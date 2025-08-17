@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexplain Document & Font Vocabulary (DFV) Specification</title>
+    <!-- ReSpec script and configuration -->
+    <script src="https://www.w3.org/Tools/respec/respec-w3c" class="respec" async></script>
+    <script class="remove">
+        var respecConfig = {
+            specStatus: "unofficial",
+            editors: [{
+                name: "Stephane Fellah",
+                url: "https://geoknoesis.com"
+            }],
+            github: "https://github.com/w3c/respec",
+            shortName: "hexplain-dfv",
+            publishDate: "2025-08-16",
+            subtitle: "Version 1.1",
+        };
+    </script>
+</head>
+<body>
+    <section id="abstract">
+        <p>
+            The Hexplain Document & Font Vocabulary (DFV) is a domain-specific ontology that provides a standard set of terms for describing the semantic properties of document and font files. As a component of the Hexplain Ontology Family, it is designed to be used with the BDDO and Hexplain Core ontologies. DFV enables format authors to map low-level physical data fields from formats like PDF, TrueType (TTF), or PostScript to high-level, unambiguous concepts (e.g., page count, font family, cross-reference table), facilitating interoperability and semantic querying across different document and font formats.
+        </p>
+    </section>
+
+    <section id="sotd">
+        <p>
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. Version 1.1 adds a richer set of classes and properties inspired by the Adobe PDF specification to better support complex document formats.
+        </p>
+    </section>
+
+    <section class="introductory">
+        <h2>Introduction</h2>
+        <p>
+            Document and font files contain complex structures representing pages, text, vector graphics, and typographic information. While BDDO can describe the physical structure of these files (such as PDF objects or TTF tables), it cannot describe the meaning of fields like "page count" or "font family." The Document & Font Vocabulary provides this essential semantic layer.
+        </p>
+        <p>
+            By providing a common, stable set of URIs for concepts like "author," "glyph," and "kerning pair," the DFV allows a Hexplain processor to understand and compare content from different file formats. This enables high-level queries such as "Find all documents authored by 'John Doe' that use the 'Times New Roman' font."
+        </p>
+        <section>
+            <h3>Conformance</h3>
+            <p>
+                The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].
+            </p>
+        </section>
+    </section>
+
+    <section id="core-concepts">
+        <h2>Core Concepts (Classes)</h2>
+        <p>DFV defines a set of classes to represent the high-level concepts within a document or font file.</p>
+        <dl>
+            <dt><code>dfv:Document</code></dt>
+            <dd>The core class representing the document as a whole (e.g., a PDF file).</dd>
+            <dt><code>dfv:Page</code></dt>
+            <dd>Represents a single page within a document.</dd>
+            <dt><code>dfv:Object</code></dt>
+            <dd>Represents a generic, addressable object or entity within a document, common in formats like PDF and PostScript.</dd>
+            <dt><code>dfv:Stream</code></dt>
+            <dd>Represents a sequence of bytes, often compressed, typically associated with an Object.</dd>
+            <dt><code>dfv:Trailer</code></dt>
+            <dd>Represents the concluding metadata section of a file or major section, often pointing to the start of the cross-reference table.</dd>
+            <dt><code>dfv:CrossReferenceTable</code></dt>
+            <dd>Represents a lookup table or index for locating objects within the file.</dd>
+            <dt><code>dfv:BoundingBox</code></dt>
+            <dd>Represents a rectangular area on a page, such as a MediaBox or CropBox.</dd>
+            <dt><code>dfv:Font</code></dt>
+            <dd>Represents a font or typeface definition.</dd>
+            <dt><code>dfv:FontDescriptor</code></dt>
+            <dd>Represents a detailed metadata block describing a font's metrics and characteristics.</dd>
+            <dt><code>dfv:FontTable</code></dt>
+            <dd>Represents a specific data table within a font file (e.g., 'cmap', 'head' in TTF).</dd>
+            <dt><code>dfv:Glyph</code></dt>
+            <dd>Represents the vector or bitmap description of a single character in a font.</dd>
+        </dl>
+    </section>
+
+    <section id="properties">
+        <h2>Semantic Properties</h2>
+        <p>These properties describe the attributes of documents and fonts. In a Hexplain description, a <code>bddo:Field</code> would use the <code>hexplain:mapsToProperty</code> predicate to link to one of these semantic properties.</p>
+        <table class="simple">
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Description</th>
+                    <th>Expected Range</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>dfv:author</code></td>
+                    <td>The name of the person or organization that created the document.</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                <tr>
+                    <td><code>dfv:title</code></td>
+                    <td>The title of the document.</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                 <tr>
+                    <td><code>dfv:creatorTool</code></td>
+                    <td>The name of the software that originally created the document (e.g., "Adobe InDesign").</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                 <tr>
+                    <td><code>dfv:producerTool</code></td>
+                    <td>The name of the software that converted the document to its final format (e.g., "Adobe PDF Library").</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                 <tr>
+                    <td><code>dfv:creationDate</code></td>
+                    <td>The timestamp of the document's creation.</td>
+                    <td><code>xsd:dateTime</code></td>
+                </tr>
+                 <tr>
+                    <td><code>dfv:modificationDate</code></td>
+                    <td>The timestamp of the document's last modification.</td>
+                    <td><code>xsd:dateTime</code></td>
+                </tr>
+                <tr>
+                    <td><code>dfv:pageCount</code></td>
+                    <td>The total number of pages in the document.</td>
+                    <td><code>xsd:positiveInteger</code></td>
+                </tr>
+                <tr>
+                    <td><code>dfv:hasBoundingBox</code></td>
+                    <td>An object property linking a Page to its BoundingBox.</td>
+                    <td><code>dfv:BoundingBox</code></td>
+                </tr>
+                 <tr>
+                    <td><code>dfv:boxType</code></td>
+                    <td>A string identifying the type of a BoundingBox (e.g., "MediaBox", "CropBox").</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                <tr>
+                    <td><code>dfv:fontFamily</code></td>
+                    <td>The family name of a font (e.g., "Arial", "Times New Roman").</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                <tr>
+                    <td><code>dfv:fontStyle</code></td>
+                    <td>The style of a font (e.g., "Regular", "Bold", "Italic").</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                 <tr>
+                    <td><code>dfv:characterEncoding</code></td>
+                    <td>The name of the character encoding used by a font (e.g., "WinAnsiEncoding", "MacRomanEncoding").</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                <tr>
+                    <td><code>dfv:glyphCount</code></td>
+                    <td>The total number of glyphs defined in a font.</td>
+                    <td><code>xsd:positiveInteger</code></td>
+                </tr>
+                 <tr>
+                    <td><code>dfv:glyphIdentifier</code></td>
+                    <td>A numeric or string identifier for a single glyph.</td>
+                    <td><code>xsd:string</code> or <code>xsd:integer</code></td>
+                </tr>
+                 <tr>
+                    <td><code>dfv:unicodeCodePoint</code></td>
+                    <td>The Unicode code point that a glyph maps to.</td>
+                    <td><code>xsd:hexBinary</code></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section id="normative-owl">
+        <h2>Normative OWL Ontology</h2>
+        <p>The following is the complete, normative OWL ontology for DFV 1.1, expressed in Turtle syntax [[turtle]].</p>
+        <pre class="nohighlight">
+@prefix : &lt;https://hexplain.io/ns/docfont#&gt; .
+@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+
+&lt;https://hexplain.io/ns/docfont&gt; a owl:Ontology ;
+    owl:versionInfo "1.1" ;
+    rdfs:label "Hexplain Document & Font Vocabulary (DFV)" .
+
+# -- Classes --
+:Document a owl:Class ; rdfs:label "Document" .
+:Page a owl:Class ; rdfs:label "Page" .
+:Object a owl:Class ; rdfs:label "Object" .
+:Stream a owl:Class ; rdfs:label "Stream" .
+:Trailer a owl:Class ; rdfs:label "Trailer" .
+:CrossReferenceTable a owl:Class ; rdfs:label "Cross Reference Table" .
+:BoundingBox a owl:Class ; rdfs:label "Bounding Box" .
+:Font a owl:Class ; rdfs:label "Font" .
+:FontDescriptor a owl:Class ; rdfs:label "Font Descriptor" .
+:FontTable a owl:Class ; rdfs:label "Font Table" .
+:Glyph a owl:Class ; rdfs:label "Glyph" .
+
+# -- Properties --
+:author a owl:DatatypeProperty ; rdfs:label "Author" .
+:title a owl:DatatypeProperty ; rdfs:label "Title" .
+:creatorTool a owl:DatatypeProperty ; rdfs:label "Creator Tool" .
+:producerTool a owl:DatatypeProperty ; rdfs:label "Producer Tool" .
+:creationDate a owl:DatatypeProperty ; rdfs:label "Creation Date" .
+:modificationDate a owl:DatatypeProperty ; rdfs:label "Modification Date" .
+:pageCount a owl:DatatypeProperty ; rdfs:label "Page Count" .
+:hasBoundingBox a owl:ObjectProperty ; rdfs:label "has Bounding Box" ; rdfs:domain :Page ; rdfs:range :BoundingBox .
+:boxType a owl:DatatypeProperty ; rdfs:label "Box Type" ; rdfs:domain :BoundingBox .
+:fontFamily a owl:DatatypeProperty ; rdfs:label "Font Family" .
+:fontStyle a owl:DatatypeProperty ; rdfs:label "Font Style" .
+:characterEncoding a owl:DatatypeProperty ; rdfs:label "Character Encoding" .
+:glyphCount a owl:DatatypeProperty ; rdfs:label "Glyph Count" .
+:glyphIdentifier a owl:DatatypeProperty ; rdfs:label "Glyph Identifier" .
+:unicodeCodePoint a owl:DatatypeProperty ; rdfs:label "Unicode Code Point" .
+        </pre>
+    </section>
+    
+    <section id="normative-jsonld-context">
+        <h2>Normative JSON-LD Context</h2>
+        <p>
+            The following context provides the normative [[JSON-LD]] mapping for the DFV terms.
+        </p>
+        <pre class="nohighlight">
+{
+  "@context": {
+    "dfv": "https://hexplain.io/ns/docfont#",
+    "author": "dfv:author",
+    "title": "dfv:title",
+    "creatorTool": "dfv:creatorTool",
+    "producerTool": "dfv:producerTool",
+    "creationDate": "dfv:creationDate",
+    "modificationDate": "dfv:modificationDate",
+    "pageCount": "dfv:pageCount",
+    "hasBoundingBox": { "@id": "dfv:hasBoundingBox", "@type": "@id" },
+    "boxType": "dfv:boxType",
+    "fontFamily": "dfv:fontFamily",
+    "fontStyle": "dfv:fontStyle",
+    "characterEncoding": "dfv:characterEncoding",
+    "glyphCount": "dfv:glyphCount",
+    "glyphIdentifier": "dfv:glyphIdentifier",
+    "unicodeCodePoint": "dfv:unicodeCodePoint"
+  }
+}
+        </pre>
+    </section>
+
+    <section id="example" class="introductory">
+        <h2>Example of Usage</h2>
+        <p>This example shows a fragment of a pseudo-PDF description, demonstrating how a physical dictionary object is mapped to the semantic properties in the Document & Font Vocabulary.</p>
+        <pre class="nohighlight">
+@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
+@prefix dfv: &lt;https://hexplain.io/ns/docfont#&gt; .
+@prefix pdf: &lt;https://hexplain.io/formats/pdf#&gt; .
+
+# The Info dictionary is a physical representation of a Document concept.
+pdf:InfoDictionary a bddo:Struct ;
+    hexplain:mapsToClass dfv:Document ;
+    bddo:hasField ( pdf:AuthorEntry, pdf:CreatorEntry, ... ) .
+
+# The physical '/Author' entry maps to the semantic 'author' property.
+pdf:AuthorEntry a bddo:Struct ; # In PDF this is a key-value pair
+    hexplain:mapsToProperty dfv:author .
+
+# The physical '/Creator' entry maps to the semantic 'creatorTool' property.
+pdf:CreatorEntry a bddo:Struct ;
+    hexplain:mapsToProperty dfv:creatorTool .
+        </pre>
+    </section>
+</body>
+</html>

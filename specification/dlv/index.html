@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexplain Data Layout Vocabulary (DLV) Specification</title>
+    <!-- ReSpec script and configuration -->
+    <script src="https://www.w3.org/Tools/respec/respec-w3c" class="respec" async></script>
+    <script class="remove">
+        var respecConfig = {
+            specStatus: "unofficial",
+            editors: [{
+                name: "Stephane Fellah",
+                url: "https://geoknoesis.com"
+            }],
+            github: "https://github.com/w3c/respec",
+            shortName: "hexplain-dlv",
+            publishDate: "2025-08-16",
+            subtitle: "Version 1.0",
+        };
+    </script>
+</head>
+<body>
+    <section id="abstract">
+        <p>
+            The Hexplain Data Layout Vocabulary (DLV) is an ontology for describing the organization of multi-dimensional data within a flat binary stream. It is a component of the Hexplain Ontology Family, designed to work as a companion to the Binary Data Description Ontology (BDDO). While BDDO describes a field as a contiguous block of bytes, the DLV explains how to interpret that block as a multi-dimensional grid, specifying its dimensions, axes, and the interleaving order of the data. This is essential for describing scientific, geospatial, and complex media formats.
+        </p>
+    </section>
+
+    <section id="sotd">
+        <p>
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
+        </p>
+    </section>
+
+    <section class="introductory">
+        <h2>Introduction</h2>
+        <p>
+            Many advanced binary formats, particularly in scientific and geospatial domains (e.g., HDF5, NetCDF, GeoTIFF), store data as n-dimensional arrays or "data cubes." A simple physical description of a data field as a sequence of bytes is insufficient to allow a processor to correctly access a specific data point (e.g., a pixel, a voxel, a time-series measurement) within that array.
+        </p>
+        <p>
+            The DLV provides the formal vocabulary to describe this "structural semantics," answering questions such as:
+        </p>
+        <ul>
+            <li>How many dimensions does the data array have?</li>
+            <li>What is the size of each dimension?</li>
+            <li>What does each dimension represent (e.g., width, height, color band, time)?</li>
+            <li>In what order is the data stored (e.g., band-interleaved, pixel-interleaved)?</li>
+        </ul>
+        <p>
+            A `bddo:Field` containing multi-dimensional data is linked to a `dlv:DataLayout` instance, which provides this essential descriptive layer.
+        </p>
+        <section>
+            <h3>Conformance</h3>
+            <p>
+                The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].
+            </p>
+        </section>
+    </section>
+
+    <section id="core-concepts">
+        <h2>Core Concepts</h2>
+        <p>The DLV model is built upon three fundamental classes.</p>
+        <dl>
+            <dt><code>dlv:DataLayout</code></dt>
+            <dd>The central class that describes the overall layout of a multi-dimensional array. An instance of this class is attached to a <code>bddo:Field</code> via the <code>hexplain:hasDataLayout</code> property.</dd>
+            <dt><code>dlv:Dimension</code></dt>
+            <dd>Represents one dimension of the data array (e.g., width, height, bands).</dd>
+            <dt><code>dlv:Axis</code></dt>
+            <dd>A semantic descriptor for a dimension, indicating what it represents. DLV provides common axes, and domain-specific vocabularies (like the Image Vocabulary) can define more specialized ones.</dd>
+        </dl>
+    </section>
+
+    <section id="properties">
+        <h2>Properties</h2>
+        <p>Properties are the predicates that define the characteristics of a Data Layout.</p>
+        <dl>
+            <dt><code>hexplain:hasDataLayout</code></dt>
+            <dd>A property from the Hexplain Core ontology that links a <code>bddo:Field</code> to a <code>dlv:DataLayout</code> instance.</dd>
+            <dt><code>dlv:hasDimension</code></dt>
+            <dd>Links a <code>dlv:DataLayout</code> to an ordered list (<code>rdf:List</code>) of its <code>dlv:Dimension</code> instances. The order in the list defines the dimension hierarchy.</dd>
+            <dt><code>dlv:interleaving</code></dt>
+            <dd>Specifies the storage order of the dimensions. The value MUST be one of the individuals from the vocabulary (e.g., <code>dlv:BandSequential</code>, <code>dlv:PixelInterleaved</code>).</dd>
+            <dt><code>dlv:dimensionSize</code></dt>
+            <dd>An <code>xsd:positiveInteger</code> property of a <code>dlv:Dimension</code> that defines its fixed length.</dd>
+            <dt><code>dlv:dimensionSizeFromField</code></dt>
+            <dd>Points to a <code>bddo:Field</code> whose value provides the size of the <code>dlv:Dimension</code>.</dd>
+            <dt><code>dlv:hasAxis</code></dt>
+            <dd>Links a <code>dlv:Dimension</code> to its semantic <code>dlv:Axis</code> type.</dd>
+        </dl>
+    </section>
+
+    <section id="normative-owl">
+        <h2>Normative OWL Ontology</h2>
+        <p>The following is the complete, normative OWL ontology for DLV 1.0, expressed in Turtle syntax [[turtle]].</p>
+        <pre class="nohighlight">
+@prefix : &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+
+&lt;https://hexplain.io/ns/dlv&gt; a owl:Ontology ;
+    owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Data Layout Vocabulary (DLV)" .
+
+# -- Classes --
+:DataLayout a rdfs:Class ; rdfs:label "Data Layout" .
+:Dimension a rdfs:Class ; rdfs:label "Dimension" .
+:Axis a rdfs:Class ; rdfs:label "Axis" .
+
+# -- Properties --
+:hasDimension a owl:ObjectProperty ; rdfs:domain :DataLayout ; rdfs:range rdf:List .
+:interleaving a owl:ObjectProperty ; rdfs:domain :DataLayout .
+:dimensionSize a owl:DatatypeProperty ; rdfs:domain :Dimension ; rdfs:range xsd:positiveInteger .
+:dimensionSizeFromField a owl:ObjectProperty ; rdfs:domain :Dimension ; rdfs:range bddo:Field .
+:hasAxis a owl:ObjectProperty ; rdfs:domain :Dimension ; rdfs:range :Axis .
+
+# -- Individuals for Interleaving Types --
+:BandSequential a owl:NamedIndividual ; rdfs:label "Band Sequential (BSQ)" .
+:PixelInterleaved a owl:NamedIndividual ; rdfs:label "Pixel Interleaved (BIP)" .
+:BandInterleavedByLine a owl:NamedIndividual ; rdfs:label "Band Interleaved by Line (BIL)" .
+
+# -- Individuals for Common Axes --
+:axisX a :Axis ; rdfs:label "X Axis (Width)" .
+:axisY a :Axis ; rdfs:label "Y Axis (Height)" .
+:axisZ a :Axis ; rdfs:label "Z Axis (Depth)" .
+:axisBand a :Axis ; rdfs:label "Band/Channel Axis" .
+:axisTime a :Axis ; rdfs:label "Time Axis" .
+        </pre>
+    </section>
+
+    <section id="normative-shacl">
+        <h2>Normative SHACL Shapes</h2>
+        <p>A DLV description graph MUST conform to the following SHACL shapes [[shacl]].</p>
+        <pre class="nohighlight">
+@prefix sh: &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix dlv: &lt;https://hexplain.io/ns/dlv#&gt; .
+
+# -- Shape for validating a dlv:DataLayout --
+dlv:DataLayoutShape a sh:NodeShape ;
+    sh:targetClass dlv:DataLayout ;
+    sh:property [
+        sh:path dlv:hasDimension ;
+        sh:minCount 1 ;
+        sh:message "A dlv:DataLayout must have at least one dlv:hasDimension property."
+    ] .
+
+# -- Shape for validating a dlv:Dimension --
+dlv:DimensionShape a sh:NodeShape ;
+    sh:targetClass dlv:Dimension ;
+    sh:xone (
+        [ sh:path dlv:dimensionSize ]
+        [ sh:path dlv:dimensionSizeFromField ]
+    ) ;
+    sh:property [
+        sh:path dlv:hasAxis ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A dlv:Dimension must have exactly one dlv:hasAxis."
+    ] .
+        </pre>
+    </section>
+    
+    <section id="normative-jsonld-context">
+        <h2>Normative JSON-LD Context</h2>
+        <p>
+            The following context provides the normative [[JSON-LD]] mapping for the DLV terms.
+        </p>
+        <pre class="nohighlight">
+{
+  "@context": {
+    "dlv": "https://hexplain.io/ns/dlv#",
+    "bddo": "https://hexplain.io/ns/bddo#",
+    "DataLayout": "dlv:DataLayout",
+    "Dimension": "dlv:Dimension",
+    "Axis": "dlv:Axis",
+    "hasDimension": { "@id": "dlv:hasDimension", "@container": "@list" },
+    "interleaving": { "@id": "dlv:interleaving", "@type": "@id" },
+    "dimensionSize": { "@id": "dlv:dimensionSize", "@type": "xsd:positiveInteger" },
+    "dimensionSizeFromField": { "@id": "dlv:dimensionSizeFromField", "@type": "@id" },
+    "hasAxis": { "@id": "dlv:hasAxis", "@type": "@id" }
+  }
+}
+        </pre>
+    </section>
+
+    <section id="example" class="introductory">
+        <h2>Example: Describing a BIL Image</h2>
+        <p>
+            A Band Interleaved by Line (BIL) image is a 3-dimensional data cube (width, height, bands). The data is stored such that all the bands for the first row are written, then all the bands for the second row, and so on. This example shows how to use DLV in conjunction with BDDO to describe this layout.
+        </p>
+        <pre class="nohighlight">
+@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
+@prefix dlv: &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix myformat: &lt;https://hexplain.io/formats/myformat#&gt; .
+
+# -- Physical Description (BDDO) --
+myformat:ImageFile a bddo:Struct ;
+    bddo:hasField (
+        myformat:Width,
+        myformat:Height,
+        myformat:NumBands,
+        myformat:PixelData
+    ) .
+
+myformat:Width a bddo:Field ; bddo:dataType bddo:uint32le .
+myformat:Height a bddo:Field ; bddo:dataType bddo:uint32le .
+myformat:NumBands a bddo:Field ; bddo:dataType bddo:uint32le .
+
+myformat:PixelData a bddo:Field ;
+    bddo:dataType bddo:bytes ;
+    bddo:sizeFromExpression "instance.Width * instance.Height * instance.NumBands" ;
+    # Link the physical field to its layout description.
+    hexplain:hasDataLayout myformat:BIL_Layout .
+
+# -- Data Layout Description (DLV) --
+myformat:BIL_Layout a dlv:DataLayout ;
+    dlv:interleaving dlv:BandInterleavedByLine ;
+    dlv:hasDimension (
+        myformat:HeightDimension
+        myformat:WidthDimension
+        myformat:BandDimension
+    ) .
+
+myformat:HeightDimension a dlv:Dimension ;
+    dlv:hasAxis dlv:axisY ;
+    dlv:dimensionSizeFromField myformat:Height .
+
+myformat:WidthDimension a dlv:Dimension ;
+    dlv:hasAxis dlv:axisX ;
+    dlv:dimensionSizeFromField myformat:Width .
+
+myformat:BandDimension a dlv:Dimension ;
+    dlv:hasAxis dlv:axisBand ;
+    dlv:dimensionSizeFromField myformat:NumBands .
+        </pre>
+    </section>
+</body>
+</html>

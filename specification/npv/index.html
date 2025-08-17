@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexplain Network Protocol Vocabulary (NPV) Specification</title>
+    <!-- ReSpec script and configuration -->
+    <script src="https://www.w3.org/Tools/respec/respec-w3c" class="respec" async></script>
+    <script class="remove">
+        var respecConfig = {
+            specStatus: "unofficial",
+            editors: [{
+                name: "Stephane Fellah",
+                url: "https://geoknoesis.com"
+            }],
+            github: "https://github.com/w3c/respec",
+            shortName: "hexplain-npv",
+            publishDate: "2025-08-16",
+            subtitle: "Version 1.0",
+        };
+    </script>
+</head>
+<body>
+    <section id="abstract">
+        <p>
+            The Hexplain Network Protocol Vocabulary (NPV) is a domain-specific ontology that provides a standard set of terms for describing the semantic properties of network protocols. As a component of the Hexplain Ontology Family, it is designed to be used with the BDDO and Hexplain Core ontologies. NPV enables format authors to map low-level physical data fields from packet capture formats (like PCAP or PCAPng) to high-level, unambiguous concepts (e.g., source IP address, destination port, TCP flags), facilitating interoperability and semantic analysis of network traffic.
+        </p>
+    </section>
+
+    <section id="sotd">
+        <p>
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
+        </p>
+    </section>
+
+    <section class="introductory">
+        <h2>Introduction</h2>
+        <p>
+            Network traffic is composed of layered protocols, where each layer encapsulates the next. While BDDO can describe the physical structure of these protocol data units (PDUs), it cannot describe the meaning of fields like "Source MAC Address" or "Protocol Number." The Network Protocol Vocabulary provides this essential semantic layer.
+        </p>
+        <p>
+            By providing a common, stable set of URIs for concepts like "IPv4Packet," "TCPSegment," and "destinationAddress," the NPV allows a Hexplain processor to understand and analyze network captures in a standardized way. This enables high-level queries such as "Find all TCP packets sent to port 443 from a specific IP address."
+        </p>
+        <section>
+            <h3>Conformance</h3>
+            <p>
+                The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].
+            </p>
+        </section>
+    </section>
+
+    <section id="core-concepts">
+        <h2>Core Concepts (Classes)</h2>
+        <p>NPV defines a set of classes to represent the protocol layers within a captured packet.</p>
+        <dl>
+            <dt><code>npv:Packet</code></dt>
+            <dd>The core class representing a single captured packet as a whole.</dd>
+            <dt><code>npv:EthernetFrame</code></dt>
+            <dd>Represents a Layer 2 Ethernet frame.</dd>
+            <dt><code>npv:IPv4Packet</code></dt>
+            <dd>Represents a Layer 3 IPv4 packet.</dd>
+            <dt><code>npv:IPv6Packet</code></dt>
+            <dd>Represents a Layer 3 IPv6 packet.</dd>
+            <dt><code>npv:TCPSegment</code></dt>
+            <dd>Represents a Layer 4 TCP segment.</dd>
+            <dt><code>npv:UDPDDatagram</code></dt>
+            <dd>Represents a Layer 4 UDP datagram.</dd>
+        </dl>
+    </section>
+
+    <section id="properties">
+        <h2>Semantic Properties</h2>
+        <p>These properties describe the attributes of network protocol headers. In a Hexplain description, a <code>bddo:Field</code> would use the <code>hexplain:mapsToProperty</code> predicate to link to one of these semantic properties.</p>
+        <table class="simple">
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Description</th>
+                    <th>Expected Range</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>npv:sourceAddress</code></td>
+                    <td>The source address (e.g., MAC, IPv4, IPv6).</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                <tr>
+                    <td><code>npv:destinationAddress</code></td>
+                    <td>The destination address (e.g., MAC, IPv4, IPv6).</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                <tr>
+                    <td><code>npv:sourcePort</code></td>
+                    <td>The source port number for a transport layer protocol.</td>
+                    <td><code>xsd:positiveInteger</code></td>
+                </tr>
+                <tr>
+                    <td><code>npv:destinationPort</code></td>
+                    <td>The destination port number for a transport layer protocol.</td>
+                    <td><code>xsd:positiveInteger</code></td>
+                </tr>
+                <tr>
+                    <td><code>npv:protocolNumber</code></td>
+                    <td>An identifier for the encapsulated protocol (e.g., 6 for TCP, 17 for UDP in an IP header).</td>
+                    <td><code>xsd:integer</code></td>
+                </tr>
+                <tr>
+                    <td><code>npv:etherType</code></td>
+                    <td>The EtherType value in an Ethernet frame, indicating the encapsulated protocol (e.g., 0x0800 for IPv4).</td>
+                    <td><code>xsd:hexBinary</code></td>
+                </tr>
+                <tr>
+                    <td><code>npv:sequenceNumber</code></td>
+                    <td>The sequence number in a TCP segment.</td>
+                    <td><code>xsd:unsignedInt</code></td>
+                </tr>
+                <tr>
+                    <td><code>npv:acknowledgmentNumber</code></td>
+                    <td>The acknowledgment number in a TCP segment.</td>
+                    <td><code>xsd:unsignedInt</code></td>
+                </tr>
+                <tr>
+                    <td><code>npv:tcpFlags</code></td>
+                    <td>A bitmask representing the flags in a TCP header (SYN, ACK, FIN, etc.).</td>
+                    <td><code>xsd:hexBinary</code></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section id="normative-owl">
+        <h2>Normative OWL Ontology</h2>
+        <p>The following is the complete, normative OWL ontology for NPV 1.0, expressed in Turtle syntax [[turtle]].</p>
+        <pre class="nohighlight">
+@prefix : &lt;https://hexplain.io/ns/net#&gt; .
+@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+
+&lt;https://hexplain.io/ns/net&gt; a owl:Ontology ;
+    owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Network Protocol Vocabulary (NPV)" .
+
+# -- Classes --
+:Packet a owl:Class ; rdfs:label "Packet" .
+:EthernetFrame a owl:Class ; rdfs:label "Ethernet Frame" .
+:IPv4Packet a owl:Class ; rdfs:label "IPv4 Packet" .
+:IPv6Packet a owl:Class ; rdfs:label "IPv6 Packet" .
+:TCPSegment a owl:Class ; rdfs:label "TCP Segment" .
+:UDPDDatagram a owl:Class ; rdfs:label "UDP Datagram" .
+
+# -- Properties --
+:sourceAddress a owl:DatatypeProperty ; rdfs:label "Source Address" .
+:destinationAddress a owl:DatatypeProperty ; rdfs:label "Destination Address" .
+:sourcePort a owl:DatatypeProperty ; rdfs:label "Source Port" .
+:destinationPort a owl:DatatypeProperty ; rdfs:label "Destination Port" .
+:protocolNumber a owl:DatatypeProperty ; rdfs:label "Protocol Number" .
+:etherType a owl:DatatypeProperty ; rdfs:label "EtherType" .
+:sequenceNumber a owl:DatatypeProperty ; rdfs:label "Sequence Number" .
+:acknowledgmentNumber a owl:DatatypeProperty ; rdfs:label "Acknowledgment Number" .
+:tcpFlags a owl:DatatypeProperty ; rdfs:label "TCP Flags" .
+        </pre>
+    </section>
+    
+    <section id="normative-jsonld-context">
+        <h2>Normative JSON-LD Context</h2>
+        <p>
+            The following context provides the normative [[JSON-LD]] mapping for the NPV terms.
+        </p>
+        <pre class="nohighlight">
+{
+  "@context": {
+    "npv": "https://hexplain.io/ns/net#",
+    "sourceAddress": "npv:sourceAddress",
+    "destinationAddress": "npv:destinationAddress",
+    "sourcePort": "npv:sourcePort",
+    "destinationPort": "npv:destinationPort",
+    "protocolNumber": "npv:protocolNumber",
+    "etherType": "npv:etherType",
+    "sequenceNumber": "npv:sequenceNumber",
+    "acknowledgmentNumber": "npv:acknowledgmentNumber",
+    "tcpFlags": "npv:tcpFlags"
+  }
+}
+        </pre>
+    </section>
+
+    <section id="example" class="introductory">
+        <h2>Example of Usage</h2>
+        <p>This example shows a fragment of an IPv4 packet header description, demonstrating how the physical fields are mapped to the semantic properties in the Network Protocol Vocabulary.</p>
+        <pre class="nohighlight">
+@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
+@prefix npv: &lt;https://hexplain.io/ns/net#&gt; .
+@prefix net: &lt;https://hexplain.io/formats/net#&gt; .
+
+# The IPv4 header structure is a physical representation of an IPv4Packet concept.
+net:IPv4Header a bddo:Struct ;
+    hexplain:mapsToClass npv:IPv4Packet ;
+    bddo:hasField ( net:SourceAddress, net:DestinationAddress, net:Protocol, ... ) .
+
+# The physical 'SourceAddress' field maps to the semantic 'sourceAddress' property.
+net:SourceAddress a bddo:Field ;
+    bddo:dataType bddo:uint32be ;
+    hexplain:mapsToProperty npv:sourceAddress .
+
+# The physical 'DestinationAddress' field maps to the semantic 'destinationAddress' property.
+net:DestinationAddress a bddo:Field ;
+    bddo:dataType bddo:uint32be ;
+    hexplain:mapsToProperty npv:destinationAddress .
+
+# The physical 'Protocol' field maps to the semantic 'protocolNumber' property.
+net:Protocol a bddo:Field ;
+    bddo:dataType bddo:uint8 ;
+    hexplain:mapsToProperty npv:protocolNumber .
+        </pre>
+    </section>
+</body>
+</html>

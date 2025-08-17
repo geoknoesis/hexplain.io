@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexplain Audio Vocabulary (ADV) Specification</title>
+    <!-- ReSpec script and configuration -->
+    <script src="https://www.w3.org/Tools/respec/respec-w3c" class="respec" async></script>
+    <script class="remove">
+        var respecConfig = {
+            specStatus: "unofficial",
+            editors: [{
+                name: "Stephane Fellah",
+                url: "https://geoknoesis.com"
+            }],
+            github: "https://github.com/w3c/respec",
+            shortName: "hexplain-adv",
+            publishDate: "2025-08-16",
+            subtitle: "Version 1.0",
+        };
+    </script>
+</head>
+<body>
+    <section id="abstract">
+        <p>
+            The Hexplain Audio Vocabulary (ADV) is a domain-specific ontology that provides a standard set of terms for describing the semantic properties of audio data. As a component of the Hexplain Ontology Family, it is designed to be used with the BDDO and Hexplain Core ontologies. ADV enables format authors to map low-level physical data fields from audio formats (like WAV or MP3 with ID3 tags) to high-level, unambiguous concepts (e.g., sample rate, artist, album), facilitating interoperability and semantic querying across different audio file formats.
+        </p>
+    </section>
+
+    <section id="sotd">
+        <p>
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
+        </p>
+    </section>
+
+    <section class="introductory">
+        <h2>Introduction</h2>
+        <p>
+            Audio files contain both technical data (the encoded audio stream) and descriptive metadata (tags describing the content). While BDDO can describe the physical structure of these files, it cannot describe the meaning of fields like "sample rate" or "artist." The Audio Vocabulary provides this essential semantic layer.
+        </p>
+        <p>
+            By providing a common, stable set of URIs for concepts like "bit depth," "album," and "track number," the ADV allows a Hexplain processor to understand and compare audio content from different file formats. This enables high-level queries such as "Find all audio files by the artist 'The Beatles' with a sample rate of 44100 Hz."
+        </p>
+        <section>
+            <h3>Conformance</h3>
+            <p>
+                The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].
+            </p>
+        </section>
+    </section>
+
+    <section id="core-concepts">
+        <h2>Core Concepts (Classes)</h2>
+        <p>ADV defines a set of classes to represent the high-level concepts within an audio file.</p>
+        <dl>
+            <dt><code>adv:AudioContainer</code></dt>
+            <dd>The core class representing the audio file as a whole (e.g., a WAV or MP3 file).</dd>
+            <dt><code>adv:AudioStream</code></dt>
+            <dd>Represents the block containing the actual encoded audio sample data.</dd>
+            <dt><code>adv:MetadataTag</code></dt>
+            <dd>Represents a metadata block (like an ID3 or Vorbis comment tag) that contains descriptive information about the audio content.</dd>
+        </dl>
+    </section>
+
+    <section id="properties">
+        <h2>Semantic Properties</h2>
+        <p>These properties describe the attributes of audio streams and metadata tags. In a Hexplain description, a <code>bddo:Field</code> would use the <code>hexplain:mapsToProperty</code> predicate to link to one of these semantic properties.</p>
+        <table class="simple">
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Description</th>
+                    <th>Expected Range</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>adv:sampleRate</code></td>
+                    <td>The number of samples per second in Hertz (e.g., 44100, 48000).</td>
+                    <td><code>xsd:positiveInteger</code></td>
+                </tr>
+                <tr>
+                    <td><code>adv:audioChannels</code></td>
+                    <td>The number of audio channels (e.g., 1 for mono, 2 for stereo).</td>
+                    <td><code>xsd:positiveInteger</code></td>
+                </tr>
+                <tr>
+                    <td><code>adv:bitDepth</code></td>
+                    <td>The number of bits per audio sample (e.g., 16, 24). Also known as sample format.</td>
+                    <td><code>xsd:positiveInteger</code></td>
+                </tr>
+                <tr>
+                    <td><code>adv:duration</code></td>
+                    <td>The duration of the audio in seconds.</td>
+                    <td><code>xsd:decimal</code></td>
+                </tr>
+                <tr>
+                    <td><code>adv:bitrate</code></td>
+                    <td>The average bitrate of the track in bits per second.</td>
+                    <td><code>xsd:positiveInteger</code></td>
+                </tr>
+                <tr>
+                    <td><code>adv:codecIdentifier</code></td>
+                    <td>A string identifying the audio codec (e.g., "PCM", "MP3", "FLAC").</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                 <tr>
+                    <td><code>adv:artist</code></td>
+                    <td>The name of the recording artist.</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                 <tr>
+                    <td><code>adv:album</code></td>
+                    <td>The name of the album the audio belongs to.</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                 <tr>
+                    <td><code>adv:trackTitle</code></td>
+                    <td>The title of the audio track.</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+                 <tr>
+                    <td><code>adv:trackNumber</code></td>
+                    <td>The number of the track on its original album.</td>
+                    <td><code>xsd:positiveInteger</code></td>
+                </tr>
+                 <tr>
+                    <td><code>adv:genre</code></td>
+                    <td>The genre of the audio content.</td>
+                    <td><code>xsd:string</code></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+    
+    <section id="layout-axes">
+        <h2>Layout Axes</h2>
+        <p>ADV extends the Hexplain Data Layout Vocabulary (DLV) by defining standard axes specific to audio. These are used in a <code>dlv:Dimension</code> to specify what each dimension of a data array represents.</p>
+        <dl>
+            <dt><code>adv:axisSample</code></dt>
+            <dd>Represents the sample axis in a sequence of audio samples (often corresponds to time).</dd>
+            <dt><code>adv:axisChannel</code></dt>
+            <dd>Represents the channel axis for interleaved audio (e.g., Left, Right channels).</dd>
+        </dl>
+    </section>
+
+    <section id="normative-owl">
+        <h2>Normative OWL Ontology</h2>
+        <p>The following is the complete, normative OWL ontology for ADV 1.0, expressed in Turtle syntax [[turtle]].</p>
+        <pre class="nohighlight">
+@prefix : &lt;https://hexplain.io/ns/audio#&gt; .
+@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix dlv: &lt;https://hexplain.io/ns/dlv#&gt; .
+
+&lt;https://hexplain.io/ns/audio&gt; a owl:Ontology ;
+    owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Audio Vocabulary (ADV)" .
+
+# -- Classes --
+:AudioContainer a owl:Class ; rdfs:label "Audio Container" .
+:AudioStream a owl:Class ; rdfs:label "Audio Stream" .
+:MetadataTag a owl:Class ; rdfs:label "Metadata Tag" .
+
+# -- Properties --
+:sampleRate a owl:DatatypeProperty ; rdfs:label "Sample Rate" .
+:audioChannels a owl:DatatypeProperty ; rdfs:label "Audio Channels" .
+:bitDepth a owl:DatatypeProperty ; rdfs:label "Bit Depth" .
+:duration a owl:DatatypeProperty ; rdfs:label "Duration" .
+:bitrate a owl:DatatypeProperty ; rdfs:label "Bitrate" .
+:codecIdentifier a owl:DatatypeProperty ; rdfs:label "Codec Identifier" .
+:artist a owl:DatatypeProperty ; rdfs:label "Artist" .
+:album a owl:DatatypeProperty ; rdfs:label "Album" .
+:trackTitle a owl:DatatypeProperty ; rdfs:label "Track Title" .
+:trackNumber a owl:DatatypeProperty ; rdfs:label "Track Number" .
+:genre a owl:DatatypeProperty ; rdfs:label "Genre" .
+
+# -- Axes for DLV --
+:axisSample a dlv:Axis ; rdfs:label "Sample Axis" .
+:axisChannel a dlv:Axis ; rdfs:label "Channel Axis" .
+        </pre>
+    </section>
+    
+    <section id="normative-jsonld-context">
+        <h2>Normative JSON-LD Context</h2>
+        <p>
+            The following context provides the normative [[JSON-LD]] mapping for the ADV terms.
+        </p>
+        <pre class="nohighlight">
+{
+  "@context": {
+    "adv": "https://hexplain.io/ns/audio#",
+    "sampleRate": "adv:sampleRate",
+    "audioChannels": "adv:audioChannels",
+    "bitDepth": "adv:bitDepth",
+    "duration": "adv:duration",
+    "bitrate": "adv:bitrate",
+    "codecIdentifier": "adv:codecIdentifier",
+    "artist": "adv:artist",
+    "album": "adv:album",
+    "trackTitle": "adv:trackTitle",
+    "trackNumber": "adv:trackNumber",
+    "genre": "adv:genre"
+  }
+}
+        </pre>
+    </section>
+
+    <section id="example" class="introductory">
+        <h2>Example of Usage</h2>
+        <p>This example shows a fragment of a WAV file description, demonstrating how the physical fields of the format (`fmt `) chunk are mapped to the semantic properties in the Audio Vocabulary.</p>
+        <pre class="nohighlight">
+@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
+@prefix adv: &lt;https://hexplain.io/ns/audio#&gt; .
+@prefix wav: &lt;https://hexplain.io/formats/wav#&gt; .
+
+# The 'fmt ' chunk is a physical representation of an AudioStream concept.
+wav:FormatChunk a bddo:Struct ;
+    hexplain:mapsToClass adv:AudioStream ;
+    bddo:hasField ( wav:SampleRate, wav:Channels, wav:BitsPerSample, ... ) .
+
+# The physical 'SampleRate' field maps to the semantic 'sampleRate' property.
+wav:SampleRate a bddo:Field ;
+    bddo:dataType bddo:uint32le ;
+    hexplain:mapsToProperty adv:sampleRate .
+
+# The physical 'Channels' field maps to the semantic 'audioChannels' property.
+wav:Channels a bddo:Field ;
+    bddo:dataType bddo:uint16le ;
+    hexplain:mapsToProperty adv:audioChannels .
+
+# The physical 'BitsPerSample' field maps to the semantic 'bitDepth' property.
+wav:BitsPerSample a bddo:Field ;
+    bddo:dataType bddo:uint16le ;
+    hexplain:mapsToProperty adv:bitDepth .
+        </pre>
+    </section>
+</body>
+</html>

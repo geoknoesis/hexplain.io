@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexplain Expression Language (HEL) Specification</title>
+    <!-- ReSpec script and configuration -->
+    <script src="https://www.w3.org/Tools/respec/respec-w3c" class="respec" async></script>
+    <script class="remove">
+        var respecConfig = {
+            specStatus: "unofficial",
+            editors: [{
+                name: "Stephane Fellah",
+                url: "https://geoknoesis.com/"
+            }],
+            github: "https://github.com/w3c/respec",
+            shortName: "hel",
+            publishDate: "2025-08-16",
+            subtitle: "Version 1.1",
+        };
+    </script>
+</head>
+<body>
+    <section id="abstract">
+        <p>
+            The Hexplain Expression Language (HEL) is a simple, declarative language designed for expressing conditions within Hexplain format descriptions. It provides the necessary logic for features such as dynamic sizing, conditional field presence, and repetitive structures. HEL is designed to be minimal, intuitive for developers, and grounded in existing web standards for its semantics. It operates on a simple logical data model that is derived from the binary data being parsed, using a context-based mapping inspired by JSON-LD to resolve field names.
+        </p>
+    </section>
+
+    <section id="sotd">
+        <p>
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. This version (1.1) introduces support for parenthesized expressions.
+        </p>
+    </section>
+
+    <section class="introductory">
+        <h2>Introduction</h2>
+        <p>
+            The Hexplain standard provides a declarative framework for describing the physical layout and semantic meaning of binary data formats. A key requirement of this framework is the ability to handle dynamic structures where the presence, size, or repetition of a field depends on the value of previously parsed data.
+        </p>
+        <p>
+            The Hexplain Expression Language (HEL) provides a concise and unambiguous syntax for these conditions. Its design goals are:
+        </p>
+        <ul>
+            <li><b>Simplicity:</b> The language should be small and easy to learn for anyone familiar with modern programming languages.</li>
+            <li><b>Clarity:</b> Expressions should be readable and their intent should be obvious.</li>
+            <li><b>Standard-Based:</b> The semantics of its operators and data model should be grounded in existing, stable standards like JSON-LD and XPath.</li>
+        </ul>
+        <p>
+            HEL is used exclusively within Hexplain descriptions, typically as the literal value for properties like <code>bddo:repeatUntil</code> and <code>bddo:isPresentIf</code>.
+        </p>
+        <section>
+            <h3>Conformance</h3>
+            <p>
+                The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].
+            </p>
+        </section>
+    </section>
+
+    <section id="data-model">
+        <h2>The Logical Data Model</h2>
+        <p>
+            A HEL expression is not evaluated directly against an RDF graph. Instead, it is evaluated against a temporary, in-memory <b>Logical Data Model</b>, referred to as the "parsing context." This model is a simple key-value map, analogous to a JSON object.
+        </p>
+        <p>
+            The keyword <code>instance</code> is a reserved term in HEL that refers to the root of the current parsing context. The parsing context is constructed by the Hexplain parser as it processes a binary stream.
+        </p>
+
+        <section>
+            <h3>Context-Based Key Resolution</h3>
+            <p>
+                The keys in the Logical Data Model are simple strings (e.g., <code>"ChunkType"</code>). These simple keys are unambiguously mapped to their full URIs via a context, which is defined by the <code>@prefix</code> declarations in the Hexplain description file. This mechanism is directly inspired by [[JSON-LD]].
+            </p>
+            <p>
+                When a parser builds the logical model for a structure, it uses the defined prefixes to resolve the local name of each field. For example, given the prefix <code>@prefix png_profile: &lt;https://hexplain.io/ns/profiles/png#&gt;</code>, a field defined as <code>png_profile:ChunkType</code> will be represented in the logical model by the simple key <code>ChunkType</code> within the scope of that structure.
+            </p>
+            <p class="note">
+                Implementations MUST ensure that if multiple fields with the same local name but different namespaces are used within the same structure, a key collision is detected and reported as an error. The recommended solution is to use different prefixes to create unique keys in the logical model.
+            </p>
+        </section>
+        <section>
+            <h3>Nested Structures</h3>
+            <p>
+                If a parsed structure contains a nested structure, the nested structure is represented as a nested object in the logical model. The dot-notation accessor is used to traverse this hierarchy. For a field <code>Version</code> inside a structure <code>Header</code>, the accessor would be <code>instance.Header.Version</code>.
+            </p>
+        </section>
+    </section>
+
+    <section id="syntax">
+        <h2>Syntax and Grammar</h2>
+        <p>A HEL expression is a string literal that conforms to the grammar defined in this section.</p>
+
+        <section>
+            <h3>Formal Grammar (ABNF)</h3>
+            <p>The following grammar, specified in Augmented Backus-Naur Form [[RFC5234]], defines the HEL syntax, including support for parentheses to control the order of evaluation.</p>
+            <pre class="abnf">
+Expression      = LogicalTerm *( WS "or" WS LogicalTerm )
+LogicalTerm     = ComparisonTerm *( WS "and" WS ComparisonTerm )
+ComparisonTerm  = PrimaryExpr [ WS ( "==" / "!=" / "&lt;" / "&gt;" / "&lt;=" / "&gt;=" ) WS PrimaryExpr ]
+
+PrimaryExpr     = Accessor / Literal / ( "(" WS Expression WS ")" )
+
+Accessor        = "instance" *( "." IDENTIFIER )
+Literal         = StringLiteral / IntegerLiteral / BooleanLiteral
+
+StringLiteral   = %x27 *( CHAR ) %x27 ; single-quoted string
+IntegerLiteral  = 1*DIGIT
+BooleanLiteral  = "true" / "false"
+
+IDENTIFIER      = ALPHA *( ALPHA / DIGIT / "_" )
+CHAR            = %x20-26 / %x28-7E ; Any character except single quote
+WS              = *( %x20 / %x09 ) ; Whitespace (space or tab)
+            </pre>
+        </section>
+
+        <section>
+            <h3>Accessors</h3>
+            <p>
+                Values from the logical model are accessed using dot-notation, starting with the <code>instance</code> keyword. The identifier following a dot MUST correspond to a key in the logical model.
+            </p>
+            <pre class="example">
+instance.FieldName
+instance.Header.Version
+            </pre>
+        </section>
+
+        <section>
+            <h3>Literals</h3>
+            <p>HEL supports three types of literals:</p>
+            <dl>
+                <dt>String</dt>
+                <dd>A sequence of characters enclosed in single quotes (<code>'</code>). Example: <code>'IEND'</code>.</dd>
+                <dt>Integer</dt>
+                <dd>A sequence of one or more digits. Example: <code>1024</code>.</dd>
+                <dt>Boolean</dt>
+                <dd>The keywords <code>true</code> or <code>false</code>.</dd>
+            </dl>
+        </section>
+
+        <section>
+            <h3>Operators</h3>
+            <p>
+                HEL supports a minimal set of comparison and logical operators. The semantics of these operators are defined to be identical to their counterparts in [[xpath-functions-31]].
+            </p>
+            <table class="simple">
+                <thead>
+                    <tr>
+                        <th>Operator</th>
+                        <th>Description</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>==</code></td>
+                        <td>Equality</td>
+                        <td><code>instance.Version == 1</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>!=</code></td>
+                        <td>Inequality</td>
+                        <td><code>instance.ChunkType != 'IEND'</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code></td>
+                        <td>Numeric Comparison</td>
+                        <td><code>instance.Length &lt; 256</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>and</code></td>
+                        <td>Logical AND</td>
+                        <td><code>instance.hasAlpha and instance.bitDepth == 8</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>or</code></td>
+                        <td>Logical OR</td>
+                        <td><code>instance.type == 'sRGB' or instance.type == 'gAMA'</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </section>
+
+    <section id="evaluation">
+        <h2>Evaluation Semantics</h2>
+        <p>
+            A HEL expression MUST be evaluated against the current parsing context (the <code>instance</code> object). The evaluation of an expression must yield a boolean (<code>true</code> or <code>false</code>) result.
+        </p>
+        <section>
+            <h3>Operator Precedence</h3>
+            <p>
+                HEL defines a clear operator precedence to ensure unambiguous evaluation.
+            </p>
+            <ol>
+                <li><b>Grouping:</b> Expressions within parentheses <code>()</code> are evaluated first.</li>
+                <li><b>Comparisons:</b> All comparison operators (<code>==</code>, <code>!=</code>, etc.) are evaluated next.</li>
+                <li><b>Logical AND:</b> The <code>and</code> operator is evaluated after comparisons.</li>
+                <li><b>Logical OR:</b> The <code>or</code> operator is evaluated last.</li>
+            </ol>
+            <p>Within the same precedence level, evaluation proceeds from left to right.</p>
+        </section>
+        <section>
+            <h3>Type System and Coercion</h3>
+            <p>
+                The logical model contains values with types corresponding to the parsed binary data (integers, strings, booleans). When performing a comparison:
+            </p>
+            <ul>
+                <li>If an integer is compared to an IntegerLiteral, a standard numeric comparison is performed.</li>
+                <li>If a string is compared to a StringLiteral, a standard string comparison is performed.</li>
+                <li>If a boolean is compared to a BooleanLiteral, a standard boolean comparison is performed.</li>
+                <li>Any other comparison (e.g., integer to string) MUST evaluate to <code>false</code>, except for the <code>!=</code> operator, which would evaluate to <code>true</code>.</li>
+            </ul>
+        </section>
+        <section>
+            <h3>Handling of Null Values</h3>
+            <p>
+                If an accessor refers to a field that is not present in the current context (e.g., an optional field that was not parsed), the accessor evaluates to a special <code>null</code> value. Any comparison operation involving a <code>null</code> value (<code>==</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>) MUST evaluate to <code>false</code>. A comparison with <code>!=</code> MUST evaluate to <code>true</code>.
+            </p>
+        </section>
+    </section>
+
+    <section id="conformance">
+        <h2>Conformance</h2>
+        <p>
+            A conforming HEL implementation MUST:
+        </p>
+        <ol>
+            <li>Implement a parser that correctly parses all valid expressions according to the ABNF grammar defined in this specification.</li>
+            <li>Correctly implement the context-based key resolution mechanism for the logical data model.</li>
+            <li>Implement all specified operators with the precedence and type coercion rules defined herein.</li>
+            <li>Correctly handle null values resulting from missing fields in the logical model.</li>
+            <li>Yield a single boolean result for any valid expression.</li>
+        </ol>
+    </section>
+    
+    <section id="examples" class="introductory">
+        <h2>Examples</h2>
+        <dl>
+            <dt>Conditional Repetition</dt>
+            <dd>Used to parse a sequence of PNG chunks until the final 'IEND' chunk is found.
+                <pre>bddo:repeatUntil "instance.ChunkType == 'IEND'"</pre>
+            </dd>
+
+            <dt>Conditional Presence</dt>
+            <dd>Used to parse a palette chunk only if the color type field indicates it is an indexed-color image.
+                <pre>bddo:isPresentIf "instance.ColorType == 3"</pre>
+            </dd>
+
+            <dt>Compound Logic with Parentheses</dt>
+            <dd>Used to parse an optional metadata block only if a flag is set and the version is greater than 1, OR if an override flag is present.
+                <pre>bddo:isPresentIf "(instance.hasMetadataFlag and instance.Version > 1) or instance.isOverridden"</pre>
+            </dd>
+            <dt>ISOBMFF Box Size Handling</dt>
+            <dd>In ISO Base Media File Format (e.g., MP4), a box's size is given by a 32-bit integer. If this value is 1, it indicates that the actual size is in a subsequent 64-bit 'largesize' field. HEL is used to conditionally parse the 'largesize' field.
+                <p>The Hexplain/BDDO structure would be:</p>
+                <pre>
+isobmff:BoxHeader a bddo:Struct ;
+    bddo:hasField (
+        isobmff:size,
+        isobmff:type,
+        isobmff:largesize
+    ) .
+
+isobmff:size a bddo:Field ; bddo:dataType bddo:uint32 .
+isobmff:type a bddo:Field ; bddo:dataType media:fourCC .
+isobmff:largesize a bddo:Field ;
+    bddo:dataType bddo:uint64 ;
+    bddo:isPresentIf "instance.size == 1" .
+                </pre>
+                <p>The HEL expression on the <code>largesize</code> field ensures it is only parsed when the preceding <code>size</code> field has the special value of 1.</p>
+            </dd>
+        </dl>
+    </section>
+
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Hexplain Standard Specification</title>
+    <!-- ReSpec script and configuration -->
+    <script src="https://www.w3.org/Tools/respec/respec-w3c" class="respec" async></script>
+    <script class="remove">
+        var respecConfig = {
+            specStatus: "unofficial",
+            editors: [{
+                name: "Stephane Fellah",
+                url: "https://geoknoesis.com"
+            }],
+            github: "https://github.com/w3c/respec",
+            shortName: "hexplain",
+            publishDate: "2025-08-16",
+            subtitle: "Version 1.0",
+        };
+    </script>
+</head>
+<body>
+    <section id="abstract">
+        <p>
+            Hexplain is a declarative, semantic framework for describing binary data formats. It provides a family of modular ontologies that allow for the creation of rich, machine-understandable descriptions of physical file structures and their conceptual meaning. By leveraging established web standards such as RDF, OWL, and SHACL, Hexplain aims to make opaque binary data a first-class citizen in the world of linked data, enabling robust validation, interoperability, and semantic querying across disparate formats.
+        </p>
+    </section>
+
+    <section id="sotd">
+        <p>
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
+        </p>
+    </section>
+
+    <section class="introductory">
+        <h2>1. Introduction</h2>
+        <section>
+            <h3>1.1 The Problem: The Dark Matter of Data</h3>
+            <p>
+                A vast amount of the world's digital information is stored in binary formats. From scientific datasets and satellite imagery to multimedia files and network packets, this data is often treated as "dark matter"—it is opaque, difficult to parse without specialized software, and its internal meaning is locked away in proprietary or poorly-documented specifications. This lack of a universal, machine-readable description leads to significant challenges in data interoperability, long-term preservation, validation, and large-scale analysis.
+            </p>
+        </section>
+        <section>
+            <h3>1.2 The Hexplain Approach: A Layered, Semantic Framework</h3>
+            <p>
+                Hexplain addresses this problem by providing a layered, modular framework for describing binary data. Instead of a single, monolithic specification, Hexplain separates concerns into a family of interoperable ontologies.
+            </p>
+            <figure>
+                <img src="https://placehold.co/800x300/E2E8F0/4A5568?text=Hexplain+Architecture+Diagram" alt="Diagram of the Hexplain layered architecture">
+                <figcaption>The Hexplain Layered Architecture</figcaption>
+            </figure>
+            <p>The core principle is to distinguish between three fundamental layers of description:</p>
+            <ol>
+                <li><b>The Physical Layer:</b> Describes the sequence, structure, and data types of the bytes in the file.</li>
+                <li><b>The Layout Layer:</b> Describes the organization of multi-dimensional data within a flat byte stream.</li>
+                <li><b>The Semantic Layer:</b> Describes the conceptual meaning of the data.</li>
+            </ol>
+            <p>
+                By modeling these layers with formal ontologies, Hexplain makes it possible to create descriptions that are not just instructions for a parser, but rich, queryable knowledge graphs. A Hexplain-compliant tool can parse a binary file and its corresponding description to generate a formal RDF graph. This graph represents the file's contents in a structured, interconnected, and semantically-rich way, making the data's meaning explicit and machine-actionable.
+            </p>
+        </section>
+    </section>
+
+    <section id="modules">
+        <h2>2. The Hexplain Ontology Family</h2>
+        <p>Hexplain is composed of several modular ontologies, each with a specific purpose. Each module has its own detailed specification.</p>
+        <dl>
+            <dt><a href="bddo/index.html"><b>BDDO (Binary Data Description Ontology)</b></a></dt>
+            <dd>The foundational physical layer. It provides the vocabulary to describe sequential structures, fields, primitive data types, endianness, and control flow (conditionals, loops, synchronization markers). It is the most fundamental part of the Hexplain standard.</dd>
+            
+            <dt><a href="core/index.html"><b>Hexplain Core</b></a></dt>
+            <dd>The "glue" that connects the other layers. It provides the essential mapping properties (<code>hexplain:mapsToClass</code>, <code>hexplain:mapsToProperty</code>, and <code>hexplain:hasDataLayout</code>) that link a physical structure to its semantic meaning and multi-dimensional layout.</dd>
+
+            <dt><a href="dlv/index.html"><b>DLV (Data Layout Vocabulary)</b></a></dt>
+            <dd>A specialized vocabulary that works with BDDO to describe the layout of multi-dimensional data arrays. It defines concepts like dimensions, axes, and interleaving order (e.g., BIL, BIP, BSQ), which are essential for scientific and geospatial raster data.</dd>
+
+            <dt><b>Domain Vocabularies</b></dt>
+            <dd>A collection of semantic vocabularies that provide the conceptual terms for specific domains. These vocabularies ensure interoperability by providing a common set of terms for different file formats within the same domain.
+                <ul>
+                    <li><a href="idv/index.html"><b>IDV (Image Vocabulary):</b></a> For concepts like pixel width, color space, and compression.</li>
+                    <li><a href="vdv/index.html"><b>VDV (Video Vocabulary):</b></a> For concepts like frame rate, codec, and duration.</li>
+                    <li><a href="adv/index.html"><b>ADV (Audio Vocabulary):</b></a> For concepts like sample rate, bit depth, artist, and album.</li>
+                    <li><a href="gv/index.html"><b>GV (Geospatial Vocabulary):</b></a> For concepts like coordinate systems, projections, and sensor models.</li>
+                    <li><a href="axv/index.html"><b>AXV (Archive Vocabulary):</b></a> For concepts like file name, checksum, and modification time.</li>
+                    <li><a href="dfv/index.html"><b>DFV (Document & Font Vocabulary):</b></a> For concepts like page count, author, and font family.</li>
+                    <li><a href="npv/index.html"><b>NPV (Network Protocol Vocabulary):</b></a> For concepts like source address and destination port.</li>
+                </ul>
+            </dd>
+        </dl>
+    </section>
+
+    <section id="benefits">
+        <h2>3. Benefits of the Hexplain Approach</h2>
+        <ul>
+            <li><b>Interoperability:</b> By mapping format-specific fields to a common semantic vocabulary, Hexplain allows for querying and analysis across different file formats. This is achieved by creating a common target vocabulary (e.g., IDV for images) that all format descriptions can map to, creating a unified view of the data.</li>
+            <li><b>Formal Validation:</b> Hexplain descriptions can be validated using SHACL, ensuring that the format descriptions themselves are correct and consistent. Furthermore, the rules and constraints within a description (like fixed values and checksums) can be used to validate the integrity of the binary data itself.</li>
+            <li><b>Semantic Querying:</b> Once parsed, the data becomes part of a knowledge graph, enabling powerful, high-level queries using SPARQL. For example, a user can query for an abstract concept like "all images with a width greater than 4000 pixels" without needing to know the specific location or data type of the width field in a PNG versus a JPEG.</li>
+            <li><b>Long-Term Preservation:</b> A formal Hexplain description serves as enduring, machine-readable documentation. It becomes a self-contained digital artifact that guarantees data can be understood and accessed long after its original authoring software is obsolete, solving a major challenge in digital archiving.</li>
+            <li><b>Extensibility:</b> The modular design allows experts to create new domain vocabularies and profiles for specialized formats without altering the core standard. This ensures Hexplain can evolve to support new and emerging data formats.</li>
+        </ul>
+    </section>
+
+    <section id="profiles">
+        <h2>4. Profiles: Extending Hexplain for Specific Formats</h2>
+        <p>
+            While the domain vocabularies provide general concepts, many file formats have unique features. Hexplain handles this through <b>Profiles</b>. A profile is a specialized ontology that extends the core vocabularies to describe a single, specific format.
+        </p>
+        <p>
+            For example, a <b>PDF Profile</b> would define PDF-specific classes like <code>pdf:Object</code>, <code>pdf:Stream</code>, and <code>pdf:CrossReferenceTable</code>. It would then map these specific concepts to the more general concepts in the DFV (e.g., mapping a PDF's `/Author` dictionary entry to the standard <code>dfv:author</code> property). This allows for descriptions of arbitrary depth and complexity while maintaining a link to the common semantic layer for interoperability. Similarly, a <b>GeoTIFF Profile</b> would define concepts for TIFF tags and GeoKeys, mapping them to the broader concepts in the GV and IDV.
+        </p>
+    </section>
+
+    <section id="tools">
+        <h2>5. The Hexplain Tool Ecosystem</h2>
+        <p>
+            The formal, machine-readable nature of Hexplain descriptions enables a powerful ecosystem of tools to be built on top of the standard. A Hexplain description is not just documentation; it is an executable specification.
+        </p>
+        <dl>
+            <dt><b>Parser & Codec Generators</b></dt>
+            <dd>A primary application is a tool that takes a Hexplain description (e.g., for the PNG format) and automatically generates high-performance parser and writer source code in various programming languages like Python, C++, or Rust. This eliminates the need for manual, error-prone implementation of format specifications.</dd>
+            
+            <dt><b>Conformance Test Suites</b></dt>
+            <dd>A Hexplain description serves as a "ground truth" for a format. A conformance tool can use this description to validate a large number of binary files, automatically checking for structural integrity, correct field values, and adherence to all conditional logic, flagging any files that do not conform to the standard.</dd>
+
+            <dt><b>Semantic Query Engines</b></dt>
+            <dd>A query engine can ingest a collection of different binary files (e.g., images, videos, and documents) along with their Hexplain descriptions. It would parse them into a unified knowledge graph. Analysts could then run high-level SPARQL queries across the entire heterogeneous dataset, asking questions based on the semantic vocabularies without needing to know the specifics of any single format.</dd>
+
+            <dt><b>Semantic Hex Editors & Visualizers</b></dt>
+            <dd>An advanced hex editor could load a Hexplain description alongside a binary file. Instead of showing just a raw wall of bytes, it would display a structured, hierarchical view of the file, allowing a user to navigate through headers, chunks, and fields by their semantic names. Values would be automatically interpreted and displayed in human-readable formats.</dd>
+            
+            <dt><b>Data Transformation & Conversion Tools</b></dt>
+            <dd>A tool could use two Hexplain descriptions—one for a source format and one for a target format—to perform intelligent data conversion. By understanding the semantic mappings in both descriptions (e.g., knowing that <code>png:Width</code> and <code>jpeg:ImageWidth</code> both map to <code>idv:pixelWidth</code>), the tool could automatically transform data between formats while preserving its meaning.</dd>
+        </dl>
+    </section>
+
+    <section id="use-cases" class="introductory">
+        <h2>6. Use Case Scenarios</h2>
+        <section>
+            <h3>6.1 Geointelligence Analysis</h3>
+            <p>
+                An intelligence agency has a massive archive of satellite imagery in various formats (GeoTIFF, NITF, HDF5). Using Hexplain, they create descriptions for each format, mapping them all to the Geospatial Vocabulary (GV). An analyst can then run a single SPARQL query: <em>"Find all datasets from the 'WorldView-3' platform (<code>gv:platformName</code>) collected after January 1, 2024 (<code>gv:acquisitionTime</code>) that contain a Lidar point cloud (<code>gv:PointCloud</code>)."</em> The Hexplain framework can query across the entire heterogeneous archive to find the relevant files, as the common semantic vocabulary provides a unified query target.
+            </p>
+        </section>
+        <section>
+            <h3>6.2 Digital Forensics</h3>
+            <p>
+                A forensics investigator is analyzing a raw disk image. They use a Hexplain-powered tool with a library of format descriptions (PNG, JPEG, PDF, etc.). The tool uses the <code>bddo:syncOnMarker</code> property from each description to scan the disk image for file signatures ("magic numbers"). When it finds a signature, it uses the corresponding Hexplain description to parse the file's structure, validate its integrity using checksums defined in the description, and extract key metadata (e.g., <code>dfv:creationDate</code> from a document, <code>img:cameraModel</code> from an image's EXIF data). This automates the process of file carving and metadata extraction.
+            </p>
+        </section>
+        <section>
+            <h3>6.3 Broadcast Media Management</h3>
+            <p>
+                A television network uses Hexplain to manage its media library. All incoming video files (in MXF, MOV, etc.) are parsed using their Hexplain descriptions. The descriptions map the technical metadata to the Video Vocabulary (VDV). An automated workflow can then query the resulting knowledge graph to perform quality control: <em>"Flag all video files where the <code>vdv:frameRate</code> is not 29.97 fps or where the <code>vdv:audioChannels</code> is not 2."</em> This allows for automated validation and cataloging of all media assets based on their deep technical properties, regardless of the container format.
+            </p>
+        </section>
+        <section>
+            <h3>6.4 Format Conformance and Validation</h3>
+            <p>
+                A standards body is releasing a new version of a complex format, "FormatX 2.0." To ensure correct implementation, they publish an official Hexplain Profile for FormatX 2.0. Software developers who are building tools to read or write this format can use the Hexplain description as a definitive, machine-readable reference. They can build a conformance test suite that uses a Hexplain processor to automatically validate a large corpus of sample files against the description, checking for correct field values, structural integrity, and adherence to all conditional logic defined in the profile. This replaces ambiguous textual specifications with a formal, testable artifact.
+            </p>
+        </section>
+    </section>
+
+</body>
+</html>

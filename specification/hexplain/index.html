@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexplain Core Ontology Specification</title>
+    <!-- ReSpec script and configuration -->
+    <script src="https://www.w3.org/Tools/respec/respec-w3c" class="respec" async></script>
+    <script class="remove">
+        var respecConfig = {
+            specStatus: "unofficial",
+            editors: [{
+                name: "Stephane Fellah",
+                url: "https://geoknoesis.com"
+            }],
+            github: "https://github.com/w3c/respec",
+            shortName: "hexplain-core",
+            publishDate: "2025-08-16",
+            subtitle: "Version 1.0",
+        };
+    </script>
+</head>
+<body>
+    <section id="abstract">
+        <p>
+            The Hexplain Core Ontology provides the essential vocabulary to link physical data structures, described by the Binary Data Description Ontology (BDDO), to their abstract semantic meaning, described by domain-specific vocabularies. It acts as the central "layout module" or "glue" for the Hexplain Ontology Family, enabling the creation of rich, multi-layered descriptions of binary data. This specification provides the normative OWL ontology, SHACL shapes, and JSON-LD context for the Hexplain Core vocabulary.
+        </p>
+    </section>
+
+    <section id="sotd">
+        <p>
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
+        </p>
+    </section>
+
+    <section class="introductory">
+        <h2>Introduction</h2>
+        <p>
+            The Hexplain framework is designed around a principle of layered separation. The <b>BDDO</b> ontology describes the physical layout of bytes, and various vocabularies (like the Image Description Vocabulary) describe the conceptual meaning of the data. The Hexplain Core Ontology provides the bridge between these layers.
+        </p>
+        <p>
+            Its purpose is to provide a small, stable set of properties that formally connect a physical element (like a <code>bddo:Struct</code> or <code>bddo:Field</code>) to its corresponding semantic concept (an <code>owl:Class</code> or <code>rdf:Property</code>). This linkage is what elevates a simple structural description into a machine-understandable knowledge graph.
+        </p>
+        <section>
+            <h3>Conformance</h3>
+            <p>
+                The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].
+            </p>
+        </section>
+    </section>
+
+    <section id="properties">
+        <h2>Core Mapping Properties</h2>
+        <p>The Hexplain Core ontology defines three fundamental annotation properties.</p>
+        <dl>
+            <dt><code>hexplain:mapsToClass</code></dt>
+            <dd>
+                This property links a physical structure to a semantic class. It asserts that the subject (which SHOULD be a <code>bddo:Struct</code>) is a concrete physical representation of an instance of the object (which MUST be an <code>owl:Class</code>).
+            </dd>
+            <dt><code>hexplain:mapsToProperty</code></dt>
+            <dd>
+                This property links a physical field to a semantic property. It asserts that the subject (which SHOULD be a <code>bddo:Field</code>) provides the value for the semantic property specified by the object (which MUST be an <code>rdf:Property</code>).
+            </dd>
+            <dt><code>hexplain:isEncodedWith</code></dt>
+            <dd>
+                This property specifies the algorithm required to interpret a block of data. It asserts that the subject (typically a <code>bddo:Field</code> containing a data stream) was encoded using the algorithm identified by the object (which SHOULD be a stable URI representing the algorithm's definition).
+            </dd>
+        </dl>
+    </section>
+
+    <section id="normative-owl">
+        <h2>Normative OWL Ontology</h2>
+        <p>The following is the complete, normative OWL ontology for Hexplain Core 1.0, expressed in Turtle syntax [[turtle]]. The properties are defined as <code>owl:AnnotationProperty</code> to prevent unintended logical inferences by standard OWL reasoners, while providing a clear "soft link" for Hexplain processors.</p>
+        <pre class="nohighlight">
+@prefix : &lt;https://hexplain.io/ns/core#&gt; .
+@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+
+&lt;https://hexplain.io/ns/core&gt; a owl:Ontology ;
+    owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Core Ontology" ;
+    rdfs:comment "Provides the core properties for linking physical and semantic layers in the Hexplain framework." .
+
+# -- Properties --
+:mapsToClass a owl:AnnotationProperty ;
+    rdfs:label "maps to class" ;
+    rdfs:comment "Links a physical structure (e.g., a bddo:Struct) to a semantic class (an owl:Class)." ;
+    rdfs:domain bddo:Struct ;
+    rdfs:range owl:Class .
+
+:mapsToProperty a owl:AnnotationProperty ;
+    rdfs:label "maps to property" ;
+    rdfs:comment "Links a physical field (a bddo:Field) to a semantic property (an rdf:Property)." ;
+    rdfs:domain bddo:Field ;
+    rdfs:range rdf:Property .
+
+:isEncodedWith a owl:AnnotationProperty ;
+    rdfs:label "is encoded with" ;
+    rdfs:comment "Specifies the encoding or compression algorithm used for a data field." .
+        </pre>
+    </section>
+
+    <section id="normative-shacl">
+        <h2>Normative SHACL Shapes</h2>
+        <p>A Hexplain description graph using these properties MUST conform to the following SHACL shapes [[shacl]].</p>
+        <pre class="nohighlight">
+@prefix sh: &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
+@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
+
+# -- Shape for validating hexplain:mapsToClass --
+hexplain:MapsToClassShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:mapsToClass ;
+    sh:class bddo:Struct ;
+    sh:property [
+        sh:path hexplain:mapsToClass ;
+        sh:nodeKind sh:IRI ;
+        sh:class owl:Class ;
+        sh:maxCount 1 ;
+        sh:message "The object of hexplain:mapsToClass MUST be a single owl:Class."
+    ] .
+
+# -- Shape for validating hexplain:mapsToProperty --
+hexplain:MapsToPropertyShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:mapsToProperty ;
+    sh:class bddo:Field ;
+    sh:property [
+        sh:path hexplain:mapsToProperty ;
+        sh:nodeKind sh:IRI ;
+        sh:maxCount 1 ;
+        sh:message "The object of hexplain:mapsToProperty MUST be a single rdf:Property."
+    ] .
+        </pre>
+    </section>
+    
+    <section id="normative-jsonld-context">
+        <h2>Normative JSON-LD Context</h2>
+        <p>
+            The following context provides the normative [[JSON-LD]] mapping for the Hexplain Core terms.
+        </p>
+        <pre class="nohighlight">
+{
+  "@context": {
+    "hexplain": "https://hexplain.io/ns/core#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "mapsToClass": { "@id": "hexplain:mapsToClass", "@type": "@id" },
+    "mapsToProperty": { "@id": "hexplain:mapsToProperty", "@type": "@id" },
+    "isEncodedWith": { "@id": "hexplain:isEncodedWith", "@type": "@id" }
+  }
+}
+        </pre>
+    </section>
+
+    <section id="example" class="introductory">
+        <h2>Example of Usage</h2>
+        <p>The following example demonstrates how the Hexplain Core properties are used to connect a physical description of a PNG Image Header (`IHDR`) chunk to a semantic vocabulary for images.</p>
+        <pre class="nohighlight">
+@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
+@prefix img: &lt;https://hexplain.io/ns/image#&gt; .
+@prefix png: &lt;https://hexplain.io/formats/png#&gt; .
+
+# -- Physical Description (from a BDDO file) --
+
+png:IHDR_ChunkData a bddo:Struct ;
+    # This Struct is a representation of the img:ImageHeader class.
+    hexplain:mapsToClass img:ImageHeader ;
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField (
+        png:Width,
+        png:Height
+    ) .
+
+png:Width a bddo:Field ;
+    bddo:dataType bddo:uint32be ;
+    # This Field provides the value for the img:pixelWidth property.
+    hexplain:mapsToProperty img:pixelWidth .
+
+png:Height a bddo:Field ;
+    bddo:dataType bddo:uint32be ;
+    # This Field provides the value for the img:pixelHeight property.
+    hexplain:mapsToProperty img:pixelHeight .
+
+# -- Semantic Vocabulary (from a separate image ontology file) --
+
+img:ImageHeader a owl:Class .
+img:pixelWidth a owl:DatatypeProperty .
+img:pixelHeight a owl:DatatypeProperty .
+        </pre>
+    </section>
+</body>
+</html>
