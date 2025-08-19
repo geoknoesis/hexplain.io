@@ -15,20 +15,20 @@
             github: "https://github.com/w3c/respec",
             shortName: "hexplain-dlv",
             publishDate: "2025-08-16",
-            subtitle: "Version 1.0",
+            subtitle: "Version 1.2",
         };
     </script>
 </head>
 <body>
     <section id="abstract">
         <p>
-            The Hexplain Data Layout Vocabulary (DLV) is an ontology for describing the organization of multi-dimensional data within a flat binary stream. It is a component of the Hexplain Ontology Family, designed to work as a companion to the Binary Data Description Ontology (BDDO). While BDDO describes a field as a contiguous block of bytes, the DLV explains how to interpret that block as a multi-dimensional grid, specifying its dimensions, axes, and the interleaving order of the data. This is essential for describing scientific, geospatial, and complex media formats.
+            The Hexplain Data Layout Vocabulary (DLV) is an ontology for describing the organization of multi-dimensional data within a flat binary stream. It is a component of the Hexplain Ontology Family, designed to work as a companion to the Binary Data Description Ontology (BDDO). While BDDO describes a field as a contiguous block of bytes, the DLV explains how to interpret that block as a multi-dimensional grid by specifying the order, size, and semantic meaning of its dimensions. This is essential for describing scientific, geospatial, and complex media formats.
         </p>
     </section>
 
     <section id="sotd">
         <p>
-            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. Version 1.2 removes the redundant <code>dlv:interleaving</code> property in favor of a normative ordering for <code>dlv:hasDimension</code>. Version 1.1 added the mandatory <code>dlv:cellDataType</code> property.
         </p>
     </section>
 
@@ -42,9 +42,9 @@
         </p>
         <ul>
             <li>How many dimensions does the data array have?</li>
-            <li>What is the size of each dimension?</li>
-            <li>What does each dimension represent (e.g., width, height, color band, time)?</li>
-            <li>In what order is the data stored (e.g., band-interleaved, pixel-interleaved)?</li>
+            <li>What is the data type of each cell in the array (e.g., 8-bit unsigned integer, 32-bit float)?</li>
+            <li>What is the size and semantic meaning of each dimension?</li>
+            <li>In what order is the data stored in the flat byte stream?</li>
         </ul>
         <p>
             A `bddo:Field` containing multi-dimensional data is linked to a `dlv:DataLayout` instance, which provides this essential descriptive layer.
@@ -77,9 +77,16 @@
             <dt><code>hexplain:hasDataLayout</code></dt>
             <dd>A property from the Hexplain Core ontology that links a <code>bddo:Field</code> to a <code>dlv:DataLayout</code> instance.</dd>
             <dt><code>dlv:hasDimension</code></dt>
-            <dd>Links a <code>dlv:DataLayout</code> to an ordered list (<code>rdf:List</code>) of its <code>dlv:Dimension</code> instances. The order in the list defines the dimension hierarchy.</dd>
-            <dt><code>dlv:interleaving</code></dt>
-            <dd>Specifies the storage order of the dimensions. The value MUST be one of the individuals from the vocabulary (e.g., <code>dlv:BandSequential</code>, <code>dlv:PixelInterleaved</code>).</dd>
+            <dd>
+                Links a <code>dlv:DataLayout</code> to an ordered list (<code>rdf:List</code>) of its <code>dlv:Dimension</code> instances. The order of this list is <b>normative</b> and defines the data sequencing rule (interleaving). The list MUST be ordered from the <b>slowest-varying dimension</b> (outermost loop) to the <b>fastest-varying dimension</b> (innermost loop).
+                <ul>
+                    <li>For <b>Band Sequential (BSQ)</b>, the order would be (Band, Row, Column).</li>
+                    <li>For <b>Pixel Interleaved (BIP)</b>, the order would be (Row, Column, Band).</li>
+                    <li>For <b>Band Interleaved by Line (BIL)</b>, the order would be (Row, Band, Column).</li>
+                </ul>
+            </dd>
+            <dt><code>dlv:cellDataType</code></dt>
+            <dd>Specifies the data type of each individual cell in the array. The value MUST be an instance of <code>bddo:DataType</code>.</dd>
             <dt><code>dlv:dimensionSize</code></dt>
             <dd>An <code>xsd:positiveInteger</code> property of a <code>dlv:Dimension</code> that defines its fixed length.</dd>
             <dt><code>dlv:dimensionSizeFromField</code></dt>
@@ -91,7 +98,7 @@
 
     <section id="normative-owl">
         <h2>Normative OWL Ontology</h2>
-        <p>The following is the complete, normative OWL ontology for DLV 1.0, expressed in Turtle syntax [[turtle]].</p>
+        <p>The following is the complete, normative OWL ontology for DLV 1.2, expressed in Turtle syntax [[turtle]].</p>
         <pre class="nohighlight">
 @prefix : &lt;https://hexplain.io/ns/dlv#&gt; .
 @prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
@@ -101,7 +108,7 @@
 @prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
 
 &lt;https://hexplain.io/ns/dlv&gt; a owl:Ontology ;
-    owl:versionInfo "1.0" ;
+    owl:versionInfo "1.2" ;
     rdfs:label "Hexplain Data Layout Vocabulary (DLV)" .
 
 # -- Classes --
@@ -111,15 +118,10 @@
 
 # -- Properties --
 :hasDimension a owl:ObjectProperty ; rdfs:domain :DataLayout ; rdfs:range rdf:List .
-:interleaving a owl:ObjectProperty ; rdfs:domain :DataLayout .
+:cellDataType a owl:ObjectProperty ; rdfs:domain :DataLayout ; rdfs:range bddo:DataType .
 :dimensionSize a owl:DatatypeProperty ; rdfs:domain :Dimension ; rdfs:range xsd:positiveInteger .
 :dimensionSizeFromField a owl:ObjectProperty ; rdfs:domain :Dimension ; rdfs:range bddo:Field .
 :hasAxis a owl:ObjectProperty ; rdfs:domain :Dimension ; rdfs:range :Axis .
-
-# -- Individuals for Interleaving Types --
-:BandSequential a owl:NamedIndividual ; rdfs:label "Band Sequential (BSQ)" .
-:PixelInterleaved a owl:NamedIndividual ; rdfs:label "Pixel Interleaved (BIP)" .
-:BandInterleavedByLine a owl:NamedIndividual ; rdfs:label "Band Interleaved by Line (BIL)" .
 
 # -- Individuals for Common Axes --
 :axisX a :Axis ; rdfs:label "X Axis (Width)" .
@@ -136,6 +138,7 @@
         <pre class="nohighlight">
 @prefix sh: &lt;http://www.w3.org/ns/shacl#&gt; .
 @prefix dlv: &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
 
 # -- Shape for validating a dlv:DataLayout --
 dlv:DataLayoutShape a sh:NodeShape ;
@@ -144,6 +147,13 @@ dlv:DataLayoutShape a sh:NodeShape ;
         sh:path dlv:hasDimension ;
         sh:minCount 1 ;
         sh:message "A dlv:DataLayout must have at least one dlv:hasDimension property."
+    ] ;
+    sh:property [
+        sh:path dlv:cellDataType ;
+        sh:class bddo:DataType ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A dlv:DataLayout must have exactly one dlv:cellDataType."
     ] .
 
 # -- Shape for validating a dlv:Dimension --
@@ -177,7 +187,7 @@ dlv:DimensionShape a sh:NodeShape ;
     "Dimension": "dlv:Dimension",
     "Axis": "dlv:Axis",
     "hasDimension": { "@id": "dlv:hasDimension", "@container": "@list" },
-    "interleaving": { "@id": "dlv:interleaving", "@type": "@id" },
+    "cellDataType": { "@id": "dlv:cellDataType", "@type": "@id" },
     "dimensionSize": { "@id": "dlv:dimensionSize", "@type": "xsd:positiveInteger" },
     "dimensionSizeFromField": { "@id": "dlv:dimensionSizeFromField", "@type": "@id" },
     "hasAxis": { "@id": "dlv:hasAxis", "@type": "@id" }
@@ -218,11 +228,14 @@ myformat:PixelData a bddo:Field ;
 
 # -- Data Layout Description (DLV) --
 myformat:BIL_Layout a dlv:DataLayout ;
-    dlv:interleaving dlv:BandInterleavedByLine ;
+    # Each cell in this layout is an 8-bit unsigned integer.
+    dlv:cellDataType bddo:uint8 ;
+    # The order of this list defines the BIL layout:
+    # Row is the slowest-varying, then Band, then Column is the fastest.
     dlv:hasDimension (
-        myformat:HeightDimension
+        myformat:HeightDimension,
+        myformat:BandDimension,
         myformat:WidthDimension
-        myformat:BandDimension
     ) .
 
 myformat:HeightDimension a dlv:Dimension ;

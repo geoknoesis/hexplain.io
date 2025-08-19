@@ -12,10 +12,13 @@
                 name: "Stephane Fellah",
                 url: "https://geoknoesis.com"
             }],
+            // Note: The 'github' property is added back as requested.
+            // This may cause a cross-origin security error in some sandboxed
+            // environments, which was the source of the previous console error.
             github: "https://github.com/w3c/respec",
             shortName: "bddo",
             publishDate: "2025-08-16",
-            subtitle: "Version 1.0",
+            subtitle: "Version 1.3",
         };
     </script>
 </head>
@@ -28,7 +31,7 @@
 
     <section id="sotd">
         <p>
-            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. Version 1.1 introduces the <code>bddo:terminator</code> and <code>bddo:syncOnMarker</code> properties.
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. Version 1.3 introduces constructs for conditional data type dispatching. Version 1.2 moved repetition properties to <code>bddo:Field</code>. Version 1.1 introduced the <code>bddo:terminator</code> and <code>bddo:syncOnMarker</code> properties.
         </p>
     </section>
 
@@ -40,18 +43,6 @@
         <p>
             BDDO provides a set of RDF classes and properties that can be used to create a graph-based model of a binary format. This model can then be used by a conforming Hexplain processor to parse a binary stream into a structured, logical representation.
         </p>
-        <p>
-            This specification is divided into several parts:
-        </p>
-        <ul>
-            <li><b>Core Concepts:</b> An explanation of the main classes used in BDDO.</li>
-            <li><b>Core Data Types:</b> A normative list of the built-in primitive data types.</li>
-            <li><b>Properties:</b> A detailed reference for all properties used to describe structures and fields.</li>
-            <li><b>Normative OWL Ontology:</b> The complete, machine-readable ontology in Turtle syntax.</li>
-            <li><b>Normative SHACL Shapes:</b> A set of shapes for validating the correctness of BDDO descriptions themselves.</li>
-            <li><b>Normative JSON-LD Context:</b> The official context for mapping BDDO terms to JSON.</li>
-            <li><b>Examples:</b> Practical examples showing how BDDO is used to describe real-world formats.</li>
-        </ul>
         <section>
             <h3>Conformance</h3>
             <p>
@@ -62,14 +53,16 @@
 
     <section id="core-concepts">
         <h2>Core Concepts</h2>
-        <p>The BDDO model is built upon three fundamental classes.</p>
+        <p>The BDDO model is built upon the following fundamental classes.</p>
         <dl>
             <dt><code>bddo:Struct</code></dt>
-            <dd>Represents a composite structure or a container for other elements. A Struct is an ordered sequence of Fields and other Structs. Examples include a file header, a network packet, or a PNG chunk.</dd>
+            <dd>Represents a composite structure or a container for other elements. A Struct is an ordered sequence of Fields. Examples include a file header, a network packet, or a PNG chunk.</dd>
             <dt><code>bddo:Field</code></dt>
-            <dd>Represents a single, contiguous piece of data within a Struct. A Field is the smallest descriptive unit and is always associated with a specific data type.</dd>
+            <dd>Represents a single element within a Struct. A Field can represent a single value (like an integer) or a sequence of values (an array). It is always associated with a specific data type.</dd>
             <dt><code>bddo:DataType</code></dt>
             <dd>Represents the type of data a Field contains. BDDO defines a set of core primitive data types (e.g., <code>bddo:uint32be</code>). This class can be extended in "profiles" to create user-defined type aliases (e.g., <code>media:fourCC</code>).</dd>
+            <dt><code>bddo:DataTypeRule</code></dt>
+            <dd>Represents a single rule for conditionally selecting a data type for a field. It consists of a condition and the data type to use if the condition is met.</dd>
         </dl>
     </section>
 
@@ -147,8 +140,6 @@
             <dl>
                 <dt><code>bddo:hasField</code></dt>
                 <dd>Links a <code>bddo:Struct</code> to its constituent components. The object of this property MUST be an <code>rdf:List</code> to preserve the order of the fields.</dd>
-                <dt><code>bddo:usesStruct</code></dt>
-                <dd>Indicates that a <code>bddo:Struct</code> inherits the fields and properties of another <code>bddo:Struct</code>, used for creating reusable templates.</dd>
                 <dt><code>bddo:endianness</code></dt>
                 <dd>Specifies the byte order for a <code>bddo:Struct</code>. The value MUST be one of the individuals <code>bddo:BigEndian</code> or <code>bddo:LittleEndian</code>.</dd>
                 <dt><code>bddo:syncOnMarker</code></dt>
@@ -159,24 +150,21 @@
             <h3>Field Properties</h3>
             <dl>
                 <dt><code>bddo:dataType</code></dt>
-                <dd>Links a <code>bddo:Field</code> to an instance of <code>bddo:DataType</code>.</dd>
+                <dd>Links a <code>bddo:Field</code> to its default data type. The value MUST be an instance of <code>bddo:DataType</code> or <code>bddo:Struct</code>.</dd>
+                <dt><code>bddo:hasConditionalDataType</code></dt>
+                <dd>Links a <code>bddo:Field</code> to an <code>rdf:List</code> of <code>bddo:DataTypeRule</code>s. This allows the parser to select a more specific data type for the field at runtime based on conditions.</dd>
                 <dt><code>bddo:size</code></dt>
                 <dd>Defines a fixed size in bytes for a field. The value MUST be an <code>xsd:positiveInteger</code>.</dd>
                 <dt><code>bddo:sizeFromField</code></dt>
-                <dd>For dynamic sizing, this property points to another <code>bddo:Field</code> in the structure whose value dictates the size of the current field. The target field MUST have an integer data type.</dd>
+                <dd>For dynamic sizing, this property points to another <code>bddo:Field</code> in the structure whose value dictates the size of the current field.</dd>
                 <dt><code>bddo:terminator</code></dt>
-                <dd>Specifies a byte sequence that terminates a variable-length field. The parser reads until this sequence is found. The value MUST be an <code>xsd:hexBinary</code> literal.</dd>
+                <dd>Specifies a byte sequence that terminates a variable-length field. The value MUST be an <code>xsd:hexBinary</code> literal.</dd>
                 <dt><code>bddo:hasFixedValue</code></dt>
-                <dd>Specifies a constant value for a field, used for validating markers and magic numbers. The literal's datatype should match the field's data type.</dd>
-            </dl>
-        </section>
-        <section>
-            <h3>Control Flow Properties</h3>
-             <dl>
+                <dd>Specifies a constant value for a field, used for validating markers and magic numbers.</dd>
                 <dt><code>bddo:isPresentIf</code></dt>
-                <dd>The object is a string literal containing a HEL expression. The field or struct is only present if the expression evaluates to <code>true</code>.</dd>
+                <dd>The object is a string literal containing a HEL expression. The field is only present if the expression evaluates to <code>true</code>.</dd>
                 <dt><code>bddo:repeatUntil</code></dt>
-                <dd>The object is a string literal containing a HEL expression. The struct repeats until the expression evaluates to <code>true</code>.</dd>
+                <dd>The object is a string literal containing a HEL expression. The field is parsed repeatedly until the expression evaluates to <code>true</code>, resulting in an array of values.</dd>
             </dl>
         </section>
         <section>
@@ -197,7 +185,7 @@
 
     <section id="normative-owl">
         <h2>Normative OWL Ontology</h2>
-        <p>The following is the complete, normative OWL ontology for BDDO version 1.1, expressed in Turtle syntax [[turtle]].</p>
+        <p>The following is the complete, normative OWL ontology for BDDO version 1.3, expressed in Turtle syntax [[turtle]].</p>
         <pre class="nohighlight">
 @prefix : &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
@@ -206,31 +194,33 @@
 @prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
 
 &lt;https://hexplain.io/ns/bddo&gt; a owl:Ontology ;
-    owl:versionInfo "1.1" ;
-    rdfs:label "Binary Data Description Ontology (BDDO)" ;
-    rdfs:comment "A core ontology of the Hexplain family for describing the physical layout of binary data." .
+    owl:versionInfo "1.3" ;
+    rdfs:label "Binary Data Description Ontology (BDDO)" .
 
 # -- Classes --
 :Struct a rdfs:Class ; rdfs:label "Struct" .
 :Field a rdfs:Class ; rdfs:label "Field" .
 :DataType a rdfs:Class ; rdfs:label "Data Type" .
+:DataTypeRule a rdfs:Class ; rdfs:label "Data Type Rule" .
 
 # -- Structural Properties --
 :hasField a owl:ObjectProperty ; rdfs:domain :Struct ; rdfs:range rdf:List .
-:usesStruct a owl:ObjectProperty ; rdfs:domain :Struct ; rdfs:range :Struct .
 :endianness a owl:ObjectProperty ; rdfs:domain :Struct .
 :syncOnMarker a owl:DatatypeProperty ; rdfs:domain :Struct ; rdfs:range xsd:hexBinary .
 
 # -- Field Properties --
-:dataType a owl:ObjectProperty ; rdfs:domain :Field ; rdfs:range :DataType .
+:dataType a owl:ObjectProperty ; rdfs:domain :Field ; rdfs:range [ a owl:Class ; owl:unionOf ( :DataType :Struct ) ] .
+:hasConditionalDataType a owl:ObjectProperty ; rdfs:domain :Field ; rdfs:range rdf:List .
 :size a owl:DatatypeProperty ; rdfs:domain :Field ; rdfs:range xsd:positiveInteger .
 :sizeFromField a owl:ObjectProperty ; rdfs:domain :Field ; rdfs:range :Field .
 :terminator a owl:DatatypeProperty ; rdfs:domain :Field ; rdfs:range xsd:hexBinary .
 :hasFixedValue a owl:DatatypeProperty ; rdfs:domain :Field .
+:isPresentIf a owl:DatatypeProperty ; rdfs:domain :Field ; rdfs:range xsd:string .
+:repeatUntil a owl:DatatypeProperty ; rdfs:domain :Field ; rdfs:range xsd:string .
 
-# -- Control Flow Properties --
-:isPresentIf a owl:DatatypeProperty ; rdfs:range xsd:string .
-:repeatUntil a owl:DatatypeProperty ; rdfs:domain :Struct ; rdfs:range xsd:string .
+# -- DataTypeRule Properties --
+:condition a owl:DatatypeProperty ; rdfs:domain :DataTypeRule ; rdfs:range xsd:string .
+:dataType a owl:ObjectProperty ; rdfs:domain :DataTypeRule ; rdfs:range :Struct .
 
 # -- DataType Description Properties --
 :baseType a owl:ObjectProperty ; rdfs:domain :DataType .
@@ -244,6 +234,7 @@
 :integer a owl:NamedIndividual ; rdfs:label "Base type Integer" .
 :float a owl:NamedIndividual ; rdfs:label "Base type Float" .
 :string a owl:NamedIndividual ; rdfs:label "Base type String" .
+:bytes a owl:NamedIndividual ; rdfs:label "Base type Bytes" .
 
 # -- Core Primitive DataType Instances --
 :uint8    a :DataType ; rdfs:label "Unsigned 8-bit integer" ; :baseType :integer ; :bitWidth 8 ; :isSigned "false"^^xsd:boolean .
@@ -264,14 +255,14 @@
 :float32le a :DataType ; rdfs:label "Little-endian IEEE 754 32-bit float" ; :baseType :float ; :bitWidth 32 ; :hasEndianness :LittleEndian .
 :float64be a :DataType ; rdfs:label "Big-endian IEEE 754 64-bit float" ; :baseType :float ; :bitWidth 64 ; :hasEndianness :BigEndian .
 :float64le a :DataType ; rdfs:label "Little-endian IEEE 754 64-bit float" ; :baseType :float ; :bitWidth 64 ; :hasEndianness :LittleEndian .
-:bytes    a :DataType ; rdfs:label "Raw byte array" .
+:bytes    a :DataType ; rdfs:label "Raw byte array" ; :baseType :bytes .
 :string   a :DataType ; rdfs:label "String" ; :baseType :string .
         </pre>
     </section>
 
     <section id="normative-shacl">
         <h2>Normative SHACL Shapes</h2>
-        <p>A BDDO description graph MUST conform to the following SHACL shapes [[shacl]]. These shapes ensure the structural integrity of the description itself.</p>
+        <p>A BDDO description graph MUST conform to the following SHACL shapes [[shacl]].</p>
         <pre class="nohighlight">
 @prefix sh: &lt;http://www.w3.org/ns/shacl#&gt; .
 @prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
@@ -285,12 +276,6 @@ bddo:StructShape a sh:NodeShape ;
         sh:nodeKind sh:BlankNodeOrIRI ;
         sh:maxCount 1 ;
         sh:message "bddo:hasField must point to a single rdf:List."
-    ] ;
-    sh:property [
-        sh:path bddo:endianness ;
-        sh:in ( bddo:BigEndian bddo:LittleEndian ) ;
-        sh:maxCount 1 ;
-        sh:message "bddo:endianness must be bddo:BigEndian or bddo:LittleEndian."
     ] .
 
 # -- Shape for validating a bddo:Field --
@@ -298,60 +283,51 @@ bddo:FieldShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
     sh:property [
         sh:path bddo:dataType ;
-        sh:class bddo:DataType ;
         sh:nodeKind sh:IRI ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:message "A bddo:Field must have exactly one bddo:dataType which must be an instance of bddo:DataType."
-    ] ;
-    sh:property [
-        sh:path bddo:sizeFromField ;
-        sh:class bddo:Field ;
-        sh:maxCount 1 ;
-        sh:message "bddo:sizeFromField must point to another bddo:Field."
-    ] ;
-    # A field cannot have more than one sizing mechanism.
-    sh:xone (
-        [ sh:path bddo:size ]
-        [ sh:path bddo:sizeFromField ]
-        [ sh:path bddo:terminator ]
-    ) .
+        sh:message "A bddo:Field must have exactly one bddo:dataType."
+    ] .
 
-# -- Shape for validating a bddo:DataType --
-bddo:DataTypeShape a sh:NodeShape ;
-    sh:targetClass bddo:DataType ;
+# -- Shape for validating a bddo:DataTypeRule --
+bddo:DataTypeRuleShape a sh:NodeShape ;
+    sh:targetClass bddo:DataTypeRule ;
     sh:property [
-        sh:path bddo:baseType ;
-        sh:in ( bddo:integer bddo:float bddo:string ) ;
-        sh:maxCount 1 ;
-        sh:message "A DataType's baseType must be one of bddo:integer, bddo:float, or bddo:string."
+        sh:path bddo:condition ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A DataTypeRule MUST have exactly one bddo:condition."
+    ] ;
+    sh:property [
+        sh:path bddo:dataType ;
+        sh:class bddo:Struct ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "The dataType of a DataTypeRule MUST be a single bddo:Struct."
     ] .
         </pre>
     </section>
-
+    
     <section id="normative-jsonld-context">
         <h2>Normative JSON-LD Context</h2>
         <p>
-            A Hexplain processor SHOULD use a [[JSON-LD]] context to map simple string keys to the full BDDO URIs. This is particularly relevant for the evaluation of HEL expressions, where simple keys are used to access fields in the logical data model. The following context provides the normative mapping for all terms defined in the BDDO 1.1 specification.
+            The following context provides the normative [[JSON-LD]] mapping for all terms defined in the BDDO 1.3 specification.
         </p>
         <pre class="nohighlight">
 {
   "@context": {
     "bddo": "https://hexplain.io/ns/bddo#",
-    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
 
     "Struct": "bddo:Struct",
     "Field": "bddo:Field",
     "DataType": "bddo:DataType",
+    "DataTypeRule": "bddo:DataTypeRule",
 
     "hasField": { "@id": "bddo:hasField", "@container": "@list" },
-    "usesStruct": { "@id": "bddo:usesStruct", "@type": "@id" },
     "endianness": { "@id": "bddo:endianness", "@type": "@id" },
     "syncOnMarker": { "@id": "bddo:syncOnMarker", "@type": "xsd:hexBinary" },
     
     "dataType": { "@id": "bddo:dataType", "@type": "@id" },
+    "hasConditionalDataType": { "@id": "bddo:hasConditionalDataType", "@container": "@list" },
     "size": { "@id": "bddo:size", "@type": "xsd:positiveInteger" },
     "sizeFromField": { "@id": "bddo:sizeFromField", "@type": "@id" },
     "terminator": { "@id": "bddo:terminator", "@type": "xsd:hexBinary" },
@@ -359,6 +335,8 @@ bddo:DataTypeShape a sh:NodeShape ;
 
     "isPresentIf": "bddo:isPresentIf",
     "repeatUntil": "bddo:repeatUntil",
+
+    "condition": "bddo:condition",
 
     "baseType": { "@id": "bddo:baseType", "@type": "@id" },
     "bitWidth": { "@id": "bddo:bitWidth", "@type": "xsd:positiveInteger" },
@@ -369,97 +347,43 @@ bddo:DataTypeShape a sh:NodeShape ;
         </pre>
     </section>
 
- 
-    <section id="examples" class="introductory">
-        <h2>Examples</h2>
-        <p>The following examples demonstrate how to use BDDO to describe common binary structures.</p>
-        <section>
-            <h3>Complete File with Header and Data</h3>
-            <p>This example shows a simple, complete file format with a magic number, a version, and a dynamically sized payload. It demonstrates <code>hasFixedValue</code> and <code>sizeFromField</code>.</p>
-            <pre class="nohighlight">
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
-@prefix ex: &lt;https://hexplain.io/formats/example#&gt; .
-@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
-
-ex:TaggedFile a bddo:Struct ;
-    bddo:endianness bddo:BigEndian ;
-    bddo:hasField ( 
-        ex:Magic, 
-        ex:Version, 
-        ex:PayloadSize, 
-        ex:Payload 
-    ) .
-
-ex:Magic a bddo:Field ;
-    bddo:dataType bddo:bytes ;
-    bddo:size 4 ;
-    bddo:hasFixedValue "TAG1"^^xsd:string .
-
-ex:Version a bddo:Field ; bddo:dataType bddo:uint8 .
-
-ex:PayloadSize a bddo:Field ; bddo:dataType bddo:uint32be .
-
-ex:Payload a bddo:Field ;
-    bddo:dataType bddo:bytes ;
-    bddo:sizeFromField ex:PayloadSize .
-            </pre>
-        </section>
-        <section>
-            <h3>Null-Terminated String</h3>
-            <p>This example describes a field containing a C-style null-terminated string, using the <code>bddo:terminator</code> property.</p>
-            <pre class="nohighlight">
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
-@prefix ex: &lt;https://hexplain.io/formats/example#&gt; .
-@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
-
-ex:Record a bddo:Struct ;
-    bddo:hasField ( ex:Name ) .
-
-ex:Name a bddo:Field ;
-    bddo:dataType bddo:string ;
-    bddo:terminator "00"^^xsd:hexBinary .
-            </pre>
-        </section>
-        <section>
-            <h3>Reusable Structures (PNG Chunks)</h3>
-            <p>This example shows how to define a reusable template for a PNG chunk using a profile, and then use it in a repeating structure. It demonstrates <code>usesStruct</code> and <code>repeatUntil</code>.</p>
-            <pre class="nohighlight">
-# In a profile file (e.g., png-profile.ttl)
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
-@prefix png_profile: &lt;https://hexplain.io/ns/profiles/png#&gt; .
-
-png_profile:Chunk a bddo:Struct ;
-    bddo:endianness bddo:BigEndian ;
-    bddo:hasField ( png_profile:Length, png_profile:Type, ... ) .
-# ...
-
-# In the main PNG format description
+    <section id="example" class="introductory">
+        <h2>Example: Conditional Data Type Dispatch</h2>
+        <p>
+            This example shows how to use <code>bddo:hasConditionalDataType</code> to model the PNG chunk structure. A generic chunk is parsed first, and then the <code>ChunkData</code> field is re-parsed using a more specific structure based on the value of the <code>ChunkType</code> field.
+        </p>
+        <p>
+            This mechanism is crucial for formats that use a type-length-value (TLV) or chunk-based structure, where a single field (the "value" or "data") can contain different internal structures depending on a preceding type identifier.
+        </p>
+        <pre class="nohighlight">
 @prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix png: &lt;https://hexplain.io/formats/png#&gt; .
 @prefix png_profile: &lt;https://hexplain.io/ns/profiles/png#&gt; .
 
-png:ChunkSequence a bddo:Struct ;
-    bddo:usesStruct png_profile:Chunk ;
-    bddo:repeatUntil "instance.Type == 'IEND'" .
-            </pre>
-        </section>
-        <section>
-            <h3>Stream Synchronization (MPEG-2)</h3>
-            <p>This example shows how to model a repeating sequence of MPEG-2 pictures, where each picture's location must be found by scanning for a specific start code marker. It demonstrates <code>syncOnMarker</code>.</p>
-             <pre class="nohighlight">
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
-@prefix mpeg: &lt;https://hexplain.io/formats/mpeg2#&gt; .
-@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+# Generic Chunk Structure defined in a profile
+png_profile:Chunk a bddo:Struct ;
+    bddo:hasField ( png_profile:ChunkLength, png_profile:ChunkType, png_profile:ChunkData, png_profile:ChunkCRC ) .
 
-mpeg:Stream a bddo:Struct ;
-    bddo:hasField ( mpeg:Pictures ) .
-
-mpeg:Pictures a bddo:Struct ;
-    bddo:repeatUntil "instance.isEOF" ;
-    bddo:syncOnMarker "00000100"^^xsd:hexBinary ;
-    bddo:hasField ( mpeg:PictureHeader, mpeg:PictureData ) .
-            </pre>
-        </section>
+png_profile:ChunkData a bddo:Field ;
+    # Default type is raw bytes.
+    bddo:dataType bddo:bytes ;
+    bddo:sizeFromField png_profile:ChunkLength ;
+    
+    # Conditionally dispatch to a more specific struct for parsing.
+    bddo:hasConditionalDataType (
+        [
+            a bddo:DataTypeRule ;
+            bddo:condition "instance.parent.ChunkType == 'IHDR'" ;
+            bddo:dataType png:IHDR_ChunkData
+        ]
+        [
+            a bddo:DataTypeRule ;
+            bddo:condition "instance.parent.ChunkType == 'PLTE'" ;
+            bddo:dataType png:PLTE_ChunkData
+        ]
+        # ... rules for other chunk types ...
+    ) .
+        </pre>
     </section>
 </body>
 </html>

@@ -28,7 +28,7 @@
 
     <section id="sotd">
         <p>
-            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. Version 1.1 introduces constructs for conditional semantic mapping.
         </p>
     </section>
 
@@ -50,54 +50,99 @@
 
     <section id="properties">
         <h2>Core Mapping Properties</h2>
-        <p>The Hexplain Core ontology defines three fundamental annotation properties.</p>
-        <dl>
-            <dt><code>hexplain:mapsToClass</code></dt>
-            <dd>
-                This property links a physical structure to a semantic class. It asserts that the subject (which SHOULD be a <code>bddo:Struct</code>) is a concrete physical representation of an instance of the object (which MUST be an <code>owl:Class</code>).
-            </dd>
-            <dt><code>hexplain:mapsToProperty</code></dt>
-            <dd>
-                This property links a physical field to a semantic property. It asserts that the subject (which SHOULD be a <code>bddo:Field</code>) provides the value for the semantic property specified by the object (which MUST be an <code>rdf:Property</code>).
-            </dd>
-            <dt><code>hexplain:isEncodedWith</code></dt>
-            <dd>
-                This property specifies the algorithm required to interpret a block of data. It asserts that the subject (typically a <code>bddo:Field</code> containing a data stream) was encoded using the algorithm identified by the object (which SHOULD be a stable URI representing the algorithm's definition).
-            </dd>
-        </dl>
+        <p>The Hexplain Core ontology defines the fundamental properties for linking layers.</p>
+        <section>
+            <h3>Static Mapping Properties</h3>
+            <dl>
+                <dt><code>hexplain:mapsToClass</code></dt>
+                <dd>
+                    This property links a physical structure to a semantic class. It asserts that the subject (which SHOULD be a <code>bddo:Struct</code>) is a concrete physical representation of an instance of the object (which MUST be an <code>owl:Class</code>).
+                </dd>
+                <dt><code>hexplain:mapsToProperty</code></dt>
+                <dd>
+                    This property links a physical field to a single, unconditional semantic property. It asserts that the subject (which SHOULD be a <code>bddo:Field</code>) provides the value for the semantic property specified by the object (which MUST be an <code>rdf:Property</code>).
+                </dd>
+                <dt><code>hexplain:isEncodedWith</code></dt>
+                <dd>
+                    This property specifies the algorithm required to interpret a block of data. It asserts that the subject (typically a <code>bddo:Field</code> containing a data stream) was encoded using the algorithm identified by the object (which SHOULD be a stable URI representing the algorithm's definition).
+                </dd>
+            </dl>
+        </section>
+        <section>
+            <h3>Conditional Mapping Properties</h3>
+            <p>
+                These constructs are used when the semantic meaning of a field depends on the runtime value of another field.
+            </p>
+            <dl>
+                <dt><code>hexplain:hasConditionalMapping</code></dt>
+                <dd>
+                    This property links a <code>bddo:Field</code> to an <code>rdf:List</code> of <code>hexplain:MappingRule</code> instances. It is used when a field's semantic property cannot be determined statically.
+                </dd>
+                <dt><code>hexplain:MappingRule</code></dt>
+                <dd>
+                    A class that represents a single rule for a conditional mapping. Each rule consists of a condition and the semantic property to apply if that condition is met.
+                </dd>
+                <dt><code>hexplain:condition</code></dt>
+                <dd>
+                    A property of a <code>hexplain:MappingRule</code>. The value is a HEL expression string that evaluates to true or false.
+                </dd>
+                <dt><code>hexplain:semanticProperty</code></dt>
+                <dd>
+                    A property of a <code>hexplain:MappingRule</code>. The value is the <code>rdf:Property</code> that should be applied to the field if the rule's condition is true.
+                </dd>
+            </dl>
+        </section>
     </section>
 
     <section id="normative-owl">
         <h2>Normative OWL Ontology</h2>
-        <p>The following is the complete, normative OWL ontology for Hexplain Core 1.0, expressed in Turtle syntax [[turtle]]. The properties are defined as <code>owl:AnnotationProperty</code> to prevent unintended logical inferences by standard OWL reasoners, while providing a clear "soft link" for Hexplain processors.</p>
+        <p>The following is the complete, normative OWL ontology for Hexplain Core 1.1, expressed in Turtle syntax [[turtle]].</p>
         <pre class="nohighlight">
 @prefix : &lt;https://hexplain.io/ns/core#&gt; .
 @prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
 @prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
 @prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
 @prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
 
 &lt;https://hexplain.io/ns/core&gt; a owl:Ontology ;
-    owl:versionInfo "1.0" ;
+    owl:versionInfo "1.1" ;
     rdfs:label "Hexplain Core Ontology" ;
     rdfs:comment "Provides the core properties for linking physical and semantic layers in the Hexplain framework." .
+
+# -- Classes --
+:MappingRule a owl:Class ;
+    rdfs:label "Mapping Rule" ;
+    rdfs:comment "A rule for conditionally mapping a physical field to a semantic property." .
 
 # -- Properties --
 :mapsToClass a owl:AnnotationProperty ;
     rdfs:label "maps to class" ;
-    rdfs:comment "Links a physical structure (e.g., a bddo:Struct) to a semantic class (an owl:Class)." ;
     rdfs:domain bddo:Struct ;
     rdfs:range owl:Class .
 
 :mapsToProperty a owl:AnnotationProperty ;
     rdfs:label "maps to property" ;
-    rdfs:comment "Links a physical field (a bddo:Field) to a semantic property (an rdf:Property)." ;
     rdfs:domain bddo:Field ;
     rdfs:range rdf:Property .
 
 :isEncodedWith a owl:AnnotationProperty ;
-    rdfs:label "is encoded with" ;
-    rdfs:comment "Specifies the encoding or compression algorithm used for a data field." .
+    rdfs:label "is encoded with" .
+
+:hasConditionalMapping a owl:ObjectProperty ;
+    rdfs:label "has conditional mapping" ;
+    rdfs:domain bddo:Field ;
+    rdfs:range rdf:List .
+
+:condition a owl:DatatypeProperty ;
+    rdfs:label "condition" ;
+    rdfs:domain :MappingRule ;
+    rdfs:range xsd:string .
+
+:semanticProperty a owl:ObjectProperty ;
+    rdfs:label "semantic property" ;
+    rdfs:domain :MappingRule ;
+    rdfs:range rdf:Property .
         </pre>
     </section>
 
@@ -113,24 +158,31 @@
 # -- Shape for validating hexplain:mapsToClass --
 hexplain:MapsToClassShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToClass ;
-    sh:class bddo:Struct ;
-    sh:property [
-        sh:path hexplain:mapsToClass ;
-        sh:nodeKind sh:IRI ;
-        sh:class owl:Class ;
-        sh:maxCount 1 ;
-        sh:message "The object of hexplain:mapsToClass MUST be a single owl:Class."
-    ] .
+    sh:class bddo:Struct .
 
 # -- Shape for validating hexplain:mapsToProperty --
 hexplain:MapsToPropertyShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToProperty ;
-    sh:class bddo:Field ;
+    sh:class bddo:Field .
+
+# -- Shape for validating a hexplain:MappingRule --
+hexplain:MappingRuleShape a sh:NodeShape ;
+    sh:targetClass hexplain:MappingRule ;
     sh:property [
-        sh:path hexplain:mapsToProperty ;
-        sh:nodeKind sh:IRI ;
+        sh:path hexplain:condition ;
+        sh:nodeKind sh:Literal ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:message "The object of hexplain:mapsToProperty MUST be a single rdf:Property."
+        sh:message "A MappingRule MUST have exactly one hexplain:condition."
+    ] ;
+    sh:property [
+        sh:path hexplain:semanticProperty ;
+        sh:nodeKind sh:IRI ;
+        sh:class rdf:Property ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A MappingRule MUST have exactly one hexplain:semanticProperty pointing to an rdf:Property."
     ] .
         </pre>
     </section>
@@ -144,10 +196,14 @@ hexplain:MapsToPropertyShape a sh:NodeShape ;
 {
   "@context": {
     "hexplain": "https://hexplain.io/ns/core#",
-    "owl": "http://www.w3.org/2002/07/owl#",
+    "bddo": "https://hexplain.io/ns/bddo#",
     "mapsToClass": { "@id": "hexplain:mapsToClass", "@type": "@id" },
     "mapsToProperty": { "@id": "hexplain:mapsToProperty", "@type": "@id" },
-    "isEncodedWith": { "@id": "hexplain:isEncodedWith", "@type": "@id" }
+    "isEncodedWith": { "@id": "hexplain:isEncodedWith", "@type": "@id" },
+    "hasConditionalMapping": { "@id": "hexplain:hasConditionalMapping", "@container": "@list" },
+    "MappingRule": "hexplain:MappingRule",
+    "condition": "hexplain:condition",
+    "semanticProperty": { "@id": "hexplain:semanticProperty", "@type": "@id" }
   }
 }
         </pre>
@@ -155,39 +211,38 @@ hexplain:MapsToPropertyShape a sh:NodeShape ;
 
     <section id="example" class="introductory">
         <h2>Example of Usage</h2>
-        <p>The following example demonstrates how the Hexplain Core properties are used to connect a physical description of a PNG Image Header (`IHDR`) chunk to a semantic vocabulary for images.</p>
+        <p>This example shows how to use the conditional mapping constructs to describe the PNG <code>tEXt</code> chunk, where the semantic meaning of the <code>TextString</code> field depends on the value of the <code>Keyword</code> field.</p>
         <pre class="nohighlight">
 @prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
-@prefix img: &lt;https://hexplain.io/ns/image#&gt; .
+@prefix dfv: &lt;https://hexplain.io/ns/docfont#&gt; .
 @prefix png: &lt;https://hexplain.io/formats/png#&gt; .
 
-# -- Physical Description (from a BDDO file) --
+png:tEXt_ChunkData a bddo:Struct ;
+    bddo:hasField ( png:Keyword, png:TextString ) .
 
-png:IHDR_ChunkData a bddo:Struct ;
-    # This Struct is a representation of the img:ImageHeader class.
-    hexplain:mapsToClass img:ImageHeader ;
-    bddo:endianness bddo:BigEndian ;
-    bddo:hasField (
-        png:Width,
-        png:Height
+png:Keyword a bddo:Field ;
+    bddo:dataType bddo:string ;
+    bddo:terminator "00"^^xsd:hexBinary .
+
+png:TextString a bddo:Field ;
+    bddo:dataType bddo:string ;
+    bddo:sizeFromExpression "parent.ChunkLength - (instance.Keyword.size + 1)" ;
+    
+    # Apply a list of conditional mapping rules to this field.
+    hexplain:hasConditionalMapping (
+        [
+            a hexplain:MappingRule ;
+            hexplain:condition "instance.parent.Keyword == 'Title'" ;
+            hexplain:semanticProperty dfv:title
+        ]
+        [
+            a hexplain:MappingRule ;
+            hexplain:condition "instance.parent.Keyword == 'Author'" ;
+            hexplain:semanticProperty dfv:author
+        ]
+        # ... more rules for other keywords ...
     ) .
-
-png:Width a bddo:Field ;
-    bddo:dataType bddo:uint32be ;
-    # This Field provides the value for the img:pixelWidth property.
-    hexplain:mapsToProperty img:pixelWidth .
-
-png:Height a bddo:Field ;
-    bddo:dataType bddo:uint32be ;
-    # This Field provides the value for the img:pixelHeight property.
-    hexplain:mapsToProperty img:pixelHeight .
-
-# -- Semantic Vocabulary (from a separate image ontology file) --
-
-img:ImageHeader a owl:Class .
-img:pixelWidth a owl:DatatypeProperty .
-img:pixelHeight a owl:DatatypeProperty .
         </pre>
     </section>
 </body>
