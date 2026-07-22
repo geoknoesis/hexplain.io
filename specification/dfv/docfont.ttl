@@ -1,0 +1,60 @@
+# Hexplain Document & Font Vocabulary (DFV) 1.2 — vocabulary + SHACL shapes
+@prefix :       <https://hexplain.io/ns/docfont#> .
+@prefix dfv:    <https://hexplain.io/ns/docfont#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/docfont> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/docfont/1.2> ; owl:versionInfo "1.2" ;
+    rdfs:label "Hexplain Document & Font Vocabulary (DFV)" ;
+    rdfs:comment "Semantic vocabulary for document and font file properties." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "dfv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/docfont#" .
+
+:Document a owl:Class ; rdfs:label "Document" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; skos:closeMatch dcterms:BibliographicResource .
+:Page a owl:Class ; rdfs:label "Page" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
+:Object a owl:Class ; rdfs:label "Object" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
+:Stream a owl:Class ; rdfs:label "Stream" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
+:Trailer a owl:Class ; rdfs:label "Trailer" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
+:CrossReferenceTable a owl:Class ; rdfs:label "Cross Reference Table" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
+:BoundingBox a owl:Class ; rdfs:label "Bounding Box" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
+:Font a owl:Class ; rdfs:label "Font" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
+:FontDescriptor a owl:Class ; rdfs:label "Font Descriptor" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
+:FontTable a owl:Class ; rdfs:label "Font Table" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
+:Glyph a owl:Class ; rdfs:label "Glyph" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
+
+:author a owl:DatatypeProperty ; rdfs:label "author" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; skos:closeMatch dcterms:creator ; rdfs:range xsd:string .
+:title a owl:DatatypeProperty ; rdfs:label "title" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; skos:closeMatch dcterms:title ; rdfs:range xsd:string .
+:creatorTool a owl:DatatypeProperty ; rdfs:label "creator tool" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; rdfs:range xsd:string .
+:producerTool a owl:DatatypeProperty ; rdfs:label "producer tool" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; rdfs:range xsd:string .
+:creationDate a owl:DatatypeProperty ; rdfs:label "creation date" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; skos:closeMatch dcterms:created ; rdfs:range xsd:dateTime .
+:modificationDate a owl:DatatypeProperty ; rdfs:label "modification date" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; skos:closeMatch dcterms:modified ; rdfs:range xsd:dateTime .
+:pageCount a owl:DatatypeProperty ; rdfs:label "page count" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; rdfs:range xsd:positiveInteger .
+:hasBoundingBox a owl:ObjectProperty ; rdfs:label "has bounding box" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; rdfs:range :BoundingBox .
+:boxType a owl:DatatypeProperty ; rdfs:label "box type" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; rdfs:range xsd:string .
+:fontFamily a owl:DatatypeProperty ; rdfs:label "font family" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; rdfs:range xsd:string .
+:fontStyle a owl:DatatypeProperty ; rdfs:label "font style" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; rdfs:range xsd:string .
+:characterEncoding a owl:DatatypeProperty ; rdfs:label "character encoding" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; rdfs:range xsd:string .
+:glyphCount a owl:DatatypeProperty ; rdfs:label "glyph count" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; rdfs:range xsd:positiveInteger .
+:glyphIdentifier a owl:DatatypeProperty ; rdfs:label "glyph identifier" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
+:unicodeCodePoint a owl:DatatypeProperty ; rdfs:label "unicode code point" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; rdfs:range xsd:hexBinary .
+
+# ---------- SHACL ----------
+dfv:DocumentShape a sh:NodeShape ; sh:targetSubjectsOf dfv:author ;
+    sh:property [ sh:path dfv:author ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dfv:title ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dfv:creationDate ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dfv:modificationDate ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dfv:pageCount ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+dfv:PageShape a sh:NodeShape ; sh:targetSubjectsOf dfv:hasBoundingBox ;
+    sh:property [ sh:path dfv:hasBoundingBox ; sh:class dfv:BoundingBox ] .
+dfv:FontShape a sh:NodeShape ; sh:targetSubjectsOf dfv:fontFamily ;
+    sh:property [ sh:path dfv:fontFamily ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dfv:fontStyle ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dfv:glyphCount ; sh:minExclusive 0 ; sh:maxCount 1 ] .

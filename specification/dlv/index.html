@@ -12,118 +12,111 @@
                 name: "Stephane Fellah",
                 url: "https://geoknoesis.com"
             }],
-            github: "https://github.com/w3c/respec",
+            github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "hexplain-dlv",
             publishDate: "2025-08-16",
-            subtitle: "Version 1.2",
+            subtitle: "Version 1.3",
         };
     </script>
 </head>
 <body>
     <section id="abstract">
         <p>
-            The Hexplain Data Layout Vocabulary (DLV) is an ontology for describing the organization of multi-dimensional data within a flat binary stream. It is a component of the Hexplain Ontology Family, designed to work as a companion to the Binary Data Description Ontology (BDDO). While BDDO describes a field as a contiguous block of bytes, the DLV explains how to interpret that block as a multi-dimensional grid by specifying the order, size, and semantic meaning of its dimensions. This is essential for describing scientific, geospatial, and complex media formats.
+            The Hexplain Data Layout Vocabulary (DLV) describes the organization of multi-dimensional data within a flat binary stream. It is a companion to the Binary Data Description Ontology (BDDO): while BDDO describes a field as a contiguous block of bytes, DLV explains how to interpret that block as a multi-dimensional grid by specifying the order, size, and semantic meaning of its dimensions. This is essential for scientific, geospatial, and complex media formats.
         </p>
     </section>
 
     <section id="sotd">
         <p>
-            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. Version 1.2 removes the redundant <code>dlv:interleaving</code> property in favor of a normative ordering for <code>dlv:hasDimension</code>. Version 1.1 added the mandatory <code>dlv:cellDataType</code> property.
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
         </p>
+        <p><b>Change log.</b> Version 1.3 (this version) corrects the <code>DimensionShape</code> SHACL (the previous <code>sh:xone</code> of two constraint-free property shapes could never be satisfied), declares classes as <code>owl:Class</code>, declares <code>rdfs:range</code> on properties and expresses domain/cardinality in SHACL (no <code>rdfs:domain</code>), and adds standard ontology metadata. Version 1.2 removed the redundant <code>dlv:interleaving</code> property in favour of a normative ordering for <code>dlv:hasDimension</code>. Version 1.1 added the mandatory <code>dlv:cellDataType</code>.</p>
     </section>
 
     <section class="introductory">
         <h2>Introduction</h2>
         <p>
-            Many advanced binary formats, particularly in scientific and geospatial domains (e.g., HDF5, NetCDF, GeoTIFF), store data as n-dimensional arrays or "data cubes." A simple physical description of a data field as a sequence of bytes is insufficient to allow a processor to correctly access a specific data point (e.g., a pixel, a voxel, a time-series measurement) within that array.
+            Many advanced formats (HDF5, NetCDF, GeoTIFF) store data as n-dimensional arrays or "data cubes." A field described merely as a sequence of bytes is insufficient to locate a specific data point. DLV answers: how many dimensions, what cell data type, what size and meaning per dimension, and in what order the data is stored.
         </p>
-        <p>
-            The DLV provides the formal vocabulary to describe this "structural semantics," answering questions such as:
-        </p>
-        <ul>
-            <li>How many dimensions does the data array have?</li>
-            <li>What is the data type of each cell in the array (e.g., 8-bit unsigned integer, 32-bit float)?</li>
-            <li>What is the size and semantic meaning of each dimension?</li>
-            <li>In what order is the data stored in the flat byte stream?</li>
-        </ul>
-        <p>
-            A `bddo:Field` containing multi-dimensional data is linked to a `dlv:DataLayout` instance, which provides this essential descriptive layer.
-        </p>
+        <p>A <code>bddo:Field</code> containing multi-dimensional data is linked to a <code>dlv:DataLayout</code> via <code>hexplain:hasDataLayout</code> (defined in <a href="../hexplain/index.html">Hexplain Core</a>).</p>
         <section>
             <h3>Conformance</h3>
-            <p>
-                The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].
-            </p>
+            <p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].</p>
         </section>
     </section>
 
     <section id="core-concepts">
         <h2>Core Concepts</h2>
-        <p>The DLV model is built upon three fundamental classes.</p>
         <dl>
             <dt><code>dlv:DataLayout</code></dt>
-            <dd>The central class that describes the overall layout of a multi-dimensional array. An instance of this class is attached to a <code>bddo:Field</code> via the <code>hexplain:hasDataLayout</code> property.</dd>
+            <dd>Describes the overall layout of a multi-dimensional array. Attached to a <code>bddo:Field</code> via <code>hexplain:hasDataLayout</code>.</dd>
             <dt><code>dlv:Dimension</code></dt>
-            <dd>Represents one dimension of the data array (e.g., width, height, bands).</dd>
+            <dd>One dimension of the array (e.g. width, height, bands).</dd>
             <dt><code>dlv:Axis</code></dt>
-            <dd>A semantic descriptor for a dimension, indicating what it represents. DLV provides common axes, and domain-specific vocabularies (like the Image Vocabulary) can define more specialized ones.</dd>
+            <dd>A semantic descriptor for a dimension. DLV provides common axes; domain vocabularies define specialized ones.</dd>
         </dl>
     </section>
 
     <section id="properties">
         <h2>Properties</h2>
-        <p>Properties are the predicates that define the characteristics of a Data Layout.</p>
         <dl>
             <dt><code>hexplain:hasDataLayout</code></dt>
-            <dd>A property from the Hexplain Core ontology that links a <code>bddo:Field</code> to a <code>dlv:DataLayout</code> instance.</dd>
+            <dd>Defined in <a href="../hexplain/index.html">Hexplain Core</a>; links a <code>bddo:Field</code> to a <code>dlv:DataLayout</code>.</dd>
             <dt><code>dlv:hasDimension</code></dt>
-            <dd>
-                Links a <code>dlv:DataLayout</code> to an ordered list (<code>rdf:List</code>) of its <code>dlv:Dimension</code> instances. The order of this list is <b>normative</b> and defines the data sequencing rule (interleaving). The list MUST be ordered from the <b>slowest-varying dimension</b> (outermost loop) to the <b>fastest-varying dimension</b> (innermost loop).
+            <dd>Links a <code>dlv:DataLayout</code> to an ordered <code>rdf:List</code> of its <code>dlv:Dimension</code> instances. The order is <b>normative</b> and defines the data-sequencing rule (interleaving): from the <b>slowest-varying</b> (outermost loop) to the <b>fastest-varying</b> (innermost loop) dimension.
                 <ul>
-                    <li>For <b>Band Sequential (BSQ)</b>, the order would be (Band, Row, Column).</li>
-                    <li>For <b>Pixel Interleaved (BIP)</b>, the order would be (Row, Column, Band).</li>
-                    <li>For <b>Band Interleaved by Line (BIL)</b>, the order would be (Row, Band, Column).</li>
+                    <li>Band Sequential (BSQ): (Band, Row, Column).</li>
+                    <li>Pixel Interleaved (BIP): (Row, Column, Band).</li>
+                    <li>Band Interleaved by Line (BIL): (Row, Band, Column).</li>
                 </ul>
             </dd>
             <dt><code>dlv:cellDataType</code></dt>
-            <dd>Specifies the data type of each individual cell in the array. The value MUST be an instance of <code>bddo:DataType</code>.</dd>
-            <dt><code>dlv:dimensionSize</code></dt>
-            <dd>An <code>xsd:positiveInteger</code> property of a <code>dlv:Dimension</code> that defines its fixed length.</dd>
-            <dt><code>dlv:dimensionSizeFromField</code></dt>
-            <dd>Points to a <code>bddo:Field</code> whose value provides the size of the <code>dlv:Dimension</code>.</dd>
+            <dd>The data type of each cell. Value MUST be a <code>bddo:DataType</code>.</dd>
+            <dt><code>dlv:dimensionSize</code> / <code>dlv:dimensionSizeFromField</code></dt>
+            <dd>The length of a <code>dlv:Dimension</code>: a fixed <code>xsd:positiveInteger</code>, or read from a <code>bddo:Field</code>. Exactly one MUST be present.</dd>
             <dt><code>dlv:hasAxis</code></dt>
-            <dd>Links a <code>dlv:Dimension</code> to its semantic <code>dlv:Axis</code> type.</dd>
+            <dd>Links a <code>dlv:Dimension</code> to its semantic <code>dlv:Axis</code>.</dd>
         </dl>
     </section>
 
     <section id="normative-owl">
-        <h2>Normative OWL Ontology</h2>
-        <p>The following is the complete, normative OWL ontology for DLV 1.2, expressed in Turtle syntax [[turtle]].</p>
+        <h2>Normative OWL Vocabulary</h2>
         <pre class="nohighlight">
-@prefix : &lt;https://hexplain.io/ns/dlv#&gt; .
-@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
-@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
-@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
-@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+# Hexplain Data Layout Vocabulary (DLV) 1.3 — vocabulary + SHACL shapes
+# Properties declare rdfs:range; domain and cardinality are in SHACL (no rdfs:domain).
+@prefix :       &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix dlv:    &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdf:    &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix rdfs:   &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:    &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix bddo:   &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 &lt;https://hexplain.io/ns/dlv&gt; a owl:Ontology ;
-    owl:versionInfo "1.2" ;
-    rdfs:label "Hexplain Data Layout Vocabulary (DLV)" .
+    owl:versionIRI &lt;https://hexplain.io/ns/dlv/1.3&gt; ; owl:versionInfo "1.3" ;
+    owl:priorVersion &lt;https://hexplain.io/ns/dlv/1.2&gt; ;
+    owl:imports &lt;https://hexplain.io/ns/bddo&gt; ;
+    rdfs:label "Hexplain Data Layout Vocabulary (DLV)" ;
+    rdfs:comment "Vocabulary for describing multi-dimensional array layout within a flat byte stream." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
+    dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
+    vann:preferredNamespacePrefix "dlv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/dlv#" .
 
-# -- Classes --
-:DataLayout a rdfs:Class ; rdfs:label "Data Layout" .
-:Dimension a rdfs:Class ; rdfs:label "Dimension" .
-:Axis a rdfs:Class ; rdfs:label "Axis" .
+:DataLayout a owl:Class ; rdfs:label "Data Layout" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
+:Dimension  a owl:Class ; rdfs:label "Dimension"  ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
+:Axis       a owl:Class ; rdfs:label "Axis"       ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 
-# -- Properties --
-:hasDimension a owl:ObjectProperty ; rdfs:domain :DataLayout ; rdfs:range rdf:List .
-:cellDataType a owl:ObjectProperty ; rdfs:domain :DataLayout ; rdfs:range bddo:DataType .
-:dimensionSize a owl:DatatypeProperty ; rdfs:domain :Dimension ; rdfs:range xsd:positiveInteger .
-:dimensionSizeFromField a owl:ObjectProperty ; rdfs:domain :Dimension ; rdfs:range bddo:Field .
-:hasAxis a owl:ObjectProperty ; rdfs:domain :Dimension ; rdfs:range :Axis .
+:hasDimension a owl:ObjectProperty ; rdfs:label "has dimension" ; rdfs:range rdf:List ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "Ordered rdf:List of dimensions, slowest- to fastest-varying." .
+:cellDataType a owl:ObjectProperty ; rdfs:label "cell data type" ; rdfs:range bddo:DataType ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
+:dimensionSize a owl:DatatypeProperty ; rdfs:label "dimension size" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
+:dimensionSizeFromField a owl:ObjectProperty ; rdfs:label "dimension size from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
+:hasAxis a owl:ObjectProperty ; rdfs:label "has axis" ; rdfs:range :Axis ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 
-# -- Individuals for Common Axes --
 :axisX a :Axis ; rdfs:label "X Axis (Width)" .
 :axisY a :Axis ; rdfs:label "Y Axis (Height)" .
 :axisZ a :Axis ; rdfs:label "Z Axis (Depth)" .
@@ -134,58 +127,48 @@
 
     <section id="normative-shacl">
         <h2>Normative SHACL Shapes</h2>
-        <p>A DLV description graph MUST conform to the following SHACL shapes [[shacl]].</p>
+        <p>A DLV description graph MUST conform to the following shapes [[shacl]].</p>
         <pre class="nohighlight">
-@prefix sh: &lt;http://www.w3.org/ns/shacl#&gt; .
-@prefix dlv: &lt;https://hexplain.io/ns/dlv#&gt; .
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix :       &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix dlv:    &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdf:    &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix rdfs:   &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:    &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix bddo:   &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
-# -- Shape for validating a dlv:DataLayout --
+# SHACL shapes
 dlv:DataLayoutShape a sh:NodeShape ;
     sh:targetClass dlv:DataLayout ;
-    sh:property [
-        sh:path dlv:hasDimension ;
-        sh:minCount 1 ;
-        sh:message "A dlv:DataLayout must have at least one dlv:hasDimension property."
-    ] ;
-    sh:property [
-        sh:path dlv:cellDataType ;
-        sh:class bddo:DataType ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:message "A dlv:DataLayout must have exactly one dlv:cellDataType."
-    ] .
+    sh:property [ sh:path dlv:hasDimension ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
+    sh:property [ sh:path ( dlv:hasDimension [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class dlv:Dimension ] ;
+    sh:property [ sh:path dlv:cellDataType ; sh:class bddo:DataType ; sh:minCount 1 ; sh:maxCount 1 ] .
 
-# -- Shape for validating a dlv:Dimension --
 dlv:DimensionShape a sh:NodeShape ;
     sh:targetClass dlv:Dimension ;
     sh:xone (
-        [ sh:path dlv:dimensionSize ]
-        [ sh:path dlv:dimensionSizeFromField ]
+        [ sh:property [ sh:path dlv:dimensionSize ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:dimensionSizeFromField ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:dimensionSizeFromField ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:dimensionSize ; sh:maxCount 0 ] ]
     ) ;
-    sh:property [
-        sh:path dlv:hasAxis ;
-        sh:nodeKind sh:IRI ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:message "A dlv:Dimension must have exactly one dlv:hasAxis."
-    ] .
+    sh:property [ sh:path dlv:dimensionSize ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:dimensionSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:hasAxis ; sh:nodeKind sh:IRI ; sh:class dlv:Axis ; sh:minCount 1 ; sh:maxCount 1 ] .
         </pre>
     </section>
-    
+
     <section id="normative-jsonld-context">
         <h2>Normative JSON-LD Context</h2>
-        <p>
-            The following context provides the normative [[JSON-LD]] mapping for the DLV terms.
-        </p>
         <pre class="nohighlight">
 {
   "@context": {
     "dlv": "https://hexplain.io/ns/dlv#",
     "bddo": "https://hexplain.io/ns/bddo#",
-    "DataLayout": "dlv:DataLayout",
-    "Dimension": "dlv:Dimension",
-    "Axis": "dlv:Axis",
+    "DataLayout": "dlv:DataLayout", "Dimension": "dlv:Dimension", "Axis": "dlv:Axis",
     "hasDimension": { "@id": "dlv:hasDimension", "@container": "@list" },
     "cellDataType": { "@id": "dlv:cellDataType", "@type": "@id" },
     "dimensionSize": { "@id": "dlv:dimensionSize", "@type": "xsd:positiveInteger" },
@@ -198,57 +181,33 @@ dlv:DimensionShape a sh:NodeShape ;
 
     <section id="example" class="introductory">
         <h2>Example: Describing a BIL Image</h2>
-        <p>
-            A Band Interleaved by Line (BIL) image is a 3-dimensional data cube (width, height, bands). The data is stored such that all the bands for the first row are written, then all the bands for the second row, and so on. This example shows how to use DLV in conjunction with BDDO to describe this layout.
-        </p>
+        <p>A Band Interleaved by Line (BIL) image is a 3-D cube where all bands of the first row are written, then all bands of the second row, and so on.</p>
         <pre class="nohighlight">
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix bddo:     &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
-@prefix dlv: &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix dlv:      &lt;https://hexplain.io/ns/dlv#&gt; .
 @prefix myformat: &lt;https://hexplain.io/formats/myformat#&gt; .
 
-# -- Physical Description (BDDO) --
 myformat:ImageFile a bddo:Struct ;
-    bddo:hasField (
-        myformat:Width,
-        myformat:Height,
-        myformat:NumBands,
-        myformat:PixelData
-    ) .
+    bddo:hasField ( myformat:Width myformat:Height myformat:NumBands myformat:PixelData ) .
 
-myformat:Width a bddo:Field ; bddo:dataType bddo:uint32le .
-myformat:Height a bddo:Field ; bddo:dataType bddo:uint32le .
+myformat:Width    a bddo:Field ; bddo:dataType bddo:uint32le .
+myformat:Height   a bddo:Field ; bddo:dataType bddo:uint32le .
 myformat:NumBands a bddo:Field ; bddo:dataType bddo:uint32le .
 
 myformat:PixelData a bddo:Field ;
     bddo:dataType bddo:bytes ;
-    bddo:sizeFromExpression "instance.Width * instance.Height * instance.NumBands" ;
-    # Link the physical field to its layout description.
+    bddo:sizeFromExpression "instance.parent.Width * instance.parent.Height * instance.parent.NumBands" ;
     hexplain:hasDataLayout myformat:BIL_Layout .
 
-# -- Data Layout Description (DLV) --
 myformat:BIL_Layout a dlv:DataLayout ;
-    # Each cell in this layout is an 8-bit unsigned integer.
     dlv:cellDataType bddo:uint8 ;
-    # The order of this list defines the BIL layout:
-    # Row is the slowest-varying, then Band, then Column is the fastest.
-    dlv:hasDimension (
-        myformat:HeightDimension,
-        myformat:BandDimension,
-        myformat:WidthDimension
-    ) .
+    # Row (slowest) -> Band -> Column (fastest) == BIL.
+    dlv:hasDimension ( myformat:HeightDimension myformat:BandDimension myformat:WidthDimension ) .
 
-myformat:HeightDimension a dlv:Dimension ;
-    dlv:hasAxis dlv:axisY ;
-    dlv:dimensionSizeFromField myformat:Height .
-
-myformat:WidthDimension a dlv:Dimension ;
-    dlv:hasAxis dlv:axisX ;
-    dlv:dimensionSizeFromField myformat:Width .
-
-myformat:BandDimension a dlv:Dimension ;
-    dlv:hasAxis dlv:axisBand ;
-    dlv:dimensionSizeFromField myformat:NumBands .
+myformat:HeightDimension a dlv:Dimension ; dlv:hasAxis dlv:axisY ; dlv:dimensionSizeFromField myformat:Height .
+myformat:WidthDimension  a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSizeFromField myformat:Width .
+myformat:BandDimension   a dlv:Dimension ; dlv:hasAxis dlv:axisBand ; dlv:dimensionSizeFromField myformat:NumBands .
         </pre>
     </section>
 </body>

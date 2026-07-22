@@ -8,248 +8,180 @@
     <script class="remove">
         var respecConfig = {
             specStatus: "unofficial",
-            editors: [{
-                name: "Stephane Fellah",
-                url: "https://geoknoesis.com"
-            }],
-            github: "https://github.com/w3c/respec",
+            editors: [{ name: "Stephane Fellah", url: "https://geoknoesis.com" }],
+            github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "hexplain-gv",
             publishDate: "2025-08-16",
-            subtitle: "Version 1.2",
+            subtitle: "Version 1.3",
         };
     </script>
 </head>
 <body>
     <section id="abstract">
         <p>
-            The Hexplain Geospatial Vocabulary (GV) is a domain-specific ontology that provides a standard set of terms for describing the semantic properties of geospatial and geointelligence data, including raster, vector, and point cloud formats. As a component of the Hexplain Ontology Family, it is designed to be used with the BDDO, DLV, and Hexplain Core ontologies. GV enables format authors to map low-level physical data fields from formats like GeoTIFF, NetCDF, HDF5, or LAS to high-level, unambiguous concepts (e.g., coordinate reference system, sensor model, point cloud layout), facilitating interoperability and semantic analysis of geospatial data.
+            The Hexplain Geospatial Vocabulary (GV) provides standard terms for geospatial and geointelligence data — raster, vector, and point-cloud formats. Used with BDDO, DLV, and Hexplain Core, it maps low-level fields from GeoTIFF, NetCDF, HDF5, or LAS to high-level concepts (coordinate reference system, sensor model, point-cloud layout). <b>Prefix:</b> <code>gv</code>; <b>namespace:</b> <code>https://hexplain.io/ns/geo#</code>.
         </p>
     </section>
 
     <section id="sotd">
-        <p>
-            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. Version 1.2 expands the vocabulary's scope to include point clouds and other geointelligence concepts. Version 1.1 added the <code>gv:pixelRegistration</code> property.
-        </p>
+        <p>This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.</p>
+        <p><b>Change log.</b> Version 1.3 adds SHACL range constraints, <code>rdfs:comment</code>/<code>rdfs:isDefinedBy</code>, ontology metadata, and alignments to GeoSPARQL, SOSA/SSN, and PROV-O; and moves all constraints out of <code>rdfs:domain</code>/<code>rdfs:range</code> into SHACL. Version 1.2 added point clouds and geointelligence concepts. Version 1.1 added <code>gv:pixelRegistration</code>.</p>
     </section>
 
     <section class="introductory">
         <h2>Introduction</h2>
-        <p>
-            Geospatial data formats contain complex information describing how data values map to physical locations on Earth. While BDDO and DLV can describe the physical structure and multi-dimensional layout of this data, they cannot describe the meaning of fields like "Coordinate Reference System" or "Sensor Platform." The Geospatial Vocabulary provides this essential semantic layer.
-        </p>
-        <p>
-            By providing a common, stable set of URIs for concepts like "projectionName," "pointCount," and "acquisitionTime," the GV allows a Hexplain processor to understand and georeference data from different file formats in a standardized way. This enables high-level queries such as "Find all Lidar point clouds collected after a specific date that use the WGS 84 projection."
-        </p>
-        <section>
-            <h3>Conformance</h3>
-            <p>
-                The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].
-            </p>
-        </section>
+        <p>Geospatial formats describe how data values map to locations on Earth. BDDO and DLV describe the physical and multi-dimensional layout; GV adds the meaning of fields like "coordinate reference system" or "sensor platform," enabling queries such as "find all Lidar point clouds collected after a date that use WGS 84."</p>
+        <section><h3>Conformance</h3><p>The key words "MUST", "SHOULD", "MAY", etc. are to be interpreted as in [[RFC2119]].</p></section>
     </section>
 
     <section id="core-concepts">
         <h2>Core Concepts (Classes)</h2>
-        <p>GV defines a set of classes to represent the high-level concepts within a geospatial file.</p>
         <dl>
-            <dt><code>gv:GeospatialDataset</code></dt>
-            <dd>The core class representing the geospatial dataset as a whole.</dd>
-            <dt><code>gv:RasterDataset</code></dt>
-            <dd>A subclass of <code>gv:GeospatialDataset</code> for raster/gridded data.</dd>
-            <dt><code>gv:VectorDataset</code></dt>
-            <dd>A subclass of <code>gv:GeospatialDataset</code> for vector data (points, lines, polygons).</dd>
-            <dt><code>gv:PointCloud</code></dt>
-            <dd>A subclass of <code>gv:GeospatialDataset</code> for point cloud data, such as Lidar.</dd>
-            <dt><code>gv:CoordinateReferenceSystem</code></dt>
-            <dd>Represents the Coordinate Reference System (CRS) information.</dd>
-            <dt><code>gv:GeoTransform</code></dt>
-            <dd>Represents the affine transformation parameters that map grid coordinates to ground coordinates.</dd>
-            <dt><code>gv:AcquisitionInfo</code></dt>
-            <dd>Represents metadata about the collection event, including the sensor and platform.</dd>
-            <dt><code>gv:SensorModel</code></dt>
-            <dd>Represents information about the sensor used for data collection.</dd>
-            <dt><code>gv:Platform</code></dt>
-            <dd>Represents information about the platform (e.g., satellite, aircraft) that carried the sensor.</dd>
+            <dt><code>gv:GeospatialDataset</code></dt><dd>A geospatial dataset as a whole.</dd>
+            <dt><code>gv:RasterDataset</code>, <code>gv:VectorDataset</code>, <code>gv:PointCloud</code></dt><dd>Subclasses for gridded, vector, and point-cloud data.</dd>
+            <dt><code>gv:CoordinateReferenceSystem</code></dt><dd>CRS information.</dd>
+            <dt><code>gv:GeoTransform</code></dt><dd>Affine parameters mapping grid to ground coordinates.</dd>
+            <dt><code>gv:AcquisitionInfo</code>, <code>gv:SensorModel</code>, <code>gv:Platform</code></dt><dd>Collection-event metadata: sensor and platform.</dd>
         </dl>
     </section>
 
     <section id="properties">
         <h2>Semantic Properties</h2>
-        <p>These properties describe the attributes of geospatial datasets. In a Hexplain description, a <code>bddo:Field</code> would use the <code>hexplain:mapsToProperty</code> predicate to link to one of these semantic properties.</p>
         <table class="simple">
-            <thead>
-                <tr>
-                    <th>Property</th>
-                    <th>Description</th>
-                    <th>Expected Range</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Property</th><th>Description</th><th>Range</th></tr></thead>
             <tbody>
-                <tr>
-                    <td><code>gv:wktString</code></td>
-                    <td>The full Coordinate Reference System definition in Well-Known Text (WKT) format.</td>
-                    <td><code>xsd:string</code></td>
-                </tr>
-                <tr>
-                    <td><code>gv:epsgCode</code></td>
-                    <td>The numeric EPSG code for the Coordinate Reference System.</td>
-                    <td><code>xsd:positiveInteger</code></td>
-                </tr>
-                <tr>
-                    <td><code>gv:originLongitude</code></td>
-                    <td>The longitude of the reference point of the top-left pixel/grid cell.</td>
-                    <td><code>xsd:double</code></td>
-                </tr>
-                <tr>
-                    <td><code>gv:originLatitude</code></td>
-                    <td>The latitude of the reference point of the top-left pixel/grid cell.</td>
-                    <td><code>xsd:double</code></td>
-                </tr>
-                <tr>
-                    <td><code>gv:pixelRegistration</code></td>
-                    <td>Specifies whether the origin coordinate refers to the pixel's corner or center.</td>
-                    <td><code>gv:PixelCorner</code> or <code>gv:PixelCenter</code></td>
-                </tr>
-                <tr>
-                    <td><code>gv:scaleX</code></td>
-                    <td>The pixel/grid width or horizontal scale in ground units.</td>
-                    <td><code>xsd:double</code></td>
-                </tr>
-                 <tr>
-                    <td><code>gv:scaleY</code></td>
-                    <td>The pixel/grid height or vertical scale in ground units (often negative).</td>
-                    <td><code>xsd:double</code></td>
-                </tr>
-                 <tr>
-                    <td><code>gv:noDataValue</code></td>
-                    <td>A special value used in a raster band to indicate that a pixel has no valid data.</td>
-                    <td><code>xsd:double</code> or <code>xsd:integer</code></td>
-                </tr>
-                <tr>
-                    <td><code>gv:pointCount</code></td>
-                    <td>The total number of points in a point cloud.</td>
-                    <td><code>xsd:unsignedLong</code></td>
-                </tr>
-                <tr>
-                    <td><code>gv:pointDataLayout</code></td>
-                    <td>Links to a <code>bddo:Struct</code> that defines the layout of a single point record in a point cloud.</td>
-                    <td><code>bddo:Struct</code></td>
-                </tr>
-                <tr>
-                    <td><code>gv:acquisitionTime</code></td>
-                    <td>The timestamp of the data acquisition.</td>
-                    <td><code>xsd:dateTime</code></td>
-                </tr>
-                <tr>
-                    <td><code>gv:platformName</code></td>
-                    <td>The name or identifier of the collection platform (e.g., "Landsat-8", "N1234A").</td>
-                    <td><code>xsd:string</code></td>
-                </tr>
-                <tr>
-                    <td><code>gv:sensorType</code></td>
-                    <td>The type or model of the sensor (e.g., "Lidar", "Panchromatic").</td>
-                    <td><code>xsd:string</code></td>
-                </tr>
-                <tr>
-                    <td><code>gv:classificationLevel</code></td>
-                    <td>The classification level of the data (e.g., "UNCLASSIFIED").</td>
-                    <td><code>xsd:string</code></td>
-                </tr>
+                <tr><td><code>gv:wktString</code></td><td>CRS as Well-Known Text.</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>gv:epsgCode</code></td><td>Numeric EPSG code.</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>gv:originLongitude</code>, <code>gv:originLatitude</code></td><td>Reference point of the top-left cell.</td><td><code>xsd:double</code></td></tr>
+                <tr><td><code>gv:pixelRegistration</code></td><td>Whether the origin is the pixel corner or centre.</td><td><code>gv:PixelCorner</code>/<code>gv:PixelCenter</code></td></tr>
+                <tr><td><code>gv:scaleX</code>, <code>gv:scaleY</code></td><td>Ground units per pixel.</td><td><code>xsd:double</code></td></tr>
+                <tr><td><code>gv:noDataValue</code></td><td>Value marking absent data.</td><td><code>xsd:double</code>/<code>xsd:integer</code></td></tr>
+                <tr><td><code>gv:pointCount</code></td><td>Number of points in a point cloud.</td><td><code>xsd:unsignedLong</code></td></tr>
+                <tr><td><code>gv:pointDataLayout</code></td><td>Struct defining one point record.</td><td><code>bddo:Struct</code></td></tr>
+                <tr><td><code>gv:acquisitionTime</code></td><td>Acquisition timestamp.</td><td><code>xsd:dateTime</code></td></tr>
+                <tr><td><code>gv:platformName</code>, <code>gv:sensorType</code></td><td>Platform / sensor identifiers.</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>gv:classificationLevel</code></td><td>Data classification level.</td><td><code>xsd:string</code></td></tr>
             </tbody>
         </table>
     </section>
-    
+
     <section id="layout-axes">
         <h2>Layout Axes</h2>
-        <p>GV extends the Hexplain Data Layout Vocabulary (DLV) by defining standard axes specific to geospatial data. These are used in a <code>dlv:Dimension</code> to specify what each dimension of a data array represents.</p>
-        <dl>
-            <dt><code>gv:axisLatitude</code></dt>
-            <dd>Represents the latitudinal (typically Y) spatial axis.</dd>
-            <dt><code>gv:axisLongitude</code></dt>
-            <dd>Represents the longitudinal (typically X) spatial axis.</dd>
-            <dt><code>gv:axisElevation</code></dt>
-            <dd>Represents an elevational or vertical (Z) spatial axis.</dd>
-            <dt><code>gv:axisPoint</code></dt>
-            <dd>Represents the point axis in a point cloud.</dd>
-        </dl>
+        <p>GV adds geospatial axes to DLV: <code>gv:axisLatitude</code>, <code>gv:axisLongitude</code>, <code>gv:axisElevation</code>, <code>gv:axisPoint</code>. They relate to the generic DLV axes via <code>rdfs:seeAlso</code>.</p>
     </section>
 
     <section id="normative-owl">
-        <h2>Normative OWL Ontology</h2>
-        <p>The following is the complete, normative OWL ontology for GV 1.2, expressed in Turtle syntax [[turtle]].</p>
+        <h2>Normative OWL Vocabulary</h2>
         <pre class="nohighlight">
-@prefix : &lt;https://hexplain.io/ns/geo#&gt; .
-@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
-@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
-@prefix dlv: &lt;https://hexplain.io/ns/dlv#&gt; .
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+# Hexplain Geospatial Vocabulary (GV) 1.3 — vocabulary + SHACL shapes
+@prefix :       &lt;https://hexplain.io/ns/geo#&gt; .
+@prefix gv:     &lt;https://hexplain.io/ns/geo#&gt; .
+@prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdfs:   &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:    &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
+@prefix dlv:    &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix bddo:   &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix geosparql: &lt;http://www.opengis.net/ont/geosparql#&gt; .
+@prefix sosa:   &lt;http://www.w3.org/ns/sosa/&gt; .
+@prefix prov:   &lt;http://www.w3.org/ns/prov#&gt; .
+@prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 &lt;https://hexplain.io/ns/geo&gt; a owl:Ontology ;
-    owl:versionInfo "1.2" ;
-    rdfs:label "Hexplain Geospatial Vocabulary (GV)" .
+    owl:versionIRI &lt;https://hexplain.io/ns/geo/1.3&gt; ; owl:versionInfo "1.3" ;
+    rdfs:label "Hexplain Geospatial Vocabulary (GV)" ;
+    rdfs:comment "Semantic vocabulary for geospatial and geointelligence data." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
+    dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
+    vann:preferredNamespacePrefix "gv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/geo#" .
 
-# -- Classes --
-:GeospatialDataset a owl:Class ; rdfs:label "Geospatial Dataset" .
-:RasterDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Raster Dataset" .
-:VectorDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Vector Dataset" .
-:PointCloud a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Point Cloud" .
-:CoordinateReferenceSystem a owl:Class ; rdfs:label "Coordinate Reference System" .
-:GeoTransform a owl:Class ; rdfs:label "GeoTransform" .
-:AcquisitionInfo a owl:Class ; rdfs:label "Acquisition Info" .
-:SensorModel a owl:Class ; rdfs:label "Sensor Model" .
-:Platform a owl:Class ; rdfs:label "Platform" .
+:GeospatialDataset a owl:Class ; rdfs:label "Geospatial Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch geosparql:Feature .
+:RasterDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Raster Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
+:VectorDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Vector Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
+:PointCloud a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Point Cloud" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
+:CoordinateReferenceSystem a owl:Class ; rdfs:label "Coordinate Reference System" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
+:GeoTransform a owl:Class ; rdfs:label "GeoTransform" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
+:AcquisitionInfo a owl:Class ; rdfs:label "Acquisition Info" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch prov:Activity .
+:SensorModel a owl:Class ; rdfs:label "Sensor Model" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch sosa:Sensor .
+:Platform a owl:Class ; rdfs:label "Platform" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch sosa:Platform .
 
-# -- Properties --
-:wktString a owl:DatatypeProperty ; rdfs:label "WKT String" .
-:epsgCode a owl:DatatypeProperty ; rdfs:label "EPSG Code" .
-:originLongitude a owl:DatatypeProperty ; rdfs:label "Origin Longitude" .
-:originLatitude a owl:DatatypeProperty ; rdfs:label "Origin Latitude" .
-:pixelRegistration a owl:ObjectProperty ; rdfs:domain :GeoTransform ; rdfs:label "Pixel Registration" .
-:scaleX a owl:DatatypeProperty ; rdfs:label "X Scale" .
-:scaleY a owl:DatatypeProperty ; rdfs:label "Y Scale" .
-:noDataValue a owl:DatatypeProperty ; rdfs:label "No Data Value" .
-:pointCount a owl:DatatypeProperty ; rdfs:label "Point Count" .
-:pointDataLayout a owl:ObjectProperty ; rdfs:domain :PointCloud ; rdfs:range bddo:Struct ; rdfs:label "Point Data Layout" .
-:acquisitionTime a owl:DatatypeProperty ; rdfs:label "Acquisition Time" .
-:platformName a owl:DatatypeProperty ; rdfs:label "Platform Name" .
-:sensorType a owl:DatatypeProperty ; rdfs:label "Sensor Type" .
-:classificationLevel a owl:DatatypeProperty ; rdfs:label "Classification Level" .
+:wktString a owl:DatatypeProperty ; rdfs:label "WKT string" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch geosparql:asWKT ; rdfs:range xsd:string .
+:epsgCode a owl:DatatypeProperty ; rdfs:label "EPSG code" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:positiveInteger .
+:originLongitude a owl:DatatypeProperty ; rdfs:label "origin longitude" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:double .
+:originLatitude a owl:DatatypeProperty ; rdfs:label "origin latitude" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:double .
+:pixelRegistration a owl:ObjectProperty ; rdfs:label "pixel registration" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
+:scaleX a owl:DatatypeProperty ; rdfs:label "X scale" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:double .
+:scaleY a owl:DatatypeProperty ; rdfs:label "Y scale" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:double .
+:noDataValue a owl:DatatypeProperty ; rdfs:label "no-data value" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
+:pointCount a owl:DatatypeProperty ; rdfs:label "point count" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:unsignedLong .
+:pointDataLayout a owl:ObjectProperty ; rdfs:label "point data layout" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range bddo:Struct .
+:acquisitionTime a owl:DatatypeProperty ; rdfs:label "acquisition time" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch prov:endedAtTime ; rdfs:range xsd:dateTime .
+:platformName a owl:DatatypeProperty ; rdfs:label "platform name" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:string .
+:sensorType a owl:DatatypeProperty ; rdfs:label "sensor type" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:string .
+:classificationLevel a owl:DatatypeProperty ; rdfs:label "classification level" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:string .
 
-# -- Individuals for Pixel Registration --
 :PixelCorner a owl:NamedIndividual ; rdfs:label "Pixel Corner Registration" .
 :PixelCenter a owl:NamedIndividual ; rdfs:label "Pixel Center Registration" .
-
-# -- Axes for DLV --
-:axisLatitude a dlv:Axis ; rdfs:label "Latitude Axis" .
-:axisLongitude a dlv:Axis ; rdfs:label "Longitude Axis" .
-:axisElevation a dlv:Axis ; rdfs:label "Elevation Axis" .
+:axisLatitude a dlv:Axis ; rdfs:label "Latitude Axis" ; rdfs:seeAlso dlv:axisY .
+:axisLongitude a dlv:Axis ; rdfs:label "Longitude Axis" ; rdfs:seeAlso dlv:axisX .
+:axisElevation a dlv:Axis ; rdfs:label "Elevation Axis" ; rdfs:seeAlso dlv:axisZ .
 :axisPoint a dlv:Axis ; rdfs:label "Point Axis" .
         </pre>
     </section>
-    
+
+    <section id="normative-shacl">
+        <h2>Normative SHACL Shapes</h2>
+        <pre class="nohighlight">
+@prefix :       &lt;https://hexplain.io/ns/geo#&gt; .
+@prefix gv:     &lt;https://hexplain.io/ns/geo#&gt; .
+@prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdfs:   &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:    &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
+@prefix dlv:    &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix bddo:   &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix geosparql: &lt;http://www.opengis.net/ont/geosparql#&gt; .
+@prefix sosa:   &lt;http://www.w3.org/ns/sosa/&gt; .
+@prefix prov:   &lt;http://www.w3.org/ns/prov#&gt; .
+@prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
+
+# SHACL shapes
+gv:CrsShape a sh:NodeShape ; sh:targetSubjectsOf gv:wktString ;
+    sh:property [ sh:path gv:wktString ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path gv:epsgCode ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+gv:OriginShape a sh:NodeShape ; sh:targetSubjectsOf gv:originLatitude ;
+    sh:property [ sh:path gv:originLatitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path gv:originLongitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] .
+gv:PixelRegistrationShape a sh:NodeShape ; sh:targetSubjectsOf gv:pixelRegistration ;
+    sh:property [ sh:path gv:pixelRegistration ; sh:maxCount 1 ; sh:in ( gv:PixelCorner gv:PixelCenter ) ] .
+gv:PointCloudShape a sh:NodeShape ; sh:targetSubjectsOf gv:pointCount ;
+    sh:property [ sh:path gv:pointCount ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path gv:pointDataLayout ; sh:class bddo:Struct ; sh:maxCount 1 ] .
+gv:AcquisitionShape a sh:NodeShape ; sh:targetSubjectsOf gv:acquisitionTime ;
+    sh:property [ sh:path gv:acquisitionTime ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
+    sh:property [ sh:path gv:platformName ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path gv:sensorType ; sh:datatype xsd:string ] .
+        </pre>
+    </section>
+
     <section id="normative-jsonld-context">
         <h2>Normative JSON-LD Context</h2>
-        <p>
-            The following context provides the normative [[JSON-LD]] mapping for the GV terms.
-        </p>
         <pre class="nohighlight">
 {
   "@context": {
     "gv": "https://hexplain.io/ns/geo#",
-    "wktString": "gv:wktString",
-    "epsgCode": "gv:epsgCode",
-    "originLongitude": "gv:originLongitude",
-    "originLatitude": "gv:originLatitude",
+    "wktString": "gv:wktString", "epsgCode": "gv:epsgCode",
+    "originLongitude": "gv:originLongitude", "originLatitude": "gv:originLatitude",
     "pixelRegistration": { "@id": "gv:pixelRegistration", "@type": "@id" },
-    "scaleX": "gv:scaleX",
-    "scaleY": "gv:scaleY",
-    "noDataValue": "gv:noDataValue",
+    "scaleX": "gv:scaleX", "scaleY": "gv:scaleY", "noDataValue": "gv:noDataValue",
     "pointCount": "gv:pointCount",
     "pointDataLayout": { "@id": "gv:pointDataLayout", "@type": "@id" },
-    "acquisitionTime": "gv:acquisitionTime",
-    "platformName": "gv:platformName",
-    "sensorType": "gv:sensorType",
-    "classificationLevel": "gv:classificationLevel"
+    "acquisitionTime": "gv:acquisitionTime", "platformName": "gv:platformName",
+    "sensorType": "gv:sensorType", "classificationLevel": "gv:classificationLevel"
   }
 }
         </pre>
@@ -257,35 +189,32 @@
 
     <section id="example" class="introductory">
         <h2>Example of Usage</h2>
-        <p>This example shows a fragment of a Lidar (LAS) file description, demonstrating how the physical header fields and the point data layout are mapped to the semantic properties in the Geospatial Vocabulary.</p>
+        <p>A Lidar (LAS) file header and its point record layout, using count-based repetition for the point array.</p>
         <pre class="nohighlight">
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix bddo:     &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
-@prefix gv: &lt;https://hexplain.io/ns/geo#&gt; .
-@prefix las: &lt;https://hexplain.io/formats/las#&gt; .
+@prefix gv:       &lt;https://hexplain.io/ns/geo#&gt; .
+@prefix las:      &lt;https://hexplain.io/formats/las#&gt; .
 
-# The LAS file header is a physical representation of a PointCloud concept.
-las:Header a bddo:Struct ;
+las:File a bddo:Struct ;
     hexplain:mapsToClass gv:PointCloud ;
-    # The layout of each point is described by this separate Struct.
     gv:pointDataLayout las:PointRecordFormat1 ;
-    bddo:hasField ( las:NumberOfPointRecords, ... ) .
+    bddo:hasField ( las:NumberOfPointRecords las:Points ) .
 
-# The physical 'NumberOfPointRecords' field maps to the semantic 'pointCount' property.
-las:NumberOfPointRecords a bddo:Field ;
-    bddo:dataType bddo:uint32le ;
+las:NumberOfPointRecords a bddo:Field ; bddo:dataType bddo:uint32le ;
     hexplain:mapsToProperty gv:pointCount .
 
-# The BDDO description for a single point record. This provides the physical layout
-# that gv:pointDataLayout refers to.
+las:Points a bddo:Field ;
+    bddo:dataType las:PointRecordFormat1 ;
+    bddo:repeatCountFromField las:NumberOfPointRecords .
+
 las:PointRecordFormat1 a bddo:Struct ;
     bddo:endianness bddo:LittleEndian ;
-    bddo:hasField ( las:X, las:Y, las:Z, las:Intensity, ... ) .
-
-las:X a bddo:Field ; bddo:dataType bddo:int32le .
-las:Y a bddo:Field ; bddo:dataType bddo:int32le .
-las:Z a bddo:Field ; bddo:dataType bddo:int32le .
-las:Intensity a bddo:Field ; bddo:dataType bddo:uint16le .
+    bddo:hasField ( las:X las:Y las:Z las:Intensity ) .
+las:X a bddo:Field ; bddo:dataType bddo:int32 .
+las:Y a bddo:Field ; bddo:dataType bddo:int32 .
+las:Z a bddo:Field ; bddo:dataType bddo:int32 .
+las:Intensity a bddo:Field ; bddo:dataType bddo:uint16 .
         </pre>
     </section>
 </body>

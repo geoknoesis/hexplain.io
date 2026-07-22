@@ -2,18 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Hexplain Audio Vocabulary (ADV) Specification</title>
+    <title>Hexplain Archive Vocabulary (AXV) Specification</title>
     <!-- ReSpec script and configuration -->
     <script src="https://www.w3.org/Tools/respec/respec-w3c" class="respec" async></script>
     <script class="remove">
         var respecConfig = {
             specStatus: "unofficial",
-            editors: [{
-                name: "Stephane Fellah",
-                url: "https://geoknoesis.com"
-            }],
-            github: "https://github.com/w3c/respec",
-            shortName: "hexplain-adv",
+            editors: [{ name: "Stephane Fellah", url: "https://geoknoesis.com" }],
+            github: "https://github.com/geoknoesis/hexplain.io",
+            shortName: "hexplain-axv",
             publishDate: "2025-08-16",
             subtitle: "Version 1.0",
         };
@@ -22,184 +19,122 @@
 <body>
     <section id="abstract">
         <p>
-            The Hexplain Audio Vocabulary (ADV) is a domain-specific ontology that provides a standard set of terms for describing the semantic properties of audio data. As a component of the Hexplain Ontology Family, it is designed to be used with the BDDO and Hexplain Core ontologies. ADV enables format authors to map low-level physical data fields from audio formats (like WAV or MP3 with ID3 tags) to high-level, unambiguous concepts (e.g., sample rate, artist, album), facilitating interoperability and semantic querying across different audio file formats.
+            The Hexplain Archive Vocabulary (AXV) provides standard terms for the semantic properties of archive and container formats. Used with BDDO and Hexplain Core, it maps low-level fields from formats like ZIP, TAR, 7z, or GZIP to high-level concepts such as file name, uncompressed size, checksum, and modification time, enabling interoperability and semantic querying across archive formats. <b>Prefix:</b> <code>axv</code>; <b>namespace:</b> <code>https://hexplain.io/ns/archive#</code>.
         </p>
     </section>
 
     <section id="sotd">
-        <p>
-            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
-        </p>
+        <p>This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. This is the first version. (Earlier drafts of the family listed an "AXV" module whose <code>axv/</code> path erroneously contained the Audio vocabulary; that content now lives at <code>adv/</code>, and this document is the real Archive Vocabulary.)</p>
     </section>
 
     <section class="introductory">
         <h2>Introduction</h2>
-        <p>
-            Audio files contain both technical data (the encoded audio stream) and descriptive metadata (tags describing the content). While BDDO can describe the physical structure of these files, it cannot describe the meaning of fields like "sample rate" or "artist." The Audio Vocabulary provides this essential semantic layer.
-        </p>
-        <p>
-            By providing a common, stable set of URIs for concepts like "bit depth," "album," and "track number," the ADV allows a Hexplain processor to understand and compare audio content from different file formats. This enables high-level queries such as "Find all audio files by the artist 'The Beatles' with a sample rate of 44100 Hz."
-        </p>
-        <section>
-            <h3>Conformance</h3>
-            <p>
-                The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].
-            </p>
-        </section>
+        <p>Archive formats bundle many files, each with metadata (name, sizes, timestamp, integrity check) and an often-compressed payload. BDDO describes the archive's physical structure — including the offset-based layout typical of ZIP central directories, expressible with <code>bddo:atOffset</code> and <code>bddo:offsetBase bddo:streamEnd</code> — while AXV adds the meaning of the metadata fields, enabling queries such as "list all entries larger than 10&nbsp;MB modified after a given date."</p>
+        <section><h3>Conformance</h3><p>The key words "MUST", "SHOULD", "MAY", etc. are to be interpreted as in [[RFC2119]].</p></section>
     </section>
 
     <section id="core-concepts">
         <h2>Core Concepts (Classes)</h2>
-        <p>ADV defines a set of classes to represent the high-level concepts within an audio file.</p>
         <dl>
-            <dt><code>adv:AudioContainer</code></dt>
-            <dd>The core class representing the audio file as a whole (e.g., a WAV or MP3 file).</dd>
-            <dt><code>adv:AudioStream</code></dt>
-            <dd>Represents the block containing the actual encoded audio sample data.</dd>
-            <dt><code>adv:MetadataTag</code></dt>
-            <dd>Represents a metadata block (like an ID3 or Vorbis comment tag) that contains descriptive information about the audio content.</dd>
+            <dt><code>axv:Archive</code></dt><dd>The archive as a whole (ZIP, TAR…).</dd>
+            <dt><code>axv:ArchiveEntry</code></dt><dd>A single member file or directory within the archive.</dd>
+            <dt><code>axv:CentralDirectory</code></dt><dd>The index of entries (e.g. the ZIP central directory).</dd>
         </dl>
     </section>
 
     <section id="properties">
         <h2>Semantic Properties</h2>
-        <p>These properties describe the attributes of audio streams and metadata tags. In a Hexplain description, a <code>bddo:Field</code> would use the <code>hexplain:mapsToProperty</code> predicate to link to one of these semantic properties.</p>
         <table class="simple">
-            <thead>
-                <tr>
-                    <th>Property</th>
-                    <th>Description</th>
-                    <th>Expected Range</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Property</th><th>Description</th><th>Range</th></tr></thead>
             <tbody>
-                <tr>
-                    <td><code>adv:sampleRate</code></td>
-                    <td>The number of samples per second in Hertz (e.g., 44100, 48000).</td>
-                    <td><code>xsd:positiveInteger</code></td>
-                </tr>
-                <tr>
-                    <td><code>adv:audioChannels</code></td>
-                    <td>The number of audio channels (e.g., 1 for mono, 2 for stereo).</td>
-                    <td><code>xsd:positiveInteger</code></td>
-                </tr>
-                <tr>
-                    <td><code>adv:bitDepth</code></td>
-                    <td>The number of bits per audio sample (e.g., 16, 24). Also known as sample format.</td>
-                    <td><code>xsd:positiveInteger</code></td>
-                </tr>
-                <tr>
-                    <td><code>adv:duration</code></td>
-                    <td>The duration of the audio in seconds.</td>
-                    <td><code>xsd:decimal</code></td>
-                </tr>
-                <tr>
-                    <td><code>adv:bitrate</code></td>
-                    <td>The average bitrate of the track in bits per second.</td>
-                    <td><code>xsd:positiveInteger</code></td>
-                </tr>
-                <tr>
-                    <td><code>adv:codecIdentifier</code></td>
-                    <td>A string identifying the audio codec (e.g., "PCM", "MP3", "FLAC").</td>
-                    <td><code>xsd:string</code></td>
-                </tr>
-                 <tr>
-                    <td><code>adv:artist</code></td>
-                    <td>The name of the recording artist.</td>
-                    <td><code>xsd:string</code></td>
-                </tr>
-                 <tr>
-                    <td><code>adv:album</code></td>
-                    <td>The name of the album the audio belongs to.</td>
-                    <td><code>xsd:string</code></td>
-                </tr>
-                 <tr>
-                    <td><code>adv:trackTitle</code></td>
-                    <td>The title of the audio track.</td>
-                    <td><code>xsd:string</code></td>
-                </tr>
-                 <tr>
-                    <td><code>adv:trackNumber</code></td>
-                    <td>The number of the track on its original album.</td>
-                    <td><code>xsd:positiveInteger</code></td>
-                </tr>
-                 <tr>
-                    <td><code>adv:genre</code></td>
-                    <td>The genre of the audio content.</td>
-                    <td><code>xsd:string</code></td>
-                </tr>
+                <tr><td><code>axv:fileName</code></td><td>Entry path/name.</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>axv:uncompressedSize</code></td><td>Original size in bytes.</td><td><code>xsd:unsignedLong</code></td></tr>
+                <tr><td><code>axv:compressedSize</code></td><td>Stored size in bytes.</td><td><code>xsd:unsignedLong</code></td></tr>
+                <tr><td><code>axv:compressionMethod</code></td><td>Method name/code ("deflate", "store").</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>axv:crcChecksum</code></td><td>Stored CRC-32 of the entry.</td><td><code>xsd:hexBinary</code></td></tr>
+                <tr><td><code>axv:modificationTime</code></td><td>Last-modified timestamp.</td><td><code>xsd:dateTime</code></td></tr>
+                <tr><td><code>axv:isDirectory</code></td><td>Whether the entry is a directory.</td><td><code>xsd:boolean</code></td></tr>
+                <tr><td><code>axv:entryComment</code></td><td>Per-entry comment.</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>axv:hasEntry</code></td><td>Links an Archive to an ArchiveEntry.</td><td><code>axv:ArchiveEntry</code></td></tr>
             </tbody>
         </table>
     </section>
-    
-    <section id="layout-axes">
-        <h2>Layout Axes</h2>
-        <p>ADV extends the Hexplain Data Layout Vocabulary (DLV) by defining standard axes specific to audio. These are used in a <code>dlv:Dimension</code> to specify what each dimension of a data array represents.</p>
-        <dl>
-            <dt><code>adv:axisSample</code></dt>
-            <dd>Represents the sample axis in a sequence of audio samples (often corresponds to time).</dd>
-            <dt><code>adv:axisChannel</code></dt>
-            <dd>Represents the channel axis for interleaved audio (e.g., Left, Right channels).</dd>
-        </dl>
-    </section>
 
     <section id="normative-owl">
-        <h2>Normative OWL Ontology</h2>
-        <p>The following is the complete, normative OWL ontology for ADV 1.0, expressed in Turtle syntax [[turtle]].</p>
+        <h2>Normative OWL Vocabulary</h2>
         <pre class="nohighlight">
-@prefix : &lt;https://hexplain.io/ns/audio#&gt; .
-@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
-@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
-@prefix dlv: &lt;https://hexplain.io/ns/dlv#&gt; .
+# Hexplain Archive Vocabulary (AXV) 1.0 — vocabulary + SHACL shapes
+@prefix :       &lt;https://hexplain.io/ns/archive#&gt; .
+@prefix axv:    &lt;https://hexplain.io/ns/archive#&gt; .
+@prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdfs:   &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:    &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
+@prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
-&lt;https://hexplain.io/ns/audio&gt; a owl:Ontology ;
-    owl:versionInfo "1.0" ;
-    rdfs:label "Hexplain Audio Vocabulary (ADV)" .
+&lt;https://hexplain.io/ns/archive&gt; a owl:Ontology ;
+    owl:versionIRI &lt;https://hexplain.io/ns/archive/1.0&gt; ; owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Archive Vocabulary (AXV)" ;
+    rdfs:comment "Semantic vocabulary for archive and container file properties." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
+    dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
+    vann:preferredNamespacePrefix "axv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/archive#" .
 
-# -- Classes --
-:AudioContainer a owl:Class ; rdfs:label "Audio Container" .
-:AudioStream a owl:Class ; rdfs:label "Audio Stream" .
-:MetadataTag a owl:Class ; rdfs:label "Metadata Tag" .
+:Archive a owl:Class ; rdfs:label "Archive" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; .
+:ArchiveEntry a owl:Class ; rdfs:label "Archive Entry" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; .
+:CentralDirectory a owl:Class ; rdfs:label "Central Directory" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; .
 
-# -- Properties --
-:sampleRate a owl:DatatypeProperty ; rdfs:label "Sample Rate" .
-:audioChannels a owl:DatatypeProperty ; rdfs:label "Audio Channels" .
-:bitDepth a owl:DatatypeProperty ; rdfs:label "Bit Depth" .
-:duration a owl:DatatypeProperty ; rdfs:label "Duration" .
-:bitrate a owl:DatatypeProperty ; rdfs:label "Bitrate" .
-:codecIdentifier a owl:DatatypeProperty ; rdfs:label "Codec Identifier" .
-:artist a owl:DatatypeProperty ; rdfs:label "Artist" .
-:album a owl:DatatypeProperty ; rdfs:label "Album" .
-:trackTitle a owl:DatatypeProperty ; rdfs:label "Track Title" .
-:trackNumber a owl:DatatypeProperty ; rdfs:label "Track Number" .
-:genre a owl:DatatypeProperty ; rdfs:label "Genre" .
-
-# -- Axes for DLV --
-:axisSample a dlv:Axis ; rdfs:label "Sample Axis" .
-:axisChannel a dlv:Axis ; rdfs:label "Channel Axis" .
+:hasEntry a owl:ObjectProperty ; rdfs:label "has entry" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ; rdfs:range :ArchiveEntry .
+:fileName a owl:DatatypeProperty ; rdfs:label "file name" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ; skos:closeMatch dcterms:title ; rdfs:range xsd:string .
+:uncompressedSize a owl:DatatypeProperty ; rdfs:label "uncompressed size" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ; skos:closeMatch dcterms:extent ; rdfs:range xsd:unsignedLong .
+:compressedSize a owl:DatatypeProperty ; rdfs:label "compressed size" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ; rdfs:range xsd:unsignedLong .
+:compressionMethod a owl:DatatypeProperty ; rdfs:label "compression method" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ; rdfs:range xsd:string .
+:crcChecksum a owl:DatatypeProperty ; rdfs:label "CRC checksum" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ; rdfs:range xsd:hexBinary .
+:modificationTime a owl:DatatypeProperty ; rdfs:label "modification time" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ; skos:closeMatch dcterms:modified ; rdfs:range xsd:dateTime .
+:isDirectory a owl:DatatypeProperty ; rdfs:label "is directory" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ; rdfs:range xsd:boolean .
+:entryComment a owl:DatatypeProperty ; rdfs:label "entry comment" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ; rdfs:range xsd:string .
         </pre>
     </section>
-    
+
+    <section id="normative-shacl">
+        <h2>Normative SHACL Shapes</h2>
+        <pre class="nohighlight">
+@prefix :       &lt;https://hexplain.io/ns/archive#&gt; .
+@prefix axv:    &lt;https://hexplain.io/ns/archive#&gt; .
+@prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdfs:   &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:    &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
+@prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
+
+# SHACL shapes
+axv:ArchiveShape a sh:NodeShape ; sh:targetSubjectsOf axv:hasEntry ;
+    sh:property [ sh:path axv:hasEntry ; sh:class axv:ArchiveEntry ] .
+axv:EntryShape a sh:NodeShape ; sh:targetSubjectsOf axv:fileName ;
+    sh:property [ sh:path axv:fileName ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path axv:uncompressedSize ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path axv:compressedSize ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path axv:crcChecksum ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
+    sh:property [ sh:path axv:modificationTime ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
+    sh:property [ sh:path axv:isDirectory ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .
+        </pre>
+    </section>
+
     <section id="normative-jsonld-context">
         <h2>Normative JSON-LD Context</h2>
-        <p>
-            The following context provides the normative [[JSON-LD]] mapping for the ADV terms.
-        </p>
         <pre class="nohighlight">
 {
   "@context": {
-    "adv": "https://hexplain.io/ns/audio#",
-    "sampleRate": "adv:sampleRate",
-    "audioChannels": "adv:audioChannels",
-    "bitDepth": "adv:bitDepth",
-    "duration": "adv:duration",
-    "bitrate": "adv:bitrate",
-    "codecIdentifier": "adv:codecIdentifier",
-    "artist": "adv:artist",
-    "album": "adv:album",
-    "trackTitle": "adv:trackTitle",
-    "trackNumber": "adv:trackNumber",
-    "genre": "adv:genre"
+    "axv": "https://hexplain.io/ns/archive#",
+    "hasEntry": { "@id": "axv:hasEntry", "@type": "@id" },
+    "fileName": "axv:fileName", "uncompressedSize": "axv:uncompressedSize",
+    "compressedSize": "axv:compressedSize", "compressionMethod": "axv:compressionMethod",
+    "crcChecksum": "axv:crcChecksum", "modificationTime": "axv:modificationTime",
+    "isDirectory": "axv:isDirectory", "entryComment": "axv:entryComment"
   }
 }
         </pre>
@@ -207,32 +142,27 @@
 
     <section id="example" class="introductory">
         <h2>Example of Usage</h2>
-        <p>This example shows a fragment of a WAV file description, demonstrating how the physical fields of the format (`fmt `) chunk are mapped to the semantic properties in the Audio Vocabulary.</p>
+        <p>A ZIP central-directory file header mapped to an ArchiveEntry.</p>
         <pre class="nohighlight">
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix bddo:     &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
-@prefix adv: &lt;https://hexplain.io/ns/audio#&gt; .
-@prefix wav: &lt;https://hexplain.io/formats/wav#&gt; .
+@prefix axv:      &lt;https://hexplain.io/ns/archive#&gt; .
+@prefix zip:      &lt;https://hexplain.io/formats/zip#&gt; .
 
-# The 'fmt ' chunk is a physical representation of an AudioStream concept.
-wav:FormatChunk a bddo:Struct ;
-    hexplain:mapsToClass adv:AudioStream ;
-    bddo:hasField ( wav:SampleRate, wav:Channels, wav:BitsPerSample, ... ) .
+zip:CentralDirEntry a bddo:Struct ;
+    hexplain:mapsToClass axv:ArchiveEntry ;
+    bddo:endianness bddo:LittleEndian ;
+    bddo:syncOnMarker "504B0102"^^xsd:hexBinary ;
+    bddo:hasField ( zip:CRC32 zip:CompressedSize zip:UncompressedSize zip:FileNameLength zip:FileName ) .
 
-# The physical 'SampleRate' field maps to the semantic 'sampleRate' property.
-wav:SampleRate a bddo:Field ;
-    bddo:dataType bddo:uint32le ;
-    hexplain:mapsToProperty adv:sampleRate .
-
-# The physical 'Channels' field maps to the semantic 'audioChannels' property.
-wav:Channels a bddo:Field ;
-    bddo:dataType bddo:uint16le ;
-    hexplain:mapsToProperty adv:audioChannels .
-
-# The physical 'BitsPerSample' field maps to the semantic 'bitDepth' property.
-wav:BitsPerSample a bddo:Field ;
-    bddo:dataType bddo:uint16le ;
-    hexplain:mapsToProperty adv:bitDepth .
+zip:CRC32 a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 ; hexplain:mapsToProperty axv:crcChecksum .
+zip:CompressedSize a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty axv:compressedSize .
+zip:UncompressedSize a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty axv:uncompressedSize .
+zip:FileNameLength a bddo:Field ; bddo:dataType bddo:uint16 .
+zip:FileName a bddo:Field ;
+    bddo:dataType bddo:string ; bddo:encoding bddo:utf8 ;
+    bddo:sizeFromField zip:FileNameLength ;
+    hexplain:mapsToProperty axv:fileName .
         </pre>
     </section>
 </body>

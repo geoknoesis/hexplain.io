@@ -1,0 +1,45 @@
+# Hexplain Image Vocabulary (IDV) 1.1 — vocabulary + SHACL shapes
+@prefix :       <https://hexplain.io/ns/image#> .
+@prefix img:    <https://hexplain.io/ns/image#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix ma:     <http://www.w3.org/ns/ma-ont#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/image> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/image/1.1> ; owl:versionInfo "1.1" ;
+    rdfs:label "Hexplain Image Vocabulary (IDV)" ;
+    rdfs:comment "Semantic vocabulary for raster image properties." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "img" ; vann:preferredNamespaceUri "https://hexplain.io/ns/image#" .
+
+:Image a owl:Class ; rdfs:label "Image" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; skos:closeMatch ma:Image .
+:ImageHeader a owl:Class ; rdfs:label "Image Header" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
+:ColorProfile a owl:Class ; rdfs:label "Color Profile" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
+:PixelData a owl:Class ; rdfs:label "Pixel Data" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
+
+:pixelWidth a owl:DatatypeProperty ; rdfs:label "pixel width" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; skos:closeMatch ma:frameWidth ; rdfs:range xsd:positiveInteger .
+:pixelHeight a owl:DatatypeProperty ; rdfs:label "pixel height" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; skos:closeMatch ma:frameHeight ; rdfs:range xsd:positiveInteger .
+:bitsPerComponent a owl:DatatypeProperty ; rdfs:label "bits per component" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:positiveInteger .
+:colorType a owl:DatatypeProperty ; rdfs:label "color type" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer .
+:compressionMethod a owl:DatatypeProperty ; rdfs:label "compression method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; skos:closeMatch ma:compression ; rdfs:range xsd:integer .
+:filterMethod a owl:DatatypeProperty ; rdfs:label "filter method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer .
+:interlaceMethod a owl:DatatypeProperty ; rdfs:label "interlace method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer .
+
+# ---------- SHACL ----------
+img:PixelWidthShape a sh:NodeShape ; sh:targetSubjectsOf img:pixelWidth ;
+    sh:property [ sh:path img:pixelWidth ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+img:PixelHeightShape a sh:NodeShape ; sh:targetSubjectsOf img:pixelHeight ;
+    sh:property [ sh:path img:pixelHeight ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+img:BitsPerComponentShape a sh:NodeShape ; sh:targetSubjectsOf img:bitsPerComponent ;
+    sh:property [ sh:path img:bitsPerComponent ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+img:CodeShapes a sh:NodeShape ; sh:targetSubjectsOf img:colorType ;
+    sh:property [ sh:path img:colorType ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path img:compressionMethod ; sh:nodeKind sh:Literal ] ;
+    sh:property [ sh:path img:filterMethod ; sh:nodeKind sh:Literal ] ;
+    sh:property [ sh:path img:interlaceMethod ; sh:nodeKind sh:Literal ] .

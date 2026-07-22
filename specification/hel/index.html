@@ -12,136 +12,136 @@
                 name: "Stephane Fellah",
                 url: "https://geoknoesis.com/"
             }],
-            github: "https://github.com/w3c/respec",
+            github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "hel",
             publishDate: "2025-08-16",
-            subtitle: "Version 1.0",
+            subtitle: "Version 2.0",
         };
     </script>
 </head>
 <body>
     <section id="abstract">
         <p>
-            The Hexplain Expression Language (HEL) is a simple, declarative language designed for expressing conditions and calculations within Hexplain format descriptions. It provides the necessary logic for features such as dynamic sizing, conditional field presence, and repetitive structures. HEL is designed to be minimal, intuitive for developers, and grounded in existing web standards for its semantics. It operates on a simple logical data model that is derived from the binary data being parsed, using a context-based mapping inspired by JSON-LD to resolve field names.
+            The Hexplain Expression Language (HEL) is a small, declarative language for the conditions and calculations inside Hexplain format descriptions. It powers dynamic sizing, conditional presence, repetition counts, offsets, and conditional data-type and semantic dispatch. HEL operates on a hierarchical <b>logical data model</b> derived from the binary data being parsed, using name resolution inspired by JSON-LD.
         </p>
     </section>
 
     <section id="sotd">
         <p>
-            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. Version 1.2 introduces the <code>parent</code> keyword for upward navigation and support for arithmetic expressions. Version 1.1 introduced support for parenthesized expressions.
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
         </p>
+        <p><b>Change log.</b> Version 2.0 (this version) is a normative clarification and expansion. It reconciles the grammar with the roots actually used in Hexplain examples (<code>instance</code>, <code>parent</code>, <code>root</code>, <code>stream</code>, <code>self</code>); precisely defines what <code>instance</code> denotes (the current node, resolving the earlier "root vs. current" ambiguity); adds a complete <b>value-type and coercion</b> section (previously an undefined forward reference); adds bitwise and modulo operators and a small function library (<code>sizeof</code>, <code>len</code>, <code>count</code>, <code>eof</code>); and adds hexadecimal integer literals and string escaping. Version 1.2 added the <code>parent</code> keyword and arithmetic; version 1.1 added parenthesized expressions.</p>
     </section>
 
     <section class="introductory">
         <h2>Introduction</h2>
         <p>
-            The Hexplain standard provides a declarative framework for describing the physical layout and semantic meaning of binary data formats. A key requirement of this framework is the ability to handle dynamic structures where the presence, size, or repetition of a field depends on the value of previously parsed data.
+            A key requirement of the Hexplain framework is handling dynamic structures where the presence, size, count, offset, or type of a field depends on previously parsed data. HEL provides a concise, unambiguous syntax for these expressions. Design goals: <b>simplicity</b>, <b>clarity</b>, and <b>grounding</b> in stable standards (JSON-LD name resolution, XPath operator semantics).
         </p>
-        <p>
-            The Hexplain Expression Language (HEL) provides a concise and unambiguous syntax for these conditions. Its design goals are:
-        </p>
-        <ul>
-            <li><b>Simplicity:</b> The language should be small and easy to learn for anyone familiar with modern programming languages.</li>
-            <li><b>Clarity:</b> Expressions should be readable and their intent should be obvious.</li>
-            <li><b>Standard-Based:</b> The semantics of its operators and data model should be grounded in existing, stable standards like JSON-LD and XPath.</li>
-        </ul>
-        <p>
-            HEL is used exclusively within Hexplain descriptions, typically as the literal value for properties like <code>bddo:repeatUntil</code>, <code>bddo:isPresentIf</code>, and <code>bddo:sizeFromExpression</code>.
-        </p>
+        <p>HEL literals appear as the value of the properties <code>bddo:isPresentIf</code>, <code>bddo:repeatUntil</code>, <code>bddo:sizeFromExpression</code>, <code>bddo:repeatCountFromExpression</code>, <code>bddo:atOffsetFromExpression</code>, <code>bddo:coversExpression</code>, <code>bddo:condition</code>, and <code>hexplain:condition</code>.</p>
         <section>
             <h3>Conformance</h3>
-            <p>
-                The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].
-            </p>
+            <p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].</p>
         </section>
     </section>
 
     <section id="data-model">
         <h2>The Logical Data Model</h2>
         <p>
-            A HEL expression is not evaluated directly against an RDF graph. Instead, it is evaluated against a temporary, in-memory <b>Logical Data Model</b>, referred to as the "parsing context." This model is a simple, hierarchical key-value map, analogous to a JSON object.
+            A HEL expression is evaluated against a temporary, in-memory <b>parsing context</b> — a hierarchical tree that the processor builds as it parses. Each parsed Struct instance is a <b>node</b> whose named children are its fields; each scalar field yields a <b>value node</b>; a repeated field yields an ordered <b>array node</b>.
         </p>
-        <p>
-            The keyword <code>instance</code> is a reserved term in HEL that refers to the root of the current parsing context. The parsing context is constructed by the Hexplain parser as it processes a binary stream.
-        </p>
-
         <section>
-            <h3>Context-Based Key Resolution</h3>
-            <p>
-                The keys in the Logical Data Model are simple strings (e.g., <code>"ChunkType"</code>). These simple keys are unambiguously mapped to their full URIs via a context, which is defined by the <code>@prefix</code> declarations in the Hexplain description file. This mechanism is directly inspired by [[JSON-LD]].
-            </p>
+            <h3>Reserved Roots</h3>
+            <p>An expression is attached to a specific description element (a Field, a DataTypeRule, a MappingRule, or a Checksum). Evaluation resolves the following reserved roots relative to that element:</p>
+            <table class="simple">
+                <thead><tr><th>Root</th><th>Denotes</th></tr></thead>
+                <tbody>
+                    <tr><td><code>instance</code></td><td><b>The current node</b> — the parsed node the expression is attached to (its Field, or the Struct/Field a rule governs). This replaces the earlier ambiguous "root of the context" wording.</td></tr>
+                    <tr><td><code>parent</code></td><td>Shorthand for <code>instance.parent</code>: the containing Struct node. Sibling fields are reached via <code>parent.SiblingName</code> (equivalently <code>instance.parent.SiblingName</code>).</td></tr>
+                    <tr><td><code>root</code></td><td>The top-level parsed instance (the outermost Struct of the description).</td></tr>
+                    <tr><td><code>self</code></td><td>Within a <code>bddo:repeatUntil</code> expression, the array element most recently parsed (the one under test). Undefined elsewhere.</td></tr>
+                    <tr><td><code>stream</code></td><td>Stream metadata: <code>stream.length</code>, <code>stream.position</code>, <code>stream.remaining</code> (all byte counts, integers).</td></tr>
+                </tbody>
+            </table>
         </section>
         <section>
-            <h3>Hierarchical Context and the `parent` Keyword</h3>
-            <p>
-                The parsing context is hierarchical. The special identifier <code>parent</code> can be used within an accessor to navigate to the containing structure in the logical model. This allows an expression to reference sibling fields or attributes of the parent struct. For example, <code>instance.parent.siblingField</code>.
-            </p>
+            <h3>Context-Based Key Resolution</h3>
+            <p>Identifiers after a dot are simple keys (e.g. <code>ChunkType</code>). They resolve to full IRIs via the <code>@prefix</code> context of the Hexplain description, exactly as in [[JSON-LD]]. A key MUST correspond to a field defined in the referenced Struct, or to the keyword <code>parent</code>.</p>
         </section>
     </section>
 
     <section id="syntax">
         <h2>Syntax and Grammar</h2>
-        <p>A HEL expression is a string literal that conforms to the grammar defined in this section.</p>
-
         <section>
             <h3>Formal Grammar (ABNF)</h3>
-            <p>The following grammar, specified in Augmented Backus-Naur Form [[RFC5234]], defines the HEL syntax.</p>
+            <p>The following grammar [[RFC5234]] defines HEL. Operators are listed lowest-precedence first.</p>
             <pre class="abnf">
-Expression      = LogicalTerm *( WS "or" WS LogicalTerm )
-LogicalTerm     = ComparisonTerm *( WS "and" WS ComparisonTerm )
-ComparisonTerm  = AdditiveExpr [ WS ( "==" / "!=" / "&lt;" / "&gt;" / "&lt;=" / "&gt;=" ) WS AdditiveExpr ]
-AdditiveExpr    = MultiplicativeExpr *( WS ( "+" / "-" ) WS MultiplicativeExpr )
-MultiplicativeExpr = PrimaryExpr *( WS ( "*" / "/" ) WS PrimaryExpr )
+Expression   = OrExpr
+OrExpr       = AndExpr *( WS "or" WS AndExpr )
+AndExpr      = NotExpr *( WS "and" WS NotExpr )
+NotExpr      = [ "not" WS ] Comparison
+Comparison   = BitOrExpr [ WS CompOp WS BitOrExpr ]
+BitOrExpr    = BitXorExpr *( WS "|" WS BitXorExpr )
+BitXorExpr   = BitAndExpr *( WS "^" WS BitAndExpr )
+BitAndExpr   = ShiftExpr  *( WS "&" WS ShiftExpr )
+ShiftExpr    = AddExpr    *( WS ( "&lt;&lt;" / "&gt;&gt;" ) WS AddExpr )
+AddExpr      = MulExpr    *( WS ( "+" / "-" ) WS MulExpr )
+MulExpr      = Unary      *( WS ( "*" / "/" / "%" ) WS Unary )
+Unary        = [ "-" / "~" ] Primary
+Primary      = FunctionCall / Accessor / Literal / ( "(" WS Expression WS ")" )
 
-PrimaryExpr     = Accessor / Literal / ( "(" WS Expression WS ")" )
+FunctionCall = FunctionName "(" WS [ Expression *( WS "," WS Expression ) ] WS ")"
+FunctionName = "sizeof" / "len" / "count" / "eof"
 
-Accessor        = "instance" *( "." ( "parent" / IDENTIFIER ) )
-Literal         = StringLiteral / IntegerLiteral / BooleanLiteral
+Accessor     = Root *( "." ( "parent" / IDENTIFIER ) )
+Root         = "instance" / "parent" / "root" / "self" / "stream"
 
-StringLiteral   = %x27 *( CHAR ) %x27 ; single-quoted string
-IntegerLiteral  = 1*DIGIT
-BooleanLiteral  = "true" / "false"
-
-IDENTIFIER      = ALPHA *( ALPHA / DIGIT / "_" )
-CHAR            = %x20-26 / %x28-7E ; Any character except single quote
-WS              = *( %x20 / %x09 ) ; Whitespace (space or tab)
+CompOp       = "==" / "!=" / "&lt;=" / "&gt;=" / "&lt;" / "&gt;"
+Literal      = StringLiteral / HexLiteral / IntegerLiteral / BooleanLiteral
+StringLiteral= %x27 *( SChar / Escape ) %x27       ; single-quoted
+Escape       = "\" ( %x27 / "\" )                  ; \' or \\
+SChar        = %x20-26 / %x28-5B / %x5D-7E          ; any char except ' and \
+HexLiteral   = "0x" 1*HEXDIG
+IntegerLiteral = 1*DIGIT
+BooleanLiteral = "true" / "false"
+IDENTIFIER   = ALPHA *( ALPHA / DIGIT / "_" )
+WS           = *( %x20 / %x09 )
             </pre>
         </section>
-
         <section>
-            <h3>Accessors</h3>
-            <p>
-                Values from the logical model are accessed using dot-notation, starting with the <code>instance</code> keyword. The identifier following a dot MUST correspond to a key in the logical model, or be the special keyword <code>parent</code>.
-            </p>
+            <h3>Accessors &amp; Functions</h3>
             <pre class="example">
 instance.FieldName
-instance.Header.Version
-instance.parent.siblingField
+instance.parent.Version
+parent.ChunkType                  ; equivalent to instance.parent.ChunkType
+root.Header.Magic
+stream.remaining
+sizeof(instance.parent.Keyword)   ; byte length of a parsed field
+len(instance.parent.Entries)      ; number of elements in an array
+eof()                             ; true when the cursor is at end of stream
             </pre>
+            <table class="simple">
+                <caption>Functions</caption>
+                <thead><tr><th>Function</th><th>Result</th></tr></thead>
+                <tbody>
+                    <tr><td><code>sizeof(accessor)</code></td><td>Byte length of the parsed field or struct referenced.</td></tr>
+                    <tr><td><code>len(accessor)</code>, <code>count(accessor)</code></td><td>Number of elements of an array node, or characters of a string.</td></tr>
+                    <tr><td><code>eof()</code></td><td>Boolean: <code>true</code> if the parse cursor is at end of stream.</td></tr>
+                </tbody>
+            </table>
         </section>
-
         <section>
             <h3>Operators</h3>
-            <p>
-                HEL supports comparison, logical, and arithmetic operators. The semantics of these operators are defined to be identical to their counterparts in [[xpath-functions-31]].
-            </p>
             <table class="simple">
-                <caption>Comparison & Logical Operators</caption>
-                <thead><tr><th>Operator</th><th>Description</th></tr></thead>
+                <thead><tr><th>Group</th><th>Operators</th></tr></thead>
                 <tbody>
-                    <tr><td><code>==</code>, <code>!=</code></td><td>Equality and Inequality</td></tr>
-                    <tr><td><code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code></td><td>Numeric Comparison</td></tr>
-                    <tr><td><code>and</code>, <code>or</code></td><td>Logical AND and OR</td></tr>
+                    <tr><td>Comparison</td><td><code>==</code> <code>!=</code> <code>&lt;</code> <code>&gt;</code> <code>&lt;=</code> <code>&gt;=</code></td></tr>
+                    <tr><td>Logical</td><td><code>and</code> <code>or</code> <code>not</code></td></tr>
+                    <tr><td>Arithmetic</td><td><code>+</code> <code>-</code> <code>*</code> <code>/</code> <code>%</code></td></tr>
+                    <tr><td>Bitwise</td><td><code>&amp;</code> <code>|</code> <code>^</code> <code>~</code> <code>&lt;&lt;</code> <code>&gt;&gt;</code></td></tr>
                 </tbody>
             </table>
-            <table class="simple">
-                <caption>Arithmetic Operators</caption>
-                <thead><tr><th>Operator</th><th>Description</th></tr></thead>
-                <tbody>
-                    <tr><td><code>+</code>, <code>-</code></td><td>Addition and Subtraction</td></tr>
-                    <tr><td><code>*</code>, <code>/</code></td><td>Multiplication and Division</td></tr>
-                </tbody>
-            </table>
+            <p>Comparison and arithmetic operator semantics follow their counterparts in [[xpath-functions-31]]. Bitwise operators operate on integer values using two's-complement semantics at the operand's bit width.</p>
         </section>
     </section>
 
@@ -149,55 +149,52 @@ instance.parent.siblingField
         <h2>Evaluation Semantics</h2>
         <section>
             <h3>Operator Precedence</h3>
-            <p>
-                HEL defines a clear operator precedence to ensure unambiguous evaluation.
-            </p>
-            <ol>
-                <li><b>Grouping:</b> Expressions within parentheses <code>()</code> are evaluated first.</li>
-                <li><b>Multiplication & Division:</b> <code>*</code> and <code>/</code> are evaluated next.</li>
-                <li><b>Addition & Subtraction:</b> <code>+</code> and <code>-</code> are evaluated after multiplication/division.</li>
-                <li><b>Comparisons:</b> All comparison operators (<code>==</code>, <code>!=</code>, etc.) are evaluated after arithmetic.</li>
-                <li><b>Logical AND:</b> The <code>and</code> operator is evaluated after comparisons.</li>
-                <li><b>Logical OR:</b> The <code>or</code> operator is evaluated last.</li>
-            </ol>
-            <p>Within the same precedence level, evaluation proceeds from left to right.</p>
+            <p>From highest to lowest: grouping <code>()</code> and function calls; unary <code>-</code>/<code>~</code>; <code>* / %</code>; <code>+ -</code>; shifts <code>&lt;&lt; &gt;&gt;</code>; bitwise <code>&amp;</code>; bitwise <code>^</code>; bitwise <code>|</code>; comparisons; <code>not</code>; <code>and</code>; <code>or</code>. Within one level, evaluation is left to right.</p>
         </section>
         <section>
-            <h3>Type System</h3>
-            <p>
-                Arithmetic operations MUST be performed on numeric types. An operation involving a non-numeric type is an error. Comparison operations follow the rules defined in the previous version of this specification.
-            </p>
+            <h3>Value Types</h3>
+            <p>Every HEL value is one of: <b>Integer</b>, <b>Float</b>, <b>Boolean</b>, <b>String</b>, <b>Bytes</b>, or <b>Null</b> (an absent/optional field). A field's parsed value takes the natural HEL type of its <code>bddo:DataType</code> (integer types → Integer, float types → Float, <code>bddo:string</code> → String, <code>bddo:bytes</code> → Bytes).</p>
+        </section>
+        <section>
+            <h3>Type Coercion &amp; Comparison Rules</h3>
+            <p>These rules are normative and resolve the comparisons used throughout Hexplain (e.g. comparing a 4-byte <code>ChunkType</code> to <code>'IHDR'</code>):</p>
+            <ul>
+                <li><b>Arithmetic / bitwise</b> operands MUST be numeric. Mixing Integer and Float promotes to Float. Bitwise operators require Integer operands. A non-numeric operand is an error.</li>
+                <li><b>Bytes vs. String.</b> When one operand is Bytes and the other is a String literal, the Bytes value is decoded to a String using the field's <code>bddo:encoding</code> (default <code>bddo:utf8</code>) before comparison. Equality holds iff the decoded strings are code-point-identical.</li>
+                <li><b>String vs. String</b> compares by Unicode code point; <code>&lt; &gt; &lt;= &gt;=</code> use code-point order.</li>
+                <li><b>Integer vs. Float</b> compares by numeric value.</li>
+                <li><b>Null.</b> An access to an absent optional field yields Null. <code>Null == Null</code> is <code>true</code>; any other comparison with Null is <code>false</code>; arithmetic with Null is an error.</li>
+                <li>Comparing values of otherwise incompatible types (e.g. Boolean vs. Integer) is an error.</li>
+            </ul>
         </section>
     </section>
 
     <section id="conformance">
         <h2>Conformance</h2>
-        <p>
-            A conforming HEL implementation MUST:
-        </p>
+        <p>A conforming HEL implementation MUST:</p>
         <ol>
-            <li>Implement a parser that correctly parses all valid expressions according to the ABNF grammar.</li>
-            <li>Correctly implement the hierarchical parsing context, including the <code>instance</code> and <code>parent</code> keywords.</li>
-            <li>Implement all specified operators with the correct precedence and type rules.</li>
-            <li>Yield a single boolean result for expressions in a boolean context (e.g., <code>bddo:isPresentIf</code>) and a numeric result for expressions in a numeric context (e.g., <code>bddo:sizeFromExpression</code>).</li>
+            <li>Parse all valid expressions per the ABNF grammar.</li>
+            <li>Implement the parsing context and all reserved roots (<code>instance</code>, <code>parent</code>, <code>root</code>, <code>self</code>, <code>stream</code>).</li>
+            <li>Implement all operators and functions with the specified precedence, and the value-type and coercion rules.</li>
+            <li>Yield a Boolean in a boolean context (e.g. <code>bddo:isPresentIf</code>, <code>bddo:repeatUntil</code>, conditions) and an Integer in a numeric context (e.g. <code>bddo:sizeFromExpression</code>, <code>bddo:repeatCountFromExpression</code>, <code>bddo:atOffsetFromExpression</code>).</li>
+            <li>Report a runtime error (rather than silently continue) on type errors, division/modulo by zero, and references to undefined names.</li>
         </ol>
     </section>
-    
+
     <section id="examples" class="introductory">
         <h2>Examples</h2>
         <dl>
-            <dt>Referencing Sibling Fields</dt>
-            <dd>
-                Used in a conditional semantic mapping. This expression checks the value of the <code>Keyword</code> field, which is a sibling to the field this expression is attached to.
-                <pre>hexplain:condition "instance.parent.Keyword == 'Title'"</pre>
-            </dd>
-            <dt>Dynamic Sizing with Expressions</dt>
-            <dd>
-                Used to calculate the size of a field based on other fields in the parent structure. The expression MUST evaluate to an integer.
-                <pre>bddo:sizeFromExpression "instance.parent.totalSize - instance.parent.headerSize"</pre>
-            </dd>
+            <dt>Sibling reference (conditional mapping)</dt>
+            <dd><pre>hexplain:condition "instance.parent.Keyword == 'Title'"</pre></dd>
+            <dt>Dynamic sizing with <code>sizeof</code></dt>
+            <dd><pre>bddo:sizeFromExpression "instance.parent.ChunkLength - (sizeof(instance.parent.Keyword) + 1)"</pre></dd>
+            <dt>Bit-mask (IPv4 header length in bytes)</dt>
+            <dd><pre>bddo:sizeFromExpression "(instance.parent.VersionIHL &amp; 0x0F) * 4"</pre></dd>
+            <dt>Repeat until end of stream</dt>
+            <dd><pre>bddo:repeatUntil "eof()"</pre></dd>
+            <dt>Count-driven presence</dt>
+            <dd><pre>bddo:isPresentIf "instance.parent.Flags &amp; 0x01 == 0x01"</pre></dd>
         </dl>
     </section>
-
 </body>
 </html>

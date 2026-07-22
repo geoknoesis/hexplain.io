@@ -1,0 +1,72 @@
+# Hexplain Geospatial Vocabulary (GV) 1.3 — vocabulary + SHACL shapes
+@prefix :       <https://hexplain.io/ns/geo#> .
+@prefix gv:     <https://hexplain.io/ns/geo#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix dlv:    <https://hexplain.io/ns/dlv#> .
+@prefix bddo:   <https://hexplain.io/ns/bddo#> .
+@prefix geosparql: <http://www.opengis.net/ont/geosparql#> .
+@prefix sosa:   <http://www.w3.org/ns/sosa/> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/geo> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/geo/1.3> ; owl:versionInfo "1.3" ;
+    rdfs:label "Hexplain Geospatial Vocabulary (GV)" ;
+    rdfs:comment "Semantic vocabulary for geospatial and geointelligence data." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "gv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/geo#" .
+
+:GeospatialDataset a owl:Class ; rdfs:label "Geospatial Dataset" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; skos:closeMatch geosparql:Feature .
+:RasterDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Raster Dataset" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> .
+:VectorDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Vector Dataset" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> .
+:PointCloud a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Point Cloud" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> .
+:CoordinateReferenceSystem a owl:Class ; rdfs:label "Coordinate Reference System" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> .
+:GeoTransform a owl:Class ; rdfs:label "GeoTransform" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> .
+:AcquisitionInfo a owl:Class ; rdfs:label "Acquisition Info" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; skos:closeMatch prov:Activity .
+:SensorModel a owl:Class ; rdfs:label "Sensor Model" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; skos:closeMatch sosa:Sensor .
+:Platform a owl:Class ; rdfs:label "Platform" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; skos:closeMatch sosa:Platform .
+
+:wktString a owl:DatatypeProperty ; rdfs:label "WKT string" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; skos:closeMatch geosparql:asWKT ; rdfs:range xsd:string .
+:epsgCode a owl:DatatypeProperty ; rdfs:label "EPSG code" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; rdfs:range xsd:positiveInteger .
+:originLongitude a owl:DatatypeProperty ; rdfs:label "origin longitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; rdfs:range xsd:double .
+:originLatitude a owl:DatatypeProperty ; rdfs:label "origin latitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; rdfs:range xsd:double .
+:pixelRegistration a owl:ObjectProperty ; rdfs:label "pixel registration" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> .
+:scaleX a owl:DatatypeProperty ; rdfs:label "X scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; rdfs:range xsd:double .
+:scaleY a owl:DatatypeProperty ; rdfs:label "Y scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; rdfs:range xsd:double .
+:noDataValue a owl:DatatypeProperty ; rdfs:label "no-data value" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> .
+:pointCount a owl:DatatypeProperty ; rdfs:label "point count" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; rdfs:range xsd:unsignedLong .
+:pointDataLayout a owl:ObjectProperty ; rdfs:label "point data layout" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; rdfs:range bddo:Struct .
+:acquisitionTime a owl:DatatypeProperty ; rdfs:label "acquisition time" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; skos:closeMatch prov:endedAtTime ; rdfs:range xsd:dateTime .
+:platformName a owl:DatatypeProperty ; rdfs:label "platform name" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; rdfs:range xsd:string .
+:sensorType a owl:DatatypeProperty ; rdfs:label "sensor type" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; rdfs:range xsd:string .
+:classificationLevel a owl:DatatypeProperty ; rdfs:label "classification level" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ; rdfs:range xsd:string .
+
+:PixelCorner a owl:NamedIndividual ; rdfs:label "Pixel Corner Registration" .
+:PixelCenter a owl:NamedIndividual ; rdfs:label "Pixel Center Registration" .
+:axisLatitude a dlv:Axis ; rdfs:label "Latitude Axis" ; rdfs:seeAlso dlv:axisY .
+:axisLongitude a dlv:Axis ; rdfs:label "Longitude Axis" ; rdfs:seeAlso dlv:axisX .
+:axisElevation a dlv:Axis ; rdfs:label "Elevation Axis" ; rdfs:seeAlso dlv:axisZ .
+:axisPoint a dlv:Axis ; rdfs:label "Point Axis" .
+
+# ---------- SHACL ----------
+gv:CrsShape a sh:NodeShape ; sh:targetSubjectsOf gv:wktString ;
+    sh:property [ sh:path gv:wktString ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path gv:epsgCode ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+gv:OriginShape a sh:NodeShape ; sh:targetSubjectsOf gv:originLatitude ;
+    sh:property [ sh:path gv:originLatitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path gv:originLongitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] .
+gv:PixelRegistrationShape a sh:NodeShape ; sh:targetSubjectsOf gv:pixelRegistration ;
+    sh:property [ sh:path gv:pixelRegistration ; sh:maxCount 1 ; sh:in ( gv:PixelCorner gv:PixelCenter ) ] .
+gv:PointCloudShape a sh:NodeShape ; sh:targetSubjectsOf gv:pointCount ;
+    sh:property [ sh:path gv:pointCount ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path gv:pointDataLayout ; sh:class bddo:Struct ; sh:maxCount 1 ] .
+gv:AcquisitionShape a sh:NodeShape ; sh:targetSubjectsOf gv:acquisitionTime ;
+    sh:property [ sh:path gv:acquisitionTime ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
+    sh:property [ sh:path gv:platformName ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path gv:sensorType ; sh:datatype xsd:string ] .

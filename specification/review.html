@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hexplain Ontology Family — Engineering & Ontology-Design Review</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1f2b;
+    --muted: #5b6472;
+    --border: #e2e6ec;
+    --card: #f7f9fc;
+    --code-bg: #f3f5f8;
+    --link: #2456c7;
+    --accent: #2456c7;
+    --blocker-bg: #fdecea; --blocker-fg: #a11b0e; --blocker-bd: #f2b8b1;
+    --major-bg: #fff4e5;   --major-fg: #9a5b00;   --major-bd: #f4d29a;
+    --minor-bg: #fffbe6;   --minor-fg: #7a6a00;   --minor-bd: #eadf9a;
+    --good-bg: #e9f7ef;    --good-fg: #1a7a45;    --good-bd: #b7e2c8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1420; --fg: #e6e9ef; --muted: #9aa4b2; --border: #26304a;
+      --card: #161d2e; --code-bg: #131a29; --link: #7aa2ff; --accent: #7aa2ff;
+      --blocker-bg: #2a1512; --blocker-fg: #ff9c8f; --blocker-bd: #5a241d;
+      --major-bg: #2a2010; --major-fg: #ffc470; --major-bd: #5a4419;
+      --minor-bg: #262208; --minor-fg: #e8d878; --minor-bd: #4d451a;
+      --good-bg: #10261a; --good-fg: #7fe0a6; --good-bd: #1f4d33;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.62 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 24px 96px; }
+  header.doc {
+    border-bottom: 3px solid var(--accent); padding-bottom: 22px; margin-bottom: 8px;
+  }
+  header.doc h1 { font-size: 1.9rem; line-height: 1.25; margin: 0 0 10px; letter-spacing: -0.01em; }
+  .meta { color: var(--muted); font-size: 0.9rem; }
+  .meta b { color: var(--fg); font-weight: 600; }
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 4px 24px; margin-top: 10px; }
+  h2 { font-size: 1.35rem; margin: 44px 0 12px; padding-top: 10px; letter-spacing: -0.01em; }
+  h3 { font-size: 1.05rem; margin: 26px 0 6px; }
+  p { margin: 10px 0; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    font-family: "SF Mono", ui-monospace, "Cascadia Code", "Consolas", monospace;
+    font-size: 0.86em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px; overflow-x: auto; font-size: 0.82rem; line-height: 1.5;
+    font-family: "SF Mono", ui-monospace, "Cascadia Code", "Consolas", monospace;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.9rem; display: block; overflow-x: auto; }
+  th, td { border: 1px solid var(--border); padding: 7px 11px; text-align: left; vertical-align: top; }
+  th { background: var(--card); font-weight: 600; }
+  .lead { font-size: 1.05rem; color: var(--fg); }
+  .callout {
+    background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+    border-radius: 8px; padding: 14px 18px; margin: 18px 0;
+  }
+  .badge {
+    display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.03em;
+    padding: 2px 8px; border-radius: 999px; border: 1px solid; text-transform: uppercase;
+    vertical-align: middle; white-space: nowrap;
+  }
+  .b-blocker { background: var(--blocker-bg); color: var(--blocker-fg); border-color: var(--blocker-bd); }
+  .b-major   { background: var(--major-bg);   color: var(--major-fg);   border-color: var(--major-bd); }
+  .b-minor   { background: var(--minor-bg);   color: var(--minor-fg);   border-color: var(--minor-bd); }
+  .b-good    { background: var(--good-bg);    color: var(--good-fg);    border-color: var(--good-bd); }
+  .finding { border: 1px solid var(--border); border-radius: 10px; padding: 4px 20px 14px; margin: 16px 0; background: var(--bg); }
+  .finding > h3 { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .finding .num { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .fix { margin-top: 8px; }
+  .fix::before { content: "→ Fix: "; font-weight: 700; color: var(--good-fg); }
+  ul, ol { margin: 10px 0; padding-left: 24px; }
+  li { margin: 5px 0; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; margin: 22px 0; }
+  .toc ol { columns: 2; column-gap: 32px; margin: 6px 0 0; }
+  @media (max-width: 640px) { .toc ol { columns: 1; } }
+  .toc a { color: var(--fg); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 10px 0 0; }
+  .ok { color: var(--good-fg); font-weight: 700; }
+  .bad { color: var(--blocker-fg); font-weight: 700; }
+  .warn { color: var(--major-fg); font-weight: 700; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); padding-top: 18px; margin-top: 40px; }
+  .disclaimer { font-size: 0.82rem; color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <h1>Hexplain Ontology Family<br>Engineering &amp; Ontology-Design Review</h1>
+  <div class="meta">
+    <div class="meta-grid">
+      <div><b>Subject:</b> Hexplain Standard specification set (10 documents)</div>
+      <div><b>Scope:</b> gaps, design, ontology best practice, implementability</div>
+      <div><b>Date:</b> 2026-07-21</div>
+      <div><b>Reviewer:</b> Claude (Opus 4.8)</div>
+      <div><b>Status:</b> Advisory review — not endorsed by any standards body</div>
+      <div><b>Sources reviewed:</b> BDDO, Core, DLV, HEL, IDV, GV, NPV, ADV, DFV, Index</div>
+    </div>
+  </div>
+</header>
+
+<p class="disclaimer">This document reviews the specifications as published in <code>specification/</code>. Line references link to the corresponding source files.</p>
+
+<div class="callout" style="border-left-color: var(--good-fg); background: var(--good-bg);">
+  <b>Status update — all findings resolved.</b> The issues below have since been fixed across the family (BDDO 1.4, Core 1.2, DLV 1.3, HEL 2.0, hardened domain vocabularies, a new Video and Archive vocabulary, a new <a href="processing/index.html">Processing Model</a> spec, and dereferenceable <code>.ttl</code> artifacts). Constraints now live in SHACL (no <code>rdfs:domain</code>/<code>rdfs:range</code>), and all Turtle/SHACL/JSON-LD has been validated with <code>rdflib</code> and <code>pyshacl</code>. This review is retained as the historical audit; the <code>file:line</code> references point to the pre-fix versions and are no longer exact.</div>
+
+<div class="callout">
+  <b>Severity legend</b>
+  <div class="legend">
+    <span><span class="badge b-blocker">Blocker</span> broken, contradictory, or logically incorrect — fix first</span>
+    <span><span class="badge b-major">Major</span> substantive design / correctness / implementability gap</span>
+    <span><span class="badge b-minor">Minor</span> polish, hygiene, consistency</span>
+    <span><span class="badge b-good">Keep</span> sound decision worth preserving</span>
+  </div>
+</div>
+
+<h2 id="summary">Executive summary</h2>
+<p class="lead">
+  The layered architecture (physical → layout → semantic, joined by a thin "glue" module) is a sound design, and the choice of RDF/OWL/SHACL/JSON-LD is right. But the family is <b>not yet publishable or implementable as it stands</b>. Four of seven domain-vocabulary links are broken, two advertised vocabularies do not exist, two normative artifacts contain logic bugs, several terms used throughout the examples are never defined, and — most importantly for the stated goal of "parse <em>any</em> data structure" — the physical model cannot express offsets/pointers, bitfields, count-based arrays, or a processing model. The good news: every issue below is fixable without disturbing the architecture's spine.
+</p>
+
+<div class="toc">
+  <b>Findings</b>
+  <ol>
+    <li><a href="#f1">Scrambled vocab files &amp; dead navigation</a></li>
+    <li><a href="#f2"><code>bddo:dataType</code> declared twice</a></li>
+    <li><a href="#f3"><code>sizeFromExpression</code> undefined</a></li>
+    <li><a href="#f4"><code>hasDataLayout</code> missing from Core</a></li>
+    <li><a href="#f5">DLV <code>sh:xone</code> can never pass</a></li>
+    <li><a href="#f6">No offset / pointer / seek</a></li>
+    <li><a href="#f7">No bitfields</a></li>
+    <li><a href="#f8">No count-based repetition</a></li>
+    <li><a href="#f9">No EOF / rest-of-stream</a></li>
+    <li><a href="#f10"><code>encoding</code> described, not defined</a></li>
+    <li><a href="#f11">Checksums promised, not modeled</a></li>
+    <li><a href="#f12">Dispatch is Struct-only</a></li>
+    <li><a href="#f13">No enumerations / value maps</a></li>
+    <li><a href="#f14">HEL under-specified</a></li>
+    <li><a href="#f15">No Processing Model spec</a></li>
+    <li><a href="#f16">Formal ontology weaker than prose</a></li>
+    <li><a href="#f17"><code>rdfs:Class</code> vs <code>owl:Class</code></a></li>
+    <li><a href="#f18">Annotation-property metamodeling</a></li>
+    <li><a href="#f19">SHOULD vs MUST mismatch</a></li>
+    <li><a href="#f20">Base-type double-typing</a></li>
+    <li><a href="#f21">Duplicated axes</a></li>
+    <li><a href="#f22">Endianness modeled twice</a></li>
+    <li><a href="#f23">Reuse external vocabularies</a></li>
+    <li><a href="#f24">Missing ontology metadata</a></li>
+    <li><a href="#f25">No dereferenceable artifacts</a></li>
+  </ol>
+</div>
+
+<h2 id="map">Document map — what's actually there</h2>
+<p>The family <em>advertises</em> a core, a layout vocabulary, an expression language, and seven domain vocabularies. The <em>published</em> reality:</p>
+<table>
+  <thead>
+    <tr><th>Directory</th><th>Actual content (from <code>&lt;title&gt;</code>)</th><th>Linked in index as</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><a href="bddo/index.html">bddo/</a></td><td>BDDO (physical) v1.3</td><td>BDDO</td><td class="ok">OK</td></tr>
+    <tr><td><a href="hexplain/index.html">hexplain/</a></td><td>Hexplain Core v1.1</td><td>Core</td><td class="ok">OK</td></tr>
+    <tr><td><a href="dlv/index.html">dlv/</a></td><td>Data Layout v1.2</td><td>DLV</td><td class="ok">OK</td></tr>
+    <tr><td><a href="hel/index.html">hel/</a></td><td>Expression Language v1.2</td><td><em>not linked</em></td><td class="warn">not linked</td></tr>
+    <tr><td><a href="idv/index.html">idv/</a></td><td>Image (IDV) v1.0</td><td>IDV</td><td class="ok">OK</td></tr>
+    <tr><td><a href="gv/index.html">gv/</a></td><td>Geospatial (GV) v1.2</td><td>GV</td><td class="ok">OK</td></tr>
+    <tr><td><a href="npv/index.html">npv/</a></td><td>Network (NPV) v1.0</td><td>NPV</td><td class="ok">OK</td></tr>
+    <tr><td><a href="axv/index.html">axv/</a></td><td><b>Audio (ADV)</b> v1.0</td><td>"Archive (AXV)"</td><td class="bad">wrong</td></tr>
+    <tr><td><a href="vdv/index.html">vdv/</a></td><td><b>Document &amp; Font (DFV)</b> v1.1</td><td>"Video (VDV)"</td><td class="bad">wrong</td></tr>
+    <tr><td>—</td><td><em>nothing</em></td><td>Audio → <code>adv/</code></td><td class="bad">404</td></tr>
+    <tr><td>—</td><td><em>nothing</em></td><td>DocFont → <code>dfv/</code></td><td class="bad">404</td></tr>
+  </tbody>
+</table>
+<p>
+  Net effect: Audio and Document/Font are unreachable at their advertised paths, <b>Video and Archive do not exist anywhere</b>, and HEL — a normative dependency of BDDO — is absent from the index.
+</p>
+
+<hr>
+
+<h2 id="blockers">Blockers — broken or logically incorrect</h2>
+
+<div class="finding" id="f1">
+  <h3><span class="num">1.</span> Scrambled vocabulary files &amp; dead navigation <span class="badge b-blocker">Blocker</span></h3>
+  <p><a href="axv/index.html">axv/index.html</a> contains the <b>Audio</b> vocabulary; <a href="vdv/index.html">vdv/index.html</a> contains the <b>Document &amp; Font</b> vocabulary. The <a href="index.html">index</a> links <code>adv/index.html</code> and <code>dfv/index.html</code> (which don't exist) and labels <code>vdv</code>/<code>axv</code> as Video/Archive (which don't exist either).</p>
+  <p class="fix">Rename <code>axv/</code>→<code>adv/</code> and <code>vdv/</code>→<code>dfv/</code>; correct the module list in the index; link HEL; and either author the Video/Archive specs or remove them from the advertised family until they exist.</p>
+</div>
+
+<div class="finding" id="f2">
+  <h3><span class="num">2.</span> <code>bddo:dataType</code> is declared twice with conflicting domain/range <span class="badge b-blocker">Blocker</span></h3>
+  <p>In <a href="bddo/index.html#L212-L223">bddo/index.html:212–223</a>:</p>
+  <pre><code>:dataType a owl:ObjectProperty ; rdfs:domain :Field ;        rdfs:range [ owl:unionOf ( :DataType :Struct ) ] .
+:dataType a owl:ObjectProperty ; rdfs:domain :DataTypeRule ; rdfs:range :Struct .</code></pre>
+  <p><code>rdfs:domain</code>/<code>rdfs:range</code> are <b>conjunctive</b>, not alternative. This entails that anything carrying <code>bddo:dataType</code> is simultaneously a <code>Field</code> <em>and</em> a <code>DataTypeRule</code>, and its object is both a <code>Struct</code> and a member of the union — a genuine logical defect.</p>
+  <p class="fix">Give the rule its own predicate (e.g. <code>bddo:ruleDataType</code>), or model the rule's target without redeclaring <code>dataType</code>.</p>
+</div>
+
+<div class="finding" id="f3">
+  <h3><span class="num">3.</span> <code>bddo:sizeFromExpression</code> is used everywhere but never defined <span class="badge b-blocker">Blocker</span></h3>
+  <p>HEL's intro (<a href="hel/index.html#L49">hel:49</a>), the DLV example (<a href="dlv/index.html#L225">dlv:225</a>), and the Core example (<a href="hexplain/index.html#L230">hexplain:230</a>) all rely on <code>bddo:sizeFromExpression</code>, but BDDO's normative ontology only defines <code>bddo:size</code> and <code>bddo:sizeFromField</code>. The most important dynamic-sizing primitive is missing from the ontology it belongs to.</p>
+  <p class="fix">Add <code>bddo:sizeFromExpression</code> as a datatype property (range <code>xsd:string</code>, HEL-valued) to BDDO, and add SHACL so a field has at most one sizing mechanism.</p>
+</div>
+
+<div class="finding" id="f4">
+  <h3><span class="num">4.</span> <code>hexplain:hasDataLayout</code> is claimed to be Core but isn't in Core <span class="badge b-blocker">Blocker</span></h3>
+  <p>The <a href="index.html#L72">index:72</a> and <a href="dlv/index.html#L77">dlv:77</a> both say <code>hexplain:hasDataLayout</code> comes "from the Hexplain Core ontology," but the Core OWL (<a href="hexplain/index.html#L118-L145">hexplain:118–145</a>) never defines it.</p>
+  <p class="fix">Define it in Core: <code>hexplain:hasDataLayout a owl:ObjectProperty ; rdfs:domain bddo:Field ; rdfs:range dlv:DataLayout .</code></p>
+</div>
+
+<div class="finding" id="f5">
+  <h3><span class="num">5.</span> The DLV <code>sh:xone</code> Dimension shape can never pass <span class="badge b-blocker">Blocker</span></h3>
+  <p>In <a href="dlv/index.html#L162-L165">dlv:162–165</a>:</p>
+  <pre><code>sh:xone (
+    [ sh:path dlv:dimensionSize ]
+    [ sh:path dlv:dimensionSizeFromField ]
+) .</code></pre>
+  <p>Each branch is a property shape with a path but <b>no constraint</b>, so every node conforms to <em>both</em>. <code>sh:xone</code> requires conformance to <em>exactly one</em> → every <code>dlv:Dimension</code> is reported invalid.</p>
+  <p class="fix">Put a real cardinality test in each branch:</p>
+  <pre><code>sh:xone (
+  [ sh:property [ sh:path dlv:dimensionSize ;          sh:minCount 1 ] ]
+  [ sh:property [ sh:path dlv:dimensionSizeFromField ; sh:minCount 1 ] ]
+) .</code></pre>
+</div>
+
+<hr>
+
+<h2 id="impl">Implementability — you cannot yet "parse any data structure"</h2>
+<p>
+  The current model handles <b>sequential, byte-aligned, fixed/chunked</b> formats (WAV, PNG chunks, simple headers) well. It cannot express several constructs that are ubiquitous in real formats — and some of those formats (GeoTIFF, PDF, ZIP) are explicitly advertised.
+</p>
+
+<div class="finding" id="f6">
+  <h3><span class="num">6.</span> No offset / pointer / seek — excludes TIFF, GeoTIFF, ZIP, ELF, PDF xref <span class="badge b-major">Major</span></h3>
+  <p><code>bddo:hasField</code> is a strictly ordered, contiguous list; there is no absolute/relative offset or pointer-follow. Yet GeoTIFF is advertised (<a href="index.html#L109">index:109</a>) and forensic carving of PDF/ZIP is a headline use case. TIFF IFDs <em>are</em> offset tables; ZIP is parsed backward from its End-Of-Central-Directory record. None of this is describable today. This is the single biggest gap for "any data structure."</p>
+  <p class="fix">Add an addressing model: an offset base concept plus properties such as <code>bddo:atAbsoluteOffset</code> / <code>bddo:atRelativeOffset</code> (constant, from-field, or HEL-valued), and a "parse-at" instruction that decouples a struct's position from sequence order.</p>
+</div>
+
+<div class="finding" id="f7">
+  <h3><span class="num">7.</span> No bitfields / sub-byte fields <span class="badge b-major">Major</span></h3>
+  <p><code>bddo:bitWidth</code> exists only on <code>DataType</code> with values 8/16/32/64. There is no way to carve a 4-bit nibble or a single flag bit — so the IPv4 version/IHL nibbles, TCP data-offset + flags, and PNG bit-depth packing are inexpressible, despite NPV's own <code>tcpFlags</code>/IPv4 example.</p>
+  <p class="fix">Add bit-granular field extraction (bit offset + bit length) with a defined bit-order, and endianness-aware bit packing.</p>
+</div>
+
+<div class="finding" id="f8">
+  <h3><span class="num">8.</span> No count-based repetition <span class="badge b-major">Major</span></h3>
+  <p>The only array construct is <code>bddo:repeatUntil</code>. The most common binary-format pattern — <em>"read count N, then N records"</em> — has no <code>repeatCount</code> / <code>repeatCountFromField</code>, and HEL has no index/counter to emulate it. The LAS example reads <code>NumberOfPointRecords</code> (<a href="gv/index.html#L275">gv:275</a>) but nothing expresses "now parse that many point records."</p>
+  <p class="fix">Add <code>bddo:repeatCount</code> and <code>bddo:repeatCountFromField</code> to <code>bddo:Field</code>.</p>
+</div>
+
+<div class="finding" id="f9">
+  <h3><span class="num">9.</span> No EOF / "rest of stream" concept <span class="badge b-major">Major</span></h3>
+  <p>Many formats end with "read until end of file" (trailing chunks, concatenated IDAT, container payloads). There is no <code>sizeToEndOfStream</code> and no stream-length variable in HEL.</p>
+  <p class="fix">Add a rest-of-stream sizing option and expose stream length / current offset to HEL.</p>
+</div>
+
+<div class="finding" id="f10">
+  <h3><span class="num">10.</span> <code>bddo:encoding</code> for strings is described but not defined <span class="badge b-major">Major</span></h3>
+  <p>Core types say <code>string</code> "may have an encoding property" (<a href="bddo/index.html#L130">bddo:130</a>), but no such property exists in the ontology and no allowed-encodings vocabulary is provided.</p>
+  <p class="fix">Define <code>bddo:encoding</code> and an enumeration of encodings (UTF-8, ASCII, UTF-16LE/BE, Latin-1, …).</p>
+</div>
+
+<div class="finding" id="f11">
+  <h3><span class="num">11.</span> Checksums / CRC are promised but not modeled <span class="badge b-major">Major</span></h3>
+  <p>The abstract and the digital-forensics use case (<a href="index.html#L147">index:147</a>) claim integrity validation via checksums, but the only validation primitive is <code>bddo:hasFixedValue</code> (magic numbers). There is no way to declare "this field is a CRC-32 over byte range X." The PNG <code>ChunkCRC</code> in the example is an inert field.</p>
+  <p class="fix">Add a checksum construct (algorithm identifier + covered byte range + stored-value field), or remove the advertised capability.</p>
+</div>
+
+<div class="finding" id="f12">
+  <h3><span class="num">12.</span> Conditional dispatch is Struct-only <span class="badge b-major">Major</span></h3>
+  <p><code>bddo:DataTypeRuleShape</code> forces the dispatched <code>dataType</code> to be a <code>bddo:Struct</code> (<a href="bddo/index.html#L300-L305">bddo:300–305</a>), so you cannot switch a field between two <em>primitives</em> (e.g. uint16 vs uint32 by version byte).</p>
+  <p class="fix">Loosen the rule range to <code>DataType ∪ Struct</code>.</p>
+</div>
+
+<div class="finding" id="f13">
+  <h3><span class="num">13.</span> No enumerations / value maps <span class="badge b-major">Major</span></h3>
+  <p>There is no way to say <code>colorType 0=Grayscale, 2=RGB, 3=Indexed</code>. Conditions compare raw integers, and the generated RDF loses the symbolic meaning. (Kaitai Struct's <code>enums</code> is the reference feature.)</p>
+  <p class="fix">Add an enumeration construct mapping raw values to named/IRI symbols, usable in conditions and emitted into the output graph.</p>
+</div>
+
+<div class="finding" id="f14">
+  <h3><span class="num">14.</span> HEL is under-specified for a conformant implementation <span class="badge b-major">Major</span></h3>
+  <ul>
+    <li><b>Grammar vs. examples conflict.</b> <code>Accessor = "instance" *(…)</code> requires every accessor to start with <code>instance</code>, but <a href="hexplain/index.html#L230">hexplain:230</a> uses <code>parent.ChunkLength</code> (no <code>instance</code>) and <code>instance.Keyword.size</code> (a <code>.size</code> meta-accessor the data model never defines).</li>
+    <li><b>"instance = root" vs <code>instance.parent</code>.</b> The data-model text (<a href="hel/index.html#L65">hel:65</a>) calls <code>instance</code> the <em>root</em>; but <code>instance.parent.X</code> only makes sense if <code>instance</code> is the <em>current</em> node. This ambiguity blocks implementation.</li>
+    <li><b>No value-coercion rules.</b> How does a 4-byte field (<code>ChunkType</code>) compare to the ASCII literal <code>'IHDR'</code>? Undefined — yet this underlies every dispatch condition.</li>
+    <li><b>No current-element reference</b> for <code>repeatUntil</code> (what value is tested each iteration?).</li>
+    <li><b>No bitwise operators, modulo, or functions</b> (length, substring). "IP header length = <code>(byte &amp; 0x0F) * 4</code>" is inexpressible.</li>
+    <li><b>Dangling reference:</b> the Type System section (<a href="hel/index.html#L168">hel:168</a>) defers to "the previous version of this specification," which isn't included.</li>
+  </ul>
+  <p class="fix">Reconcile grammar with examples; define <code>instance</code>/<code>parent</code>/current-element precisely; specify a type-coercion table (bytes↔string↔int↔bool); add bitwise/modulo operators and a small function library; inline the comparison rules.</p>
+</div>
+
+<div class="finding" id="f15">
+  <h3><span class="num">15.</span> No Processing Model spec — the central missing document <span class="badge b-major">Major</span></h3>
+  <p>Hexplain's whole value proposition is "(binary + description) → RDF instance graph," yet no document defines <em>how</em> that graph is produced: parse order, how the parsing context is built, <b>how instance IRIs are minted</b> (essential for the advertised SPARQL queries), what <code>xsd</code> datatype a parsed <code>uint32be</code> becomes as an RDF literal, array/instance identity, and error handling. Without this, two implementations produce different graphs and none of the cross-format SPARQL examples are reproducible.</p>
+  <p class="fix">Author a normative "Hexplain Processing Model" spec covering evaluation order, context construction, IRI minting policy, primitive→<code>xsd</code> literal mapping, and error semantics.</p>
+</div>
+
+<hr>
+
+<h2 id="best">Ontology-engineering best practices</h2>
+
+<div class="finding" id="f16">
+  <h3><span class="num">16.</span> The formal ontologies are far weaker than their own prose <span class="badge b-major">Major</span></h3>
+  <p>In IDV/ADV/NPV/DFV/GV, nearly every property is a bare <code>owl:DatatypeProperty ; rdfs:label "…"</code> with <b>no <code>rdfs:range</code>, no <code>rdfs:domain</code>, no <code>rdfs:comment</code></b> — e.g. <a href="idv/index.html#L150">idv:150</a> <code>:pixelWidth a owl:DatatypeProperty ; rdfs:label "Pixel Width" .</code> The ranges (<code>xsd:positiveInteger</code>, …) live only in the HTML tables, so no reasoner or SHACL engine can enforce them.</p>
+  <p class="fix">Push range/domain/definition into the OWL, and add <code>rdfs:isDefinedBy</code> to every term. Better still, generate the tables <em>from</em> the ontology (single source of truth).</p>
+</div>
+
+<div class="finding" id="f17">
+  <h3><span class="num">17.</span> <code>rdfs:Class</code> vs <code>owl:Class</code> inconsistency <span class="badge b-minor">Minor</span></h3>
+  <p>BDDO and DLV declare classes as <code>rdfs:Class</code>; Core/IDV/GV/DFV/ADV/NPV use <code>owl:Class</code>.</p>
+  <p class="fix">Standardize on <code>owl:Class</code> for OWL-DL consistency across the family.</p>
+</div>
+
+<div class="finding" id="f18">
+  <h3><span class="num">18.</span> Core mapping properties are annotation properties with (inert) domain/range <span class="badge b-major">Major</span></h3>
+  <p><a href="hexplain/index.html#L118-L130">hexplain:119–130</a> declare <code>mapsToClass</code>/<code>mapsToProperty</code>/<code>isEncodedWith</code> as <code>owl:AnnotationProperty</code> <em>and</em> give them <code>rdfs:domain</code>/<code>rdfs:range</code> — which OWL-DL ignores on annotation properties. Meanwhile the parallel <em>conditional</em> mapping (<code>hasConditionalMapping</code>, <code>semanticProperty</code>) is an <code>owl:ObjectProperty</code>. Same concept, two metamodeling treatments.</p>
+  <p class="fix">If the intent is to avoid punning (a <code>Struct</code> individual referencing an <code>owl:Class</code>), document that rationale and adopt OWL 2 punning consistently, rather than mixing annotation and object properties for one concept.</p>
+</div>
+
+<div class="finding" id="f19">
+  <h3><span class="num">19.</span> Prose says SHOULD, SHACL says MUST <span class="badge b-minor">Minor</span></h3>
+  <p><code>mapsToClass</code>'s subject "SHOULD be a <code>bddo:Struct</code>" (<a href="hexplain/index.html#L59">hexplain:59</a>) but <code>MapsToClassShape</code> enforces <code>sh:class bddo:Struct</code> (a hard MUST).</p>
+  <p class="fix">Align the normative language — pick SHOULD (relax the shape to a warning) or MUST (update the prose).</p>
+</div>
+
+<div class="finding" id="f20">
+  <h3><span class="num">20.</span> Base-type modeling is inconsistent and double-typed <span class="badge b-minor">Minor</span></h3>
+  <p>Prose says <code>baseType</code> MUST be one of integer/float/string (<a href="bddo/index.html#L175">bddo:175</a>), but the ontology also defines a fourth, <code>:bytes</code>, and <code>:string</code>/<code>:bytes</code> are each declared <b>both</b> as an <code>owl:NamedIndividual</code> base type <em>and</em> as a <code>:DataType</code> instance (<a href="bddo/index.html#L236-L259">bddo:236–259</a>).</p>
+  <p class="fix">Separate the base-type enum values (e.g. <code>:baseTypeString</code>) from the datatype instances (<code>:string</code>), and reconcile the prose with the four actual base types.</p>
+</div>
+
+<div class="finding" id="f21">
+  <h3><span class="num">21.</span> Redundant / duplicated axes <span class="badge b-minor">Minor</span></h3>
+  <p>DLV defines <code>dlv:axisX/Y/Band</code>; IDV re-defines <code>img:axisX/axisY/axisBand</code> (<a href="idv/index.html#L159-L161">idv:159–161</a>) instead of reusing or subclassing the DLV ones.</p>
+  <p class="fix">Decide the relationship explicitly (reuse, <code>rdfs:subClassOf</code>, or <code>skos:exactMatch</code>) rather than silently duplicating.</p>
+</div>
+
+<div class="finding" id="f22">
+  <h3><span class="num">22.</span> Endianness modeled two ways with two names <span class="badge b-minor">Minor</span></h3>
+  <p><code>bddo:Struct</code> uses <code>bddo:endianness</code>; <code>bddo:DataType</code> uses <code>bddo:hasEndianness</code>. Because every integer primitive is endianness-bound (<code>uint32be</code>/<code>uint32le</code>) with no neutral <code>uint32</code>, the struct-level property has nothing to govern — in the LAS example it is set but unused (<a href="gv/index.html#L282">gv:282</a>).</p>
+  <p class="fix">Either add endianness-neutral primitives that inherit the struct's byte order, or drop struct-level endianness. Unify the property name.</p>
+</div>
+
+<div class="finding" id="f23">
+  <h3><span class="num">23.</span> Reuse established vocabularies (the big interoperability win) <span class="badge b-major">Major</span></h3>
+  <p>The domain vocabs reinvent well-standardized terms, which undercuts the stated interoperability goal:</p>
+  <ul>
+    <li><b>DFV</b> <code>author</code>/<code>title</code>/<code>creationDate</code>/<code>modificationDate</code> → <b>Dublin Core Terms</b> (<code>dcterms:creator/title/created/modified</code>).</li>
+    <li><b>GV</b> <code>SensorModel</code>/<code>Platform</code>/<code>AcquisitionInfo</code>/<code>acquisitionTime</code> → <b>W3C/OGC SOSA/SSN</b> + <b>PROV-O</b>; <code>epsgCode</code>/<code>wktString</code>/CRS → <b>GeoSPARQL</b>.</li>
+    <li><b>ADV/VDV/IDV</b> technical metadata (sampleRate, frameRate, codec, bitDepth) → <b>W3C Ontology for Media Resources</b> (<code>ma:</code>) / <b>EBUCore</b>.</li>
+    <li>Units (Hz, seconds, pixels) → <b>QUDT</b> or <b>OM</b>.</li>
+  </ul>
+  <p class="fix">At minimum, publish alignment axioms (<code>owl:equivalentProperty</code>/<code>skos:exactMatch</code>) so a Hexplain graph joins the wider linked-data cloud.</p>
+</div>
+
+<div class="finding" id="f24">
+  <h3><span class="num">24.</span> Missing ontology metadata / FAIR hygiene, on every module <span class="badge b-minor">Minor</span></h3>
+  <p>No <code>owl:versionIRI</code>, <code>owl:priorVersion</code>, <code>dcterms:license</code>, <code>dcterms:created</code>, <code>vann:preferredNamespacePrefix</code>/<code>preferredNamespaceUri</code>; only Core carries an <code>rdfs:comment</code> on the ontology node. <code>owl:imports</code> is never declared even though modules use each other's terms.</p>
+  <p class="fix">Add the standard ontology-header annotations to all modules and declare <code>owl:imports</code> (Core→BDDO, DLV→BDDO, domain vocabs→DLV).</p>
+</div>
+
+<div class="finding" id="f25">
+  <h3><span class="num">25.</span> No dereferenceable artifacts <span class="badge b-major">Major</span></h3>
+  <p>The OWL/SHACL/JSON-LD live only inside HTML <code>&lt;pre&gt;</code> blocks. The namespace IRIs (<code>https://hexplain.io/ns/bddo#Struct</code>) do not resolve to a machine-readable document — the opposite of linked-data best practice for a project whose thesis <em>is</em> linked data.</p>
+  <p class="fix">Publish real <code>.ttl</code> / <code>.shacl.ttl</code> / <code>.jsonld</code> files with content negotiation, and generate the HTML from them so prose and formal definitions cannot drift.</p>
+</div>
+
+<hr>
+
+<h2 id="minor">Additional minor / polish items</h2>
+<ul>
+  <li><b>Version metadata drift.</b> ReSpec <code>subtitle</code> disagrees with <code>owl:versionInfo</code>: Core says "Version 1.0" but is 1.1; HEL says "Version 1.0" but the SOTD describes 1.1 and 1.2 changes. Sync them.</li>
+  <li><b>Copy-pasted ReSpec <code>github</code>.</b> Every spec sets <code>github: "https://github.com/w3c/respec"</code> — ReSpec's own repo, not Hexplain's. Point it at the real repo or remove it.</li>
+  <li><b>Prefix/acronym drift.</b> IDV is called both "Image Description Vocabulary" and "Image Vocabulary," uses prefix <code>img:</code> and namespace <code>/ns/image#</code> — the acronym "IDV" matches none of them. Establish one prefix registry (name ↔ prefix ↔ namespace) and apply it uniformly.</li>
+  <li><b><code>UDPDDatagram</code> typo</b> in NPV (<a href="npv/index.html#L149">npv:149</a>) — double "D".</li>
+  <li><b>SHACL doesn't validate list membership.</b> <code>StructShape</code> only checks <code>hasField</code> points to one node; it never checks the members are <code>bddo:Field</code>s (needs an <code>rdf:rest*/rdf:first</code> path). Same for the conditional lists and <code>hasDimension</code>.</li>
+  <li><b><code>FieldShape</code> <code>sh:nodeKind sh:IRI</code> forbids inline (blank-node) structs</b> as a field's type, which you may want for anonymous nested structures.</li>
+  <li><b>Architecture diagram is a placeholder</b> (<code>placehold.co</code> image, <a href="index.html#L49">index:49</a>).</li>
+</ul>
+
+<h2 id="keep">What's genuinely good — worth preserving <span class="badge b-good">Keep</span></h2>
+<ul>
+  <li>The three-layer separation (physical / layout / semantic) with a thin "glue" Core module is a sound architecture.</li>
+  <li>Choosing RDF + OWL + SHACL + JSON-LD, and using <code>rdf:List</code> for field ordering.</li>
+  <li>Expressing interleaving (BSQ/BIP/BIL) purely as list ordering (<a href="dlv/index.html#L81">dlv:81</a>) rather than a fixed enum — elegant and extensible.</li>
+  <li>The conditional-dispatch mechanism for TLV/chunked formats.</li>
+  <li>The map-everything-to-a-shared-domain-vocabulary interoperability strategy.</li>
+</ul>
+<p>The problems above are fixable without disturbing this spine.</p>
+
+<h2 id="priority">Suggested priority order</h2>
+<ol>
+  <li><b>Fix the file scramble + navigation</b> (#1) and the two logic bugs (#2 <code>dataType</code>, #5 <code>sh:xone</code>) — these are objectively broken.</li>
+  <li><b>Define the missing terms</b> the examples already use (#3 <code>sizeFromExpression</code>, #4 <code>hasDataLayout</code>, #10 <code>encoding</code>).</li>
+  <li><b>Write the Processing Model spec and fix HEL</b> (#14, #15) — nothing is truly implementable without these.</li>
+  <li><b>Add the addressing / bitfield / repeat-count / enum primitives</b> (#6–#9, #12, #13) to actually reach "any data structure."</li>
+  <li><b>Harden the ontologies</b> — ranges/domains, metadata, external alignments, dereferenceable files (#16–#25).</li>
+</ol>
+
+<footer>
+  Advisory review of the Hexplain Standard specification set · generated 2026-07-21 · Claude (Opus 4.8).
+  This document has no official standing and is not endorsed by any standards body.
+</footer>
+
+</div>
+</body>
+</html>

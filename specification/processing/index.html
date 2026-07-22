@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexplain Processing Model Specification</title>
+    <!-- ReSpec script and configuration -->
+    <script src="https://www.w3.org/Tools/respec/respec-w3c" class="respec" async></script>
+    <script class="remove">
+        var respecConfig = {
+            specStatus: "unofficial",
+            editors: [{
+                name: "Stephane Fellah",
+                url: "https://geoknoesis.com"
+            }],
+            github: "https://github.com/geoknoesis/hexplain.io",
+            shortName: "hexplain-processing",
+            publishDate: "2025-08-16",
+            subtitle: "Version 1.0",
+        };
+    </script>
+</head>
+<body>
+    <section id="abstract">
+        <p>
+            The Hexplain Processing Model defines, normatively, how a conforming processor turns a <b>binary stream</b> plus a <b>Hexplain description</b> (BDDO + Core + domain vocabularies) into two outputs: a transient <b>parsing context</b> and a persistent <b>RDF instance graph</b>. It specifies the parse algorithm, the construction of the <a href="../hel/index.html">HEL</a> context, the minting of instance IRIs, the mapping of primitive values to RDF literals, the emission of semantic triples, and error handling. This document makes Hexplain descriptions <i>executable</i> and reproducible across implementations.
+        </p>
+    </section>
+
+    <section id="sotd">
+        <p>This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. This is the first version.</p>
+    </section>
+
+    <section class="introductory">
+        <h2>Introduction</h2>
+        <p>
+            The other Hexplain specifications define <i>vocabulary</i>; this one defines <i>behaviour</i>. Without a shared processing model, two implementations could parse the same file against the same description and emit different graphs, defeating the interoperability and SPARQL-query goals of the framework. Everything here is REQUIRED behaviour for a conforming processor unless marked otherwise.
+        </p>
+        <section>
+            <h3>Conformance</h3>
+            <p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].</p>
+            <p>A <dfn>conforming processor</dfn> MUST implement the parse algorithm (§3), the context model (§4), IRI minting (§5), the value mapping (§6), and semantic emission (§7); and MUST support every construct of BDDO 1.4, Hexplain Core 1.2, DLV 1.3, and HEL 2.0.</p>
+        </section>
+    </section>
+
+    <section id="inputs-outputs">
+        <h2>Inputs and Outputs</h2>
+        <dl>
+            <dt>Inputs</dt>
+            <dd>(1) a byte stream <code>S</code> with known length <code>|S|</code>; (2) a Hexplain description graph <code>D</code>; (3) a designated <b>root Struct</b> <code>R</code> in <code>D</code>; (4) an optional <b>base IRI</b> <code>B</code> for minting instance IRIs.</dd>
+            <dt>Outputs</dt>
+            <dd>(1) the <b>parsing context</b> <code>C</code> (transient, used by HEL); (2) the <b>instance graph</b> <code>G</code> (RDF, persistent). A processor MAY expose either or both.</dd>
+        </dl>
+    </section>
+
+    <section id="algorithm">
+        <h2>Parse Algorithm</h2>
+        <p>Parsing maintains a <b>cursor</b> (byte position, initially 0) and a <b>bit cursor</b> for bit-level fields. To parse the root, invoke <b>ParseStruct(R, cursor=0, parent=nil)</b>.</p>
+
+        <section>
+            <h3>ParseStruct(struct, cursor, parent)</h3>
+            <ol>
+                <li>If <code>struct</code> has <code>bddo:syncOnMarker</code>, advance the cursor to the next occurrence of the marker bytes; if none exists, raise a <i>sync error</i>.</li>
+                <li>Create a new context node <code>n</code> with a back-link to <code>parent</code>; record its start offset.</li>
+                <li>Resolve the effective endianness and bit order (nearest declaration wins: DataType &gt; Field &gt; Struct &gt; inherited from parent).</li>
+                <li>For each <code>field</code> in the <code>bddo:hasField</code> list, in order, call <b>ParseField(field, n)</b>. Members MUST be processed in list order.</li>
+                <li>Record the node's end offset (<code>sizeof</code> = end − start) and return <code>n</code>.</li>
+            </ol>
+        </section>
+
+        <section>
+            <h3>ParseField(field, node)</h3>
+            <ol>
+                <li><b>Presence.</b> If <code>bddo:isPresentIf</code> is present and its HEL expression evaluates to <code>false</code>, skip the field (bind it to <code>Null</code> in the context) and return.</li>
+                <li><b>Alignment.</b> If <code>bddo:alignment = a</code>, advance the cursor to the next multiple of <code>a</code>.</li>
+                <li><b>Addressing.</b> If an offset property is present, compute the target offset from <code>bddo:atOffset</code> / <code>atOffsetFromField</code> / <code>atOffsetFromExpression</code>, relative to <code>bddo:offsetBase</code> (default <code>streamStart</code>; <code>streamEnd</code> counts backward from <code>|S|</code>). Save the current cursor, seek to the target, parse, then restore the saved cursor (an offset field does not advance sibling parsing) unless <code>offsetBase</code> is <code>currentPosition</code>.</li>
+                <li><b>Repetition.</b> If a repetition property is present, determine the iteration policy: a fixed <code>bddo:repeatCount</code>, a count via <code>repeatCountFromField</code>/<code>repeatCountFromExpression</code>, or repeat-until (<code>bddo:repeatUntil</code>, evaluated after each element with <code>self</code> bound to it). Produce an ordered array node; each element is parsed by the single-value procedure below.</li>
+                <li><b>Type selection.</b> If <code>bddo:hasConditionalDataType</code> is present, evaluate each <code>bddo:DataTypeRule</code> in list order; the first whose <code>bddo:condition</code> is <code>true</code> supplies the effective type via <code>bddo:ruleDataType</code>. Otherwise use <code>bddo:dataType</code>. It is an error if neither yields a type.</li>
+                <li><b>Value.</b> If the effective type is a <code>bddo:Struct</code>, recurse via ParseStruct. If it is a <code>bddo:DataType</code>:
+                    <ul>
+                        <li>Determine the field's byte size from (in priority order) the fixed width of the datatype (<code>bddo:bitWidth</code>/8), <code>bddo:size</code>, <code>bddo:sizeFromField</code>, <code>bddo:sizeFromExpression</code>, <code>bddo:terminator</code> (read until the terminator sequence), or <code>bddo:sizeToEndOfStream</code> (read to <code>|S|</code>). Exactly one applies; a variable-length type (<code>bytes</code>/<code>string</code>) MUST resolve to one of these.</li>
+                        <li>If <code>bddo:bitLength</code> is present, read that many bits per <code>bddo:bitOrder</code> instead of whole bytes.</li>
+                        <li>Decode the raw bytes to a typed value per §6, honouring endianness and (for strings) <code>bddo:encoding</code>.</li>
+                    </ul>
+                </li>
+                <li><b>Fixed value.</b> If <code>bddo:hasFixedValue</code> is present and the decoded value differs, raise a <i>validation error</i>.</li>
+                <li><b>Enumeration.</b> If <code>bddo:enumeration</code> is present, look up the raw value among the <code>bddo:EnumValue</code>s; the matching symbol/label is attached to the value node (and emitted per §7).</li>
+                <li><b>Checksum.</b> If <code>bddo:checksum</code> is present, compute the algorithm over the covered range (<code>coversFromField</code>…<code>coversToField</code>, or <code>coversExpression</code>) and compare with the stored value; a mismatch raises a <i>checksum error</i>.</li>
+                <li>Bind the field's value into <code>node</code> under the field's simple key, and return.</li>
+            </ol>
+        </section>
+    </section>
+
+    <section id="context">
+        <h2>The HEL Parsing Context</h2>
+        <p>The parsing context is the tree of nodes produced above. It is the sole input, besides <code>stream</code> metadata, to <a href="../hel/index.html">HEL</a> evaluation. Fields already parsed within the current and ancestor nodes are visible; forward references (to fields not yet parsed) MUST raise an error. The roots <code>instance</code>, <code>parent</code>, <code>root</code>, <code>self</code>, and <code>stream</code> resolve as defined in HEL §2.</p>
+    </section>
+
+    <section id="iri-minting">
+        <h2>Instance IRI Minting</h2>
+        <p>To make the instance graph queryable, every emitted subject MUST have a stable, deterministic IRI. The default policy:</p>
+        <ul>
+            <li>The root instance IRI is the base IRI <code>B</code> (or a blank node if <code>B</code> is absent).</li>
+            <li>A nested Struct instance mapped by <code>hexplain:mapsToClass</code> receives the IRI <code>B + '/' + path</code>, where <code>path</code> is the slash-joined chain of field keys and array indices from the root to that node (e.g. <code>B/Chunks/3/IHDR</code>).</li>
+            <li>Array elements are indexed from 0.</li>
+        </ul>
+        <p>A processor MAY offer alternative minting policies (e.g. hash-based or field-derived keys) but MUST document them and MUST be deterministic: parsing the same bytes with the same description and base IRI MUST yield an isomorphic graph.</p>
+    </section>
+
+    <section id="value-mapping">
+        <h2>Primitive Value → RDF Literal Mapping</h2>
+        <p>When a mapped field's value is emitted, its RDF literal datatype is the <code>bddo:xsdType</code> of the field's effective <code>bddo:DataType</code>. This fixes, for example, that a <code>bddo:uint32be</code> becomes an <code>xsd:unsignedInt</code> literal and a <code>bddo:float64le</code> becomes an <code>xsd:double</code>. Integers are decoded with the resolved endianness and signedness; floats per IEEE 754; <code>bddo:string</code> per its <code>bddo:encoding</code>; <code>bddo:bytes</code> as <code>xsd:hexBinary</code>.</p>
+    </section>
+
+    <section id="emission">
+        <h2>Semantic Triple Emission</h2>
+        <p>The instance graph <code>G</code> is produced from the mapping properties of Hexplain Core:</p>
+        <ul>
+            <li>For a Struct instance <code>s</code> whose description has <code>hexplain:mapsToClass C</code>, emit <code>&lt;IRI(s)&gt; rdf:type C</code>.</li>
+            <li>For a Field with <code>hexplain:mapsToProperty P</code>, emit <code>&lt;IRI(parent)&gt; P "value"^^xsdType</code>.</li>
+            <li>For a Field with <code>hexplain:hasConditionalMapping</code>, evaluate rules in order and emit the property of the first rule whose condition holds.</li>
+            <li>For a Field with <code>hexplain:hasDataLayout</code>, the layout (DLV) governs how the multi-dimensional cells are addressed; a processor MAY additionally emit per-cell triples but is not required to materialize them.</li>
+            <li>For a Field with <code>hexplain:isEncodedWith A</code>, a processor SHOULD decode the block with algorithm <code>A</code> and MAY re-parse the decoded bytes against a nested Struct.</li>
+            <li>If an enumeration matched, a processor SHOULD also emit the symbolic value (the <code>bddo:enumSymbol</code> IRI, if any) alongside the raw literal.</li>
+        </ul>
+    </section>
+
+    <section id="errors">
+        <h2>Error Handling</h2>
+        <p>Processors MUST distinguish and report the following conditions rather than emit a silently-wrong graph:</p>
+        <table class="simple">
+            <thead><tr><th>Error</th><th>Cause</th></tr></thead>
+            <tbody>
+                <tr><td>Sync error</td><td><code>bddo:syncOnMarker</code> not found.</td></tr>
+                <tr><td>Bounds error</td><td>A read would pass the end of the stream (or a negative offset).</td></tr>
+                <tr><td>Validation error</td><td><code>bddo:hasFixedValue</code> mismatch.</td></tr>
+                <tr><td>Checksum error</td><td><code>bddo:Checksum</code> mismatch.</td></tr>
+                <tr><td>Type / HEL error</td><td>A HEL type error, division/modulo by zero, undefined name, or forward reference.</td></tr>
+                <tr><td>Dispatch error</td><td>No <code>bddo:DataTypeRule</code> matched and no default <code>bddo:dataType</code> exists.</td></tr>
+            </tbody>
+        </table>
+        <p>A processor MAY offer a lenient mode that records errors as annotations in <code>G</code> and continues; the default mode SHOULD halt on the first error.</p>
+    </section>
+
+    <section id="example" class="introductory">
+        <h2>Worked Example (abridged)</h2>
+        <p>Parsing a PNG <code>IHDR</code> chunk against the descriptions in <a href="../bddo/index.html">BDDO</a> and <a href="../idv/index.html">Image Vocabulary</a>, with base IRI <code>&lt;urn:file:example.png&gt;</code>, yields:</p>
+        <pre class="nohighlight">
+@prefix img: &lt;https://hexplain.io/ns/image#&gt; .
+@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+
+&lt;urn:file:example.png/Chunks/0/IHDR&gt;
+    a img:ImageHeader ;
+    img:pixelWidth  "1920"^^xsd:unsignedInt ;
+    img:pixelHeight "1080"^^xsd:unsignedInt ;
+    img:bitsPerComponent "8"^^xsd:unsignedByte ;
+    img:colorType "2"^^xsd:unsignedByte .   # enum symbol: RGB
+        </pre>
+    </section>
+</body>
+</html>

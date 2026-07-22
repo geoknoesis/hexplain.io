@@ -1,0 +1,74 @@
+# Hexplain Core Ontology 1.2 — vocabulary + SHACL shapes
+# Properties declare rdfs:range; domain and cardinality are in SHACL (no rdfs:domain).
+@prefix :         <https://hexplain.io/ns/core#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix bddo:     <https://hexplain.io/ns/bddo#> .
+@prefix dlv:      <https://hexplain.io/ns/dlv#> .
+@prefix dcterms:  <http://purl.org/dc/terms/> .
+@prefix vann:     <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/core> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/core/1.2> ; owl:versionInfo "1.2" ;
+    owl:priorVersion <https://hexplain.io/ns/core/1.1> ;
+    owl:imports <https://hexplain.io/ns/bddo> , <https://hexplain.io/ns/dlv> ;
+    rdfs:label "Hexplain Core Ontology" ;
+    rdfs:comment "Properties linking the physical, layout, and semantic layers of the Hexplain framework." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "hexplain" ; vann:preferredNamespaceUri "https://hexplain.io/ns/core#" .
+
+:MappingRule a owl:Class ; rdfs:label "Mapping Rule" ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "A rule for conditionally mapping a physical field to a semantic property." .
+
+# Mapping properties (OWL 2 punning; domain in SHACL). rdfs:range declared.
+:mapsToClass a owl:ObjectProperty ; rdfs:label "maps to class" ; rdfs:range owl:Class ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "Relates a bddo:Struct to the owl:Class it physically represents." .
+:mapsToProperty a owl:ObjectProperty ; rdfs:label "maps to property" ; rdfs:range rdf:Property ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "Relates a bddo:Field to the rdf:Property it supplies a value for." .
+:hasDataLayout a owl:ObjectProperty ; rdfs:label "has data layout" ; rdfs:range dlv:DataLayout ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "Relates a bddo:Field to a dlv:DataLayout describing its multi-dimensional interpretation." .
+:isEncodedWith a owl:ObjectProperty ; rdfs:label "is encoded with" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "Identifies the algorithm (e.g. a codec) needed to interpret a data block." .
+:hasConditionalMapping a owl:ObjectProperty ; rdfs:label "has conditional mapping" ; rdfs:range rdf:List ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> .
+:condition a owl:DatatypeProperty ; rdfs:label "condition" ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> .
+:semanticProperty a owl:ObjectProperty ; rdfs:label "semantic property" ; rdfs:range rdf:Property ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> .
+
+# ---------- SHACL ----------
+hexplain:MapsToClassShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:mapsToClass ;
+    sh:class bddo:Struct ;
+    sh:property [ sh:path hexplain:mapsToClass ; sh:nodeKind sh:IRI ; sh:class owl:Class ] .
+hexplain:MapsToPropertyShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:mapsToProperty ;
+    sh:class bddo:Field ;
+    sh:property [ sh:path hexplain:mapsToProperty ; sh:nodeKind sh:IRI ;
+        sh:or ( [ sh:class rdf:Property ] [ sh:class owl:DatatypeProperty ]
+                [ sh:class owl:ObjectProperty ] [ sh:class owl:AnnotationProperty ] ) ] .
+hexplain:HasDataLayoutShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:hasDataLayout ;
+    sh:class bddo:Field ;
+    sh:property [ sh:path hexplain:hasDataLayout ; sh:class dlv:DataLayout ; sh:maxCount 1 ] .
+hexplain:HasConditionalMappingShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:hasConditionalMapping ;
+    sh:class bddo:Field ;
+    sh:property [ sh:path ( hexplain:hasConditionalMapping [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:class hexplain:MappingRule ;
+        sh:message "Every member of a hasConditionalMapping list must be a hexplain:MappingRule." ] .
+hexplain:MappingRuleShape a sh:NodeShape ;
+    sh:targetClass hexplain:MappingRule ;
+    sh:property [ sh:path hexplain:condition ; sh:nodeKind sh:Literal ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:semanticProperty ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:or ( [ sh:class rdf:Property ] [ sh:class owl:DatatypeProperty ]
+                [ sh:class owl:ObjectProperty ] [ sh:class owl:AnnotationProperty ] ) ] .

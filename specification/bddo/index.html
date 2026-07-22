@@ -12,37 +12,46 @@
                 name: "Stephane Fellah",
                 url: "https://geoknoesis.com"
             }],
-            // Note: The 'github' property is added back as requested.
-            // This may cause a cross-origin security error in some sandboxed
-            // environments, which was the source of the previous console error.
-            github: "https://github.com/w3c/respec",
+            github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "bddo",
             publishDate: "2025-08-16",
-            subtitle: "Version 1.3",
+            subtitle: "Version 1.4",
         };
     </script>
 </head>
 <body>
     <section id="abstract">
         <p>
-            The Binary Data Description Ontology (BDDO) provides a formal vocabulary to declaratively describe the structure, syntax, and layout of binary data. It is the foundational physical layer of the Hexplain Ontology Family. BDDO allows authors to model binary formats as a series of nested structures and typed fields, with support for dynamic layouts through conditional logic, variable sizing, and stream synchronization. This specification provides the normative OWL ontology for BDDO and a set of SHACL shapes for validating BDDO descriptions.
+            The Binary Data Description Ontology (BDDO) provides a formal vocabulary to declaratively describe the structure, syntax, and layout of binary data. It is the foundational physical layer of the Hexplain Ontology Family. BDDO allows authors to model binary formats as nested structures and typed fields, with support for dynamic layouts through conditional logic, variable sizing, offset-based addressing, bit-level fields, arrays, stream synchronization, enumerations, and integrity checksums. This specification provides the normative OWL vocabulary for BDDO and a set of SHACL shapes for validating BDDO descriptions.
         </p>
     </section>
 
     <section id="sotd">
         <p>
-            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. Version 1.3 introduces constructs for conditional data type dispatching. Version 1.2 moved repetition properties to <code>bddo:Field</code>. Version 1.1 introduced the <code>bddo:terminator</code> and <code>bddo:syncOnMarker</code> properties.
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
+        </p>
+        <p><b>Change log.</b> Version 1.4 (this version) adds offset-based addressing (<code>bddo:atOffset</code> and companions), bit-level fields (<code>bddo:bitLength</code>), count-based repetition (<code>bddo:repeatCount</code> and companions), rest-of-stream sizing (<code>bddo:sizeToEndOfStream</code>), string/byte <code>bddo:encoding</code>, integrity checksums (<code>bddo:Checksum</code>), value enumerations (<code>bddo:Enumeration</code>), and endianness-neutral primitive types. It defines <code>bddo:sizeFromExpression</code> (previously used but undefined), fixes the double declaration of <code>bddo:dataType</code> by introducing <code>bddo:ruleDataType</code>, separates base-type individuals from primitive datatype instances, unifies byte-order onto <code>bddo:endianness</code>, and adds a normative primitive&#8594;<code>xsd</code> datatype mapping via <code>bddo:xsdType</code>. Property value types are declared with <code>rdfs:range</code>; domain and cardinality constraints are expressed in SHACL (no <code>rdfs:domain</code>). Version 1.3 introduced conditional data type dispatching. Version 1.2 moved repetition properties to <code>bddo:Field</code>. Version 1.1 introduced <code>bddo:terminator</code> and <code>bddo:syncOnMarker</code>.
         </p>
     </section>
 
     <section class="introductory">
         <h2>Introduction</h2>
         <p>
-            The primary goal of the Hexplain project is to make opaque binary data machine-understandable. The first step in this process is to provide a standardized, unambiguous way to describe the physical structure of the data. The Binary Data Description Ontology (BDDO) serves this purpose.
+            The primary goal of the Hexplain project is to make opaque binary data machine-understandable. The first step is to provide a standardized, unambiguous way to describe the physical structure of the data. The Binary Data Description Ontology (BDDO) serves this purpose.
         </p>
         <p>
-            BDDO provides a set of RDF classes and properties that can be used to create a graph-based model of a binary format. This model can then be used by a conforming Hexplain processor to parse a binary stream into a structured, logical representation.
+            BDDO provides a set of RDF classes and properties that can be used to create a graph-based model of a binary format. This model can then be used by a conforming Hexplain processor (see the <a href="../processing/index.html">Processing Model</a> specification) to parse a binary stream into a structured, logical representation, and ultimately into an RDF instance graph.
         </p>
+        <section id="modeling-approach">
+            <h3>Modeling Approach: Vocabulary vs. Constraints</h3>
+            <p>
+                BDDO follows a deliberate separation of concerns that is a recommended ontology-engineering practice:
+            </p>
+            <ul>
+                <li>The <b>OWL vocabulary</b> declares terms (classes, properties, individuals) with human-readable metadata (<code>rdfs:label</code>, <code>rdfs:comment</code>, <code>rdfs:isDefinedBy</code>), lightweight semantics (<code>rdfs:subClassOf</code>, alignment axioms), and each property's <code>rdfs:range</code> (its value type). It deliberately does <b>not</b> assert <code>rdfs:domain</code>, because a domain axiom would silently type <em>any</em> subject of a property — a term is often reused across several classes.</li>
+                <li>The <b>SHACL shapes</b> carry the remaining <i>constraints</i> — the classes a property may apply to (its "domain"), value cardinalities, and any refinement of the declared ranges (controlled-vocabulary membership, numeric bounds). Validation therefore never mutates the graph, and errors are reported rather than repaired by inference.</li>
+            </ul>
+        </section>
         <section>
             <h3>Conformance</h3>
             <p>
@@ -53,337 +62,550 @@
 
     <section id="core-concepts">
         <h2>Core Concepts</h2>
-        <p>The BDDO model is built upon the following fundamental classes.</p>
+        <p>The BDDO model is built upon the following classes.</p>
         <dl>
             <dt><code>bddo:Struct</code></dt>
-            <dd>Represents a composite structure or a container for other elements. A Struct is an ordered sequence of Fields. Examples include a file header, a network packet, or a PNG chunk.</dd>
+            <dd>A composite structure or container for other elements. A Struct is an ordered sequence of Fields. Examples: a file header, a network packet, a PNG chunk.</dd>
             <dt><code>bddo:Field</code></dt>
-            <dd>Represents a single element within a Struct. A Field can represent a single value (like an integer) or a sequence of values (an array). It is always associated with a specific data type.</dd>
+            <dd>A single element within a Struct. A Field may represent one value, a bit-level slice, or an array of values, and is associated with a data type.</dd>
             <dt><code>bddo:DataType</code></dt>
-            <dd>Represents the type of data a Field contains. BDDO defines a set of core primitive data types (e.g., <code>bddo:uint32be</code>). This class can be extended in "profiles" to create user-defined type aliases (e.g., <code>media:fourCC</code>).</dd>
+            <dd>The type of data a Field contains. BDDO defines core primitive data types (e.g. <code>bddo:uint32be</code>). This class can be extended in profiles to create user-defined type aliases (e.g. <code>media:fourCC</code>).</dd>
             <dt><code>bddo:DataTypeRule</code></dt>
-            <dd>Represents a single rule for conditionally selecting a data type for a field. It consists of a condition and the data type to use if the condition is met.</dd>
+            <dd>A single rule for conditionally selecting a data type for a field, consisting of a condition and the data type to use when the condition holds.</dd>
+            <dt><code>bddo:Enumeration</code> / <code>bddo:EnumValue</code></dt>
+            <dd>A mapping of raw parsed values to named symbols, so that (for example) a colour-type byte of <code>2</code> can be surfaced as <code>RGB</code> in the output graph and referenced by name in conditions.</dd>
+            <dt><code>bddo:Checksum</code></dt>
+            <dd>A declarative description of an integrity check: the algorithm and the byte range it covers. A field that stores a checksum value links to it so that a processor can verify data integrity.</dd>
         </dl>
+    </section>
+
+    <section id="addressing">
+        <h2>Sequencing, Addressing &amp; Alignment</h2>
+        <p>
+            By default, the Fields listed in <code>bddo:hasField</code> are parsed <b>sequentially and contiguously</b>: each field begins where the previous one ended. Many real formats (TIFF/GeoTIFF IFDs, ZIP central directories, ELF section tables, PDF cross-reference tables) instead locate structures by <b>offset</b>. BDDO supports both models.
+        </p>
+        <dl>
+            <dt><code>bddo:atOffset</code>, <code>bddo:atOffsetFromField</code>, <code>bddo:atOffsetFromExpression</code></dt>
+            <dd>Relocate a Field or Struct to a fixed offset, an offset read from another field, or an offset computed by a <a href="../hel/index.html">HEL</a> expression, respectively. A field with an offset does not advance the sequential cursor for its siblings unless the processor is told otherwise.</dd>
+            <dt><code>bddo:offsetBase</code></dt>
+            <dd>The reference point the offset is measured from: <code>bddo:streamStart</code> (default), <code>bddo:streamEnd</code> (for formats parsed from the tail, such as ZIP), <code>bddo:parentStart</code>, or <code>bddo:currentPosition</code>.</dd>
+            <dt><code>bddo:alignment</code></dt>
+            <dd>An <code>xsd:positiveInteger</code>. Before parsing the field, the processor MUST advance the cursor to the next multiple of this value (padding bytes are skipped).</dd>
+        </dl>
+    </section>
+
+    <section id="bitfields">
+        <h2>Bit-Level Fields</h2>
+        <p>
+            Formats such as IPv4, TCP, and many compression headers pack several logical values into a single byte. A Field MAY declare <code>bddo:bitLength</code> (an <code>xsd:positiveInteger</code> number of bits). Consecutive bit-length fields are packed into the underlying bytes; the packing order is governed by <code>bddo:bitOrder</code> (<code>bddo:MSBFirst</code>, the default, or <code>bddo:LSBFirst</code>) declared on the enclosing Struct. A run of bit fields SHOULD align to a byte boundary; a processor MUST pad to the next byte before parsing a subsequent non-bit field.
+        </p>
     </section>
 
     <section id="core-datatypes">
         <h2>Core Data Types</h2>
-        <p>BDDO provides a normative set of built-in primitive data types. All conforming Hexplain processors MUST support these types. Each type is a formal instance of <code>bddo:DataType</code> and is described by the properties defined in the ontology.</p>
-        
-        <h3>Integer Types</h3>
+        <p>BDDO provides a normative set of built-in primitive data types. All conforming processors MUST support these types. Each is an instance of <code>bddo:DataType</code> and carries a normative <code>bddo:xsdType</code> that fixes the RDF literal datatype produced when a value of that type is emitted into the output graph.</p>
+        <p>
+            Integer and floating types come in three forms: an <b>endianness-neutral</b> form (e.g. <code>bddo:uint32</code>) that inherits its byte order from the enclosing Struct or Field via <code>bddo:endianness</code>, and explicit <b>big-endian</b> / <b>little-endian</b> forms (e.g. <code>bddo:uint32be</code>, <code>bddo:uint32le</code>). Single-byte types have no byte order.
+        </p>
+        <h3>Integer Types (excerpt)</h3>
         <table class="simple">
             <thead>
-                <tr>
-                    <th>IRI</th>
-                    <th>Description</th>
-                    <th>bitWidth</th>
-                    <th>isSigned</th>
-                    <th>hasEndianness</th>
-                </tr>
+                <tr><th>IRI</th><th>bitWidth</th><th>isSigned</th><th>endianness</th><th>xsdType</th></tr>
             </thead>
             <tbody>
-                <tr><td><code>bddo:uint8</code></td><td>Unsigned 8-bit integer</td><td>8</td><td>false</td><td>N/A</td></tr>
-                <tr><td><code>bddo:int8</code></td><td>Signed 8-bit integer</td><td>8</td><td>true</td><td>N/A</td></tr>
-                <tr><td><code>bddo:uint16be</code></td><td>Big-endian unsigned 16-bit integer</td><td>16</td><td>false</td><td>BigEndian</td></tr>
-                <tr><td><code>bddo:uint16le</code></td><td>Little-endian unsigned 16-bit integer</td><td>16</td><td>false</td><td>LittleEndian</td></tr>
-                <tr><td><code>bddo:int16be</code></td><td>Big-endian signed 16-bit integer</td><td>16</td><td>true</td><td>BigEndian</td></tr>
-                <tr><td><code>bddo:int16le</code></td><td>Little-endian signed 16-bit integer</td><td>16</td><td>true</td><td>LittleEndian</td></tr>
-                <tr><td><code>bddo:uint32be</code></td><td>Big-endian unsigned 32-bit integer</td><td>32</td><td>false</td><td>BigEndian</td></tr>
-                <tr><td><code>bddo:uint32le</code></td><td>Little-endian unsigned 32-bit integer</td><td>32</td><td>false</td><td>LittleEndian</td></tr>
-                <tr><td><code>bddo:int32be</code></td><td>Big-endian signed 32-bit integer</td><td>32</td><td>true</td><td>BigEndian</td></tr>
-                <tr><td><code>bddo:int32le</code></td><td>Little-endian signed 32-bit integer</td><td>32</td><td>true</td><td>LittleEndian</td></tr>
-                <tr><td><code>bddo:uint64be</code></td><td>Big-endian unsigned 64-bit integer</td><td>64</td><td>false</td><td>BigEndian</td></tr>
-                <tr><td><code>bddo:uint64le</code></td><td>Little-endian unsigned 64-bit integer</td><td>64</td><td>false</td><td>LittleEndian</td></tr>
-                <tr><td><code>bddo:int64be</code></td><td>Big-endian signed 64-bit integer</td><td>64</td><td>true</td><td>BigEndian</td></tr>
-                <tr><td><code>bddo:int64le</code></td><td>Little-endian signed 64-bit integer</td><td>64</td><td>true</td><td>LittleEndian</td></tr>
+                <tr><td><code>bddo:uint8</code> / <code>bddo:int8</code></td><td>8</td><td>false / true</td><td>—</td><td><code>xsd:unsignedByte</code> / <code>xsd:byte</code></td></tr>
+                <tr><td><code>bddo:uint16</code> / <code>bddo:uint16be</code> / <code>bddo:uint16le</code></td><td>16</td><td>false</td><td>inherited / BE / LE</td><td><code>xsd:unsignedShort</code></td></tr>
+                <tr><td><code>bddo:uint32</code> / <code>bddo:uint32be</code> / <code>bddo:uint32le</code></td><td>32</td><td>false</td><td>inherited / BE / LE</td><td><code>xsd:unsignedInt</code></td></tr>
+                <tr><td><code>bddo:uint64</code> / <code>bddo:uint64be</code> / <code>bddo:uint64le</code></td><td>64</td><td>false</td><td>inherited / BE / LE</td><td><code>xsd:unsignedLong</code></td></tr>
+                <tr><td><code>bddo:int16</code>…, <code>bddo:int32</code>…, <code>bddo:int64</code>…</td><td>16/32/64</td><td>true</td><td>inherited / BE / LE</td><td><code>xsd:short</code>/<code>int</code>/<code>long</code></td></tr>
             </tbody>
         </table>
-
-        <h3>Floating-Point Types</h3>
+        <h3>Floating-Point &amp; Other Types</h3>
         <table class="simple">
-            <thead>
-                <tr>
-                    <th>IRI</th>
-                    <th>Description</th>
-                    <th>bitWidth</th>
-                    <th>hasEndianness</th>
-                </tr>
-            </thead>
+            <thead><tr><th>IRI</th><th>Description</th><th>xsdType</th></tr></thead>
             <tbody>
-                <tr><td><code>bddo:float32be</code></td><td>Big-endian IEEE 754 32-bit float</td><td>32</td><td>BigEndian</td></tr>
-                <tr><td><code>bddo:float32le</code></td><td>Little-endian IEEE 754 32-bit float</td><td>32</td><td>LittleEndian</td></tr>
-                <tr><td><code>bddo:float64be</code></td><td>Big-endian IEEE 754 64-bit float</td><td>64</td><td>BigEndian</td></tr>
-                <tr><td><code>bddo:float64le</code></td><td>Little-endian IEEE 754 64-bit float</td><td>64</td><td>LittleEndian</td></tr>
-            </tbody>
-        </table>
-
-        <h3>Other Types</h3>
-        <table class="simple">
-            <thead>
-                <tr>
-                    <th>IRI</th>
-                    <th>Description</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td><code>bddo:bytes</code></td><td>Raw byte array. Requires a sizing property (e.g., <code>bddo:size</code>) or a termination property (<code>bddo:terminator</code>).</td></tr>
-                <tr><td><code>bddo:string</code></td><td>String. Requires a sizing property or a termination property. May have an encoding property.</td></tr>
+                <tr><td><code>bddo:float32</code>/<code>be</code>/<code>le</code></td><td>IEEE 754 32-bit float</td><td><code>xsd:float</code></td></tr>
+                <tr><td><code>bddo:float64</code>/<code>be</code>/<code>le</code></td><td>IEEE 754 64-bit float</td><td><code>xsd:double</code></td></tr>
+                <tr><td><code>bddo:bytes</code></td><td>Raw byte array. Requires a sizing or termination property.</td><td><code>xsd:hexBinary</code></td></tr>
+                <tr><td><code>bddo:string</code></td><td>Text. Requires a sizing or termination property; MAY have <code>bddo:encoding</code>.</td><td><code>xsd:string</code></td></tr>
             </tbody>
         </table>
     </section>
 
     <section id="properties">
         <h2>Properties</h2>
-        <p>Properties are the predicates that define the characteristics of Structs, Fields, and DataTypes.</p>
         <section>
             <h3>Structural Properties</h3>
             <dl>
                 <dt><code>bddo:hasField</code></dt>
-                <dd>Links a <code>bddo:Struct</code> to its constituent components. The object of this property MUST be an <code>rdf:List</code> to preserve the order of the fields.</dd>
+                <dd>Links a <code>bddo:Struct</code> to its ordered components. The object MUST be an <code>rdf:List</code> of <code>bddo:Field</code> to preserve order.</dd>
                 <dt><code>bddo:endianness</code></dt>
-                <dd>Specifies the byte order for a <code>bddo:Struct</code>. The value MUST be one of the individuals <code>bddo:BigEndian</code> or <code>bddo:LittleEndian</code>.</dd>
+                <dd>The byte order for a <code>bddo:Struct</code>, <code>bddo:Field</code>, or <code>bddo:DataType</code>. Value MUST be <code>bddo:BigEndian</code> or <code>bddo:LittleEndian</code>. The nearest declaration wins (DataType &gt; Field &gt; Struct &gt; inherited from the parent).</dd>
+                <dt><code>bddo:bitOrder</code></dt>
+                <dd>The bit-packing order for bit-level fields in a Struct. Value MUST be <code>bddo:MSBFirst</code> or <code>bddo:LSBFirst</code>.</dd>
                 <dt><code>bddo:syncOnMarker</code></dt>
-                <dd>Specifies a byte sequence that a processor MUST scan for before parsing this <code>bddo:Struct</code>. The value MUST be an <code>xsd:hexBinary</code> literal.</dd>
+                <dd>A byte sequence a processor MUST scan for before parsing this <code>bddo:Struct</code>. Value MUST be an <code>xsd:hexBinary</code> literal.</dd>
             </dl>
         </section>
         <section>
             <h3>Field Properties</h3>
             <dl>
                 <dt><code>bddo:dataType</code></dt>
-                <dd>Links a <code>bddo:Field</code> to its default data type. The value MUST be an instance of <code>bddo:DataType</code> or <code>bddo:Struct</code>.</dd>
+                <dd>The Field's default data type. Value MUST be a <code>bddo:DataType</code> or a <code>bddo:Struct</code>. A Field MUST have either a <code>bddo:dataType</code> or a <code>bddo:hasConditionalDataType</code> (or both).</dd>
                 <dt><code>bddo:hasConditionalDataType</code></dt>
-                <dd>Links a <code>bddo:Field</code> to an <code>rdf:List</code> of <code>bddo:DataTypeRule</code>s. This allows the parser to select a more specific data type for the field at runtime based on conditions.</dd>
-                <dt><code>bddo:size</code></dt>
-                <dd>Defines a fixed size in bytes for a field. The value MUST be an <code>xsd:positiveInteger</code>.</dd>
-                <dt><code>bddo:sizeFromField</code></dt>
-                <dd>For dynamic sizing, this property points to another <code>bddo:Field</code> in the structure whose value dictates the size of the current field.</dd>
+                <dd>An <code>rdf:List</code> of <code>bddo:DataTypeRule</code> allowing the processor to select a more specific data type at runtime.</dd>
+                <dt><code>bddo:size</code> / <code>bddo:sizeFromField</code> / <code>bddo:sizeFromExpression</code> / <code>bddo:sizeToEndOfStream</code></dt>
+                <dd>The size of the field in bytes: fixed, read from another field, computed by a <a href="../hel/index.html">HEL</a> expression, or "consume the remainder of the stream" (<code>xsd:boolean</code>). A Field MUST use <b>at most one</b> sizing mechanism, and variable-length types (<code>bddo:bytes</code>, <code>bddo:string</code>) MUST use exactly one sizing or termination mechanism.</dd>
                 <dt><code>bddo:terminator</code></dt>
-                <dd>Specifies a byte sequence that terminates a variable-length field. The value MUST be an <code>xsd:hexBinary</code> literal.</dd>
+                <dd>A byte sequence terminating a variable-length field. Value MUST be an <code>xsd:hexBinary</code> literal.</dd>
+                <dt><code>bddo:encoding</code></dt>
+                <dd>The character encoding of a <code>bddo:string</code> field. Value MUST be one of the encoding individuals (<code>bddo:utf8</code>, <code>bddo:ascii</code>, <code>bddo:utf16le</code>, <code>bddo:utf16be</code>, <code>bddo:latin1</code>). Defaults to <code>bddo:utf8</code>.</dd>
+                <dt><code>bddo:bitLength</code></dt>
+                <dd>The width, in bits, of a sub-byte field (see <a href="#bitfields">Bit-Level Fields</a>).</dd>
+                <dt><code>bddo:repeatCount</code> / <code>bddo:repeatCountFromField</code> / <code>bddo:repeatCountFromExpression</code> / <code>bddo:repeatUntil</code></dt>
+                <dd>Turn the field into an array parsed a fixed number of times, a number read from another field, a number computed by a <a href="../hel/index.html">HEL</a> expression, or repeatedly until a <a href="../hel/index.html">HEL</a> boolean expression evaluates to <code>true</code>. A Field MUST use at most one repetition mechanism.</dd>
+                <dt><code>bddo:atOffset</code> / <code>bddo:atOffsetFromField</code> / <code>bddo:atOffsetFromExpression</code> / <code>bddo:offsetBase</code> / <code>bddo:alignment</code></dt>
+                <dd>Addressing and alignment (see <a href="#addressing">Sequencing, Addressing &amp; Alignment</a>).</dd>
                 <dt><code>bddo:hasFixedValue</code></dt>
-                <dd>Specifies a constant value for a field, used for validating markers and magic numbers.</dd>
+                <dd>A constant expected value, used to validate markers and magic numbers. The literal is compared against the parsed value after decoding according to the field's data type.</dd>
                 <dt><code>bddo:isPresentIf</code></dt>
-                <dd>The object is a string literal containing a HEL expression. The field is only present if the expression evaluates to <code>true</code>.</dd>
-                <dt><code>bddo:repeatUntil</code></dt>
-                <dd>The object is a string literal containing a HEL expression. The field is parsed repeatedly until the expression evaluates to <code>true</code>, resulting in an array of values.</dd>
+                <dd>A <a href="../hel/index.html">HEL</a> boolean expression; the field is present only if it evaluates to <code>true</code>.</dd>
+                <dt><code>bddo:enumeration</code></dt>
+                <dd>Links a Field to a <code>bddo:Enumeration</code> that maps its raw value to a named symbol.</dd>
+                <dt><code>bddo:checksum</code></dt>
+                <dd>Links a Field (the one storing the checksum value) to a <code>bddo:Checksum</code> describing the algorithm and covered range.</dd>
             </dl>
         </section>
         <section>
-            <h3>Data Type Description Properties</h3>
-            <p>These properties are used on instances of <code>bddo:DataType</code> to describe their characteristics.</p>
+            <h3>Data Type, Rule, Enumeration &amp; Checksum Properties</h3>
             <dl>
                 <dt><code>bddo:baseType</code></dt>
-                <dd>Specifies the fundamental kind of data. The value MUST be one of the individuals <code>bddo:integer</code>, <code>bddo:float</code>, or <code>bddo:string</code>.</dd>
-                <dt><code>bddo:bitWidth</code></dt>
-                <dd>Specifies the size of the data type in bits. The value MUST be an <code>xsd:positiveInteger</code>.</dd>
-                <dt><code>bddo:isSigned</code></dt>
-                <dd>An <code>xsd:boolean</code> indicating if an integer type is signed (true) or unsigned (false).</dd>
-                <dt><code>bddo:hasEndianness</code></dt>
-                <dd>Specifies the byte order for a multi-byte data type. The value MUST be one of the individuals <code>bddo:BigEndian</code> or <code>bddo:LittleEndian</code>.</dd>
+                <dd>The fundamental kind of data. Value MUST be one of <code>bddo:baseInteger</code>, <code>bddo:baseFloat</code>, <code>bddo:baseString</code>, or <code>bddo:baseBytes</code>.</dd>
+                <dt><code>bddo:bitWidth</code>, <code>bddo:isSigned</code>, <code>bddo:xsdType</code></dt>
+                <dd>Describe a <code>bddo:DataType</code>: its width in bits, its signedness, and the RDF literal datatype produced on output.</dd>
+                <dt><code>bddo:condition</code>, <code>bddo:ruleDataType</code></dt>
+                <dd>A <code>bddo:DataTypeRule</code>'s <a href="../hel/index.html">HEL</a> condition and the data type (a <code>bddo:DataType</code> or <code>bddo:Struct</code>) to apply when it holds.</dd>
+                <dt><code>bddo:hasEnumValue</code>, <code>bddo:enumRawValue</code>, <code>bddo:enumSymbol</code></dt>
+                <dd>An <code>bddo:Enumeration</code>'s members; each <code>bddo:EnumValue</code> pairs a raw literal (<code>bddo:enumRawValue</code>) with an optional symbolic IRI (<code>bddo:enumSymbol</code>) and/or <code>rdfs:label</code>.</dd>
+                <dt><code>bddo:checksumAlgorithm</code>, <code>bddo:coversFromField</code>, <code>bddo:coversToField</code>, <code>bddo:coversExpression</code></dt>
+                <dd>A <code>bddo:Checksum</code>'s algorithm (e.g. <code>bddo:crc32</code>) and the byte range it protects, given either as a start/end field pair or a <a href="../hel/index.html">HEL</a> expression.</dd>
             </dl>
         </section>
     </section>
 
     <section id="normative-owl">
-        <h2>Normative OWL Ontology</h2>
-        <p>The following is the complete, normative OWL ontology for BDDO version 1.3, expressed in Turtle syntax [[turtle]].</p>
+        <h2>Normative OWL Vocabulary</h2>
+        <p>The following is the complete, normative OWL vocabulary for BDDO 1.4, in Turtle [[turtle]]. Constraints are defined separately in <a href="#normative-shacl">§ Normative SHACL Shapes</a>.</p>
         <pre class="nohighlight">
-@prefix : &lt;https://hexplain.io/ns/bddo#&gt; .
-@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
-@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
-@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
-@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+# Binary Data Description Ontology (BDDO) 1.4 — vocabulary + SHACL shapes
+# Canonical machine-readable artifact. Namespace: https://hexplain.io/ns/bddo#
+# Modeling: properties declare rdfs:range (value type). Domain and cardinality
+# are expressed in SHACL only (no rdfs:domain), to avoid over-committing subjects.
+@prefix :       &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix bddo:   &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdf:    &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix rdfs:   &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:    &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 &lt;https://hexplain.io/ns/bddo&gt; a owl:Ontology ;
-    owl:versionInfo "1.3" ;
-    rdfs:label "Binary Data Description Ontology (BDDO)" .
+    owl:versionIRI &lt;https://hexplain.io/ns/bddo/1.4&gt; ;
+    owl:versionInfo "1.4" ;
+    owl:priorVersion &lt;https://hexplain.io/ns/bddo/1.3&gt; ;
+    rdfs:label "Binary Data Description Ontology (BDDO)" ;
+    rdfs:comment "Vocabulary for declaratively describing the physical structure of binary data." ;
+    dcterms:created "2025-08-16"^^xsd:date ;
+    dcterms:creator &lt;https://geoknoesis.com&gt; ;
+    dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
+    vann:preferredNamespacePrefix "bddo" ;
+    vann:preferredNamespaceUri "https://hexplain.io/ns/bddo#" .
 
-# -- Classes --
-:Struct a rdfs:Class ; rdfs:label "Struct" .
-:Field a rdfs:Class ; rdfs:label "Field" .
-:DataType a rdfs:Class ; rdfs:label "Data Type" .
-:DataTypeRule a rdfs:Class ; rdfs:label "Data Type Rule" .
+# ---------- Classes ----------
+:Struct       a owl:Class ; rdfs:label "Struct" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
+    rdfs:comment "An ordered sequence of fields; a container in a binary format." .
+:Field        a owl:Class ; rdfs:label "Field" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
+    rdfs:comment "A single element within a Struct: a value, a bit slice, or an array." .
+:DataType     a owl:Class ; rdfs:label "Data Type" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:DataTypeRule a owl:Class ; rdfs:label "Data Type Rule" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:Enumeration  a owl:Class ; rdfs:label "Enumeration" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:EnumValue    a owl:Class ; rdfs:label "Enumeration Value" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:Checksum     a owl:Class ; rdfs:label "Checksum" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+# Controlled-vocabulary classes (typed enumerated individuals)
+:Endianness       a owl:Class ; rdfs:label "Endianness" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:BitOrder         a owl:Class ; rdfs:label "Bit Order" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:BaseType         a owl:Class ; rdfs:label "Base Type" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:OffsetBase       a owl:Class ; rdfs:label "Offset Base" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:Encoding         a owl:Class ; rdfs:label "Encoding" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:ChecksumAlgorithm a owl:Class ; rdfs:label "Checksum Algorithm" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+# Union of DataType and Struct, used as the range of dataType / ruleDataType
+:DataTypeOrStruct a owl:Class ; rdfs:label "Data Type or Struct" ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ; owl:unionOf ( :DataType :Struct ) .
 
-# -- Structural Properties --
-:hasField a owl:ObjectProperty ; rdfs:domain :Struct ; rdfs:range rdf:List .
-:endianness a owl:ObjectProperty ; rdfs:domain :Struct .
-:syncOnMarker a owl:DatatypeProperty ; rdfs:domain :Struct ; rdfs:range xsd:hexBinary .
+# ---------- Structural properties ----------
+:hasField     a owl:ObjectProperty ; rdfs:label "has field" ; rdfs:range rdf:List ;
+    rdfs:comment "Ordered rdf:List of the Fields that make up a Struct." .
+:endianness   a owl:ObjectProperty ; rdfs:label "endianness" ; rdfs:range :Endianness ;
+    rdfs:comment "Byte order for a Struct, Field, or DataType." .
+:bitOrder     a owl:ObjectProperty ; rdfs:label "bit order" ; rdfs:range :BitOrder .
+:syncOnMarker a owl:DatatypeProperty ; rdfs:label "sync on marker" ; rdfs:range xsd:hexBinary .
 
-# -- Field Properties --
-:dataType a owl:ObjectProperty ; rdfs:domain :Field ; rdfs:range [ a owl:Class ; owl:unionOf ( :DataType :Struct ) ] .
-:hasConditionalDataType a owl:ObjectProperty ; rdfs:domain :Field ; rdfs:range rdf:List .
-:size a owl:DatatypeProperty ; rdfs:domain :Field ; rdfs:range xsd:positiveInteger .
-:sizeFromField a owl:ObjectProperty ; rdfs:domain :Field ; rdfs:range :Field .
-:terminator a owl:DatatypeProperty ; rdfs:domain :Field ; rdfs:range xsd:hexBinary .
-:hasFixedValue a owl:DatatypeProperty ; rdfs:domain :Field .
-:isPresentIf a owl:DatatypeProperty ; rdfs:domain :Field ; rdfs:range xsd:string .
-:repeatUntil a owl:DatatypeProperty ; rdfs:domain :Field ; rdfs:range xsd:string .
+# ---------- Field properties ----------
+:dataType               a owl:ObjectProperty ; rdfs:label "data type" ; rdfs:range :DataTypeOrStruct .
+:hasConditionalDataType a owl:ObjectProperty ; rdfs:label "has conditional data type" ; rdfs:range rdf:List .
+:size                   a owl:DatatypeProperty ; rdfs:label "size (bytes)" ; rdfs:range xsd:positiveInteger .
+:sizeFromField          a owl:ObjectProperty ; rdfs:label "size from field" ; rdfs:range :Field .
+:sizeFromExpression     a owl:DatatypeProperty ; rdfs:label "size from expression" ; rdfs:range xsd:string .
+:sizeToEndOfStream      a owl:DatatypeProperty ; rdfs:label "size to end of stream" ; rdfs:range xsd:boolean .
+:terminator             a owl:DatatypeProperty ; rdfs:label "terminator" ; rdfs:range xsd:hexBinary .
+:encoding               a owl:ObjectProperty ; rdfs:label "encoding" ; rdfs:range :Encoding .
+:bitLength              a owl:DatatypeProperty ; rdfs:label "bit length" ; rdfs:range xsd:positiveInteger .
+:repeatCount            a owl:DatatypeProperty ; rdfs:label "repeat count" ; rdfs:range xsd:nonNegativeInteger .
+:repeatCountFromField   a owl:ObjectProperty ; rdfs:label "repeat count from field" ; rdfs:range :Field .
+:repeatCountFromExpression a owl:DatatypeProperty ; rdfs:label "repeat count from expression" ; rdfs:range xsd:string .
+:repeatUntil            a owl:DatatypeProperty ; rdfs:label "repeat until" ; rdfs:range xsd:string .
+:atOffset               a owl:DatatypeProperty ; rdfs:label "at offset" ; rdfs:range xsd:nonNegativeInteger .
+:atOffsetFromField      a owl:ObjectProperty ; rdfs:label "at offset from field" ; rdfs:range :Field .
+:atOffsetFromExpression a owl:DatatypeProperty ; rdfs:label "at offset from expression" ; rdfs:range xsd:string .
+:offsetBase             a owl:ObjectProperty ; rdfs:label "offset base" ; rdfs:range :OffsetBase .
+:alignment              a owl:DatatypeProperty ; rdfs:label "alignment" ; rdfs:range xsd:positiveInteger .
+:hasFixedValue          a owl:DatatypeProperty ; rdfs:label "has fixed value" .
+:isPresentIf            a owl:DatatypeProperty ; rdfs:label "is present if" ; rdfs:range xsd:string .
+:enumeration            a owl:ObjectProperty ; rdfs:label "enumeration" ; rdfs:range :Enumeration .
+:checksum               a owl:ObjectProperty ; rdfs:label "checksum" ; rdfs:range :Checksum .
 
-# -- DataTypeRule Properties --
-:condition a owl:DatatypeProperty ; rdfs:domain :DataTypeRule ; rdfs:range xsd:string .
-:dataType a owl:ObjectProperty ; rdfs:domain :DataTypeRule ; rdfs:range :Struct .
+# ---------- DataType / Rule / Enum / Checksum properties ----------
+:baseType      a owl:ObjectProperty ; rdfs:label "base type" ; rdfs:range :BaseType .
+:bitWidth      a owl:DatatypeProperty ; rdfs:label "bit width" ; rdfs:range xsd:positiveInteger .
+:isSigned      a owl:DatatypeProperty ; rdfs:label "is signed" ; rdfs:range xsd:boolean .
+:xsdType       a owl:ObjectProperty ; rdfs:label "xsd type" ; rdfs:range rdfs:Datatype ;
+    rdfs:comment "The RDF literal datatype produced when a value of this DataType is emitted." .
+:condition     a owl:DatatypeProperty ; rdfs:label "condition" ; rdfs:range xsd:string .
+:ruleDataType  a owl:ObjectProperty ; rdfs:label "rule data type" ; rdfs:range :DataTypeOrStruct .
+:hasEnumValue  a owl:ObjectProperty ; rdfs:label "has enum value" ; rdfs:range :EnumValue .
+:enumRawValue  a owl:DatatypeProperty ; rdfs:label "enum raw value" .
+:enumSymbol    a owl:ObjectProperty ; rdfs:label "enum symbol" .
+:checksumAlgorithm a owl:ObjectProperty ; rdfs:label "checksum algorithm" ; rdfs:range :ChecksumAlgorithm .
+:coversFromField   a owl:ObjectProperty ; rdfs:label "covers from field" ; rdfs:range :Field .
+:coversToField     a owl:ObjectProperty ; rdfs:label "covers to field" ; rdfs:range :Field .
+:coversExpression  a owl:DatatypeProperty ; rdfs:label "covers expression" ; rdfs:range xsd:string .
 
-# -- DataType Description Properties --
-:baseType a owl:ObjectProperty ; rdfs:domain :DataType .
-:bitWidth a owl:DatatypeProperty ; rdfs:domain :DataType ; rdfs:range xsd:positiveInteger .
-:isSigned a owl:DatatypeProperty ; rdfs:domain :DataType ; rdfs:range xsd:boolean .
-:hasEndianness a owl:ObjectProperty ; rdfs:domain :DataType .
+# ---------- Enumerated individuals (typed with their controlled-vocabulary class) ----------
+:BigEndian a owl:NamedIndividual, :Endianness ; rdfs:label "Big Endian" .
+:LittleEndian a owl:NamedIndividual, :Endianness ; rdfs:label "Little Endian" .
+:MSBFirst a owl:NamedIndividual, :BitOrder ; rdfs:label "MSB-first bit order" .
+:LSBFirst a owl:NamedIndividual, :BitOrder ; rdfs:label "LSB-first bit order" .
+:baseInteger a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Integer" .
+:baseFloat   a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Float" .
+:baseString  a owl:NamedIndividual, :BaseType ; rdfs:label "Base type String" .
+:baseBytes   a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Bytes" .
+:streamStart a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: stream start" .
+:streamEnd   a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: stream end" .
+:parentStart a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: parent start" .
+:currentPosition a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: current position" .
+:utf8 a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-8" .
+:ascii a owl:NamedIndividual, :Encoding ; rdfs:label "US-ASCII" .
+:utf16le a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 LE" .
+:utf16be a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 BE" .
+:latin1 a owl:NamedIndividual, :Encoding ; rdfs:label "ISO-8859-1" .
+:crc16 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16" .
+:crc32 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32" .
+:adler32 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "Adler-32" .
+:md5 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "MD5" .
+:sha1 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "SHA-1" .
+:sha256 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "SHA-256" .
 
-# -- Individuals --
-:BigEndian a owl:NamedIndividual ; rdfs:label "Big Endian" .
-:LittleEndian a owl:NamedIndividual ; rdfs:label "Little Endian" .
-:integer a owl:NamedIndividual ; rdfs:label "Base type Integer" .
-:float a owl:NamedIndividual ; rdfs:label "Base type Float" .
-:string a owl:NamedIndividual ; rdfs:label "Base type String" .
-:bytes a owl:NamedIndividual ; rdfs:label "Base type Bytes" .
-
-# -- Core Primitive DataType Instances --
-:uint8    a :DataType ; rdfs:label "Unsigned 8-bit integer" ; :baseType :integer ; :bitWidth 8 ; :isSigned "false"^^xsd:boolean .
-:int8     a :DataType ; rdfs:label "Signed 8-bit integer" ; :baseType :integer ; :bitWidth 8 ; :isSigned "true"^^xsd:boolean .
-:uint16be a :DataType ; rdfs:label "Big-endian unsigned 16-bit integer" ; :baseType :integer ; :bitWidth 16 ; :isSigned "false"^^xsd:boolean ; :hasEndianness :BigEndian .
-:uint16le a :DataType ; rdfs:label "Little-endian unsigned 16-bit integer" ; :baseType :integer ; :bitWidth 16 ; :isSigned "false"^^xsd:boolean ; :hasEndianness :LittleEndian .
-:int16be  a :DataType ; rdfs:label "Big-endian signed 16-bit integer" ; :baseType :integer ; :bitWidth 16 ; :isSigned "true"^^xsd:boolean ; :hasEndianness :BigEndian .
-:int16le  a :DataType ; rdfs:label "Little-endian signed 16-bit integer" ; :baseType :integer ; :bitWidth 16 ; :isSigned "true"^^xsd:boolean ; :hasEndianness :LittleEndian .
-:uint32be a :DataType ; rdfs:label "Big-endian unsigned 32-bit integer" ; :baseType :integer ; :bitWidth 32 ; :isSigned "false"^^xsd:boolean ; :hasEndianness :BigEndian .
-:uint32le a :DataType ; rdfs:label "Little-endian unsigned 32-bit integer" ; :baseType :integer ; :bitWidth 32 ; :isSigned "false"^^xsd:boolean ; :hasEndianness :LittleEndian .
-:int32be  a :DataType ; rdfs:label "Big-endian signed 32-bit integer" ; :baseType :integer ; :bitWidth 32 ; :isSigned "true"^^xsd:boolean ; :hasEndianness :BigEndian .
-:int32le  a :DataType ; rdfs:label "Little-endian signed 32-bit integer" ; :baseType :integer ; :bitWidth 32 ; :isSigned "true"^^xsd:boolean ; :hasEndianness :LittleEndian .
-:uint64be a :DataType ; rdfs:label "Big-endian unsigned 64-bit integer" ; :baseType :integer ; :bitWidth 64 ; :isSigned "false"^^xsd:boolean ; :hasEndianness :BigEndian .
-:uint64le a :DataType ; rdfs:label "Little-endian unsigned 64-bit integer" ; :baseType :integer ; :bitWidth 64 ; :isSigned "false"^^xsd:boolean ; :hasEndianness :LittleEndian .
-:int64be  a :DataType ; rdfs:label "Big-endian signed 64-bit integer" ; :baseType :integer ; :bitWidth 64 ; :isSigned "true"^^xsd:boolean ; :hasEndianness :BigEndian .
-:int64le  a :DataType ; rdfs:label "Little-endian signed 64-bit integer" ; :baseType :integer ; :bitWidth 64 ; :isSigned "true"^^xsd:boolean ; :hasEndianness :LittleEndian .
-:float32be a :DataType ; rdfs:label "Big-endian IEEE 754 32-bit float" ; :baseType :float ; :bitWidth 32 ; :hasEndianness :BigEndian .
-:float32le a :DataType ; rdfs:label "Little-endian IEEE 754 32-bit float" ; :baseType :float ; :bitWidth 32 ; :hasEndianness :LittleEndian .
-:float64be a :DataType ; rdfs:label "Big-endian IEEE 754 64-bit float" ; :baseType :float ; :bitWidth 64 ; :hasEndianness :BigEndian .
-:float64le a :DataType ; rdfs:label "Little-endian IEEE 754 64-bit float" ; :baseType :float ; :bitWidth 64 ; :hasEndianness :LittleEndian .
-:bytes    a :DataType ; rdfs:label "Raw byte array" ; :baseType :bytes .
-:string   a :DataType ; rdfs:label "String" ; :baseType :string .
+# ---------- Core primitive DataType instances ----------
+:uint8  a :DataType ; rdfs:label "uint8"  ; :baseType :baseInteger ; :bitWidth 8  ; :isSigned false ; :xsdType xsd:unsignedByte .
+:int8   a :DataType ; rdfs:label "int8"   ; :baseType :baseInteger ; :bitWidth 8  ; :isSigned true  ; :xsdType xsd:byte .
+:uint16 a :DataType ; rdfs:label "uint16" ; :baseType :baseInteger ; :bitWidth 16 ; :isSigned false ; :xsdType xsd:unsignedShort .
+:uint16be a :DataType ; rdfs:label "uint16be" ; :baseType :baseInteger ; :bitWidth 16 ; :isSigned false ; :endianness :BigEndian ; :xsdType xsd:unsignedShort .
+:uint16le a :DataType ; rdfs:label "uint16le" ; :baseType :baseInteger ; :bitWidth 16 ; :isSigned false ; :endianness :LittleEndian ; :xsdType xsd:unsignedShort .
+:uint32 a :DataType ; rdfs:label "uint32" ; :baseType :baseInteger ; :bitWidth 32 ; :isSigned false ; :xsdType xsd:unsignedInt .
+:uint32be a :DataType ; rdfs:label "uint32be" ; :baseType :baseInteger ; :bitWidth 32 ; :isSigned false ; :endianness :BigEndian ; :xsdType xsd:unsignedInt .
+:uint32le a :DataType ; rdfs:label "uint32le" ; :baseType :baseInteger ; :bitWidth 32 ; :isSigned false ; :endianness :LittleEndian ; :xsdType xsd:unsignedInt .
+:uint64 a :DataType ; rdfs:label "uint64" ; :baseType :baseInteger ; :bitWidth 64 ; :isSigned false ; :xsdType xsd:unsignedLong .
+:uint64be a :DataType ; rdfs:label "uint64be" ; :baseType :baseInteger ; :bitWidth 64 ; :isSigned false ; :endianness :BigEndian ; :xsdType xsd:unsignedLong .
+:uint64le a :DataType ; rdfs:label "uint64le" ; :baseType :baseInteger ; :bitWidth 64 ; :isSigned false ; :endianness :LittleEndian ; :xsdType xsd:unsignedLong .
+:int16 a :DataType ; rdfs:label "int16" ; :baseType :baseInteger ; :bitWidth 16 ; :isSigned true ; :xsdType xsd:short .
+:int16be a :DataType ; rdfs:label "int16be" ; :baseType :baseInteger ; :bitWidth 16 ; :isSigned true ; :endianness :BigEndian ; :xsdType xsd:short .
+:int16le a :DataType ; rdfs:label "int16le" ; :baseType :baseInteger ; :bitWidth 16 ; :isSigned true ; :endianness :LittleEndian ; :xsdType xsd:short .
+:int32 a :DataType ; rdfs:label "int32" ; :baseType :baseInteger ; :bitWidth 32 ; :isSigned true ; :xsdType xsd:int .
+:int32be a :DataType ; rdfs:label "int32be" ; :baseType :baseInteger ; :bitWidth 32 ; :isSigned true ; :endianness :BigEndian ; :xsdType xsd:int .
+:int32le a :DataType ; rdfs:label "int32le" ; :baseType :baseInteger ; :bitWidth 32 ; :isSigned true ; :endianness :LittleEndian ; :xsdType xsd:int .
+:int64 a :DataType ; rdfs:label "int64" ; :baseType :baseInteger ; :bitWidth 64 ; :isSigned true ; :xsdType xsd:long .
+:int64be a :DataType ; rdfs:label "int64be" ; :baseType :baseInteger ; :bitWidth 64 ; :isSigned true ; :endianness :BigEndian ; :xsdType xsd:long .
+:int64le a :DataType ; rdfs:label "int64le" ; :baseType :baseInteger ; :bitWidth 64 ; :isSigned true ; :endianness :LittleEndian ; :xsdType xsd:long .
+:float32 a :DataType ; rdfs:label "float32" ; :baseType :baseFloat ; :bitWidth 32 ; :xsdType xsd:float .
+:float32be a :DataType ; rdfs:label "float32be" ; :baseType :baseFloat ; :bitWidth 32 ; :endianness :BigEndian ; :xsdType xsd:float .
+:float32le a :DataType ; rdfs:label "float32le" ; :baseType :baseFloat ; :bitWidth 32 ; :endianness :LittleEndian ; :xsdType xsd:float .
+:float64 a :DataType ; rdfs:label "float64" ; :baseType :baseFloat ; :bitWidth 64 ; :xsdType xsd:double .
+:float64be a :DataType ; rdfs:label "float64be" ; :baseType :baseFloat ; :bitWidth 64 ; :endianness :BigEndian ; :xsdType xsd:double .
+:float64le a :DataType ; rdfs:label "float64le" ; :baseType :baseFloat ; :bitWidth 64 ; :endianness :LittleEndian ; :xsdType xsd:double .
+:bytes  a :DataType ; rdfs:label "bytes"  ; :baseType :baseBytes  ; :xsdType xsd:hexBinary .
+:string a :DataType ; rdfs:label "string" ; :baseType :baseString ; :xsdType xsd:string .
         </pre>
     </section>
 
     <section id="normative-shacl">
         <h2>Normative SHACL Shapes</h2>
-        <p>A BDDO description graph MUST conform to the following SHACL shapes [[shacl]].</p>
+        <p>A BDDO description graph MUST conform to the following SHACL shapes [[shacl]]. These shapes carry the domain and cardinality constraints and refine the declared value ranges (the vocabulary declares <code>rdfs:range</code> but no <code>rdfs:domain</code>).</p>
         <pre class="nohighlight">
-@prefix sh: &lt;http://www.w3.org/ns/shacl#&gt; .
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
-@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix :       &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix bddo:   &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdf:    &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix rdfs:   &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:    &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
-# -- Shape for validating a bddo:Struct --
+# SHACL shapes
+bddo:_prefixes sh:declare [ sh:prefix "bddo" ; sh:namespace "https://hexplain.io/ns/bddo#"^^xsd:anyURI ] .
+
 bddo:StructShape a sh:NodeShape ;
     sh:targetClass bddo:Struct ;
-    sh:property [
-        sh:path bddo:hasField ;
-        sh:nodeKind sh:BlankNodeOrIRI ;
-        sh:maxCount 1 ;
-        sh:message "bddo:hasField must point to a single rdf:List."
-    ] .
+    sh:property [ sh:path bddo:hasField ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:message "bddo:hasField must point to a single rdf:List." ] ;
+    sh:property [ sh:path ( bddo:hasField [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:class bddo:Field ;
+        sh:message "Every member of a Struct's hasField list must be a bddo:Field." ] ;
+    sh:property [ sh:path bddo:endianness ; sh:maxCount 1 ; sh:in ( bddo:BigEndian bddo:LittleEndian ) ] ;
+    sh:property [ sh:path bddo:bitOrder ; sh:maxCount 1 ; sh:in ( bddo:MSBFirst bddo:LSBFirst ) ] ;
+    sh:property [ sh:path bddo:syncOnMarker ; sh:maxCount 1 ; sh:datatype xsd:hexBinary ] .
 
-# -- Shape for validating a bddo:Field --
 bddo:FieldShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
-    sh:property [
-        sh:path bddo:dataType ;
-        sh:nodeKind sh:IRI ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:message "A bddo:Field must have exactly one bddo:dataType."
-    ] .
+    sh:or (
+        [ sh:property [ sh:path bddo:dataType ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path bddo:hasConditionalDataType ; sh:minCount 1 ] ]
+    ) ;
+    sh:property [ sh:path bddo:dataType ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+        sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ] ;
+    sh:property [ sh:path ( bddo:hasConditionalDataType [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:class bddo:DataTypeRule ;
+        sh:message "Every member of a hasConditionalDataType list must be a bddo:DataTypeRule." ] ;
+    sh:property [ sh:path bddo:size ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:sizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:sizeFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:sizeToEndOfStream ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:terminator ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:encoding ; sh:maxCount 1 ; sh:in ( bddo:utf8 bddo:ascii bddo:utf16le bddo:utf16be bddo:latin1 ) ] ;
+    sh:property [ sh:path bddo:bitLength ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:alignment ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:atOffset ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:atOffsetFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:atOffsetFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:offsetBase ; sh:maxCount 1 ;
+        sh:in ( bddo:streamStart bddo:streamEnd bddo:parentStart bddo:currentPosition ) ] ;
+    sh:property [ sh:path bddo:enumeration ; sh:class bddo:Enumeration ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:checksum ; sh:class bddo:Checksum ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:isPresentIf ; sh:datatype xsd:string ; sh:maxCount 1 ] .
 
-# -- Shape for validating a bddo:DataTypeRule --
+# At most one sizing mechanism per field.
+bddo:FieldSizingShape a sh:NodeShape ;
+    sh:targetClass bddo:Field ;
+    sh:sparql [ sh:message "A bddo:Field must use at most one sizing/termination mechanism." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this ?p ?v .
+            FILTER(?p IN (bddo:size, bddo:sizeFromField, bddo:sizeFromExpression,
+                          bddo:sizeToEndOfStream, bddo:terminator))
+        } GROUP BY $this HAVING (COUNT(DISTINCT ?p) &gt; 1)""" ] .
+
+# A variable-length field (bytes/string) MUST declare exactly one sizing/termination.
+bddo:VariableLengthFieldShape a sh:NodeShape ;
+    sh:targetClass bddo:Field ;
+    sh:sparql [ sh:message "A bddo:bytes or bddo:string field must declare a sizing or termination mechanism." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:dataType ?dt . FILTER(?dt IN (bddo:bytes, bddo:string))
+            FILTER NOT EXISTS {
+                $this ?p ?v .
+                FILTER(?p IN (bddo:size, bddo:sizeFromField, bddo:sizeFromExpression,
+                              bddo:sizeToEndOfStream, bddo:terminator))
+            }
+        }""" ] .
+
+# At most one repetition mechanism per field.
+bddo:FieldRepetitionShape a sh:NodeShape ;
+    sh:targetClass bddo:Field ;
+    sh:sparql [ sh:message "A bddo:Field must use at most one repetition mechanism." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this ?p ?v .
+            FILTER(?p IN (bddo:repeatCount, bddo:repeatCountFromField,
+                          bddo:repeatCountFromExpression, bddo:repeatUntil))
+        } GROUP BY $this HAVING (COUNT(DISTINCT ?p) &gt; 1)""" ] .
+
+# At most one offset mechanism per field.
+bddo:FieldOffsetShape a sh:NodeShape ;
+    sh:targetClass bddo:Field ;
+    sh:sparql [ sh:message "A bddo:Field must use at most one offset mechanism." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this ?p ?v .
+            FILTER(?p IN (bddo:atOffset, bddo:atOffsetFromField, bddo:atOffsetFromExpression))
+        } GROUP BY $this HAVING (COUNT(DISTINCT ?p) &gt; 1)""" ] .
+
+bddo:DataTypeShape a sh:NodeShape ;
+    sh:targetClass bddo:DataType ;
+    sh:property [ sh:path bddo:baseType ; sh:maxCount 1 ;
+        sh:in ( bddo:baseInteger bddo:baseFloat bddo:baseString bddo:baseBytes ) ] ;
+    sh:property [ sh:path bddo:bitWidth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:isSigned ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:endianness ; sh:maxCount 1 ; sh:in ( bddo:BigEndian bddo:LittleEndian ) ] ;
+    sh:property [ sh:path bddo:xsdType ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+
 bddo:DataTypeRuleShape a sh:NodeShape ;
     sh:targetClass bddo:DataTypeRule ;
-    sh:property [
-        sh:path bddo:condition ;
-        sh:minCount 1 ; sh:maxCount 1 ;
-        sh:message "A DataTypeRule MUST have exactly one bddo:condition."
-    ] ;
-    sh:property [
-        sh:path bddo:dataType ;
-        sh:class bddo:Struct ;
-        sh:minCount 1 ; sh:maxCount 1 ;
-        sh:message "The dataType of a DataTypeRule MUST be a single bddo:Struct."
-    ] .
+    sh:property [ sh:path bddo:condition ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:ruleDataType ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+        sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ] .
+
+bddo:EnumerationShape a sh:NodeShape ;
+    sh:targetClass bddo:Enumeration ;
+    sh:property [ sh:path bddo:hasEnumValue ; sh:minCount 1 ; sh:class bddo:EnumValue ] .
+
+bddo:EnumValueShape a sh:NodeShape ;
+    sh:targetClass bddo:EnumValue ;
+    sh:property [ sh:path bddo:enumRawValue ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:enumSymbol ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+
+bddo:ChecksumShape a sh:NodeShape ;
+    sh:targetClass bddo:Checksum ;
+    sh:property [ sh:path bddo:checksumAlgorithm ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( bddo:crc16 bddo:crc32 bddo:adler32 bddo:md5 bddo:sha1 bddo:sha256 ) ] ;
+    sh:property [ sh:path bddo:coversFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:coversToField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:coversExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] .
         </pre>
     </section>
-    
+
     <section id="normative-jsonld-context">
         <h2>Normative JSON-LD Context</h2>
-        <p>
-            The following context provides the normative [[JSON-LD]] mapping for all terms defined in the BDDO 1.3 specification.
-        </p>
+        <p>The following context provides the normative [[JSON-LD]] mapping for the BDDO 1.4 terms.</p>
         <pre class="nohighlight">
 {
   "@context": {
     "bddo": "https://hexplain.io/ns/bddo#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
 
-    "Struct": "bddo:Struct",
-    "Field": "bddo:Field",
-    "DataType": "bddo:DataType",
-    "DataTypeRule": "bddo:DataTypeRule",
+    "Struct": "bddo:Struct", "Field": "bddo:Field", "DataType": "bddo:DataType",
+    "DataTypeRule": "bddo:DataTypeRule", "Enumeration": "bddo:Enumeration",
+    "EnumValue": "bddo:EnumValue", "Checksum": "bddo:Checksum",
 
     "hasField": { "@id": "bddo:hasField", "@container": "@list" },
     "endianness": { "@id": "bddo:endianness", "@type": "@id" },
+    "bitOrder": { "@id": "bddo:bitOrder", "@type": "@id" },
     "syncOnMarker": { "@id": "bddo:syncOnMarker", "@type": "xsd:hexBinary" },
-    
+
     "dataType": { "@id": "bddo:dataType", "@type": "@id" },
     "hasConditionalDataType": { "@id": "bddo:hasConditionalDataType", "@container": "@list" },
     "size": { "@id": "bddo:size", "@type": "xsd:positiveInteger" },
     "sizeFromField": { "@id": "bddo:sizeFromField", "@type": "@id" },
+    "sizeFromExpression": "bddo:sizeFromExpression",
+    "sizeToEndOfStream": { "@id": "bddo:sizeToEndOfStream", "@type": "xsd:boolean" },
     "terminator": { "@id": "bddo:terminator", "@type": "xsd:hexBinary" },
-    "hasFixedValue": "bddo:hasFixedValue",
-
-    "isPresentIf": "bddo:isPresentIf",
+    "encoding": { "@id": "bddo:encoding", "@type": "@id" },
+    "bitLength": { "@id": "bddo:bitLength", "@type": "xsd:positiveInteger" },
+    "repeatCount": { "@id": "bddo:repeatCount", "@type": "xsd:nonNegativeInteger" },
+    "repeatCountFromField": { "@id": "bddo:repeatCountFromField", "@type": "@id" },
+    "repeatCountFromExpression": "bddo:repeatCountFromExpression",
     "repeatUntil": "bddo:repeatUntil",
-
-    "condition": "bddo:condition",
+    "atOffset": { "@id": "bddo:atOffset", "@type": "xsd:nonNegativeInteger" },
+    "atOffsetFromField": { "@id": "bddo:atOffsetFromField", "@type": "@id" },
+    "atOffsetFromExpression": "bddo:atOffsetFromExpression",
+    "offsetBase": { "@id": "bddo:offsetBase", "@type": "@id" },
+    "alignment": { "@id": "bddo:alignment", "@type": "xsd:positiveInteger" },
+    "hasFixedValue": "bddo:hasFixedValue",
+    "isPresentIf": "bddo:isPresentIf",
+    "enumeration": { "@id": "bddo:enumeration", "@type": "@id" },
+    "checksum": { "@id": "bddo:checksum", "@type": "@id" },
 
     "baseType": { "@id": "bddo:baseType", "@type": "@id" },
     "bitWidth": { "@id": "bddo:bitWidth", "@type": "xsd:positiveInteger" },
     "isSigned": { "@id": "bddo:isSigned", "@type": "xsd:boolean" },
-    "hasEndianness": { "@id": "bddo:hasEndianness", "@type": "@id" }
+    "xsdType": { "@id": "bddo:xsdType", "@type": "@id" },
+    "condition": "bddo:condition",
+    "ruleDataType": { "@id": "bddo:ruleDataType", "@type": "@id" },
+    "hasEnumValue": { "@id": "bddo:hasEnumValue", "@type": "@id" },
+    "enumRawValue": "bddo:enumRawValue",
+    "enumSymbol": { "@id": "bddo:enumSymbol", "@type": "@id" },
+    "checksumAlgorithm": { "@id": "bddo:checksumAlgorithm", "@type": "@id" },
+    "coversFromField": { "@id": "bddo:coversFromField", "@type": "@id" },
+    "coversToField": { "@id": "bddo:coversToField", "@type": "@id" },
+    "coversExpression": "bddo:coversExpression"
   }
 }
         </pre>
     </section>
 
     <section id="example" class="introductory">
-        <h2>Example: Conditional Data Type Dispatch</h2>
-        <p>
-            This example shows how to use <code>bddo:hasConditionalDataType</code> to model the PNG chunk structure. A generic chunk is parsed first, and then the <code>ChunkData</code> field is re-parsed using a more specific structure based on the value of the <code>ChunkType</code> field.
-        </p>
-        <p>
-            This mechanism is crucial for formats that use a type-length-value (TLV) or chunk-based structure, where a single field (the "value" or "data") can contain different internal structures depending on a preceding type identifier.
-        </p>
-        <pre class="nohighlight">
+        <h2>Examples</h2>
+        <section>
+            <h3>Conditional Data Type Dispatch (PNG chunk)</h3>
+            <p>A generic chunk is parsed first; the <code>ChunkData</code> field is then re-interpreted using a more specific structure based on <code>ChunkType</code>. This is the type-length-value (TLV) pattern.</p>
+            <pre class="nohighlight">
 @prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
-@prefix png: &lt;https://hexplain.io/formats/png#&gt; .
-@prefix png_profile: &lt;https://hexplain.io/ns/profiles/png#&gt; .
+@prefix png:  &lt;https://hexplain.io/formats/png#&gt; .
 
-# Generic Chunk Structure defined in a profile
-png_profile:Chunk a bddo:Struct ;
-    bddo:hasField ( png_profile:ChunkLength, png_profile:ChunkType, png_profile:ChunkData, png_profile:ChunkCRC ) .
+png:Chunk a bddo:Struct ;
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField ( png:ChunkLength png:ChunkType png:ChunkData png:ChunkCRC ) .
 
-png_profile:ChunkData a bddo:Field ;
-    # Default type is raw bytes.
+png:ChunkLength a bddo:Field ; bddo:dataType bddo:uint32 .
+png:ChunkType   a bddo:Field ; bddo:dataType bddo:string ; bddo:size 4 ; bddo:encoding bddo:ascii .
+
+png:ChunkData a bddo:Field ;
     bddo:dataType bddo:bytes ;
-    bddo:sizeFromField png_profile:ChunkLength ;
-    
-    # Conditionally dispatch to a more specific struct for parsing.
+    bddo:sizeFromField png:ChunkLength ;
     bddo:hasConditionalDataType (
-        [
-            a bddo:DataTypeRule ;
-            bddo:condition "instance.parent.ChunkType == 'IHDR'" ;
-            bddo:dataType png:IHDR_ChunkData
-        ]
-        [
-            a bddo:DataTypeRule ;
-            bddo:condition "instance.parent.ChunkType == 'PLTE'" ;
-            bddo:dataType png:PLTE_ChunkData
-        ]
-        # ... rules for other chunk types ...
+        [ a bddo:DataTypeRule ; bddo:condition "instance.parent.ChunkType == 'IHDR'" ; bddo:ruleDataType png:IHDR_ChunkData ]
+        [ a bddo:DataTypeRule ; bddo:condition "instance.parent.ChunkType == 'PLTE'" ; bddo:ruleDataType png:PLTE_ChunkData ]
     ) .
-        </pre>
+
+# CRC-32 over the ChunkType and ChunkData bytes.
+png:ChunkCRC a bddo:Field ;
+    bddo:dataType bddo:uint32 ;
+    bddo:checksum [ a bddo:Checksum ;
+        bddo:checksumAlgorithm bddo:crc32 ;
+        bddo:coversFromField png:ChunkType ;
+        bddo:coversToField   png:ChunkData ] .
+            </pre>
+        </section>
+        <section>
+            <h3>Count-based array, enumeration, and offset (sketch)</h3>
+            <pre class="nohighlight">
+@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix tiff: &lt;https://hexplain.io/formats/tiff#&gt; .
+
+# An IFD entry count followed by that many entries.
+tiff:IFD a bddo:Struct ;
+    bddo:hasField ( tiff:NumEntries tiff:Entries tiff:NextIFDOffset ) .
+tiff:NumEntries a bddo:Field ; bddo:dataType bddo:uint16 .
+tiff:Entries a bddo:Field ;
+    bddo:dataType tiff:IFDEntry ;
+    bddo:repeatCountFromField tiff:NumEntries .
+
+# A colour-type byte surfaced as a symbol.
+tiff:ColorType a bddo:Field ;
+    bddo:dataType bddo:uint8 ;
+    bddo:enumeration [ a bddo:Enumeration ; bddo:hasEnumValue
+        [ a bddo:EnumValue ; bddo:enumRawValue 0 ; rdfs:label "Grayscale" ] ,
+        [ a bddo:EnumValue ; bddo:enumRawValue 2 ; rdfs:label "RGB" ] ,
+        [ a bddo:EnumValue ; bddo:enumRawValue 3 ; rdfs:label "Indexed" ] ] .
+
+# A structure located by an absolute offset read from a header field.
+tiff:FirstIFD a bddo:Field ;
+    bddo:dataType tiff:IFD ;
+    bddo:atOffsetFromField tiff:IFDOffset ;
+    bddo:offsetBase bddo:streamStart .
+            </pre>
+        </section>
     </section>
 </body>
 </html>

@@ -1,0 +1,43 @@
+# Hexplain Archive Vocabulary (AXV) 1.0 — vocabulary + SHACL shapes
+@prefix :       <https://hexplain.io/ns/archive#> .
+@prefix axv:    <https://hexplain.io/ns/archive#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/archive> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/archive/1.0> ; owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Archive Vocabulary (AXV)" ;
+    rdfs:comment "Semantic vocabulary for archive and container file properties." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "axv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/archive#" .
+
+:Archive a owl:Class ; rdfs:label "Archive" ; rdfs:isDefinedBy <https://hexplain.io/ns/archive> .
+:ArchiveEntry a owl:Class ; rdfs:label "Archive Entry" ; rdfs:isDefinedBy <https://hexplain.io/ns/archive> .
+:CentralDirectory a owl:Class ; rdfs:label "Central Directory" ; rdfs:isDefinedBy <https://hexplain.io/ns/archive> .
+
+:hasEntry a owl:ObjectProperty ; rdfs:label "has entry" ; rdfs:isDefinedBy <https://hexplain.io/ns/archive> ; rdfs:range :ArchiveEntry .
+:fileName a owl:DatatypeProperty ; rdfs:label "file name" ; rdfs:isDefinedBy <https://hexplain.io/ns/archive> ; skos:closeMatch dcterms:title ; rdfs:range xsd:string .
+:uncompressedSize a owl:DatatypeProperty ; rdfs:label "uncompressed size" ; rdfs:isDefinedBy <https://hexplain.io/ns/archive> ; skos:closeMatch dcterms:extent ; rdfs:range xsd:unsignedLong .
+:compressedSize a owl:DatatypeProperty ; rdfs:label "compressed size" ; rdfs:isDefinedBy <https://hexplain.io/ns/archive> ; rdfs:range xsd:unsignedLong .
+:compressionMethod a owl:DatatypeProperty ; rdfs:label "compression method" ; rdfs:isDefinedBy <https://hexplain.io/ns/archive> ; rdfs:range xsd:string .
+:crcChecksum a owl:DatatypeProperty ; rdfs:label "CRC checksum" ; rdfs:isDefinedBy <https://hexplain.io/ns/archive> ; rdfs:range xsd:hexBinary .
+:modificationTime a owl:DatatypeProperty ; rdfs:label "modification time" ; rdfs:isDefinedBy <https://hexplain.io/ns/archive> ; skos:closeMatch dcterms:modified ; rdfs:range xsd:dateTime .
+:isDirectory a owl:DatatypeProperty ; rdfs:label "is directory" ; rdfs:isDefinedBy <https://hexplain.io/ns/archive> ; rdfs:range xsd:boolean .
+:entryComment a owl:DatatypeProperty ; rdfs:label "entry comment" ; rdfs:isDefinedBy <https://hexplain.io/ns/archive> ; rdfs:range xsd:string .
+
+# ---------- SHACL ----------
+axv:ArchiveShape a sh:NodeShape ; sh:targetSubjectsOf axv:hasEntry ;
+    sh:property [ sh:path axv:hasEntry ; sh:class axv:ArchiveEntry ] .
+axv:EntryShape a sh:NodeShape ; sh:targetSubjectsOf axv:fileName ;
+    sh:property [ sh:path axv:fileName ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path axv:uncompressedSize ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path axv:compressedSize ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path axv:crcChecksum ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
+    sh:property [ sh:path axv:modificationTime ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
+    sh:property [ sh:path axv:isDirectory ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .

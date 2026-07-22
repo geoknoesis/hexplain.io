@@ -12,186 +12,176 @@
                 name: "Stephane Fellah",
                 url: "https://geoknoesis.com"
             }],
-            github: "https://github.com/w3c/respec",
+            github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "hexplain-core",
             publishDate: "2025-08-16",
-            subtitle: "Version 1.0",
+            subtitle: "Version 1.2",
         };
     </script>
 </head>
 <body>
     <section id="abstract">
         <p>
-            The Hexplain Core Ontology provides the essential vocabulary to link physical data structures, described by the Binary Data Description Ontology (BDDO), to their abstract semantic meaning, described by domain-specific vocabularies. It acts as the central "layout module" or "glue" for the Hexplain Ontology Family, enabling the creation of rich, multi-layered descriptions of binary data. This specification provides the normative OWL ontology, SHACL shapes, and JSON-LD context for the Hexplain Core vocabulary.
+            The Hexplain Core Ontology provides the essential vocabulary to link physical data structures, described by the Binary Data Description Ontology (BDDO), to their abstract semantic meaning (described by domain vocabularies) and to their multi-dimensional layout (described by the Data Layout Vocabulary). It is the central "glue" of the Hexplain Ontology Family. This specification provides the normative OWL vocabulary, SHACL shapes, and JSON-LD context for Hexplain Core.
         </p>
     </section>
 
     <section id="sotd">
         <p>
-            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. Version 1.1 introduces constructs for conditional semantic mapping.
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
         </p>
+        <p><b>Change log.</b> Version 1.2 (this version) adds the <code>hexplain:hasDataLayout</code> property (previously referenced by DLV and the index but never defined here), models the mapping properties consistently as <code>owl:ObjectProperty</code> using OWL 2 punning, declares <code>rdfs:range</code> on properties and expresses domain/cardinality in SHACL (no <code>rdfs:domain</code>), and adds standard ontology metadata. Version 1.1 introduced conditional semantic mapping.</p>
     </section>
 
     <section class="introductory">
         <h2>Introduction</h2>
         <p>
-            The Hexplain framework is designed around a principle of layered separation. The <b>BDDO</b> ontology describes the physical layout of bytes, and various vocabularies (like the Image Description Vocabulary) describe the conceptual meaning of the data. The Hexplain Core Ontology provides the bridge between these layers.
+            The Hexplain framework is designed around layered separation. <b>BDDO</b> describes the physical layout of bytes; domain vocabularies (e.g. the Image Vocabulary) describe conceptual meaning; the <b>Data Layout Vocabulary (DLV)</b> describes multi-dimensional array layout. Hexplain Core provides the small, stable set of properties that connect these layers.
         </p>
-        <p>
-            Its purpose is to provide a small, stable set of properties that formally connect a physical element (like a <code>bddo:Struct</code> or <code>bddo:Field</code>) to its corresponding semantic concept (an <code>owl:Class</code> or <code>rdf:Property</code>). This linkage is what elevates a simple structural description into a machine-understandable knowledge graph.
-        </p>
+        <section id="punning">
+            <h3>Metamodeling Note (OWL 2 Punning)</h3>
+            <p>
+                The mapping properties relate a <i>physical element</i> (an instance of <code>bddo:Struct</code> or <code>bddo:Field</code>) to a <i>semantic term</i> that is itself an <code>owl:Class</code> or an <code>rdf:Property</code>. Using a class or property as the value of an object property is permitted in OWL 2 DL under <b>punning</b>: the same IRI may denote both a class and an individual. Hexplain Core therefore models all mapping properties uniformly as <code>owl:ObjectProperty</code> and declares their <code>rdfs:range</code>, while — following the family convention — expressing each property's domain as a SHACL constraint rather than an <code>rdfs:domain</code> axiom, so that no subject is silently typed.
+            </p>
+        </section>
         <section>
             <h3>Conformance</h3>
-            <p>
-                The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].
-            </p>
+            <p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].</p>
         </section>
     </section>
 
     <section id="properties">
-        <h2>Core Mapping Properties</h2>
-        <p>The Hexplain Core ontology defines the fundamental properties for linking layers.</p>
+        <h2>Core Properties</h2>
         <section>
             <h3>Static Mapping Properties</h3>
             <dl>
                 <dt><code>hexplain:mapsToClass</code></dt>
-                <dd>
-                    This property links a physical structure to a semantic class. It asserts that the subject (which SHOULD be a <code>bddo:Struct</code>) is a concrete physical representation of an instance of the object (which MUST be an <code>owl:Class</code>).
-                </dd>
+                <dd>Links a physical structure to a semantic class. The subject MUST be a <code>bddo:Struct</code> and the object MUST be an <code>owl:Class</code>. It asserts that each parsed instance of the Struct is a physical representation of an instance of that class.</dd>
                 <dt><code>hexplain:mapsToProperty</code></dt>
-                <dd>
-                    This property links a physical field to a single, unconditional semantic property. It asserts that the subject (which SHOULD be a <code>bddo:Field</code>) provides the value for the semantic property specified by the object (which MUST be an <code>rdf:Property</code>).
-                </dd>
+                <dd>Links a physical field to a single, unconditional semantic property. The subject MUST be a <code>bddo:Field</code> and the object MUST be an <code>rdf:Property</code>. The field supplies the value of that property.</dd>
+                <dt><code>hexplain:hasDataLayout</code></dt>
+                <dd>Links a <code>bddo:Field</code> that contains multi-dimensional data to a <code>dlv:DataLayout</code> describing how to interpret it (see <a href="../dlv/index.html">DLV</a>).</dd>
                 <dt><code>hexplain:isEncodedWith</code></dt>
-                <dd>
-                    This property specifies the algorithm required to interpret a block of data. It asserts that the subject (typically a <code>bddo:Field</code> containing a data stream) was encoded using the algorithm identified by the object (which SHOULD be a stable URI representing the algorithm's definition).
-                </dd>
+                <dd>Specifies the algorithm required to interpret a block of data (e.g. a compression codec). The object SHOULD be a stable IRI identifying the algorithm. A processor MAY decode the block and re-parse the result.</dd>
             </dl>
         </section>
         <section>
             <h3>Conditional Mapping Properties</h3>
-            <p>
-                These constructs are used when the semantic meaning of a field depends on the runtime value of another field.
-            </p>
+            <p>Used when the semantic meaning of a field depends on the runtime value of another field.</p>
             <dl>
                 <dt><code>hexplain:hasConditionalMapping</code></dt>
-                <dd>
-                    This property links a <code>bddo:Field</code> to an <code>rdf:List</code> of <code>hexplain:MappingRule</code> instances. It is used when a field's semantic property cannot be determined statically.
-                </dd>
+                <dd>Links a <code>bddo:Field</code> to an <code>rdf:List</code> of <code>hexplain:MappingRule</code> instances.</dd>
                 <dt><code>hexplain:MappingRule</code></dt>
-                <dd>
-                    A class that represents a single rule for a conditional mapping. Each rule consists of a condition and the semantic property to apply if that condition is met.
-                </dd>
+                <dd>A single conditional mapping: a condition and the semantic property to apply when it holds.</dd>
                 <dt><code>hexplain:condition</code></dt>
-                <dd>
-                    A property of a <code>hexplain:MappingRule</code>. The value is a HEL expression string that evaluates to true or false.
-                </dd>
+                <dd>A <a href="../hel/index.html">HEL</a> expression string that evaluates to a boolean.</dd>
                 <dt><code>hexplain:semanticProperty</code></dt>
-                <dd>
-                    A property of a <code>hexplain:MappingRule</code>. The value is the <code>rdf:Property</code> that should be applied to the field if the rule's condition is true.
-                </dd>
+                <dd>The <code>rdf:Property</code> applied to the field when the rule's condition is <code>true</code>.</dd>
             </dl>
         </section>
     </section>
 
     <section id="normative-owl">
-        <h2>Normative OWL Ontology</h2>
-        <p>The following is the complete, normative OWL ontology for Hexplain Core 1.1, expressed in Turtle syntax [[turtle]].</p>
+        <h2>Normative OWL Vocabulary</h2>
+        <p>The complete, normative OWL vocabulary for Hexplain Core 1.2, in Turtle [[turtle]].</p>
         <pre class="nohighlight">
-@prefix : &lt;https://hexplain.io/ns/core#&gt; .
-@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
-@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
-@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
-@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+# Hexplain Core Ontology 1.2 — vocabulary + SHACL shapes
+# Properties declare rdfs:range; domain and cardinality are in SHACL (no rdfs:domain).
+@prefix :         &lt;https://hexplain.io/ns/core#&gt; .
+@prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
+@prefix owl:      &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdf:      &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix rdfs:     &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:      &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:       &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix bddo:     &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix dlv:      &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix dcterms:  &lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:     &lt;http://purl.org/vocab/vann/&gt; .
 
 &lt;https://hexplain.io/ns/core&gt; a owl:Ontology ;
-    owl:versionInfo "1.1" ;
+    owl:versionIRI &lt;https://hexplain.io/ns/core/1.2&gt; ; owl:versionInfo "1.2" ;
+    owl:priorVersion &lt;https://hexplain.io/ns/core/1.1&gt; ;
+    owl:imports &lt;https://hexplain.io/ns/bddo&gt; , &lt;https://hexplain.io/ns/dlv&gt; ;
     rdfs:label "Hexplain Core Ontology" ;
-    rdfs:comment "Provides the core properties for linking physical and semantic layers in the Hexplain framework." .
+    rdfs:comment "Properties linking the physical, layout, and semantic layers of the Hexplain framework." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
+    dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
+    vann:preferredNamespacePrefix "hexplain" ; vann:preferredNamespaceUri "https://hexplain.io/ns/core#" .
 
-# -- Classes --
-:MappingRule a owl:Class ;
-    rdfs:label "Mapping Rule" ;
+:MappingRule a owl:Class ; rdfs:label "Mapping Rule" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
     rdfs:comment "A rule for conditionally mapping a physical field to a semantic property." .
 
-# -- Properties --
-:mapsToClass a owl:AnnotationProperty ;
-    rdfs:label "maps to class" ;
-    rdfs:domain bddo:Struct ;
-    rdfs:range owl:Class .
-
-:mapsToProperty a owl:AnnotationProperty ;
-    rdfs:label "maps to property" ;
-    rdfs:domain bddo:Field ;
-    rdfs:range rdf:Property .
-
-:isEncodedWith a owl:AnnotationProperty ;
-    rdfs:label "is encoded with" .
-
-:hasConditionalMapping a owl:ObjectProperty ;
-    rdfs:label "has conditional mapping" ;
-    rdfs:domain bddo:Field ;
-    rdfs:range rdf:List .
-
-:condition a owl:DatatypeProperty ;
-    rdfs:label "condition" ;
-    rdfs:domain :MappingRule ;
-    rdfs:range xsd:string .
-
-:semanticProperty a owl:ObjectProperty ;
-    rdfs:label "semantic property" ;
-    rdfs:domain :MappingRule ;
-    rdfs:range rdf:Property .
+# Mapping properties (OWL 2 punning; domain in SHACL). rdfs:range declared.
+:mapsToClass a owl:ObjectProperty ; rdfs:label "maps to class" ; rdfs:range owl:Class ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "Relates a bddo:Struct to the owl:Class it physically represents." .
+:mapsToProperty a owl:ObjectProperty ; rdfs:label "maps to property" ; rdfs:range rdf:Property ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "Relates a bddo:Field to the rdf:Property it supplies a value for." .
+:hasDataLayout a owl:ObjectProperty ; rdfs:label "has data layout" ; rdfs:range dlv:DataLayout ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "Relates a bddo:Field to a dlv:DataLayout describing its multi-dimensional interpretation." .
+:isEncodedWith a owl:ObjectProperty ; rdfs:label "is encoded with" ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "Identifies the algorithm (e.g. a codec) needed to interpret a data block." .
+:hasConditionalMapping a owl:ObjectProperty ; rdfs:label "has conditional mapping" ; rdfs:range rdf:List ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:condition a owl:DatatypeProperty ; rdfs:label "condition" ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:semanticProperty a owl:ObjectProperty ; rdfs:label "semantic property" ; rdfs:range rdf:Property ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
         </pre>
     </section>
 
     <section id="normative-shacl">
         <h2>Normative SHACL Shapes</h2>
-        <p>A Hexplain description graph using these properties MUST conform to the following SHACL shapes [[shacl]].</p>
+        <p>A Hexplain description graph using these properties MUST conform to the following shapes [[shacl]].</p>
         <pre class="nohighlight">
-@prefix sh: &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix :         &lt;https://hexplain.io/ns/core#&gt; .
 @prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
-@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix owl:      &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdf:      &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix rdfs:     &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:      &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:       &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix bddo:     &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix dlv:      &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix dcterms:  &lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:     &lt;http://purl.org/vocab/vann/&gt; .
 
-# -- Shape for validating hexplain:mapsToClass --
+# SHACL shapes
 hexplain:MapsToClassShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToClass ;
-    sh:class bddo:Struct .
-
-# -- Shape for validating hexplain:mapsToProperty --
+    sh:class bddo:Struct ;
+    sh:property [ sh:path hexplain:mapsToClass ; sh:nodeKind sh:IRI ; sh:class owl:Class ] .
 hexplain:MapsToPropertyShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToProperty ;
-    sh:class bddo:Field .
-
-# -- Shape for validating a hexplain:MappingRule --
+    sh:class bddo:Field ;
+    sh:property [ sh:path hexplain:mapsToProperty ; sh:nodeKind sh:IRI ;
+        sh:or ( [ sh:class rdf:Property ] [ sh:class owl:DatatypeProperty ]
+                [ sh:class owl:ObjectProperty ] [ sh:class owl:AnnotationProperty ] ) ] .
+hexplain:HasDataLayoutShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:hasDataLayout ;
+    sh:class bddo:Field ;
+    sh:property [ sh:path hexplain:hasDataLayout ; sh:class dlv:DataLayout ; sh:maxCount 1 ] .
+hexplain:HasConditionalMappingShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:hasConditionalMapping ;
+    sh:class bddo:Field ;
+    sh:property [ sh:path ( hexplain:hasConditionalMapping [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:class hexplain:MappingRule ;
+        sh:message "Every member of a hasConditionalMapping list must be a hexplain:MappingRule." ] .
 hexplain:MappingRuleShape a sh:NodeShape ;
     sh:targetClass hexplain:MappingRule ;
-    sh:property [
-        sh:path hexplain:condition ;
-        sh:nodeKind sh:Literal ;
-        sh:datatype xsd:string ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:message "A MappingRule MUST have exactly one hexplain:condition."
-    ] ;
-    sh:property [
-        sh:path hexplain:semanticProperty ;
-        sh:nodeKind sh:IRI ;
-        sh:class rdf:Property ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-        sh:message "A MappingRule MUST have exactly one hexplain:semanticProperty pointing to an rdf:Property."
-    ] .
+    sh:property [ sh:path hexplain:condition ; sh:nodeKind sh:Literal ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:semanticProperty ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:or ( [ sh:class rdf:Property ] [ sh:class owl:DatatypeProperty ]
+                [ sh:class owl:ObjectProperty ] [ sh:class owl:AnnotationProperty ] ) ] .
         </pre>
     </section>
-    
+
     <section id="normative-jsonld-context">
         <h2>Normative JSON-LD Context</h2>
-        <p>
-            The following context provides the normative [[JSON-LD]] mapping for the Hexplain Core terms.
-        </p>
         <pre class="nohighlight">
 {
   "@context": {
@@ -199,6 +189,7 @@ hexplain:MappingRuleShape a sh:NodeShape ;
     "bddo": "https://hexplain.io/ns/bddo#",
     "mapsToClass": { "@id": "hexplain:mapsToClass", "@type": "@id" },
     "mapsToProperty": { "@id": "hexplain:mapsToProperty", "@type": "@id" },
+    "hasDataLayout": { "@id": "hexplain:hasDataLayout", "@type": "@id" },
     "isEncodedWith": { "@id": "hexplain:isEncodedWith", "@type": "@id" },
     "hasConditionalMapping": { "@id": "hexplain:hasConditionalMapping", "@container": "@list" },
     "MappingRule": "hexplain:MappingRule",
@@ -211,37 +202,29 @@ hexplain:MappingRuleShape a sh:NodeShape ;
 
     <section id="example" class="introductory">
         <h2>Example of Usage</h2>
-        <p>This example shows how to use the conditional mapping constructs to describe the PNG <code>tEXt</code> chunk, where the semantic meaning of the <code>TextString</code> field depends on the value of the <code>Keyword</code> field.</p>
+        <p>Conditional mapping for the PNG <code>tEXt</code> chunk, where the meaning of <code>TextString</code> depends on the value of the sibling <code>Keyword</code> field.</p>
         <pre class="nohighlight">
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix bddo:     &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
-@prefix dfv: &lt;https://hexplain.io/ns/docfont#&gt; .
-@prefix png: &lt;https://hexplain.io/formats/png#&gt; .
+@prefix dfv:      &lt;https://hexplain.io/ns/docfont#&gt; .
+@prefix png:      &lt;https://hexplain.io/formats/png#&gt; .
 
 png:tEXt_ChunkData a bddo:Struct ;
-    bddo:hasField ( png:Keyword, png:TextString ) .
+    bddo:hasField ( png:Keyword png:TextString ) .
 
 png:Keyword a bddo:Field ;
     bddo:dataType bddo:string ;
+    bddo:encoding bddo:latin1 ;
     bddo:terminator "00"^^xsd:hexBinary .
 
 png:TextString a bddo:Field ;
     bddo:dataType bddo:string ;
-    bddo:sizeFromExpression "parent.ChunkLength - (instance.Keyword.size + 1)" ;
-    
-    # Apply a list of conditional mapping rules to this field.
+    bddo:encoding bddo:latin1 ;
+    # HEL: total chunk length minus the keyword bytes and its 1-byte separator.
+    bddo:sizeFromExpression "instance.parent.ChunkLength - (sizeof(instance.parent.Keyword) + 1)" ;
     hexplain:hasConditionalMapping (
-        [
-            a hexplain:MappingRule ;
-            hexplain:condition "instance.parent.Keyword == 'Title'" ;
-            hexplain:semanticProperty dfv:title
-        ]
-        [
-            a hexplain:MappingRule ;
-            hexplain:condition "instance.parent.Keyword == 'Author'" ;
-            hexplain:semanticProperty dfv:author
-        ]
-        # ... more rules for other keywords ...
+        [ a hexplain:MappingRule ; hexplain:condition "instance.parent.Keyword == 'Title'" ;  hexplain:semanticProperty dfv:title ]
+        [ a hexplain:MappingRule ; hexplain:condition "instance.parent.Keyword == 'Author'" ; hexplain:semanticProperty dfv:author ]
     ) .
         </pre>
     </section>

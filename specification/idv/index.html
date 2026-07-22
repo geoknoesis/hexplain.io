@@ -8,175 +8,143 @@
     <script class="remove">
         var respecConfig = {
             specStatus: "unofficial",
-            editors: [{
-                name: "Stephane Fellah",
-                url: "https://geoknoesis.com"
-            }],
-            github: "https://github.com/w3c/respec",
+            editors: [{ name: "Stephane Fellah", url: "https://geoknoesis.com" }],
+            github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "hexplain-idv",
             publishDate: "2025-08-16",
-            subtitle: "Version 1.0",
+            subtitle: "Version 1.1",
         };
     </script>
 </head>
 <body>
     <section id="abstract">
         <p>
-            The Hexplain Image Vocabulary (IDV) is a domain-specific ontology that provides a standard set of terms for describing the semantic properties of raster images. It is a component of the Hexplain Ontology Family, designed to be used in conjunction with the BDDO and Hexplain Core ontologies. IDV allows format authors to map low-level physical data fields (e.g., a 4-byte integer) to high-level, unambiguous concepts (e.g., image width in pixels), enabling interoperability and semantic querying across different image file formats.
+            The Hexplain Image Vocabulary (IDV) provides a standard set of terms for the semantic properties of raster images. Used with BDDO and Hexplain Core, it lets format authors map low-level physical fields to high-level concepts (image width in pixels, colour type, compression), enabling interoperability and semantic querying across image formats. <b>Prefix:</b> <code>img</code>; <b>namespace:</b> <code>https://hexplain.io/ns/image#</code>.
         </p>
     </section>
 
     <section id="sotd">
-        <p>
-            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
-        </p>
+        <p>This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.</p>
+        <p><b>Change log.</b> Version 1.1 adds SHACL range constraints (previously only in prose), <code>rdfs:comment</code>/<code>rdfs:isDefinedBy</code> on every term, ontology metadata, and alignments to the W3C Ontology for Media Resources. It removes the duplicated layout axes <code>img:axisX/Y/Band</code> in favour of reusing <code>dlv:axisX</code>, <code>dlv:axisY</code>, and <code>dlv:axisBand</code>. Property ranges use <code>rdfs:range</code>; domain and cardinality are in SHACL (no <code>rdfs:domain</code>).</p>
     </section>
 
     <section class="introductory">
         <h2>Introduction</h2>
-        <p>
-            While the BDDO ontology describes the physical structure of a file, it does not provide any information about what the data represents. The Image Vocabulary provides this semantic layer for the specific domain of raster imagery.
-        </p>
-        <p>
-            By providing a common, stable set of URIs for concepts like "pixel width," "color space," and "compression type," the IDV allows a Hexplain processor to understand and compare images from different file formats (e.g., PNG, JPEG, BMP) in a standardized way. A user can ask a high-level question like "Find all images wider than 1024 pixels" without needing to know the specific physical location of the width field in each format.
-        </p>
-        <section>
-            <h3>Conformance</h3>
-            <p>
-                The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].
-            </p>
+        <p>BDDO describes the physical structure of a file; IDV describes what raster image data means. Common URIs for "pixel width," "colour space," and "compression" let a processor compare images across formats (PNG, JPEG, BMP) and answer questions like "find all images wider than 1024 pixels" without knowing each format's byte layout.</p>
+        <section><h3>Conformance</h3>
+            <p>The key words "MUST", "MUST NOT", "SHOULD", "MAY", etc. are to be interpreted as in [[RFC2119]].</p>
         </section>
     </section>
 
     <section id="core-concepts">
         <h2>Core Concepts (Classes)</h2>
-        <p>IDV defines a set of classes to represent the high-level concepts within an image file.</p>
         <dl>
-            <dt><code>img:Image</code></dt>
-            <dd>The core class representing the image as a whole.</dd>
-            <dt><code>img:ImageHeader</code></dt>
-            <dd>Represents the metadata block that contains the primary image characteristics, such as dimensions and color information.</dd>
-            <dt><code>img:ColorProfile</code></dt>
-            <dd>Represents information about the color space, gamma, etc.</dd>
-            <dt><code>img:PixelData</code></dt>
-            <dd>Represents the block containing the actual compressed or uncompressed pixel data.</dd>
+            <dt><code>img:Image</code></dt><dd>The image as a whole.</dd>
+            <dt><code>img:ImageHeader</code></dt><dd>The metadata block holding primary characteristics (dimensions, colour).</dd>
+            <dt><code>img:ColorProfile</code></dt><dd>Colour space, gamma, etc.</dd>
+            <dt><code>img:PixelData</code></dt><dd>The compressed or uncompressed pixel data.</dd>
         </dl>
     </section>
 
     <section id="properties">
         <h2>Semantic Properties</h2>
-        <p>These properties describe the attributes of an image. In a Hexplain description, a <code>bddo:Field</code> would use the <code>hexplain:mapsToProperty</code> predicate to link to one of these semantic properties.</p>
+        <p>A <code>bddo:Field</code> uses <code>hexplain:mapsToProperty</code> to link to one of these. Ranges are enforced by the SHACL shapes below.</p>
         <table class="simple">
-            <thead>
-                <tr>
-                    <th>Property</th>
-                    <th>Description</th>
-                    <th>Expected Range</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Property</th><th>Description</th><th>Range</th></tr></thead>
             <tbody>
-                <tr>
-                    <td><code>img:pixelWidth</code></td>
-                    <td>The width of the image in pixels.</td>
-                    <td><code>xsd:positiveInteger</code></td>
-                </tr>
-                <tr>
-                    <td><code>img:pixelHeight</code></td>
-                    <td>The height of the image in pixels.</td>
-                    <td><code>xsd:positiveInteger</code></td>
-                </tr>
-                <tr>
-                    <td><code>img:bitsPerComponent</code></td>
-                    <td>The number of bits per color or sample component (e.g., 8 for standard RGB).</td>
-                    <td><code>xsd:positiveInteger</code></td>
-                </tr>
-                <tr>
-                    <td><code>img:colorType</code></td>
-                    <td>An identifier for the color type (e.g., Grayscale, RGB, Indexed). Often an integer code.</td>
-                    <td><code>xsd:integer</code></td>
-                </tr>
-                <tr>
-                    <td><code>img:compressionMethod</code></td>
-                    <td>An identifier for the compression method used.</td>
-                    <td><code>xsd:integer</code></td>
-                </tr>
-                 <tr>
-                    <td><code>img:filterMethod</code></td>
-                    <td>An identifier for the filter or prediction method used before compression.</td>
-                    <td><code>xsd:integer</code></td>
-                </tr>
-                 <tr>
-                    <td><code>img:interlaceMethod</code></td>
-                    <td>An identifier for the interlacing or progressive display method.</td>
-                    <td><code>xsd:integer</code></td>
-                </tr>
+                <tr><td><code>img:pixelWidth</code></td><td>Width in pixels.</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>img:pixelHeight</code></td><td>Height in pixels.</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>img:bitsPerComponent</code></td><td>Bits per colour/sample component.</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>img:colorType</code></td><td>Colour-type code (Grayscale, RGB, Indexed…).</td><td><code>xsd:integer</code></td></tr>
+                <tr><td><code>img:compressionMethod</code></td><td>Compression-method code.</td><td><code>xsd:integer</code></td></tr>
+                <tr><td><code>img:filterMethod</code></td><td>Filter/prediction-method code.</td><td><code>xsd:integer</code></td></tr>
+                <tr><td><code>img:interlaceMethod</code></td><td>Interlace/progressive-method code.</td><td><code>xsd:integer</code></td></tr>
             </tbody>
         </table>
     </section>
-    
+
     <section id="layout-axes">
         <h2>Layout Axes</h2>
-        <p>IDV extends the Hexplain Data Layout Vocabulary (DLV) by defining standard axes specific to imagery. These are used in a <code>dlv:Dimension</code> to specify what each dimension of a pixel data array represents.</p>
-        <dl>
-            <dt><code>img:axisX</code></dt>
-            <dd>Represents the horizontal (width) spatial axis.</dd>
-            <dt><code>img:axisY</code></dt>
-            <dd>Represents the vertical (height) spatial axis.</dd>
-            <dt><code>img:axisBand</code></dt>
-            <dd>Represents the band, channel, or component axis (e.g., R, G, B components).</dd>
-        </dl>
+        <p>IDV reuses the Data Layout Vocabulary axes rather than defining duplicates: use <code>dlv:axisX</code> (width), <code>dlv:axisY</code> (height), and <code>dlv:axisBand</code> (channel/component) inside a <code>dlv:Dimension</code>.</p>
     </section>
 
     <section id="normative-owl">
-        <h2>Normative OWL Ontology</h2>
-        <p>The following is the complete, normative OWL ontology for IDV 1.0, expressed in Turtle syntax [[turtle]].</p>
+        <h2>Normative OWL Vocabulary</h2>
         <pre class="nohighlight">
-@prefix : &lt;https://hexplain.io/ns/image#&gt; .
-@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
-@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
-@prefix dlv: &lt;https://hexplain.io/ns/dlv#&gt; .
+# Hexplain Image Vocabulary (IDV) 1.1 — vocabulary + SHACL shapes
+@prefix :       &lt;https://hexplain.io/ns/image#&gt; .
+@prefix img:    &lt;https://hexplain.io/ns/image#&gt; .
+@prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdfs:   &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:    &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
+@prefix ma:     &lt;http://www.w3.org/ns/ma-ont#&gt; .
+@prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 &lt;https://hexplain.io/ns/image&gt; a owl:Ontology ;
-    owl:versionInfo "1.0" ;
-    rdfs:label "Hexplain Image Vocabulary (IDV)" .
+    owl:versionIRI &lt;https://hexplain.io/ns/image/1.1&gt; ; owl:versionInfo "1.1" ;
+    rdfs:label "Hexplain Image Vocabulary (IDV)" ;
+    rdfs:comment "Semantic vocabulary for raster image properties." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
+    dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
+    vann:preferredNamespacePrefix "img" ; vann:preferredNamespaceUri "https://hexplain.io/ns/image#" .
 
-# -- Classes --
-:Image a owl:Class ; rdfs:label "Image" .
-:ImageHeader a owl:Class ; rdfs:label "Image Header" .
-:ColorProfile a owl:Class ; rdfs:label "Color Profile" .
-:PixelData a owl:Class ; rdfs:label "Pixel Data" .
+:Image a owl:Class ; rdfs:label "Image" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; skos:closeMatch ma:Image .
+:ImageHeader a owl:Class ; rdfs:label "Image Header" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; .
+:ColorProfile a owl:Class ; rdfs:label "Color Profile" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; .
+:PixelData a owl:Class ; rdfs:label "Pixel Data" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; .
 
-# -- Properties --
-:pixelWidth a owl:DatatypeProperty ; rdfs:label "Pixel Width" .
-:pixelHeight a owl:DatatypeProperty ; rdfs:label "Pixel Height" .
-:bitsPerComponent a owl:DatatypeProperty ; rdfs:label "Bits Per Component" .
-:colorType a owl:DatatypeProperty ; rdfs:label "Color Type" .
-:compressionMethod a owl:DatatypeProperty ; rdfs:label "Compression Method" .
-:filterMethod a owl:DatatypeProperty ; rdfs:label "Filter Method" .
-:interlaceMethod a owl:DatatypeProperty ; rdfs:label "Interlace Method" .
-
-# -- Axes for DLV --
-:axisX a dlv:Axis ; rdfs:label "X Axis" .
-:axisY a dlv:Axis ; rdfs:label "Y Axis" .
-:axisBand a dlv:Axis ; rdfs:label "Band Axis" .
+:pixelWidth a owl:DatatypeProperty ; rdfs:label "pixel width" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; skos:closeMatch ma:frameWidth ; rdfs:range xsd:positiveInteger .
+:pixelHeight a owl:DatatypeProperty ; rdfs:label "pixel height" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; skos:closeMatch ma:frameHeight ; rdfs:range xsd:positiveInteger .
+:bitsPerComponent a owl:DatatypeProperty ; rdfs:label "bits per component" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; rdfs:range xsd:positiveInteger .
+:colorType a owl:DatatypeProperty ; rdfs:label "color type" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; rdfs:range xsd:integer .
+:compressionMethod a owl:DatatypeProperty ; rdfs:label "compression method" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; skos:closeMatch ma:compression ; rdfs:range xsd:integer .
+:filterMethod a owl:DatatypeProperty ; rdfs:label "filter method" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; rdfs:range xsd:integer .
+:interlaceMethod a owl:DatatypeProperty ; rdfs:label "interlace method" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; rdfs:range xsd:integer .
         </pre>
     </section>
-    
+
+    <section id="normative-shacl">
+        <h2>Normative SHACL Shapes</h2>
+        <p>These shapes constrain the ranges of IDV properties in the instance graph (no <code>rdfs:range</code> axioms are used).</p>
+        <pre class="nohighlight">
+@prefix :       &lt;https://hexplain.io/ns/image#&gt; .
+@prefix img:    &lt;https://hexplain.io/ns/image#&gt; .
+@prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdfs:   &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:    &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
+@prefix ma:     &lt;http://www.w3.org/ns/ma-ont#&gt; .
+@prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
+
+# SHACL shapes
+img:PixelWidthShape a sh:NodeShape ; sh:targetSubjectsOf img:pixelWidth ;
+    sh:property [ sh:path img:pixelWidth ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+img:PixelHeightShape a sh:NodeShape ; sh:targetSubjectsOf img:pixelHeight ;
+    sh:property [ sh:path img:pixelHeight ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+img:BitsPerComponentShape a sh:NodeShape ; sh:targetSubjectsOf img:bitsPerComponent ;
+    sh:property [ sh:path img:bitsPerComponent ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+img:CodeShapes a sh:NodeShape ; sh:targetSubjectsOf img:colorType ;
+    sh:property [ sh:path img:colorType ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path img:compressionMethod ; sh:nodeKind sh:Literal ] ;
+    sh:property [ sh:path img:filterMethod ; sh:nodeKind sh:Literal ] ;
+    sh:property [ sh:path img:interlaceMethod ; sh:nodeKind sh:Literal ] .
+        </pre>
+    </section>
+
     <section id="normative-jsonld-context">
         <h2>Normative JSON-LD Context</h2>
-        <p>
-            The following context provides the normative [[JSON-LD]] mapping for the IDV terms.
-        </p>
         <pre class="nohighlight">
 {
   "@context": {
     "img": "https://hexplain.io/ns/image#",
-    "pixelWidth": "img:pixelWidth",
-    "pixelHeight": "img:pixelHeight",
-    "bitsPerComponent": "img:bitsPerComponent",
-    "colorType": "img:colorType",
-    "compressionMethod": "img:compressionMethod",
-    "filterMethod": "img:filterMethod",
+    "pixelWidth": "img:pixelWidth", "pixelHeight": "img:pixelHeight",
+    "bitsPerComponent": "img:bitsPerComponent", "colorType": "img:colorType",
+    "compressionMethod": "img:compressionMethod", "filterMethod": "img:filterMethod",
     "interlaceMethod": "img:interlaceMethod"
   }
 }
@@ -185,32 +153,25 @@
 
     <section id="example" class="introductory">
         <h2>Example of Usage</h2>
-        <p>This example shows a fragment of a PNG description, demonstrating how the physical fields of the `IHDR` chunk are mapped to the semantic properties in the Image Vocabulary.</p>
         <pre class="nohighlight">
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix bddo:     &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
-@prefix img: &lt;https://hexplain.io/ns/image#&gt; .
-@prefix png: &lt;https://hexplain.io/formats/png#&gt; .
+@prefix img:      &lt;https://hexplain.io/ns/image#&gt; .
+@prefix png:      &lt;https://hexplain.io/formats/png#&gt; .
 
-# The IHDR chunk data structure is a physical representation of an ImageHeader concept.
 png:IHDR_ChunkData a bddo:Struct ;
     hexplain:mapsToClass img:ImageHeader ;
-    bddo:hasField ( png:Width, png:Height, png:BitDepth, ... ) .
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField ( png:Width png:Height png:BitDepth png:ColorType ) .
 
-# The physical 'Width' field maps to the semantic 'pixelWidth' property.
-png:Width a bddo:Field ;
-    bddo:dataType bddo:uint32be ;
-    hexplain:mapsToProperty img:pixelWidth .
-
-# The physical 'Height' field maps to the semantic 'pixelHeight' property.
-png:Height a bddo:Field ;
-    bddo:dataType bddo:uint32be ;
-    hexplain:mapsToProperty img:pixelHeight .
-
-# The physical 'BitDepth' field maps to the semantic 'bitsPerComponent' property.
-png:BitDepth a bddo:Field ;
-    bddo:dataType bddo:uint8 ;
-    hexplain:mapsToProperty img:bitsPerComponent .
+png:Width  a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty img:pixelWidth .
+png:Height a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty img:pixelHeight .
+png:BitDepth a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty img:bitsPerComponent .
+png:ColorType a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty img:colorType ;
+    bddo:enumeration [ a bddo:Enumeration ; bddo:hasEnumValue
+        [ a bddo:EnumValue ; bddo:enumRawValue 0 ; rdfs:label "Grayscale" ] ,
+        [ a bddo:EnumValue ; bddo:enumRawValue 2 ; rdfs:label "RGB" ] ,
+        [ a bddo:EnumValue ; bddo:enumRawValue 3 ; rdfs:label "Indexed" ] ] .
         </pre>
     </section>
 </body>

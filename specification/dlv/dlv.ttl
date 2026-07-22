@@ -1,0 +1,59 @@
+# Hexplain Data Layout Vocabulary (DLV) 1.3 — vocabulary + SHACL shapes
+# Properties declare rdfs:range; domain and cardinality are in SHACL (no rdfs:domain).
+@prefix :       <https://hexplain.io/ns/dlv#> .
+@prefix dlv:    <https://hexplain.io/ns/dlv#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix bddo:   <https://hexplain.io/ns/bddo#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/dlv> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/dlv/1.3> ; owl:versionInfo "1.3" ;
+    owl:priorVersion <https://hexplain.io/ns/dlv/1.2> ;
+    owl:imports <https://hexplain.io/ns/bddo> ;
+    rdfs:label "Hexplain Data Layout Vocabulary (DLV)" ;
+    rdfs:comment "Vocabulary for describing multi-dimensional array layout within a flat byte stream." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "dlv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/dlv#" .
+
+:DataLayout a owl:Class ; rdfs:label "Data Layout" ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:Dimension  a owl:Class ; rdfs:label "Dimension"  ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:Axis       a owl:Class ; rdfs:label "Axis"       ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+
+:hasDimension a owl:ObjectProperty ; rdfs:label "has dimension" ; rdfs:range rdf:List ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
+    rdfs:comment "Ordered rdf:List of dimensions, slowest- to fastest-varying." .
+:cellDataType a owl:ObjectProperty ; rdfs:label "cell data type" ; rdfs:range bddo:DataType ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:dimensionSize a owl:DatatypeProperty ; rdfs:label "dimension size" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:dimensionSizeFromField a owl:ObjectProperty ; rdfs:label "dimension size from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:hasAxis a owl:ObjectProperty ; rdfs:label "has axis" ; rdfs:range :Axis ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+
+:axisX a :Axis ; rdfs:label "X Axis (Width)" .
+:axisY a :Axis ; rdfs:label "Y Axis (Height)" .
+:axisZ a :Axis ; rdfs:label "Z Axis (Depth)" .
+:axisBand a :Axis ; rdfs:label "Band/Channel Axis" .
+:axisTime a :Axis ; rdfs:label "Time Axis" .
+
+# ---------- SHACL ----------
+dlv:DataLayoutShape a sh:NodeShape ;
+    sh:targetClass dlv:DataLayout ;
+    sh:property [ sh:path dlv:hasDimension ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
+    sh:property [ sh:path ( dlv:hasDimension [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class dlv:Dimension ] ;
+    sh:property [ sh:path dlv:cellDataType ; sh:class bddo:DataType ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+dlv:DimensionShape a sh:NodeShape ;
+    sh:targetClass dlv:Dimension ;
+    sh:xone (
+        [ sh:property [ sh:path dlv:dimensionSize ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:dimensionSizeFromField ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:dimensionSizeFromField ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:dimensionSize ; sh:maxCount 0 ] ]
+    ) ;
+    sh:property [ sh:path dlv:dimensionSize ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:dimensionSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:hasAxis ; sh:nodeKind sh:IRI ; sh:class dlv:Axis ; sh:minCount 1 ; sh:maxCount 1 ] .

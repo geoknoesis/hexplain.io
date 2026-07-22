@@ -1,0 +1,52 @@
+# Hexplain Audio Vocabulary (ADV) 1.1 — vocabulary + SHACL shapes
+@prefix :       <https://hexplain.io/ns/audio#> .
+@prefix adv:    <https://hexplain.io/ns/audio#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix ma:     <http://www.w3.org/ns/ma-ont#> .
+@prefix dlv:    <https://hexplain.io/ns/dlv#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/audio> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/audio/1.1> ; owl:versionInfo "1.1" ;
+    rdfs:label "Hexplain Audio Vocabulary (ADV)" ;
+    rdfs:comment "Semantic vocabulary for audio stream and tag properties." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "adv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/audio#" .
+
+:AudioContainer a owl:Class ; rdfs:label "Audio Container" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; skos:closeMatch ma:MediaResource .
+:AudioStream a owl:Class ; rdfs:label "Audio Stream" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; skos:closeMatch ma:AudioTrack .
+:MetadataTag a owl:Class ; rdfs:label "Metadata Tag" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> .
+
+:sampleRate a owl:DatatypeProperty ; rdfs:label "sample rate" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; skos:closeMatch ma:samplingRate ; rdfs:range xsd:positiveInteger .
+:audioChannels a owl:DatatypeProperty ; rdfs:label "audio channels" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; skos:closeMatch ma:numberOfTracks ; rdfs:range xsd:positiveInteger .
+:bitDepth a owl:DatatypeProperty ; rdfs:label "bit depth" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:range xsd:positiveInteger .
+:duration a owl:DatatypeProperty ; rdfs:label "duration" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; skos:closeMatch ma:duration ; rdfs:range xsd:decimal .
+:bitrate a owl:DatatypeProperty ; rdfs:label "bitrate" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; skos:closeMatch ma:averageBitRate ; rdfs:range xsd:positiveInteger .
+:codecIdentifier a owl:DatatypeProperty ; rdfs:label "codec identifier" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; skos:closeMatch ma:hasFormat ; rdfs:range xsd:string .
+:artist a owl:DatatypeProperty ; rdfs:label "artist" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; skos:closeMatch dcterms:creator ; rdfs:range xsd:string .
+:album a owl:DatatypeProperty ; rdfs:label "album" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:range xsd:string .
+:trackTitle a owl:DatatypeProperty ; rdfs:label "track title" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; skos:closeMatch dcterms:title ; rdfs:range xsd:string .
+:trackNumber a owl:DatatypeProperty ; rdfs:label "track number" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:range xsd:positiveInteger .
+:genre a owl:DatatypeProperty ; rdfs:label "genre" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:range xsd:string .
+
+:axisSample a dlv:Axis ; rdfs:label "Sample Axis" ; rdfs:seeAlso dlv:axisTime .
+:axisChannel a dlv:Axis ; rdfs:label "Channel Axis" ; rdfs:seeAlso dlv:axisBand .
+
+# ---------- SHACL ----------
+adv:StreamShape a sh:NodeShape ; sh:targetSubjectsOf adv:sampleRate ;
+    sh:property [ sh:path adv:sampleRate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:audioChannels ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:bitDepth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:duration ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:bitrate ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+adv:TagShape a sh:NodeShape ; sh:targetSubjectsOf adv:artist ;
+    sh:property [ sh:path adv:artist ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:album ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:trackTitle ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:trackNumber ; sh:minExclusive 0 ; sh:maxCount 1 ] .

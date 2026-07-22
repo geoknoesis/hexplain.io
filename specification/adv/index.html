@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexplain Audio Vocabulary (ADV) Specification</title>
+    <!-- ReSpec script and configuration -->
+    <script src="https://www.w3.org/Tools/respec/respec-w3c" class="respec" async></script>
+    <script class="remove">
+        var respecConfig = {
+            specStatus: "unofficial",
+            editors: [{ name: "Stephane Fellah", url: "https://geoknoesis.com" }],
+            github: "https://github.com/geoknoesis/hexplain.io",
+            shortName: "hexplain-adv",
+            publishDate: "2025-08-16",
+            subtitle: "Version 1.1",
+        };
+    </script>
+</head>
+<body>
+    <section id="abstract">
+        <p>
+            The Hexplain Audio Vocabulary (ADV) provides standard terms for the semantic properties of audio data. Used with BDDO and Hexplain Core, it maps fields from formats like WAV or MP3 (ID3) to concepts such as sample rate, artist, and album. <b>Prefix:</b> <code>adv</code>; <b>namespace:</b> <code>https://hexplain.io/ns/audio#</code>.
+        </p>
+    </section>
+
+    <section id="sotd">
+        <p>This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.</p>
+        <p><b>Change log.</b> Version 1.1 adds SHACL range constraints, <code>rdfs:comment</code>/<code>rdfs:isDefinedBy</code>, ontology metadata, and alignments to the W3C Ontology for Media Resources and Dublin Core; declares <code>rdfs:range</code> and expresses domain/cardinality in SHACL (no <code>rdfs:domain</code>). <b>Note:</b> this vocabulary was previously published at the <code>axv/</code> path in error; its canonical location is now <code>adv/</code>.</p>
+    </section>
+
+    <section class="introductory">
+        <h2>Introduction</h2>
+        <p>Audio files carry both technical data (the encoded stream) and descriptive metadata (tags). BDDO describes the physical structure; ADV adds the meaning of fields like "sample rate" or "artist," enabling queries such as "find all audio by 'The Beatles' at 44100 Hz."</p>
+        <section><h3>Conformance</h3><p>The key words "MUST", "SHOULD", "MAY", etc. are to be interpreted as in [[RFC2119]].</p></section>
+    </section>
+
+    <section id="core-concepts">
+        <h2>Core Concepts (Classes)</h2>
+        <dl>
+            <dt><code>adv:AudioContainer</code></dt><dd>The audio file as a whole (WAV, MP3…).</dd>
+            <dt><code>adv:AudioStream</code></dt><dd>The encoded audio sample data.</dd>
+            <dt><code>adv:MetadataTag</code></dt><dd>A descriptive tag block (ID3, Vorbis comment).</dd>
+        </dl>
+    </section>
+
+    <section id="properties">
+        <h2>Semantic Properties</h2>
+        <table class="simple">
+            <thead><tr><th>Property</th><th>Description</th><th>Range</th></tr></thead>
+            <tbody>
+                <tr><td><code>adv:sampleRate</code></td><td>Samples per second (Hz).</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>adv:audioChannels</code></td><td>Channel count (1 mono, 2 stereo).</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>adv:bitDepth</code></td><td>Bits per sample.</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>adv:duration</code></td><td>Duration in seconds.</td><td><code>xsd:decimal</code></td></tr>
+                <tr><td><code>adv:bitrate</code></td><td>Average bitrate (bits/s).</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>adv:codecIdentifier</code></td><td>Codec name ("PCM", "MP3", "FLAC").</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>adv:artist</code>, <code>adv:album</code>, <code>adv:trackTitle</code>, <code>adv:genre</code></td><td>Descriptive tags.</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>adv:trackNumber</code></td><td>Track number.</td><td><code>xsd:positiveInteger</code></td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section id="layout-axes">
+        <h2>Layout Axes</h2>
+        <p>ADV adds audio-specific axes to DLV: <code>adv:axisSample</code> (often corresponds to time; see <code>dlv:axisTime</code>) and <code>adv:axisChannel</code> (for interleaved channels; see <code>dlv:axisBand</code>).</p>
+    </section>
+
+    <section id="normative-owl">
+        <h2>Normative OWL Vocabulary</h2>
+        <pre class="nohighlight">
+# Hexplain Audio Vocabulary (ADV) 1.1 — vocabulary + SHACL shapes
+@prefix :       &lt;https://hexplain.io/ns/audio#&gt; .
+@prefix adv:    &lt;https://hexplain.io/ns/audio#&gt; .
+@prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdfs:   &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:    &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
+@prefix ma:     &lt;http://www.w3.org/ns/ma-ont#&gt; .
+@prefix dlv:    &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
+
+&lt;https://hexplain.io/ns/audio&gt; a owl:Ontology ;
+    owl:versionIRI &lt;https://hexplain.io/ns/audio/1.1&gt; ; owl:versionInfo "1.1" ;
+    rdfs:label "Hexplain Audio Vocabulary (ADV)" ;
+    rdfs:comment "Semantic vocabulary for audio stream and tag properties." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
+    dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
+    vann:preferredNamespacePrefix "adv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/audio#" .
+
+:AudioContainer a owl:Class ; rdfs:label "Audio Container" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch ma:MediaResource .
+:AudioStream a owl:Class ; rdfs:label "Audio Stream" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch ma:AudioTrack .
+:MetadataTag a owl:Class ; rdfs:label "Metadata Tag" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; .
+
+:sampleRate a owl:DatatypeProperty ; rdfs:label "sample rate" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch ma:samplingRate ; rdfs:range xsd:positiveInteger .
+:audioChannels a owl:DatatypeProperty ; rdfs:label "audio channels" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch ma:numberOfTracks ; rdfs:range xsd:positiveInteger .
+:bitDepth a owl:DatatypeProperty ; rdfs:label "bit depth" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; rdfs:range xsd:positiveInteger .
+:duration a owl:DatatypeProperty ; rdfs:label "duration" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch ma:duration ; rdfs:range xsd:decimal .
+:bitrate a owl:DatatypeProperty ; rdfs:label "bitrate" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch ma:averageBitRate ; rdfs:range xsd:positiveInteger .
+:codecIdentifier a owl:DatatypeProperty ; rdfs:label "codec identifier" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch ma:hasFormat ; rdfs:range xsd:string .
+:artist a owl:DatatypeProperty ; rdfs:label "artist" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch dcterms:creator ; rdfs:range xsd:string .
+:album a owl:DatatypeProperty ; rdfs:label "album" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; rdfs:range xsd:string .
+:trackTitle a owl:DatatypeProperty ; rdfs:label "track title" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch dcterms:title ; rdfs:range xsd:string .
+:trackNumber a owl:DatatypeProperty ; rdfs:label "track number" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; rdfs:range xsd:positiveInteger .
+:genre a owl:DatatypeProperty ; rdfs:label "genre" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; rdfs:range xsd:string .
+
+:axisSample a dlv:Axis ; rdfs:label "Sample Axis" ; rdfs:seeAlso dlv:axisTime .
+:axisChannel a dlv:Axis ; rdfs:label "Channel Axis" ; rdfs:seeAlso dlv:axisBand .
+        </pre>
+    </section>
+
+    <section id="normative-shacl">
+        <h2>Normative SHACL Shapes</h2>
+        <pre class="nohighlight">
+@prefix :       &lt;https://hexplain.io/ns/audio#&gt; .
+@prefix adv:    &lt;https://hexplain.io/ns/audio#&gt; .
+@prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdfs:   &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd:    &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
+@prefix ma:     &lt;http://www.w3.org/ns/ma-ont#&gt; .
+@prefix dlv:    &lt;https://hexplain.io/ns/dlv#&gt; .
+@prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
+@prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
+
+# SHACL shapes
+adv:StreamShape a sh:NodeShape ; sh:targetSubjectsOf adv:sampleRate ;
+    sh:property [ sh:path adv:sampleRate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:audioChannels ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:bitDepth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:duration ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:bitrate ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+adv:TagShape a sh:NodeShape ; sh:targetSubjectsOf adv:artist ;
+    sh:property [ sh:path adv:artist ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:album ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:trackTitle ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path adv:trackNumber ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+        </pre>
+    </section>
+
+    <section id="normative-jsonld-context">
+        <h2>Normative JSON-LD Context</h2>
+        <pre class="nohighlight">
+{
+  "@context": {
+    "adv": "https://hexplain.io/ns/audio#",
+    "sampleRate": "adv:sampleRate", "audioChannels": "adv:audioChannels",
+    "bitDepth": "adv:bitDepth", "duration": "adv:duration", "bitrate": "adv:bitrate",
+    "codecIdentifier": "adv:codecIdentifier", "artist": "adv:artist", "album": "adv:album",
+    "trackTitle": "adv:trackTitle", "trackNumber": "adv:trackNumber", "genre": "adv:genre"
+  }
+}
+        </pre>
+    </section>
+
+    <section id="example" class="introductory">
+        <h2>Example of Usage</h2>
+        <pre class="nohighlight">
+@prefix bddo:     &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
+@prefix adv:      &lt;https://hexplain.io/ns/audio#&gt; .
+@prefix wav:      &lt;https://hexplain.io/formats/wav#&gt; .
+
+wav:FormatChunk a bddo:Struct ;
+    hexplain:mapsToClass adv:AudioStream ;
+    bddo:endianness bddo:LittleEndian ;
+    bddo:hasField ( wav:SampleRate wav:Channels wav:BitsPerSample ) .
+
+wav:SampleRate a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty adv:sampleRate .
+wav:Channels a bddo:Field ; bddo:dataType bddo:uint16 ; hexplain:mapsToProperty adv:audioChannels .
+wav:BitsPerSample a bddo:Field ; bddo:dataType bddo:uint16 ; hexplain:mapsToProperty adv:bitDepth .
+        </pre>
+    </section>
+</body>
+</html>

@@ -1,0 +1,46 @@
+# Hexplain Network Protocol Vocabulary (NPV) 1.1 — vocabulary + SHACL shapes
+@prefix :       <https://hexplain.io/ns/net#> .
+@prefix npv:    <https://hexplain.io/ns/net#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/net> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/net/1.1> ; owl:versionInfo "1.1" ;
+    rdfs:label "Hexplain Network Protocol Vocabulary (NPV)" ;
+    rdfs:comment "Semantic vocabulary for network-protocol fields." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "npv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/net#" .
+
+:Packet a owl:Class ; rdfs:label "Packet" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> .
+:EthernetFrame a owl:Class ; rdfs:label "Ethernet Frame" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> .
+:IPv4Packet a owl:Class ; rdfs:label "IPv4 Packet" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> .
+:IPv6Packet a owl:Class ; rdfs:label "IPv6 Packet" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> .
+:TCPSegment a owl:Class ; rdfs:label "TCP Segment" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> .
+:UDPDatagram a owl:Class ; rdfs:label "UDP Datagram" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> .
+
+:sourceAddress a owl:DatatypeProperty ; rdfs:label "source address" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> ; rdfs:range xsd:string .
+:destinationAddress a owl:DatatypeProperty ; rdfs:label "destination address" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> ; rdfs:range xsd:string .
+:sourcePort a owl:DatatypeProperty ; rdfs:label "source port" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> ; rdfs:range xsd:positiveInteger .
+:destinationPort a owl:DatatypeProperty ; rdfs:label "destination port" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> ; rdfs:range xsd:positiveInteger .
+:protocolNumber a owl:DatatypeProperty ; rdfs:label "protocol number" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> ; rdfs:range xsd:integer .
+:etherType a owl:DatatypeProperty ; rdfs:label "EtherType" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> ; rdfs:range xsd:hexBinary .
+:sequenceNumber a owl:DatatypeProperty ; rdfs:label "sequence number" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> ; rdfs:range xsd:unsignedInt .
+:acknowledgmentNumber a owl:DatatypeProperty ; rdfs:label "acknowledgment number" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> ; rdfs:range xsd:unsignedInt .
+:tcpFlags a owl:DatatypeProperty ; rdfs:label "TCP flags" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> ; rdfs:range xsd:hexBinary .
+
+# ---------- SHACL ----------
+npv:AddressShape a sh:NodeShape ; sh:targetSubjectsOf npv:sourceAddress ;
+    sh:property [ sh:path npv:sourceAddress ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path npv:destinationAddress ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+npv:PortShape a sh:NodeShape ; sh:targetSubjectsOf npv:sourcePort ;
+    sh:property [ sh:path npv:sourcePort ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path npv:destinationPort ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+npv:TcpShape a sh:NodeShape ; sh:targetSubjectsOf npv:sequenceNumber ;
+    sh:property [ sh:path npv:sequenceNumber ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path npv:acknowledgmentNumber ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path npv:tcpFlags ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] .
