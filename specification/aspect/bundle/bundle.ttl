@@ -1,0 +1,107 @@
+# Hexplain Aspect — Bundle (hx-bundle) 1.0
+# Base container-tier aspect: one logical Asset realized by N physical Parts, bound by
+# containment / naming-convention / manifest-reference / concatenation. Imports nothing.
+# Unified semantics: each Part carries an aspect facet; a SHACL rule lifts those facets
+# onto the Asset (see LiftByCarriedAspectRule, added with the profile layer).
+@prefix :        <https://hexplain.io/ns/aspect/bundle#> .
+@prefix abnd:    <https://hexplain.io/ns/aspect/bundle#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcat:    <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/aspect/bundle> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.0> ; owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Aspect — Bundle (hx-bundle)" ;
+    rdfs:comment "Base aspect for multi-part assets: one logical Asset realized by N physical Parts, bound by containment, naming-convention, manifest-reference, or concatenation. Part aspect facets lift onto the Asset for a unified semantic view." ;
+    dcterms:created "2026-07-26"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "abnd" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/bundle#" .
+
+# ---------- Classes ----------
+:Asset a owl:Class ; rdfs:label "Asset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    skos:closeMatch dcat:Dataset ;
+    rdfs:comment "A logical resource realized by one or more physical Parts. The single unified semantic subject." .
+:Part a owl:Class ; rdfs:label "Part" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:comment "One physical carrier (a byte stream / file) contributing to an Asset. Composes with hx-fsmeta and BDDO at instance level." .
+:BindingKind a owl:Class ; rdfs:label "Binding Kind" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:comment "The mechanism binding an Asset's Parts. Closed enumeration." .
+:BundleProfile a owl:Class ; rdfs:label "Bundle Profile" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:comment "A reusable format template: its binding kind plus the set of expected member PartSpecs." .
+:PartSpec a owl:Class ; rdfs:label "Part Spec" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:comment "One expected member of a BundleProfile: role, extension, requiredness, and the aspect it carries." .
+
+# ---------- Instance-level properties ----------
+:hasPart a owl:ObjectProperty ; rdfs:label "has part" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range :Part ; owl:inverseOf :partOf .
+:partOf a owl:ObjectProperty ; rdfs:label "part of" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range :Asset .
+:primaryPart a owl:ObjectProperty ; rdfs:label "primary part" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:subPropertyOf :hasPart ; rdfs:range :Part ;
+    rdfs:comment "The recognition anchor / manifest part (e.g. .shp, .gltf, .mpd)." .
+:partRole a owl:ObjectProperty ; rdfs:label "part role" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range skos:Concept ; rdfs:comment "The role a Part or PartSpec plays, from abnd:PartRoleScheme." .
+:boundBy a owl:ObjectProperty ; rdfs:label "bound by" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range :BindingKind .
+:partIndex a owl:DatatypeProperty ; rdfs:label "part index" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range xsd:nonNegativeInteger ; rdfs:comment "Ordinal of a Part within a segmented/concatenated Asset." .
+:stem a owl:DatatypeProperty ; rdfs:label "stem" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range xsd:string ; rdfs:comment "Shared basename of a naming-convention bundle (e.g. \"roads\")." .
+
+# ---------- Profile-level properties ----------
+:partSpec a owl:ObjectProperty ; rdfs:label "part spec" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range :PartSpec .
+:carriesAspect a owl:ObjectProperty ; rdfs:label "carries aspect" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range owl:Ontology ;
+    rdfs:comment "The aspect ontology whose properties this part contributes. Drives facet lifting. An annotation-style link, NOT an owl:import — orthogonality is preserved." .
+:describedBy a owl:ObjectProperty ; rdfs:label "described by" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range <https://hexplain.io/ns/bddo#Struct> ;
+    rdfs:comment "The BDDO byte-layout struct describing this part's bytes (optional)." .
+:required a owl:DatatypeProperty ; rdfs:label "required" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range xsd:boolean .
+:extension a owl:DatatypeProperty ; rdfs:label "extension" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range xsd:string ; rdfs:comment "Filename extension identifying this member (e.g. \".dbf\")." .
+:primary a owl:DatatypeProperty ; rdfs:label "primary" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range xsd:boolean ; rdfs:comment "Marks the PartSpec whose instance is the Asset's primaryPart." .
+
+# ---------- Binding-kind enumeration (NamedIndividual + sh:in) ----------
+:Containment a owl:NamedIndividual, :BindingKind ; rdfs:label "Containment" ;
+    rdfs:comment "Parts are physically nested inside one byte stream (ZIP, TAR)." .
+:NamingConvention a owl:NamedIndividual, :BindingKind ; rdfs:label "Naming Convention" ;
+    rdfs:comment "Sibling files sharing a stem, one role per extension (Shapefile, ENVI)." .
+:ManifestReference a owl:NamedIndividual, :BindingKind ; rdfs:label "Manifest Reference" ;
+    rdfs:comment "A primary part references members by path/URI (glTF, DASH, HLS, VRT)." .
+:Concatenation a owl:NamedIndividual, :BindingKind ; rdfs:label "Concatenation" ;
+    rdfs:comment "Parts are ordered fragments of one logical byte stream (multi-volume archives)." .
+
+# ---------- Part-role register (SKOS, open) ----------
+:PartRoleScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    skos:prefLabel "Part Role Register"@en .
+:GeometryCarrier   a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Geometry carrier"@en .
+:AttributeTable    a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Attribute table"@en .
+:SpatialReference  a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Spatial reference"@en .
+:CharacterEncoding a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Character encoding"@en .
+:SpatialIndex      a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Spatial index"@en .
+:Manifest          a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Manifest"@en .
+:Segment           a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Segment"@en .
+:Sidecar           a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Sidecar"@en .
+:Metadata          a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Metadata"@en .
+:Thumbnail         a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Thumbnail"@en .
+:Checksum          a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Checksum"@en .
+:Payload           a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Payload"@en .
+
+# ---------- Structural SHACL ----------
+:AssetShape a sh:NodeShape ; sh:targetClass :Asset ;
+    sh:property [ sh:path :boundBy ; sh:maxCount 1 ;
+        sh:in ( :Containment :NamingConvention :ManifestReference :Concatenation ) ;
+        sh:message "abnd:boundBy must be one of the four BindingKind individuals." ] ;
+    sh:property [ sh:path :primaryPart ; sh:maxCount 1 ; sh:class :Part ;
+        sh:message "An Asset has at most one primaryPart." ] .
+:PartShape a sh:NodeShape ; sh:targetClass :Part ;
+    sh:property [ sh:path :partRole ; sh:class skos:Concept ;
+        sh:message "abnd:partRole must be a skos:Concept (from abnd:PartRoleScheme)." ] .
