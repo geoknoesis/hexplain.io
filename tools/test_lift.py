@@ -12,6 +12,7 @@ FILES = [
     "specification/aspect/geometry/geometry.ttl",
     "specification/aspect/spatialref/spatialref.ttl",
     "specification/aspect/tabular/tabular.ttl",
+    "specification/aspect/fsmeta/fsmeta.ttl",
     "specification/profiles/shapefile/shapefile.ttl",
     "specification/profiles/shapefile/example.ttl",
 ]
