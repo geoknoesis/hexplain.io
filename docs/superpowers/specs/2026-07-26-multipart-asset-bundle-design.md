@@ -85,7 +85,8 @@ Core properties below; the profile/PartSpec properties (`abnd:partSpec`,
 | `abnd:boundBy` | Asset → `abnd:BindingKind` | §5 |
 | `abnd:partIndex` | Part → `xsd:nonNegativeInteger` | order, for segmented/concatenation |
 | `abnd:stem` | Asset → `xsd:string` | convenience for naming-convention bundles |
-| `abnd:liftsToAsset` | (annotation on a predicate) → `xsd:boolean` | marks a predicate as content-aspect that rolls up to the Asset (§8) |
+
+Liftability is not a property — it is derived from `carriesAspect` + `rdfs:isDefinedBy` (§8).
 
 ## 5. Binding kinds — closed enum
 
@@ -133,27 +134,37 @@ Instances link `Asset dcterms:conformsTo <profile>`; SHACL checks required parts
 
 ## 8. Unification — lifting facets onto the Asset
 
-Physical truth stays on the part. One generic SHACL-SPARQL rule lifts *marked*
-predicates to the Asset, so physical/fs properties (`fileName`, `byteLength`) never
-leak up.
+Physical truth stays on the part. One generic SHACL-SPARQL rule lifts *content-aspect*
+predicates to the Asset. **Liftability is derived, not marked** (resolves §14-Q3):
+a predicate lifts from a part iff it is `rdfs:isDefinedBy` the aspect ontology that the
+part's role `abnd:carriesAspect` in the profile. No per-predicate annotation, no
+denylist — so `hx-bundle` stays coupled to *nothing*, and physical/fs predicates
+(`afs:fileName`, byte offsets) never lift because no `PartSpec` declares `afs` as a
+carried content aspect.
 
 ```turtle
-asref:crs          abnd:liftsToAsset true .
-ageom:geometryType abnd:liftsToAsset true .
-atab:columnSchema  abnd:liftsToAsset true .
-
-abnd:LiftFacetsRule a sh:NodeShape ;
+# full IRIs in the query so it runs identically under pyshacl and standalone rdflib
+abnd:LiftByCarriedAspectRule a sh:NodeShape ;
   sh:targetClass abnd:Asset ;
   sh:rule [ a sh:SPARQLRule ;
     sh:construct """
       CONSTRUCT { $this ?p ?v }
-      WHERE { $this abnd:hasPart ?part . ?part ?p ?v . ?p abnd:liftsToAsset true }""" ] .
+      WHERE {
+        $this <https://hexplain.io/ns/aspect/bundle#hasPart> ?part .
+        ?part <https://hexplain.io/ns/aspect/bundle#partRole> ?role ; ?p ?v .
+        $this <http://purl.org/dc/terms/conformsTo> ?profile .
+        ?profile <https://hexplain.io/ns/aspect/bundle#partSpec> ?spec .
+        ?spec <https://hexplain.io/ns/aspect/bundle#partRole> ?role ;
+              <https://hexplain.io/ns/aspect/bundle#carriesAspect> ?aspect .
+        ?p <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> ?aspect .
+      }""" ] .
 ```
 
-Result: `Asset asref:crs "EPSG:4326"` is queryable directly, **and**
-`Asset hasPart / [role=SpatialReference]` still identifies the source file.
-Cardinality conflicts (e.g. two CRSs) surface through each aspect's own SHACL shape at
-the Asset level.
+Result: `Asset asref:wktString "…"` / `Asset ageom:geometryType ageom:MultiLineString`
+are queryable directly, **and** `Asset hasPart / [role=SpatialReference]` still
+identifies the source file. Cardinality conflicts (e.g. two CRSs) surface through each
+aspect's own SHACL shape at the Asset level. (The rule requires the referenced aspect
+ontologies to be present in the graph so `rdfs:isDefinedBy` resolves.)
 
 **Open refinement (deferred):** sidecar *override/precedence* — a `.prj` next to a
 `.tif` should override the TIFF's internal CRS. Base design unions; a precedence order
@@ -172,7 +183,7 @@ fmt:Shapefile a abnd:BundleProfile ;
       abnd:carriesAspect ageom: ; abnd:primary true ] ,
     [ abnd:extension ".shx" ; abnd:partRole role:SpatialIndex      ; abnd:required true ] ,
     [ abnd:extension ".dbf" ; abnd:partRole role:AttributeTable    ; abnd:required true ;
-      abnd:carriesAspect atab: ; abnd:describedBy bddo:DBaseTable ] ,
+      abnd:carriesAspect atab: ] ,   # abnd:describedBy MAY point at a bddo:Struct once a dBASE layout is authored
     [ abnd:extension ".prj" ; abnd:partRole role:SpatialReference  ; abnd:required false ;
       abnd:carriesAspect asref: ] ,
     [ abnd:extension ".cpg" ; abnd:partRole role:CharacterEncoding ; abnd:required false ;
@@ -185,11 +196,12 @@ ex:roads a abnd:Asset ; dcterms:conformsTo fmt:Shapefile ;
   abnd:hasPart ex:roads.shp, ex:roads.shx, ex:roads.dbf, ex:roads.prj, ex:roads.cpg .
 
 ex:roads.prj a abnd:Part ; abnd:partRole role:SpatialReference ;
-  afs:fileName "roads.prj" ; asref:crs "EPSG:4326" .
+  afs:fileName "roads.prj" ; asref:wktString "GEOGCS[\"WGS 84\", …]" ; asref:epsgCode 4326 .
 ex:roads.shp a abnd:Part ; abnd:partRole role:GeometryCarrier ;
-  afs:fileName "roads.shp" ; ageom:geometryType ageom:Polyline .
-# after LiftFacetsRule:
-# ex:roads asref:crs "EPSG:4326" ; ageom:geometryType ageom:Polyline ; atab:columnSchema … .
+  afs:fileName "roads.shp" ; ageom:geometryType ageom:MultiLineString ; ageom:dimensionality 2 .
+# after LiftByCarriedAspectRule:
+# ex:roads asref:wktString "GEOGCS[…]" ; asref:epsgCode 4326 ;
+#          ageom:geometryType ageom:MultiLineString ; ageom:dimensionality 2 ; atab:rowCount … .
 ```
 
 ### 9.2 glTF (`ManifestReference`)
@@ -242,7 +254,6 @@ Compositions) can add a **Bundle profiles** note: Shapefile / glTF / DASH are *p
 ## 14. Open questions for review
 
 1. **Name:** `hx-bundle`/`abnd` vs `hx-composite`/`acmp` vs `hx-multipart`.
-2. **Fold-in vs align-only** (§11) — confirm full fold-in.
-3. **`liftsToAsset` marker granularity** — per-predicate (as drafted) vs per-aspect
-   (lift *all* properties defined by a content-aspect ontology). Per-predicate is more
-   explicit; per-aspect is less to annotate.
+2. **Fold-in vs align-only** (§11) — confirmed **full fold-in**.
+3. ~~Lift granularity~~ — **resolved**: liftability is derived from `carriesAspect` +
+   `rdfs:isDefinedBy` (§8), no per-predicate marker.
