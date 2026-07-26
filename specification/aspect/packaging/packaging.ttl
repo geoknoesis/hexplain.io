@@ -1,0 +1,30 @@
+# Hexplain Aspect — Packaging (hx-packaging) 1.0
+# Container aspect: multi-entry container membership. Shared by archives (ZIP/TAR) and,
+# in principle, box/atom media containers. Imports nothing.
+@prefix :       <https://hexplain.io/ns/aspect/packaging#> .
+@prefix apkg:   <https://hexplain.io/ns/aspect/packaging#> .
+@prefix abnd:   <https://hexplain.io/ns/aspect/bundle#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/aspect/packaging> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/packaging/1.0> ; owl:versionInfo "1.0" ;
+    owl:imports <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:label "Hexplain Aspect — Packaging (hx-packaging)" ;
+    rdfs:comment "Aspect for multi-entry container membership: containers, entries, and paths. Shared by archives and box/atom media containers." ;
+    dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "apkg" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/packaging#" .
+
+:Container a owl:Class ; rdfs:label "Container" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/packaging> ; rdfs:comment "A file that holds member entries." .
+:Entry a owl:Class ; rdfs:label "Entry" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/packaging> ; rdfs:comment "A member of a container." .
+:hasEntry a owl:ObjectProperty ; rdfs:label "has entry" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/packaging> ; rdfs:range :Entry .
+:entryPath a owl:DatatypeProperty ; rdfs:label "entry path" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/packaging> ; rdfs:range xsd:string ; rdfs:comment "Path of the entry within the container." .
+
+# ---------- Bundle alignment: containment is one binding kind ----------
+:Container rdfs:subClassOf abnd:Asset .
+:Entry     rdfs:subClassOf abnd:Part .
+:hasEntry  rdfs:subPropertyOf abnd:hasPart .
