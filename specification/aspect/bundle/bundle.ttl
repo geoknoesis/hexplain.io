@@ -125,3 +125,21 @@ WHERE {
   ?p <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> ?aspect .
 }
 """ ] .
+
+# ---------- Profile conformance (required parts present) ----------
+:RequiredPartsShape a sh:NodeShape ; sh:targetClass :Asset ;
+    sh:sparql [ a sh:SPARQLConstraint ;
+        sh:message "A required part role declared by the conformed profile is missing." ;
+        sh:select """
+SELECT $this ?role
+WHERE {
+  $this <http://purl.org/dc/terms/conformsTo> ?profile .
+  ?profile <https://hexplain.io/ns/aspect/bundle#partSpec> ?spec .
+  ?spec <https://hexplain.io/ns/aspect/bundle#required> true ;
+        <https://hexplain.io/ns/aspect/bundle#partRole> ?role .
+  FILTER NOT EXISTS {
+    $this <https://hexplain.io/ns/aspect/bundle#hasPart> ?p .
+    ?p <https://hexplain.io/ns/aspect/bundle#partRole> ?role .
+  }
+}
+""" ] .
