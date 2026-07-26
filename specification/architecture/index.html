@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexplain Aspect-Oriented Architecture</title>
+    <!-- ReSpec script and configuration -->
+    <script src="https://www.w3.org/Tools/respec/respec-w3c" class="respec" async></script>
+    <script class="remove">
+        var respecConfig = {
+            specStatus: "unofficial",
+            editors: [{ name: "Stephane Fellah", url: "https://geoknoesis.com" }],
+            github: "https://github.com/geoknoesis/hexplain.io",
+            shortName: "hexplain-architecture",
+            publishDate: "2026-07-22",
+            subtitle: "Version 1.0",
+        };
+    </script>
+</head>
+<body>
+    <section id="abstract">
+        <p>
+            This document defines how the Hexplain vocabulary family is decomposed into modules. It replaces file-type-centric grouping with an <b>aspect-oriented</b> decomposition: cross-cutting concerns (codec, colour, time, spatial reference, provenance…) are defined once as orthogonal <em>aspect</em> ontologies, and each format/domain vocabulary is a thin <em>composition</em> that imports the aspects it exhibits and adds only its genuinely-unique terms. The goal is maximum reusability and orthogonality — every term has exactly one home, and adding a new data paradigm never forces a reorganization of existing modules.
+        </p>
+    </section>
+
+    <section id="sotd">
+        <p>Unofficial draft for defining the Hexplain standard; no official standing. This is a normative architecture and a refactoring roadmap; individual aspect and domain ontologies are published as their own artifacts under <code>aspect/</code> and the domain paths.</p>
+    </section>
+
+    <section class="introductory">
+        <h2>1. Motivation</h2>
+        <p>The original domain vocabularies were carved by <b>file type</b> (image / video / audio / geo), but the concepts they carry are properties of <b>intrinsic aspects of data</b> that cut across file types. <code>colorSpace</code> belongs to any raster or vector-styled content (image, video, geo-raster); <code>codec</code> belongs to any encoded stream (audio, video, compressed image); <code>duration</code> belongs to any timeline (audio, video). When modules are partitioned by file type, every cross-cutting concept has an ambiguous home and is either duplicated or forced into a "shared" grab-bag.</p>
+        <p>Two symptoms made this concrete: <code>colorSpace</code> was defined in both the image and video vocabularies; and an interim "Media Vocabulary" whose membership rule was "terms shared by audio ∩ video" ended up bundling two unrelated concerns (visual colour and stream/time). A set-intersection of domains is not a concern. Meanwhile the <a href="../gv/index.html">Geospatial Vocabulary</a> fuses five concerns in one module (spatial reference, raster georeferencing, point-cloud geometry, sensor/acquisition provenance, and even a security marking, <code>classificationLevel</code>) — the same disease at a larger scale. Tellingly, the <b>layout layer already models data as a composition of independent axes</b> (<code>dlv:axisX</code>, <code>axisTime</code>, <code>axisBand</code>, …); the semantic layer should adopt the same facet discipline.</p>
+    </section>
+
+    <section id="principles">
+        <h2>2. Principles</h2>
+        <p class="note"><b>Invariant.</b> Every term has exactly one home = its aspect. Aspects never import siblings; imports point only <em>downward</em> to base aspects. A domain/format is a composition — <code>import(aspects) + only-its-unique terms</code>.</p>
+        <ol>
+            <li><b>One concept, one home.</b> A property is defined in exactly one module. Two domains needing it ⇒ it belongs to a more general module both import — never copied.</li>
+            <li><b>Modules are aspects (facets), not file types.</b> Each semantic module models one coherent, format-independent concern.</li>
+            <li><b>Aspects are mutually independent.</b> Aspect modules import nothing from each other. Orthogonality = zero sideways coupling. The only permitted imports are downward, to a small set of base aspects.</li>
+            <li><b>Domains are thin compositions.</b> "Video" = <code>import(raster) + import(time) + import(encoding)</code> + a few video-only terms. A format is a boolean AND of aspects; hybrids (a GeoPDF = raster ∧ vector) need no special module.</li>
+            <li><b>Registers are decoupled data.</b> A codec / colour-space register is referenced by an aspect's property but governed and versioned on its own; its members belong to no domain.</li>
+            <li><b>Map to external standards at the leaf.</b> Descriptive metadata, provenance, and rights reuse <code>dcterms:</code>, PROV, SOSA/SSN, ODRL directly (with <code>skos:closeMatch</code>/<code>owl:equivalentProperty</code>) rather than minting parallel terms.</li>
+        </ol>
+    </section>
+
+    <section id="catalog">
+        <h2>3. The Aspect Catalogue</h2>
+        <p><b>Tier 0 — Foundation (existing):</b> BDDO (physical) · DLV (layout/axes) · HEL (expressions) · Hexplain Core (glue) · Processing Model.</p>
+
+        <h3>3.1 Base aspects <span class="note">(importable by higher aspects)</span></h3>
+        <table class="simple">
+            <thead><tr><th>Aspect</th><th>Concern</th><th>Key terms</th><th>Source</th></tr></thead>
+            <tbody>
+                <tr><td><code>hx-sampling</code> ✓</td><td>quantised sample values</td><td>bitDepth, componentCount, sampleFormat</td><td>mint</td></tr>
+                <tr><td><code>hx-color</code> ✓</td><td>colour interpretation</td><td>colorSpace ▸reg, colorModel, iccProfile, palette</td><td>mint + register</td></tr>
+            </tbody>
+        </table>
+
+        <h3>3.2 Content representation <span class="note">(a dataset has ≥1; mutually independent; compose freely)</span></h3>
+        <table class="simple">
+            <thead><tr><th>Aspect</th><th>Concern</th><th>Key terms</th><th>Imports</th></tr></thead>
+            <tbody>
+                <tr><td><code>hx-raster</code> ✓</td><td>regular N-D sample grid</td><td>width, height, depth, gridSpacing</td><td>sampling, color</td></tr>
+                <tr><td><code>hx-geometry</code> ✓</td><td>explicit geometry (vector)</td><td>geometryType, dimensionality, coordSpace, units, precision, windingRule</td><td>— (closeMatch GeoSPARQL)</td></tr>
+                <tr><td><code>hx-pointcloud</code> ✓</td><td>unstructured sampled points</td><td>pointCount, per-point attribute layout</td><td>sampling</td></tr>
+                <tr><td><code>hx-tabular</code> ✓</td><td>rows × typed columns</td><td>columnSchema, fieldDef, rowCount</td><td>— (closeMatch csvw)</td></tr>
+            </tbody>
+        </table>
+
+        <h3>3.3 Appearance</h3>
+        <table class="simple">
+            <thead><tr><th>Aspect</th><th>Concern</th><th>Key terms</th><th>Imports</th></tr></thead>
+            <tbody>
+                <tr><td><code>hx-style</code></td><td>rendered appearance</td><td>stroke, fill, opacity, lineWidth, dash</td><td>color</td></tr>
+                <tr><td><code>hx-typography</code></td><td>type/font layout</td><td>fontFamily, unitsPerEm, advanceWidth, kerning</td><td>—</td></tr>
+            </tbody>
+        </table>
+
+        <h3>3.4 Signal &amp; encoding</h3>
+        <table class="simple">
+            <thead><tr><th>Aspect</th><th>Concern</th><th>Key terms</th><th>Imports</th></tr></thead>
+            <tbody>
+                <tr><td><code>hx-signal</code> ✓</td><td>1-D temporal sampled stream</td><td>sampleRate, channelLayout</td><td>sampling</td></tr>
+                <tr><td><code>hx-encoding</code> ✓</td><td>coding / compression / encryption</td><td>codec ▸reg, compression ▸reg, bitrate, quality, encryption</td><td>mint + registers</td></tr>
+                <tr><td><code>hx-integrity</code> ✓</td><td>byte verification</td><td>checksumAlgorithm, hashValue, signature, ecc</td><td>mint</td></tr>
+            </tbody>
+        </table>
+
+        <h3>3.5 Reference frames</h3>
+        <table class="simple">
+            <thead><tr><th>Aspect</th><th>Concern</th><th>Key terms</th><th>Source</th></tr></thead>
+            <tbody>
+                <tr><td><code>hx-time</code> ✓</td><td>temporal extent/structure</td><td>duration, timeBase, frameCount, frameRate, timecode</td><td>mint (closeMatch ma:, OWL-Time)</td></tr>
+                <tr><td><code>hx-spatialref</code> ✓</td><td>georeferencing / CRS</td><td>crs (wkt/epsg), datum, projection, geoTransform, axisOrder, pixelRegistration</td><td>mint (closeMatch GeoSPARQL/ISO 19111)</td></tr>
+            </tbody>
+        </table>
+
+        <h3>3.6 Descriptive &amp; governance <span class="note">(mostly reuse external; map, don't re-mint)</span></h3>
+        <table class="simple">
+            <thead><tr><th>Aspect</th><th>Concern</th><th>Source</th></tr></thead>
+            <tbody>
+                <tr><td><code>hx-descriptive</code></td><td>title, creator, date, subject, language, identifier</td><td>reuse dcterms / ma</td></tr>
+                <tr><td><code>hx-provenance</code> ✓</td><td>sensor, platform, acquisitionTime, activity, lineage</td><td>reuse PROV + SOSA/SSN</td></tr>
+                <tr><td><code>hx-rights</code></td><td>license, usage constraints</td><td>reuse dcterms:license / ODRL</td></tr>
+                <tr><td><code>hx-security</code> ✓</td><td>classificationLevel, caveats, dissemination, redaction</td><td>mint (align to a marking standard)</td></tr>
+            </tbody>
+        </table>
+
+        <h3>3.7 Container &amp; system</h3>
+        <table class="simple">
+            <thead><tr><th>Aspect</th><th>Concern</th><th>Key terms</th></tr></thead>
+            <tbody>
+                <tr><td><code>hx-bundle</code> ✓</td><td>multi-part asset: N carriers → 1 logical Asset</td><td>Asset, Part, hasPart, primaryPart, partRole ▸reg, boundBy {containment∣naming∣manifest∣concatenation}, BundleProfile, PartSpec, carriesAspect</td></tr>
+                <tr><td><code>hx-packaging</code> ✓</td><td>multi-entry container membership</td><td>hasEntry (⊑abnd:hasPart), entryPath — Container ⊑ abnd:Asset (Containment binding)</td></tr>
+                <tr><td><code>hx-fsmeta</code> ✓</td><td>filesystem attributes</td><td>fileName, size, mtime/ctime, permissions, owner</td></tr>
+                <tr><td><code>hx-networkflow</code> ✓</td><td>protocol addressing &amp; flow</td><td>srcAddress, dstAddress, port, protocol, seqNumber, flags</td></tr>
+            </tbody>
+        </table>
+        <p class="note">✓ = established (Phases 1–6). <code>hx-descriptive</code> and <code>hx-rights</code> are satisfied by reusing external vocabularies (Dublin Core, ODRL) rather than minting terms, so they have no Hexplain namespace. <code>hx-style</code> and <code>hx-typography</code> remain unbuilt — no consumer models them yet (fonts/SVG will trigger them). Note: some built aspects (e.g. <code>hx-networkflow</code>, <code>hx-packaging</code>) currently have a single consumer; they were extracted deliberately as part of the committed architecture, ahead of the second consumer the lazy-factoring rule would otherwise wait for.</p>
+    </section>
+
+    <section id="dependency-shape">
+        <h2>4. Dependency Shape</h2>
+        <p>The import graph is a DAG; edges point only downward. Sibling aspects never import one another.</p>
+        <pre class="nohighlight">
+BDDO / DLV / HEL / Core                 (foundation)
+   ▲
+hx-sampling   hx-color                  (base aspects)
+   ▲             ▲
+hx-raster  hx-geometry  hx-pointcloud  hx-tabular   hx-signal    (representation / signal)
+   … hx-time, hx-encoding, hx-spatialref, hx-provenance, hx-security, … are independent siblings
+hx-bundle  (container-tier base)  ◀── hx-packaging refines it (Container = Containment-bound Asset)
+   ▲
+DOMAINS = compositions           PROFILES = domain(s) + format-unique terms
+        </pre>
+    </section>
+
+    <section id="compositions">
+        <h2>5. Domains as Compositions</h2>
+        <table class="simple">
+            <thead><tr><th>Domain</th><th>= aspects</th><th>+ unique terms only</th></tr></thead>
+            <tbody>
+                <tr><td><b>IDV</b> image</td><td>raster (→sampling, color)</td><td>orientation, dpi</td></tr>
+                <tr><td><b>VDV</b> video</td><td>raster + time + encoding</td><td>scanType, aspectRatio</td></tr>
+                <tr><td><b>ADV</b> audio</td><td>signal + time + encoding</td><td>— (music metadata → reuse <code>mo:</code>)</td></tr>
+                <tr><td><b>SVG / vector graphics</b></td><td>geometry + style(→color) + time? + encoding?</td><td>—</td></tr>
+                <tr><td><b>DFV</b> doc/font</td><td>typography + geometry (glyphs) + style + tabular?</td><td>page structure</td></tr>
+                <tr><td><b>GV</b> geo</td><td>spatialref + {raster ∣ geometry ∣ pointcloud} + provenance + security</td><td>—</td></tr>
+                <tr><td><b>NPV</b> network</td><td>networkflow + time</td><td>—</td></tr>
+                <tr><td><b>AXV</b> archive</td><td>packaging + fsmeta + integrity + encoding</td><td>—</td></tr>
+                <tr><td><b>Shapefile</b> <span class="note">(profile)</span></td><td>bundle + geometry + tabular + spatialref</td><td>PartSpecs (.shp/.shx/.dbf/.prj/.cpg), NamingConvention binding</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section id="decision-rule">
+        <h2>6. The Decision Rule</h2>
+        <p class="note"><b>Home = the most general aspect for which the term is <em>always</em> meaningful.</b></p>
+        <ol>
+            <li>Meaningful without naming a file format? If no → it is a profile/domain term. If yes → it is an aspect term.</li>
+            <li>Needed by more than one format? → it must live in the shared aspect, never duplicated.</li>
+            <li>Value drawn from a governed list? → a SKOS <b>register</b>, defined separately from the property.</li>
+            <li>Computable/measurable scalar? → a literal + SHACL (e.g. <code>aspectRatio</code>).</li>
+        </ol>
+        <p>If a term seems to belong to <em>two</em> aspect modules, the modules are not orthogonal — split the concern. Extract a shared aspect the moment a <b>second consumer</b> appears (lazy factoring); one-concept-one-home makes the extraction cheap and mechanical.</p>
+    </section>
+
+    <section id="conventions">
+        <h2>7. Conventions</h2>
+        <h3>7.1 Naming</h3>
+        <p>Aspect ontologies live under <code>https://hexplain.io/ns/aspect/&lt;name&gt;#</code> and are labelled <code>hx-&lt;name&gt;</code>. Prefixes carry a leading <code>a</code> to mark the aspect layer and avoid collisions with common prefixes (e.g. <code>time:</code> for OWL-Time): <code>atime</code>, <code>aenc</code>, <code>acolor</code>, <code>araster</code>, <code>ageom</code>, <code>asref</code>, <code>asamp</code>, <code>asig</code>, <code>aprov</code>, <code>asec</code>, …</p>
+        <h3>7.2 Registers</h3>
+        <p>Controlled vocabularies are open <code>skos:ConceptScheme</code>s. In this release each register is hosted inside the aspect that references it (Codec Register in <code>hx-encoding</code>, Colour Space Register in <code>hx-color</code>); registers MAY later be split into standalone, independently-versioned artifacts without changing referencing IRIs' semantics.</p>
+        <h3>7.3 Versioning &amp; compatibility</h3>
+        <p>The family is pre-release. Every module is version 1.0 with no prior-version history: terms are defined (or placed during this refactor) directly, with no deprecation, no backward-compatibility layer, and no <code>owl:priorVersion</code>. A compatibility policy will be defined when the first version is released.</p>
+    </section>
+
+    <section id="roadmap">
+        <h2>8. Refactoring Roadmap</h2>
+        <p>Each phase is independently shippable and gated on <b>parse + SHACL clean + no duplicated term</b>.</p>
+        <table class="simple">
+            <thead><tr><th>Phase</th><th>Scope</th><th>Status</th></tr></thead>
+            <tbody>
+                <tr><td><b>0. Conventions</b></td><td>This document: catalogue, decision rule, naming, back-compat policy, roadmap.</td><td>✓ done</td></tr>
+                <tr><td><b>1. Media split</b></td><td>Dissolve the interim Media Vocabulary into <code>hx-time</code> + <code>hx-encoding</code> + <code>hx-color</code>; move <code>colorSpace</code> to <code>hx-color</code>; re-point ADV &amp; VDV imports.</td><td>✓ done</td></tr>
+                <tr><td><b>2. Raster + sampling</b></td><td>Create <code>hx-sampling</code>, <code>hx-raster</code>; migrate IDV + VDV dimensions (<code>frameWidth</code>≡<code>pixelWidth</code> → <code>araster:width</code>) and bit depth (image + audio → <code>asamp:bitDepth</code>); IDV gains semantic <code>acolor:colorSpace</code>.</td><td>✓ done</td></tr>
+                <tr><td><b>3. Signal</b></td><td><code>hx-signal</code> for ADV (sampleRate, channelLayout).</td><td>✓ done</td></tr>
+                <tr><td><b>4. Un-bundle GV</b></td><td>Extract <code>hx-spatialref</code>, <code>hx-provenance</code> (reuse PROV/SOSA), <code>hx-security</code> (<code>classificationLevel</code> out). GV → composition.</td><td>✓ done</td></tr>
+                <tr><td><b>5. Vector / geometry</b></td><td><code>hx-geometry</code> (+ <code>hx-tabular</code>, <code>hx-pointcloud</code>); retrofit GV vector + point cloud, DFV glyphs, add an SVG profile.</td><td>✓ done</td></tr>
+                <tr><td><b>6. Governance &amp; container</b></td><td><code>hx-descriptive</code> (map dcterms), <code>hx-rights</code>, <code>hx-integrity</code>, <code>hx-packaging</code>, <code>hx-fsmeta</code>, <code>hx-networkflow</code>; apply to AXV/NPV/DFV.</td><td>✓ done</td></tr>
+                <tr><td><b>7. Thin domains + conformance</b></td><td>Reduce every domain vocab to <code>imports + unique terms</code>; SHACL asserting valid composition.</td><td>✓ done</td></tr>
+            </tbody>
+        </table>
+    </section>
+</body>
+</html>
