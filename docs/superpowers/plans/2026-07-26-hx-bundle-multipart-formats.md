@@ -447,19 +447,28 @@ AGEOM = rdflib.Namespace("https://hexplain.io/ns/aspect/geometry#")
 ASREF = rdflib.Namespace("https://hexplain.io/ns/aspect/spatialref#")
 ATAB = rdflib.Namespace("https://hexplain.io/ns/aspect/tabular#")
 
-checks = [
-    (roads, AGEOM.geometryType, AGEOM.MultiLineString),  # lifted from .shp
-    (roads, ASREF.epsgCode, rdflib.Literal(4326, datatype=rdflib.XSD.positiveInteger)),  # from .prj
-    (roads, ATAB.rowCount, rdflib.Literal(1200, datatype=rdflib.XSD.unsignedLong)),  # from .dbf
-]
-missing = [c for c in checks if c not in g]
+# Compare by value, not by exact typed literal: the fixtures use bare integer
+# literals (rdflib types them xsd:integer) while the source properties declare
+# narrower ranges, so an exact-datatype match would give a false FAIL. Numeric
+# value comparison is the robust check that the facet lifted.
+def lifted_int(pred):
+    v = g.value(roads, pred)
+    return None if v is None else int(v.toPython())
+
+problems = []
+if (roads, AGEOM.geometryType, AGEOM.MultiLineString) not in g:  # object is a URI — exact match is fine
+    problems.append("ageom:geometryType MultiLineString not lifted from .shp")
+if lifted_int(ASREF.epsgCode) != 4326:
+    problems.append("asref:epsgCode 4326 not lifted from .prj")
+if lifted_int(ATAB.rowCount) != 1200:
+    problems.append("atab:rowCount 1200 not lifted from .dbf")
 
 # Negative: fsmeta filename must NOT lift (no PartSpec declares afs as a carried aspect).
 AFS = rdflib.Namespace("https://hexplain.io/ns/aspect/fsmeta#")
 leaked = list(g.triples((roads, AFS.fileName, None)))
 
-if missing:
-    print("FAIL: not lifted onto Asset:", missing)
+if problems:
+    print("FAIL: not lifted onto Asset:", problems)
     sys.exit(1)
 if leaked:
     print("FAIL: physical afs:fileName leaked onto Asset:", leaked)
@@ -756,4 +765,4 @@ git commit -m "docs(architecture): register hx-bundle in catalogue + family pars
 
 **3. Type consistency:** Property/class/individual names are identical across Tasks 1→3→4→5 (`abnd:hasPart`, `abnd:partRole`, `abnd:carriesAspect`, `abnd:partSpec`, `abnd:required`, role concepts, binding individuals). Aspect terms match the real ontologies verified pre-plan (`ageom:MultiLineString`, `asref:epsgCode` typed `xsd:positiveInteger`, `atab:rowCount` typed `xsd:unsignedLong` — reflected in the test's typed literals). Aspect IRIs in `carriesAspect` use the slash form matching `rdfs:isDefinedBy` in the source ontologies. ✓
 
-**One risk flagged for the implementer:** the lift test compares typed literals (`4326^^xsd:positiveInteger`, `1200^^xsd:unsignedLong`). If rdflib normalizes a literal differently, prefer asserting the predicate exists on the Asset (`(roads, ASREF.epsgCode, None) in g` via `g.value`) over exact-literal equality. The datatypes above are copied from the source ontologies, so exact match is expected to hold.
+**Resolved during execution:** the lift test now compares numeric **values** (`int(g.value(...).toPython())`) rather than exact typed literals. The fixtures use bare integer literals (`4326`, `1200`), which rdflib types as `xsd:integer` — not the properties' declared `xsd:positiveInteger`/`xsd:unsignedLong` — so an exact-datatype comparison would false-FAIL. Value comparison is datatype-agnostic and robustly proves the facet lifted.
