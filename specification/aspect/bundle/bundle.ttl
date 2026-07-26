@@ -105,3 +105,23 @@
 :PartShape a sh:NodeShape ; sh:targetClass :Part ;
     sh:property [ sh:path :partRole ; sh:class skos:Concept ;
         sh:message "abnd:partRole must be a skos:Concept (from abnd:PartRoleScheme)." ] .
+
+# ---------- Facet lifting (SHACL-AF rule) ----------
+# For each Asset, lift the properties its parts carry that are defined by the aspect the
+# profile's matching PartSpec declares via carriesAspect. Full IRIs so it runs identically
+# under pyshacl and standalone rdflib. Requires the referenced aspect ontologies in the graph.
+:LiftByCarriedAspectRule a sh:NodeShape ; sh:targetClass :Asset ;
+    sh:rule [ a sh:SPARQLRule ;
+        rdfs:label "Lift part facets onto the Asset" ;
+        sh:construct """
+CONSTRUCT { $this ?p ?v }
+WHERE {
+  $this <https://hexplain.io/ns/aspect/bundle#hasPart> ?part .
+  ?part <https://hexplain.io/ns/aspect/bundle#partRole> ?role ; ?p ?v .
+  $this <http://purl.org/dc/terms/conformsTo> ?profile .
+  ?profile <https://hexplain.io/ns/aspect/bundle#partSpec> ?spec .
+  ?spec <https://hexplain.io/ns/aspect/bundle#partRole> ?role ;
+        <https://hexplain.io/ns/aspect/bundle#carriesAspect> ?aspect .
+  ?p <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> ?aspect .
+}
+""" ] .
