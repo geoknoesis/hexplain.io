@@ -422,6 +422,10 @@ FILES = [
     "specification/aspect/geometry/geometry.ttl",
     "specification/aspect/spatialref/spatialref.ttl",
     "specification/aspect/tabular/tabular.ttl",
+    # fsmeta MUST be loaded so afs:fileName rdfs:isDefinedBy <fsmeta> is present;
+    # that gives the "did not leak" assertion teeth (the only thing then blocking
+    # the lift is the absence of a PartSpec carriesAspect <fsmeta>).
+    "specification/aspect/fsmeta/fsmeta.ttl",
     "specification/profiles/shapefile/shapefile.ttl",
     "specification/profiles/shapefile/example.ttl",
 ]
