@@ -1,0 +1,72 @@
+# Hexplain Profile — NGA NITF 2.1 (MIL-STD-2500C). Byte-level container description.
+@prefix nitf:    <https://hexplain.io/ns/profile/nitf#> .
+@prefix bddo:    <https://hexplain.io/ns/bddo#> .
+@prefix hexplain:<https://hexplain.io/ns/core#> .
+@prefix gv:      <https://hexplain.io/ns/geo#> .
+@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix asec:    <https://hexplain.io/ns/aspect/security#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/profile/nitf> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/profile/nitf/1.0> ; owl:versionInfo "1.0" ;
+    owl:imports <https://hexplain.io/ns/core> ;
+    rdfs:label "Hexplain Profile — NGA NITF 2.1" ;
+    rdfs:comment "Byte-level description of the National Imagery Transmission Format 2.1 container (MIL-STD-2500C): file header, image/graphic/text/DES/RES subheaders, and the generic Tagged Record Extension framework. NSIF/STANAG 4545 is field-compatible." ;
+    rdfs:seeAlso <https://www.everyspec.com/MIL-STD/MIL-STD-2500-2599/MIL-STD-2500C_25693/> ;
+    dcterms:created "2026-07-26"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "nitf" ; vann:preferredNamespaceUri "https://hexplain.io/ns/profile/nitf#" .
+
+# ---------- Profile-local data types (NITF fields are BCS/ECS text) ----------
+nitf:BCSA a bddo:DataType ; rdfs:label "BCS-A (alphanumeric text)" ;
+    bddo:baseType bddo:baseString ; bddo:encoding bddo:ascii ; bddo:xsdType xsd:string .
+nitf:BCSN a bddo:DataType ; rdfs:label "BCS-N (numeric text: digits + . / + -)" ;
+    bddo:baseType bddo:baseString ; bddo:encoding bddo:ascii ; bddo:xsdType xsd:string .
+nitf:BCSNpos a bddo:DataType ; rdfs:label "BCS-N positive integer (digits only)" ;
+    bddo:baseType bddo:baseString ; bddo:encoding bddo:ascii ; bddo:xsdType xsd:string .
+nitf:ECSA a bddo:DataType ; rdfs:label "ECS-A (restricted to BCS-A subset)" ;
+    bddo:baseType bddo:baseString ; bddo:encoding bddo:ascii ; bddo:xsdType xsd:string .
+
+# ---------- Core enumerations (values verbatim from Table A-3) ----------
+nitf:PVTYPEEnum a bddo:Enumeration ; rdfs:label "Pixel Value Type" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue "INT" ] , [ a bddo:EnumValue ; bddo:enumRawValue "B" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "SI" ] , [ a bddo:EnumValue ; bddo:enumRawValue "R" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "C" ] .
+nitf:IMODEEnum a bddo:Enumeration ; rdfs:label "Image Mode" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue "B" ] , [ a bddo:EnumValue ; bddo:enumRawValue "P" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "R" ] , [ a bddo:EnumValue ; bddo:enumRawValue "S" ] .
+nitf:ICORDSEnum a bddo:Enumeration ; rdfs:label "Image Coordinate Representation" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue "U" ] , [ a bddo:EnumValue ; bddo:enumRawValue "G" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "N" ] , [ a bddo:EnumValue ; bddo:enumRawValue "S" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "D" ] , [ a bddo:EnumValue ; bddo:enumRawValue " " ] .
+nitf:IREPEnum a bddo:Enumeration ; rdfs:label "Image Representation" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue "MONO" ] , [ a bddo:EnumValue ; bddo:enumRawValue "RGB" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "RGB/LUT" ] , [ a bddo:EnumValue ; bddo:enumRawValue "MULTI" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "NODISPLY" ] , [ a bddo:EnumValue ; bddo:enumRawValue "NVECTOR" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "POLAR" ] , [ a bddo:EnumValue ; bddo:enumRawValue "VPH" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "YCbCr601" ] .
+nitf:ICEnum a bddo:Enumeration ; rdfs:label "Image Compression" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue "NC" ] , [ a bddo:EnumValue ; bddo:enumRawValue "NM" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "C1" ] , [ a bddo:EnumValue ; bddo:enumRawValue "C3" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "C4" ] , [ a bddo:EnumValue ; bddo:enumRawValue "C5" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "C6" ] , [ a bddo:EnumValue ; bddo:enumRawValue "C7" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "C8" ] , [ a bddo:EnumValue ; bddo:enumRawValue "I1" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "M1" ] , [ a bddo:EnumValue ; bddo:enumRawValue "M3" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "M4" ] , [ a bddo:EnumValue ; bddo:enumRawValue "M5" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "M6" ] , [ a bddo:EnumValue ; bddo:enumRawValue "M7" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "M8" ] .
+nitf:FSCLASEnum a bddo:Enumeration ; rdfs:label "Security Classification level" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue "T" ] , [ a bddo:EnumValue ; bddo:enumRawValue "S" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "C" ] , [ a bddo:EnumValue ; bddo:enumRawValue "R" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "U" ] .
