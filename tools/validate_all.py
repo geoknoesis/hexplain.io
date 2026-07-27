@@ -5,6 +5,8 @@ import rdflib
 
 failures = []
 files = sorted(glob.glob("specification/**/*.ttl", recursive=True))
+if not files:
+    sys.exit("FAIL: no ttl files found (wrong working directory?)")
 for f in files:
     try:
         rdflib.Graph().parse(f, format="turtle")

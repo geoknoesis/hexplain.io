@@ -6,7 +6,6 @@
 @prefix :        <https://hexplain.io/ns/aspect/bundle#> .
 @prefix abnd:    <https://hexplain.io/ns/aspect/bundle#> .
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
-@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
@@ -104,7 +103,10 @@
         sh:message "An Asset has at most one primaryPart." ] .
 :PartShape a sh:NodeShape ; sh:targetClass :Part ;
     sh:property [ sh:path :partRole ; sh:class skos:Concept ;
-        sh:message "abnd:partRole must be a skos:Concept (from abnd:PartRoleScheme)." ] .
+        sh:message "abnd:partRole must be a skos:Concept." ] ;
+    sh:property [ sh:path :partRole ;
+        sh:node [ sh:property [ sh:path skos:inScheme ; sh:hasValue :PartRoleScheme ] ] ;
+        sh:message "abnd:partRole must be drawn from abnd:PartRoleScheme." ] .
 
 # ---------- Facet lifting (SHACL-AF rule) ----------
 # For each Asset, lift the properties its parts carry that are defined by the aspect the
