@@ -711,3 +711,22 @@ nitf:RES_RESSHF a bddo:Field ; rdfs:label "RESSHF — RES User-Defined Subheader
 nitf:RES_RESDATA a bddo:Field ; rdfs:label "RESDATA — RES Data Field" ;
     bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
     rdfs:comment "Bounded by the enclosing segment's LREn length from the file header's RES length table." .
+
+# ---------- Semantic lift (targets that exist today) ----------
+nitf:ImageSubheader hexplain:mapsToClass gv:RasterDataset .
+nitf:IS_NROWS hexplain:mapsToProperty araster:height ;
+    hexplain:valueExpression "xsd:integer(NROWS)" ; hexplain:valueDatatype xsd:integer .
+nitf:IS_NCOLS hexplain:mapsToProperty araster:width ;
+    hexplain:valueExpression "xsd:integer(NCOLS)" ; hexplain:valueDatatype xsd:integer .
+nitf:FH_FSCLAS hexplain:mapsToProperty asec:classificationLevel .
+nitf:IS_ISCLAS hexplain:mapsToProperty asec:classificationLevel .
+
+# ---------- SEMANTIC GAP LOG (backlog for a future "extend vocabs" sub-project) ----------
+# The following NITF fields have no semantic target in current vocabularies and remain
+# physical-only until the aspect vocabularies are extended:
+#   NBANDS            -> raster band count            (needs araster:bandCount)
+#   NBPP / ABPP       -> bit depth                    (needs araster:bitDepth)
+#   IGEOLO + BLOCKA corners -> geospatial footprint   (needs spatialref corner/bbox term)
+#   RPC00B            -> rational-polynomial sensor model (needs a sensor-model vocab)
+#   ISCODE/ISCTLH/ISREL/ISDCTP…ISCTLN (15 ISM fields) -> ISM-aligned security register
+#     (Table A-4 gives the codeword digraphs for that future register)

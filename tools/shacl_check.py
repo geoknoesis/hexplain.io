@@ -7,6 +7,9 @@ ONT = [
     "specification/bddo/bddo.ttl",
     "specification/dlv/dlv.ttl",
     "specification/hexplain/core.ttl",
+    "specification/aspect/raster/raster.ttl",
+    "specification/aspect/security/security.ttl",
+    "specification/gv/geo.ttl",
 ]
 SHAPES = [
     "specification/bddo/bddo.ttl",
