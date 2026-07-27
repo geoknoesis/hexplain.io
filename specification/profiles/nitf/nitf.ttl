@@ -413,3 +413,168 @@ nitf:IS_IXSOFL a bddo:Field ; rdfs:label "IXSOFL — image extended subheader ov
 nitf:IS_IXSHD a bddo:Field ; rdfs:label "IXSHD — image extended subheader data (TREs)" ;
     bddo:dataType nitf:TRE ; bddo:isPresentIf "IXSHDL != '00000'" ;
     bddo:sizeFromExpression "IXSHDL - 3" ; bddo:repeatUntil "end-of-region" .
+
+# ---------- NITF Graphic Subheader (Table A-5) ----------
+nitf:GraphicSubheader a bddo:Struct ; rdfs:label "NITF Graphic Subheader (Table A-5)" ;
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField (
+      nitf:GS_SY nitf:GS_SID nitf:GS_SNAME
+      nitf:GS_SSCLAS nitf:GS_SSCLSY nitf:GS_SSCODE nitf:GS_SSCTLH nitf:GS_SSREL nitf:GS_SSDCTP nitf:GS_SSDCDT
+      nitf:GS_SSDCXM nitf:GS_SSDG nitf:GS_SSDGDT nitf:GS_SSCLTX nitf:GS_SSCATP nitf:GS_SSCAUT nitf:GS_SSCRSN
+      nitf:GS_SSSRDT nitf:GS_SSCTLN
+      nitf:GS_ENCRYP nitf:GS_SFMT nitf:GS_SSTRUCT nitf:GS_SDLVL nitf:GS_SALVL
+      nitf:GS_SLOC nitf:GS_SBND1 nitf:GS_SCOLOR nitf:GS_SBND2 nitf:GS_SRES2
+      nitf:GS_SXSHDL nitf:GS_SXSOFL nitf:GS_SXSHD
+    ) .
+
+# Fixed prefix (SY..SNAME)
+nitf:GS_SY a bddo:Field ; rdfs:label "SY — File Part Type" ;
+    bddo:dataType nitf:BCSA ; bddo:size 2 ; bddo:hasFixedValue "SY" .
+nitf:GS_SID a bddo:Field ; rdfs:label "SID — Graphic Identifier" ;
+    bddo:dataType nitf:BCSA ; bddo:size 10 .
+nitf:GS_SNAME a bddo:Field ; rdfs:label "SNAME — Graphic Name" ;
+    bddo:dataType nitf:ECSA ; bddo:size 20 .
+
+# Security block (SSCLAS..SSCTLN) — identical sizes to FS* block
+nitf:GS_SSCLAS a bddo:Field ; rdfs:label "SSCLAS — Graphic Security Classification" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:FSCLASEnum .
+nitf:GS_SSCLSY a bddo:Field ; rdfs:label "SSCLSY — Graphic Security Classification System" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:GS_SSCODE a bddo:Field ; rdfs:label "SSCODE — Graphic Codewords" ;
+    bddo:dataType nitf:ECSA ; bddo:size 11 .
+nitf:GS_SSCTLH a bddo:Field ; rdfs:label "SSCTLH — Graphic Control and Handling" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:GS_SSREL a bddo:Field ; rdfs:label "SSREL — Graphic Releasing Instructions" ;
+    bddo:dataType nitf:ECSA ; bddo:size 20 .
+nitf:GS_SSDCTP a bddo:Field ; rdfs:label "SSDCTP — Graphic Declassification Type" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:GS_SSDCDT a bddo:Field ; rdfs:label "SSDCDT — Graphic Declassification Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:GS_SSDCXM a bddo:Field ; rdfs:label "SSDCXM — Graphic Declassification Exemption" ;
+    bddo:dataType nitf:ECSA ; bddo:size 4 .
+nitf:GS_SSDG a bddo:Field ; rdfs:label "SSDG — Graphic Downgrade" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:GS_SSDGDT a bddo:Field ; rdfs:label "SSDGDT — Graphic Downgrade Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:GS_SSCLTX a bddo:Field ; rdfs:label "SSCLTX — Graphic Classification Text" ;
+    bddo:dataType nitf:ECSA ; bddo:size 43 .
+nitf:GS_SSCATP a bddo:Field ; rdfs:label "SSCATP — Graphic Classification Authority Type" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:GS_SSCAUT a bddo:Field ; rdfs:label "SSCAUT — Graphic Classification Authority" ;
+    bddo:dataType nitf:ECSA ; bddo:size 40 .
+nitf:GS_SSCRSN a bddo:Field ; rdfs:label "SSCRSN — Graphic Classification Reason" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:GS_SSSRDT a bddo:Field ; rdfs:label "SSSRDT — Graphic Security Source Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:GS_SSCTLN a bddo:Field ; rdfs:label "SSCTLN — Graphic Security Control Number" ;
+    bddo:dataType nitf:ECSA ; bddo:size 15 .
+
+# Encryption, format, structure, display level, attachment, location, color, bounds
+nitf:GS_ENCRYP a bddo:Field ; rdfs:label "ENCRYP — Encryption" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 1 .
+nitf:GS_SFMT a bddo:Field ; rdfs:label "SFMT — Graphic Type" ;
+    bddo:dataType nitf:BCSA ; bddo:size 1 ; bddo:hasFixedValue "C" .
+nitf:GS_SSTRUCT a bddo:Field ; rdfs:label "SSTRUCT — Reserved for Future Use" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 13 .
+nitf:GS_SDLVL a bddo:Field ; rdfs:label "SDLVL — Graphic Display Level" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 .
+nitf:GS_SALVL a bddo:Field ; rdfs:label "SALVL — Graphic Attachment Level" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 .
+nitf:GS_SLOC a bddo:Field ; rdfs:label "SLOC — Graphic Location" ;
+    bddo:dataType nitf:BCSN ; bddo:size 10 .
+nitf:GS_SBND1 a bddo:Field ; rdfs:label "SBND1 — First Graphic Bound Location" ;
+    bddo:dataType nitf:BCSN ; bddo:size 10 .
+nitf:GS_SCOLOR a bddo:Field ; rdfs:label "SCOLOR — Graphic Color" ;
+    bddo:dataType nitf:BCSA ; bddo:size 1 .
+nitf:GS_SBND2 a bddo:Field ; rdfs:label "SBND2 — Second Graphic Bound Location" ;
+    bddo:dataType nitf:BCSN ; bddo:size 10 .
+nitf:GS_SRES2 a bddo:Field ; rdfs:label "SRES2 — Reserved for Future Use" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 2 .
+
+# Extension area: graphic extended subheader TRE region
+nitf:GS_SXSHDL a bddo:Field ; rdfs:label "SXSHDL — Graphic Extended Subheader Data Length" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 5 .
+nitf:GS_SXSOFL a bddo:Field ; rdfs:label "SXSOFL — graphic extended subheader overflow" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "SXSHDL != '00000'" .
+nitf:GS_SXSHD a bddo:Field ; rdfs:label "SXSHD — graphic extended subheader data (TREs)" ;
+    bddo:dataType nitf:TRE ; bddo:isPresentIf "SXSHDL != '00000'" ;
+    bddo:sizeFromExpression "SXSHDL - 3" ; bddo:repeatUntil "end-of-region" .
+
+# ---------- Text-specific enumeration (Table A-6) ----------
+nitf:TXTFMTEnum a bddo:Enumeration ; rdfs:label "Text Format" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue "STA" ] , [ a bddo:EnumValue ; bddo:enumRawValue "MTF" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "UT1" ] , [ a bddo:EnumValue ; bddo:enumRawValue "U8S" ] .
+
+# ---------- NITF Text Subheader (Table A-6) ----------
+nitf:TextSubheader a bddo:Struct ; rdfs:label "NITF Text Subheader (Table A-6)" ;
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField (
+      nitf:TS_TE nitf:TS_TEXTID nitf:TS_TXTALVL nitf:TS_TXTDT nitf:TS_TXTITL
+      nitf:TS_TSCLAS nitf:TS_TSCLSY nitf:TS_TSCODE nitf:TS_TSCTLH nitf:TS_TSREL nitf:TS_TSDCTP nitf:TS_TSDCDT
+      nitf:TS_TSDCXM nitf:TS_TSDG nitf:TS_TSDGDT nitf:TS_TSCLTX nitf:TS_TSCATP nitf:TS_TSCAUT nitf:TS_TSCRSN
+      nitf:TS_TSSRDT nitf:TS_TSCTLN
+      nitf:TS_ENCRYP nitf:TS_TXTFMT
+      nitf:TS_TXSHDL nitf:TS_TXSOFL nitf:TS_TXSHD
+    ) .
+
+# Fixed prefix (TE..TXTITL)
+nitf:TS_TE a bddo:Field ; rdfs:label "TE — File Part Type" ;
+    bddo:dataType nitf:BCSA ; bddo:size 2 ; bddo:hasFixedValue "TE" .
+nitf:TS_TEXTID a bddo:Field ; rdfs:label "TEXTID — Text Identifier" ;
+    bddo:dataType nitf:BCSA ; bddo:size 7 .
+nitf:TS_TXTALVL a bddo:Field ; rdfs:label "TXTALVL — Text Attachment Level" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 .
+nitf:TS_TXTDT a bddo:Field ; rdfs:label "TXTDT — Text Date and Time (CCYYMMDDhhmmss)" ;
+    bddo:dataType nitf:BCSN ; bddo:size 14 .
+nitf:TS_TXTITL a bddo:Field ; rdfs:label "TXTITL — Text Title" ;
+    bddo:dataType nitf:ECSA ; bddo:size 80 .
+
+# Security block (TSCLAS..TSCTLN) — identical sizes to FS* block
+nitf:TS_TSCLAS a bddo:Field ; rdfs:label "TSCLAS — Text Security Classification" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:FSCLASEnum .
+nitf:TS_TSCLSY a bddo:Field ; rdfs:label "TSCLSY — Text Security Classification System" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:TS_TSCODE a bddo:Field ; rdfs:label "TSCODE — Text Codewords" ;
+    bddo:dataType nitf:ECSA ; bddo:size 11 .
+nitf:TS_TSCTLH a bddo:Field ; rdfs:label "TSCTLH — Text Control and Handling" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:TS_TSREL a bddo:Field ; rdfs:label "TSREL — Text Releasing Instructions" ;
+    bddo:dataType nitf:ECSA ; bddo:size 20 .
+nitf:TS_TSDCTP a bddo:Field ; rdfs:label "TSDCTP — Text Declassification Type" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:TS_TSDCDT a bddo:Field ; rdfs:label "TSDCDT — Text Declassification Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:TS_TSDCXM a bddo:Field ; rdfs:label "TSDCXM — Text Declassification Exemption" ;
+    bddo:dataType nitf:ECSA ; bddo:size 4 .
+nitf:TS_TSDG a bddo:Field ; rdfs:label "TSDG — Text Downgrade" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:TS_TSDGDT a bddo:Field ; rdfs:label "TSDGDT — Text Downgrade Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:TS_TSCLTX a bddo:Field ; rdfs:label "TSCLTX — Text Classification Text" ;
+    bddo:dataType nitf:ECSA ; bddo:size 43 .
+nitf:TS_TSCATP a bddo:Field ; rdfs:label "TSCATP — Text Classification Authority Type" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:TS_TSCAUT a bddo:Field ; rdfs:label "TSCAUT — Text Classification Authority" ;
+    bddo:dataType nitf:ECSA ; bddo:size 40 .
+nitf:TS_TSCRSN a bddo:Field ; rdfs:label "TSCRSN — Text Classification Reason" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:TS_TSSRDT a bddo:Field ; rdfs:label "TSSRDT — Text Security Source Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:TS_TSCTLN a bddo:Field ; rdfs:label "TSCTLN — Text Security Control Number" ;
+    bddo:dataType nitf:ECSA ; bddo:size 15 .
+
+# Encryption, format
+nitf:TS_ENCRYP a bddo:Field ; rdfs:label "ENCRYP — Encryption" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 1 .
+nitf:TS_TXTFMT a bddo:Field ; rdfs:label "TXTFMT — Text Format" ;
+    bddo:dataType nitf:BCSA ; bddo:size 3 ; bddo:enumeration nitf:TXTFMTEnum .
+
+# Extension area: text extended subheader TRE region
+nitf:TS_TXSHDL a bddo:Field ; rdfs:label "TXSHDL — Text Extended Subheader Data Length" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 5 .
+nitf:TS_TXSOFL a bddo:Field ; rdfs:label "TXSOFL — text extended subheader overflow" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "TXSHDL != '00000'" .
+nitf:TS_TXSHD a bddo:Field ; rdfs:label "TXSHD — text extended subheader data (TREs)" ;
+    bddo:dataType nitf:TRE ; bddo:isPresentIf "TXSHDL != '00000'" ;
+    bddo:sizeFromExpression "TXSHDL - 3" ; bddo:repeatUntil "end-of-region" .
