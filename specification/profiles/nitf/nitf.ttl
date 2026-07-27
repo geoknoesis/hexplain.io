@@ -70,3 +70,15 @@ nitf:FSCLASEnum a bddo:Enumeration ; rdfs:label "Security Classification level" 
       [ a bddo:EnumValue ; bddo:enumRawValue "T" ] , [ a bddo:EnumValue ; bddo:enumRawValue "S" ] ,
       [ a bddo:EnumValue ; bddo:enumRawValue "C" ] , [ a bddo:EnumValue ; bddo:enumRawValue "R" ] ,
       [ a bddo:EnumValue ; bddo:enumRawValue "U" ] .
+
+# ---------- Generic Tagged Record Extension (Table A-7) ----------
+nitf:TRE a bddo:Struct ; rdfs:label "Tagged Record Extension" ;
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField ( nitf:TRE_CETAG nitf:TRE_CEL nitf:TRE_CEDATA ) .
+
+nitf:TRE_CETAG a bddo:Field ; rdfs:label "CETAG/RETAG — 6-char tag" ;
+    bddo:dataType nitf:BCSA ; bddo:size 6 .
+nitf:TRE_CEL a bddo:Field ; rdfs:label "CEL/REL — length of CEDATA" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 5 .
+nitf:TRE_CEDATA a bddo:Field ; rdfs:label "CEDATA/REDATA — user-defined data" ;
+    bddo:dataType bddo:bytes ; bddo:sizeFromField nitf:TRE_CEL .
