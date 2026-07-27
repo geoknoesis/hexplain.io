@@ -82,3 +82,166 @@ nitf:TRE_CEL a bddo:Field ; rdfs:label "CEL/REL — length of CEDATA" ;
     bddo:dataType nitf:BCSNpos ; bddo:size 5 .
 nitf:TRE_CEDATA a bddo:Field ; rdfs:label "CEDATA/REDATA — user-defined data" ;
     bddo:dataType bddo:bytes ; bddo:sizeFromField nitf:TRE_CEL .
+
+# ---------- NITF File Header (Table A-1) ----------
+nitf:FileHeader a bddo:Struct ; rdfs:label "NITF File Header (Table A-1)" ;
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField (
+      nitf:FH_FHDR nitf:FH_FVER nitf:FH_CLEVEL nitf:FH_STYPE nitf:FH_OSTAID nitf:FH_FDT nitf:FH_FTITLE
+      nitf:FH_FSCLAS nitf:FH_FSCLSY nitf:FH_FSCODE nitf:FH_FSCTLH nitf:FH_FSREL nitf:FH_FSDCTP nitf:FH_FSDCDT
+      nitf:FH_FSDCXM nitf:FH_FSDG nitf:FH_FSDGDT nitf:FH_FSCLTX nitf:FH_FSCATP nitf:FH_FSCAUT nitf:FH_FSCRSN
+      nitf:FH_FSSRDT nitf:FH_FSCTLN nitf:FH_FSCOP nitf:FH_FSCPYS nitf:FH_ENCRYP nitf:FH_FBKGC nitf:FH_ONAME
+      nitf:FH_OPHONE nitf:FH_FL nitf:FH_HL
+      nitf:FH_NUMI nitf:FH_ImageSegTable
+      nitf:FH_NUMS nitf:FH_GraphicSegTable
+      nitf:FH_NUMX
+      nitf:FH_NUMT nitf:FH_TextSegTable
+      nitf:FH_NUMDES nitf:FH_DESegTable
+      nitf:FH_NUMRES nitf:FH_RESegTable
+      nitf:FH_UDHDL nitf:FH_UDHOFL nitf:FH_UDHD
+      nitf:FH_XHDL nitf:FH_XHDLOFL nitf:FH_XHD
+    ) .
+
+# Fixed prefix (FHDR..FTITLE)
+nitf:FH_FHDR a bddo:Field ; rdfs:label "FHDR — File Profile Name" ;
+    bddo:dataType nitf:BCSA ; bddo:size 4 ; bddo:hasFixedValue "NITF" .
+nitf:FH_FVER a bddo:Field ; rdfs:label "FVER — File Version" ;
+    bddo:dataType nitf:BCSA ; bddo:size 5 ; bddo:hasFixedValue "02.10" .
+nitf:FH_CLEVEL a bddo:Field ; rdfs:label "CLEVEL — Complexity Level" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 2 .
+nitf:FH_STYPE a bddo:Field ; rdfs:label "STYPE — Standard Type" ;
+    bddo:dataType nitf:BCSA ; bddo:size 4 ; bddo:hasFixedValue "BF01" .
+nitf:FH_OSTAID a bddo:Field ; rdfs:label "OSTAID — Originating Station ID" ;
+    bddo:dataType nitf:BCSA ; bddo:size 10 .
+nitf:FH_FDT a bddo:Field ; rdfs:label "FDT — File Date and Time (CCYYMMDDhhmmss)" ;
+    bddo:dataType nitf:BCSN ; bddo:size 14 .
+nitf:FH_FTITLE a bddo:Field ; rdfs:label "FTITLE — File Title" ;
+    bddo:dataType nitf:ECSA ; bddo:size 80 .
+
+# Security block (FSCLAS..FSCTLN)
+nitf:FH_FSCLAS a bddo:Field ; rdfs:label "FSCLAS — File Security Classification" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:FSCLASEnum .
+nitf:FH_FSCLSY a bddo:Field ; rdfs:label "FSCLSY — File Security Classification System" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:FH_FSCODE a bddo:Field ; rdfs:label "FSCODE — File Codewords" ;
+    bddo:dataType nitf:BCSA ; bddo:size 11 .
+nitf:FH_FSCTLH a bddo:Field ; rdfs:label "FSCTLH — File Control and Handling" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:FH_FSREL a bddo:Field ; rdfs:label "FSREL — File Releasing Instructions" ;
+    bddo:dataType nitf:ECSA ; bddo:size 20 .
+nitf:FH_FSDCTP a bddo:Field ; rdfs:label "FSDCTP — File Declassification Type" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:FH_FSDCDT a bddo:Field ; rdfs:label "FSDCDT — File Declassification Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:FH_FSDCXM a bddo:Field ; rdfs:label "FSDCXM — File Declassification Exemption" ;
+    bddo:dataType nitf:ECSA ; bddo:size 4 .
+nitf:FH_FSDG a bddo:Field ; rdfs:label "FSDG — File Downgrade" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:FH_FSDGDT a bddo:Field ; rdfs:label "FSDGDT — File Downgrade Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:FH_FSCLTX a bddo:Field ; rdfs:label "FSCLTX — File Classification Text" ;
+    bddo:dataType nitf:ECSA ; bddo:size 43 .
+nitf:FH_FSCATP a bddo:Field ; rdfs:label "FSCATP — File Classification Authority Type" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:FH_FSCAUT a bddo:Field ; rdfs:label "FSCAUT — File Classification Authority" ;
+    bddo:dataType nitf:ECSA ; bddo:size 40 .
+nitf:FH_FSCRSN a bddo:Field ; rdfs:label "FSCRSN — File Classification Reason" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:FH_FSSRDT a bddo:Field ; rdfs:label "FSSRDT — File Security Source Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:FH_FSCTLN a bddo:Field ; rdfs:label "FSCTLN — File Security Control Number" ;
+    bddo:dataType nitf:ECSA ; bddo:size 15 .
+
+# Copies, encryption, background color, originator, lengths (FSCOP..HL)
+nitf:FH_FSCOP a bddo:Field ; rdfs:label "FSCOP — File Copy Number" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 5 .
+nitf:FH_FSCPYS a bddo:Field ; rdfs:label "FSCPYS — File Number of Copies" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 5 .
+nitf:FH_ENCRYP a bddo:Field ; rdfs:label "ENCRYP — Encryption" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 1 .
+nitf:FH_FBKGC a bddo:Field ; rdfs:label "FBKGC — File Background Color (RGB)" ;
+    bddo:dataType bddo:bytes ; bddo:size 3 .
+nitf:FH_ONAME a bddo:Field ; rdfs:label "ONAME — Originator's Name" ;
+    bddo:dataType nitf:ECSA ; bddo:size 24 .
+nitf:FH_OPHONE a bddo:Field ; rdfs:label "OPHONE — Originator's Phone Number" ;
+    bddo:dataType nitf:ECSA ; bddo:size 18 .
+nitf:FH_FL a bddo:Field ; rdfs:label "FL — File Length" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 12 .
+nitf:FH_HL a bddo:Field ; rdfs:label "HL — NITF File Header Length" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 6 .
+
+# Segment counts + segment-length tables (interleaved: count field then its table)
+nitf:FH_NUMI a bddo:Field ; rdfs:label "NUMI — Number of Image Segments" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 .
+nitf:FH_ImageSegTable a bddo:Field ; rdfs:label "Image segment length pairs (× NUMI)" ;
+    bddo:dataType nitf:ImageSegLenPair ; bddo:repeatCountFromField nitf:FH_NUMI .
+nitf:ImageSegLenPair a bddo:Struct ; rdfs:label "{ LISHn, LIn }" ;
+    bddo:endianness bddo:BigEndian ; bddo:hasField ( nitf:FH_LISHn nitf:FH_LIn ) .
+nitf:FH_LISHn a bddo:Field ; rdfs:label "LISHn — length of nth image subheader" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 6 .
+nitf:FH_LIn a bddo:Field ; rdfs:label "LIn — length of nth image segment" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 10 .
+
+nitf:FH_NUMS a bddo:Field ; rdfs:label "NUMS — Number of Graphic Segments" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 .
+nitf:FH_GraphicSegTable a bddo:Field ; rdfs:label "Graphic segment length pairs (× NUMS)" ;
+    bddo:dataType nitf:GraphicSegLenPair ; bddo:repeatCountFromField nitf:FH_NUMS .
+nitf:GraphicSegLenPair a bddo:Struct ; rdfs:label "{ LSSHn, LSn }" ;
+    bddo:endianness bddo:BigEndian ; bddo:hasField ( nitf:FH_LSSHn nitf:FH_LSn ) .
+nitf:FH_LSSHn a bddo:Field ; rdfs:label "LSSHn — length of nth graphic subheader" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 4 .
+nitf:FH_LSn a bddo:Field ; rdfs:label "LSn — length of nth graphic segment" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 6 .
+
+nitf:FH_NUMX a bddo:Field ; rdfs:label "NUMX — Reserved for Future Use" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 .
+
+nitf:FH_NUMT a bddo:Field ; rdfs:label "NUMT — Number of Text Segments" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 .
+nitf:FH_TextSegTable a bddo:Field ; rdfs:label "Text segment length pairs (× NUMT)" ;
+    bddo:dataType nitf:TextSegLenPair ; bddo:repeatCountFromField nitf:FH_NUMT .
+nitf:TextSegLenPair a bddo:Struct ; rdfs:label "{ LTSHn, LTn }" ;
+    bddo:endianness bddo:BigEndian ; bddo:hasField ( nitf:FH_LTSHn nitf:FH_LTn ) .
+nitf:FH_LTSHn a bddo:Field ; rdfs:label "LTSHn — length of nth text subheader" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 4 .
+nitf:FH_LTn a bddo:Field ; rdfs:label "LTn — length of nth text segment" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 5 .
+
+nitf:FH_NUMDES a bddo:Field ; rdfs:label "NUMDES — Number of Data Extension Segments" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 .
+nitf:FH_DESegTable a bddo:Field ; rdfs:label "DES length pairs (× NUMDES)" ;
+    bddo:dataType nitf:DESegLenPair ; bddo:repeatCountFromField nitf:FH_NUMDES .
+nitf:DESegLenPair a bddo:Struct ; rdfs:label "{ LDSHn, LDn }" ;
+    bddo:endianness bddo:BigEndian ; bddo:hasField ( nitf:FH_LDSHn nitf:FH_LDn ) .
+nitf:FH_LDSHn a bddo:Field ; rdfs:label "LDSHn — length of nth data extension segment subheader" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 4 .
+nitf:FH_LDn a bddo:Field ; rdfs:label "LDn — length of nth data extension segment" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 9 .
+
+nitf:FH_NUMRES a bddo:Field ; rdfs:label "NUMRES — Number of Reserved Extension Segments" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 .
+nitf:FH_RESegTable a bddo:Field ; rdfs:label "RES length pairs (× NUMRES)" ;
+    bddo:dataType nitf:RESegLenPair ; bddo:repeatCountFromField nitf:FH_NUMRES .
+nitf:RESegLenPair a bddo:Struct ; rdfs:label "{ LRESHn, LREn }" ;
+    bddo:endianness bddo:BigEndian ; bddo:hasField ( nitf:FH_LRESHn nitf:FH_LREn ) .
+nitf:FH_LRESHn a bddo:Field ; rdfs:label "LRESHn — length of nth reserved extension segment subheader" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 4 .
+nitf:FH_LREn a bddo:Field ; rdfs:label "LREn — length of nth reserved extension segment" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 7 .
+
+# Extension areas: user-defined header and extended header TRE regions
+nitf:FH_UDHDL a bddo:Field ; rdfs:label "UDHDL — User-Defined Header Data Length" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 5 .
+nitf:FH_UDHOFL a bddo:Field ; rdfs:label "UDHOFL — user-defined header overflow" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "UDHDL != '00000'" .
+nitf:FH_UDHD a bddo:Field ; rdfs:label "UDHD — user-defined header data (TREs)" ;
+    bddo:dataType nitf:TRE ; bddo:isPresentIf "UDHDL != '00000'" ;
+    bddo:sizeFromExpression "UDHDL - 3" ; bddo:repeatUntil "end-of-region" .
+
+nitf:FH_XHDL a bddo:Field ; rdfs:label "XHDL — Extended Header Data Length" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 5 .
+nitf:FH_XHDLOFL a bddo:Field ; rdfs:label "XHDLOFL — extended header overflow" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "XHDL != '00000'" .
+nitf:FH_XHD a bddo:Field ; rdfs:label "XHD — extended header data (TREs)" ;
+    bddo:dataType nitf:TRE ; bddo:isPresentIf "XHDL != '00000'" ;
+    bddo:sizeFromExpression "XHDL - 3" ; bddo:repeatUntil "end-of-region" .
