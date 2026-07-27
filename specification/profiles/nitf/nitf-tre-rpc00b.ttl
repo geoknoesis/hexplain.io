@@ -1,0 +1,39 @@
+@prefix nitf: <https://hexplain.io/ns/profile/nitf#> .
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+
+<https://hexplain.io/ns/profile/nitf/tre/rpc00b> a owl:Ontology ;
+    owl:imports <https://hexplain.io/ns/profile/nitf> ;
+    rdfs:label "NITF TRE — RPC00B (rational polynomial camera, STDI-0002)" ;
+    rdfs:comment "CEDATA layout for the RPC00B controlled extension (CETAG=RPC00B, CEL=1041)." .
+
+nitf:RPC00B a bddo:Struct ; rdfs:label "RPC00B TRE payload" ;
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField ( nitf:RPC_SUCCESS nitf:RPC_ERR_BIAS nitf:RPC_ERR_RAND
+      nitf:RPC_LINE_OFF nitf:RPC_SAMP_OFF nitf:RPC_LAT_OFF nitf:RPC_LONG_OFF nitf:RPC_HEIGHT_OFF
+      nitf:RPC_LINE_SCALE nitf:RPC_SAMP_SCALE nitf:RPC_LAT_SCALE nitf:RPC_LONG_SCALE nitf:RPC_HEIGHT_SCALE
+      nitf:RPC_LINE_NUM_COEFF nitf:RPC_LINE_DEN_COEFF nitf:RPC_SAMP_NUM_COEFF nitf:RPC_SAMP_DEN_COEFF ) .
+
+nitf:RPC_SUCCESS a bddo:Field ; rdfs:label "SUCCESS" ; bddo:dataType nitf:BCSNpos ; bddo:size 1 .
+nitf:RPC_ERR_BIAS a bddo:Field ; rdfs:label "ERR_BIAS" ; bddo:dataType nitf:BCSN ; bddo:size 7 .
+nitf:RPC_ERR_RAND a bddo:Field ; rdfs:label "ERR_RAND" ; bddo:dataType nitf:BCSN ; bddo:size 7 .
+nitf:RPC_LINE_OFF a bddo:Field ; rdfs:label "LINE_OFF" ; bddo:dataType nitf:BCSNpos ; bddo:size 6 .
+nitf:RPC_SAMP_OFF a bddo:Field ; rdfs:label "SAMP_OFF" ; bddo:dataType nitf:BCSNpos ; bddo:size 5 .
+nitf:RPC_LAT_OFF a bddo:Field ; rdfs:label "LAT_OFF" ; bddo:dataType nitf:BCSN ; bddo:size 8 .
+nitf:RPC_LONG_OFF a bddo:Field ; rdfs:label "LONG_OFF" ; bddo:dataType nitf:BCSN ; bddo:size 9 .
+nitf:RPC_HEIGHT_OFF a bddo:Field ; rdfs:label "HEIGHT_OFF" ; bddo:dataType nitf:BCSN ; bddo:size 5 .
+nitf:RPC_LINE_SCALE a bddo:Field ; rdfs:label "LINE_SCALE" ; bddo:dataType nitf:BCSNpos ; bddo:size 6 .
+nitf:RPC_SAMP_SCALE a bddo:Field ; rdfs:label "SAMP_SCALE" ; bddo:dataType nitf:BCSNpos ; bddo:size 5 .
+nitf:RPC_LAT_SCALE a bddo:Field ; rdfs:label "LAT_SCALE" ; bddo:dataType nitf:BCSN ; bddo:size 8 .
+nitf:RPC_LONG_SCALE a bddo:Field ; rdfs:label "LONG_SCALE" ; bddo:dataType nitf:BCSN ; bddo:size 9 .
+nitf:RPC_HEIGHT_SCALE a bddo:Field ; rdfs:label "HEIGHT_SCALE" ; bddo:dataType nitf:BCSN ; bddo:size 5 .
+# Four coefficient arrays: 20 coefficients each, 12 chars per coefficient.
+nitf:RPC_LINE_NUM_COEFF a bddo:Field ; rdfs:label "LINE_NUM_COEFF (20 × 12)" ;
+    bddo:dataType nitf:BCSN ; bddo:size 12 ; bddo:repeatCount 20 .
+nitf:RPC_LINE_DEN_COEFF a bddo:Field ; rdfs:label "LINE_DEN_COEFF (20 × 12)" ;
+    bddo:dataType nitf:BCSN ; bddo:size 12 ; bddo:repeatCount 20 .
+nitf:RPC_SAMP_NUM_COEFF a bddo:Field ; rdfs:label "SAMP_NUM_COEFF (20 × 12)" ;
+    bddo:dataType nitf:BCSN ; bddo:size 12 ; bddo:repeatCount 20 .
+nitf:RPC_SAMP_DEN_COEFF a bddo:Field ; rdfs:label "SAMP_DEN_COEFF (20 × 12)" ;
+    bddo:dataType nitf:BCSN ; bddo:size 12 ; bddo:repeatCount 20 .
