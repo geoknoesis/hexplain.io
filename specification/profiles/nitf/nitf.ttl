@@ -578,3 +578,136 @@ nitf:TS_TXSOFL a bddo:Field ; rdfs:label "TXSOFL — text extended subheader ove
 nitf:TS_TXSHD a bddo:Field ; rdfs:label "TXSHD — text extended subheader data (TREs)" ;
     bddo:dataType nitf:TRE ; bddo:isPresentIf "TXSHDL != '00000'" ;
     bddo:sizeFromExpression "TXSHDL - 3" ; bddo:repeatUntil "end-of-region" .
+
+# ---------- NITF Data Extension Segment Subheader (Table A-8) ----------
+nitf:DESubheader a bddo:Struct ; rdfs:label "NITF Data Extension Segment Subheader (Table A-8)" ;
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField (
+      nitf:DES_DE nitf:DES_DESID nitf:DES_DESVER
+      nitf:DES_DECLAS nitf:DES_DESCLSY nitf:DES_DESCODE nitf:DES_DESCTLH nitf:DES_DESREL nitf:DES_DESDCTP nitf:DES_DESDCDT
+      nitf:DES_DESDCXM nitf:DES_DESDG nitf:DES_DESDGDT nitf:DES_DESCLTX nitf:DES_DESCATP nitf:DES_DESCAUT nitf:DES_DESCRSN
+      nitf:DES_DESSRDT nitf:DES_DESCTLN
+      nitf:DES_DESOFLW nitf:DES_DESITEM
+      nitf:DES_DESSHL nitf:DES_DESSHF
+      nitf:DES_DESDATA
+    ) .
+
+# Fixed prefix (DE..DESVER)
+nitf:DES_DE a bddo:Field ; rdfs:label "DE — File Part Type" ;
+    bddo:dataType nitf:BCSA ; bddo:size 2 ; bddo:hasFixedValue "DE" .
+nitf:DES_DESID a bddo:Field ; rdfs:label "DESID — Unique DES Type Identifier" ;
+    bddo:dataType nitf:BCSA ; bddo:size 25 .
+nitf:DES_DESVER a bddo:Field ; rdfs:label "DESVER — Version of the Data Definition" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 2 .
+
+# Security block (DECLAS..DESCTLN) — identical sizes to FS* block
+nitf:DES_DECLAS a bddo:Field ; rdfs:label "DECLAS — Data Extension Segment Security Classification" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:FSCLASEnum .
+nitf:DES_DESCLSY a bddo:Field ; rdfs:label "DESCLSY — DES Security Classification System" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:DES_DESCODE a bddo:Field ; rdfs:label "DESCODE — DES Codewords" ;
+    bddo:dataType nitf:ECSA ; bddo:size 11 .
+nitf:DES_DESCTLH a bddo:Field ; rdfs:label "DESCTLH — DES Control and Handling" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:DES_DESREL a bddo:Field ; rdfs:label "DESREL — DES Releasing Instructions" ;
+    bddo:dataType nitf:ECSA ; bddo:size 20 .
+nitf:DES_DESDCTP a bddo:Field ; rdfs:label "DESDCTP — DES Declassification Type" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:DES_DESDCDT a bddo:Field ; rdfs:label "DESDCDT — DES Declassification Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:DES_DESDCXM a bddo:Field ; rdfs:label "DESDCXM — DES Declassification Exemption" ;
+    bddo:dataType nitf:ECSA ; bddo:size 4 .
+nitf:DES_DESDG a bddo:Field ; rdfs:label "DESDG — DES Downgrade" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:DES_DESDGDT a bddo:Field ; rdfs:label "DESDGDT — DES Downgrade Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:DES_DESCLTX a bddo:Field ; rdfs:label "DESCLTX — DES Classification Text" ;
+    bddo:dataType nitf:ECSA ; bddo:size 43 .
+nitf:DES_DESCATP a bddo:Field ; rdfs:label "DESCATP — DES Classification Authority Type" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:DES_DESCAUT a bddo:Field ; rdfs:label "DESCAUT — DES Classification Authority" ;
+    bddo:dataType nitf:ECSA ; bddo:size 40 .
+nitf:DES_DESCRSN a bddo:Field ; rdfs:label "DESCRSN — DES Classification Reason" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:DES_DESSRDT a bddo:Field ; rdfs:label "DESSRDT — DES Security Source Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:DES_DESCTLN a bddo:Field ; rdfs:label "DESCTLN — DES Security Control Number" ;
+    bddo:dataType nitf:ECSA ; bddo:size 15 .
+
+# Overflow (present only when DESID indicates a TRE_OVERFLOW DES)
+nitf:DES_DESOFLW a bddo:Field ; rdfs:label "DESOFLW — DES Overflowed Header Type" ;
+    bddo:dataType nitf:BCSA ; bddo:size 6 ; bddo:isPresentIf "DESID == 'TRE_OVERFLOW'" .
+nitf:DES_DESITEM a bddo:Field ; rdfs:label "DESITEM — DES Data Item Overflowed" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "DESID == 'TRE_OVERFLOW'" .
+
+# User-defined subheader fields and payload
+nitf:DES_DESSHL a bddo:Field ; rdfs:label "DESSHL — DES User-Defined Subheader Length" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 4 .
+nitf:DES_DESSHF a bddo:Field ; rdfs:label "DESSHF — DES User-Defined Subheader Fields" ;
+    bddo:dataType nitf:BCSA ; bddo:sizeFromField nitf:DES_DESSHL ; bddo:isPresentIf "DESSHL != '0000'" .
+nitf:DES_DESDATA a bddo:Field ; rdfs:label "DESDATA — DES Data Field" ;
+    bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    rdfs:comment "Bounded by the enclosing segment's LDn length from the file header's DES length table. When DESID = TRE_OVERFLOW, this field carries a nitf:TRE sequence rather than opaque bytes." .
+
+# ---------- NITF Reserved Extension Segment Subheader (Table A-9) ----------
+nitf:RESubheader a bddo:Struct ; rdfs:label "NITF Reserved Extension Segment Subheader (Table A-9)" ;
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField (
+      nitf:RES_RE nitf:RES_RESID nitf:RES_RESVER
+      nitf:RES_RECLAS nitf:RES_RECLSY nitf:RES_RECODE nitf:RES_RECTLH nitf:RES_REREL nitf:RES_REDCTP nitf:RES_REDCDT
+      nitf:RES_REDCXM nitf:RES_REDG nitf:RES_REDGDT nitf:RES_RECLTX nitf:RES_RECATP nitf:RES_RECAUT nitf:RES_RECRSN
+      nitf:RES_RESRDT nitf:RES_RECTLN
+      nitf:RES_RESSHL nitf:RES_RESSHF
+      nitf:RES_RESDATA
+    ) .
+
+# Fixed prefix (RE..RESVER)
+nitf:RES_RE a bddo:Field ; rdfs:label "RE — File Part Type" ;
+    bddo:dataType nitf:BCSA ; bddo:size 2 ; bddo:hasFixedValue "RE" .
+nitf:RES_RESID a bddo:Field ; rdfs:label "RESID — Unique RES Type Identifier" ;
+    bddo:dataType nitf:BCSA ; bddo:size 25 .
+nitf:RES_RESVER a bddo:Field ; rdfs:label "RESVER — Version of the Data Definition" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 2 .
+
+# Security block (RECLAS..RECTLN) — identical sizes to FS* block
+nitf:RES_RECLAS a bddo:Field ; rdfs:label "RECLAS — Reserved Extension Segment Security Classification" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:FSCLASEnum .
+nitf:RES_RECLSY a bddo:Field ; rdfs:label "RECLSY — RES Security Classification System" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:RES_RECODE a bddo:Field ; rdfs:label "RECODE — RES Codewords" ;
+    bddo:dataType nitf:ECSA ; bddo:size 11 .
+nitf:RES_RECTLH a bddo:Field ; rdfs:label "RECTLH — RES Control and Handling" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:RES_REREL a bddo:Field ; rdfs:label "REREL — RES Releasing Instructions" ;
+    bddo:dataType nitf:ECSA ; bddo:size 20 .
+nitf:RES_REDCTP a bddo:Field ; rdfs:label "REDCTP — RES Declassification Type" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:RES_REDCDT a bddo:Field ; rdfs:label "REDCDT — RES Declassification Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:RES_REDCXM a bddo:Field ; rdfs:label "REDCXM — RES Declassification Exemption" ;
+    bddo:dataType nitf:ECSA ; bddo:size 4 .
+nitf:RES_REDG a bddo:Field ; rdfs:label "REDG — RES Downgrade" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:RES_REDGDT a bddo:Field ; rdfs:label "REDGDT — RES Downgrade Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:RES_RECLTX a bddo:Field ; rdfs:label "RECLTX — RES Classification Text" ;
+    bddo:dataType nitf:ECSA ; bddo:size 43 .
+nitf:RES_RECATP a bddo:Field ; rdfs:label "RECATP — RES Classification Authority Type" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:RES_RECAUT a bddo:Field ; rdfs:label "RECAUT — RES Classification Authority" ;
+    bddo:dataType nitf:ECSA ; bddo:size 40 .
+nitf:RES_RECRSN a bddo:Field ; rdfs:label "RECRSN — RES Classification Reason" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:RES_RESRDT a bddo:Field ; rdfs:label "RESRDT — RES Security Source Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:RES_RECTLN a bddo:Field ; rdfs:label "RECTLN — RES Security Control Number" ;
+    bddo:dataType nitf:ECSA ; bddo:size 15 .
+
+# User-defined subheader fields and payload
+nitf:RES_RESSHL a bddo:Field ; rdfs:label "RESSHL — RES User-Defined Subheader Length" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 4 .
+nitf:RES_RESSHF a bddo:Field ; rdfs:label "RESSHF — RES User-Defined Subheader Fields" ;
+    bddo:dataType nitf:BCSA ; bddo:sizeFromField nitf:RES_RESSHL ; bddo:isPresentIf "RESSHL != '0000'" .
+nitf:RES_RESDATA a bddo:Field ; rdfs:label "RESDATA — RES Data Field" ;
+    bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    rdfs:comment "Bounded by the enclosing segment's LREn length from the file header's RES length table." .
