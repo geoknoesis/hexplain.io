@@ -245,3 +245,171 @@ nitf:FH_XHDLOFL a bddo:Field ; rdfs:label "XHDLOFL — extended header overflow"
 nitf:FH_XHD a bddo:Field ; rdfs:label "XHD — extended header data (TREs)" ;
     bddo:dataType nitf:TRE ; bddo:isPresentIf "XHDL != '00000'" ;
     bddo:sizeFromExpression "XHDL - 3" ; bddo:repeatUntil "end-of-region" .
+
+# ---------- NITF Image Subheader (Table A-3) ----------
+nitf:ImageSubheader a bddo:Struct ; rdfs:label "NITF Image Subheader (Table A-3)" ;
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField (
+      nitf:IS_IM nitf:IS_IID1 nitf:IS_IDATIM nitf:IS_TGTID nitf:IS_IID2
+      nitf:IS_ISCLAS nitf:IS_ISCLSY nitf:IS_ISCODE nitf:IS_ISCTLH nitf:IS_ISREL nitf:IS_ISDCTP nitf:IS_ISDCDT
+      nitf:IS_ISDCXM nitf:IS_ISDG nitf:IS_ISDGDT nitf:IS_ISCLTX nitf:IS_ISCATP nitf:IS_ISCAUT nitf:IS_ISCRSN
+      nitf:IS_ISSRDT nitf:IS_ISCTLN
+      nitf:IS_ENCRYP nitf:IS_ISORCE
+      nitf:IS_NROWS nitf:IS_NCOLS
+      nitf:IS_PVTYPE nitf:IS_IREP nitf:IS_ICAT nitf:IS_ABPP nitf:IS_PJUST
+      nitf:IS_ICORDS nitf:IS_IGEOLO
+      nitf:IS_NICOM nitf:IS_ICOM
+      nitf:IS_IC nitf:IS_COMRAT
+      nitf:IS_NBANDS nitf:IS_XBANDS nitf:IS_BandTable
+      nitf:IS_ISYNC nitf:IS_IMODE
+      nitf:IS_NBPR nitf:IS_NBPC nitf:IS_NPPBH nitf:IS_NPPBV nitf:IS_NBPP
+      nitf:IS_IDLVL nitf:IS_IALVL nitf:IS_ILOC nitf:IS_IMAG
+      nitf:IS_UDIDL nitf:IS_UDOFL nitf:IS_UDID
+      nitf:IS_IXSHDL nitf:IS_IXSOFL nitf:IS_IXSHD
+    ) .
+
+# Fixed prefix (IM..IID2)
+nitf:IS_IM a bddo:Field ; rdfs:label "IM — File Part Type" ;
+    bddo:dataType nitf:BCSA ; bddo:size 2 ; bddo:hasFixedValue "IM" .
+nitf:IS_IID1 a bddo:Field ; rdfs:label "IID1 — Image Identifier 1" ;
+    bddo:dataType nitf:BCSA ; bddo:size 10 .
+nitf:IS_IDATIM a bddo:Field ; rdfs:label "IDATIM — Image Date and Time (CCYYMMDDhhmmss)" ;
+    bddo:dataType nitf:BCSN ; bddo:size 14 .
+nitf:IS_TGTID a bddo:Field ; rdfs:label "TGTID — Target Identifier" ;
+    bddo:dataType nitf:BCSA ; bddo:size 17 .
+nitf:IS_IID2 a bddo:Field ; rdfs:label "IID2 — Image Identifier 2" ;
+    bddo:dataType nitf:ECSA ; bddo:size 80 .
+
+# Security block (ISCLAS..ISCTLN) — identical sizes to FS* block; ISCODE is ECS-A here (unlike file FSCODE)
+nitf:IS_ISCLAS a bddo:Field ; rdfs:label "ISCLAS — Image Security Classification" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:FSCLASEnum .
+nitf:IS_ISCLSY a bddo:Field ; rdfs:label "ISCLSY — Image Security Classification System" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:IS_ISCODE a bddo:Field ; rdfs:label "ISCODE — Image Codewords" ;
+    bddo:dataType nitf:ECSA ; bddo:size 11 .
+nitf:IS_ISCTLH a bddo:Field ; rdfs:label "ISCTLH — Image Control and Handling" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:IS_ISREL a bddo:Field ; rdfs:label "ISREL — Image Releasing Instructions" ;
+    bddo:dataType nitf:ECSA ; bddo:size 20 .
+nitf:IS_ISDCTP a bddo:Field ; rdfs:label "ISDCTP — Image Declassification Type" ;
+    bddo:dataType nitf:ECSA ; bddo:size 2 .
+nitf:IS_ISDCDT a bddo:Field ; rdfs:label "ISDCDT — Image Declassification Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:IS_ISDCXM a bddo:Field ; rdfs:label "ISDCXM — Image Declassification Exemption" ;
+    bddo:dataType nitf:ECSA ; bddo:size 4 .
+nitf:IS_ISDG a bddo:Field ; rdfs:label "ISDG — Image Downgrade" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:IS_ISDGDT a bddo:Field ; rdfs:label "ISDGDT — Image Downgrade Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:IS_ISCLTX a bddo:Field ; rdfs:label "ISCLTX — Image Classification Text" ;
+    bddo:dataType nitf:ECSA ; bddo:size 43 .
+nitf:IS_ISCATP a bddo:Field ; rdfs:label "ISCATP — Image Classification Authority Type" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:IS_ISCAUT a bddo:Field ; rdfs:label "ISCAUT — Image Classification Authority" ;
+    bddo:dataType nitf:ECSA ; bddo:size 40 .
+nitf:IS_ISCRSN a bddo:Field ; rdfs:label "ISCRSN — Image Classification Reason" ;
+    bddo:dataType nitf:ECSA ; bddo:size 1 .
+nitf:IS_ISSRDT a bddo:Field ; rdfs:label "ISSRDT — Image Security Source Date" ;
+    bddo:dataType nitf:ECSA ; bddo:size 8 .
+nitf:IS_ISCTLN a bddo:Field ; rdfs:label "ISCTLN — Image Security Control Number" ;
+    bddo:dataType nitf:ECSA ; bddo:size 15 .
+
+# Encryption, source, dimensions, pixel representation
+nitf:IS_ENCRYP a bddo:Field ; rdfs:label "ENCRYP — Encryption" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 1 .
+nitf:IS_ISORCE a bddo:Field ; rdfs:label "ISORCE — Image Source" ;
+    bddo:dataType nitf:ECSA ; bddo:size 42 .
+nitf:IS_NROWS a bddo:Field ; rdfs:label "NROWS — Number of Significant Rows in image" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 8 .
+nitf:IS_NCOLS a bddo:Field ; rdfs:label "NCOLS — Number of Significant Columns in image" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 8 .
+nitf:IS_PVTYPE a bddo:Field ; rdfs:label "PVTYPE — Pixel Value Type" ;
+    bddo:dataType nitf:BCSA ; bddo:size 3 ; bddo:enumeration nitf:PVTYPEEnum .
+nitf:IS_IREP a bddo:Field ; rdfs:label "IREP — Image Representation" ;
+    bddo:dataType nitf:BCSA ; bddo:size 8 ; bddo:enumeration nitf:IREPEnum .
+nitf:IS_ICAT a bddo:Field ; rdfs:label "ICAT — Image Category" ;
+    bddo:dataType nitf:BCSA ; bddo:size 8 .
+nitf:IS_ABPP a bddo:Field ; rdfs:label "ABPP — Actual Bits-Per-Pixel Per Band" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 2 .
+nitf:IS_PJUST a bddo:Field ; rdfs:label "PJUST — Pixel Justification" ;
+    bddo:dataType nitf:BCSA ; bddo:size 1 .
+
+# Coordinates
+nitf:IS_ICORDS a bddo:Field ; rdfs:label "ICORDS — Image Coordinate Representation" ;
+    bddo:dataType nitf:BCSA ; bddo:size 1 ; bddo:enumeration nitf:ICORDSEnum .
+nitf:IS_IGEOLO a bddo:Field ; rdfs:label "IGEOLO — Image Geographic Location" ;
+    bddo:dataType nitf:BCSA ; bddo:size 60 ; bddo:isPresentIf "ICORDS != ' '" .
+
+# Comments (repeat loop driven by NICOM)
+nitf:IS_NICOM a bddo:Field ; rdfs:label "NICOM — Number of Image Comments" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 1 .
+nitf:IS_ICOM a bddo:Field ; rdfs:label "ICOMn — Image Comment n (× NICOM)" ;
+    bddo:dataType nitf:ECSA ; bddo:size 80 ; bddo:repeatCountFromField nitf:IS_NICOM .
+
+# Compression
+nitf:IS_IC a bddo:Field ; rdfs:label "IC — Image Compression" ;
+    bddo:dataType nitf:BCSA ; bddo:size 2 ; bddo:enumeration nitf:ICEnum .
+nitf:IS_COMRAT a bddo:Field ; rdfs:label "COMRAT — Compression Rate Code" ;
+    bddo:dataType nitf:BCSA ; bddo:size 4 ; bddo:isPresentIf "IC not in (NC, NM)" .
+
+# Bands (repeat loop driven by NBANDS; XBANDS present only when NBANDS overflows to 0)
+nitf:IS_NBANDS a bddo:Field ; rdfs:label "NBANDS — Number of Bands" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 1 .
+nitf:IS_XBANDS a bddo:Field ; rdfs:label "XBANDS — Number of Multispectral Bands" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 5 ; bddo:isPresentIf "NBANDS == 0" .
+nitf:IS_BandTable a bddo:Field ; rdfs:label "Band records (× NBANDS)" ;
+    bddo:dataType nitf:ImageBand ; bddo:repeatCountFromField nitf:IS_NBANDS .
+
+nitf:ImageBand a bddo:Struct ; rdfs:label "Image band record (Table A-3 band loop)" ;
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField ( nitf:IB_IREPBAND nitf:IB_ISUBCAT nitf:IB_IFC nitf:IB_IMFLT nitf:IB_NLUTS ) .
+nitf:IB_IREPBAND a bddo:Field ; rdfs:label "IREPBANDn" ; bddo:dataType nitf:BCSA ; bddo:size 2 .
+nitf:IB_ISUBCAT a bddo:Field ; rdfs:label "ISUBCATn" ; bddo:dataType nitf:BCSA ; bddo:size 6 .
+nitf:IB_IFC a bddo:Field ; rdfs:label "IFCn" ; bddo:dataType nitf:BCSA ; bddo:size 1 .
+nitf:IB_IMFLT a bddo:Field ; rdfs:label "IMFLTn" ; bddo:dataType nitf:BCSA ; bddo:size 3 .
+nitf:IB_NLUTS a bddo:Field ; rdfs:label "NLUTSn (LUT sub-loop omitted in cut #1)" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 1 ;
+    rdfs:comment "When NLUTSn != 0, NELUTn(5) + LUTDnm data follow; LUT body deferred (see design non-goals)." .
+
+# Sync, mode, blocking
+nitf:IS_ISYNC a bddo:Field ; rdfs:label "ISYNC — Image Sync Code" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 1 .
+nitf:IS_IMODE a bddo:Field ; rdfs:label "IMODE — Image Mode" ;
+    bddo:dataType nitf:BCSA ; bddo:size 1 ; bddo:enumeration nitf:IMODEEnum .
+nitf:IS_NBPR a bddo:Field ; rdfs:label "NBPR — Number of Blocks Per Row" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 4 .
+nitf:IS_NBPC a bddo:Field ; rdfs:label "NBPC — Number of Blocks Per Column" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 4 .
+nitf:IS_NPPBH a bddo:Field ; rdfs:label "NPPBH — Number of Pixels Per Block Horizontal" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 4 .
+nitf:IS_NPPBV a bddo:Field ; rdfs:label "NPPBV — Number of Pixels Per Block Vertical" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 4 .
+nitf:IS_NBPP a bddo:Field ; rdfs:label "NBPP — Number of Bits Per Pixel Per Band" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 2 .
+
+# Display level, attachment, location, magnification
+nitf:IS_IDLVL a bddo:Field ; rdfs:label "IDLVL — Image Display Level" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 .
+nitf:IS_IALVL a bddo:Field ; rdfs:label "IALVL — Image Attachment Level" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 .
+nitf:IS_ILOC a bddo:Field ; rdfs:label "ILOC — Image Location" ;
+    bddo:dataType nitf:BCSN ; bddo:size 10 .
+nitf:IS_IMAG a bddo:Field ; rdfs:label "IMAG — Image Magnification" ;
+    bddo:dataType nitf:BCSA ; bddo:size 4 .
+
+# Extension areas: user-defined image data and extended subheader TRE regions
+nitf:IS_UDIDL a bddo:Field ; rdfs:label "UDIDL — User-Defined Image Data Length" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 5 .
+nitf:IS_UDOFL a bddo:Field ; rdfs:label "UDOFL — user-defined image data overflow" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "UDIDL != '00000'" .
+nitf:IS_UDID a bddo:Field ; rdfs:label "UDID — user-defined image data (TREs)" ;
+    bddo:dataType nitf:TRE ; bddo:isPresentIf "UDIDL != '00000'" ;
+    bddo:sizeFromExpression "UDIDL - 3" ; bddo:repeatUntil "end-of-region" .
+
+nitf:IS_IXSHDL a bddo:Field ; rdfs:label "IXSHDL — Image Extended Subheader Data Length" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 5 .
+nitf:IS_IXSOFL a bddo:Field ; rdfs:label "IXSOFL — image extended subheader overflow" ;
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "IXSHDL != '00000'" .
+nitf:IS_IXSHD a bddo:Field ; rdfs:label "IXSHD — image extended subheader data (TREs)" ;
+    bddo:dataType nitf:TRE ; bddo:isPresentIf "IXSHDL != '00000'" ;
+    bddo:sizeFromExpression "IXSHDL - 3" ; bddo:repeatUntil "end-of-region" .
