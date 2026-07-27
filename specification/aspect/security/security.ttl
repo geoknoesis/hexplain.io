@@ -1,0 +1,182 @@
+# Hexplain Aspect — Security Marking (hx-security) 1.1
+# Governance aspect: classification / handling markings. Cross-cutting across any dataset;
+# it does not belong to any one domain (it was wrongly trapped in the Geospatial vocabulary).
+# 1.1 adds full marking coverage (NITF security-block parity) + SKOS registers, aligned to
+# IC ISM by mirroring value tokens as skos:notation (no canonical ISM RDF namespace exists;
+# concepts cite the governing authorities via rdfs:seeAlso / skos:note).
+@prefix :       <https://hexplain.io/ns/aspect/security#> .
+@prefix asec:   <https://hexplain.io/ns/aspect/security#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/aspect/security> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/security/1.1> ; owl:versionInfo "1.1" ;
+    rdfs:label "Hexplain Aspect — Security Marking (hx-security)" ;
+    rdfs:comment "Aspect for classification and handling markings: classification level, system, compartments/codewords, control-and-handling, releasability, declassification/downgrade instructions, and classification authority. Cross-cutting across any classified dataset. Controlled values are SKOS registers whose skos:notation mirrors the IC ISM / CAPCO wire tokens." ;
+    rdfs:seeAlso <https://www.dni.gov/index.php/who-we-are/organizations/ic-cio/ic-cio-related-menus/ic-cio-related-links/ic-technical-specifications/information-security-marking-metadata> ,
+        <https://www.esd.whs.mil/Directives/issuances/dodm/> ;
+    dcterms:created "2026-07-22"^^xsd:date ; dcterms:modified "2026-07-27"^^xsd:date ;
+    dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "asec" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/security#" .
+
+# =========================================================
+# Marking properties (flat, composable; align to IC ISM)
+# =========================================================
+:classification a owl:ObjectProperty ; rdfs:label "classification" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range skos:Concept ; skos:note "Value drawn from asec:ClassificationLevelScheme." ;
+    rdfs:comment "Resolved classification level of the resource — the interoperable (concept) companion to asec:classificationLevel (verbatim string)." .
+:classificationLevel a owl:DatatypeProperty ; rdfs:label "classification level" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range xsd:string ; rdfs:comment "Security classification of the resource as a verbatim marking string. Retained from 1.0; asec:classification carries the resolved register concept." .
+:classificationSystem a owl:DatatypeProperty ; rdfs:label "classification system" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range xsd:string ; rdfs:comment "National or multinational security system used to classify the resource (FIPS 10-4 country code, or 'XN' for NATO marking guidance). NITF FSCLSY/ISCLSY." .
+:compartment a owl:ObjectProperty ; rdfs:label "compartment" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range skos:Concept ; skos:note "Value drawn from asec:MarkingScheme; repeatable." ;
+    rdfs:comment "A security compartment or codeword associated with the resource (repeatable). NITF FSCODE codewords." .
+:controlAndHandling a owl:ObjectProperty ; rdfs:label "control and handling" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range skos:Concept ; skos:note "Value drawn from asec:MarkingScheme; repeatable." ;
+    rdfs:comment "Additional security control and/or handling caveat associated with the resource (repeatable). NITF FSCTLH." .
+:releasableTo a owl:DatatypeProperty ; rdfs:label "releasable to" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range xsd:string ; rdfs:comment "Country or multilateral-entity code to which the resource is authorized for release (repeatable; FIPS 10-4). NITF FSREL. A controlled country register is future work." .
+:declassificationType a owl:ObjectProperty ; rdfs:label "declassification type" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range skos:Concept ; skos:note "Value drawn from asec:DeclassTypeScheme." ;
+    rdfs:comment "Type of security declassification or downgrading instruction that applies to the resource. NITF FSDCTP." .
+:declassificationDate a owl:DatatypeProperty ; rdfs:label "declassification date" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range xsd:date ; rdfs:comment "Date on which the resource is to be declassified (when declassificationType is DeclassifyOnDate). NITF FSDCDT." .
+:declassificationExemption a owl:ObjectProperty ; rdfs:label "declassification exemption" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range skos:Concept ; skos:note "Value drawn from asec:ExemptionScheme." ;
+    rdfs:comment "Reason the resource is exempt from automatic declassification (when declassificationType is ExemptFromAutomatic). NITF FSDCXM." .
+:downgradeTo a owl:ObjectProperty ; rdfs:label "downgrade to" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range skos:Concept ; skos:note "Value drawn from asec:ClassificationLevelScheme." ;
+    rdfs:comment "Classification level to which the resource is to be downgraded. NITF FSDG." .
+:downgradeDate a owl:DatatypeProperty ; rdfs:label "downgrade date" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range xsd:date ; rdfs:comment "Date on which the resource is to be downgraded (when declassificationType is DowngradeOnDate). NITF FSDGDT." .
+:classificationText a owl:DatatypeProperty ; rdfs:label "classification text" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range xsd:string ; rdfs:comment "Free-text additional information about the classification (e.g. declassification/downgrading event, multiple sources). NITF FSCLTX." .
+:classificationAuthorityType a owl:ObjectProperty ; rdfs:label "classification authority type" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range skos:Concept ; skos:note "Value drawn from asec:AuthorityTypeScheme." ;
+    rdfs:comment "Type of authority used to classify the resource. NITF FSCATP." .
+:classificationAuthority a owl:DatatypeProperty ; rdfs:label "classification authority" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range xsd:string ; rdfs:comment "Identity of the classification authority (name/position, source document, or 'Derive-Multiple'). NITF FSCAUT." .
+:classificationReason a owl:ObjectProperty ; rdfs:label "classification reason" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range skos:Concept ; skos:note "Value drawn from asec:ClassificationReasonScheme." ;
+    rdfs:comment "Reason for classifying the resource. NITF FSCRSN." .
+:securitySourceDate a owl:DatatypeProperty ; rdfs:label "security source date" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range xsd:date ; rdfs:comment "Date of the source used to derive the classification of the resource. NITF FSSRDT." .
+:securityControlNumber a owl:DatatypeProperty ; rdfs:label "security control number" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    rdfs:range xsd:string ; rdfs:comment "Security control number associated with the resource. NITF FSCTLN." .
+
+# =========================================================
+# SKOS registers — skos:notation mirrors the IC ISM / NITF wire token.
+# =========================================================
+
+# ---------- Classification Level Register ----------
+:ClassificationLevelScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    skos:prefLabel "Classification Level Register"@en ; owl:versionInfo "1.1" .
+:Unclassified a skos:Concept ; skos:inScheme :ClassificationLevelScheme ; skos:topConceptOf :ClassificationLevelScheme ; skos:prefLabel "Unclassified"@en ; skos:notation "U" .
+:Restricted   a skos:Concept ; skos:inScheme :ClassificationLevelScheme ; skos:topConceptOf :ClassificationLevelScheme ; skos:prefLabel "Restricted"@en ; skos:notation "R" .
+:Confidential a skos:Concept ; skos:inScheme :ClassificationLevelScheme ; skos:topConceptOf :ClassificationLevelScheme ; skos:prefLabel "Confidential"@en ; skos:notation "C" .
+:Secret       a skos:Concept ; skos:inScheme :ClassificationLevelScheme ; skos:topConceptOf :ClassificationLevelScheme ; skos:prefLabel "Secret"@en ; skos:notation "S" .
+:TopSecret    a skos:Concept ; skos:inScheme :ClassificationLevelScheme ; skos:topConceptOf :ClassificationLevelScheme ; skos:prefLabel "Top Secret"@en ; skos:notation "T" .
+
+# ---------- Marking Register (compartments / dissemination / handling) ----------
+# Digraphs per NITF MIL-STD-2500C Table A-4 (exemplary; consult current security directives).
+# Collection membership is INDICATIVE — Table A-4 mixes categories and warns values change.
+:MarkingScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    skos:prefLabel "Security Marking Register"@en ; owl:versionInfo "1.1" ;
+    skos:note "Digraph notations from NITF MIL-STD-2500C Table A-4; align to the current CAPCO Register when applying." .
+
+:Atomal a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "ATOMAL"@en ; skos:notation "AT" .
+:Cnwdi a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Critical Nuclear Weapon Design Information"@en ; skos:altLabel "CNWDI"@en ; skos:notation "CN" .
+:Copyright a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Copyright"@en ; skos:notation "PX" .
+:Cosmic a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "COSMIC"@en ; skos:notation "CS" .
+:Crypto a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "CRYPTO"@en ; skos:notation "CR" .
+:Efto a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Encrypted For Transmission Only"@en ; skos:altLabel "EFTO"@en ; skos:notation "TX" .
+:FormerlyRestrictedData a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Formerly Restricted Data"@en ; skos:altLabel "FORMREST DATA"@en ; skos:notation "RF" .
+:Fouo a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "For Official Use Only"@en ; skos:altLabel "FOUO"@en ; skos:notation "FO" .
+:Genser a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "General Service"@en ; skos:altLabel "GENSER"@en ; skos:notation "GS" .
+:LimitedOfficialUse a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Limited Official Use (Unclassified)"@en ; skos:altLabel "LIM OFF USE"@en ; skos:notation "LU" .
+:LimitedDissemination a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Limited Dissemination"@en ; skos:altLabel "LIMDIS"@en ; skos:notation "DS" .
+:Nato a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "NATO"@en ; skos:notation "NS" .
+:NoContract a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "No Contract"@en ; skos:altLabel "NO CONTRACT"@en ; skos:notation "NC" .
+:NonCompartment a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Non-Compartmented"@en ; skos:altLabel "NONCOMPARTMENT"@en ; skos:notation "NT" .
+:Orcon a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Originator Controlled"@en ; skos:altLabel "ORCON"@en ; skos:notation "OR" .
+:PersonalData a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Personal Data"@en ; skos:notation "IN" .
+:Propin a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Proprietary Information"@en ; skos:altLabel "PROPIN"@en ; skos:notation "PI" .
+:RestrictedData a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Restricted Data"@en ; skos:altLabel "RESTRICTED DATA"@en ; skos:notation "RD" .
+:Sao a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Special Access Only"@en ; skos:altLabel "SAO"@en ; skos:notation "SA" .
+:Sao1 a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "SAO-1"@en ; skos:notation "SL" .
+:Sao2 a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "SAO-2"@en ; skos:notation "HA" .
+:Sao3 a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "SAO-3"@en ; skos:notation "HB" .
+:SaoSi2 a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "SAO-SI-2"@en ; skos:notation "SK" .
+:SaoSi3 a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "SAO-SI-3"@en ; skos:notation "HC" .
+:SaoSi4 a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "SAO-SI-4"@en ; skos:notation "HD" .
+:Siop a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "SIOP"@en ; skos:notation "SH" .
+:SiopEsi a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "SIOP-ESI"@en ; skos:notation "SE" .
+:SpecialControl a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Special Control"@en ; skos:altLabel "SPECIAL CONTROL"@en ; skos:notation "SC" .
+:SpecialIntel a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Special Intelligence"@en ; skos:altLabel "SPECIAL INTEL"@en ; skos:notation "SI" .
+:UsOnly a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "US Only"@en ; skos:altLabel "US ONLY"@en ; skos:notation "UO" .
+:WarningNotice a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Warning Notice"@en ; skos:notation "WN" .
+:Wnintel a skos:Concept ; skos:inScheme :MarkingScheme ; skos:prefLabel "Warning Notice — Intelligence Sources or Methods"@en ; skos:altLabel "WNINTEL"@en ; skos:notation "WI" .
+
+:Compartments a skos:Collection ; skos:prefLabel "Compartments / SCI"@en ;
+    skos:member :Atomal , :Cosmic , :Crypto , :Sao , :Sao1 , :Sao2 , :Sao3 , :SaoSi2 , :SaoSi3 , :SaoSi4 , :Siop , :SiopEsi , :SpecialIntel , :SpecialControl , :Cnwdi , :RestrictedData .
+:DisseminationControls a skos:Collection ; skos:prefLabel "Dissemination Controls"@en ;
+    skos:member :Orcon , :Propin , :UsOnly , :NoContract , :Wnintel , :Efto .
+:HandlingCaveats a skos:Collection ; skos:prefLabel "Handling Caveats"@en ;
+    skos:member :Fouo , :LimitedDissemination , :LimitedOfficialUse , :PersonalData , :NonCompartment , :FormerlyRestrictedData , :Genser , :Nato , :Copyright , :WarningNotice .
+
+# ---------- Declassification Type Register ----------
+:DeclassTypeScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    skos:prefLabel "Declassification Type Register"@en ; owl:versionInfo "1.1" .
+:DeclassifyOnDate a skos:Concept ; skos:inScheme :DeclassTypeScheme ; skos:topConceptOf :DeclassTypeScheme ; skos:prefLabel "Declassify on a specific date"@en ; skos:notation "DD" .
+:DeclassifyOnEvent a skos:Concept ; skos:inScheme :DeclassTypeScheme ; skos:topConceptOf :DeclassTypeScheme ; skos:prefLabel "Declassify upon occurrence of an event"@en ; skos:notation "DE" .
+:DowngradeOnDate a skos:Concept ; skos:inScheme :DeclassTypeScheme ; skos:topConceptOf :DeclassTypeScheme ; skos:prefLabel "Downgrade to a specified level on a specific date"@en ; skos:notation "GD" .
+:DowngradeOnEvent a skos:Concept ; skos:inScheme :DeclassTypeScheme ; skos:topConceptOf :DeclassTypeScheme ; skos:prefLabel "Downgrade to a specified level upon an event"@en ; skos:notation "GE" .
+:Oadr a skos:Concept ; skos:inScheme :DeclassTypeScheme ; skos:topConceptOf :DeclassTypeScheme ; skos:prefLabel "Originating Agency Determination Required"@en ; skos:altLabel "OADR"@en ; skos:notation "O" .
+:ExemptFromAutomatic a skos:Concept ; skos:inScheme :DeclassTypeScheme ; skos:topConceptOf :DeclassTypeScheme ; skos:prefLabel "Exempt from automatic declassification"@en ; skos:notation "X" .
+
+# ---------- Classification Authority Type Register ----------
+:AuthorityTypeScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    skos:prefLabel "Classification Authority Type Register"@en ; owl:versionInfo "1.1" .
+:OriginalAuthority a skos:Concept ; skos:inScheme :AuthorityTypeScheme ; skos:topConceptOf :AuthorityTypeScheme ; skos:prefLabel "Original classification authority"@en ; skos:notation "O" .
+:DerivativeSingle a skos:Concept ; skos:inScheme :AuthorityTypeScheme ; skos:topConceptOf :AuthorityTypeScheme ; skos:prefLabel "Derivative from a single source"@en ; skos:notation "D" .
+:DerivativeMultiple a skos:Concept ; skos:inScheme :AuthorityTypeScheme ; skos:topConceptOf :AuthorityTypeScheme ; skos:prefLabel "Derivative from multiple sources"@en ; skos:notation "M" .
+
+# ---------- Classification Reason Register (EO 12958 Sec 1.5(a)-(g)) ----------
+:ClassificationReasonScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    skos:prefLabel "Classification Reason Register"@en ; owl:versionInfo "1.1" ;
+    skos:note "Values A-G correspond to the reasons for original classification per Executive Order 12958, Section 1.5(a) to (g)." .
+:ReasonA a skos:Concept ; skos:inScheme :ClassificationReasonScheme ; skos:topConceptOf :ClassificationReasonScheme ; skos:prefLabel "Reason A (EO 12958 1.5(a))"@en ; skos:notation "A" .
+:ReasonB a skos:Concept ; skos:inScheme :ClassificationReasonScheme ; skos:topConceptOf :ClassificationReasonScheme ; skos:prefLabel "Reason B (EO 12958 1.5(b))"@en ; skos:notation "B" .
+:ReasonC a skos:Concept ; skos:inScheme :ClassificationReasonScheme ; skos:topConceptOf :ClassificationReasonScheme ; skos:prefLabel "Reason C (EO 12958 1.5(c))"@en ; skos:notation "C" .
+:ReasonD a skos:Concept ; skos:inScheme :ClassificationReasonScheme ; skos:topConceptOf :ClassificationReasonScheme ; skos:prefLabel "Reason D (EO 12958 1.5(d))"@en ; skos:notation "D" .
+:ReasonE a skos:Concept ; skos:inScheme :ClassificationReasonScheme ; skos:topConceptOf :ClassificationReasonScheme ; skos:prefLabel "Reason E (EO 12958 1.5(e))"@en ; skos:notation "E" .
+:ReasonF a skos:Concept ; skos:inScheme :ClassificationReasonScheme ; skos:topConceptOf :ClassificationReasonScheme ; skos:prefLabel "Reason F (EO 12958 1.5(f))"@en ; skos:notation "F" .
+:ReasonG a skos:Concept ; skos:inScheme :ClassificationReasonScheme ; skos:topConceptOf :ClassificationReasonScheme ; skos:prefLabel "Reason G (EO 12958 1.5(g))"@en ; skos:notation "G" .
+
+# ---------- Declassification Exemption Register (DOD 5200.1-R) ----------
+:ExemptionScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+    skos:prefLabel "Declassification Exemption Register"@en ; owl:versionInfo "1.1" ;
+    skos:note "X1-X8 per DOD 5200.1-R paragraphs 4-202b(1)-(8) (10-year rule); X251-X259 per 4-301a(1)-(9) (25-year system)." .
+:X1 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X1"@en ; skos:notation "X1" .
+:X2 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X2"@en ; skos:notation "X2" .
+:X3 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X3"@en ; skos:notation "X3" .
+:X4 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X4"@en ; skos:notation "X4" .
+:X5 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X5"@en ; skos:notation "X5" .
+:X6 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X6"@en ; skos:notation "X6" .
+:X7 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X7"@en ; skos:notation "X7" .
+:X8 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X8"@en ; skos:notation "X8" .
+:X251 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X251"@en ; skos:notation "X251" .
+:X252 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X252"@en ; skos:notation "X252" .
+:X253 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X253"@en ; skos:notation "X253" .
+:X254 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X254"@en ; skos:notation "X254" .
+:X255 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X255"@en ; skos:notation "X255" .
+:X256 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X256"@en ; skos:notation "X256" .
+:X257 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X257"@en ; skos:notation "X257" .
+:X258 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X258"@en ; skos:notation "X258" .
+:X259 a skos:Concept ; skos:inScheme :ExemptionScheme ; skos:topConceptOf :ExemptionScheme ; skos:prefLabel "Exemption X259"@en ; skos:notation "X259" .
