@@ -262,7 +262,7 @@ asset roads conforms Shapefile @bound-by naming-convention @stem "roads" @primar
         <h2>Escape Hatch</h2>
         <p>Two constructs guarantee completeness against the evolving vocabularies:</p>
         <ul>
-            <li><code>raw-turtle { &#8230; }</code> at struct or field scope injects arbitrary Turtle triples into the output graph; its body is preserved verbatim.</li>
+            <li><code>raw-turtle { &#8230; }</code> at struct scope injects arbitrary Turtle triples into the output graph; its body is preserved verbatim. There is no field-scoped form, but a struct-scope block can still inject a triple about any of the struct's fields (e.g. <code>:S ageom:crs :Field .</code>).</li>
             <li><code>@prop &lt;curie&gt; &lt;value&gt;</code> sets any property the sugar does not know by name.</li>
         </ul>
         <pre class="nohighlight">
@@ -322,7 +322,7 @@ clause       = "[" ( expr / ".." ) "]"                      ; byte size
              / "@at" expr [ "from" offsetbase ]
              / "if" expr
              / "@fixed" ( HEXBYTES / INT / STRING )
-             / "enum" [ "flags" ] ( IDENT / "{" enumpair *( "," enumpair ) "}" )
+             / "enum" [ "flags" ] "{" enumpair *( "," enumpair ) "}"
              / "@checksum" ALGO "(" ( ref ".." ref / "covers" "(" expr ")" ) ")"
              / "@terminator" HEXBYTES / "@trim-null"
              / "@endian" endian / "@align" INT / "@bit-order" bitorder
