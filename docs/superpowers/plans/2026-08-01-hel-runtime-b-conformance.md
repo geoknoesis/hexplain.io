@@ -19,6 +19,14 @@
 
 Compliance Plan **B of 4** (of the "fix all" compliance effort). Plan A (HDL compiler) is merged. This plan fixes the HEL runtime (audit items 5, 10, 11, 12, 13, 14). Plan C (BDDO/DLV execution + SHACL) and Plan D (hx-bundle lifting + generic processor) are separate.
 
+## Re-audit addendum (current `main` @ d030b91 — post NITFS-conformance merge)
+
+A parallel "conformance engine" feature merged into `main` after this plan was drafted. A re-audit confirms **all six items (5, 10–14) are STILL OPEN** — the merge added capability but fixed none of the defects (only two error-message strings changed). Two things changed the plan's execution constraints:
+
+- **PRESERVE the new HEL surface — do not break or duplicate it.** `HelEvaluator` now also implements: quantifiers `all(coll,pred)`/`any(coll,pred)`; string fns `matches/substr/startsWith/trim`; temporal `datetime/evaluationInstant`; geometry `ringOrientation/isSelfIntersecting`; register `inRegister`; a `FIXED_ARITY` map + arity pre-check that runs **before** arg evaluation (keep that ordering); and two extra constructor params `evaluationInstant`, `registerProvider`. Every task that changes the `HelEvaluator` constructor MUST **add** its new params (defaulted) without dropping these, and update **all** construction sites in lockstep — the ~8 in `Metaparser.kt`, plus `Metawriter`, `SemanticLifter`, and **`ConformanceEngine.kt`** (which currently passes `streamContext = null` at ~`:110`).
+- **Two error paths — assert per-path.** A thrown `HelEvaluationException` in the **Metaparser** path propagates and aborts the parse (it is a plain `RuntimeException`, not a caught `HexplainParsingException`); `isPresentIf`/`repeatUntil` sites are outside the recovery try/catch. In the **`ConformanceEngine`** path, `evaluate()` is wrapped in `catch(RuntimeException)` → a per-constraint Finding. So "raise a runtime error" (items 5/10/11) means *throws-and-aborts* in the parser and *becomes-a-Finding* in the engine — tests MUST assert the correct behavior for each path.
+- **Current line hints (verify live):** `isEqual` `else -> false` at `HelEvaluator.kt:~344`; `sizeof` at `:~195-199`; parent one-hop at `:~54-64,73-75`; the `HelEvaluator(...)` sites in `Metaparser.kt:~198,257,365,411,464,485,514,532`; `ConformanceEngine.kt:~110`. Item 5's stream wiring should also fix `ConformanceEngine`'s `streamContext=null` so `conf:` rules can use `eof()`/`stream.*`.
+
 ---
 
 ## File Structure
