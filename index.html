@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hexplain — The semantic framework for binary data</title>
+<meta name="description" content="Hexplain is a declarative, semantic framework that turns opaque binary formats into rich, queryable knowledge graphs — built on RDF, OWL, SHACL, and JSON-LD.">
+<meta name="author" content="Stephane Fellah">
+<meta name="keywords" content="binary data, ontology, RDF, OWL, SHACL, JSON-LD, semantic web, linked data, binary format description, knowledge graph, SPARQL, data preservation">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0b0e14">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://geoknoesis.github.io/hexplain.io/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Hexplain">
+<meta property="og:title" content="Hexplain — The semantic framework for binary data">
+<meta property="og:description" content="Turn opaque binary formats into rich, queryable knowledge graphs. A declarative, modular standard built on RDF, OWL, SHACL, and JSON-LD.">
+<meta property="og:url" content="https://geoknoesis.github.io/hexplain.io/">
+<meta property="og:image" content="https://geoknoesis.github.io/hexplain.io/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Hexplain — the semantic framework for binary data. Built on RDF, OWL, SHACL, JSON-LD, and SPARQL.">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Hexplain — The semantic framework for binary data">
+<meta name="twitter:description" content="Turn opaque binary formats into rich, queryable knowledge graphs. Built on RDF, OWL, SHACL, and JSON-LD.">
+<meta name="twitter:image" content="https://geoknoesis.github.io/hexplain.io/assets/og-image.png">
+<meta name="twitter:image:alt" content="Hexplain — the semantic framework for binary data.">
+
+<!-- Icons -->
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<!-- Structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://geoknoesis.github.io/hexplain.io/#website",
+      "url": "https://geoknoesis.github.io/hexplain.io/",
+      "name": "Hexplain",
+      "description": "A declarative, semantic framework for describing binary data formats as linked data.",
+      "inLanguage": "en",
+      "publisher": { "@id": "https://geoknoesis.github.io/hexplain.io/#org" }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://geoknoesis.github.io/hexplain.io/#org",
+      "name": "Geoknoesis LLC",
+      "url": "https://geoknoesis.com",
+      "founder": { "@type": "Person", "name": "Stephane Fellah" }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://geoknoesis.github.io/hexplain.io/#software",
+      "name": "Hexplain",
+      "description": "A declarative, semantic framework that turns opaque binary formats into rich, queryable knowledge graphs, built on RDF, OWL, SHACL, and JSON-LD.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Cross-platform",
+      "url": "https://geoknoesis.github.io/hexplain.io/",
+      "codeRepository": "https://github.com/geoknoesis/hexplain.io",
+      "author": { "@id": "https://geoknoesis.github.io/hexplain.io/#org" },
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "keywords": "binary data, RDF, OWL, SHACL, JSON-LD, ontology, linked data, knowledge graph, SPARQL"
+    }
+  ]
+}
+</script>
+<style>
+  :root{
+    --bg:#0b0e14;
+    --bg-2:#0f131c;
+    --surface:#141a25;
+    --surface-2:#19212f;
+    --border:#232c3d;
+    --border-soft:#1c2434;
+    --text:#e7edf5;
+    --muted:#93a1b5;
+    --muted-2:#6b7889;
+    --cyan:#22d3ee;
+    --cyan-soft:#67e8f9;
+    --violet:#a78bfa;
+    --violet-soft:#c4b5fd;
+    --amber:#fbbf24;
+    --green:#34d399;
+    --blue:#5b8def;
+    --grad: linear-gradient(120deg,var(--cyan),var(--violet));
+    --radius:14px;
+    --radius-sm:10px;
+    --maxw:1160px;
+    --shadow: 0 20px 50px -20px rgba(0,0,0,.7);
+    --mono: ui-monospace,"SF Mono","Cascadia Code","Fira Code",Consolas,"Liberation Mono",monospace;
+    --sans: ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  /* ambient background glow */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    background:
+      radial-gradient(680px 420px at 82% -6%, rgba(34,211,238,.14), transparent 60%),
+      radial-gradient(720px 480px at 12% 4%, rgba(167,139,250,.13), transparent 60%);
+  }
+
+  a{color:inherit;text-decoration:none}
+  a:focus-visible,button:focus-visible,.btn:focus-visible,.mod:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:8px}
+  main:focus{outline:none}
+  .skip-link{
+    position:fixed;top:-100px;left:16px;z-index:200;
+    background:var(--cyan);color:#08121a;font-weight:700;font-size:14px;
+    padding:10px 18px;border-radius:10px;transition:top .2s ease;
+  }
+  .skip-link:focus{top:14px}
+  h1,h2,h3{line-height:1.15;letter-spacing:-.02em;margin:0}
+  p{margin:0}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--cyan-soft);
+    padding:6px 12px;border:1px solid var(--border);border-radius:999px;
+    background:rgba(34,211,238,.05);
+  }
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+
+  .grad-text{
+    background:var(--grad);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;
+    font-weight:600;font-size:15px;
+    padding:12px 22px;border-radius:11px;
+    border:1px solid transparent;cursor:pointer;
+    transition:transform .15s ease, box-shadow .2s ease, background .2s ease, border-color .2s;
+    white-space:nowrap;
+  }
+  .btn svg{width:17px;height:17px}
+  .btn-primary{
+    background:var(--grad);color:#08121a;
+    box-shadow:0 10px 28px -10px rgba(34,211,238,.6);
+  }
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 34px -12px rgba(34,211,238,.7)}
+  .btn-ghost{
+    background:var(--surface);color:var(--text);border-color:var(--border);
+  }
+  .btn-ghost:hover{border-color:var(--cyan);transform:translateY(-2px);background:var(--surface-2)}
+
+  /* ---------- nav ---------- */
+  header.nav{
+    position:sticky;top:0;z-index:50;
+    backdrop-filter:blur(14px);
+    background:rgba(11,14,20,.72);
+    border-bottom:1px solid transparent;
+    transition:border-color .3s, background .3s;
+  }
+  header.nav.scrolled{border-bottom-color:var(--border-soft);background:rgba(11,14,20,.88)}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;height:66px}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:700;font-size:19px;letter-spacing:-.01em}
+  .brand .mark{width:30px;height:30px;flex:none}
+  .nav-links{display:flex;align-items:center;gap:30px}
+  .nav-links a{color:var(--muted);font-size:14.5px;font-weight:500;transition:color .2s}
+  .nav-links a:hover{color:var(--text)}
+  .nav-cta{display:flex;align-items:center;gap:14px}
+  .nav-cta .btn{padding:9px 17px;font-size:14px}
+  .hamburger{display:none;background:none;border:1px solid var(--border);border-radius:9px;width:42px;height:40px;cursor:pointer;color:var(--text);align-items:center;justify-content:center}
+  .hamburger svg{width:20px;height:20px}
+
+  /* ---------- hero ---------- */
+  .hero{padding:78px 0 84px;position:relative}
+  .hero-grid{display:grid;grid-template-columns:1.03fr .97fr;gap:52px;align-items:center}
+  .hero h1{font-size:clamp(2.3rem,5vw,3.7rem);font-weight:800;margin:22px 0 20px}
+  .hero .sub{font-size:clamp(1.05rem,1.5vw,1.22rem);color:var(--muted);max-width:33ch}
+  .hero-cta{display:flex;gap:14px;margin-top:32px;flex-wrap:wrap}
+  .hero-meta{display:flex;gap:26px;margin-top:34px;flex-wrap:wrap}
+  .hero-meta div{display:flex;flex-direction:column;gap:2px}
+  .hero-meta .n{font-family:var(--mono);font-size:1.35rem;font-weight:700;color:var(--text)}
+  .hero-meta .l{font-size:12.5px;color:var(--muted-2);letter-spacing:.04em}
+
+  /* hero transform visual */
+  .transform{
+    position:relative;
+    background:linear-gradient(180deg,var(--surface),var(--bg-2));
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:20px;
+    box-shadow:var(--shadow);
+  }
+  .transform .cap{
+    position:absolute;top:-11px;left:20px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);background:var(--surface);padding:2px 10px;border:1px solid var(--border);border-radius:999px;
+  }
+  .hexdump{
+    font-family:var(--mono);font-size:12.2px;line-height:1.9;
+    background:#0a0d13;border:1px solid var(--border-soft);border-radius:10px;
+    padding:14px 16px;color:var(--muted);overflow-x:auto;
+  }
+  .hexdump .row{white-space:nowrap}
+  .hexdump .off{color:var(--muted-2)}
+  .hexdump .b{color:#c6d2e1}
+  .hexdump .hl-w{color:#08121a;background:var(--cyan);border-radius:3px;padding:1px 3px;font-weight:700}
+  .hexdump .hl-h{color:#08121a;background:var(--violet);border-radius:3px;padding:1px 3px;font-weight:700}
+  .flow-arrow{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--muted-2);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin:12px 0}
+  .flow-arrow .line{height:1px;flex:1;background:linear-gradient(90deg,transparent,var(--border),transparent)}
+  .graph{width:100%;height:auto;display:block}
+
+  /* ---------- section scaffolding ---------- */
+  section.blk{padding:84px 0;position:relative}
+  .sec-head{max-width:660px;margin-bottom:48px}
+  .sec-head.center{margin-left:auto;margin-right:auto;text-align:center}
+  .sec-head h2{font-size:clamp(1.8rem,3.4vw,2.5rem);font-weight:800;margin:16px 0 14px}
+  .sec-head p{color:var(--muted);font-size:1.06rem}
+
+  .rule{height:1px;background:linear-gradient(90deg,transparent,var(--border-soft) 20%,var(--border-soft) 80%,transparent)}
+
+  /* problem cards */
+  .prob-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .prob{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px 24px;
+    transition:border-color .25s, transform .25s;
+  }
+  .prob:hover{border-color:var(--border);transform:translateY(-3px)}
+  .prob .ico{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25)}
+  .prob .ico svg{width:22px;height:22px;color:var(--amber)}
+  .prob h3{font-size:1.14rem;margin-bottom:8px}
+  .prob p{color:var(--muted);font-size:.96rem}
+
+  /* architecture */
+  .arch-wrap{background:linear-gradient(180deg,var(--surface),var(--bg-2));border:1px solid var(--border);border-radius:18px;padding:34px;box-shadow:var(--shadow)}
+  .arch-note{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:26px}
+  .arch-note .item{padding:16px 18px;border:1px solid var(--border-soft);border-radius:11px;background:rgba(255,255,255,.015)}
+  .arch-note .item .t{font-weight:700;font-size:.98rem;margin-bottom:4px}
+  .arch-note .item .d{color:var(--muted);font-size:.9rem}
+  .arch-note .item.l1 .t{color:var(--blue)}
+  .arch-note .item.l2 .t{color:var(--green)}
+  .arch-note .item.l3 .t{color:var(--amber)}
+
+  /* standards */
+  .std-row{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+  .std{
+    display:inline-flex;align-items:center;gap:9px;
+    font-family:var(--mono);font-size:14px;font-weight:600;
+    padding:11px 18px;border-radius:11px;
+    background:var(--surface);border:1px solid var(--border);
+  }
+  .std .d{width:9px;height:9px;border-radius:3px}
+  .align-line{text-align:center;color:var(--muted);margin-top:26px;font-size:.98rem}
+  .align-line b{color:var(--text);font-weight:600}
+
+  /* code example */
+  .code-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .code-card{background:#0a0d13;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+  .code-head{display:flex;align-items:center;gap:9px;padding:12px 16px;border-bottom:1px solid var(--border-soft);background:var(--surface)}
+  .code-head .fn{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+  .code-head .tag{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid var(--border)}
+  .code-head .tag.ttl{color:var(--violet);border-color:rgba(167,139,250,.35)}
+  .code-head .tag.sparql{color:var(--cyan);border-color:rgba(34,211,238,.35)}
+  pre{margin:0;padding:18px 18px;overflow-x:auto;font-family:var(--mono);font-size:12.8px;line-height:1.75;color:#c6d2e1}
+  pre .c{color:#5c6b7f;font-style:italic}
+  pre .k{color:var(--violet-soft)}
+  pre .p{color:var(--cyan)}
+  pre .s{color:var(--green)}
+  pre .n{color:var(--amber)}
+  .code-note{text-align:center;color:var(--muted);margin-top:24px;font-size:1rem;max-width:640px;margin-left:auto;margin-right:auto}
+
+  /* comparison table */
+  .cmp-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow);-webkit-overflow-scrolling:touch}
+  table.cmp{width:100%;min-width:700px;border-collapse:collapse;font-size:.95rem}
+  table.cmp th,table.cmp td{padding:15px 18px;text-align:center;border-bottom:1px solid var(--border-soft)}
+  table.cmp thead th{font-weight:700;color:var(--muted);white-space:nowrap;vertical-align:bottom;font-size:.98rem}
+  table.cmp .cap-col{text-align:left;width:40%;min-width:250px}
+  table.cmp tbody td:first-child{text-align:left;color:var(--text);font-weight:500}
+  table.cmp tbody tr:last-child td{border-bottom:none}
+  table.cmp tbody tr:hover td{background:rgba(255,255,255,.02)}
+  table.cmp thead th.hx-col{font-size:1.12rem;border-top:2px solid var(--cyan);padding-top:16px}
+  table.cmp .hx-col{background:linear-gradient(180deg,rgba(34,211,238,.08),rgba(167,139,250,.07));border-left:1px solid rgba(34,211,238,.28);border-right:1px solid rgba(167,139,250,.28)}
+  table.cmp .yes{color:var(--cyan);font-weight:800;font-size:1.2rem}
+  table.cmp .partial{color:var(--amber);font-weight:700;font-size:1.1rem}
+  table.cmp .no{color:var(--muted-2);font-weight:700;font-size:1.05rem;opacity:.6}
+  .cmp-legend{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-top:20px;color:var(--muted);font-size:.86rem}
+  .cmp-legend span{display:inline-flex;align-items:center;gap:7px}
+  .cmp-legend .yes,.cmp-legend .partial,.cmp-legend .no{font-size:1rem}
+
+  /* module family */
+  .mod-group-label{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);margin:34px 0 16px}
+  .mod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .mod{
+    display:block;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:20px;
+    transition:border-color .2s, transform .2s, background .2s;position:relative;
+  }
+  .mod:hover{border-color:var(--cyan);transform:translateY(-3px);background:var(--surface-2)}
+  .mod .code-badge{font-family:var(--mono);font-size:11px;color:var(--cyan);background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);padding:2px 8px;border-radius:6px}
+  .mod h4{font-size:1.05rem;margin:12px 0 6px;display:flex;align-items:center;gap:8px}
+  .mod p{color:var(--muted);font-size:.9rem}
+  .mod .arrow{position:absolute;top:18px;right:18px;color:var(--muted-2);opacity:0;transition:opacity .2s, transform .2s}
+  .mod:hover .arrow{opacity:1;transform:translate(2px,-2px);color:var(--cyan)}
+  .mod-grid.vocab{grid-template-columns:repeat(4,1fr)}
+  .mod.small h4{font-size:.98rem}
+
+  /* tools */
+  .tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .tool{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px 24px;transition:border-color .25s,transform .25s}
+  .tool:hover{border-color:var(--violet);transform:translateY(-3px)}
+  .tool .ico{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;background:linear-gradient(135deg,rgba(34,211,238,.12),rgba(167,139,250,.12));border:1px solid var(--border)}
+  .tool .ico svg{width:23px;height:23px;color:var(--cyan-soft)}
+  .tool h3{font-size:1.1rem;margin-bottom:8px}
+  .tool p{color:var(--muted);font-size:.94rem}
+
+  /* use cases */
+  .uc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+  .uc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;transition:border-color .25s,transform .25s;position:relative;overflow:hidden}
+  .uc:hover{border-color:var(--border);transform:translateY(-3px)}
+  .uc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad);opacity:.7}
+  .uc .k{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan-soft)}
+  .uc h3{font-size:1.18rem;margin:10px 0 10px}
+  .uc p{color:var(--muted);font-size:.96rem}
+  .uc code{font-family:var(--mono);font-size:.85em;color:var(--violet-soft);background:rgba(167,139,250,.09);padding:1px 6px;border-radius:5px;border:1px solid rgba(167,139,250,.18)}
+
+  /* final cta */
+  .cta-band{
+    text-align:center;
+    background:
+      radial-gradient(600px 300px at 50% 0%, rgba(34,211,238,.14), transparent 65%),
+      linear-gradient(180deg,var(--surface),var(--bg-2));
+    border:1px solid var(--border);border-radius:22px;padding:66px 32px;box-shadow:var(--shadow);
+  }
+  .cta-band h2{font-size:clamp(1.9rem,3.6vw,2.7rem);font-weight:800;margin-bottom:16px}
+  .cta-band p{color:var(--muted);font-size:1.1rem;max-width:52ch;margin:0 auto 30px}
+  .cta-band .hero-cta{justify-content:center}
+
+  /* footer */
+  footer{border-top:1px solid var(--border-soft);margin-top:20px;padding:56px 0 40px}
+  .foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:34px}
+  .foot-brand .brand{margin-bottom:14px}
+  .foot-brand p{color:var(--muted);font-size:.92rem;max-width:34ch}
+  .foot-col h5{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin:0 0 16px;font-weight:600}
+  .foot-col a{display:block;color:var(--muted);font-size:.94rem;margin-bottom:10px;transition:color .2s}
+  .foot-col a:hover{color:var(--cyan)}
+  .foot-bottom{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:44px;padding-top:24px;border-top:1px solid var(--border-soft);color:var(--muted-2);font-size:13px;flex-wrap:wrap}
+  .foot-bottom .badge{font-family:var(--mono);font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted)}
+
+  /* reveal animation */
+  @media (prefers-reduced-motion: no-preference){
+    .js .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease, transform .6s ease}
+    .js .reveal.in{opacity:1;transform:none}
+    .js .reveal.d1{transition-delay:.06s}
+    .js .reveal.d2{transition-delay:.12s}
+    .js .reveal.d3{transition-delay:.18s}
+    @keyframes sweep{0%,100%{opacity:.35}50%{opacity:1}}
+    .js .hl-w,.js .hl-h{animation:sweep 3.4s ease-in-out infinite}
+    .js .hl-h{animation-delay:.5s}
+    @keyframes edgepulse{0%,100%{stroke-opacity:.3}50%{stroke-opacity:.9}}
+    .js .g-edge{animation:edgepulse 3.4s ease-in-out infinite}
+  }
+
+  /* responsive */
+  @media (max-width:900px){
+    .hero-grid{grid-template-columns:1fr;gap:44px}
+    .hero .sub{max-width:none}
+    .prob-grid,.tool-grid,.mod-grid,.arch-note{grid-template-columns:1fr 1fr}
+    .code-grid,.uc-grid,.mod-grid.vocab{grid-template-columns:1fr}
+    .nav-links{display:none}
+    .foot-grid{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width:560px){
+    .prob-grid,.tool-grid,.mod-grid,.arch-note,.foot-grid{grid-template-columns:1fr}
+    .hamburger{display:flex}
+    .nav-cta .btn.ghost-nav{display:none}
+    section.blk{padding:60px 0}
+    .arch-wrap{padding:20px}
+    .cta-band{padding:48px 22px}
+  }
+
+  /* mobile menu */
+  .mobile-menu{display:none;flex-direction:column;gap:4px;padding:14px 24px 22px;border-bottom:1px solid var(--border-soft);background:var(--bg-2)}
+  .mobile-menu.open{display:flex}
+  .mobile-menu a{padding:11px 8px;color:var(--muted);border-radius:9px}
+  .mobile-menu a:hover{background:var(--surface);color:var(--text)}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#top">Skip to content</a>
+
+<!-- ===================== NAV ===================== -->
+<header class="nav" id="nav">
+  <div class="wrap nav-inner">
+    <a href="#top" class="brand" aria-label="Hexplain home">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a78bfa"/>
+        </linearGradient></defs>
+        <path d="M16 2l12 7v14l-12 7L4 23V9z" fill="none" stroke="url(#mg)" stroke-width="2.4" stroke-linejoin="round"/>
+        <text x="16" y="21" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="url(#mg)" text-anchor="middle">Hx</text>
+      </svg>
+      Hexplain
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#why">Why</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#example">Example</a>
+      <a href="#compare">Compare</a>
+      <a href="#ecosystem">Ecosystem</a>
+      <a href="#use-cases">Use cases</a>
+    </nav>
+    <div class="nav-cta">
+      <a href="https://github.com/geoknoesis/hexplain.io" class="btn btn-ghost ghost-nav" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49l-.01-1.7c-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.27 2.75 1.05a9.36 9.36 0 015 0c1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.35 4.8-4.58 5.05.36.32.68.94.68 1.9l-.01 2.82c0 .27.18.6.69.49A10.02 10.02 0 0022 12.25C22 6.58 17.52 2 12 2z"/></svg>
+        GitHub
+      </a>
+      <a href="specification/index.html" class="btn btn-primary">Read the spec</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#why">Why</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#example">Example</a>
+    <a href="#compare">Compare</a>
+    <a href="#ecosystem">Ecosystem</a>
+    <a href="#use-cases">Use cases</a>
+    <a href="https://github.com/geoknoesis/hexplain.io" target="_blank" rel="noopener">GitHub ↗</a>
+  </div>
+</header>
+
+<main id="top" tabindex="-1">
+
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow reveal"><span class="dot"></span>The semantic framework for binary data</span>
+      <h1 class="reveal d1">Give binary data a meaning <span class="grad-text">machines can read.</span></h1>
+      <p class="sub reveal d2">Hexplain turns opaque binary formats into rich, queryable knowledge graphs — a declarative, modular standard built on RDF, OWL, SHACL, and JSON-LD.</p>
+      <div class="hero-cta reveal d2">
+        <a href="specification/index.html" class="btn btn-primary">
+          Read the Specification
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a href="https://github.com/geoknoesis/hexplain.io" class="btn btn-ghost" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49l-.01-1.7c-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.27 2.75 1.05a9.36 9.36 0 015 0c1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.35 4.8-4.58 5.05.36.32.68.94.68 1.9l-.01 2.82c0 .27.18.6.69.49A10.02 10.02 0 0022 12.25C22 6.58 17.52 2 12 2z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+      <div class="hero-meta reveal d3">
+        <div><span class="n">3</span><span class="l">description layers</span></div>
+        <div><span class="n">16+</span><span class="l">modular ontologies</span></div>
+        <div><span class="n">1</span><span class="l">query language for all formats</span></div>
+      </div>
+    </div>
+
+    <!-- transform visual: bytes -> graph -->
+    <div class="transform reveal d2" aria-hidden="true">
+      <span class="cap">image.png &nbsp;→&nbsp; knowledge graph</span>
+      <div class="hexdump">
+        <div class="row"><span class="off">0x0000</span> &nbsp;<span class="b">89 50 4E 47 0D 0A 1A 0A</span> &nbsp;<span class="b">00 00 00 0D 49 48 44 52</span></div>
+        <div class="row"><span class="off">0x0010</span> &nbsp;<span class="hl-w">00 00 13 40</span> <span class="hl-h">00 00 0C C0</span> &nbsp;<span class="b">08 06 00 00 00 8D B1 68</span></div>
+        <div class="row"><span class="off">0x0020</span> &nbsp;<span class="b">36 00 00 20 00 49 44 41</span> &nbsp;<span class="b">54 78 9C EC BD 07 60 1C</span></div>
+      </div>
+      <div class="flow-arrow"><span class="line"></span>parse + map<span class="line"></span></div>
+      <svg class="graph" viewBox="0 0 440 220" role="img" aria-label="RDF graph derived from the binary">
+        <defs>
+          <linearGradient id="ng" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+        </defs>
+        <!-- edges -->
+        <line class="g-edge" x1="220" y1="110" x2="88" y2="40"  stroke="#22d3ee" stroke-width="1.4"/>
+        <line class="g-edge" x1="220" y1="110" x2="360" y2="42" stroke="#a78bfa" stroke-width="1.4"/>
+        <line class="g-edge" x1="220" y1="110" x2="80" y2="180" stroke="#34d399" stroke-width="1.4"/>
+        <line class="g-edge" x1="220" y1="110" x2="366" y2="176" stroke="#fbbf24" stroke-width="1.4"/>
+        <!-- edge labels -->
+        <text x="140" y="66"  fill="#67e8f9" font-family="ui-monospace,monospace" font-size="9">img:width</text>
+        <text x="270" y="70"  fill="#c4b5fd" font-family="ui-monospace,monospace" font-size="9">img:height</text>
+        <text x="118" y="152" fill="#34d399" font-family="ui-monospace,monospace" font-size="9">img:colorSpace</text>
+        <text x="248" y="150" fill="#fbbf24" font-family="ui-monospace,monospace" font-size="9">dcterms:format</text>
+        <!-- center node -->
+        <g><rect x="168" y="94" width="104" height="32" rx="8" fill="#0a0d13" stroke="url(#ng)" stroke-width="1.6"/>
+          <text x="220" y="114" fill="#e7edf5" font-family="ui-monospace,monospace" font-size="11" font-weight="700" text-anchor="middle">img:Image</text></g>
+        <!-- satellites -->
+        <g><rect x="34" y="24"  width="86" height="30" rx="7" fill="#141a25" stroke="#22d3ee" stroke-width="1.2"/>
+          <text x="77" y="43" fill="#c6d2e1" font-family="ui-monospace,monospace" font-size="10" text-anchor="middle">4928</text></g>
+        <g><rect x="316" y="26" width="86" height="30" rx="7" fill="#141a25" stroke="#a78bfa" stroke-width="1.2"/>
+          <text x="359" y="45" fill="#c6d2e1" font-family="ui-monospace,monospace" font-size="10" text-anchor="middle">3264</text></g>
+        <g><rect x="26" y="164" width="94" height="30" rx="7" fill="#141a25" stroke="#34d399" stroke-width="1.2"/>
+          <text x="73" y="183" fill="#c6d2e1" font-family="ui-monospace,monospace" font-size="10" text-anchor="middle">sRGB</text></g>
+        <g><rect x="318" y="160" width="98" height="30" rx="7" fill="#141a25" stroke="#fbbf24" stroke-width="1.2"/>
+          <text x="367" y="179" fill="#c6d2e1" font-family="ui-monospace,monospace" font-size="10" text-anchor="middle">image/png</text></g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<!-- ===================== WHY / PROBLEM ===================== -->
+<section class="blk" id="why">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow"><span class="dot"></span>The problem</span>
+      <h2>The dark matter of data</h2>
+      <p>Most of the world's information lives in binary formats — scientific datasets, satellite imagery, media, network captures. It's opaque, locked behind specialized parsers, and its meaning is buried in proprietary or poorly-documented specs.</p>
+    </div>
+    <div class="prob-grid">
+      <div class="prob reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><line x1="4" y1="4" x2="20" y2="20"/></svg></div>
+        <h3>Opaque by default</h3>
+        <p>A wall of bytes tells you nothing. Without the right software and tribal knowledge, the structure and meaning stay invisible.</p>
+      </div>
+      <div class="prob reveal d1">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg></div>
+        <h3>Brittle, hand-written parsers</h3>
+        <p>Every format needs bespoke code in every language. It's error-prone, hard to validate, and expensive to maintain.</p>
+      </div>
+      <div class="prob reveal d2">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4"/></svg></div>
+        <h3>No shared meaning</h3>
+        <p>A width in a PNG and a width in a JPEG are the same concept — but nothing connects them. Cross-format analysis is impossible.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ARCHITECTURE ===================== -->
+<section class="blk" id="architecture" style="padding-top:20px">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow"><span class="dot"></span>How it works</span>
+      <h2>Three layers, one meaning</h2>
+      <p>Instead of one monolithic spec, Hexplain separates concerns into interoperable ontologies. A conforming processor turns a binary stream plus its description into a formal RDF instance graph — not just parser instructions, but queryable knowledge.</p>
+    </div>
+    <div class="arch-wrap reveal d1">
+      <svg viewBox="0 0 820 300" role="img" aria-labelledby="archT archD" style="width:100%;height:auto;font-family:var(--sans)">
+        <title id="archT">The Hexplain layered architecture</title>
+        <desc id="archD">Semantic, Layout, and Physical layers connected by the Hexplain Core glue module, with HEL and the Processing Model spanning them.</desc>
+        <!-- Semantic -->
+        <rect x="20" y="18" width="600" height="60" rx="10" fill="rgba(91,141,239,.12)" stroke="#5b8def" stroke-width="1.4"/>
+        <text x="40" y="44" font-size="15" font-weight="700" fill="#8fb3ff">Semantic Layer</text>
+        <text x="40" y="65" font-size="12" fill="#a9bde6">IDV · VDV · ADV · GV · DFV · NPV · AXV — domain vocabularies + aspects</text>
+        <!-- Layout -->
+        <rect x="20" y="98" width="600" height="56" rx="10" fill="rgba(52,211,153,.11)" stroke="#34d399" stroke-width="1.4"/>
+        <text x="40" y="123" font-size="15" font-weight="700" fill="#6ee7b7">Layout Layer</text>
+        <text x="40" y="143" font-size="12" fill="#a7e8cf">DLV — multi-dimensional array layout (BSQ / BIP / BIL)</text>
+        <!-- Physical -->
+        <rect x="20" y="174" width="600" height="56" rx="10" fill="rgba(251,191,36,.1)" stroke="#fbbf24" stroke-width="1.4"/>
+        <text x="40" y="199" font-size="15" font-weight="700" fill="#fcd34d">Physical Layer</text>
+        <text x="40" y="219" font-size="12" fill="#f3dda0">BDDO — structs, fields, types, offsets, bitfields, arrays</text>
+        <!-- Core glue -->
+        <rect x="640" y="18" width="160" height="212" rx="10" fill="rgba(167,139,250,.13)" stroke="#a78bfa" stroke-width="1.4"/>
+        <text x="720" y="116" font-size="15" font-weight="700" fill="#c4b5fd" text-anchor="middle">Hexplain</text>
+        <text x="720" y="137" font-size="15" font-weight="700" fill="#c4b5fd" text-anchor="middle">Core</text>
+        <text x="720" y="160" font-size="11" fill="#a78bfa" text-anchor="middle">(the glue)</text>
+        <!-- baseline -->
+        <rect x="20" y="250" width="780" height="34" rx="9" fill="rgba(255,255,255,.03)" stroke="#232c3d" stroke-width="1.2"/>
+        <text x="410" y="272" font-size="12" fill="#93a1b5" text-anchor="middle">HEL — expression language · Processing Model — parse → RDF instance graph</text>
+      </svg>
+      <div class="arch-note">
+        <div class="item l3"><div class="t">Physical</div><div class="d">The sequence, structure, and data types of the bytes themselves.</div></div>
+        <div class="item l2"><div class="t">Layout</div><div class="d">How multi-dimensional data is organized within a flat byte stream.</div></div>
+        <div class="item l1"><div class="t">Semantic</div><div class="d">The conceptual meaning — mapped to shared, cross-format vocabulary.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== STANDARDS ===================== -->
+<section class="blk" style="padding-top:20px">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow"><span class="dot"></span>Open by design</span>
+      <h2>Built on the standards you already trust</h2>
+    </div>
+    <div class="std-row reveal d1">
+      <span class="std"><span class="d" style="background:var(--cyan)"></span>RDF</span>
+      <span class="std"><span class="d" style="background:var(--violet)"></span>OWL</span>
+      <span class="std"><span class="d" style="background:var(--green)"></span>SHACL</span>
+      <span class="std"><span class="d" style="background:var(--amber)"></span>JSON-LD</span>
+      <span class="std"><span class="d" style="background:var(--blue)"></span>SPARQL</span>
+    </div>
+    <p class="align-line reveal d2">Domain vocabularies align to <b>Dublin Core</b>, the <b>W3C Ontology for Media Resources</b>, <b>SOSA/SSN</b>, and <b>GeoSPARQL</b> — so your descriptions plug straight into the wider linked-data world.</p>
+  </div>
+</section>
+
+<!-- ===================== EXAMPLE ===================== -->
+<section class="blk" id="example">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow"><span class="dot"></span>See it in action</span>
+      <h2>Map a field once. Query every format.</h2>
+      <p>Describe where a value lives in the bytes and what it <em>means</em>. Then ask questions across your whole corpus — without knowing whether each file is a PNG, a JPEG, or something you've never seen.</p>
+    </div>
+    <div class="code-grid">
+      <div class="code-card reveal">
+        <div class="code-head"><span class="d" style="width:9px;height:9px;border-radius:3px;background:var(--violet)"></span><span class="fn">png-profile.ttl</span><span class="tag ttl">description</span></div>
+<pre><span class="c"># The PNG IHDR width field, mapped to a shared concept</span>
+<span class="p">:IHDR_Width</span> <span class="k">a</span> <span class="p">bddo:Field</span> ;
+    <span class="p">bddo:hasDataType</span> <span class="p">bddo:uint32</span> ;
+    <span class="p">bddo:byteOrder</span>  <span class="p">bddo:BigEndian</span> ;
+    <span class="p">bddo:atOffset</span>   <span class="n">16</span> ;
+    <span class="p">hexplain:mapsToProperty</span> <span class="p">img:width</span> .
+
+<span class="c"># A JPEG description maps its SOF0 width</span>
+<span class="c"># to the very same img:width property.</span></pre>
+      </div>
+      <div class="code-card reveal d1">
+        <div class="code-head"><span class="d" style="width:9px;height:9px;border-radius:3px;background:var(--cyan)"></span><span class="fn">query.rq</span><span class="tag sparql">SPARQL</span></div>
+<pre><span class="c"># Every large image — regardless of file format</span>
+<span class="k">PREFIX</span> <span class="p">img:</span> <span class="s">&lt;https://hexplain.io/ns/image#&gt;</span>
+
+<span class="k">SELECT</span> ?file ?w <span class="k">WHERE</span> {
+  ?file <span class="k">a</span> <span class="p">img:Image</span> ;
+        <span class="p">img:width</span> ?w .
+  <span class="k">FILTER</span>(?w &gt; <span class="n">4000</span>)
+}
+<span class="k">ORDER BY</span> <span class="k">DESC</span>(?w)</pre>
+      </div>
+    </div>
+    <p class="code-note reveal d2">No more hunting for the width field's offset and data type in a dozen format specs. The meaning is explicit, and the query is portable.</p>
+  </div>
+</section>
+
+<!-- ===================== COMPARISON ===================== -->
+<section class="blk" id="compare">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow"><span class="dot"></span>How it compares</span>
+      <h2>Others stop at the parse. Hexplain keeps going — to meaning.</h2>
+      <p>Declarative binary-description tools solve half the problem: they turn bytes into fields. Hexplain adds the layer none of them have — a shared semantic model that makes the data queryable, validatable, and interoperable across every format.</p>
+    </div>
+    <div class="cmp-scroll reveal d1">
+      <table class="cmp">
+        <thead>
+          <tr>
+            <th class="cap-col">Capability</th>
+            <th class="hx-col"><span class="grad-text">Hexplain</span></th>
+            <th>Kaitai Struct</th>
+            <th>DFDL</th>
+            <th>Protobuf&nbsp;/&nbsp;Avro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Describes existing, arbitrary binary formats</td>
+            <td class="hx-col"><span class="yes" title="Full support">✓</span></td>
+            <td><span class="yes" title="Full support">✓</span></td>
+            <td><span class="yes" title="Full support">✓</span></td>
+            <td><span class="no" title="Defines its own wire format instead">✕</span></td>
+          </tr>
+          <tr>
+            <td>Declarative schema — no hand-written parser</td>
+            <td class="hx-col"><span class="yes" title="Full support">✓</span></td>
+            <td><span class="yes" title="Full support">✓</span></td>
+            <td><span class="yes" title="Full support">✓</span></td>
+            <td><span class="yes" title="Full support">✓</span></td>
+          </tr>
+          <tr>
+            <td>Generates parsers in many languages</td>
+            <td class="hx-col"><span class="yes" title="Python, C++, Rust via the tool ecosystem">✓</span></td>
+            <td><span class="yes" title="A dozen target languages — its core strength">✓</span></td>
+            <td><span class="partial" title="Mainly Apache Daffodil on the JVM">◐</span></td>
+            <td><span class="yes" title="Full support">✓</span></td>
+          </tr>
+          <tr>
+            <td>Produces a semantic RDF knowledge graph</td>
+            <td class="hx-col"><span class="yes" title="The Processing Model emits an RDF instance graph">✓</span></td>
+            <td><span class="no" title="Emits language objects, not a graph">✕</span></td>
+            <td><span class="no" title="Produces an XML infoset, not a semantic graph">✕</span></td>
+            <td><span class="no" title="Emits language objects, not a graph">✕</span></td>
+          </tr>
+          <tr>
+            <td>Query across formats with one vocabulary (SPARQL)</td>
+            <td class="hx-col"><span class="yes" title="Shared vocabularies enable cross-format queries">✓</span></td>
+            <td><span class="no">✕</span></td>
+            <td><span class="no">✕</span></td>
+            <td><span class="no">✕</span></td>
+          </tr>
+          <tr>
+            <td>Formal validation of schema &amp; data (SHACL)</td>
+            <td class="hx-col"><span class="yes" title="SHACL shapes plus in-description constraints">✓</span></td>
+            <td><span class="partial" title="Basic value constraints">◐</span></td>
+            <td><span class="yes" title="Asserts and discriminators">✓</span></td>
+            <td><span class="partial" title="Type-level checks only">◐</span></td>
+          </tr>
+          <tr>
+            <td>Aligns to linked-data vocabularies (Dublin Core, GeoSPARQL…)</td>
+            <td class="hx-col"><span class="yes" title="Aligns to Dublin Core, W3C Media, SOSA/SSN, GeoSPARQL">✓</span></td>
+            <td><span class="no">✕</span></td>
+            <td><span class="no">✕</span></td>
+            <td><span class="no">✕</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cmp-legend reveal d2">
+      <span><span class="yes">✓</span> Full</span>
+      <span><span class="partial">◐</span> Partial</span>
+      <span><span class="no">✕</span> None</span>
+    </div>
+    <p class="code-note reveal d2">Kaitai Struct is excellent at generating parsers, DFDL is a solid XML-oriented standard, and Protobuf and Avro are great for defining <em>new</em> formats. Hexplain is the only one that turns <em>any</em> binary into linked data you can reason over — and it can complement the others rather than replace them.</p>
+  </div>
+</section>
+
+<!-- ===================== ONTOLOGY FAMILY ===================== -->
+<section class="blk" id="modules">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow"><span class="dot"></span>Modular by design</span>
+      <h2>The Hexplain ontology family</h2>
+      <p>A small foundation, a set of domain vocabularies, and cross-cutting aspects — each a versioned module with its own spec. Compose only what you need.</p>
+    </div>
+
+    <div class="mod-group-label reveal">Foundation</div>
+    <div class="mod-grid">
+      <a class="mod reveal" href="specification/bddo/index.html">
+        <span class="code-badge">bddo</span>
+        <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        <h4>BDDO</h4>
+        <p>The physical layer: structs, fields, primitive types, endianness, bitfields, arrays, checksums, and control flow.</p>
+      </a>
+      <a class="mod reveal d1" href="specification/hexplain/index.html">
+        <span class="code-badge">hexplain</span>
+        <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        <h4>Core</h4>
+        <p>The glue that links physical structure to semantic meaning and layout — <code style="font-family:var(--mono);font-size:.85em;color:var(--cyan)">mapsToClass</code>, <code style="font-family:var(--mono);font-size:.85em;color:var(--cyan)">mapsToProperty</code>.</p>
+      </a>
+      <a class="mod reveal d2" href="specification/dlv/index.html">
+        <span class="code-badge">dlv</span>
+        <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        <h4>DLV</h4>
+        <p>Data Layout Vocabulary: dimensions, axes, and interleaving (BIL / BIP / BSQ) for scientific and geospatial rasters.</p>
+      </a>
+      <a class="mod reveal" href="specification/hel/index.html">
+        <span class="code-badge">hel</span>
+        <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        <h4>HEL</h4>
+        <p>The Hexplain Expression Language for conditions and calculations: dynamic sizing, presence, counts, offsets, dispatch.</p>
+      </a>
+      <a class="mod reveal d1" href="specification/processing/index.html">
+        <span class="code-badge">processing</span>
+        <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        <h4>Processing Model</h4>
+        <p>The normative execution model: how a processor turns bytes + description into an RDF instance graph, with IRI minting.</p>
+      </a>
+      <a class="mod reveal d2" href="specification/architecture/index.html">
+        <span class="code-badge">architecture</span>
+        <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        <h4>Aspect Architecture</h4>
+        <p>Cross-cutting aspects — color, time, encoding, geometry, provenance — each concept defined once, imported everywhere.</p>
+      </a>
+    </div>
+
+    <div class="mod-group-label reveal">Domain vocabularies</div>
+    <div class="mod-grid vocab">
+      <a class="mod small reveal" href="specification/idv/index.html"><span class="code-badge">img</span><h4>IDV · Image</h4><p>Pixel width, colour space, compression.</p></a>
+      <a class="mod small reveal d1" href="specification/vdv/index.html"><span class="code-badge">vdv</span><h4>VDV · Video</h4><p>Frame rate, codec, resolution, duration.</p></a>
+      <a class="mod small reveal d2" href="specification/adv/index.html"><span class="code-badge">adv</span><h4>ADV · Audio</h4><p>Sample rate, bit depth, artist, album.</p></a>
+      <a class="mod small reveal d3" href="specification/gv/index.html"><span class="code-badge">gv</span><h4>GV · Geospatial</h4><p>Coordinate systems, projections, sensors.</p></a>
+      <a class="mod small reveal" href="specification/dfv/index.html"><span class="code-badge">dfv</span><h4>DFV · Doc &amp; Font</h4><p>Page count, author, font family.</p></a>
+      <a class="mod small reveal d1" href="specification/npv/index.html"><span class="code-badge">npv</span><h4>NPV · Network</h4><p>Source address, destination port.</p></a>
+      <a class="mod small reveal d2" href="specification/axv/index.html"><span class="code-badge">axv</span><h4>AXV · Archive</h4><p>File name, checksum, modification time.</p></a>
+      <a class="mod small reveal d3" href="specification/index.html"><span class="code-badge">+</span><h4>Profiles</h4><p>Extend any vocabulary for a specific format.</p></a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ECOSYSTEM / TOOLS ===================== -->
+<section class="blk" id="ecosystem">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow"><span class="dot"></span>What you can build</span>
+      <h2>An executable spec powers real tools</h2>
+      <p>Because Hexplain descriptions are formal and machine-readable, a single description drives an entire ecosystem — no more re-implementing the same format five times.</p>
+    </div>
+    <div class="tool-grid">
+      <div class="tool reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+        <h3>Parser &amp; codec generators</h3>
+        <p>Generate high-performance parsers and writers in Python, C++, or Rust straight from a description — no manual, error-prone code.</p>
+      </div>
+      <div class="tool reveal d1">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+        <h3>Conformance test suites</h3>
+        <p>Use a description as ground truth to validate a corpus of files for structural integrity, correct values, and conditional logic.</p>
+      </div>
+      <div class="tool reveal d2">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <h3>Semantic query engines</h3>
+        <p>Ingest heterogeneous binaries plus descriptions into one knowledge graph and run high-level SPARQL across the whole dataset.</p>
+      </div>
+      <div class="tool reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/></svg></div>
+        <h3>Semantic hex editors</h3>
+        <p>Show a structured, hierarchical, semantically-named view of a file — meaningful fields instead of a raw wall of bytes.</p>
+      </div>
+      <div class="tool reveal d1">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></div>
+        <h3>Format converters</h3>
+        <p>Two descriptions and their shared semantic mappings let tools translate data between formats while preserving meaning.</p>
+      </div>
+      <div class="tool reveal d2">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2v6M12 22v-6M4.93 10.93l1.41 1.41M17.66 11.66l1.41-1.41M2 18h4M18 18h4"/><circle cx="12" cy="14" r="4"/></svg></div>
+        <h3>Long-term preservation</h3>
+        <p>A description is enduring, self-contained documentation — guaranteeing data can be understood long after its software is gone.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== USE CASES ===================== -->
+<section class="blk" id="use-cases">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow"><span class="dot"></span>In the field</span>
+      <h2>Where Hexplain earns its keep</h2>
+    </div>
+    <div class="uc-grid">
+      <div class="uc reveal">
+        <span class="k">Geointelligence</span>
+        <h3>One query across every imagery format</h3>
+        <p>Describe GeoTIFF, NITF, and HDF5 against the Geospatial Vocabulary, then run a single query: <em>"all WorldView-3 datasets collected after Jan 2024 that contain a Lidar point cloud"</em> — via <code>gv:platformName</code> and <code>gv:PointCloud</code>.</p>
+      </div>
+      <div class="uc reveal d1">
+        <span class="k">Digital forensics</span>
+        <h3>Automated file carving &amp; extraction</h3>
+        <p>Scan a raw disk image for signatures with <code>bddo:syncOnMarker</code>, parse each file, validate integrity via declared <code>bddo:Checksum</code>s, and pull key metadata like EXIF camera model — automatically.</p>
+      </div>
+      <div class="uc reveal d2">
+        <span class="k">Broadcast media</span>
+        <h3>Automated QC at ingest</h3>
+        <p>Parse incoming MXF and MOV files to the Video Vocabulary, then flag anything where <code>vdv:frameRate</code> isn't 29.97 fps or <code>vdv:audioChannels</code> isn't 2 — no manual inspection.</p>
+      </div>
+      <div class="uc reveal d3">
+        <span class="k">Format conformance</span>
+        <h3>A testable spec, not a PDF</h3>
+        <p>Publish an official Hexplain Profile for "FormatX 2.0" as a definitive, machine-readable reference — and build a conformance suite that validates real sample files against it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FINAL CTA ===================== -->
+<section class="blk">
+  <div class="wrap">
+    <div class="cta-band reveal">
+      <h2>Make opaque binary data a <span class="grad-text">first-class citizen.</span></h2>
+      <p>Dive into the specification family — the foundation, the domain vocabularies, and the processing model that ties it all together.</p>
+      <div class="hero-cta">
+        <a href="specification/index.html" class="btn btn-primary">
+          Read the Specification
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a href="https://github.com/geoknoesis/hexplain.io" class="btn btn-ghost" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49l-.01-1.7c-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.27 2.75 1.05a9.36 9.36 0 015 0c1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.35 4.8-4.58 5.05.36.32.68.94.68 1.9l-.01 2.82c0 .27.18.6.69.49A10.02 10.02 0 0022 12.25C22 6.58 17.52 2 12 2z"/></svg>
+          Star on GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="#top" class="brand">
+          <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M16 2l12 7v14l-12 7L4 23V9z" fill="none" stroke="url(#mg)" stroke-width="2.4" stroke-linejoin="round"/>
+            <text x="16" y="21" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="url(#mg)" text-anchor="middle">Hx</text>
+          </svg>
+          Hexplain
+        </a>
+        <p>A declarative, semantic framework for describing binary data formats as linked data.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Foundation</h5>
+        <a href="specification/bddo/index.html">BDDO</a>
+        <a href="specification/hexplain/index.html">Core</a>
+        <a href="specification/dlv/index.html">DLV</a>
+        <a href="specification/hel/index.html">HEL</a>
+        <a href="specification/processing/index.html">Processing Model</a>
+      </div>
+      <div class="foot-col">
+        <h5>Vocabularies</h5>
+        <a href="specification/idv/index.html">Image (IDV)</a>
+        <a href="specification/vdv/index.html">Video (VDV)</a>
+        <a href="specification/adv/index.html">Audio (ADV)</a>
+        <a href="specification/gv/index.html">Geospatial (GV)</a>
+        <a href="specification/architecture/index.html">Aspect Architecture</a>
+      </div>
+      <div class="foot-col">
+        <h5>Project</h5>
+        <a href="specification/index.html">Full specification</a>
+        <a href="https://github.com/geoknoesis/hexplain.io" target="_blank" rel="noopener">GitHub ↗</a>
+        <a href="https://geoknoesis.com" target="_blank" rel="noopener">Geoknoesis ↗</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2025–2026 Stephane Fellah · Geoknoesis LLC</span>
+      <span class="badge">Unofficial draft · v1.0</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // progressive enhancement flag
+  document.documentElement.classList.add('js');
+
+  // nav shadow on scroll
+  var nav = document.getElementById('nav');
+  var onScroll = function(){ nav.classList.toggle('scrolled', window.scrollY > 8); };
+  onScroll();
+  window.addEventListener('scroll', onScroll, {passive:true});
+
+  // mobile menu
+  var burger = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  burger.addEventListener('click', function(){
+    var open = menu.classList.toggle('open');
+    burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  menu.querySelectorAll('a').forEach(function(a){
+    a.addEventListener('click', function(){ menu.classList.remove('open'); burger.setAttribute('aria-expanded','false'); });
+  });
+
+  // scroll reveal
+  var motionOK = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (motionOK && 'IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, {rootMargin:'0px 0px -8% 0px', threshold:0.08});
+    document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
+  }
+</script>
+</body>
+</html>
