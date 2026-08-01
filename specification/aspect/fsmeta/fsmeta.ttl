@@ -1,0 +1,24 @@
+# Hexplain Aspect — Filesystem Metadata (hx-fsmeta) 1.0
+# System aspect: filesystem attributes of a file/entry. Shared by archives and disk images.
+@prefix :       <https://hexplain.io/ns/aspect/fsmeta#> .
+@prefix afs:    <https://hexplain.io/ns/aspect/fsmeta#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/aspect/fsmeta> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/fsmeta/1.0> ; owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Aspect — Filesystem Metadata (hx-fsmeta)" ;
+    rdfs:comment "Aspect for filesystem attributes: name, size, timestamps, directory flag (permissions/owner to follow). Shared by archives and disk images." ;
+    dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "afs" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/fsmeta#" .
+
+:fileName a owl:DatatypeProperty ; rdfs:label "file name" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/fsmeta> ; rdfs:range xsd:string .
+:fileSize a owl:DatatypeProperty ; rdfs:label "file size" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/fsmeta> ; skos:closeMatch dcterms:extent ; rdfs:range xsd:unsignedLong ; rdfs:comment "Logical (uncompressed) size in bytes." .
+:modificationTime a owl:DatatypeProperty ; rdfs:label "modification time" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/fsmeta> ; skos:closeMatch dcterms:modified ; rdfs:range xsd:dateTime .
+:creationTime a owl:DatatypeProperty ; rdfs:label "creation time" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/fsmeta> ; skos:closeMatch dcterms:created ; rdfs:range xsd:dateTime .
+:isDirectory a owl:DatatypeProperty ; rdfs:label "is directory" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/fsmeta> ; rdfs:range xsd:boolean .

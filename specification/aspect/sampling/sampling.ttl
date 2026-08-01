@@ -1,0 +1,30 @@
+# Hexplain Aspect — Sampling (hx-sampling) 1.0
+# Base aspect: quantised sample values. Shared by any sampled representation
+# (raster pixels, audio samples, point-cloud attributes). Imports nothing.
+@prefix :       <https://hexplain.io/ns/aspect/sampling#> .
+@prefix asamp:  <https://hexplain.io/ns/aspect/sampling#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix qudt:   <http://qudt.org/schema/qudt/> .
+@prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .
+@prefix unit:   <http://qudt.org/vocab/unit/> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/aspect/sampling> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/sampling/1.0> ; owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Aspect — Sampling (hx-sampling)" ;
+    rdfs:comment "Base aspect for quantised sample values (bit depth, component count, sample format). Shared by raster, signal, and point-cloud representations." ;
+    dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "asamp" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/sampling#" .
+
+:bitDepth a owl:DatatypeProperty ; rdfs:label "bit depth" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ; rdfs:range xsd:positiveInteger ; qudt:hasQuantityKind quantitykind:InformationEntropy ; qudt:hasUnit unit:BIT ; rdfs:comment "Bits per component/sample of the quantised data (e.g. 8, 16, 24)." .
+:componentCount a owl:DatatypeProperty ; rdfs:label "component count" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ; rdfs:range xsd:positiveInteger ; rdfs:comment "Number of components per sample — colour channels/bands for raster, channels for signal." .
+:sampleFormat a owl:ObjectProperty ; rdfs:label "sample format" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ; rdfs:comment "Numeric interpretation of each stored sample." .
+
+:SignedInteger a owl:NamedIndividual ; rdfs:label "Signed integer" .
+:UnsignedInteger a owl:NamedIndividual ; rdfs:label "Unsigned integer" .
+:Float a owl:NamedIndividual ; rdfs:label "Floating point" .

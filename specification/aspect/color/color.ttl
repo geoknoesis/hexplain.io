@@ -1,0 +1,34 @@
+# Hexplain Aspect — Colour (hx-color) 1.0
+# Orthogonal aspect: colour interpretation of content. NOT a raster concept — shared by
+# raster pixels and vector fills/strokes. Imported by hx-raster and by vector styling.
+@prefix :       <https://hexplain.io/ns/aspect/color#> .
+@prefix acolor: <https://hexplain.io/ns/aspect/color#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/aspect/color> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/color/1.0> ; owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Aspect — Colour (hx-color)" ;
+    rdfs:comment "Orthogonal aspect for colour interpretation (colour space; colour model and ICC profile to follow). Carries the Colour Space Register. Shared by raster and vector styling." ;
+    dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "acolor" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/color#" .
+
+# ---------- Properties ----------
+:colorSpace a owl:ObjectProperty ; rdfs:label "color space" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/color> ; rdfs:range skos:Concept ; rdfs:comment "Colour space, drawn from the Colour Space Register (acolor:ColorSpaceScheme)." .
+
+# ---------- Colour Space Register (SKOS) ----------
+:ColorSpaceScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/color> ;
+    skos:prefLabel "Colour Space Register"@en .
+:BT601 a skos:Concept ; skos:inScheme :ColorSpaceScheme ; skos:topConceptOf :ColorSpaceScheme ;
+    skos:prefLabel "ITU-R BT.601"@en ; skos:altLabel "Rec. 601"@en ; skos:notation "bt601" .
+:BT709 a skos:Concept ; skos:inScheme :ColorSpaceScheme ; skos:topConceptOf :ColorSpaceScheme ;
+    skos:prefLabel "ITU-R BT.709"@en ; skos:altLabel "Rec. 709"@en ; skos:notation "bt709" .
+:BT2020 a skos:Concept ; skos:inScheme :ColorSpaceScheme ; skos:topConceptOf :ColorSpaceScheme ;
+    skos:prefLabel "ITU-R BT.2020"@en ; skos:altLabel "Rec. 2020"@en ; skos:notation "bt2020" .
+:sRGB a skos:Concept ; skos:inScheme :ColorSpaceScheme ; skos:topConceptOf :ColorSpaceScheme ;
+    skos:prefLabel "sRGB"@en ; skos:notation "srgb" .

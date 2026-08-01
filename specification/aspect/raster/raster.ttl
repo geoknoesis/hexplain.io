@@ -1,0 +1,27 @@
+# Hexplain Aspect — Raster (hx-raster) 1.0
+# Content-representation aspect: a regular N-D grid of samples. Sibling of hx-geometry
+# (vector); neither imports the other. Imports the sampling and colour base aspects.
+@prefix :        <https://hexplain.io/ns/aspect/raster#> .
+@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix ma:      <http://www.w3.org/ns/ma-ont#> .
+@prefix asamp:   <https://hexplain.io/ns/aspect/sampling#> .
+@prefix acolor:  <https://hexplain.io/ns/aspect/color#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/aspect/raster> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/raster/1.0> ; owl:versionInfo "1.0" ;
+    owl:imports <https://hexplain.io/ns/aspect/sampling> , <https://hexplain.io/ns/aspect/color> ;
+    rdfs:label "Hexplain Aspect — Raster (hx-raster)" ;
+    rdfs:comment "Content-representation aspect for a regular N-dimensional sample grid (width, height). Colour comes from hx-color and per-sample precision from hx-sampling, both imported. Shared by image, video frames, and geospatial rasters." ;
+    dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "araster" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/raster#" .
+
+:width a owl:DatatypeProperty ; rdfs:label "width" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; skos:closeMatch ma:frameWidth ; rdfs:range xsd:positiveInteger ; rdfs:comment "Grid extent along the horizontal axis, in samples (pixels)." .
+:height a owl:DatatypeProperty ; rdfs:label "height" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; skos:closeMatch ma:frameHeight ; rdfs:range xsd:positiveInteger ; rdfs:comment "Grid extent along the vertical axis, in samples (pixels)." .
+:noDataValue a owl:DatatypeProperty ; rdfs:label "no-data value" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Sample value denoting absence of data in the grid." .

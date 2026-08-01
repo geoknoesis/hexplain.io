@@ -1,0 +1,29 @@
+# Hexplain Aspect — Provenance & Acquisition (hx-provenance) 1.0
+# Governance aspect: how data was observed/acquired. Aligns to PROV and SOSA/SSN.
+# Cross-cutting (geospatial sensing, camera EXIF, scientific instruments).
+@prefix :       <https://hexplain.io/ns/aspect/provenance#> .
+@prefix aprov:  <https://hexplain.io/ns/aspect/provenance#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix sosa:   <http://www.w3.org/ns/sosa/> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/aspect/provenance> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/provenance/1.0> ; owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Aspect — Provenance & Acquisition (hx-provenance)" ;
+    rdfs:comment "Aspect for acquisition provenance: sensor, platform, acquisition time. Aligns to PROV and SOSA/SSN. Cross-cutting across sensed data." ;
+    dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "aprov" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/provenance#" .
+
+:AcquisitionInfo a owl:Class ; rdfs:label "Acquisition Info" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/provenance> ; skos:closeMatch prov:Activity .
+:SensorModel a owl:Class ; rdfs:label "Sensor Model" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/provenance> ; skos:closeMatch sosa:Sensor .
+:Platform a owl:Class ; rdfs:label "Platform" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/provenance> ; skos:closeMatch sosa:Platform .
+
+:acquisitionTime a owl:DatatypeProperty ; rdfs:label "acquisition time" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/provenance> ; skos:closeMatch prov:endedAtTime ; rdfs:range xsd:dateTime .
+:platformName a owl:DatatypeProperty ; rdfs:label "platform name" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/provenance> ; rdfs:range xsd:string .
+:sensorType a owl:DatatypeProperty ; rdfs:label "sensor type" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/provenance> ; rdfs:range xsd:string .

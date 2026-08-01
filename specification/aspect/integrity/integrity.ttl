@@ -1,0 +1,30 @@
+# Hexplain Aspect — Integrity (hx-integrity) 1.0
+# Governance aspect: verification of content bytes (checksums, hashes, signatures).
+# Cross-cutting across archives, network payloads, and any format carrying a checksum.
+@prefix :       <https://hexplain.io/ns/aspect/integrity#> .
+@prefix aintg:  <https://hexplain.io/ns/aspect/integrity#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/aspect/integrity> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/integrity/1.0> ; owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Aspect — Integrity (hx-integrity)" ;
+    rdfs:comment "Aspect for byte-integrity verification: checksum value and algorithm (signatures/ECC to follow). Cross-cutting across archives, network, and other formats." ;
+    dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "aintg" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/integrity#" .
+
+:checksum a owl:DatatypeProperty ; rdfs:label "checksum" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ; rdfs:range xsd:hexBinary ; rdfs:comment "Checksum/hash value over the content bytes." .
+:checksumAlgorithm a owl:ObjectProperty ; rdfs:label "checksum algorithm" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ; rdfs:range skos:Concept ; rdfs:comment "Algorithm used, from the Checksum Algorithm Register." .
+
+# ---------- Checksum Algorithm Register (SKOS) ----------
+:ChecksumAlgorithmScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ;
+    skos:prefLabel "Checksum Algorithm Register"@en .
+:CRC32 a skos:Concept ; skos:inScheme :ChecksumAlgorithmScheme ; skos:topConceptOf :ChecksumAlgorithmScheme ; skos:prefLabel "CRC-32"@en ; skos:notation "crc32" .
+:MD5 a skos:Concept ; skos:inScheme :ChecksumAlgorithmScheme ; skos:topConceptOf :ChecksumAlgorithmScheme ; skos:prefLabel "MD5"@en ; skos:notation "md5" .
+:SHA1 a skos:Concept ; skos:inScheme :ChecksumAlgorithmScheme ; skos:topConceptOf :ChecksumAlgorithmScheme ; skos:prefLabel "SHA-1"@en ; skos:notation "sha1" .
+:SHA256 a skos:Concept ; skos:inScheme :ChecksumAlgorithmScheme ; skos:topConceptOf :ChecksumAlgorithmScheme ; skos:prefLabel "SHA-256"@en ; skos:notation "sha256" .

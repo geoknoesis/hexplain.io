@@ -1,0 +1,34 @@
+# Hexplain Aspect — Spatial Reference (hx-spatialref) 1.0
+# Reference-frame aspect: georeferencing / coordinate reference. Neither raster nor vector —
+# shared by geo-raster and geo-vector alike. Imports nothing.
+@prefix :        <https://hexplain.io/ns/aspect/spatialref#> .
+@prefix asref:   <https://hexplain.io/ns/aspect/spatialref#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix geosparql: <http://www.opengis.net/ont/geosparql#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/aspect/spatialref> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/spatialref/1.0> ; owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Aspect — Spatial Reference (hx-spatialref)" ;
+    rdfs:comment "Aspect for georeferencing: coordinate reference systems, geotransforms, registration. Shared by geospatial raster and vector data." ;
+    dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "asref" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/spatialref#" .
+
+:CoordinateReferenceSystem a owl:Class ; rdfs:label "Coordinate Reference System" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> .
+:GeoTransform a owl:Class ; rdfs:label "GeoTransform" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> .
+
+:wktString a owl:DatatypeProperty ; rdfs:label "WKT string" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; skos:closeMatch geosparql:asWKT ; rdfs:range xsd:string .
+:epsgCode a owl:DatatypeProperty ; rdfs:label "EPSG code" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:positiveInteger .
+:originLongitude a owl:DatatypeProperty ; rdfs:label "origin longitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
+:originLatitude a owl:DatatypeProperty ; rdfs:label "origin latitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
+:scaleX a owl:DatatypeProperty ; rdfs:label "X scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
+:scaleY a owl:DatatypeProperty ; rdfs:label "Y scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
+:pixelRegistration a owl:ObjectProperty ; rdfs:label "pixel registration" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> .
+
+:PixelCorner a owl:NamedIndividual ; rdfs:label "Pixel Corner Registration" .
+:PixelCenter a owl:NamedIndividual ; rdfs:label "Pixel Center Registration" .

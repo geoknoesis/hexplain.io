@@ -1,0 +1,40 @@
+# Hexplain Aspect — Geometry (hx-geometry) 1.0
+# Content-representation aspect: explicit geometry (vector). Sibling of hx-raster; neither
+# imports the other. Shared by vector graphics, geospatial vector, and font glyph outlines.
+@prefix :        <https://hexplain.io/ns/aspect/geometry#> .
+@prefix ageom:   <https://hexplain.io/ns/aspect/geometry#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix geosparql: <http://www.opengis.net/ont/geosparql#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/aspect/geometry> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/geometry/1.0> ; owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Aspect — Geometry (hx-geometry)" ;
+    rdfs:comment "Aspect for explicit (vector) geometry: geometry type, dimensionality, coordinate precision. Sibling of hx-raster. Shared by vector graphics, geospatial vector, and font glyphs." ;
+    dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "ageom" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/geometry#" .
+
+:geometryType a owl:ObjectProperty ; rdfs:label "geometry type" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ; rdfs:range skos:Concept ; rdfs:comment "Kind of geometry, from the Geometry Type Register." .
+:dimensionality a owl:DatatypeProperty ; rdfs:label "dimensionality" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ; rdfs:range xsd:positiveInteger ; rdfs:comment "Coordinate dimensionality (2 for XY, 3 for XYZ)." .
+:coordinatePrecision a owl:DatatypeProperty ; rdfs:label "coordinate precision" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ; rdfs:range xsd:integer ; rdfs:comment "Number of decimal places retained per coordinate." .
+
+# ---------- Geometry Type Register (SKOS) ----------
+:GeometryTypeScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ;
+    skos:prefLabel "Geometry Type Register"@en .
+:Point a skos:Concept ; skos:inScheme :GeometryTypeScheme ; skos:topConceptOf :GeometryTypeScheme ;
+    skos:prefLabel "Point"@en ; skos:closeMatch geosparql:Point .
+:LineString a skos:Concept ; skos:inScheme :GeometryTypeScheme ; skos:topConceptOf :GeometryTypeScheme ;
+    skos:prefLabel "LineString"@en .
+:Polygon a skos:Concept ; skos:inScheme :GeometryTypeScheme ; skos:topConceptOf :GeometryTypeScheme ;
+    skos:prefLabel "Polygon"@en .
+:MultiPoint a skos:Concept ; skos:inScheme :GeometryTypeScheme ; skos:topConceptOf :GeometryTypeScheme ;
+    skos:prefLabel "MultiPoint"@en .
+:MultiLineString a skos:Concept ; skos:inScheme :GeometryTypeScheme ; skos:topConceptOf :GeometryTypeScheme ;
+    skos:prefLabel "MultiLineString"@en .
+:MultiPolygon a skos:Concept ; skos:inScheme :GeometryTypeScheme ; skos:topConceptOf :GeometryTypeScheme ;
+    skos:prefLabel "MultiPolygon"@en .
