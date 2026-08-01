@@ -1,0 +1,20 @@
+# An ASCII-coded length field driving a sibling's size — the NITF/FITS pattern.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/ascii#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Segment a bddo:Struct ;
+    rdfs:label "Segment with an ASCII length prefix" ;
+    bddo:hasField ( ex:Segment.length ex:Segment.payload ex:Segment.flags ) .
+
+ex:Segment.length a bddo:Field ;
+    rdfs:comment "Five ASCII digits, e.g. \"00512\"." ;
+    bddo:dataType bddo:asciiInteger ; bddo:size 5 .
+
+ex:Segment.payload a bddo:Field ;
+    bddo:dataType bddo:bytes ;
+    bddo:sizeFromField ex:Segment.length .
+
+ex:Segment.flags a bddo:Field ;
+    rdfs:comment "Two ASCII hex digits." ;
+    bddo:dataType bddo:asciiInteger ; bddo:size 2 ; bddo:numericBase 16 .

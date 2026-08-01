@@ -64,6 +64,8 @@
 :trimNull               a owl:DatatypeProperty ; rdfs:label "trim null" ; rdfs:range xsd:boolean ;
     rdfs:comment "For a fixed-size (padded) string field, the emitted value ends at the first 0x00 byte within the field's width." .
 :encoding               a owl:ObjectProperty ; rdfs:label "encoding" ; rdfs:range :Encoding .
+:numericBase            a owl:DatatypeProperty ; rdfs:label "numeric base" ; rdfs:range xsd:positiveInteger ;
+    rdfs:comment "Radix used to read an :asciiInteger field: 8, 10 or 16. Default 10." .
 :bitLength              a owl:DatatypeProperty ; rdfs:label "bit length" ; rdfs:range xsd:positiveInteger .
 :repeatCount            a owl:DatatypeProperty ; rdfs:label "repeat count" ; rdfs:range xsd:nonNegativeInteger .
 :repeatCountFromField   a owl:ObjectProperty ; rdfs:label "repeat count from field" ; rdfs:range :Field .
@@ -151,6 +153,15 @@
 :float64le a :DataType ; rdfs:label "float64le" ; :baseType :baseFloat ; :bitWidth 64 ; :endianness :LittleEndian ; :xsdType xsd:double .
 :bytes  a :DataType ; rdfs:label "bytes"  ; :baseType :baseBytes  ; :xsdType xsd:hexBinary .
 :string a :DataType ; rdfs:label "string" ; :baseType :baseString ; :xsdType xsd:string .
+
+# ---------- ASCII-coded numeric types ----------
+# Numbers written as text in a fixed-width field (NITF BCS-N, FITS card values,
+# USGSDEM Fortran fields). The parsed HEL value is numeric, so these fields may
+# drive sizing, offset and repeat expressions — which bddo:string cannot.
+:asciiInteger a :DataType ; rdfs:label "asciiInteger" ; :baseType :baseInteger ; :encoding :ascii ; :xsdType xsd:integer ;
+    rdfs:comment "An integer written as text, occupying the field's declared width (bddo:size) or ending at its terminator. Surrounding space and a leading '+'/'-' are accepted. Radix is bddo:numericBase, default 10. Yields a HEL Integer." .
+:asciiDecimal a :DataType ; rdfs:label "asciiDecimal" ; :baseType :baseFloat ; :encoding :ascii ; :xsdType xsd:decimal ;
+    rdfs:comment "A fixed- or floating-point number written as text, occupying the field's declared width or ending at its terminator. Accepts leading sign, decimal point and exponent. Yields a HEL Float." .
 
 # =========================================================
 # SHACL shapes (domain + cardinality; refine the declared ranges)
@@ -289,3 +300,25 @@ bddo:ChecksumShape a sh:NodeShape ;
     sh:property [ sh:path bddo:coversFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:coversToField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:coversExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+
+# An ASCII-coded numeric field must have a width or a terminator, or it cannot be read.
+bddo:AsciiNumericWidthShape a sh:NodeShape ;
+    sh:targetClass bddo:Field ;
+    sh:sparql [ sh:message "A bddo:asciiInteger / bddo:asciiDecimal field must declare a width (size / sizeFromField / sizeFromExpression) or a terminator." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:dataType ?dt .
+            FILTER(?dt IN (bddo:asciiInteger, bddo:asciiDecimal))
+            FILTER NOT EXISTS { $this bddo:size ?s }
+            FILTER NOT EXISTS { $this bddo:sizeFromField ?f }
+            FILTER NOT EXISTS { $this bddo:sizeFromExpression ?e }
+            FILTER NOT EXISTS { $this bddo:terminator ?t }
+        }""" ] .
+
+# numericBase is meaningful only for :asciiInteger.
+bddo:NumericBaseShape a sh:NodeShape ;
+    sh:targetSubjectsOf bddo:numericBase ;
+    sh:property [ sh:path bddo:numericBase ; sh:maxCount 1 ; sh:in ( 8 10 16 ) ;
+        sh:message "bddo:numericBase must be 8, 10 or 16." ] ;
+    sh:property [ sh:path bddo:dataType ; sh:hasValue bddo:asciiInteger ;
+        sh:message "bddo:numericBase applies only to a field whose bddo:dataType is bddo:asciiInteger." ] .

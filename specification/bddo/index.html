@@ -128,6 +128,8 @@
                 <tr><td><code>bddo:string</code></td><td>Text. Requires a sizing or termination property; MAY have <code>bddo:encoding</code>.</td><td><code>xsd:string</code></td></tr>
             </tbody>
         </table>
+        <h3>ASCII-Coded Numeric Types</h3>
+        <p>Many record-oriented formats write numbers as text in fixed-width fields — NITF BCS-N, FITS card values, USGS DEM Fortran fields. <code>bddo:asciiInteger</code> and <code>bddo:asciiDecimal</code> read such a field as a number rather than a string, so its value may drive <code>bddo:sizeFromExpression</code>, <code>bddo:atOffsetFromExpression</code> and <code>bddo:repeatCountFromExpression</code>. The field's width comes from <code>bddo:size</code> (or a terminator); <code>bddo:numericBase</code> selects the radix.</p>
     </section>
 
     <section id="properties">
@@ -162,6 +164,8 @@
                 <dd>For a fixed-size (padded) <code>bddo:string</code>, the emitted value ends at the first <code>0x00</code> within the field's width (NUL-padded names, e.g. TAR/ZIP).</dd>
                 <dt><code>bddo:encoding</code></dt>
                 <dd>The character encoding of a <code>bddo:string</code> field. Value MUST be one of the encoding individuals (<code>bddo:utf8</code>, <code>bddo:ascii</code>, <code>bddo:utf16le</code>, <code>bddo:utf16be</code>, <code>bddo:latin1</code>). Defaults to <code>bddo:utf8</code>.</dd>
+                <dt><code>bddo:numericBase</code></dt>
+                <dd>Radix (8, 10 or 16) for reading a <code>bddo:asciiInteger</code> field. Default 10.</dd>
                 <dt><code>bddo:bitLength</code></dt>
                 <dd>The width, in bits, of a sub-byte field (see <a href="#bitfields">Bit-Level Fields</a>).</dd>
                 <dt><code>bddo:repeatCount</code> / <code>bddo:repeatCountFromField</code> / <code>bddo:repeatCountFromExpression</code> / <code>bddo:repeatUntil</code></dt>
@@ -265,6 +269,8 @@
 :trimNull               a owl:DatatypeProperty ; rdfs:label "trim null" ; rdfs:range xsd:boolean ;
     rdfs:comment "For a fixed-size (padded) string field, the emitted value ends at the first 0x00 byte within the field's width." .
 :encoding               a owl:ObjectProperty ; rdfs:label "encoding" ; rdfs:range :Encoding .
+:numericBase            a owl:DatatypeProperty ; rdfs:label "numeric base" ; rdfs:range xsd:positiveInteger ;
+    rdfs:comment "Radix used to read an :asciiInteger field: 8, 10 or 16. Default 10." .
 :bitLength              a owl:DatatypeProperty ; rdfs:label "bit length" ; rdfs:range xsd:positiveInteger .
 :repeatCount            a owl:DatatypeProperty ; rdfs:label "repeat count" ; rdfs:range xsd:nonNegativeInteger .
 :repeatCountFromField   a owl:ObjectProperty ; rdfs:label "repeat count from field" ; rdfs:range :Field .
@@ -352,6 +358,15 @@
 :float64le a :DataType ; rdfs:label "float64le" ; :baseType :baseFloat ; :bitWidth 64 ; :endianness :LittleEndian ; :xsdType xsd:double .
 :bytes  a :DataType ; rdfs:label "bytes"  ; :baseType :baseBytes  ; :xsdType xsd:hexBinary .
 :string a :DataType ; rdfs:label "string" ; :baseType :baseString ; :xsdType xsd:string .
+
+# ---------- ASCII-coded numeric types ----------
+# Numbers written as text in a fixed-width field (NITF BCS-N, FITS card values,
+# USGSDEM Fortran fields). The parsed HEL value is numeric, so these fields may
+# drive sizing, offset and repeat expressions — which bddo:string cannot.
+:asciiInteger a :DataType ; rdfs:label "asciiInteger" ; :baseType :baseInteger ; :encoding :ascii ; :xsdType xsd:integer ;
+    rdfs:comment "An integer written as text, occupying the field's declared width (bddo:size) or ending at its terminator. Surrounding space and a leading '+'/'-' are accepted. Radix is bddo:numericBase, default 10. Yields a HEL Integer." .
+:asciiDecimal a :DataType ; rdfs:label "asciiDecimal" ; :baseType :baseFloat ; :encoding :ascii ; :xsdType xsd:decimal ;
+    rdfs:comment "A fixed- or floating-point number written as text, occupying the field's declared width or ending at its terminator. Accepts leading sign, decimal point and exponent. Yields a HEL Float." .
         </pre>
     </section>
 
@@ -504,6 +519,28 @@ bddo:ChecksumShape a sh:NodeShape ;
     sh:property [ sh:path bddo:coversFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:coversToField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:coversExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+
+# An ASCII-coded numeric field must have a width or a terminator, or it cannot be read.
+bddo:AsciiNumericWidthShape a sh:NodeShape ;
+    sh:targetClass bddo:Field ;
+    sh:sparql [ sh:message "A bddo:asciiInteger / bddo:asciiDecimal field must declare a width (size / sizeFromField / sizeFromExpression) or a terminator." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:dataType ?dt .
+            FILTER(?dt IN (bddo:asciiInteger, bddo:asciiDecimal))
+            FILTER NOT EXISTS { $this bddo:size ?s }
+            FILTER NOT EXISTS { $this bddo:sizeFromField ?f }
+            FILTER NOT EXISTS { $this bddo:sizeFromExpression ?e }
+            FILTER NOT EXISTS { $this bddo:terminator ?t }
+        }""" ] .
+
+# numericBase is meaningful only for :asciiInteger.
+bddo:NumericBaseShape a sh:NodeShape ;
+    sh:targetSubjectsOf bddo:numericBase ;
+    sh:property [ sh:path bddo:numericBase ; sh:maxCount 1 ; sh:in ( 8 10 16 ) ;
+        sh:message "bddo:numericBase must be 8, 10 or 16." ] ;
+    sh:property [ sh:path bddo:dataType ; sh:hasValue bddo:asciiInteger ;
+        sh:message "bddo:numericBase applies only to a field whose bddo:dataType is bddo:asciiInteger." ] .
         </pre>
     </section>
 
@@ -533,6 +570,7 @@ bddo:ChecksumShape a sh:NodeShape ;
     "sizeToEndOfStream": { "@id": "bddo:sizeToEndOfStream", "@type": "xsd:boolean" },
     "terminator": { "@id": "bddo:terminator", "@type": "xsd:hexBinary" },
     "encoding": { "@id": "bddo:encoding", "@type": "@id" },
+    "numericBase": "bddo:numericBase",
     "bitLength": { "@id": "bddo:bitLength", "@type": "xsd:positiveInteger" },
     "repeatCount": { "@id": "bddo:repeatCount", "@type": "xsd:nonNegativeInteger" },
     "repeatCountFromField": { "@id": "bddo:repeatCountFromField", "@type": "@id" },

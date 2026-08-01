@@ -139,6 +139,8 @@ struct Chunk {
 | `bytes` | `bddo:bytes` (needs a size/terminator) |
 | `str` | `bddo:string`, encoding `utf8` (default) |
 | `ascii utf8 utf16le utf16be latin1` | `bddo:string` + `bddo:encoding <that>` |
+| `anum` | `bddo:asciiInteger` — an integer written as text; needs a width, e.g. `anum[5]` |
+| `adec` | `bddo:asciiDecimal` — a decimal written as text; needs a width |
 | `bits[N]` | a field with `bddo:bitLength N` |
 | `<StructName>` | nested/typed field (`bddo:dataType <that Struct>`) |
 
@@ -158,6 +160,7 @@ struct Chunk {
 | bit slice | `flags : bits[3]` | `bitLength 3` |
 | terminator | `str @terminator 0x00` | `terminator` (`@trim-null` → `trimNull`) |
 | overrides | `@endian little` · `@align 4` · `@bit-order lsb` · `@encoding latin1` | per-field props |
+| numeric base | `anum[2] @base 16` | `numericBase` |
 | conditional type | `switch <expr?> { <val|when expr> => <Struct> … }` | `hasConditionalDataType` (`DataTypeRule` list) |
 
 `offsetBase` keywords: `stream-start stream-end parent-start current`. `@fixed` accepts a
@@ -393,7 +396,7 @@ struct-decl  = "struct" IDENT [ "as" IDENT ] [ "means" CURIE ]
 struct-annot = "@endian" endian | "@bit-order" bitorder
              | "@size" ( INT | ref | "`" HEL "`" ) ;
 field-decl   = [ "field" ] IDENT [ "as" IDENT ] ":" type { clause } ;
-type         = prim | "bytes" | strtype | "bits" "[" expr "]" | struct-ref ;
+type         = prim | "bytes" | strtype | "anum" | "adec" | "bits" "[" expr "]" | struct-ref ;
 strtype      = "str" | "ascii" | "utf8" | "utf16le" | "utf16be" | "latin1" ;
 clause       = "[" ( expr | ".." ) "]"                      (* byte size *)
              | "repeat" ( expr | "until" expr )
@@ -404,7 +407,7 @@ clause       = "[" ( expr | ".." ) "]"                      (* byte size *)
              | "@checksum" ALGO "(" ( ref ".." ref | "covers" "(" expr ")" ) ")"
              | "@terminator" HEXBYTES | "@trim-null"
              | "@endian" endian | "@align" INT | "@bit-order" bitorder
-             | "@encoding" enc
+             | "@encoding" enc | "@base" INT
              | "switch" [ expr ] "{" { swarm } "}"
              | "means" CURIE
              | "value" expr [ "@datatype" CURIE ]
