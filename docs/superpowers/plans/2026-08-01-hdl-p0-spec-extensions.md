@@ -185,17 +185,18 @@ specification/<mod>/test/<feature>-invalid.ttl must NOT. Each -invalid file
 carries an rdfs:comment naming the shape it is expected to trip.
 """
 import glob
+import os
+import pathlib
 import sys
 
 import rdflib
 from pyshacl import validate
 
-ONT = [
+CORE = [
     "specification/bddo/bddo.ttl",
     "specification/dlv/dlv.ttl",
     "specification/hexplain/core.ttl",
 ]
-SHAPES = ONT
 
 
 def load(paths):
@@ -205,7 +206,21 @@ def load(paths):
     return g
 
 
-shapes = load(SHAPES)
+def ontologies_for(fixture_path):
+    """Core vocabularies plus the owning module's own vocabulary and shapes.
+
+    A fixture lives at specification/<mod>/test/<feature>-{valid,invalid}.ttl.
+    Some modules keep their SHACL beside the vocabulary (bddo.ttl); others put
+    it in a sibling shapes.ttl (conf, req). Load whichever exist.
+    """
+    mod = pathlib.Path(fixture_path).parent.parent.name
+    paths = list(CORE)
+    for extra in (f"specification/{mod}/{mod}.ttl", f"specification/{mod}/shapes.ttl"):
+        if os.path.exists(extra) and extra not in paths:
+            paths.append(extra)
+    return paths
+
+
 fixtures = sorted(glob.glob("specification/*/test/*-valid.ttl")) + sorted(
     glob.glob("specification/*/test/*-invalid.ttl")
 )
@@ -215,7 +230,9 @@ if not fixtures:
 failures = []
 for path in fixtures:
     should_conform = path.endswith("-valid.ttl")
-    data = load(ONT + [path])
+    ont = ontologies_for(path)
+    data = load(ont + [path])
+    shapes = load(ont)
     conforms, _, report = validate(
         data, shacl_graph=shapes, inference="none", advanced=True, meta_shacl=False
     )
@@ -229,6 +246,8 @@ if failures:
     sys.exit(1)
 print(f"PASS: {len(fixtures)} vocabulary fixtures behave as expected")
 ```
+
+The runner loads each fixture's owning module — `<mod>.ttl` plus a sibling `shapes.ttl` if present — so it works for modules that keep their SHACL separately (conf, req) as well as those that inline it (bddo, dlv).
 
 Create `specification/bddo/test/smoke-valid.ttl` — a minimal well-formed struct that must conform:
 
@@ -263,12 +282,12 @@ ex:Broken a bddo:Struct ;
 ex:Broken.nameless a bddo:Field ; rdfs:label "no data type declared" .
 ```
 
-- [ ] **Step 2: Run it to verify both fixtures behave**
+- [ ] **Step 2: Run it to verify all fixtures behave**
 
 Run: `python tools/test_vocab_shapes.py`
-Expected: `PASS: 2 vocabulary fixtures behave as expected`.
+Expected: `PASS: 6 vocabulary fixtures behave as expected` (smoke-valid, smoke-invalid, plus pre-existing conf and req fixtures).
 
-> If `smoke-invalid.ttl` unexpectedly conforms, the runner is not reaching `bddo:FieldShape` — check that `advanced=True` is set and that `SHAPES` includes `bddo.ttl`. Do not weaken the fixture to make it pass.
+> If `smoke-invalid.ttl` unexpectedly conforms, the runner is not reaching `bddo:FieldShape` — check that `advanced=True` is set and that the fixture's owning module is loaded via `ontologies_for()`. Do not weaken the fixture to make it pass.
 
 - [ ] **Step 3: Confirm the new fixtures do not break the parse gate**
 
