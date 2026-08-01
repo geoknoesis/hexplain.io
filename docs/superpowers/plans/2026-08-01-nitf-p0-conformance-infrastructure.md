@@ -2368,6 +2368,24 @@ class ConformanceEngineTest {
         assertTrue(report.findings.any { it.constraintId == "ex:C-FHDR" })
     }
 
+    @Test fun `a nested-scope constraint can reach the root for cross-segment rules`() {
+        // "No segment is classified above the file" is the archetypal cross-segment rule
+        // and is unwritable unless a nested scope can navigate to root.
+        val dominance = ConstraintIR(
+            id = "ex:C-Dominance",
+            scope = "ex:ImageSubheader",
+            assertion = hel("ISCLAS == root.FHDR or ISCLAS == 'U'"),
+            requirementIds = listOf("R-CLAS"),
+            message = "ISCLAS '{value}' exceeds the file classification.",
+        )
+        val clean = engine(listOf(dominance)).evaluate(parsedTree("NITF", listOf("U")))
+        assertTrue(clean.isConformant())
+
+        val violating = engine(listOf(dominance)).evaluate(parsedTree("NITF", listOf("S")))
+        assertEquals(1, violating.findings.size)
+        assertEquals("R-CLAS", violating.findings[0].requirementId)
+    }
+
     @Test fun `a constraint citing several requirements yields one finding each`() {
         val multi = fhdrRule.copy(id = "ex:C-Multi", requirementIds = listOf("R-FHDR", "R-CLAS"))
         val report = engine(listOf(multi)).evaluate(parsedTree("BIIF", listOf("U")))
@@ -2412,7 +2430,7 @@ class ConformanceEngine(
 
     fun evaluate(parsed: Map<String, Any>): ConformanceReport {
         val instances = mutableMapOf<String, MutableList<Instance>>()
-        collectInstances(formatIR.rootStruct, parsed, null, instances)
+        collectInstances(formatIR.rootStruct, parsed, null, parsed, instances)
 
         val findings = mutableListOf<Finding>()
         for (constraint in conformanceIR.constraints) {
@@ -2427,7 +2445,10 @@ class ConformanceEngine(
         val evaluator = HelEvaluator(
             context = instance.data,
             parentContext = instance.parent,
-            rootContext = null,
+            // The root must be reachable: cross-segment rules are the point of a scoped
+            // constraint language. "No segment is classified above the file" is exactly
+            // `FSCLAS`-vs-`root.FSCLAS`, and it cannot be written without this.
+            rootContext = instance.root,
             streamContext = null,
             selfContext = instance.data,
             evaluationInstant = evaluationInstant,
@@ -2479,6 +2500,7 @@ class ConformanceEngine(
     private data class Instance(
         val data: Map<String, Any>,
         val parent: Map<String, Any>?,
+        val root: Map<String, Any>,
         val byteOffset: Int?,
     )
 
@@ -2490,10 +2512,11 @@ class ConformanceEngine(
         structName: String,
         data: Map<String, Any>,
         parent: Map<String, Any>?,
+        root: Map<String, Any>,
         out: MutableMap<String, MutableList<Instance>>,
     ) {
         out.getOrPut(structName) { mutableListOf() }
-            .add(Instance(data, parent, data[Metaparser.BYTE_OFFSET_KEY] as? Int))
+            .add(Instance(data, parent, root, data[Metaparser.BYTE_OFFSET_KEY] as? Int))
 
         val structDef = formatIR.structs[structName] ?: return
         for (field in structDef.fields) {
@@ -2501,11 +2524,11 @@ class ConformanceEngine(
             when (val value = data[field.name]) {
                 is Map<*, *> -> {
                     @Suppress("UNCHECKED_CAST")
-                    collectInstances(nested, value as Map<String, Any>, data, out)
+                    collectInstances(nested, value as Map<String, Any>, data, root, out)
                 }
                 is List<*> -> value.filterIsInstance<Map<*, *>>().forEach {
                     @Suppress("UNCHECKED_CAST")
-                    collectInstances(nested, it as Map<String, Any>, data, out)
+                    collectInstances(nested, it as Map<String, Any>, data, root, out)
                 }
                 else -> Unit
             }
@@ -2525,7 +2548,7 @@ class ConformanceEngine(
 - [ ] **Step 4: Run the tests**
 
 Run: `cd /d/work/hexplain-tools && ./gradlew :core:test --tests "io.hexplain.core.conformance.ConformanceEngineTest"`
-Expected: PASS — all six tests.
+Expected: PASS — all seven tests.
 
 - [ ] **Step 5: Run the full suite and commit**
 
