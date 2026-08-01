@@ -114,10 +114,10 @@ struct FileHeader {
   resSegs     : RESegLen      repeat NUMRES
   UDHDL    : ascii[5]
   UDHOFL   : ascii[3]  if UDHDL != "00000"
-  UDHD     : TRE if UDHDL != "00000" @prop bddo:sizeFromExpression `UDHDL - 3` @prop bddo:repeatUntil "end-of-region"
+  UDHD     : TRE if UDHDL != "00000" @prop bddo:sizeFromExpression "UDHDL - 3" @prop bddo:repeatUntil "end-of-region"
   XHDL     : ascii[5]
   XHDLOFL  : ascii[3]  if XHDL != "00000"
-  XHD      : TRE if XHDL != "00000" @prop bddo:sizeFromExpression `XHDL - 3` @prop bddo:repeatUntil "end-of-region"
+  XHD      : TRE if XHDL != "00000" @prop bddo:sizeFromExpression "XHDL - 3" @prop bddo:repeatUntil "end-of-region"
 }
 
 // =========================================================
@@ -132,8 +132,8 @@ struct ImageSubheader means gv:RasterDataset {
   security : SecurityMarking
   ENCRYP   : ascii[1]
   ISORCE   : ascii[42]
-  NROWS    : ascii[8]  means araster:height value `xsd:integer(instance.parent.NROWS)` @datatype xsd:integer
-  NCOLS    : ascii[8]  means araster:width  value `xsd:integer(instance.parent.NCOLS)` @datatype xsd:integer
+  NROWS    : ascii[8]  means araster:height @prop hexplain:valueExpression "xsd:integer(NROWS)" @prop hexplain:valueDatatype xsd:integer
+  NCOLS    : ascii[8]  means araster:width  @prop hexplain:valueExpression "xsd:integer(NCOLS)" @prop hexplain:valueDatatype xsd:integer
   PVTYPE   : ascii[3]  enum { "INT"=>Int, "B"=>BiLevel, "SI"=>Signed, "R"=>Real, "C"=>Complex }
   IREP     : ascii[8]  // enum over MONO/RGB/RGB-LUT/MULTI/NODISPLY/NVECTOR/POLAR/VPH/YCbCr601
   ICAT     : ascii[8]
@@ -144,7 +144,7 @@ struct ImageSubheader means gv:RasterDataset {
   NICOM    : ascii[1]
   ICOM     : ascii[80] repeat NICOM
   IC       : ascii[2]  // enum over NC/NM/C1/C3-C8/I1/M1/M3-M8
-  COMRAT   : ascii[4]  if IC != "NC" && IC != "NM"
+  COMRAT   : ascii[4]  if IC != "NC" and IC != "NM"
   NBANDS   : ascii[1]
   XBANDS   : ascii[5]  if NBANDS == "0"
   bands    : ImageBand repeat NBANDS
@@ -161,10 +161,10 @@ struct ImageSubheader means gv:RasterDataset {
   IMAG     : ascii[4]
   UDIDL    : ascii[5]
   UDOFL    : ascii[3]  if UDIDL != "00000"
-  UDID     : TRE if UDIDL != "00000" @prop bddo:sizeFromExpression `UDIDL - 3` @prop bddo:repeatUntil "end-of-region"
+  UDID     : TRE if UDIDL != "00000" @prop bddo:sizeFromExpression "UDIDL - 3" @prop bddo:repeatUntil "end-of-region"
   IXSHDL   : ascii[5]
   IXSOFL   : ascii[3]  if IXSHDL != "00000"
-  IXSHD    : TRE if IXSHDL != "00000" @prop bddo:sizeFromExpression `IXSHDL - 3` @prop bddo:repeatUntil "end-of-region"
+  IXSHD    : TRE if IXSHDL != "00000" @prop bddo:sizeFromExpression "IXSHDL - 3" @prop bddo:repeatUntil "end-of-region"
 }
 
 // =========================================================
@@ -187,7 +187,7 @@ struct GraphicSubheader {
   SRES2    : ascii[2]
   SXSHDL   : ascii[5]
   SXSOFL   : ascii[3]  if SXSHDL != "00000"
-  SXSHD    : TRE if SXSHDL != "00000" @prop bddo:sizeFromExpression `SXSHDL - 3` @prop bddo:repeatUntil "end-of-region"
+  SXSHD    : TRE if SXSHDL != "00000" @prop bddo:sizeFromExpression "SXSHDL - 3" @prop bddo:repeatUntil "end-of-region"
 }
 
 // =========================================================
@@ -204,7 +204,7 @@ struct TextSubheader {
   TXTFMT   : ascii[3]  enum { "STA"=>Standard, "MTF"=>MessageTextFormat, "UT1"=>EcsText, "U8S"=>U8sText }
   TXSHDL   : ascii[5]
   TXSOFL   : ascii[3]  if TXSHDL != "00000"
-  TXSHD    : TRE if TXSHDL != "00000" @prop bddo:sizeFromExpression `TXSHDL - 3` @prop bddo:repeatUntil "end-of-region"
+  TXSHD    : TRE if TXSHDL != "00000" @prop bddo:sizeFromExpression "TXSHDL - 3" @prop bddo:repeatUntil "end-of-region"
 }
 
 // =========================================================
