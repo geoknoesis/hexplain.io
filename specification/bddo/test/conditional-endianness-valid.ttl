@@ -1,0 +1,16 @@
+# The TIFF II/MM case: byte order declared by the file's own first field.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix ex:   <https://hexplain.io/test/endian#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:TIFFHeader a bddo:Struct ;
+    rdfs:label "TIFF image file header" ;
+    bddo:hasConditionalEndianness (
+        [ a bddo:EndiannessRule ; bddo:condition "instance.ByteOrder == 0x4949" ; bddo:ruleEndianness bddo:LittleEndian ]
+        [ a bddo:EndiannessRule ; bddo:condition "instance.ByteOrder == 0x4D4D" ; bddo:ruleEndianness bddo:BigEndian ]
+    ) ;
+    bddo:hasField ( ex:TIFFHeader.ByteOrder ex:TIFFHeader.Version ) .
+
+ex:TIFFHeader.ByteOrder a bddo:Field ; bddo:dataType bddo:uint16be .
+ex:TIFFHeader.Version a bddo:Field ; bddo:dataType bddo:uint16 .

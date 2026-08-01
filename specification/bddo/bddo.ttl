@@ -34,6 +34,8 @@
 :EnumValue    a owl:Class ; rdfs:label "Enumeration Value" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :Checksum     a owl:Class ; rdfs:label "Checksum" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "A checksum/hash over a byte range: from the first byte of coversFromField to the last byte of coversToField (inclusive), or the [start,end) range yielded by coversExpression." .
+:EndiannessRule a owl:Class ; rdfs:label "Endianness Rule" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "One arm of a hasConditionalEndianness list: a HEL condition and the byte order it selects." .
 # Controlled-vocabulary classes (typed enumerated individuals)
 :Endianness       a owl:Class ; rdfs:label "Endianness" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :BitOrder         a owl:Class ; rdfs:label "Bit Order" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
@@ -50,6 +52,8 @@
     rdfs:comment "Ordered rdf:List of the Fields that make up a Struct." .
 :endianness   a owl:ObjectProperty ; rdfs:label "endianness" ; rdfs:range :Endianness ;
     rdfs:comment "Byte order for a Struct, Field, or DataType." .
+:hasConditionalEndianness a owl:ObjectProperty ; rdfs:label "has conditional endianness" ; rdfs:range rdf:List ;
+    rdfs:comment "Ordered rdf:List of EndiannessRule. The first rule whose condition holds selects the byte order for this Struct or Field and, as with bddo:endianness, for its descendants unless they override it. Use for formats that declare their own byte order, such as TIFF's 4949h/4D4Dh marker. Mutually exclusive with bddo:endianness." .
 :bitOrder     a owl:ObjectProperty ; rdfs:label "bit order" ; rdfs:range :BitOrder .
 :syncOnMarker a owl:DatatypeProperty ; rdfs:label "sync on marker" ; rdfs:range xsd:hexBinary .
 
@@ -89,6 +93,8 @@
     rdfs:comment "The RDF literal datatype produced when a value of this DataType is emitted." .
 :condition     a owl:DatatypeProperty ; rdfs:label "condition" ; rdfs:range xsd:string .
 :ruleDataType  a owl:ObjectProperty ; rdfs:label "rule data type" ; rdfs:range :DataTypeOrStruct .
+:ruleEndianness a owl:ObjectProperty ; rdfs:label "rule endianness" ; rdfs:range :Endianness ;
+    rdfs:comment "The byte order selected by an EndiannessRule." .
 :hasEnumValue  a owl:ObjectProperty ; rdfs:label "has enum value" ; rdfs:range :EnumValue .
 :enumRawValue  a owl:DatatypeProperty ; rdfs:label "enum raw value" .
 :enumSymbol    a owl:ObjectProperty ; rdfs:label "enum symbol" .
@@ -322,3 +328,20 @@ bddo:NumericBaseShape a sh:NodeShape ;
         sh:message "bddo:numericBase must be 8, 10 or 16." ] ;
     sh:property [ sh:path bddo:dataType ; sh:hasValue bddo:asciiInteger ;
         sh:message "bddo:numericBase applies only to a field whose bddo:dataType is bddo:asciiInteger." ] .
+
+bddo:EndiannessRuleShape a sh:NodeShape ;
+    sh:targetClass bddo:EndiannessRule ;
+    sh:property [ sh:path bddo:condition ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:ruleEndianness ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( bddo:BigEndian bddo:LittleEndian ) ;
+        sh:message "bddo:ruleEndianness must be bddo:BigEndian or bddo:LittleEndian." ] .
+
+bddo:ConditionalEndiannessShape a sh:NodeShape ;
+    sh:targetSubjectsOf bddo:hasConditionalEndianness ;
+    sh:property [ sh:path bddo:hasConditionalEndianness ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:message "bddo:hasConditionalEndianness must point to a single rdf:List." ] ;
+    sh:property [ sh:path bddo:endianness ; sh:maxCount 0 ;
+        sh:message "bddo:endianness and bddo:hasConditionalEndianness are mutually exclusive." ] ;
+    sh:property [ sh:path ( bddo:hasConditionalEndianness [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:class bddo:EndiannessRule ;
+        sh:message "Every member of a hasConditionalEndianness list must be a bddo:EndiannessRule." ] .

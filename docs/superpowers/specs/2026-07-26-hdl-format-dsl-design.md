@@ -162,6 +162,7 @@ struct Chunk {
 | overrides | `@endian little` · `@align 4` · `@bit-order lsb` · `@encoding latin1` | per-field props |
 | numeric base | `anum[2] @base 16` | `numericBase` |
 | conditional type | `switch <expr?> { <val|when expr> => <Struct> … }` | `hasConditionalDataType` (`DataTypeRule` list) |
+| conditional endianness | `@endian switch { when ByteOrder == 0x4949 => little, when ByteOrder == 0x4D4D => big }` | `hasConditionalEndianness` (`EndiannessRule` list) |
 
 `offsetBase` keywords: `stream-start stream-end parent-start current`. `@fixed` accepts a
 hex byte string, an integer, or a string literal.
@@ -393,8 +394,9 @@ format-decl  = "format" IDENT { "@namespace" STRING | "@endian" endian
                               | "@bit-order" bitorder } ;
 struct-decl  = "struct" IDENT [ "as" IDENT ] [ "means" CURIE ]
                { struct-annot } "{" { field-decl | raw-block | prop-clause } "}" ;
-struct-annot = "@endian" endian | "@bit-order" bitorder
-             | "@size" ( INT | ref | "`" HEL "`" ) ;
+struct-annot = "@endian" endian | "@endian" "switch" "{" { endianarm } "}"
+             | "@bit-order" bitorder | "@size" ( INT | ref | "`" HEL "`" ) ;
+endianarm    = "when" expr "=>" endian ;
 field-decl   = [ "field" ] IDENT [ "as" IDENT ] ":" type { clause } ;
 type         = prim | "bytes" | strtype | "anum" | "adec" | "bits" "[" expr "]" | struct-ref ;
 strtype      = "str" | "ascii" | "utf8" | "utf16le" | "utf16be" | "latin1" ;
