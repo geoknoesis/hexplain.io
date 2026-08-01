@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexplain Description Language (HDL) Specification</title>
+    <!-- ReSpec script and configuration -->
+    <script src="https://www.w3.org/Tools/respec/respec-w3c" class="respec" async></script>
+    <script class="remove">
+        var respecConfig = {
+            specStatus: "unofficial",
+            editors: [{
+                name: "Stephane Fellah",
+                url: "https://geoknoesis.com/"
+            }],
+            github: "https://github.com/geoknoesis/hexplain.io",
+            shortName: "hdl",
+            publishDate: "2026-07-26",
+            subtitle: "Version 1.0",
+        };
+    </script>
+</head>
+<body>
+    <section id="abstract">
+        <p>
+            The <b>Hexplain Description Language (HDL)</b> is a concise authoring language for Hexplain format descriptions. Instead of writing the canonical RDF/Turtle of the <a href="../bddo/index.html">BDDO</a>, <a href="../hexplain/index.html">Hexplain Core</a>, <a href="../dlv/index.html">DLV</a>, and <a href="../aspect/bundle/bundle.ttl">hx-bundle</a> vocabularies by hand, an author writes a compact description that a compiler lowers to exactly that Turtle. HDL has two interchangeable concrete syntaxes — a purpose-built <b>text surface</b> (<code>.hx</code>) and an isomorphic <b>YAML surface</b> (<code>.hx.yaml</code>) — over a single abstract model, so either compiles to the same RDF graph.
+        </p>
+    </section>
+
+    <section id="sotd">
+        <p>
+            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
+        </p>
+    </section>
+
+    <section class="introductory">
+        <h2>Introduction</h2>
+        <p>
+            A Hexplain format description is a set of RDF triples spanning several vocabularies: <a href="../bddo/index.html">BDDO</a> for the physical byte structure, <a href="../hexplain/index.html">Hexplain Core</a> for the bytes&#8594;meaning mapping, <a href="../hel/index.html">HEL</a> for dynamic expressions, <a href="../dlv/index.html">DLV</a> for multi-dimensional layout, and hx-bundle for multi-file formats. Authoring these by hand is verbose: every field is a separate subject, field order is carried by an <code>rdf:List</code>, and enumerations, checksums, layouts, and part-specs are blank-node structures. HDL removes that ceremony while remaining <b>expressively complete</b> — anything the underlying vocabularies can express, HDL can author.
+        </p>
+        <p>
+            HDL is an <b>authoring front-end</b>: compilation is one-directional (HDL&#8594;Turtle), and the emitted Turtle remains the canonical, SHACL-validated artifact that all downstream tooling (the <a href="../processing/index.html">Processing Model</a>, semantic lifting, validation) consumes. HDL introduces no new run-time semantics of its own; it is a surface syntax whose meaning is defined entirely by the Turtle it produces.
+        </p>
+        <section>
+            <h3>Design Goals</h3>
+            <ul>
+                <li><b>Ergonomic.</b> A field reads as <code>name : type clause*</code>; sibling fields are referenced by bare name; common patterns (sizing, enums, checksums, conditional dispatch) have dedicated sugar.</li>
+                <li><b>Complete.</b> Every BDDO/Core/DLV/hx-bundle construct is reachable, and a <a href="#escape-hatch">raw escape hatch</a> guarantees coverage even as the vocabularies evolve.</li>
+                <li><b>Two surfaces, one model.</b> The text and YAML surfaces parse to the same abstract model and compile to isomorphic RDF, so a description may be authored or exchanged in either.</li>
+                <li><b>Grounded.</b> Expressions are <a href="../hel/index.html">HEL</a>; the compiler validates them and every closed-vocabulary value at compile time.</li>
+            </ul>
+        </section>
+        <section>
+            <h3>Conformance</h3>
+            <p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].</p>
+            <p>Two normative artifacts define HDL: this document, and the RDF vocabularies it targets. Where a mapping in this document and a targeted vocabulary disagree, the vocabulary's shapes govern the validity of the <em>output</em>; this document governs the meaning of the <em>input</em>.</p>
+        </section>
+    </section>
+
+    <section id="compilation-model">
+        <h2>Compilation Model</h2>
+        <p>An HDL compiler transforms a source document into an RDF graph through the following stages. The stages are conceptual; an implementation MAY fuse them.</p>
+        <ol>
+            <li><b>Parse.</b> The text or YAML surface is parsed into a single abstract model (a <em>document</em>: a format header, prefix declarations, structs, standalone fields, bundle profiles, and asset instances).</li>
+            <li><b>Resolve.</b> Prefixes are bound, IRIs are minted (<a href="#iri-minting">§IRI Minting</a>), and every bare identifier in an expression is checked against the fields in scope.</li>
+            <li><b>Synthesize expressions.</b> Each HDL expression is lowered to a canonical <a href="../hel/index.html">HEL</a> string and validated.</li>
+            <li><b>Emit.</b> The resolved document is written as BDDO/Core/DLV/hx-bundle Turtle.</li>
+        </ol>
+        <p>Errors at any stage are reported as <b>diagnostics</b> with a source location; a conforming compiler MUST NOT raise an uncaught exception to its caller on malformed input, and MUST report at least one <code>ERROR</code> diagnostic for input it cannot faithfully compile.</p>
+
+        <section id="iri-minting">
+            <h3>IRI Minting</h3>
+            <p>Terms receive IRIs deterministically from the format's <b>base namespace</b>. The base namespace is the value of <code>@namespace</code> if present, otherwise <code>https://hexplain.io/formats/&lt;format-name&gt;#</code>.</p>
+            <table class="simple">
+                <thead><tr><th>Declaration</th><th>Minted IRI</th></tr></thead>
+                <tbody>
+                    <tr><td><code>format png</code></td><td>base namespace <code>https://hexplain.io/formats/png#</code></td></tr>
+                    <tr><td><code>struct Chunk</code></td><td><code>&lt;base&gt;Chunk</code> — a <code>bddo:Struct</code></td></tr>
+                    <tr><td>field <code>length</code> in <code>struct Chunk</code></td><td><code>&lt;base&gt;Chunk.length</code> — a <code>bddo:Field</code></td></tr>
+                    <tr><td><code>length as ChunkLength</code></td><td><code>&lt;base&gt;ChunkLength</code> (the alias replaces the local name)</td></tr>
+                    <tr><td><code>bundle Shapefile</code></td><td><code>&lt;base&gt;Shapefile</code> — an <code>abnd:BundleProfile</code></td></tr>
+                    <tr><td><code>asset roads</code></td><td><code>&lt;base&gt;roads</code> — an <code>abnd:Asset</code></td></tr>
+                </tbody>
+            </table>
+            <p class="note">A field's <b>runtime name</b> — the key under which its value appears in the parsed instance — is the segment after the final <code>.</code> in its IRI local name (so <code>png:Chunk.length</code> parses as the field <code>length</code>). This lets field IRIs be per-struct-unique (avoiding subject collisions between two structs that both have a <code>length</code> field) without changing the runtime data model.</p>
+        </section>
+
+        <section id="prefixes">
+            <h3>Prefixes</h3>
+            <p>A <code>use</code> declaration binds a prefix to a namespace IRI. The following prefixes are <b>predeclared</b> and need not be introduced with <code>use</code>: <code>bddo</code>, <code>dlv</code>, <code>hexplain</code>, <code>abnd</code>, <code>role</code> (an alias of <code>abnd</code>, for part roles), <code>xsd</code>, <code>rdfs</code>, <code>skos</code>, <code>dcterms</code>, and <code>owl</code>. The empty prefix <code>:</code> denotes the base namespace.</p>
+        </section>
+    </section>
+
+    <section id="lexical">
+        <h2>Lexical Structure (text surface)</h2>
+        <ul>
+            <li><b>Comments.</b> <code>//</code> to end of line; <code>/* &#8230; */</code> block.</li>
+            <li><b>Identifiers.</b> <code>[A-Za-z_][A-Za-z0-9_]*</code>. Within an identifier, a single <code>-</code> and a single <code>.</code> are folded into the identifier (so <code>naming-convention</code> and <code>roads.shp</code> are each one identifier); a trailing <code>:</code> is folded, forming a CURIE prefix (<code>ageom:</code>).</li>
+            <li><b>Literals.</b> integers (<code>42</code>, <code>0x2A</code>, <code>0b1010</code>), floats (<code>1.5</code>), strings (<code>"&#8230;"</code>), hex byte strings (<code>0x89504E47</code>), booleans (<code>true</code>/<code>false</code>).</li>
+            <li><b>Annotations.</b> begin with <code>@</code> (<code>@endian</code>, <code>@at</code>, <code>@fixed</code>, <code>@bound-by</code>, &#8230;).</li>
+            <li><b>Bracketed expressions.</b> the text between a matching <code>[ ]</code> pair is captured whole (§<a href="#expressions">Expressions</a>).</li>
+            <li><b>Backtick expressions.</b> a <code>`&#8230;`</code> literal denotes a raw HEL expression (§<a href="#raw-hel">Raw HEL</a>).</li>
+        </ul>
+        <p><b>Keywords:</b> <code>format struct enum bundle asset field use means value map switch when repeat until if from cell dim axis role required optional primary carries described-by conforms as raw-turtle</code>.</p>
+    </section>
+
+    <section id="structure">
+        <h2>Physical Structure</h2>
+        <p>A <b>struct</b> is an ordered sequence of <b>fields</b>. A field is written <code>name : type clause*</code>. The following example is the PNG chunk — a type-length-value record with a checksum and conditional dispatch on the chunk type:</p>
+        <pre class="nohighlight">
+format png
+  @namespace "https://hexplain.io/formats/png#"
+  @endian big
+
+struct Chunk {
+  length : u32
+  type   : ascii[4]
+  data   : bytes[length]                 // lone sibling &#8594; bddo:sizeFromField
+             switch type {               // &#8594; bddo:hasConditionalDataType
+               "IHDR" =&gt; IHDR_ChunkData
+               "PLTE" =&gt; PLTE_ChunkData
+             }
+  crc    : u32 @checksum crc32(type .. data)   // coversFromField .. coversToField
+}
+        </pre>
+        <p>A struct MAY carry <code>@endian big|little</code>, <code>@bit-order msb|lsb</code>, a <code>means</code> clause (§<a href="#semantic">Semantic Mapping</a>), a <code>@root</code> annotation (marking the format's entry point; the first struct is the default root), and an <code>as</code> alias. A <code>field</code> declared at document scope (outside any struct) mints a standalone <code>bddo:Field</code>.</p>
+
+        <section id="types">
+            <h3>Types</h3>
+            <table class="simple">
+                <thead><tr><th>HDL type</th><th>BDDO</th></tr></thead>
+                <tbody>
+                    <tr><td><code>u8 i8 u16 u16le u16be u32 u32be u64 &#8230; i16 &#8230; i64</code></td><td><code>bddo:uint8</code> / <code>bddo:int16be</code> / &#8230;</td></tr>
+                    <tr><td><code>f32 f32le f32be f64 f64le f64be</code></td><td><code>bddo:float32</code> / &#8230;</td></tr>
+                    <tr><td><code>bytes</code></td><td><code>bddo:bytes</code> (requires a sizing or terminator clause)</td></tr>
+                    <tr><td><code>str</code></td><td><code>bddo:string</code>, encoding <code>bddo:utf8</code> (default)</td></tr>
+                    <tr><td><code>ascii utf8 utf16le utf16be latin1</code></td><td><code>bddo:string</code> + <code>bddo:encoding</code></td></tr>
+                    <tr><td><code>bits[N]</code></td><td>a field with <code>bddo:bitLength N</code></td></tr>
+                    <tr><td><code>&lt;StructName&gt;</code></td><td>a nested/typed field (<code>bddo:dataType</code> that Struct)</td></tr>
+                </tbody>
+            </table>
+            <p>An <code>[n]</code> immediately after a <code>bytes</code> or string type sets the <b>byte size</b> (§<a href="#clauses">Clauses</a>).</p>
+        </section>
+
+        <section id="clauses">
+            <h3>Field Clauses</h3>
+            <table class="simple">
+                <thead><tr><th>Clause</th><th>Example</th><th>Compiles to</th></tr></thead>
+                <tbody>
+                    <tr><td>byte size</td><td><code>bytes[length]</code> &middot; <code>bytes[len-4]</code> &middot; <code>bytes[..]</code></td><td><code>sizeFromField</code> / <code>sizeFromExpression</code> / <code>sizeToEndOfStream</code></td></tr>
+                    <tr><td>array count</td><td><code>Entry repeat n</code> &middot; <code>Item repeat until eof()</code></td><td><code>repeatCountFromField</code>/<code>&#8230;FromExpression</code> &middot; <code>repeatUntil</code></td></tr>
+                    <tr><td>offset</td><td><code>@at ifdOffset from stream-start</code></td><td><code>atOffset*</code> + <code>offsetBase</code></td></tr>
+                    <tr><td>presence</td><td><code>if hasGamma == 1</code></td><td><code>isPresentIf</code></td></tr>
+                    <tr><td>fixed value</td><td><code>@fixed 0x89504E470D0A1A0A</code></td><td><code>hasFixedValue</code></td></tr>
+                    <tr><td>enumeration</td><td><code>u8 enum { 0=&gt;Grayscale, 2=&gt;RGB }</code> &middot; <code>enum flags {&#8230;}</code></td><td>inline <code>Enumeration</code>/<code>EnumValue</code>, <code>enumIsFlags</code></td></tr>
+                    <tr><td>checksum</td><td><code>@checksum crc32(type .. data)</code></td><td>inline <code>Checksum</code> (<code>coversFromField..coversToField</code>)</td></tr>
+                    <tr><td>terminator</td><td><code>str @terminator 0x00</code> &middot; <code>@trim-null</code></td><td><code>terminator</code> / <code>trimNull</code></td></tr>
+                    <tr><td>overrides</td><td><code>@endian little</code> &middot; <code>@align 4</code> &middot; <code>@bit-order lsb</code> &middot; <code>@encoding latin1</code></td><td>per-field properties</td></tr>
+                    <tr><td>conditional type</td><td><code>switch &lt;expr?&gt; { &lt;val|when expr&gt; =&gt; &lt;Struct&gt; &#8230; }</code></td><td><code>hasConditionalDataType</code> (<code>DataTypeRule</code> list)</td></tr>
+                </tbody>
+            </table>
+            <p><code>offsetBase</code> keywords: <code>stream-start stream-end parent-start current</code>. A <code>switch</code> arm may match a literal value against the discriminator (<code>"IHDR" =&gt; S</code>) or supply a full boolean guard (<code>when expr =&gt; S</code>).</p>
+        </section>
+
+        <section id="form-rule">
+            <h3>Field-Form vs. Expression-Form (normative)</h3>
+            <p>For any size, offset, or count clause: when the expression is <b>exactly one sibling field name</b>, a conforming compiler MUST emit the specific <code>&#8230;FromField</code> object property; otherwise it MUST emit the <code>&#8230;FromExpression</code> datatype property carrying the synthesized HEL string. An integer literal emits the plain form (<code>bddo:size</code>, <code>bddo:repeatCount</code>, <code>bddo:atOffset</code>). This rule is deterministic and identical across both surfaces. (DLV <code>dimensionSize</code> has no expression form: an integer &#8594; <code>dimensionSize</code>, a sibling name &#8594; <code>dimensionSizeFromField</code>.)</p>
+        </section>
+    </section>
+
+    <section id="expressions">
+        <h2>Expressions</h2>
+        <p>Expression clauses (sizes, offsets, counts, presence, conditions, computed values) are written in <a href="../hel/index.html">HEL</a>, with one authoring convenience: identifiers are resolved by context so that authors rarely write the full <code>instance.parent.&#8230;</code> form.</p>
+        <ul>
+            <li>A <b>sibling field name</b> resolves to the canonical HEL accessor <code>instance.parent.&lt;Name&gt;</code> (rendered <code>parent.&lt;Name&gt;</code>).</li>
+            <li>The reserved roots <code>instance parent root self stream</code> and the functions <code>sizeof len count eof</code> pass through unchanged.</li>
+            <li>Dotted paths and subscripts pass through: <code>root.Directory[i].Entries[0].Tag</code>.</li>
+            <li>Contents of string literals are never rewritten (so <code>type == 'IHDR'</code> keeps <code>'IHDR'</code> intact).</li>
+        </ul>
+        <p>A conforming compiler MUST validate every synthesized expression against the HEL grammar and MUST report a diagnostic when a bare identifier does not resolve to a declared sibling. The canonical HEL string is produced by parsing and re-serializing the resolved expression, so equivalent inputs converge on one normal form.</p>
+        <section id="raw-hel">
+            <h3>Raw HEL</h3>
+            <p>A backtick-delimited expression is a <b>literal HEL string</b> that bypasses sibling resolution — the escape hatch for the rare expression the sugar cannot express, or that references a context the resolver cannot see:</p>
+            <pre class="example">
+data : bytes[`instance.parent.ChunkLength - (sizeof(instance.parent.Keyword) + 1)`]
+            </pre>
+        </section>
+    </section>
+
+    <section id="semantic">
+        <h2>Semantic Mapping (Hexplain Core)</h2>
+        <p>The keyword <code>means</code> carries the OWL&nbsp;2 punning that <a href="../hexplain/index.html">Hexplain Core</a> uses: on a <b>struct</b> it emits <code>hexplain:mapsToClass</code>; on a <b>field</b>, <code>hexplain:mapsToProperty</code>.</p>
+        <pre class="nohighlight">
+struct IHDR_ChunkData means araster:RasterImage {
+  width  : u32 means araster:width
+  height : u32 means araster:height
+  gamma  : u32 means acolor:gamma value gamma / 100000 @datatype xsd:double
+  data   : bytes[..] @encoded-with aenc:deflate
+}
+        </pre>
+        <table class="simple">
+            <thead><tr><th>HDL</th><th>Turtle</th></tr></thead>
+            <tbody>
+                <tr><td><code>means &lt;Class&gt;</code> (struct)</td><td><code>hexplain:mapsToClass &lt;Class&gt;</code></td></tr>
+                <tr><td><code>means &lt;Property&gt;</code> (field)</td><td><code>hexplain:mapsToProperty &lt;Property&gt;</code></td></tr>
+                <tr><td><code>value &lt;expr&gt; @datatype &lt;dt&gt;</code></td><td><code>hexplain:valueExpression "&#8230;HEL&#8230;"</code> [+ <code>hexplain:valueDatatype &lt;dt&gt;</code>]</td></tr>
+                <tr><td><code>@encoded-with &lt;concept&gt;</code></td><td><code>hexplain:isEncodedWith &lt;concept&gt;</code></td></tr>
+            </tbody>
+        </table>
+        <p>A field's <code>value</code> expression may reference the field by its own name. <b>Conditional mapping</b> (<code>hexplain:hasConditionalMapping</code>) is written with <code>map</code>, mirroring <code>switch</code>:</p>
+        <pre class="nohighlight">
+text : str[..] map {
+  when keyword == "Title"  =&gt; dcterms:title
+  when keyword == "Author" =&gt; dcterms:creator value trim(text)
+}
+        </pre>
+        <p>Each arm becomes a <code>hexplain:MappingRule</code> with <code>hexplain:condition</code> + <code>hexplain:semanticProperty</code>, and an optional per-arm <code>valueExpression</code>/<code>valueDatatype</code>.</p>
+    </section>
+
+    <section id="layout">
+        <h2>Multi-dimensional Layout (DLV)</h2>
+        <p>A <code>layout</code> clause on a field emits <code>hexplain:hasDataLayout</code> &#8594; a <code>dlv:DataLayout</code>. Dimensions are listed <b>slowest to fastest</b> (the <code>dlv:hasDimension</code> list order); <code>size &lt;int&gt;</code> &#8594; <code>dimensionSize</code>, <code>size &lt;sibling&gt;</code> &#8594; <code>dimensionSizeFromField</code>.</p>
+        <pre class="nohighlight">
+pixels : bytes[..] layout cell u8 {
+  dim axis Y    size height  stride rowBytes   // dlv:dimensionStride (positive-integer literal)
+  dim axis X    size width
+  dim axis Band size 3
+}
+        </pre>
+        <p>Axes: <code>X Y Z Band Time</code> &#8594; <code>dlv:axisX/axisY/axisZ/axisBand/axisTime</code>. <code>dlv:dimensionStride</code> is a positive-integer literal; a non-literal stride is not representable and is dropped.</p>
+    </section>
+
+    <section id="bundle">
+        <h2>Multi-file Formats (hx-bundle)</h2>
+        <p>Some formats are not a single file. hx-bundle models a logical <b>Asset</b> realized by several physical <b>Parts</b>. A <b>bundle profile</b> is a reusable template; an <b>asset</b> is an instance.</p>
+        <section id="bundle-profile">
+            <h3>Bundle Profiles</h3>
+            <pre class="nohighlight">
+bundle Shapefile @bound-by naming-convention {
+  part ".shp" role GeometryCarrier   required primary carries ageom: described-by ShpMain
+  part ".shx" role SpatialIndex      required
+  part ".dbf" role AttributeTable    required          carries atab:
+  part ".prj" role SpatialReference  optional          carries asref:
+  part ".cpg" role CharacterEncoding optional          carries aenc:
+}
+            </pre>
+            <p>A <code>bundle</code> mints an <code>abnd:BundleProfile</code>; each <code>part</code> mints a <code>abnd:PartSpec</code>. <code>@bound-by</code> keywords <code>containment | naming-convention | manifest-reference | concatenation</code> map to the four <code>abnd:BindingKind</code> individuals. <code>role X</code> resolves to the register concept <code>abnd:X</code> (or a CURIE <code>role ns:Custom</code>); <code>required</code>/<code>optional</code> &#8594; <code>abnd:required</code>; <code>primary</code> &#8594; <code>abnd:primary</code>; <code>described-by S</code> &#8594; <code>abnd:describedBy</code> the named struct.</p>
+            <p class="note"><code>carries</code> resolves to the aspect's <b>ontology IRI</b>, not its namespace IRI: <code>abnd:carriesAspect</code> has range <code>owl:Ontology</code>, so a single trailing <code>#</code> or <code>/</code> is stripped from the prefix's namespace (<code>ageom:</code> &#8594; <code>&lt;https://hexplain.io/ns/aspect/geometry&gt;</code>).</p>
+        </section>
+        <section id="asset">
+            <h3>Asset Instances</h3>
+            <pre class="nohighlight">
+asset roads conforms Shapefile @bound-by naming-convention @stem "roads" @primary roads.shp {
+  part roads.shp role GeometryCarrier
+  part roads.prj role SpatialReference
+}
+            </pre>
+            <p>An <code>asset</code> mints an <code>abnd:Asset</code>; <code>conforms P</code> &#8594; <code>dcterms:conformsTo</code>; <code>@bound-by</code>/<code>@stem</code>/<code>@primary</code> &#8594; <code>abnd:boundBy</code>/<code>abnd:stem</code>/<code>abnd:primaryPart</code>; each <code>part</code> mints an <code>abnd:Part</code> linked by <code>abnd:hasPart</code> and typed with <code>abnd:partRole</code>. Per-part aspect facets (e.g. a CRS on the <code>.prj</code> part) are attached with the <a href="#escape-hatch">raw-turtle escape hatch</a>.</p>
+        </section>
+    </section>
+
+    <section id="escape-hatch">
+        <h2>Escape Hatch</h2>
+        <p>Two constructs guarantee completeness against the evolving vocabularies:</p>
+        <ul>
+            <li><code>raw-turtle { &#8230; }</code> at struct or field scope injects arbitrary Turtle triples into the output graph; its body is preserved verbatim.</li>
+            <li><code>@prop &lt;curie&gt; &lt;value&gt;</code> sets any property the sugar does not know by name.</li>
+        </ul>
+        <pre class="nohighlight">
+struct S {
+  a : u32
+  raw-turtle { :S rdfs:comment "hand-written note" . }
+}
+        </pre>
+    </section>
+
+    <section id="yaml">
+        <h2>YAML Surface</h2>
+        <p>The YAML surface is an isomorphic projection of the same abstract model: a <code>.hx.yaml</code> document and its equivalent <code>.hx</code> document compile to isomorphic RDF graphs. Field lists are YAML sequences (order preserved). The PNG chunk of §<a href="#structure">Physical Structure</a> in YAML:</p>
+        <pre class="nohighlight">
+format: png
+namespace: "https://hexplain.io/formats/png#"
+endian: big
+structs:
+  Chunk:
+    fields:
+      - { name: length, type: u32 }
+      - { name: type,   type: ascii, size: 4 }
+      - name: data
+        type: bytes
+        size: length                       # sibling &#8594; sizeFromField
+        switch: { on: type, cases: { IHDR: IHDR_ChunkData, PLTE: PLTE_ChunkData } }
+      - name: crc
+        type: u32
+        checksum: { algorithm: crc32, from: type, to: data }
+        </pre>
+        <p>Every text clause has a YAML key; <code>bundles:</code> and <code>assets:</code> mirror the text bundle/asset declarations. Because YAML values are consumed directly, the following conventions apply:</p>
+        <ul>
+            <li><b>End-of-stream</b> is the string <code>size: ".."</code> (mirroring <code>[..]</code>); any other <code>size</code> scalar is an expression.</li>
+            <li><b>Raw HEL</b> is a backtick-wrapped scalar (<code>size: "`parent.ChunkLength`"</code>).</li>
+            <li><b>Hex byte literals</b> are quoted strings (<code>fixed: "0x89504E47"</code>), since an unquoted <code>0x&#8230;</code> would be read as an integer.</li>
+            <li><b>Bit fields</b> use <code>type: bits</code> with a sibling <code>bit-length</code> scalar.</li>
+            <li><b>HEL string literals</b> inside a YAML expression scalar use single quotes, HEL's own delimiter (<code>until: "instance.ChunkType == 'IEND'"</code>).</li>
+            <li><b>Booleans.</b> A conforming YAML loader MUST restrict implicit boolean resolution to <code>true</code>/<code>false</code>; the YAML&nbsp;1.1 words <code>on/off/yes/no</code> are strings (so a struct field or switch key named <code>on</code> is not silently coerced).</li>
+        </ul>
+    </section>
+
+    <section id="grammar">
+        <h2>Grammar (text surface)</h2>
+        <p>The following grammar [[RFC5234]] sketches the HDL text surface. Expression interiors are HEL (§<a href="#expressions">Expressions</a>).</p>
+        <pre class="abnf">
+document     = *( use-decl / format-decl / struct-decl / field-decl
+                / bundle-decl / asset-decl )
+use-decl     = "use" PREFIX ( IRIREF / STRING )
+format-decl  = "format" IDENT *( "@namespace" STRING / "@endian" endian
+                              / "@bit-order" bitorder )
+struct-decl  = [ "@root" ] "struct" IDENT [ "as" IDENT ] [ "means" CURIE ]
+               *struct-annot "{" *( field-decl / raw-block / prop-clause ) "}"
+field-decl   = [ "field" ] IDENT [ "as" IDENT ] ":" type *clause
+type         = prim / "bytes" / strtype / "bits" "[" expr "]" / struct-ref
+clause       = "[" ( expr / ".." ) "]"                      ; byte size
+             / "repeat" ( expr / "until" expr )
+             / "@at" expr [ "from" offsetbase ]
+             / "if" expr
+             / "@fixed" ( HEXBYTES / INT / STRING )
+             / "enum" [ "flags" ] ( IDENT / "{" enumpair *( "," enumpair ) "}" )
+             / "@checksum" ALGO "(" ( ref ".." ref / "covers" "(" expr ")" ) ")"
+             / "@terminator" HEXBYTES / "@trim-null"
+             / "@endian" endian / "@align" INT / "@bit-order" bitorder
+             / "@encoding" enc
+             / "switch" [ expr ] "{" *swarm "}"
+             / "means" CURIE
+             / "value" expr [ "@datatype" CURIE ]
+             / "@encoded-with" CURIE
+             / "map" "{" *maparm "}"
+             / "layout" "cell" type "{" *dimdecl "}"
+             / "@prop" CURIE value
+swarm        = ( value / "when" expr ) "=&gt;" struct-ref
+maparm       = "when" expr "=&gt;" CURIE [ "value" expr [ "@datatype" CURIE ] ]
+dimdecl      = "dim" "axis" AXIS "size" ( INT / ref ) [ "stride" ( INT / expr ) ]
+enumpair     = value "=&gt;" IDENT [ "(" STRING ")" ]
+bundle-decl  = "bundle" IDENT [ "as" IDENT ] "@bound-by" binding "{" *partspec "}"
+partspec     = "part" STRING "role" role-ref [ "required" / "optional" ]
+               [ "primary" ] [ "carries" PREFIX ] [ "described-by" struct-ref ]
+asset-decl   = "asset" IDENT [ "conforms" IDENT ]
+               *( "@bound-by" binding / "@stem" STRING / "@primary" IDENT )
+               "{" *( "part" IDENT "role" role-ref ) "}"
+binding      = "containment" / "naming-convention"
+             / "manifest-reference" / "concatenation"
+endian       = "big" / "little"
+bitorder     = "msb" / "lsb"
+offsetbase   = "stream-start" / "stream-end" / "parent-start" / "current"
+        </pre>
+    </section>
+
+    <section id="conformance-section">
+        <h2>Conformance</h2>
+        <p>A conforming HDL compiler MUST:</p>
+        <ol>
+            <li>Accept both the text and YAML surfaces and parse each into the same abstract model, such that a text document and its YAML mirror compile to isomorphic RDF graphs.</li>
+            <li>Mint IRIs per <a href="#iri-minting">§IRI Minting</a> and bind prefixes per <a href="#prefixes">§Prefixes</a>.</li>
+            <li>Apply the <a href="#form-rule">field-form-vs-expression-form rule</a> and resolve expression identifiers per <a href="#expressions">§Expressions</a>, emitting canonical HEL validated against [[?hel]].</li>
+            <li>Emit BDDO/Core/DLV/hx-bundle triples whose meaning matches the mappings in this document, such that the output satisfies the SHACL shapes of the targeted vocabularies for any well-formed input.</li>
+            <li>Report malformed input as source-located diagnostics and never raise an uncaught exception to its caller; input that cannot be faithfully compiled MUST yield at least one <code>ERROR</code> diagnostic.</li>
+            <li>Preserve <code>raw-turtle</code> bodies verbatim in the output graph.</li>
+        </ol>
+        <p>Compilation is one-directional; a conforming compiler is NOT required to reconstruct HDL from Turtle.</p>
+    </section>
+
+    <section id="examples" class="introductory">
+        <h2>Examples</h2>
+        <section>
+            <h3>PNG chunk &#8594; Turtle</h3>
+            <p>The <a href="#structure">PNG chunk</a> compiles to the canonical BDDO form:</p>
+            <pre class="nohighlight">
+@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
+@prefix png:  &lt;https://hexplain.io/formats/png#&gt; .
+
+png:Chunk a bddo:Struct ;
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField ( png:Chunk.length png:Chunk.type png:Chunk.data png:Chunk.crc ) .
+
+png:Chunk.length a bddo:Field ; bddo:dataType bddo:uint32 .
+png:Chunk.type   a bddo:Field ; bddo:dataType bddo:string ; bddo:size 4 ; bddo:encoding bddo:ascii .
+png:Chunk.data a bddo:Field ;
+    bddo:dataType bddo:bytes ;
+    bddo:sizeFromField png:Chunk.length ;
+    bddo:hasConditionalDataType (
+        [ a bddo:DataTypeRule ; bddo:condition "instance.parent.type == 'IHDR'" ; bddo:ruleDataType png:IHDR_ChunkData ]
+        [ a bddo:DataTypeRule ; bddo:condition "instance.parent.type == 'PLTE'" ; bddo:ruleDataType png:PLTE_ChunkData ]
+    ) .
+png:Chunk.crc a bddo:Field ;
+    bddo:dataType bddo:uint32 ;
+    bddo:checksum [ a bddo:Checksum ; bddo:checksumAlgorithm bddo:crc32 ;
+        bddo:coversFromField png:Chunk.type ; bddo:coversToField png:Chunk.data ] .
+            </pre>
+        </section>
+        <section>
+            <h3>Shapefile bundle profile &#8594; Turtle</h3>
+            <pre class="nohighlight">
+fmt:Shapefile a abnd:BundleProfile ;
+  abnd:boundBy abnd:NamingConvention ;
+  abnd:partSpec
+    [ abnd:extension ".shp" ; abnd:partRole abnd:GeometryCarrier ; abnd:required true ;
+      abnd:primary true ; abnd:carriesAspect &lt;https://hexplain.io/ns/aspect/geometry&gt; ; abnd:describedBy fmt:ShpMain ] ,
+    [ abnd:extension ".dbf" ; abnd:partRole abnd:AttributeTable ; abnd:required true ;
+      abnd:carriesAspect &lt;https://hexplain.io/ns/aspect/tabular&gt; ] .
+            </pre>
+        </section>
+    </section>
+</body>
+</html>
