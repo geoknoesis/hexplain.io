@@ -1,7 +1,9 @@
 // Hexplain Description Language (HDL) — NGA NITF 2.1 (MIL-STD-2500C)
 // Authoring surface for the profile whose canonical compiled form is nitf.ttl.
-// NOTE: the HDL->Turtle compiler is designed but not yet built, so nitf.ttl remains
-// the validated source of truth; this file is the human-authored source.
+// NOTE: compiles via the `hdl` module in hexplain-tools (io.hexplain.hdl.HdlCompiler;
+// `.hx`/`.yaml` CLI). nitf.ttl is the hand-written equivalent. A compile of THIS file
+// emits HDL's dotted-IRI structs (e.g. nitf:FileHeader.FHDR) rather than the TTL's
+// FH_/IS_ names, so the two are structurally equivalent, not byte-isomorphic.
 //
 // Idiomatic choices (vs the hand-written TTL):
 //   * BCS-A / BCS-N text fields are modeled as ascii[N] (the BCS-N vs BCS-A distinction
