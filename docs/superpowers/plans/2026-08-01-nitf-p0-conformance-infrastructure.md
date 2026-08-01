@@ -937,9 +937,11 @@ class HelGeometryTest {
         "LON" to listOf(0.0, 1.0, 1.0, 0.0),
         "LAT" to listOf(1.0, 1.0, 0.0, 0.0),
     )
+    // (0,0) -> (1,0) -> (1,1) -> (0,1): right, up, left, down. A reversal of the
+    // clockwise ring, not a rotation of it — rotation preserves winding.
     private val counterClockwise = mapOf(
-        "LON" to listOf(0.0, 0.0, 1.0, 1.0),
-        "LAT" to listOf(0.0, 1.0, 1.0, 0.0),
+        "LON" to listOf(0.0, 1.0, 1.0, 0.0),
+        "LAT" to listOf(0.0, 0.0, 1.0, 1.0),
     )
     private val bowtie = mapOf(
         "LON" to listOf(0.0, 1.0, 0.0, 1.0),
