@@ -1,0 +1,36 @@
+@prefix :     <https://hexplain.io/ns/conf#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req:  <https://hexplain.io/ns/req#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://hexplain.io/ns/conf> a owl:Ontology ;
+    rdfs:label "Hexplain Conformance Vocabulary" ;
+    owl:versionInfo "1.0" ;
+    owl:imports <https://hexplain.io/ns/req> ;
+    rdfs:comment """Binds executable HEL assertions to the standards requirements they check.
+Format-agnostic. Severity is deliberately absent: it derives from the cited requirement's
+req:discrepancyType, so a rule reused across profiles is classified consistently.""" .
+
+# --- Classes ---
+:Constraint a owl:Class ; rdfs:label "Constraint" ;
+    rdfs:comment "An executable check: a HEL assertion evaluated within a scope, citing the requirements it enforces." ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
+
+# --- Properties ---
+:scope a owl:ObjectProperty ; rdfs:label "scope" ;
+    rdfs:comment "The bddo:Struct or bddo:Field the assertion is evaluated against. A struct scope fires once per parsed instance of that struct." ;
+    rdfs:range rdfs:Resource .
+
+:assertion a owl:DatatypeProperty ; rdfs:label "assertion" ;
+    rdfs:comment "A HEL expression evaluating to boolean. True means conformant; false raises a finding." ;
+    rdfs:range xsd:string .
+
+:satisfies a owl:ObjectProperty ; rdfs:label "satisfies" ;
+    rdfs:comment "A requirement this constraint enforces. Required: an unattributed rule cannot be reported or counted toward coverage." ;
+    rdfs:range req:Requirement .
+
+:message a owl:DatatypeProperty ; rdfs:label "message" ;
+    rdfs:comment "Finding text template. {field} interpolates the scoped field name, {value} its parsed value." ;
+    rdfs:range xsd:string .

@@ -1,0 +1,35 @@
+@prefix :     <https://hexplain.io/ns/conf#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req:  <https://hexplain.io/ns/req#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+:ConstraintShape a sh:NodeShape ;
+    sh:targetClass conf:Constraint ;
+    rdfs:label "Constraint shape" ;
+    sh:property [
+        sh:path conf:scope ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A Constraint needs exactly one conf:scope IRI naming the struct or field it applies to." ;
+    ] ;
+    sh:property [
+        sh:path conf:assertion ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:minLength 1 ;
+        sh:message "A Constraint needs exactly one non-empty conf:assertion HEL expression." ;
+    ] ;
+    sh:property [
+        sh:path conf:satisfies ;
+        sh:class req:Requirement ;
+        sh:minCount 1 ;
+        sh:message "A Constraint must cite at least one req:Requirement; an unattributed rule cannot be reported." ;
+    ] ;
+    sh:property [
+        sh:path conf:message ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A Constraint needs exactly one conf:message finding template." ;
+    ] .
