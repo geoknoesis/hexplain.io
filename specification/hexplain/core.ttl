@@ -1,4 +1,4 @@
-# Hexplain Core Ontology 1.2 — vocabulary + SHACL shapes
+# Hexplain Core Ontology 1.0 — vocabulary + SHACL shapes
 # Properties declare rdfs:range; domain and cardinality are in SHACL (no rdfs:domain).
 @prefix :         <https://hexplain.io/ns/core#> .
 @prefix hexplain: <https://hexplain.io/ns/core#> .
@@ -7,14 +7,14 @@
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
 @prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
 @prefix bddo:     <https://hexplain.io/ns/bddo#> .
 @prefix dlv:      <https://hexplain.io/ns/dlv#> .
 @prefix dcterms:  <http://purl.org/dc/terms/> .
 @prefix vann:     <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/core> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/core/1.2> ; owl:versionInfo "1.2" ;
-    owl:priorVersion <https://hexplain.io/ns/core/1.1> ;
+    owl:versionIRI <https://hexplain.io/ns/core/1.0> ; owl:versionInfo "1.0" ;
     owl:imports <https://hexplain.io/ns/bddo> , <https://hexplain.io/ns/dlv> ;
     rdfs:label "Hexplain Core Ontology" ;
     rdfs:comment "Properties linking the physical, layout, and semantic layers of the Hexplain framework." ;
@@ -35,15 +35,21 @@
 :hasDataLayout a owl:ObjectProperty ; rdfs:label "has data layout" ; rdfs:range dlv:DataLayout ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "Relates a bddo:Field to a dlv:DataLayout describing its multi-dimensional interpretation." .
-:isEncodedWith a owl:ObjectProperty ; rdfs:label "is encoded with" ;
+:isEncodedWith a owl:ObjectProperty ; rdfs:label "is encoded with" ; rdfs:range skos:Concept ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "Identifies the algorithm (e.g. a codec) needed to interpret a data block." .
+    rdfs:comment "The algorithm needed to interpret a data block, drawn from the encoding aspect registers (aenc:CompressionScheme for compression, aenc:CodecScheme for codecs). A processor decodes the block, then re-parses the decoded bytes against the field's data type when it is a bddo:Struct." .
 :hasConditionalMapping a owl:ObjectProperty ; rdfs:label "has conditional mapping" ; rdfs:range rdf:List ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> .
 :condition a owl:DatatypeProperty ; rdfs:label "condition" ; rdfs:range xsd:string ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> .
 :semanticProperty a owl:ObjectProperty ; rdfs:label "semantic property" ; rdfs:range rdf:Property ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> .
+:valueExpression a owl:DatatypeProperty ; rdfs:label "value expression" ; rdfs:range xsd:string ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "A HEL expression computing the value to emit for the mapped property instead of the field's raw parsed value (e.g. fixed-point or unit scaling). Evaluated in the field's context." .
+:valueDatatype a owl:ObjectProperty ; rdfs:label "value datatype" ; rdfs:range rdfs:Datatype ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "The xsd datatype of a computed hexplain:valueExpression result; defaults to the natural datatype of the HEL result type." .
 
 # ---------- SHACL ----------
 hexplain:MapsToClassShape a sh:NodeShape ;
@@ -60,6 +66,14 @@ hexplain:HasDataLayoutShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:hasDataLayout ;
     sh:class bddo:Field ;
     sh:property [ sh:path hexplain:hasDataLayout ; sh:class dlv:DataLayout ; sh:maxCount 1 ] .
+hexplain:IsEncodedWithShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:isEncodedWith ;
+    sh:property [ sh:path hexplain:isEncodedWith ; sh:nodeKind sh:IRI ; sh:class skos:Concept ; sh:maxCount 1 ] .
+hexplain:ValueExpressionShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:valueExpression ;
+    sh:class bddo:Field ;
+    sh:property [ sh:path hexplain:valueExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:valueDatatype ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
 hexplain:HasConditionalMappingShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:hasConditionalMapping ;
     sh:class bddo:Field ;

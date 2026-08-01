@@ -1,4 +1,4 @@
-# Hexplain Image Vocabulary (IDV) 1.1 — vocabulary + SHACL shapes
+# Hexplain Image Vocabulary (IDV) 1.0 — vocabulary + SHACL shapes
 @prefix :       <https://hexplain.io/ns/image#> .
 @prefix img:    <https://hexplain.io/ns/image#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
@@ -7,11 +7,15 @@
 @prefix sh:     <http://www.w3.org/ns/shacl#> .
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix ma:     <http://www.w3.org/ns/ma-ont#> .
+@prefix araster:<https://hexplain.io/ns/aspect/raster#> .
+@prefix asamp:  <https://hexplain.io/ns/aspect/sampling#> .
+@prefix acolor: <https://hexplain.io/ns/aspect/color#> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/image> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/image/1.1> ; owl:versionInfo "1.1" ;
+    owl:versionIRI <https://hexplain.io/ns/image/1.0> ; owl:versionInfo "1.0" ;
+    owl:imports <https://hexplain.io/ns/aspect/raster> , <https://hexplain.io/ns/aspect/sampling> , <https://hexplain.io/ns/aspect/color> ;
     rdfs:label "Hexplain Image Vocabulary (IDV)" ;
     rdfs:comment "Semantic vocabulary for raster image properties." ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -23,21 +27,21 @@
 :ColorProfile a owl:Class ; rdfs:label "Color Profile" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
 :PixelData a owl:Class ; rdfs:label "Pixel Data" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
 
-:pixelWidth a owl:DatatypeProperty ; rdfs:label "pixel width" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; skos:closeMatch ma:frameWidth ; rdfs:range xsd:positiveInteger .
-:pixelHeight a owl:DatatypeProperty ; rdfs:label "pixel height" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; skos:closeMatch ma:frameHeight ; rdfs:range xsd:positiveInteger .
-:bitsPerComponent a owl:DatatypeProperty ; rdfs:label "bits per component" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:positiveInteger .
+# Image dimensions, per-component precision, and colour space are the raster/sampling/colour
+# aspects: araster:width, araster:height, asamp:bitDepth, acolor:colorSpace.
+# colorType and the compression/filter/interlace codes below are PNG-specific and will move
+# to a PNG profile in a later phase.
 :colorType a owl:DatatypeProperty ; rdfs:label "color type" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer .
 :compressionMethod a owl:DatatypeProperty ; rdfs:label "compression method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; skos:closeMatch ma:compression ; rdfs:range xsd:integer .
 :filterMethod a owl:DatatypeProperty ; rdfs:label "filter method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer .
 :interlaceMethod a owl:DatatypeProperty ; rdfs:label "interlace method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer .
 
 # ---------- SHACL ----------
-img:PixelWidthShape a sh:NodeShape ; sh:targetSubjectsOf img:pixelWidth ;
-    sh:property [ sh:path img:pixelWidth ; sh:minExclusive 0 ; sh:maxCount 1 ] .
-img:PixelHeightShape a sh:NodeShape ; sh:targetSubjectsOf img:pixelHeight ;
-    sh:property [ sh:path img:pixelHeight ; sh:minExclusive 0 ; sh:maxCount 1 ] .
-img:BitsPerComponentShape a sh:NodeShape ; sh:targetSubjectsOf img:bitsPerComponent ;
-    sh:property [ sh:path img:bitsPerComponent ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+img:ImageShape a sh:NodeShape ; sh:targetClass img:ImageHeader ;
+    sh:property [ sh:path araster:width ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path araster:height ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asamp:bitDepth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path acolor:colorSpace ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
 img:CodeShapes a sh:NodeShape ; sh:targetSubjectsOf img:colorType ;
     sh:property [ sh:path img:colorType ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
     sh:property [ sh:path img:compressionMethod ; sh:nodeKind sh:Literal ] ;

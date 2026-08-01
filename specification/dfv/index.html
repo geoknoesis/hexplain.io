@@ -12,21 +12,19 @@
             github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "hexplain-dfv",
             publishDate: "2025-08-16",
-            subtitle: "Version 1.2",
+            subtitle: "Version 1.0",
         };
     </script>
 </head>
 <body>
     <section id="abstract">
         <p>
-            The Hexplain Document &amp; Font Vocabulary (DFV) provides standard terms for the semantic properties of document and font files. Used with BDDO and Hexplain Core, it maps fields from formats like PDF, TrueType (TTF), or PostScript to concepts such as page count, font family, and cross-reference table. <b>Prefix:</b> <code>dfv</code>; <b>namespace:</b> <code>https://hexplain.io/ns/docfont#</code>.
+            The Hexplain Document &amp; Font Vocabulary (DFV) provides standard terms for the semantic properties of document and font files. Used with BDDO and Hexplain Core, it maps fields from formats like PDF, TrueType (TTF), or PostScript to concepts such as page count, font family, and cross-reference table. Generic descriptive metadata (author, title, creation and modification dates) now reuses Dublin Core (<code>dcterms:</code>) directly rather than DFV-specific terms. <b>Prefix:</b> <code>dfv</code>; <b>namespace:</b> <code>https://hexplain.io/ns/docfont#</code>.
         </p>
     </section>
 
     <section id="sotd">
-        <p>This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.</p>
-        <p><b>Change log.</b> Version 1.2 adds SHACL range constraints, <code>rdfs:comment</code>/<code>rdfs:isDefinedBy</code>, ontology metadata, and Dublin Core alignments; corrects the example (physical PDF dictionary entries are modelled as <code>bddo:Field</code>, not <code>bddo:Struct</code>); declares <code>rdfs:range</code> and expresses domain/cardinality in SHACL (no <code>rdfs:domain</code>). <b>Note:</b> this vocabulary was previously published at the <code>vdv/</code> path in error; its canonical location is now <code>dfv/</code>. Version 1.1 added richer PDF-inspired classes.</p>
-    </section>
+        <p>This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.</p>    </section>
 
     <section class="introductory">
         <h2>Introduction</h2>
@@ -51,10 +49,10 @@
         <table class="simple">
             <thead><tr><th>Property</th><th>Description</th><th>Range</th></tr></thead>
             <tbody>
-                <tr><td><code>dfv:author</code></td><td>Creator of the document.</td><td><code>xsd:string</code></td></tr>
-                <tr><td><code>dfv:title</code></td><td>Document title.</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>dcterms:creator</code> <span class="note">(Dublin Core)</span></td><td>Creator of the document.</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>dcterms:title</code> <span class="note">(Dublin Core)</span></td><td>Document title.</td><td><code>xsd:string</code></td></tr>
                 <tr><td><code>dfv:creatorTool</code>, <code>dfv:producerTool</code></td><td>Authoring / producing software.</td><td><code>xsd:string</code></td></tr>
-                <tr><td><code>dfv:creationDate</code>, <code>dfv:modificationDate</code></td><td>Timestamps.</td><td><code>xsd:dateTime</code></td></tr>
+                <tr><td><code>dcterms:created</code>, <code>dcterms:modified</code> <span class="note">(Dublin Core)</span></td><td>Timestamps.</td><td><code>xsd:dateTime</code></td></tr>
                 <tr><td><code>dfv:pageCount</code></td><td>Number of pages.</td><td><code>xsd:positiveInteger</code></td></tr>
                 <tr><td><code>dfv:hasBoundingBox</code></td><td>Links a Page to a BoundingBox.</td><td><code>dfv:BoundingBox</code></td></tr>
                 <tr><td><code>dfv:boxType</code></td><td>BoundingBox type ("MediaBox"…).</td><td><code>xsd:string</code></td></tr>
@@ -70,7 +68,7 @@
     <section id="normative-owl">
         <h2>Normative OWL Vocabulary</h2>
         <pre class="nohighlight">
-# Hexplain Document &amp; Font Vocabulary (DFV) 1.2 — vocabulary + SHACL shapes
+# Hexplain Document &amp; Font Vocabulary (DFV) 1.0 — vocabulary + SHACL shapes
 @prefix :       &lt;https://hexplain.io/ns/docfont#&gt; .
 @prefix dfv:    &lt;https://hexplain.io/ns/docfont#&gt; .
 @prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
@@ -82,7 +80,7 @@
 @prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 &lt;https://hexplain.io/ns/docfont&gt; a owl:Ontology ;
-    owl:versionIRI &lt;https://hexplain.io/ns/docfont/1.2&gt; ; owl:versionInfo "1.2" ;
+    owl:versionIRI &lt;https://hexplain.io/ns/docfont/1.0&gt; ; owl:versionInfo "1.0" ;
     rdfs:label "Hexplain Document &amp; Font Vocabulary (DFV)" ;
     rdfs:comment "Semantic vocabulary for document and font file properties." ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
@@ -101,12 +99,9 @@
 :FontTable a owl:Class ; rdfs:label "Font Table" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/docfont&gt; .
 :Glyph a owl:Class ; rdfs:label "Glyph" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/docfont&gt; .
 
-:author a owl:DatatypeProperty ; rdfs:label "author" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/docfont&gt; ; skos:closeMatch dcterms:creator ; rdfs:range xsd:string .
-:title a owl:DatatypeProperty ; rdfs:label "title" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/docfont&gt; ; skos:closeMatch dcterms:title ; rdfs:range xsd:string .
+# Descriptive metadata reuses Dublin Core directly: dcterms:creator, dcterms:title, dcterms:created, dcterms:modified.
 :creatorTool a owl:DatatypeProperty ; rdfs:label "creator tool" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/docfont&gt; ; rdfs:range xsd:string .
 :producerTool a owl:DatatypeProperty ; rdfs:label "producer tool" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/docfont&gt; ; rdfs:range xsd:string .
-:creationDate a owl:DatatypeProperty ; rdfs:label "creation date" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/docfont&gt; ; skos:closeMatch dcterms:created ; rdfs:range xsd:dateTime .
-:modificationDate a owl:DatatypeProperty ; rdfs:label "modification date" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/docfont&gt; ; skos:closeMatch dcterms:modified ; rdfs:range xsd:dateTime .
 :pageCount a owl:DatatypeProperty ; rdfs:label "page count" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/docfont&gt; ; rdfs:range xsd:positiveInteger .
 :hasBoundingBox a owl:ObjectProperty ; rdfs:label "has bounding box" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/docfont&gt; ; rdfs:range :BoundingBox .
 :boxType a owl:DatatypeProperty ; rdfs:label "box type" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/docfont&gt; ; rdfs:range xsd:string .
@@ -133,11 +128,11 @@
 @prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 # SHACL shapes
-dfv:DocumentShape a sh:NodeShape ; sh:targetSubjectsOf dfv:author ;
-    sh:property [ sh:path dfv:author ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dfv:title ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dfv:creationDate ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dfv:modificationDate ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
+dfv:DocumentShape a sh:NodeShape ; sh:targetSubjectsOf dcterms:creator ;
+    sh:property [ sh:path dcterms:creator ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dcterms:title ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dcterms:created ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dcterms:modified ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
     sh:property [ sh:path dfv:pageCount ; sh:minExclusive 0 ; sh:maxCount 1 ] .
 dfv:PageShape a sh:NodeShape ; sh:targetSubjectsOf dfv:hasBoundingBox ;
     sh:property [ sh:path dfv:hasBoundingBox ; sh:class dfv:BoundingBox ] .
@@ -154,9 +149,10 @@ dfv:FontShape a sh:NodeShape ; sh:targetSubjectsOf dfv:fontFamily ;
 {
   "@context": {
     "dfv": "https://hexplain.io/ns/docfont#",
-    "author": "dfv:author", "title": "dfv:title",
+    "dcterms": "http://purl.org/dc/terms/",
+    "author": "dcterms:creator", "title": "dcterms:title",
     "creatorTool": "dfv:creatorTool", "producerTool": "dfv:producerTool",
-    "creationDate": "dfv:creationDate", "modificationDate": "dfv:modificationDate",
+    "creationDate": "dcterms:created", "modificationDate": "dcterms:modified",
     "pageCount": "dfv:pageCount",
     "hasBoundingBox": { "@id": "dfv:hasBoundingBox", "@type": "@id" },
     "boxType": "dfv:boxType", "fontFamily": "dfv:fontFamily", "fontStyle": "dfv:fontStyle",
@@ -174,6 +170,8 @@ dfv:FontShape a sh:NodeShape ; sh:targetSubjectsOf dfv:fontFamily ;
 @prefix bddo:     &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
 @prefix dfv:      &lt;https://hexplain.io/ns/docfont#&gt; .
+@prefix dcterms:  &lt;http://purl.org/dc/terms/&gt; .
+@prefix xsd:      &lt;http://www.w3.org/2001/XMLSchema#&gt; .
 @prefix pdf:      &lt;https://hexplain.io/formats/pdf#&gt; .
 
 pdf:InfoDictionary a bddo:Struct ;
@@ -182,7 +180,7 @@ pdf:InfoDictionary a bddo:Struct ;
 
 pdf:AuthorEntry a bddo:Field ;
     bddo:dataType bddo:string ; bddo:terminator "0A"^^xsd:hexBinary ;
-    hexplain:mapsToProperty dfv:author .
+    hexplain:mapsToProperty dcterms:creator .
 
 pdf:CreatorEntry a bddo:Field ;
     bddo:dataType bddo:string ; bddo:terminator "0A"^^xsd:hexBinary ;

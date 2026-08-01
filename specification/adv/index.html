@@ -11,21 +11,20 @@
             editors: [{ name: "Stephane Fellah", url: "https://geoknoesis.com" }],
             github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "hexplain-adv",
-            publishDate: "2025-08-16",
-            subtitle: "Version 1.1",
+            publishDate: "2026-07-22",
+            subtitle: "Version 1.0",
         };
     </script>
 </head>
 <body>
     <section id="abstract">
         <p>
-            The Hexplain Audio Vocabulary (ADV) provides standard terms for the semantic properties of audio data. Used with BDDO and Hexplain Core, it maps fields from formats like WAV or MP3 (ID3) to concepts such as sample rate, artist, and album. <b>Prefix:</b> <code>adv</code>; <b>namespace:</b> <code>https://hexplain.io/ns/audio#</code>.
+            The Hexplain Audio Vocabulary (ADV) provides standard terms for the semantic properties of audio data. Used with BDDO and Hexplain Core, it maps fields from formats like WAV or MP3 (ID3) to concepts such as sample rate, artist, and album. It <code>owl:imports</code> the <a href="../architecture/index.html">aspect layer</a> and reuses its orthogonal terms — <code>aenc:codec</code>/<code>aenc:bitrate</code> (encoding) and <code>atime:duration</code> (time) — rather than redefining them. <b>Prefix:</b> <code>adv</code>; <b>namespace:</b> <code>https://hexplain.io/ns/audio#</code>.
         </p>
     </section>
 
     <section id="sotd">
         <p>This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.</p>
-        <p><b>Change log.</b> Version 1.1 adds SHACL range constraints, <code>rdfs:comment</code>/<code>rdfs:isDefinedBy</code>, ontology metadata, and alignments to the W3C Ontology for Media Resources and Dublin Core; declares <code>rdfs:range</code> and expresses domain/cardinality in SHACL (no <code>rdfs:domain</code>). <b>Note:</b> this vocabulary was previously published at the <code>axv/</code> path in error; its canonical location is now <code>adv/</code>.</p>
     </section>
 
     <section class="introductory">
@@ -48,12 +47,12 @@
         <table class="simple">
             <thead><tr><th>Property</th><th>Description</th><th>Range</th></tr></thead>
             <tbody>
-                <tr><td><code>adv:sampleRate</code></td><td>Samples per second (Hz).</td><td><code>xsd:positiveInteger</code></td></tr>
-                <tr><td><code>adv:audioChannels</code></td><td>Channel count (1 mono, 2 stereo).</td><td><code>xsd:positiveInteger</code></td></tr>
-                <tr><td><code>adv:bitDepth</code></td><td>Bits per sample.</td><td><code>xsd:positiveInteger</code></td></tr>
-                <tr><td><code>adv:duration</code></td><td>Duration in seconds.</td><td><code>xsd:decimal</code></td></tr>
-                <tr><td><code>adv:bitrate</code></td><td>Average bitrate (bits/s).</td><td><code>xsd:positiveInteger</code></td></tr>
-                <tr><td><code>adv:codecIdentifier</code></td><td>Codec name ("PCM", "MP3", "FLAC").</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>asig:sampleRate</code> <span class="note">(aspect)</span></td><td>Samples per second (Hz).</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>asamp:componentCount</code> <span class="note">(aspect)</span></td><td>Channel count (1 mono, 2 stereo).</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>asamp:bitDepth</code> <span class="note">(aspect)</span></td><td>Bits per sample.</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>atime:duration</code> <span class="note">(aspect)</span></td><td>Duration in seconds.</td><td><code>xsd:decimal</code></td></tr>
+                <tr><td><code>aenc:bitrate</code> <span class="note">(aspect)</span></td><td>Average bitrate (bits/s).</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>aenc:codec</code> <span class="note">(aspect)</span></td><td>Codec, from the Codec Register ("PCM", "MP3", "FLAC").</td><td><code>skos:Concept</code></td></tr>
                 <tr><td><code>adv:artist</code>, <code>adv:album</code>, <code>adv:trackTitle</code>, <code>adv:genre</code></td><td>Descriptive tags.</td><td><code>xsd:string</code></td></tr>
                 <tr><td><code>adv:trackNumber</code></td><td>Track number.</td><td><code>xsd:positiveInteger</code></td></tr>
             </tbody>
@@ -68,7 +67,7 @@
     <section id="normative-owl">
         <h2>Normative OWL Vocabulary</h2>
         <pre class="nohighlight">
-# Hexplain Audio Vocabulary (ADV) 1.1 — vocabulary + SHACL shapes
+# Hexplain Audio Vocabulary (ADV) 1.0 — vocabulary + SHACL shapes
 @prefix :       &lt;https://hexplain.io/ns/audio#&gt; .
 @prefix adv:    &lt;https://hexplain.io/ns/audio#&gt; .
 @prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
@@ -77,12 +76,17 @@
 @prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
 @prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
 @prefix ma:     &lt;http://www.w3.org/ns/ma-ont#&gt; .
+@prefix atime:  &lt;https://hexplain.io/ns/aspect/time#&gt; .
+@prefix aenc:   &lt;https://hexplain.io/ns/aspect/encoding#&gt; .
+@prefix asamp:  &lt;https://hexplain.io/ns/aspect/sampling#&gt; .
+@prefix asig:   &lt;https://hexplain.io/ns/aspect/signal#&gt; .
 @prefix dlv:    &lt;https://hexplain.io/ns/dlv#&gt; .
 @prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
 @prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 &lt;https://hexplain.io/ns/audio&gt; a owl:Ontology ;
-    owl:versionIRI &lt;https://hexplain.io/ns/audio/1.1&gt; ; owl:versionInfo "1.1" ;
+    owl:versionIRI &lt;https://hexplain.io/ns/audio/1.0&gt; ; owl:versionInfo "1.0" ;
+    owl:imports &lt;https://hexplain.io/ns/aspect/time&gt; , &lt;https://hexplain.io/ns/aspect/encoding&gt; , &lt;https://hexplain.io/ns/aspect/sampling&gt; , &lt;https://hexplain.io/ns/aspect/signal&gt; ;
     rdfs:label "Hexplain Audio Vocabulary (ADV)" ;
     rdfs:comment "Semantic vocabulary for audio stream and tag properties." ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
@@ -93,12 +97,9 @@
 :AudioStream a owl:Class ; rdfs:label "Audio Stream" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch ma:AudioTrack .
 :MetadataTag a owl:Class ; rdfs:label "Metadata Tag" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; .
 
-:sampleRate a owl:DatatypeProperty ; rdfs:label "sample rate" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch ma:samplingRate ; rdfs:range xsd:positiveInteger .
-:audioChannels a owl:DatatypeProperty ; rdfs:label "audio channels" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch ma:numberOfTracks ; rdfs:range xsd:positiveInteger .
-:bitDepth a owl:DatatypeProperty ; rdfs:label "bit depth" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; rdfs:range xsd:positiveInteger .
-:duration a owl:DatatypeProperty ; rdfs:label "duration" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch ma:duration ; rdfs:range xsd:decimal .
-:bitrate a owl:DatatypeProperty ; rdfs:label "bitrate" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch ma:averageBitRate ; rdfs:range xsd:positiveInteger .
-:codecIdentifier a owl:DatatypeProperty ; rdfs:label "codec identifier" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch ma:hasFormat ; rdfs:range xsd:string .
+# sampleRate is the signal aspect (asig:sampleRate); audioChannels is the sampling aspect
+# (asamp:componentCount); bitDepth is asamp:bitDepth (shared with image) — all imported.
+# duration (atime), bitrate + codec (aenc) are imported from the aspect layer.
 :artist a owl:DatatypeProperty ; rdfs:label "artist" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch dcterms:creator ; rdfs:range xsd:string .
 :album a owl:DatatypeProperty ; rdfs:label "album" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; rdfs:range xsd:string .
 :trackTitle a owl:DatatypeProperty ; rdfs:label "track title" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/audio&gt; ; skos:closeMatch dcterms:title ; rdfs:range xsd:string .
@@ -121,17 +122,22 @@
 @prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
 @prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
 @prefix ma:     &lt;http://www.w3.org/ns/ma-ont#&gt; .
+@prefix atime:  &lt;https://hexplain.io/ns/aspect/time#&gt; .
+@prefix aenc:   &lt;https://hexplain.io/ns/aspect/encoding#&gt; .
+@prefix asamp:  &lt;https://hexplain.io/ns/aspect/sampling#&gt; .
+@prefix asig:   &lt;https://hexplain.io/ns/aspect/signal#&gt; .
 @prefix dlv:    &lt;https://hexplain.io/ns/dlv#&gt; .
 @prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
 @prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 # SHACL shapes
-adv:StreamShape a sh:NodeShape ; sh:targetSubjectsOf adv:sampleRate ;
-    sh:property [ sh:path adv:sampleRate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path adv:audioChannels ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path adv:bitDepth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path adv:duration ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
-    sh:property [ sh:path adv:bitrate ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+adv:StreamShape a sh:NodeShape ; sh:targetSubjectsOf asig:sampleRate ;
+    sh:property [ sh:path asig:sampleRate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asamp:componentCount ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asamp:bitDepth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path atime:duration ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path aenc:bitrate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path aenc:codec ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
 adv:TagShape a sh:NodeShape ; sh:targetSubjectsOf adv:artist ;
     sh:property [ sh:path adv:artist ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path adv:album ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
@@ -146,9 +152,14 @@ adv:TagShape a sh:NodeShape ; sh:targetSubjectsOf adv:artist ;
 {
   "@context": {
     "adv": "https://hexplain.io/ns/audio#",
-    "sampleRate": "adv:sampleRate", "audioChannels": "adv:audioChannels",
-    "bitDepth": "adv:bitDepth", "duration": "adv:duration", "bitrate": "adv:bitrate",
-    "codecIdentifier": "adv:codecIdentifier", "artist": "adv:artist", "album": "adv:album",
+    "atime": "https://hexplain.io/ns/aspect/time#",
+    "aenc": "https://hexplain.io/ns/aspect/encoding#",
+    "asamp": "https://hexplain.io/ns/aspect/sampling#",
+    "asig": "https://hexplain.io/ns/aspect/signal#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "sampleRate": "asig:sampleRate", "audioChannels": "asamp:componentCount",
+    "bitDepth": "asamp:bitDepth", "duration": "atime:duration", "bitrate": "aenc:bitrate",
+    "codec": { "@id": "aenc:codec", "@type": "@id" }, "artist": "adv:artist", "album": "adv:album",
     "trackTitle": "adv:trackTitle", "trackNumber": "adv:trackNumber", "genre": "adv:genre"
   }
 }
@@ -161,6 +172,8 @@ adv:TagShape a sh:NodeShape ; sh:targetSubjectsOf adv:artist ;
 @prefix bddo:     &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
 @prefix adv:      &lt;https://hexplain.io/ns/audio#&gt; .
+@prefix asamp:    &lt;https://hexplain.io/ns/aspect/sampling#&gt; .
+@prefix asig:     &lt;https://hexplain.io/ns/aspect/signal#&gt; .
 @prefix wav:      &lt;https://hexplain.io/formats/wav#&gt; .
 
 wav:FormatChunk a bddo:Struct ;
@@ -168,9 +181,9 @@ wav:FormatChunk a bddo:Struct ;
     bddo:endianness bddo:LittleEndian ;
     bddo:hasField ( wav:SampleRate wav:Channels wav:BitsPerSample ) .
 
-wav:SampleRate a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty adv:sampleRate .
-wav:Channels a bddo:Field ; bddo:dataType bddo:uint16 ; hexplain:mapsToProperty adv:audioChannels .
-wav:BitsPerSample a bddo:Field ; bddo:dataType bddo:uint16 ; hexplain:mapsToProperty adv:bitDepth .
+wav:SampleRate a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty asig:sampleRate .
+wav:Channels a bddo:Field ; bddo:dataType bddo:uint16 ; hexplain:mapsToProperty asamp:componentCount .
+wav:BitsPerSample a bddo:Field ; bddo:dataType bddo:uint16 ; hexplain:mapsToProperty asamp:bitDepth .
         </pre>
     </section>
 </body>

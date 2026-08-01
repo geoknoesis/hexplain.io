@@ -19,12 +19,12 @@
 <body>
     <section id="abstract">
         <p>
-            The Hexplain Video Vocabulary (VDV) provides standard terms for the semantic properties of video data. Used with BDDO, DLV, and Hexplain Core, it maps low-level fields from container formats (MXF, MOV, MP4, AVI) to high-level concepts such as frame rate, codec, resolution, and duration, enabling interoperability and semantic querying across video formats regardless of container. <b>Prefix:</b> <code>vdv</code>; <b>namespace:</b> <code>https://hexplain.io/ns/video#</code>.
+            The Hexplain Video Vocabulary (VDV) provides standard terms for the semantic properties of video data. Used with BDDO, DLV, and Hexplain Core, it maps low-level fields from container formats (MXF, MOV, MP4, AVI) to high-level concepts such as frame rate, codec, resolution, and duration, enabling interoperability and semantic querying across video formats regardless of container. It <code>owl:imports</code> the <a href="../architecture/index.html">aspect layer</a> and reuses its orthogonal terms — <code>aenc:codec</code>/<code>aenc:bitrate</code> (encoding), <code>acolor:colorSpace</code> (colour), <code>atime:duration</code> (time) — rather than redefining them. <b>Prefix:</b> <code>vdv</code>; <b>namespace:</b> <code>https://hexplain.io/ns/video#</code>.
         </p>
     </section>
 
     <section id="sotd">
-        <p>This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. This is the first version. (Earlier drafts of the family listed a "VDV" module whose <code>vdv/</code> path erroneously contained the Document &amp; Font vocabulary; that content now lives at <code>dfv/</code>, and this document is the real Video Vocabulary.)</p>
+        <p>This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. This is the first version.</p>
     </section>
 
     <section class="introductory">
@@ -47,18 +47,24 @@
         <table class="simple">
             <thead><tr><th>Property</th><th>Description</th><th>Range</th></tr></thead>
             <tbody>
-                <tr><td><code>vdv:frameWidth</code>, <code>vdv:frameHeight</code></td><td>Picture dimensions in pixels.</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>araster:width</code>, <code>araster:height</code> <span class="note">(aspect)</span></td><td>Picture dimensions in pixels (raster grid extent).</td><td><code>xsd:positiveInteger</code></td></tr>
                 <tr><td><code>vdv:frameRate</code></td><td>Frames per second.</td><td><code>xsd:decimal</code></td></tr>
-                <tr><td><code>vdv:duration</code></td><td>Duration in seconds.</td><td><code>xsd:decimal</code></td></tr>
-                <tr><td><code>vdv:bitrate</code></td><td>Average bitrate (bits/s).</td><td><code>xsd:positiveInteger</code></td></tr>
-                <tr><td><code>vdv:codecIdentifier</code></td><td>Codec name ("H.264", "ProRes", "VP9").</td><td><code>xsd:string</code></td></tr>
-                <tr><td><code>vdv:aspectRatio</code></td><td>Display aspect ratio ("16:9").</td><td><code>xsd:string</code></td></tr>
-                <tr><td><code>vdv:colorSpace</code></td><td>Colour space ("BT.709", "BT.2020").</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>atime:duration</code> <span class="note">(aspect)</span></td><td>Duration in seconds.</td><td><code>xsd:decimal</code></td></tr>
+                <tr><td><code>aenc:bitrate</code> <span class="note">(aspect)</span></td><td>Average bitrate (bits/s).</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>aenc:codec</code> <span class="note">(aspect)</span></td><td>Codec, from the Codec Register ("H.264", "ProRes", "VP9").</td><td><code>skos:Concept</code></td></tr>
+                <tr><td><code>vdv:aspectRatio</code></td><td>Display aspect ratio as a <code>W:H</code> string ("16:9").</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>acolor:colorSpace</code> <span class="note">(aspect)</span></td><td>Colour space, from the Colour Space Register ("BT.709", "BT.2020").</td><td><code>skos:Concept</code></td></tr>
                 <tr><td><code>vdv:scanType</code></td><td>Progressive or interlaced.</td><td><code>vdv:Progressive</code>/<code>vdv:Interlaced</code></td></tr>
                 <tr><td><code>vdv:frameCount</code></td><td>Total number of frames.</td><td><code>xsd:unsignedLong</code></td></tr>
                 <tr><td><code>vdv:audioChannels</code></td><td>Audio channel count of the muxed audio.</td><td><code>xsd:positiveInteger</code></td></tr>
             </tbody>
         </table>
+    </section>
+
+    <section id="registers">
+        <h2>Controlled Vocabularies</h2>
+        <p>Codec and colour space are object properties whose values are <code>skos:Concept</code> members of open registers, rather than free-text strings. These registers live in the orthogonal <a href="../architecture/index.html">aspect layer</a> — <code>aenc:CodecScheme</code> (encoding aspect) and <code>acolor:ColorSpaceScheme</code> (colour aspect) — and are shared with the audio and image vocabularies, so a codec carries the same IRI (e.g. <code>aenc:H264</code>) regardless of media type. By contrast, <code>vdv:aspectRatio</code> remains a literal because it is a computable value (a <code>W:H</code> ratio), not a term; its form is constrained by SHACL.</p>
+        <p>Example: <code>_:stream aenc:codec aenc:H264 ; acolor:colorSpace acolor:BT709 ; vdv:aspectRatio "16:9" .</code></p>
     </section>
 
     <section id="layout-axes">
@@ -78,12 +84,20 @@
 @prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
 @prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
 @prefix ma:     &lt;http://www.w3.org/ns/ma-ont#&gt; .
+@prefix qudt:   &lt;http://qudt.org/schema/qudt/&gt; .
+@prefix quantitykind: &lt;http://qudt.org/vocab/quantitykind/&gt; .
+@prefix unit:   &lt;http://qudt.org/vocab/unit/&gt; .
+@prefix atime:  &lt;https://hexplain.io/ns/aspect/time#&gt; .
+@prefix aenc:   &lt;https://hexplain.io/ns/aspect/encoding#&gt; .
+@prefix acolor: &lt;https://hexplain.io/ns/aspect/color#&gt; .
+@prefix araster:&lt;https://hexplain.io/ns/aspect/raster#&gt; .
 @prefix dlv:    &lt;https://hexplain.io/ns/dlv#&gt; .
 @prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
 @prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 &lt;https://hexplain.io/ns/video&gt; a owl:Ontology ;
     owl:versionIRI &lt;https://hexplain.io/ns/video/1.0&gt; ; owl:versionInfo "1.0" ;
+    owl:imports &lt;https://hexplain.io/ns/aspect/time&gt; , &lt;https://hexplain.io/ns/aspect/encoding&gt; , &lt;https://hexplain.io/ns/aspect/color&gt; , &lt;https://hexplain.io/ns/aspect/raster&gt; ;
     rdfs:label "Hexplain Video Vocabulary (VDV)" ;
     rdfs:comment "Semantic vocabulary for video stream and container properties." ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
@@ -94,14 +108,10 @@
 :VideoStream a owl:Class ; rdfs:label "Video Stream" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; ; skos:closeMatch ma:VideoTrack .
 :VideoTrack a owl:Class ; rdfs:label "Video Track" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; .
 
-:frameWidth a owl:DatatypeProperty ; rdfs:label "frame width" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; ; skos:closeMatch ma:frameWidth ; rdfs:range xsd:positiveInteger .
-:frameHeight a owl:DatatypeProperty ; rdfs:label "frame height" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; ; skos:closeMatch ma:frameHeight ; rdfs:range xsd:positiveInteger .
-:frameRate a owl:DatatypeProperty ; rdfs:label "frame rate" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; ; skos:closeMatch ma:frameRate ; rdfs:range xsd:decimal .
-:duration a owl:DatatypeProperty ; rdfs:label "duration" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; ; skos:closeMatch ma:duration ; rdfs:range xsd:decimal .
-:bitrate a owl:DatatypeProperty ; rdfs:label "bitrate" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; ; skos:closeMatch ma:averageBitRate ; rdfs:range xsd:positiveInteger .
-:codecIdentifier a owl:DatatypeProperty ; rdfs:label "codec identifier" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; ; skos:closeMatch ma:hasFormat ; rdfs:range xsd:string .
-:aspectRatio a owl:DatatypeProperty ; rdfs:label "aspect ratio" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; ; rdfs:range xsd:string .
-:colorSpace a owl:DatatypeProperty ; rdfs:label "color space" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; ; rdfs:range xsd:string .
+:frameRate a owl:DatatypeProperty ; rdfs:label "frame rate" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; ; skos:closeMatch ma:frameRate ; rdfs:range xsd:decimal ; qudt:hasQuantityKind quantitykind:Frequency ; qudt:hasUnit unit:HZ .
+# Frame dimensions come from the raster aspect: araster:width / araster:height.
+# duration (atime), bitrate + codec (aenc), colorSpace (acolor) are imported from the aspect layer.
+:aspectRatio a owl:DatatypeProperty ; rdfs:label "aspect ratio" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; ; rdfs:range xsd:string ; rdfs:comment "Display aspect ratio as a W:H string, e.g. \"16:9\"." .
 :scanType a owl:ObjectProperty ; rdfs:label "scan type" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; .
 :frameCount a owl:DatatypeProperty ; rdfs:label "frame count" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; ; rdfs:range xsd:unsignedLong .
 :audioChannels a owl:DatatypeProperty ; rdfs:label "audio channels" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/video&gt; ; rdfs:range xsd:positiveInteger .
@@ -123,18 +133,28 @@
 @prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
 @prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
 @prefix ma:     &lt;http://www.w3.org/ns/ma-ont#&gt; .
+@prefix qudt:   &lt;http://qudt.org/schema/qudt/&gt; .
+@prefix quantitykind: &lt;http://qudt.org/vocab/quantitykind/&gt; .
+@prefix unit:   &lt;http://qudt.org/vocab/unit/&gt; .
+@prefix atime:  &lt;https://hexplain.io/ns/aspect/time#&gt; .
+@prefix aenc:   &lt;https://hexplain.io/ns/aspect/encoding#&gt; .
+@prefix acolor: &lt;https://hexplain.io/ns/aspect/color#&gt; .
+@prefix araster:&lt;https://hexplain.io/ns/aspect/raster#&gt; .
 @prefix dlv:    &lt;https://hexplain.io/ns/dlv#&gt; .
 @prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
 @prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 # SHACL shapes
 vdv:StreamShape a sh:NodeShape ; sh:targetSubjectsOf vdv:frameRate ;
-    sh:property [ sh:path vdv:frameWidth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:frameHeight ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path araster:width ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path araster:height ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path vdv:frameRate ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:duration ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:bitrate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:scanType ; sh:maxCount 1 ; sh:in ( vdv:Progressive vdv:Interlaced ) ] .
+    sh:property [ sh:path atime:duration ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path aenc:bitrate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path vdv:scanType ; sh:maxCount 1 ; sh:in ( vdv:Progressive vdv:Interlaced ) ] ;
+    sh:property [ sh:path aenc:codec ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] ;
+    sh:property [ sh:path acolor:colorSpace ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] ;
+    sh:property [ sh:path vdv:aspectRatio ; sh:datatype xsd:string ; sh:pattern "^[0-9]+(\\.[0-9]+)?:[0-9]+(\\.[0-9]+)?$" ; sh:maxCount 1 ] .
         </pre>
     </section>
 
@@ -144,10 +164,16 @@ vdv:StreamShape a sh:NodeShape ; sh:targetSubjectsOf vdv:frameRate ;
 {
   "@context": {
     "vdv": "https://hexplain.io/ns/video#",
-    "frameWidth": "vdv:frameWidth", "frameHeight": "vdv:frameHeight",
-    "frameRate": "vdv:frameRate", "duration": "vdv:duration", "bitrate": "vdv:bitrate",
-    "codecIdentifier": "vdv:codecIdentifier", "aspectRatio": "vdv:aspectRatio",
-    "colorSpace": "vdv:colorSpace",
+    "atime": "https://hexplain.io/ns/aspect/time#",
+    "aenc": "https://hexplain.io/ns/aspect/encoding#",
+    "acolor": "https://hexplain.io/ns/aspect/color#",
+    "araster": "https://hexplain.io/ns/aspect/raster#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "frameWidth": "araster:width", "frameHeight": "araster:height",
+    "frameRate": "vdv:frameRate", "duration": "atime:duration", "bitrate": "aenc:bitrate",
+    "codec": { "@id": "aenc:codec", "@type": "@id" },
+    "aspectRatio": "vdv:aspectRatio",
+    "colorSpace": { "@id": "acolor:colorSpace", "@type": "@id" },
     "scanType": { "@id": "vdv:scanType", "@type": "@id" },
     "frameCount": "vdv:frameCount", "audioChannels": "vdv:audioChannels"
   }
@@ -161,6 +187,7 @@ vdv:StreamShape a sh:NodeShape ; sh:targetSubjectsOf vdv:frameRate ;
 @prefix bddo:     &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
 @prefix vdv:      &lt;https://hexplain.io/ns/video#&gt; .
+@prefix araster:  &lt;https://hexplain.io/ns/aspect/raster#&gt; .
 @prefix mp4:      &lt;https://hexplain.io/formats/mp4#&gt; .
 
 # The MP4 'tkhd' (track header) mapped to a VideoStream.
@@ -169,8 +196,8 @@ mp4:TrackHeader a bddo:Struct ;
     bddo:endianness bddo:BigEndian ;
     bddo:hasField ( mp4:Width mp4:Height ) .
 
-mp4:Width  a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty vdv:frameWidth .
-mp4:Height a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty vdv:frameHeight .
+mp4:Width  a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty araster:width .
+mp4:Height a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty araster:height .
         </pre>
     </section>
 </body>

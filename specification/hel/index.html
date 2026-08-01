@@ -15,7 +15,7 @@
             github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "hel",
             publishDate: "2025-08-16",
-            subtitle: "Version 2.0",
+            subtitle: "Version 1.0",
         };
     </script>
 </head>
@@ -30,7 +30,6 @@
         <p>
             This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
         </p>
-        <p><b>Change log.</b> Version 2.0 (this version) is a normative clarification and expansion. It reconciles the grammar with the roots actually used in Hexplain examples (<code>instance</code>, <code>parent</code>, <code>root</code>, <code>stream</code>, <code>self</code>); precisely defines what <code>instance</code> denotes (the current node, resolving the earlier "root vs. current" ambiguity); adds a complete <b>value-type and coercion</b> section (previously an undefined forward reference); adds bitwise and modulo operators and a small function library (<code>sizeof</code>, <code>len</code>, <code>count</code>, <code>eof</code>); and adds hexadecimal integer literals and string escaping. Version 1.2 added the <code>parent</code> keyword and arithmetic; version 1.1 added parenthesized expressions.</p>
     </section>
 
     <section class="introductory">
@@ -56,7 +55,7 @@
             <table class="simple">
                 <thead><tr><th>Root</th><th>Denotes</th></tr></thead>
                 <tbody>
-                    <tr><td><code>instance</code></td><td><b>The current node</b> — the parsed node the expression is attached to (its Field, or the Struct/Field a rule governs). This replaces the earlier ambiguous "root of the context" wording.</td></tr>
+                    <tr><td><code>instance</code></td><td><b>The current node</b> — the parsed node the expression is attached to (its Field, or the Struct/Field a rule governs).</td></tr>
                     <tr><td><code>parent</code></td><td>Shorthand for <code>instance.parent</code>: the containing Struct node. Sibling fields are reached via <code>parent.SiblingName</code> (equivalently <code>instance.parent.SiblingName</code>).</td></tr>
                     <tr><td><code>root</code></td><td>The top-level parsed instance (the outermost Struct of the description).</td></tr>
                     <tr><td><code>self</code></td><td>Within a <code>bddo:repeatUntil</code> expression, the array element most recently parsed (the one under test). Undefined elsewhere.</td></tr>
@@ -67,6 +66,7 @@
         <section>
             <h3>Context-Based Key Resolution</h3>
             <p>Identifiers after a dot are simple keys (e.g. <code>ChunkType</code>). They resolve to full IRIs via the <code>@prefix</code> context of the Hexplain description, exactly as in [[JSON-LD]]. A key MUST correspond to a field defined in the referenced Struct, or to the keyword <code>parent</code>.</p>
+            <p>An array node (a repeated field) MAY be subscripted with <code>[ Expression ]</code>. The index expression MUST evaluate to a non-negative Integer strictly less than the array's length (elements are 0-based); otherwise a <b>range error</b> is raised. Subscripts and key steps compose freely (e.g. <code>root.Directory[i].Entries[0].Tag</code>).</p>
         </section>
     </section>
 
@@ -93,7 +93,8 @@ Primary      = FunctionCall / Accessor / Literal / ( "(" WS Expression WS ")" )
 FunctionCall = FunctionName "(" WS [ Expression *( WS "," WS Expression ) ] WS ")"
 FunctionName = "sizeof" / "len" / "count" / "eof"
 
-Accessor     = Root *( "." ( "parent" / IDENTIFIER ) )
+Accessor     = Root *( Step )
+Step         = "." ( "parent" / IDENTIFIER ) / "[" WS Expression WS "]"
 Root         = "instance" / "parent" / "root" / "self" / "stream"
 
 CompOp       = "==" / "!=" / "&lt;=" / "&gt;=" / "&lt;" / "&gt;"
@@ -118,6 +119,8 @@ root.Header.Magic
 stream.remaining
 sizeof(instance.parent.Keyword)   ; byte length of a parsed field
 len(instance.parent.Entries)      ; number of elements in an array
+instance.parent.Entries[0].Offset ; a field of the first (0-based) array element
+root.Directory[instance.Index].Tag; array index from a parsed field value
 eof()                             ; true when the cursor is at end of stream
             </pre>
             <table class="simple">

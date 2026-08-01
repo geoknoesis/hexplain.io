@@ -1,4 +1,4 @@
-# Binary Data Description Ontology (BDDO) 1.4 — vocabulary + SHACL shapes
+# Binary Data Description Ontology (BDDO) 1.0 — vocabulary + SHACL shapes
 # Canonical machine-readable artifact. Namespace: https://hexplain.io/ns/bddo#
 # Modeling: properties declare rdfs:range (value type). Domain and cardinality
 # are expressed in SHACL only (no rdfs:domain), to avoid over-committing subjects.
@@ -13,9 +13,8 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/bddo> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/bddo/1.4> ;
-    owl:versionInfo "1.4" ;
-    owl:priorVersion <https://hexplain.io/ns/bddo/1.3> ;
+    owl:versionIRI <https://hexplain.io/ns/bddo/1.0> ;
+    owl:versionInfo "1.0" ;
     rdfs:label "Binary Data Description Ontology (BDDO)" ;
     rdfs:comment "Vocabulary for declaratively describing the physical structure of binary data." ;
     dcterms:created "2025-08-16"^^xsd:date ;
@@ -33,7 +32,8 @@
 :DataTypeRule a owl:Class ; rdfs:label "Data Type Rule" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :Enumeration  a owl:Class ; rdfs:label "Enumeration" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :EnumValue    a owl:Class ; rdfs:label "Enumeration Value" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
-:Checksum     a owl:Class ; rdfs:label "Checksum" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:Checksum     a owl:Class ; rdfs:label "Checksum" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A checksum/hash over a byte range: from the first byte of coversFromField to the last byte of coversToField (inclusive), or the [start,end) range yielded by coversExpression." .
 # Controlled-vocabulary classes (typed enumerated individuals)
 :Endianness       a owl:Class ; rdfs:label "Endianness" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :BitOrder         a owl:Class ; rdfs:label "Bit Order" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
@@ -61,6 +61,8 @@
 :sizeFromExpression     a owl:DatatypeProperty ; rdfs:label "size from expression" ; rdfs:range xsd:string .
 :sizeToEndOfStream      a owl:DatatypeProperty ; rdfs:label "size to end of stream" ; rdfs:range xsd:boolean .
 :terminator             a owl:DatatypeProperty ; rdfs:label "terminator" ; rdfs:range xsd:hexBinary .
+:trimNull               a owl:DatatypeProperty ; rdfs:label "trim null" ; rdfs:range xsd:boolean ;
+    rdfs:comment "For a fixed-size (padded) string field, the emitted value ends at the first 0x00 byte within the field's width." .
 :encoding               a owl:ObjectProperty ; rdfs:label "encoding" ; rdfs:range :Encoding .
 :bitLength              a owl:DatatypeProperty ; rdfs:label "bit length" ; rdfs:range xsd:positiveInteger .
 :repeatCount            a owl:DatatypeProperty ; rdfs:label "repeat count" ; rdfs:range xsd:nonNegativeInteger .
@@ -88,6 +90,8 @@
 :hasEnumValue  a owl:ObjectProperty ; rdfs:label "has enum value" ; rdfs:range :EnumValue .
 :enumRawValue  a owl:DatatypeProperty ; rdfs:label "enum raw value" .
 :enumSymbol    a owl:ObjectProperty ; rdfs:label "enum symbol" .
+:enumIsFlags   a owl:DatatypeProperty ; rdfs:label "enum is flags" ; rdfs:range xsd:boolean ;
+    rdfs:comment "If true, the Enumeration is a bit-flag set: each EnumValue's raw value is a bitmask, and every symbol whose bit(s) are set in the parsed value is emitted." .
 :checksumAlgorithm a owl:ObjectProperty ; rdfs:label "checksum algorithm" ; rdfs:range :ChecksumAlgorithm .
 :coversFromField   a owl:ObjectProperty ; rdfs:label "covers from field" ; rdfs:range :Field .
 :coversToField     a owl:ObjectProperty ; rdfs:label "covers to field" ; rdfs:range :Field .
@@ -162,7 +166,21 @@ bddo:StructShape a sh:NodeShape ;
         sh:message "Every member of a Struct's hasField list must be a bddo:Field." ] ;
     sh:property [ sh:path bddo:endianness ; sh:maxCount 1 ; sh:in ( bddo:BigEndian bddo:LittleEndian ) ] ;
     sh:property [ sh:path bddo:bitOrder ; sh:maxCount 1 ; sh:in ( bddo:MSBFirst bddo:LSBFirst ) ] ;
-    sh:property [ sh:path bddo:syncOnMarker ; sh:maxCount 1 ; sh:datatype xsd:hexBinary ] .
+    sh:property [ sh:path bddo:syncOnMarker ; sh:maxCount 1 ; sh:datatype xsd:hexBinary ] ;
+    # Struct-level size bounds the byte extent of the Struct (a bounded region for its children).
+    sh:property [ sh:path bddo:size ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:sizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:sizeFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+
+# At most one struct-sizing mechanism per Struct.
+bddo:StructSizingShape a sh:NodeShape ;
+    sh:targetClass bddo:Struct ;
+    sh:sparql [ sh:message "A bddo:Struct must use at most one sizing mechanism (size / sizeFromField / sizeFromExpression)." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this ?p ?v .
+            FILTER(?p IN (bddo:size, bddo:sizeFromField, bddo:sizeFromExpression))
+        } GROUP BY $this HAVING (COUNT(DISTINCT ?p) > 1)""" ] .
 
 bddo:FieldShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
@@ -180,6 +198,7 @@ bddo:FieldShape a sh:NodeShape ;
     sh:property [ sh:path bddo:sizeFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:sizeToEndOfStream ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:terminator ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:trimNull ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:encoding ; sh:maxCount 1 ; sh:in ( bddo:utf8 bddo:ascii bddo:utf16le bddo:utf16be bddo:latin1 ) ] ;
     sh:property [ sh:path bddo:bitLength ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:alignment ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
@@ -255,7 +274,8 @@ bddo:DataTypeRuleShape a sh:NodeShape ;
 
 bddo:EnumerationShape a sh:NodeShape ;
     sh:targetClass bddo:Enumeration ;
-    sh:property [ sh:path bddo:hasEnumValue ; sh:minCount 1 ; sh:class bddo:EnumValue ] .
+    sh:property [ sh:path bddo:hasEnumValue ; sh:minCount 1 ; sh:class bddo:EnumValue ] ;
+    sh:property [ sh:path bddo:enumIsFlags ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .
 
 bddo:EnumValueShape a sh:NodeShape ;
     sh:targetClass bddo:EnumValue ;

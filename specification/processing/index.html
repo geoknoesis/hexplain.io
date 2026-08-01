@@ -38,7 +38,7 @@
         <section>
             <h3>Conformance</h3>
             <p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].</p>
-            <p>A <dfn>conforming processor</dfn> MUST implement the parse algorithm (§3), the context model (§4), IRI minting (§5), the value mapping (§6), and semantic emission (§7); and MUST support every construct of BDDO 1.4, Hexplain Core 1.2, DLV 1.3, and HEL 2.0.</p>
+            <p>A <dfn>conforming processor</dfn> MUST implement the parse algorithm (§3), the context model (§4), IRI minting (§5), the value mapping (§6), and semantic emission (§7); and MUST support every construct of BDDO, Hexplain Core, DLV, and HEL.</p>
         </section>
     </section>
 
@@ -61,9 +61,10 @@
             <ol>
                 <li>If <code>struct</code> has <code>bddo:syncOnMarker</code>, advance the cursor to the next occurrence of the marker bytes; if none exists, raise a <i>sync error</i>.</li>
                 <li>Create a new context node <code>n</code> with a back-link to <code>parent</code>; record its start offset.</li>
+                <li><b>Bounded region.</b> If <code>struct</code> declares a size (<code>bddo:size</code> / <code>bddo:sizeFromField</code> / <code>bddo:sizeFromExpression</code>), it establishes a <b>bounded region</b> <code>[start, start+size)</code>. A read by this struct or any descendant that would cross the region end raises a <i>bounds error</i>, and a descendant's <code>bddo:sizeToEndOfStream</code> resolves to the region end (not <code>|S|</code>). This is what lets length-delimited containers (ISOBMFF/MP4 boxes, EBML, chunk payloads) bound their children.</li>
                 <li>Resolve the effective endianness and bit order (nearest declaration wins: DataType &gt; Field &gt; Struct &gt; inherited from parent).</li>
                 <li>For each <code>field</code> in the <code>bddo:hasField</code> list, in order, call <b>ParseField(field, n)</b>. Members MUST be processed in list order.</li>
-                <li>Record the node's end offset (<code>sizeof</code> = end − start) and return <code>n</code>.</li>
+                <li>If <code>struct</code> declared a size, advance the cursor to <code>start+size</code> (skipping any trailing padding/unknown bytes); otherwise the end offset is the current cursor. Record the node's end offset (<code>sizeof</code> = end − start) and return <code>n</code>.</li>
             </ol>
         </section>
 
@@ -71,22 +72,35 @@
             <h3>ParseField(field, node)</h3>
             <ol>
                 <li><b>Presence.</b> If <code>bddo:isPresentIf</code> is present and its HEL expression evaluates to <code>false</code>, skip the field (bind it to <code>Null</code> in the context) and return.</li>
-                <li><b>Alignment.</b> If <code>bddo:alignment = a</code>, advance the cursor to the next multiple of <code>a</code>.</li>
+                <li><b>Alignment.</b> If <code>bddo:alignment = a</code>, advance the cursor to the next multiple of <code>a</code>, measured from the start of the innermost enclosing bounded region (or the stream start if none).</li>
                 <li><b>Addressing.</b> If an offset property is present, compute the target offset from <code>bddo:atOffset</code> / <code>atOffsetFromField</code> / <code>atOffsetFromExpression</code>, relative to <code>bddo:offsetBase</code> (default <code>streamStart</code>; <code>streamEnd</code> counts backward from <code>|S|</code>). Save the current cursor, seek to the target, parse, then restore the saved cursor (an offset field does not advance sibling parsing) unless <code>offsetBase</code> is <code>currentPosition</code>.</li>
                 <li><b>Repetition.</b> If a repetition property is present, determine the iteration policy: a fixed <code>bddo:repeatCount</code>, a count via <code>repeatCountFromField</code>/<code>repeatCountFromExpression</code>, or repeat-until (<code>bddo:repeatUntil</code>, evaluated after each element with <code>self</code> bound to it). Produce an ordered array node; each element is parsed by the single-value procedure below.</li>
                 <li><b>Type selection.</b> If <code>bddo:hasConditionalDataType</code> is present, evaluate each <code>bddo:DataTypeRule</code> in list order; the first whose <code>bddo:condition</code> is <code>true</code> supplies the effective type via <code>bddo:ruleDataType</code>. Otherwise use <code>bddo:dataType</code>. It is an error if neither yields a type.</li>
                 <li><b>Value.</b> If the effective type is a <code>bddo:Struct</code>, recurse via ParseStruct. If it is a <code>bddo:DataType</code>:
                     <ul>
-                        <li>Determine the field's byte size from (in priority order) the fixed width of the datatype (<code>bddo:bitWidth</code>/8), <code>bddo:size</code>, <code>bddo:sizeFromField</code>, <code>bddo:sizeFromExpression</code>, <code>bddo:terminator</code> (read until the terminator sequence), or <code>bddo:sizeToEndOfStream</code> (read to <code>|S|</code>). Exactly one applies; a variable-length type (<code>bytes</code>/<code>string</code>) MUST resolve to one of these.</li>
-                        <li>If <code>bddo:bitLength</code> is present, read that many bits per <code>bddo:bitOrder</code> instead of whole bytes.</li>
-                        <li>Decode the raw bytes to a typed value per §6, honouring endianness and (for strings) <code>bddo:encoding</code>.</li>
+                        <li>Determine the field's byte size from (in priority order) the fixed width of the datatype (<code>bddo:bitWidth</code>/8), <code>bddo:size</code>, <code>bddo:sizeFromField</code>, <code>bddo:sizeFromExpression</code>, <code>bddo:terminator</code> (read until the terminator sequence), or <code>bddo:sizeToEndOfStream</code> (read to the end of the innermost enclosing bounded region, or <code>|S|</code>). Exactly one applies; a variable-length type (<code>bytes</code>/<code>string</code>) MUST resolve to one of these.</li>
+                        <li>If <code>bddo:bitLength</code> is present, read that many bits per the bit-cursor rules (§3.3) instead of whole bytes.</li>
+                        <li>Decode the raw bytes to a typed value per §6, honouring endianness and (for strings) <code>bddo:encoding</code>. For a fixed-size <code>bddo:string</code> with <code>bddo:trimNull true</code>, the value is the bytes up to (excluding) the first <code>0x00</code> within the field's width (NUL-padded strings, e.g. TAR/ZIP names).</li>
                     </ul>
                 </li>
                 <li><b>Fixed value.</b> If <code>bddo:hasFixedValue</code> is present and the decoded value differs, raise a <i>validation error</i>.</li>
-                <li><b>Enumeration.</b> If <code>bddo:enumeration</code> is present, look up the raw value among the <code>bddo:EnumValue</code>s; the matching symbol/label is attached to the value node (and emitted per §7).</li>
-                <li><b>Checksum.</b> If <code>bddo:checksum</code> is present, compute the algorithm over the covered range (<code>coversFromField</code>…<code>coversToField</code>, or <code>coversExpression</code>) and compare with the stored value; a mismatch raises a <i>checksum error</i>.</li>
+                <li><b>Enumeration.</b> If <code>bddo:enumeration</code> is present, look up the raw value among the <code>bddo:EnumValue</code>s; the matching symbol/label is attached to the value node (and emitted per §7). If the enumeration has <code>bddo:enumIsFlags true</code>, the raw value is a bitmask: every <code>bddo:EnumValue</code> whose raw value's bits are all set in the parsed value matches, and <em>all</em> matching symbols are attached/emitted.</li>
+                <li><b>Checksum.</b> If <code>bddo:checksum</code> is present, compute the algorithm over the covered byte range — from the first byte of <code>coversFromField</code> to the last byte of <code>coversToField</code> (inclusive), or the <code>[start, end)</code> range yielded by <code>coversExpression</code> — and compare with the stored value; a mismatch raises a <i>checksum error</i>.</li>
                 <li>Bind the field's value into <code>node</code> under the field's simple key, and return.</li>
             </ol>
+        </section>
+
+        <section>
+            <h3>Bit-level fields (the bit cursor)</h3>
+            <p>Bit-level fields (<code>bddo:bitLength</code>) are read through a <b>bit cursor</b> that tracks the current byte offset and a bit offset within it (0–7):</p>
+            <ol>
+                <li>Consecutive <code>bddo:bitLength</code> fields pack <b>contiguously</b>: each consumes the next <code>bitLength</code> bits from the current bit offset, advancing the cursor (rolling into the next byte when it reaches 8).</li>
+                <li>Bits are consumed within each byte per the effective <code>bddo:bitOrder</code>: <code>bddo:MSBFirst</code> takes bits from the most-significant end first; <code>bddo:LSBFirst</code> from the least-significant end.</li>
+                <li>A field's integer value is assembled from its bits <b>most-significant-bit first</b>, so the decoded value is independent of storage order. A field spanning a byte boundary continues into the next byte in the same bit order.</li>
+                <li>The bit cursor <b>realigns to the next whole byte boundary</b> before any byte-oriented read (a field without <code>bitLength</code>), before <code>bddo:alignment</code>, and at the end of a Struct; partial bits before the boundary are skipped.</li>
+                <li>A bit read that would cross the end of the innermost bounded region (or <code>|S|</code>) raises a <i>bounds error</i>.</li>
+            </ol>
+            <p>This makes sub-byte structures (IPv4 version/IHL, TCP data-offset + flags, PNG bit-packed samples) parse identically across implementations.</p>
         </section>
     </section>
 
@@ -116,10 +130,10 @@
         <p>The instance graph <code>G</code> is produced from the mapping properties of Hexplain Core:</p>
         <ul>
             <li>For a Struct instance <code>s</code> whose description has <code>hexplain:mapsToClass C</code>, emit <code>&lt;IRI(s)&gt; rdf:type C</code>.</li>
-            <li>For a Field with <code>hexplain:mapsToProperty P</code>, emit <code>&lt;IRI(parent)&gt; P "value"^^xsdType</code>.</li>
+            <li>For a Field with <code>hexplain:mapsToProperty P</code>, emit <code>&lt;IRI(parent)&gt; P "value"^^xsdType</code>. If the field also carries <code>hexplain:valueExpression E</code>, emit instead the value obtained by evaluating <code>E</code> in the field's context (e.g. fixed-point or unit scaling), typed with <code>hexplain:valueDatatype</code> if given, else the natural datatype of the HEL result.</li>
             <li>For a Field with <code>hexplain:hasConditionalMapping</code>, evaluate rules in order and emit the property of the first rule whose condition holds.</li>
             <li>For a Field with <code>hexplain:hasDataLayout</code>, the layout (DLV) governs how the multi-dimensional cells are addressed; a processor MAY additionally emit per-cell triples but is not required to materialize them.</li>
-            <li>For a Field with <code>hexplain:isEncodedWith A</code>, a processor SHOULD decode the block with algorithm <code>A</code> and MAY re-parse the decoded bytes against a nested Struct.</li>
+            <li>For a Field with <code>hexplain:isEncodedWith A</code>, a processor MUST decode the block with algorithm <code>A</code> (a concept from the encoding registers — <code>aenc:CompressionScheme</code> / <code>aenc:CodecScheme</code>); when the field's effective data type is a <code>bddo:Struct</code>, it MUST then re-parse the decoded bytes as a fresh bounded sub-stream against that Struct.</li>
             <li>If an enumeration matched, a processor SHOULD also emit the symbolic value (the <code>bddo:enumSymbol</code> IRI, if any) alongside the raw literal.</li>
         </ul>
     </section>
@@ -131,10 +145,10 @@
             <thead><tr><th>Error</th><th>Cause</th></tr></thead>
             <tbody>
                 <tr><td>Sync error</td><td><code>bddo:syncOnMarker</code> not found.</td></tr>
-                <tr><td>Bounds error</td><td>A read would pass the end of the stream (or a negative offset).</td></tr>
+                <tr><td>Bounds error</td><td>A read would pass the end of the stream or the innermost bounded region (or a negative offset).</td></tr>
                 <tr><td>Validation error</td><td><code>bddo:hasFixedValue</code> mismatch.</td></tr>
                 <tr><td>Checksum error</td><td><code>bddo:Checksum</code> mismatch.</td></tr>
-                <tr><td>Type / HEL error</td><td>A HEL type error, division/modulo by zero, undefined name, or forward reference.</td></tr>
+                <tr><td>Type / HEL error</td><td>A HEL type error, division/modulo by zero, undefined name, forward reference, or an array subscript out of range.</td></tr>
                 <tr><td>Dispatch error</td><td>No <code>bddo:DataTypeRule</code> matched and no default <code>bddo:dataType</code> exists.</td></tr>
             </tbody>
         </table>
@@ -146,13 +160,15 @@
         <p>Parsing a PNG <code>IHDR</code> chunk against the descriptions in <a href="../bddo/index.html">BDDO</a> and <a href="../idv/index.html">Image Vocabulary</a>, with base IRI <code>&lt;urn:file:example.png&gt;</code>, yields:</p>
         <pre class="nohighlight">
 @prefix img: &lt;https://hexplain.io/ns/image#&gt; .
+@prefix araster: &lt;https://hexplain.io/ns/aspect/raster#&gt; .
+@prefix asamp: &lt;https://hexplain.io/ns/aspect/sampling#&gt; .
 @prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
 
 &lt;urn:file:example.png/Chunks/0/IHDR&gt;
     a img:ImageHeader ;
-    img:pixelWidth  "1920"^^xsd:unsignedInt ;
-    img:pixelHeight "1080"^^xsd:unsignedInt ;
-    img:bitsPerComponent "8"^^xsd:unsignedByte ;
+    araster:width  "1920"^^xsd:unsignedInt ;
+    araster:height "1080"^^xsd:unsignedInt ;
+    asamp:bitDepth "8"^^xsd:unsignedByte ;
     img:colorType "2"^^xsd:unsignedByte .   # enum symbol: RGB
         </pre>
     </section>

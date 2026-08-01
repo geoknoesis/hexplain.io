@@ -11,22 +11,20 @@
             editors: [{ name: "Stephane Fellah", url: "https://geoknoesis.com" }],
             github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "hexplain-gv",
-            publishDate: "2025-08-16",
-            subtitle: "Version 1.3",
+            publishDate: "2026-07-22",
+            subtitle: "Version 1.0",
         };
     </script>
 </head>
 <body>
     <section id="abstract">
         <p>
-            The Hexplain Geospatial Vocabulary (GV) provides standard terms for geospatial and geointelligence data — raster, vector, and point-cloud formats. Used with BDDO, DLV, and Hexplain Core, it maps low-level fields from GeoTIFF, NetCDF, HDF5, or LAS to high-level concepts (coordinate reference system, sensor model, point-cloud layout). <b>Prefix:</b> <code>gv</code>; <b>namespace:</b> <code>https://hexplain.io/ns/geo#</code>.
+            The Hexplain Geospatial Vocabulary (GV) provides standard terms for geospatial and geointelligence data — raster, vector, and point-cloud formats. Used with BDDO, DLV, and Hexplain Core, it maps low-level fields from GeoTIFF, NetCDF, HDF5, or LAS to high-level concepts. GV is a <em>composition</em>: it defines the dataset kinds and <code>owl:imports</code> the orthogonal aspects that carry the actual concerns — spatial reference (<code>asref:</code>), geometry (<code>ageom:</code>), raster (<code>araster:</code>), point cloud (<code>apc:</code>), provenance (<code>aprov:</code>), and security (<code>asec:</code>). <b>Prefix:</b> <code>gv</code>; <b>namespace:</b> <code>https://hexplain.io/ns/geo#</code>.
         </p>
     </section>
 
     <section id="sotd">
-        <p>This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.</p>
-        <p><b>Change log.</b> Version 1.3 adds SHACL range constraints, <code>rdfs:comment</code>/<code>rdfs:isDefinedBy</code>, ontology metadata, and alignments to GeoSPARQL, SOSA/SSN, and PROV-O; and moves all constraints out of <code>rdfs:domain</code>/<code>rdfs:range</code> into SHACL. Version 1.2 added point clouds and geointelligence concepts. Version 1.1 added <code>gv:pixelRegistration</code>.</p>
-    </section>
+        <p>This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.</p>    </section>
 
     <section class="introductory">
         <h2>Introduction</h2>
@@ -38,10 +36,9 @@
         <h2>Core Concepts (Classes)</h2>
         <dl>
             <dt><code>gv:GeospatialDataset</code></dt><dd>A geospatial dataset as a whole.</dd>
-            <dt><code>gv:RasterDataset</code>, <code>gv:VectorDataset</code>, <code>gv:PointCloud</code></dt><dd>Subclasses for gridded, vector, and point-cloud data.</dd>
-            <dt><code>gv:CoordinateReferenceSystem</code></dt><dd>CRS information.</dd>
-            <dt><code>gv:GeoTransform</code></dt><dd>Affine parameters mapping grid to ground coordinates.</dd>
-            <dt><code>gv:AcquisitionInfo</code>, <code>gv:SensorModel</code>, <code>gv:Platform</code></dt><dd>Collection-event metadata: sensor and platform.</dd>
+            <dt><code>gv:RasterDataset</code>, <code>gv:VectorDataset</code>, <code>gv:PointCloud</code></dt><dd>Subclasses for gridded, vector, and point-cloud data — each composing the matching content aspect.</dd>
+            <dt><code>asref:CoordinateReferenceSystem</code>, <code>asref:GeoTransform</code> <span class="note">(aspect)</span></dt><dd>CRS and affine georeferencing — the spatial-reference aspect.</dd>
+            <dt><code>aprov:AcquisitionInfo</code>, <code>aprov:SensorModel</code>, <code>aprov:Platform</code> <span class="note">(aspect)</span></dt><dd>Collection-event metadata — the provenance aspect (aligned to PROV/SOSA).</dd>
         </dl>
     </section>
 
@@ -50,17 +47,18 @@
         <table class="simple">
             <thead><tr><th>Property</th><th>Description</th><th>Range</th></tr></thead>
             <tbody>
-                <tr><td><code>gv:wktString</code></td><td>CRS as Well-Known Text.</td><td><code>xsd:string</code></td></tr>
-                <tr><td><code>gv:epsgCode</code></td><td>Numeric EPSG code.</td><td><code>xsd:positiveInteger</code></td></tr>
-                <tr><td><code>gv:originLongitude</code>, <code>gv:originLatitude</code></td><td>Reference point of the top-left cell.</td><td><code>xsd:double</code></td></tr>
-                <tr><td><code>gv:pixelRegistration</code></td><td>Whether the origin is the pixel corner or centre.</td><td><code>gv:PixelCorner</code>/<code>gv:PixelCenter</code></td></tr>
-                <tr><td><code>gv:scaleX</code>, <code>gv:scaleY</code></td><td>Ground units per pixel.</td><td><code>xsd:double</code></td></tr>
-                <tr><td><code>gv:noDataValue</code></td><td>Value marking absent data.</td><td><code>xsd:double</code>/<code>xsd:integer</code></td></tr>
-                <tr><td><code>gv:pointCount</code></td><td>Number of points in a point cloud.</td><td><code>xsd:unsignedLong</code></td></tr>
-                <tr><td><code>gv:pointDataLayout</code></td><td>Struct defining one point record.</td><td><code>bddo:Struct</code></td></tr>
-                <tr><td><code>gv:acquisitionTime</code></td><td>Acquisition timestamp.</td><td><code>xsd:dateTime</code></td></tr>
-                <tr><td><code>gv:platformName</code>, <code>gv:sensorType</code></td><td>Platform / sensor identifiers.</td><td><code>xsd:string</code></td></tr>
-                <tr><td><code>gv:classificationLevel</code></td><td>Data classification level.</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>asref:wktString</code> <span class="note">(aspect)</span></td><td>CRS as Well-Known Text.</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>asref:epsgCode</code> <span class="note">(aspect)</span></td><td>Numeric EPSG code.</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>asref:originLongitude</code>, <code>asref:originLatitude</code> <span class="note">(aspect)</span></td><td>Reference point of the top-left cell.</td><td><code>xsd:double</code></td></tr>
+                <tr><td><code>asref:pixelRegistration</code> <span class="note">(aspect)</span></td><td>Whether the origin is the pixel corner or centre.</td><td><code>asref:PixelCorner</code>/<code>asref:PixelCenter</code></td></tr>
+                <tr><td><code>asref:scaleX</code>, <code>asref:scaleY</code> <span class="note">(aspect)</span></td><td>Ground units per pixel.</td><td><code>xsd:double</code></td></tr>
+                <tr><td><code>araster:noDataValue</code> <span class="note">(aspect)</span></td><td>Value marking absent data.</td><td><code>xsd:double</code>/<code>xsd:integer</code></td></tr>
+                <tr><td><code>ageom:geometryType</code> <span class="note">(aspect)</span></td><td>Vector geometry kind (Point, Polygon…).</td><td><code>skos:Concept</code></td></tr>
+                <tr><td><code>apc:pointCount</code> <span class="note">(aspect)</span></td><td>Number of points in a point cloud.</td><td><code>xsd:unsignedLong</code></td></tr>
+                <tr><td><code>apc:pointDataLayout</code> <span class="note">(aspect)</span></td><td>Struct defining one point record.</td><td><code>bddo:Struct</code></td></tr>
+                <tr><td><code>aprov:acquisitionTime</code> <span class="note">(aspect)</span></td><td>Acquisition timestamp.</td><td><code>xsd:dateTime</code></td></tr>
+                <tr><td><code>aprov:platformName</code>, <code>aprov:sensorType</code> <span class="note">(aspect)</span></td><td>Platform / sensor identifiers.</td><td><code>xsd:string</code></td></tr>
+                <tr><td><code>asec:classificationLevel</code> <span class="note">(aspect)</span></td><td>Data classification level (security aspect — not geo-specific).</td><td><code>xsd:string</code></td></tr>
             </tbody>
         </table>
     </section>
@@ -73,7 +71,7 @@
     <section id="normative-owl">
         <h2>Normative OWL Vocabulary</h2>
         <pre class="nohighlight">
-# Hexplain Geospatial Vocabulary (GV) 1.3 — vocabulary + SHACL shapes
+# Hexplain Geospatial Vocabulary (GV) 1.0 — vocabulary + SHACL shapes
 @prefix :       &lt;https://hexplain.io/ns/geo#&gt; .
 @prefix gv:     &lt;https://hexplain.io/ns/geo#&gt; .
 @prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
@@ -82,48 +80,36 @@
 @prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
 @prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
 @prefix dlv:    &lt;https://hexplain.io/ns/dlv#&gt; .
-@prefix bddo:   &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix geosparql: &lt;http://www.opengis.net/ont/geosparql#&gt; .
-@prefix sosa:   &lt;http://www.w3.org/ns/sosa/&gt; .
-@prefix prov:   &lt;http://www.w3.org/ns/prov#&gt; .
+@prefix asref:  &lt;https://hexplain.io/ns/aspect/spatialref#&gt; .
+@prefix aprov:  &lt;https://hexplain.io/ns/aspect/provenance#&gt; .
+@prefix asec:   &lt;https://hexplain.io/ns/aspect/security#&gt; .
+@prefix araster:&lt;https://hexplain.io/ns/aspect/raster#&gt; .
+@prefix ageom:  &lt;https://hexplain.io/ns/aspect/geometry#&gt; .
+@prefix apc:    &lt;https://hexplain.io/ns/aspect/pointcloud#&gt; .
 @prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
 @prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 &lt;https://hexplain.io/ns/geo&gt; a owl:Ontology ;
-    owl:versionIRI &lt;https://hexplain.io/ns/geo/1.3&gt; ; owl:versionInfo "1.3" ;
+    owl:versionIRI &lt;https://hexplain.io/ns/geo/1.0&gt; ; owl:versionInfo "1.0" ;
+    owl:imports &lt;https://hexplain.io/ns/aspect/spatialref&gt; , &lt;https://hexplain.io/ns/aspect/provenance&gt; ,
+                &lt;https://hexplain.io/ns/aspect/security&gt; , &lt;https://hexplain.io/ns/aspect/raster&gt; ,
+                &lt;https://hexplain.io/ns/aspect/geometry&gt; , &lt;https://hexplain.io/ns/aspect/pointcloud&gt; ;
     rdfs:label "Hexplain Geospatial Vocabulary (GV)" ;
-    rdfs:comment "Semantic vocabulary for geospatial and geointelligence data." ;
+    rdfs:comment "Semantic vocabulary for geospatial and geointelligence data. A composition of dataset kinds plus the spatial-reference, geometry, raster, point-cloud, provenance, and security aspects." ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
     dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
     vann:preferredNamespacePrefix "gv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/geo#" .
 
+# ---------- Domain classes (compositions) ----------
 :GeospatialDataset a owl:Class ; rdfs:label "Geospatial Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch geosparql:Feature .
-:RasterDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Raster Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
-:VectorDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Vector Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
-:PointCloud a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Point Cloud" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
-:CoordinateReferenceSystem a owl:Class ; rdfs:label "Coordinate Reference System" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
-:GeoTransform a owl:Class ; rdfs:label "GeoTransform" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
-:AcquisitionInfo a owl:Class ; rdfs:label "Acquisition Info" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch prov:Activity .
-:SensorModel a owl:Class ; rdfs:label "Sensor Model" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch sosa:Sensor .
-:Platform a owl:Class ; rdfs:label "Platform" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch sosa:Platform .
+:RasterDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Raster Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:comment "Composes araster:* with asref:*." .
+:VectorDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Vector Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:comment "Composes ageom:* with asref:*." .
+:PointCloud a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Point Cloud" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:comment "Composes apc:* with asref:*." .
 
-:wktString a owl:DatatypeProperty ; rdfs:label "WKT string" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch geosparql:asWKT ; rdfs:range xsd:string .
-:epsgCode a owl:DatatypeProperty ; rdfs:label "EPSG code" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:positiveInteger .
-:originLongitude a owl:DatatypeProperty ; rdfs:label "origin longitude" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:double .
-:originLatitude a owl:DatatypeProperty ; rdfs:label "origin latitude" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:double .
-:pixelRegistration a owl:ObjectProperty ; rdfs:label "pixel registration" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
-:scaleX a owl:DatatypeProperty ; rdfs:label "X scale" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:double .
-:scaleY a owl:DatatypeProperty ; rdfs:label "Y scale" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:double .
-:noDataValue a owl:DatatypeProperty ; rdfs:label "no-data value" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
-:pointCount a owl:DatatypeProperty ; rdfs:label "point count" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:unsignedLong .
-:pointDataLayout a owl:ObjectProperty ; rdfs:label "point data layout" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range bddo:Struct .
-:acquisitionTime a owl:DatatypeProperty ; rdfs:label "acquisition time" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch prov:endedAtTime ; rdfs:range xsd:dateTime .
-:platformName a owl:DatatypeProperty ; rdfs:label "platform name" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:string .
-:sensorType a owl:DatatypeProperty ; rdfs:label "sensor type" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:string .
-:classificationLevel a owl:DatatypeProperty ; rdfs:label "classification level" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:range xsd:string .
+# Imported aspects provide: CRS/GeoTransform + registration in asref: ; AcquisitionInfo/SensorModel/Platform + acquisition* in aprov: ;
+# noDataValue in araster: ; pointCount/pointDataLayout in apc: ; classificationLevel in asec: ; geometry* in ageom:.
 
-:PixelCorner a owl:NamedIndividual ; rdfs:label "Pixel Corner Registration" .
-:PixelCenter a owl:NamedIndividual ; rdfs:label "Pixel Center Registration" .
 :axisLatitude a dlv:Axis ; rdfs:label "Latitude Axis" ; rdfs:seeAlso dlv:axisY .
 :axisLongitude a dlv:Axis ; rdfs:label "Longitude Axis" ; rdfs:seeAlso dlv:axisX .
 :axisElevation a dlv:Axis ; rdfs:label "Elevation Axis" ; rdfs:seeAlso dlv:axisZ .
@@ -134,37 +120,34 @@
     <section id="normative-shacl">
         <h2>Normative SHACL Shapes</h2>
         <pre class="nohighlight">
-@prefix :       &lt;https://hexplain.io/ns/geo#&gt; .
 @prefix gv:     &lt;https://hexplain.io/ns/geo#&gt; .
-@prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
-@prefix rdfs:   &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
 @prefix xsd:    &lt;http://www.w3.org/2001/XMLSchema#&gt; .
 @prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
 @prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
-@prefix dlv:    &lt;https://hexplain.io/ns/dlv#&gt; .
 @prefix bddo:   &lt;https://hexplain.io/ns/bddo#&gt; .
-@prefix geosparql: &lt;http://www.opengis.net/ont/geosparql#&gt; .
-@prefix sosa:   &lt;http://www.w3.org/ns/sosa/&gt; .
-@prefix prov:   &lt;http://www.w3.org/ns/prov#&gt; .
-@prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
-@prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
+@prefix asref:  &lt;https://hexplain.io/ns/aspect/spatialref#&gt; .
+@prefix aprov:  &lt;https://hexplain.io/ns/aspect/provenance#&gt; .
+@prefix ageom:  &lt;https://hexplain.io/ns/aspect/geometry#&gt; .
+@prefix apc:    &lt;https://hexplain.io/ns/aspect/pointcloud#&gt; .
 
 # SHACL shapes
-gv:CrsShape a sh:NodeShape ; sh:targetSubjectsOf gv:wktString ;
-    sh:property [ sh:path gv:wktString ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path gv:epsgCode ; sh:minExclusive 0 ; sh:maxCount 1 ] .
-gv:OriginShape a sh:NodeShape ; sh:targetSubjectsOf gv:originLatitude ;
-    sh:property [ sh:path gv:originLatitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
-    sh:property [ sh:path gv:originLongitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] .
-gv:PixelRegistrationShape a sh:NodeShape ; sh:targetSubjectsOf gv:pixelRegistration ;
-    sh:property [ sh:path gv:pixelRegistration ; sh:maxCount 1 ; sh:in ( gv:PixelCorner gv:PixelCenter ) ] .
-gv:PointCloudShape a sh:NodeShape ; sh:targetSubjectsOf gv:pointCount ;
-    sh:property [ sh:path gv:pointCount ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path gv:pointDataLayout ; sh:class bddo:Struct ; sh:maxCount 1 ] .
-gv:AcquisitionShape a sh:NodeShape ; sh:targetSubjectsOf gv:acquisitionTime ;
-    sh:property [ sh:path gv:acquisitionTime ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
-    sh:property [ sh:path gv:platformName ; sh:datatype xsd:string ] ;
-    sh:property [ sh:path gv:sensorType ; sh:datatype xsd:string ] .
+gv:CrsShape a sh:NodeShape ; sh:targetSubjectsOf asref:wktString ;
+    sh:property [ sh:path asref:wktString ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:epsgCode ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+gv:OriginShape a sh:NodeShape ; sh:targetSubjectsOf asref:originLatitude ;
+    sh:property [ sh:path asref:originLatitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:originLongitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] .
+gv:PixelRegistrationShape a sh:NodeShape ; sh:targetSubjectsOf asref:pixelRegistration ;
+    sh:property [ sh:path asref:pixelRegistration ; sh:maxCount 1 ; sh:in ( asref:PixelCorner asref:PixelCenter ) ] .
+gv:VectorShape a sh:NodeShape ; sh:targetClass gv:VectorDataset ;
+    sh:property [ sh:path ageom:geometryType ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+gv:PointCloudShape a sh:NodeShape ; sh:targetSubjectsOf apc:pointCount ;
+    sh:property [ sh:path apc:pointCount ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path apc:pointDataLayout ; sh:class bddo:Struct ; sh:maxCount 1 ] .
+gv:AcquisitionShape a sh:NodeShape ; sh:targetSubjectsOf aprov:acquisitionTime ;
+    sh:property [ sh:path aprov:acquisitionTime ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
+    sh:property [ sh:path aprov:platformName ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path aprov:sensorType ; sh:datatype xsd:string ] .
         </pre>
     </section>
 
@@ -174,14 +157,21 @@ gv:AcquisitionShape a sh:NodeShape ; sh:targetSubjectsOf gv:acquisitionTime ;
 {
   "@context": {
     "gv": "https://hexplain.io/ns/geo#",
-    "wktString": "gv:wktString", "epsgCode": "gv:epsgCode",
-    "originLongitude": "gv:originLongitude", "originLatitude": "gv:originLatitude",
-    "pixelRegistration": { "@id": "gv:pixelRegistration", "@type": "@id" },
-    "scaleX": "gv:scaleX", "scaleY": "gv:scaleY", "noDataValue": "gv:noDataValue",
-    "pointCount": "gv:pointCount",
-    "pointDataLayout": { "@id": "gv:pointDataLayout", "@type": "@id" },
-    "acquisitionTime": "gv:acquisitionTime", "platformName": "gv:platformName",
-    "sensorType": "gv:sensorType", "classificationLevel": "gv:classificationLevel"
+    "asref": "https://hexplain.io/ns/aspect/spatialref#",
+    "aprov": "https://hexplain.io/ns/aspect/provenance#",
+    "asec": "https://hexplain.io/ns/aspect/security#",
+    "araster": "https://hexplain.io/ns/aspect/raster#",
+    "ageom": "https://hexplain.io/ns/aspect/geometry#",
+    "apc": "https://hexplain.io/ns/aspect/pointcloud#",
+    "wktString": "asref:wktString", "epsgCode": "asref:epsgCode",
+    "originLongitude": "asref:originLongitude", "originLatitude": "asref:originLatitude",
+    "pixelRegistration": { "@id": "asref:pixelRegistration", "@type": "@id" },
+    "scaleX": "asref:scaleX", "scaleY": "asref:scaleY", "noDataValue": "araster:noDataValue",
+    "geometryType": { "@id": "ageom:geometryType", "@type": "@id" },
+    "pointCount": "apc:pointCount",
+    "pointDataLayout": { "@id": "apc:pointDataLayout", "@type": "@id" },
+    "acquisitionTime": "aprov:acquisitionTime", "platformName": "aprov:platformName",
+    "sensorType": "aprov:sensorType", "classificationLevel": "asec:classificationLevel"
   }
 }
         </pre>
@@ -194,15 +184,16 @@ gv:AcquisitionShape a sh:NodeShape ; sh:targetSubjectsOf gv:acquisitionTime ;
 @prefix bddo:     &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
 @prefix gv:       &lt;https://hexplain.io/ns/geo#&gt; .
+@prefix apc:      &lt;https://hexplain.io/ns/aspect/pointcloud#&gt; .
 @prefix las:      &lt;https://hexplain.io/formats/las#&gt; .
 
 las:File a bddo:Struct ;
     hexplain:mapsToClass gv:PointCloud ;
-    gv:pointDataLayout las:PointRecordFormat1 ;
+    apc:pointDataLayout las:PointRecordFormat1 ;
     bddo:hasField ( las:NumberOfPointRecords las:Points ) .
 
 las:NumberOfPointRecords a bddo:Field ; bddo:dataType bddo:uint32le ;
-    hexplain:mapsToProperty gv:pointCount .
+    hexplain:mapsToProperty apc:pointCount .
 
 las:Points a bddo:Field ;
     bddo:dataType las:PointRecordFormat1 ;

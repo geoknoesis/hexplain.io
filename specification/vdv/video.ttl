@@ -7,12 +7,20 @@
 @prefix sh:     <http://www.w3.org/ns/shacl#> .
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix ma:     <http://www.w3.org/ns/ma-ont#> .
+@prefix qudt:   <http://qudt.org/schema/qudt/> .
+@prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .
+@prefix unit:   <http://qudt.org/vocab/unit/> .
+@prefix atime:  <https://hexplain.io/ns/aspect/time#> .
+@prefix aenc:   <https://hexplain.io/ns/aspect/encoding#> .
+@prefix acolor: <https://hexplain.io/ns/aspect/color#> .
+@prefix araster:<https://hexplain.io/ns/aspect/raster#> .
 @prefix dlv:    <https://hexplain.io/ns/dlv#> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/video> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/video/1.0> ; owl:versionInfo "1.0" ;
+    owl:imports <https://hexplain.io/ns/aspect/time> , <https://hexplain.io/ns/aspect/encoding> , <https://hexplain.io/ns/aspect/color> , <https://hexplain.io/ns/aspect/raster> ;
     rdfs:label "Hexplain Video Vocabulary (VDV)" ;
     rdfs:comment "Semantic vocabulary for video stream and container properties." ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -23,14 +31,10 @@
 :VideoStream a owl:Class ; rdfs:label "Video Stream" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; skos:closeMatch ma:VideoTrack .
 :VideoTrack a owl:Class ; rdfs:label "Video Track" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> .
 
-:frameWidth a owl:DatatypeProperty ; rdfs:label "frame width" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; skos:closeMatch ma:frameWidth ; rdfs:range xsd:positiveInteger .
-:frameHeight a owl:DatatypeProperty ; rdfs:label "frame height" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; skos:closeMatch ma:frameHeight ; rdfs:range xsd:positiveInteger .
-:frameRate a owl:DatatypeProperty ; rdfs:label "frame rate" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; skos:closeMatch ma:frameRate ; rdfs:range xsd:decimal .
-:duration a owl:DatatypeProperty ; rdfs:label "duration" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; skos:closeMatch ma:duration ; rdfs:range xsd:decimal .
-:bitrate a owl:DatatypeProperty ; rdfs:label "bitrate" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; skos:closeMatch ma:averageBitRate ; rdfs:range xsd:positiveInteger .
-:codecIdentifier a owl:DatatypeProperty ; rdfs:label "codec identifier" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; skos:closeMatch ma:hasFormat ; rdfs:range xsd:string .
-:aspectRatio a owl:DatatypeProperty ; rdfs:label "aspect ratio" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:string .
-:colorSpace a owl:DatatypeProperty ; rdfs:label "color space" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:string .
+:frameRate a owl:DatatypeProperty ; rdfs:label "frame rate" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; skos:closeMatch ma:frameRate ; rdfs:range xsd:decimal ; qudt:hasQuantityKind quantitykind:Frequency ; qudt:hasUnit unit:HZ .
+# Frame dimensions come from the raster aspect: araster:width / araster:height.
+# duration (atime), bitrate + codec (aenc), colorSpace (acolor) are imported from the aspect layer.
+:aspectRatio a owl:DatatypeProperty ; rdfs:label "aspect ratio" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:string ; rdfs:comment "Display aspect ratio as a W:H string, e.g. \"16:9\"." .
 :scanType a owl:ObjectProperty ; rdfs:label "scan type" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> .
 :frameCount a owl:DatatypeProperty ; rdfs:label "frame count" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:unsignedLong .
 :audioChannels a owl:DatatypeProperty ; rdfs:label "audio channels" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:positiveInteger .
@@ -41,9 +45,12 @@
 
 # ---------- SHACL ----------
 vdv:StreamShape a sh:NodeShape ; sh:targetSubjectsOf vdv:frameRate ;
-    sh:property [ sh:path vdv:frameWidth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:frameHeight ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path araster:width ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path araster:height ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path vdv:frameRate ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:duration ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:bitrate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:scanType ; sh:maxCount 1 ; sh:in ( vdv:Progressive vdv:Interlaced ) ] .
+    sh:property [ sh:path atime:duration ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path aenc:bitrate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path vdv:scanType ; sh:maxCount 1 ; sh:in ( vdv:Progressive vdv:Interlaced ) ] ;
+    sh:property [ sh:path aenc:codec ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] ;
+    sh:property [ sh:path acolor:colorSpace ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] ;
+    sh:property [ sh:path vdv:aspectRatio ; sh:datatype xsd:string ; sh:pattern "^[0-9]+(\\.[0-9]+)?:[0-9]+(\\.[0-9]+)?$" ; sh:maxCount 1 ] .

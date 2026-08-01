@@ -11,21 +11,20 @@
             editors: [{ name: "Stephane Fellah", url: "https://geoknoesis.com" }],
             github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "hexplain-idv",
-            publishDate: "2025-08-16",
-            subtitle: "Version 1.1",
+            publishDate: "2026-07-22",
+            subtitle: "Version 1.0",
         };
     </script>
 </head>
 <body>
     <section id="abstract">
         <p>
-            The Hexplain Image Vocabulary (IDV) provides a standard set of terms for the semantic properties of raster images. Used with BDDO and Hexplain Core, it lets format authors map low-level physical fields to high-level concepts (image width in pixels, colour type, compression), enabling interoperability and semantic querying across image formats. <b>Prefix:</b> <code>img</code>; <b>namespace:</b> <code>https://hexplain.io/ns/image#</code>.
+            The Hexplain Image Vocabulary (IDV) provides a standard set of terms for the semantic properties of raster images. Used with BDDO and Hexplain Core, it lets format authors map low-level physical fields to high-level concepts (image width in pixels, colour type, compression), enabling interoperability and semantic querying across image formats. It <code>owl:imports</code> the <a href="../architecture/index.html">aspect layer</a>, so raster dimensions (<code>araster:width</code>/<code>height</code>), per-component precision (<code>asamp:bitDepth</code>), and colour space (<code>acolor:colorSpace</code>) are shared with the other media vocabularies rather than image-specific. <b>Prefix:</b> <code>img</code>; <b>namespace:</b> <code>https://hexplain.io/ns/image#</code>.
         </p>
     </section>
 
     <section id="sotd">
         <p>This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.</p>
-        <p><b>Change log.</b> Version 1.1 adds SHACL range constraints (previously only in prose), <code>rdfs:comment</code>/<code>rdfs:isDefinedBy</code> on every term, ontology metadata, and alignments to the W3C Ontology for Media Resources. It removes the duplicated layout axes <code>img:axisX/Y/Band</code> in favour of reusing <code>dlv:axisX</code>, <code>dlv:axisY</code>, and <code>dlv:axisBand</code>. Property ranges use <code>rdfs:range</code>; domain and cardinality are in SHACL (no <code>rdfs:domain</code>).</p>
     </section>
 
     <section class="introductory">
@@ -52,13 +51,13 @@
         <table class="simple">
             <thead><tr><th>Property</th><th>Description</th><th>Range</th></tr></thead>
             <tbody>
-                <tr><td><code>img:pixelWidth</code></td><td>Width in pixels.</td><td><code>xsd:positiveInteger</code></td></tr>
-                <tr><td><code>img:pixelHeight</code></td><td>Height in pixels.</td><td><code>xsd:positiveInteger</code></td></tr>
-                <tr><td><code>img:bitsPerComponent</code></td><td>Bits per colour/sample component.</td><td><code>xsd:positiveInteger</code></td></tr>
-                <tr><td><code>img:colorType</code></td><td>Colour-type code (Grayscale, RGB, Indexed…).</td><td><code>xsd:integer</code></td></tr>
-                <tr><td><code>img:compressionMethod</code></td><td>Compression-method code.</td><td><code>xsd:integer</code></td></tr>
-                <tr><td><code>img:filterMethod</code></td><td>Filter/prediction-method code.</td><td><code>xsd:integer</code></td></tr>
-                <tr><td><code>img:interlaceMethod</code></td><td>Interlace/progressive-method code.</td><td><code>xsd:integer</code></td></tr>
+                <tr><td><code>araster:width</code>, <code>araster:height</code> <span class="note">(aspect)</span></td><td>Dimensions in pixels (raster grid extent).</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>asamp:bitDepth</code> <span class="note">(aspect)</span></td><td>Bits per colour/sample component.</td><td><code>xsd:positiveInteger</code></td></tr>
+                <tr><td><code>acolor:colorSpace</code> <span class="note">(aspect)</span></td><td>Colour space, from the Colour Space Register.</td><td><code>skos:Concept</code></td></tr>
+                <tr><td><code>img:colorType</code> <span class="note">(PNG)</span></td><td>Colour-type code (Grayscale, RGB, Indexed…).</td><td><code>xsd:integer</code></td></tr>
+                <tr><td><code>img:compressionMethod</code> <span class="note">(PNG)</span></td><td>Compression-method code.</td><td><code>xsd:integer</code></td></tr>
+                <tr><td><code>img:filterMethod</code> <span class="note">(PNG)</span></td><td>Filter/prediction-method code.</td><td><code>xsd:integer</code></td></tr>
+                <tr><td><code>img:interlaceMethod</code> <span class="note">(PNG)</span></td><td>Interlace/progressive-method code.</td><td><code>xsd:integer</code></td></tr>
             </tbody>
         </table>
     </section>
@@ -71,7 +70,7 @@
     <section id="normative-owl">
         <h2>Normative OWL Vocabulary</h2>
         <pre class="nohighlight">
-# Hexplain Image Vocabulary (IDV) 1.1 — vocabulary + SHACL shapes
+# Hexplain Image Vocabulary (IDV) 1.0 — vocabulary + SHACL shapes
 @prefix :       &lt;https://hexplain.io/ns/image#&gt; .
 @prefix img:    &lt;https://hexplain.io/ns/image#&gt; .
 @prefix owl:    &lt;http://www.w3.org/2002/07/owl#&gt; .
@@ -80,11 +79,15 @@
 @prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
 @prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
 @prefix ma:     &lt;http://www.w3.org/ns/ma-ont#&gt; .
+@prefix araster:&lt;https://hexplain.io/ns/aspect/raster#&gt; .
+@prefix asamp:  &lt;https://hexplain.io/ns/aspect/sampling#&gt; .
+@prefix acolor: &lt;https://hexplain.io/ns/aspect/color#&gt; .
 @prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
 @prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 &lt;https://hexplain.io/ns/image&gt; a owl:Ontology ;
-    owl:versionIRI &lt;https://hexplain.io/ns/image/1.1&gt; ; owl:versionInfo "1.1" ;
+    owl:versionIRI &lt;https://hexplain.io/ns/image/1.0&gt; ; owl:versionInfo "1.0" ;
+    owl:imports &lt;https://hexplain.io/ns/aspect/raster&gt; , &lt;https://hexplain.io/ns/aspect/sampling&gt; , &lt;https://hexplain.io/ns/aspect/color&gt; ;
     rdfs:label "Hexplain Image Vocabulary (IDV)" ;
     rdfs:comment "Semantic vocabulary for raster image properties." ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
@@ -96,9 +99,9 @@
 :ColorProfile a owl:Class ; rdfs:label "Color Profile" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; .
 :PixelData a owl:Class ; rdfs:label "Pixel Data" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; .
 
-:pixelWidth a owl:DatatypeProperty ; rdfs:label "pixel width" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; skos:closeMatch ma:frameWidth ; rdfs:range xsd:positiveInteger .
-:pixelHeight a owl:DatatypeProperty ; rdfs:label "pixel height" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; skos:closeMatch ma:frameHeight ; rdfs:range xsd:positiveInteger .
-:bitsPerComponent a owl:DatatypeProperty ; rdfs:label "bits per component" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; rdfs:range xsd:positiveInteger .
+# Dimensions, per-component precision, and colour space are the raster/sampling/colour aspects:
+# araster:width, araster:height, asamp:bitDepth, acolor:colorSpace (imported above).
+# The codes below are PNG-specific and will move to a PNG profile in a later phase.
 :colorType a owl:DatatypeProperty ; rdfs:label "color type" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; rdfs:range xsd:integer .
 :compressionMethod a owl:DatatypeProperty ; rdfs:label "compression method" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; skos:closeMatch ma:compression ; rdfs:range xsd:integer .
 :filterMethod a owl:DatatypeProperty ; rdfs:label "filter method" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/image&gt; ; rdfs:range xsd:integer .
@@ -118,16 +121,18 @@
 @prefix sh:     &lt;http://www.w3.org/ns/shacl#&gt; .
 @prefix skos:   &lt;http://www.w3.org/2004/02/skos/core#&gt; .
 @prefix ma:     &lt;http://www.w3.org/ns/ma-ont#&gt; .
+@prefix araster:&lt;https://hexplain.io/ns/aspect/raster#&gt; .
+@prefix asamp:  &lt;https://hexplain.io/ns/aspect/sampling#&gt; .
+@prefix acolor: &lt;https://hexplain.io/ns/aspect/color#&gt; .
 @prefix dcterms:&lt;http://purl.org/dc/terms/&gt; .
 @prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 # SHACL shapes
-img:PixelWidthShape a sh:NodeShape ; sh:targetSubjectsOf img:pixelWidth ;
-    sh:property [ sh:path img:pixelWidth ; sh:minExclusive 0 ; sh:maxCount 1 ] .
-img:PixelHeightShape a sh:NodeShape ; sh:targetSubjectsOf img:pixelHeight ;
-    sh:property [ sh:path img:pixelHeight ; sh:minExclusive 0 ; sh:maxCount 1 ] .
-img:BitsPerComponentShape a sh:NodeShape ; sh:targetSubjectsOf img:bitsPerComponent ;
-    sh:property [ sh:path img:bitsPerComponent ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+img:ImageShape a sh:NodeShape ; sh:targetClass img:ImageHeader ;
+    sh:property [ sh:path araster:width ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path araster:height ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asamp:bitDepth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path acolor:colorSpace ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
 img:CodeShapes a sh:NodeShape ; sh:targetSubjectsOf img:colorType ;
     sh:property [ sh:path img:colorType ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
     sh:property [ sh:path img:compressionMethod ; sh:nodeKind sh:Literal ] ;
@@ -142,8 +147,13 @@ img:CodeShapes a sh:NodeShape ; sh:targetSubjectsOf img:colorType ;
 {
   "@context": {
     "img": "https://hexplain.io/ns/image#",
-    "pixelWidth": "img:pixelWidth", "pixelHeight": "img:pixelHeight",
-    "bitsPerComponent": "img:bitsPerComponent", "colorType": "img:colorType",
+    "araster": "https://hexplain.io/ns/aspect/raster#",
+    "asamp": "https://hexplain.io/ns/aspect/sampling#",
+    "acolor": "https://hexplain.io/ns/aspect/color#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "pixelWidth": "araster:width", "pixelHeight": "araster:height",
+    "bitDepth": "asamp:bitDepth", "colorSpace": { "@id": "acolor:colorSpace", "@type": "@id" },
+    "colorType": "img:colorType",
     "compressionMethod": "img:compressionMethod", "filterMethod": "img:filterMethod",
     "interlaceMethod": "img:interlaceMethod"
   }
@@ -156,7 +166,10 @@ img:CodeShapes a sh:NodeShape ; sh:targetSubjectsOf img:colorType ;
         <pre class="nohighlight">
 @prefix bddo:     &lt;https://hexplain.io/ns/bddo#&gt; .
 @prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
+@prefix rdfs:     &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
 @prefix img:      &lt;https://hexplain.io/ns/image#&gt; .
+@prefix araster:  &lt;https://hexplain.io/ns/aspect/raster#&gt; .
+@prefix asamp:    &lt;https://hexplain.io/ns/aspect/sampling#&gt; .
 @prefix png:      &lt;https://hexplain.io/formats/png#&gt; .
 
 png:IHDR_ChunkData a bddo:Struct ;
@@ -164,9 +177,9 @@ png:IHDR_ChunkData a bddo:Struct ;
     bddo:endianness bddo:BigEndian ;
     bddo:hasField ( png:Width png:Height png:BitDepth png:ColorType ) .
 
-png:Width  a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty img:pixelWidth .
-png:Height a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty img:pixelHeight .
-png:BitDepth a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty img:bitsPerComponent .
+png:Width  a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty araster:width .
+png:Height a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty araster:height .
+png:BitDepth a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty asamp:bitDepth .
 png:ColorType a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty img:colorType ;
     bddo:enumeration [ a bddo:Enumeration ; bddo:hasEnumValue
         [ a bddo:EnumValue ; bddo:enumRawValue 0 ; rdfs:label "Grayscale" ] ,

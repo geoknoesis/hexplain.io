@@ -15,7 +15,7 @@
             github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "hexplain-dlv",
             publishDate: "2025-08-16",
-            subtitle: "Version 1.3",
+            subtitle: "Version 1.0",
         };
     </script>
 </head>
@@ -30,7 +30,6 @@
         <p>
             This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
         </p>
-        <p><b>Change log.</b> Version 1.3 (this version) corrects the <code>DimensionShape</code> SHACL (the previous <code>sh:xone</code> of two constraint-free property shapes could never be satisfied), declares classes as <code>owl:Class</code>, declares <code>rdfs:range</code> on properties and expresses domain/cardinality in SHACL (no <code>rdfs:domain</code>), and adds standard ontology metadata. Version 1.2 removed the redundant <code>dlv:interleaving</code> property in favour of a normative ordering for <code>dlv:hasDimension</code>. Version 1.1 added the mandatory <code>dlv:cellDataType</code>.</p>
     </section>
 
     <section class="introductory">
@@ -74,6 +73,8 @@
             <dd>The data type of each cell. Value MUST be a <code>bddo:DataType</code>.</dd>
             <dt><code>dlv:dimensionSize</code> / <code>dlv:dimensionSizeFromField</code></dt>
             <dd>The length of a <code>dlv:Dimension</code>: a fixed <code>xsd:positiveInteger</code>, or read from a <code>bddo:Field</code>. Exactly one MUST be present.</dd>
+            <dt><code>dlv:dimensionStride</code></dt>
+            <dd>Bytes to advance per step along a dimension (pitch). Optional; when absent, addressing is contiguous. Use for padded/aligned rows, e.g. BMP's 4-byte row padding.</dd>
             <dt><code>dlv:hasAxis</code></dt>
             <dd>Links a <code>dlv:Dimension</code> to its semantic <code>dlv:Axis</code>.</dd>
         </dl>
@@ -82,7 +83,7 @@
     <section id="normative-owl">
         <h2>Normative OWL Vocabulary</h2>
         <pre class="nohighlight">
-# Hexplain Data Layout Vocabulary (DLV) 1.3 — vocabulary + SHACL shapes
+# Hexplain Data Layout Vocabulary (DLV) 1.0 — vocabulary + SHACL shapes
 # Properties declare rdfs:range; domain and cardinality are in SHACL (no rdfs:domain).
 @prefix :       &lt;https://hexplain.io/ns/dlv#&gt; .
 @prefix dlv:    &lt;https://hexplain.io/ns/dlv#&gt; .
@@ -96,8 +97,7 @@
 @prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 &lt;https://hexplain.io/ns/dlv&gt; a owl:Ontology ;
-    owl:versionIRI &lt;https://hexplain.io/ns/dlv/1.3&gt; ; owl:versionInfo "1.3" ;
-    owl:priorVersion &lt;https://hexplain.io/ns/dlv/1.2&gt; ;
+    owl:versionIRI &lt;https://hexplain.io/ns/dlv/1.0&gt; ; owl:versionInfo "1.0" ;
     owl:imports &lt;https://hexplain.io/ns/bddo&gt; ;
     rdfs:label "Hexplain Data Layout Vocabulary (DLV)" ;
     rdfs:comment "Vocabulary for describing multi-dimensional array layout within a flat byte stream." ;
@@ -115,6 +115,7 @@
 :cellDataType a owl:ObjectProperty ; rdfs:label "cell data type" ; rdfs:range bddo:DataType ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 :dimensionSize a owl:DatatypeProperty ; rdfs:label "dimension size" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 :dimensionSizeFromField a owl:ObjectProperty ; rdfs:label "dimension size from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
+:dimensionStride a owl:DatatypeProperty ; rdfs:label "dimension stride" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 :hasAxis a owl:ObjectProperty ; rdfs:label "has axis" ; rdfs:range :Axis ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 
 :axisX a :Axis ; rdfs:label "X Axis (Width)" .
@@ -157,6 +158,7 @@ dlv:DimensionShape a sh:NodeShape ;
     ) ;
     sh:property [ sh:path dlv:dimensionSize ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:dimensionSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:dimensionStride ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:hasAxis ; sh:nodeKind sh:IRI ; sh:class dlv:Axis ; sh:minCount 1 ; sh:maxCount 1 ] .
         </pre>
     </section>
@@ -173,6 +175,7 @@ dlv:DimensionShape a sh:NodeShape ;
     "cellDataType": { "@id": "dlv:cellDataType", "@type": "@id" },
     "dimensionSize": { "@id": "dlv:dimensionSize", "@type": "xsd:positiveInteger" },
     "dimensionSizeFromField": { "@id": "dlv:dimensionSizeFromField", "@type": "@id" },
+    "dimensionStride": "dlv:dimensionStride",
     "hasAxis": { "@id": "dlv:hasAxis", "@type": "@id" }
   }
 }
