@@ -32,16 +32,16 @@
         </p>
     </section>
 
-    <section class="introductory">
-        <h2>1. Introduction</h2>
+    <section id="introduction">
+        <h2>Introduction</h2>
         <section>
-            <h3>1.1 The Problem: The Dark Matter of Data</h3>
+            <h3>The Problem: The Dark Matter of Data</h3>
             <p>
                 A vast amount of the world's digital information is stored in binary formats. From scientific datasets and satellite imagery to multimedia files and network packets, this data is often treated as "dark matter"—it is opaque, difficult to parse without specialized software, and its internal meaning is locked away in proprietary or poorly-documented specifications. This lack of a universal, machine-readable description leads to significant challenges in data interoperability, long-term preservation, validation, and large-scale analysis.
             </p>
         </section>
         <section>
-            <h3>1.2 The Hexplain Approach: A Layered, Semantic Framework</h3>
+            <h3>The Hexplain Approach: A Layered, Semantic Framework</h3>
             <p>
                 Hexplain addresses this problem by providing a layered, modular framework for describing binary data. Instead of a single, monolithic specification, Hexplain separates concerns into a family of interoperable ontologies.
             </p>
@@ -86,9 +86,9 @@
     </section>
 
     <section id="modules">
-        <h2>2. The Hexplain Ontology Family</h2>
+        <h2>The Hexplain Ontology Family</h2>
         <p>Hexplain is composed of several modular specifications, each with its own detailed document.</p>
-        <h3>2.1 Foundation</h3>
+        <h3>Foundation</h3>
         <dl>
             <dt><a href="bddo/index.html"><b>BDDO (Binary Data Description Ontology)</b></a></dt>
             <dd>The foundational physical layer. Vocabulary for sequential and offset-based structures, fields, primitive data types, endianness, bit-level fields, arrays, enumerations, checksums, and control flow (conditionals, loops, synchronization markers).</dd>
@@ -106,7 +106,7 @@
             <dd>The normative execution model: how a conforming processor turns a binary stream plus a Hexplain description into an RDF instance graph, including IRI minting and value mapping.</dd>
         </dl>
 
-        <h3>2.2 Domain Vocabularies</h3>
+        <h3>Domain Vocabularies</h3>
         <p>Semantic vocabularies providing conceptual terms for specific domains, ensuring interoperability across different file formats within a domain.</p>
         <ul>
             <li><a href="idv/index.html"><b>IDV (Image Vocabulary):</b></a> pixel width, colour space, compression.</li>
@@ -117,10 +117,22 @@
             <li><a href="npv/index.html"><b>NPV (Network Protocol Vocabulary):</b></a> source address, destination port.</li>
             <li><a href="axv/index.html"><b>AXV (Archive Vocabulary):</b></a> file name, checksum, modification time.</li>
         </ul>
+
+        <h3>Aspect Layer</h3>
+        <p>Cross-cutting concerns that belong to <em>no single domain</em> are defined once as orthogonal <b>aspect</b> ontologies and imported by the domains that exhibit them, so each term (a codec, a colour space, a duration) has exactly one IRI everywhere. A format is then a composition — it imports the aspects it has and adds only its genuinely-unique terms. See the <a href="architecture/index.html"><b>Aspect-Oriented Architecture</b></a> for the full catalogue, decision rule, and refactoring roadmap. Established so far:</p>
+        <p>The established aspects (see the <a href="architecture/index.html">architecture document</a> for the full catalogue, tiers, and rationale):</p>
+        <ul>
+            <li><b>Base:</b> <a href="aspect/sampling/sampling.ttl">hx-sampling</a> (<code>asamp</code>), <a href="aspect/color/color.ttl">hx-color</a> (<code>acolor</code>).</li>
+            <li><b>Content representation:</b> <a href="aspect/raster/raster.ttl">hx-raster</a> (<code>araster</code>), <a href="aspect/geometry/geometry.ttl">hx-geometry</a> (<code>ageom</code>), <a href="aspect/pointcloud/pointcloud.ttl">hx-pointcloud</a> (<code>apc</code>), <a href="aspect/tabular/tabular.ttl">hx-tabular</a> (<code>atab</code>), <a href="aspect/signal/signal.ttl">hx-signal</a> (<code>asig</code>).</li>
+            <li><b>Signal &amp; encoding:</b> <a href="aspect/encoding/encoding.ttl">hx-encoding</a> (<code>aenc</code>; codec + compression registers), <a href="aspect/integrity/integrity.ttl">hx-integrity</a> (<code>aintg</code>).</li>
+            <li><b>Reference frames:</b> <a href="aspect/time/time.ttl">hx-time</a> (<code>atime</code>), <a href="aspect/spatialref/spatialref.ttl">hx-spatialref</a> (<code>asref</code>).</li>
+            <li><b>Governance:</b> <a href="aspect/provenance/provenance.ttl">hx-provenance</a> (<code>aprov</code>), <a href="aspect/security/security.ttl">hx-security</a> (<code>asec</code>); descriptive metadata reuses Dublin Core directly.</li>
+            <li><b>Container &amp; system:</b> <a href="aspect/packaging/packaging.ttl">hx-packaging</a> (<code>apkg</code>), <a href="aspect/fsmeta/fsmeta.ttl">hx-fsmeta</a> (<code>afs</code>), <a href="aspect/networkflow/networkflow.ttl">hx-networkflow</a> (<code>anet</code>).</li>
+        </ul>
     </section>
 
     <section id="namespaces">
-        <h2>3. Namespace &amp; Prefix Registry</h2>
+        <h2>Namespace &amp; Prefix Registry</h2>
         <p>All Hexplain modules use the following prefixes and namespaces. Each namespace IRI is intended to be dereferenceable to a machine-readable ontology (see the <code>.ttl</code> artifacts published alongside each specification).</p>
         <table class="simple">
             <thead><tr><th>Module</th><th>Prefix</th><th>Namespace</th></tr></thead>
@@ -128,6 +140,22 @@
                 <tr><td>BDDO</td><td><code>bddo</code></td><td><code>https://hexplain.io/ns/bddo#</code></td></tr>
                 <tr><td>Core</td><td><code>hexplain</code></td><td><code>https://hexplain.io/ns/core#</code></td></tr>
                 <tr><td>DLV</td><td><code>dlv</code></td><td><code>https://hexplain.io/ns/dlv#</code></td></tr>
+                <tr><td>Aspect · Time</td><td><code>atime</code></td><td><code>https://hexplain.io/ns/aspect/time#</code></td></tr>
+                <tr><td>Aspect · Encoding</td><td><code>aenc</code></td><td><code>https://hexplain.io/ns/aspect/encoding#</code></td></tr>
+                <tr><td>Aspect · Colour</td><td><code>acolor</code></td><td><code>https://hexplain.io/ns/aspect/color#</code></td></tr>
+                <tr><td>Aspect · Sampling</td><td><code>asamp</code></td><td><code>https://hexplain.io/ns/aspect/sampling#</code></td></tr>
+                <tr><td>Aspect · Raster</td><td><code>araster</code></td><td><code>https://hexplain.io/ns/aspect/raster#</code></td></tr>
+                <tr><td>Aspect · Signal</td><td><code>asig</code></td><td><code>https://hexplain.io/ns/aspect/signal#</code></td></tr>
+                <tr><td>Aspect · Geometry</td><td><code>ageom</code></td><td><code>https://hexplain.io/ns/aspect/geometry#</code></td></tr>
+                <tr><td>Aspect · Point Cloud</td><td><code>apc</code></td><td><code>https://hexplain.io/ns/aspect/pointcloud#</code></td></tr>
+                <tr><td>Aspect · Tabular</td><td><code>atab</code></td><td><code>https://hexplain.io/ns/aspect/tabular#</code></td></tr>
+                <tr><td>Aspect · Spatial Reference</td><td><code>asref</code></td><td><code>https://hexplain.io/ns/aspect/spatialref#</code></td></tr>
+                <tr><td>Aspect · Provenance</td><td><code>aprov</code></td><td><code>https://hexplain.io/ns/aspect/provenance#</code></td></tr>
+                <tr><td>Aspect · Security</td><td><code>asec</code></td><td><code>https://hexplain.io/ns/aspect/security#</code></td></tr>
+                <tr><td>Aspect · Integrity</td><td><code>aintg</code></td><td><code>https://hexplain.io/ns/aspect/integrity#</code></td></tr>
+                <tr><td>Aspect · Packaging</td><td><code>apkg</code></td><td><code>https://hexplain.io/ns/aspect/packaging#</code></td></tr>
+                <tr><td>Aspect · Filesystem</td><td><code>afs</code></td><td><code>https://hexplain.io/ns/aspect/fsmeta#</code></td></tr>
+                <tr><td>Aspect · Network Flow</td><td><code>anet</code></td><td><code>https://hexplain.io/ns/aspect/networkflow#</code></td></tr>
                 <tr><td>Image</td><td><code>img</code></td><td><code>https://hexplain.io/ns/image#</code></td></tr>
                 <tr><td>Video</td><td><code>vdv</code></td><td><code>https://hexplain.io/ns/video#</code></td></tr>
                 <tr><td>Audio</td><td><code>adv</code></td><td><code>https://hexplain.io/ns/audio#</code></td></tr>
@@ -141,7 +169,7 @@
     </section>
 
     <section id="benefits">
-        <h2>4. Benefits of the Hexplain Approach</h2>
+        <h2>Benefits of the Hexplain Approach</h2>
         <ul>
             <li><b>Interoperability:</b> By mapping format-specific fields to a common semantic vocabulary, Hexplain allows querying and analysis across different file formats, creating a unified view of the data. Domain vocabularies additionally align (via <code>skos:closeMatch</code>/<code>owl:equivalentProperty</code>) to established standards such as Dublin Core, the W3C Ontology for Media Resources, SOSA/SSN, and GeoSPARQL.</li>
             <li><b>Formal Validation:</b> Hexplain descriptions can be validated using SHACL, ensuring the descriptions themselves are correct. Rules and constraints within a description (fixed values, checksums) can further validate the integrity of the binary data itself.</li>
@@ -152,7 +180,7 @@
     </section>
 
     <section id="profiles">
-        <h2>5. Profiles: Extending Hexplain for Specific Formats</h2>
+        <h2>Profiles: Extending Hexplain for Specific Formats</h2>
         <p>
             While domain vocabularies provide general concepts, many formats have unique features. Hexplain handles this through <b>Profiles</b>: a specialized ontology that extends the core vocabularies to describe a single, specific format.
         </p>
@@ -162,7 +190,7 @@
     </section>
 
     <section id="tools">
-        <h2>6. The Hexplain Tool Ecosystem</h2>
+        <h2>The Hexplain Tool Ecosystem</h2>
         <p>The formal, machine-readable nature of Hexplain descriptions — made executable by the <a href="processing/index.html">Processing Model</a> — enables a powerful tool ecosystem.</p>
         <dl>
             <dt><b>Parser &amp; Codec Generators</b></dt>
@@ -178,28 +206,28 @@
         </dl>
     </section>
 
-    <section id="use-cases" class="introductory">
-        <h2>7. Use Case Scenarios</h2>
+    <section id="use-cases">
+        <h2>Use Case Scenarios</h2>
         <section>
-            <h3>7.1 Geointelligence Analysis</h3>
+            <h3>Geointelligence Analysis</h3>
             <p>
                 An intelligence agency has a massive archive of satellite imagery in various formats (GeoTIFF, NITF, HDF5). Using Hexplain, they create descriptions for each, all mapping to the Geospatial Vocabulary (GV). An analyst runs a single SPARQL query: <em>"Find all datasets from the 'WorldView-3' platform (<code>gv:platformName</code>) collected after January 1, 2024 (<code>gv:acquisitionTime</code>) that contain a Lidar point cloud (<code>gv:PointCloud</code>)."</em>
             </p>
         </section>
         <section>
-            <h3>7.2 Digital Forensics</h3>
+            <h3>Digital Forensics</h3>
             <p>
                 An investigator analyzes a raw disk image with a Hexplain-powered tool. It uses <code>bddo:syncOnMarker</code> from each description to scan for file signatures, then parses each file, validates integrity using declared <code>bddo:Checksum</code>s, and extracts key metadata (<code>dfv:creationDate</code>, EXIF camera model). This automates file carving and metadata extraction.
             </p>
         </section>
         <section>
-            <h3>7.3 Broadcast Media Management</h3>
+            <h3>Broadcast Media Management</h3>
             <p>
                 A television network parses all incoming video files (MXF, MOV) using their Hexplain descriptions, mapping technical metadata to the Video Vocabulary (VDV). An automated workflow queries the graph for QC: <em>"Flag all files where <code>vdv:frameRate</code> is not 29.97 fps or <code>vdv:audioChannels</code> is not 2."</em>
             </p>
         </section>
         <section>
-            <h3>7.4 Format Conformance and Validation</h3>
+            <h3>Format Conformance and Validation</h3>
             <p>
                 A standards body releasing "FormatX 2.0" publishes an official Hexplain Profile. Developers use it as a definitive, machine-readable reference and build a conformance test suite that validates a corpus of sample files against the description — replacing ambiguous textual specifications with a formal, testable artifact.
             </p>
