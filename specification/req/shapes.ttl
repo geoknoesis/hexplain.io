@@ -1,0 +1,38 @@
+@prefix :     <https://hexplain.io/ns/req#> .
+@prefix req:  <https://hexplain.io/ns/req#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+:RequirementShape a sh:NodeShape ;
+    sh:targetClass req:Requirement ;
+    rdfs:label "Requirement shape" ;
+    sh:property [
+        sh:path req:requirementId ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:minLength 1 ;
+        sh:message "A Requirement needs exactly one non-empty req:requirementId." ;
+    ] ;
+    sh:property [
+        sh:path req:fromStandard ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A Requirement needs exactly one req:fromStandard." ;
+    ] ;
+    sh:property [
+        sh:path req:statement ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A Requirement needs exactly one req:statement quoting the source text." ;
+    ] ;
+    sh:property [
+        sh:path req:discrepancyType ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( req:Syntactic req:Semantic req:Functional ) ;
+        sh:message "A Requirement needs exactly one req:discrepancyType from the controlled set." ;
+    ] ;
+    sh:property [
+        sh:path req:appliesToVersion ;
+        sh:datatype xsd:string ;
+    ] .

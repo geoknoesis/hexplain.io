@@ -1,0 +1,52 @@
+@prefix :        <https://hexplain.io/ns/req#> .
+@prefix req:     <https://hexplain.io/ns/req#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+<https://hexplain.io/ns/req> a owl:Ontology ;
+    rdfs:label "Hexplain Requirements Vocabulary" ;
+    owl:versionInfo "1.0" ;
+    rdfs:comment """Identifies requirements stated by an external standards document, so that
+executable conformance constraints can cite them. Format-agnostic: it describes what documents
+demand, independent of any binary format description.""" .
+
+# --- Classes ---
+:Requirement a owl:Class ; rdfs:label "Requirement" ;
+    rdfs:comment "A single normative requirement drawn from a standards document." ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req> .
+
+:DiscrepancyType a owl:Class ; rdfs:label "Discrepancy Type" ;
+    rdfs:comment "The class of defect that violating a requirement produces." ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req> .
+
+# --- Controlled individuals ---
+# Definitions track the discrepancy types used by conformance test reporting: a violation
+# impairs interpretability (syntactic), understandability (semantic), or usability (functional).
+:Syntactic a :DiscrepancyType ; rdfs:label "Syntactic" ;
+    rdfs:comment "Impacts interpretability of the data: violates format or compression specifications." .
+:Semantic a :DiscrepancyType ; rdfs:label "Semantic" ;
+    rdfs:comment "Impacts understandability of the data: violates data dictionaries or content specifications." .
+:Functional a :DiscrepancyType ; rdfs:label "Functional" ;
+    rdfs:comment "Impacts usability of the data: violates community or system documentation and data models." .
+
+# --- Properties ---
+:requirementId a owl:DatatypeProperty ; rdfs:label "requirement id" ;
+    rdfs:comment "The identifier the source standard uses, verbatim (e.g. 'JBP-2021.2-002')." ;
+    rdfs:range xsd:string .
+
+:fromStandard a owl:DatatypeProperty ; rdfs:label "from standard" ;
+    rdfs:comment "Source document and edition (e.g. 'MIL-STD-2500C, 01 May 2006')." ;
+    rdfs:range xsd:string .
+
+:statement a owl:DatatypeProperty ; rdfs:label "statement" ;
+    rdfs:comment "The requirement text, quoted verbatim from the source." ;
+    rdfs:range xsd:string .
+
+:discrepancyType a owl:ObjectProperty ; rdfs:label "discrepancy type" ;
+    rdfs:comment "The class of defect a violation produces." ;
+    rdfs:range :DiscrepancyType .
+
+:appliesToVersion a owl:DatatypeProperty ; rdfs:label "applies to version" ;
+    rdfs:comment "A format version the requirement governs (e.g. 'NITF 2.1'). Absent means all." ;
+    rdfs:range xsd:string .
