@@ -1,0 +1,22 @@
+# Task 16 investigation fixture — profile refinement capability probe.
+#
+# NOTE ON NAMESPACES: the task-16 brief's illustrative snippet used
+# `nitf: <https://hexplain.io/formats/nitf#>` and imported
+# `<https://hexplain.io/formats/nitf>`. The actual profile at
+# specification/profiles/nitf/nitf.ttl declares ontology IRI
+# <https://hexplain.io/ns/profile/nitf> with preferred prefix
+# `nitf: <https://hexplain.io/ns/profile/nitf#>`. This fixture uses the real
+# namespace so the probe targets the actual field resource nitf:FH_FHDR.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix nitf: <https://hexplain.io/ns/profile/nitf#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://example.org/nsif-probe> a owl:Ontology ;
+    rdfs:label "NSIF refinement probe" ;
+    owl:imports <https://hexplain.io/ns/profile/nitf> .
+
+# Probe: can a downstream profile restate a field's fixed value without redefining the
+# whole struct? If the compiler takes the last-written value, refinement works. If it
+# takes both, or the first, refinement needs explicit support.
+nitf:FH_FHDR bddo:hasFixedValue "NSIF" .
