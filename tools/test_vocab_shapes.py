@@ -16,6 +16,11 @@ CORE = [
     "specification/bddo/bddo.ttl",
     "specification/dlv/dlv.ttl",
     "specification/hexplain/core.ttl",
+    # Aspect ontologies (and the geo vocabulary) declare the domain terms a fixture
+    # targets with hexplain:mapsToProperty. Load them so fixtures reference the real
+    # declarations instead of restating them locally.
+    *sorted(glob.glob("specification/aspect/*/*.ttl")),
+    "specification/gv/geo.ttl",
 ]
 
 

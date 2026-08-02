@@ -275,6 +275,19 @@ text : str[..] map {
 A `layout` clause on a field emits `hexplain:hasDataLayout` → a `dlv:DataLayout`.
 Dimensions are listed **slowest → fastest** (the `dlv:hasDimension` list order).
 
+Plain contiguous (optionally strided) layout — no `chunk`, no `chunks`:
+
+```
+pixels : bytes[..] layout cell u8 {
+  dim axis Y    size height  stride rowBytes   // dimensionSizeFromField + dimensionStride
+  dim axis X    size width
+  dim axis Band size 3                         // literal ⇒ dimensionSize
+}
+```
+
+Chunked (tiled/blocked) layout — every `dim` MAY carry a `chunk` extent, and the
+`chunks` clause says where the chunks are:
+
 ```
 pixels : bytes[..] layout cell u8 {
   dim axis Y size height chunk tileLength
@@ -288,7 +301,9 @@ pixels : bytes[..] layout cell u8 {
   `dlv:hasAxis dlv:axis<A>`, `dlv:dimensionSize`/`dlv:dimensionSizeFromField`, and optional
   `dlv:dimensionStride`.
 - Axes: `X Y Z Band Time` → `dlv:axisX/axisY/axisZ/axisBand/axisTime`.
-- `dim … chunk <int|sibling>` → `dlv:chunkSize` / `dlv:chunkSizeFromField`.
+- `dim … chunk <int|sibling>` → `dlv:chunkSize` / `dlv:chunkSizeFromField`. At most one of
+  the two per `dim`. In a chunked layout, a `dim` with no `chunk` is chunked at its full
+  `size`, and `stride` addresses cells within a chunk.
 - `chunks offsets <field> [lengths <field>] [base <offsetbase>] [order <order>]` →
   `dlv:chunkOffsetsFromField`, `dlv:chunkLengthsFromField`, `dlv:chunkOffsetBase`,
   `dlv:chunkOrder`. Orders: `row-major column-major morton hilbert`.
@@ -389,9 +404,11 @@ Mapping of clause → YAML key: `size`, `repeat` (`{ count: … }` | `{ until: �
 and use the identical bare-name→HEL resolution.
 
 `header`/`table` mirror under top-level `headers:` and `tables:` maps, keyed by name, with
-`separator`, `record-separator`, `quote`, `escape`, `comment`, `skip`, `trim`, `ci` (same
-meaning as the `@`-annotations in §6.5) and an ordered `fields:` sequence; a `header`
-entry's `key` gives its `bddo:key` (a `table` entry has none — its position is the key).
+`separator`, `record-separator`, `quote`, `escape`, `comment`, `skip`, `trim` (same
+meaning as the `@`-annotations in §6.5) and an ordered `fields:` sequence. `headers:`
+entries additionally take `ci` (`keyIsCaseInsensitive`); it has no meaning for a keyless
+`table`. A `header` entry's `key` gives its `bddo:key` (a `table` entry has none — its
+position is the key).
 
 ## 12. Escape hatch, compilation & validation
 

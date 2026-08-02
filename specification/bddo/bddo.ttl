@@ -205,7 +205,9 @@
 # =========================================================
 # SHACL shapes (domain + cardinality; refine the declared ranges)
 # =========================================================
-bddo:_prefixes sh:declare [ sh:prefix "bddo" ; sh:namespace "https://hexplain.io/ns/bddo#"^^xsd:anyURI ] .
+bddo:_prefixes sh:declare
+    [ sh:prefix "bddo" ; sh:namespace "https://hexplain.io/ns/bddo#"^^xsd:anyURI ] ,
+    [ sh:prefix "rdf" ; sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ] .
 
 bddo:StructShape a sh:NodeShape ;
     sh:targetClass bddo:Struct ;
@@ -273,6 +275,8 @@ bddo:FieldSizingShape a sh:NodeShape ;
         } GROUP BY $this HAVING (COUNT(DISTINCT ?p) > 1)""" ] .
 
 # A variable-length field (bytes/string) MUST declare exactly one sizing/termination.
+# Exempt: a field of a delimited-record container gets its extent from the container's
+# recordDelimiter/fieldDelimiter, not from its own size or terminator.
 bddo:VariableLengthFieldShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
     sh:sparql [ sh:message "A bddo:bytes or bddo:string field must declare a sizing or termination mechanism." ;
@@ -283,6 +287,11 @@ bddo:VariableLengthFieldShape a sh:NodeShape ;
                 $this ?p ?v .
                 FILTER(?p IN (bddo:size, bddo:sizeFromField, bddo:sizeFromExpression,
                               bddo:sizeToEndOfStream, bddo:terminator))
+            }
+            FILTER NOT EXISTS {
+                ?p bddo:hasField/rdf:rest*/rdf:first $this .
+                ?p a ?c .
+                FILTER(?c IN (bddo:DelimitedRecords, bddo:KeyValueHeader, bddo:DelimitedTable))
             }
         }""" ] .
 
@@ -341,6 +350,8 @@ bddo:ChecksumShape a sh:NodeShape ;
     sh:property [ sh:path bddo:coversExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] .
 
 # An ASCII-coded numeric field must have a width or a terminator, or it cannot be read.
+# Exempt: a field of a delimited-record container gets its extent from the container's
+# recordDelimiter/fieldDelimiter, not from its own size or terminator.
 bddo:AsciiNumericWidthShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
     sh:sparql [ sh:message "A bddo:asciiInteger / bddo:asciiDecimal field must declare a width (size / sizeFromField / sizeFromExpression) or a terminator." ;
@@ -352,6 +363,11 @@ bddo:AsciiNumericWidthShape a sh:NodeShape ;
             FILTER NOT EXISTS { $this bddo:sizeFromField ?f }
             FILTER NOT EXISTS { $this bddo:sizeFromExpression ?e }
             FILTER NOT EXISTS { $this bddo:terminator ?t }
+            FILTER NOT EXISTS {
+                ?p bddo:hasField/rdf:rest*/rdf:first $this .
+                ?p a ?c .
+                FILTER(?c IN (bddo:DelimitedRecords, bddo:KeyValueHeader, bddo:DelimitedTable))
+            }
         }""" ] .
 
 # numericBase is meaningful only for :asciiInteger.
@@ -407,4 +423,7 @@ bddo:DelimitedTableShape a sh:NodeShape ;
     sh:property [ sh:path bddo:fieldDelimiter ; sh:minCount 1 ;
         sh:message "A bddo:DelimitedTable must declare bddo:fieldDelimiter." ] ;
     sh:property [ sh:path bddo:keyValueSeparator ; sh:maxCount 0 ;
-        sh:message "bddo:keyValueSeparator applies to a KeyValueHeader, not a DelimitedTable." ] .
+        sh:message "bddo:keyValueSeparator applies to a KeyValueHeader, not a DelimitedTable." ] ;
+    sh:property [ sh:path ( bddo:hasField [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:node [ sh:property [ sh:path bddo:key ; sh:maxCount 0 ;
+            sh:message "bddo:key applies to a field of a KeyValueHeader; a DelimitedTable's columns are located by position." ] ] ] .

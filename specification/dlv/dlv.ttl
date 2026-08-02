@@ -38,7 +38,7 @@
 :ChunkOrder a owl:Class ; rdfs:label "Chunk Order" ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
     rdfs:comment "The order in which chunks appear in the chunk offset table." .
 :chunkSize a owl:DatatypeProperty ; rdfs:label "chunk size" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    rdfs:comment "Extent of one chunk (tile/block) along this dimension, in cells. When any Dimension of a DataLayout declares a chunk extent, the layout is chunked: the grid is partitioned into chunks of this shape and each chunk is located through the layout's chunk offset table. A trailing partial chunk is padded to the full chunk extent." .
+    rdfs:comment "Extent of one chunk (tile/block) along this dimension, in cells. When any Dimension of a DataLayout declares a chunk extent, the layout is chunked: the grid is partitioned into chunks of this shape and each chunk is located through the layout's chunk offset table. A trailing partial chunk is padded to the full chunk extent. A Dimension of a chunked layout that declares neither dlv:chunkSize nor dlv:chunkSizeFromField is chunked at its full extent, i.e. its chunk extent is its dlv:dimensionSize (or the value read through dlv:dimensionSizeFromField); a layout chunked on X alone therefore has chunks spanning all of Y. Within a chunked layout, dlv:dimensionStride addresses cells inside one chunk, not across the whole grid." .
 :chunkSizeFromField a owl:ObjectProperty ; rdfs:label "chunk size from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
 :chunkOffsetsFromField a owl:ObjectProperty ; rdfs:label "chunk offsets from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
     rdfs:comment "The repeating Field holding each chunk's byte offset, indexed in chunkOrder (e.g. TIFF TileOffsets, NITF block offsets)." .
@@ -74,6 +74,15 @@ dlv:DimensionShape a sh:NodeShape ;
           sh:property [ sh:path dlv:dimensionSizeFromField ; sh:maxCount 0 ] ]
         [ sh:property [ sh:path dlv:dimensionSizeFromField ; sh:minCount 1 ] ;
           sh:property [ sh:path dlv:dimensionSize ; sh:maxCount 0 ] ]
+    ) ;
+    # A chunk extent is optional, but the two mechanisms are mutually exclusive.
+    sh:xone (
+        [ sh:property [ sh:path dlv:chunkSize ; sh:maxCount 0 ] ;
+          sh:property [ sh:path dlv:chunkSizeFromField ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:chunkSize ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:chunkSizeFromField ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:chunkSizeFromField ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:chunkSize ; sh:maxCount 0 ] ]
     ) ;
     sh:property [ sh:path dlv:dimensionSize ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:dimensionSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;

@@ -55,6 +55,9 @@
             <p>
                 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].
             </p>
+            <p>
+                A validator checking a BDDO description graph against <a href="#normative-shacl">§ Normative SHACL Shapes</a> MUST either include the BDDO <code>rdfs:subClassOf</code> axioms of <a href="#normative-owl">§ Normative OWL Vocabulary</a> in the graph it validates, or apply RDFS subclass closure to that graph before validating. SHACL selects the targets of <code>sh:targetClass</code> through <code>rdf:type/rdfs:subClassOf*</code>, so a validator that omits those axioms silently under-validates every subclass: a <code>bddo:KeyValueHeader</code>, for example, would not be reached by <code>bddo:StructShape</code> and its <code>bddo:endianness</code> would go unchecked.
+            </p>
         </section>
     </section>
 
@@ -70,6 +73,8 @@
             <dd>The type of data a Field contains. BDDO defines core primitive data types (e.g. <code>bddo:uint32be</code>). This class can be extended in profiles to create user-defined type aliases (e.g. <code>media:fourCC</code>).</dd>
             <dt><code>bddo:DataTypeRule</code></dt>
             <dd>A single rule for conditionally selecting a data type for a field, consisting of a condition and the data type to use when the condition holds.</dd>
+            <dt><code>bddo:EndiannessRule</code></dt>
+            <dd>A single rule for conditionally selecting a byte order for a Struct or Field, consisting of a condition and the endianness to use when the condition holds. Used by formats that declare their own byte order in a magic or version field.</dd>
             <dt><code>bddo:Enumeration</code> / <code>bddo:EnumValue</code></dt>
             <dd>A mapping of raw parsed values to named symbols, so that (for example) a colour-type byte of <code>2</code> can be surfaced as <code>RGB</code> in the output graph and referenced by name in conditions.</dd>
             <dt><code>bddo:Checksum</code></dt>
@@ -102,6 +107,7 @@
     <section id="delimited-text">
         <h2>Delimited Text Records</h2>
         <p>Record- and line-oriented text — <code>key = value</code> headers, CSV, whitespace-separated grids — cannot be addressed by byte offset. <code>bddo:DelimitedRecords</code> is a <code>bddo:Struct</code> whose children are located by delimiter position instead: <code>bddo:recordDelimiter</code> splits the byte run into records, and <code>bddo:fieldDelimiter</code> splits each record into values. Its two specialisations cover the common cases — <code>bddo:KeyValueHeader</code>, where each field is matched by <code>bddo:key</code> rather than position, and <code>bddo:DelimitedTable</code>, where <code>bddo:hasField</code> gives an ordered column list that repeats per row.</p>
+        <p>A field of a <code>bddo:DelimitedRecords</code> takes its extent from its container's delimiters, so it declares no <code>bddo:size</code> and no <code>bddo:terminator</code> of its own; restating a delimiter as a field's terminator is redundant and breaks when a column is inserted. Such fields are therefore exempt from the sizing requirements that apply to variable-length and ASCII-coded numeric fields elsewhere.</p>
         <p class="note">This primitive is deliberately non-recursive. It describes flat delimited text only; nested grammars such as XML and JSON are outside BDDO's scope by design.</p>
     </section>
 
@@ -135,7 +141,7 @@
             </tbody>
         </table>
         <h3>ASCII-Coded Numeric Types</h3>
-        <p>Many record-oriented formats write numbers as text in fixed-width fields — NITF BCS-N, FITS card values, USGS DEM Fortran fields. <code>bddo:asciiInteger</code> and <code>bddo:asciiDecimal</code> read such a field as a number rather than a string, so its value may drive <code>bddo:sizeFromExpression</code>, <code>bddo:atOffsetFromExpression</code> and <code>bddo:repeatCountFromExpression</code>. The field's width comes from <code>bddo:size</code> (or a terminator); <code>bddo:numericBase</code> selects the radix.</p>
+        <p>Many record-oriented formats write numbers as text in fixed-width fields — NITF BCS-N, FITS card values, USGS DEM Fortran fields. <code>bddo:asciiInteger</code> and <code>bddo:asciiDecimal</code> read such a field as a number rather than a string, so its value may drive <code>bddo:sizeFromExpression</code>, <code>bddo:atOffsetFromExpression</code> and <code>bddo:repeatCountFromExpression</code>. The field's width comes from <code>bddo:size</code> (or a terminator), except for a field of a <code>bddo:DelimitedRecords</code>, whose extent comes from its container's delimiters; <code>bddo:numericBase</code> selects the radix.</p>
     </section>
 
     <section id="properties">
@@ -165,7 +171,7 @@
                 <dt><code>bddo:hasConditionalDataType</code></dt>
                 <dd>An <code>rdf:List</code> of <code>bddo:DataTypeRule</code> allowing the processor to select a more specific data type at runtime.</dd>
                 <dt><code>bddo:size</code> / <code>bddo:sizeFromField</code> / <code>bddo:sizeFromExpression</code> / <code>bddo:sizeToEndOfStream</code></dt>
-                <dd>The size of the field in bytes: fixed, read from another field, computed by a <a href="../hel/index.html">HEL</a> expression, or "consume the remainder of the stream" (<code>xsd:boolean</code>). A Field MUST use <b>at most one</b> sizing mechanism, and variable-length types (<code>bddo:bytes</code>, <code>bddo:string</code>) MUST use exactly one sizing or termination mechanism.</dd>
+                <dd>The size of the field in bytes: fixed, read from another field, computed by a <a href="../hel/index.html">HEL</a> expression, or "consume the remainder of the stream" (<code>xsd:boolean</code>). A Field MUST use <b>at most one</b> sizing mechanism, and variable-length types (<code>bddo:bytes</code>, <code>bddo:string</code>) MUST use exactly one sizing or termination mechanism — except for a field of a <code>bddo:DelimitedRecords</code>, which is exempt because its extent is set by its container's delimiters.</dd>
                 <dt><code>bddo:terminator</code></dt>
                 <dd>A byte sequence terminating a variable-length field. Value MUST be an <code>xsd:hexBinary</code> literal.</dd>
                 <dt><code>bddo:trimNull</code></dt>
@@ -207,6 +213,8 @@
                 <dd>Describe a <code>bddo:DataType</code>: its width in bits, its signedness, and the RDF literal datatype produced on output.</dd>
                 <dt><code>bddo:condition</code>, <code>bddo:ruleDataType</code></dt>
                 <dd>A <code>bddo:DataTypeRule</code>'s <a href="../hel/index.html">HEL</a> condition and the data type (a <code>bddo:DataType</code> or <code>bddo:Struct</code>) to apply when it holds.</dd>
+                <dt><code>bddo:condition</code>, <code>bddo:ruleEndianness</code></dt>
+                <dd>A <code>bddo:EndiannessRule</code>'s <a href="../hel/index.html">HEL</a> condition and the byte order (<code>bddo:BigEndian</code> or <code>bddo:LittleEndian</code>) to apply when it holds.</dd>
                 <dt><code>bddo:hasEnumValue</code>, <code>bddo:enumRawValue</code>, <code>bddo:enumSymbol</code></dt>
                 <dd>An <code>bddo:Enumeration</code>'s members; each <code>bddo:EnumValue</code> pairs a raw literal (<code>bddo:enumRawValue</code>) with an optional symbolic IRI (<code>bddo:enumSymbol</code>) and/or <code>rdfs:label</code>.</dd>
                 <dt><code>bddo:checksumAlgorithm</code>, <code>bddo:coversFromField</code>, <code>bddo:coversToField</code>, <code>bddo:coversExpression</code></dt>
@@ -440,7 +448,9 @@
 @prefix vann:   &lt;http://purl.org/vocab/vann/&gt; .
 
 # SHACL shapes
-bddo:_prefixes sh:declare [ sh:prefix "bddo" ; sh:namespace "https://hexplain.io/ns/bddo#"^^xsd:anyURI ] .
+bddo:_prefixes sh:declare
+    [ sh:prefix "bddo" ; sh:namespace "https://hexplain.io/ns/bddo#"^^xsd:anyURI ] ,
+    [ sh:prefix "rdf" ; sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ] .
 
 bddo:StructShape a sh:NodeShape ;
     sh:targetClass bddo:Struct ;
@@ -508,6 +518,8 @@ bddo:FieldSizingShape a sh:NodeShape ;
         } GROUP BY $this HAVING (COUNT(DISTINCT ?p) &gt; 1)""" ] .
 
 # A variable-length field (bytes/string) MUST declare exactly one sizing/termination.
+# Exempt: a field of a delimited-record container gets its extent from the container's
+# recordDelimiter/fieldDelimiter, not from its own size or terminator.
 bddo:VariableLengthFieldShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
     sh:sparql [ sh:message "A bddo:bytes or bddo:string field must declare a sizing or termination mechanism." ;
@@ -518,6 +530,11 @@ bddo:VariableLengthFieldShape a sh:NodeShape ;
                 $this ?p ?v .
                 FILTER(?p IN (bddo:size, bddo:sizeFromField, bddo:sizeFromExpression,
                               bddo:sizeToEndOfStream, bddo:terminator))
+            }
+            FILTER NOT EXISTS {
+                ?p bddo:hasField/rdf:rest*/rdf:first $this .
+                ?p a ?c .
+                FILTER(?c IN (bddo:DelimitedRecords, bddo:KeyValueHeader, bddo:DelimitedTable))
             }
         }""" ] .
 
@@ -576,6 +593,8 @@ bddo:ChecksumShape a sh:NodeShape ;
     sh:property [ sh:path bddo:coversExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] .
 
 # An ASCII-coded numeric field must have a width or a terminator, or it cannot be read.
+# Exempt: a field of a delimited-record container gets its extent from the container's
+# recordDelimiter/fieldDelimiter, not from its own size or terminator.
 bddo:AsciiNumericWidthShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
     sh:sparql [ sh:message "A bddo:asciiInteger / bddo:asciiDecimal field must declare a width (size / sizeFromField / sizeFromExpression) or a terminator." ;
@@ -587,6 +606,11 @@ bddo:AsciiNumericWidthShape a sh:NodeShape ;
             FILTER NOT EXISTS { $this bddo:sizeFromField ?f }
             FILTER NOT EXISTS { $this bddo:sizeFromExpression ?e }
             FILTER NOT EXISTS { $this bddo:terminator ?t }
+            FILTER NOT EXISTS {
+                ?p bddo:hasField/rdf:rest*/rdf:first $this .
+                ?p a ?c .
+                FILTER(?c IN (bddo:DelimitedRecords, bddo:KeyValueHeader, bddo:DelimitedTable))
+            }
         }""" ] .
 
 # numericBase is meaningful only for :asciiInteger.
@@ -642,7 +666,10 @@ bddo:DelimitedTableShape a sh:NodeShape ;
     sh:property [ sh:path bddo:fieldDelimiter ; sh:minCount 1 ;
         sh:message "A bddo:DelimitedTable must declare bddo:fieldDelimiter." ] ;
     sh:property [ sh:path bddo:keyValueSeparator ; sh:maxCount 0 ;
-        sh:message "bddo:keyValueSeparator applies to a KeyValueHeader, not a DelimitedTable." ] .
+        sh:message "bddo:keyValueSeparator applies to a KeyValueHeader, not a DelimitedTable." ] ;
+    sh:property [ sh:path ( bddo:hasField [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:node [ sh:property [ sh:path bddo:key ; sh:maxCount 0 ;
+            sh:message "bddo:key applies to a field of a KeyValueHeader; a DelimitedTable's columns are located by position." ] ] ] .
         </pre>
     </section>
 
