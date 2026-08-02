@@ -99,11 +99,11 @@ struct SecurityMarking {
 // from these struct names -- FH_LISHn/FH_LIn etc. (RESegLen's ttl counterpart is even named
 // "LRESHn", not "LRSHn": the ttl author expanded "LRSH" to "LRESH" for the pair's label, so the
 // `as` target follows ttl's actual field name, not a mechanical prefix+DSL-name transform).
-struct ImageSegLen   { LISH as FH_LISHn  : ascii[6]  LI  as FH_LIn  : ascii[10] }
-struct GraphicSegLen { LSSH as FH_LSSHn  : ascii[4]  LS  as FH_LSn  : ascii[6]  }
-struct TextSegLen    { LTSH as FH_LTSHn  : ascii[4]  LT  as FH_LTn  : ascii[5]  }
-struct DESegLen      { LDSH as FH_LDSHn  : ascii[4]  LD  as FH_LDn  : ascii[9]  }
-struct RESegLen      { LRSH as FH_LRESHn : ascii[4]  LRE as FH_LREn : ascii[7]  }
+struct ImageSegLen as ImageSegLenPair   { LISH as FH_LISHn  : ascii[6]  LI  as FH_LIn  : ascii[10] }
+struct GraphicSegLen as GraphicSegLenPair { LSSH as FH_LSSHn  : ascii[4]  LS  as FH_LSn  : ascii[6]  }
+struct TextSegLen as TextSegLenPair    { LTSH as FH_LTSHn  : ascii[4]  LT  as FH_LTn  : ascii[5]  }
+struct DESegLen as DESegLenPair      { LDSH as FH_LDSHn  : ascii[4]  LD  as FH_LDn  : ascii[9]  }
+struct RESegLen as RESegLenPair      { LRSH as FH_LRESHn : ascii[4]  LRE as FH_LREn : ascii[7]  }
 
 // Per-band record inside the image subheader (Table A-3 band loop).
 struct ImageBand {
