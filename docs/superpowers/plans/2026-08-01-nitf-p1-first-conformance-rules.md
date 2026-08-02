@@ -1269,6 +1269,152 @@ git commit -m "test(nitf): compile and parse the real NITF 2.1 profile"
 
 ---
 
+### Task 8b: Resolve a repeat count carried as text
+
+**Repo:** `hexplain-tools`
+
+**Files:**
+- Modify: `core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt` (`resolveRepeatCount`)
+- Test: `core/src/test/kotlin/io/hexplain/core/metacodec/RepeatCountFromTextFieldTest.kt`
+
+**Interfaces:**
+- Consumes: nothing new.
+- Produces: no new types. `bddo:repeatCountFromField` accepts a count carried as numeric text, exactly as `bddo:sizeFromField` already does.
+
+**Why this task exists.** Added after Task 8, by human ruling. `resolveRepeatCount` reads the referenced field as `(context[name] as? Number) ?: (parentContext?.get(name) as? Number)` and throws otherwise (`Metaparser.kt:766`). Its `sizeFromField` sibling handles both a `Number` and numeric text. NITF's `FH_NUMI` is `nitf:BCSNpos`, i.e. the string `"000"`, so parsing the real file header dies at `FH_ImageSegTable` with `repeatCountFromField 'FH_NUMI' not found or not a number` — before reaching any other blocker.
+
+This is the same defect class as Task 4b's first finding: a resolver ladder that forgot numbers can arrive as text.
+
+- [ ] **Step 1: Read both ladders**
+
+Run: `grep -n "sizeFromField\|repeatCountFromField" core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt`
+Record how `sizeFromField` accepts text, so this change mirrors it rather than inventing a second idiom.
+
+- [ ] **Step 2: Write the failing test**
+
+Create `core/src/test/kotlin/io/hexplain/core/metacodec/RepeatCountFromTextFieldTest.kt`. A struct with a 3-byte `BaseType.STRING` count field holding `"002"`, followed by a struct-typed field carrying `repeatCountFromField` naming it, then a trailer. Assert exactly two elements are produced and the trailer still reads correctly. Add a second case where the count is `"000"`, asserting an empty list and an intact trailer.
+
+Cover the failure path too: a count field whose text is not numeric must still raise, with the existing message. A silent zero would be worse than the current throw.
+
+- [ ] **Step 3: Run test to verify it fails**
+
+Run: `cd /d/work/hexplain-tools && ./gradlew :core:test --tests "io.hexplain.core.metacodec.RepeatCountFromTextFieldTest"`
+Expected: FAIL — `repeatCountFromField '...' not found or not a number`.
+
+- [ ] **Step 4: Accept numeric text**
+
+In `resolveRepeatCount`, widen the `repeatCountFromField` branch to try the `Number` forms first and then numeric text, in the same order and with the same `parentContext` fallback the existing code uses. Keep the throw for anything that resolves to neither. Match `sizeFromField`'s trimming behaviour exactly — a BCS-N field may carry surrounding space.
+
+- [ ] **Step 5: Run the tests**
+
+Run: `cd /d/work/hexplain-tools && ./gradlew test`
+Expected: PASS — the new tests, both module baselines green. Report exact counts.
+
+- [ ] **Step 6: Prove the fix bites**
+
+Revert the widening, re-run, confirm the two positive tests FAIL and the non-numeric test still passes, then restore. Report the observation.
+
+- [ ] **Step 7: Commit**
+
+```bash
+cd /d/work/hexplain-tools
+git add core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt \
+        core/src/test/kotlin/io/hexplain/core/metacodec/RepeatCountFromTextFieldTest.kt
+git commit -m "fix(metacodec): accept a repeat count carried as numeric text"
+```
+
+---
+
+### Task 8a: Make every profile expression valid, prefixed HEL
+
+**Repo:** `hexplain.io`
+
+**Files:**
+- Modify: `specification/profiles/nitf/nitf.ttl`
+
+**Interfaces:**
+- Consumes: `toNumber()` (Task 4c); the compiled field naming recorded by Task 8.
+- Produces: a profile that compiles. No Kotlin change.
+
+**Why this task exists.** Added after Task 8, by human ruling, and it merges two blockers because they touch the same expressions.
+
+*`nitf.ttl` has never compiled.* `RdfToIrCompiler` parses HEL eagerly, and three expressions are not HEL 1.0:
+- `nitf.ttl:353` — `"IC not in (NC, NM)"`. HEL has no `not in` operator, and `NC`/`NM` are bare identifiers that would resolve as names rather than the string literals intended.
+- `nitf.ttl:718` and `:720` — `"xsd:integer(NROWS)"` / `"xsd:integer(NCOLS)"`. There is no `xsd:integer` function. These are the two sites Task 4d's review filed as a deferred minor ("a second coercion idiom"); they are not minor, they are a hard blocker, and `toNumber()` is the fix.
+
+*Every name reference is unprefixed.* Compiled field names come from the URI local name (`RdfToIrCompiler.simpleFieldName()`), so `nitf:FH_UDHDL` compiles to `FH_UDHDL`, while the expressions say `UDHDL`. A merged change made an undefined name raise rather than evaluate to null, and `HelEvaluationException` is a plain `RuntimeException` no catch handles — so the parse aborts with **zero** diagnostics. Resource-valued sibling references (`bddo:sizeFromField`, `bddo:repeatCountFromField`) are unaffected, because both sides derive from the URI.
+
+The human ruled for prefixing the expressions rather than teaching HEL to resolve a suffix: resolution stays explicit at the call site, consistent with the `toNumber()` ruling, and no engine change is needed.
+
+- [ ] **Step 1: Inventory every HEL-valued expression**
+
+Run: `grep -n 'isPresentIf\|sizeFromExpression\|repeatUntil\|repeatCountFromExpression\|valueExpression' specification/profiles/nitf/nitf.ttl`
+
+Expect 27 expression strings across 21 lines. Six are `bddo:repeatUntil "eof()"` and reference no name — leave those alone. Work from your own inventory, not from this list, and report any expression it does not cover.
+
+- [ ] **Step 2: Map each referenced name to its declared field**
+
+Every referenced name is declared exactly once, with a struct prefix, and the mapping is unambiguous:
+
+| referenced | declared as | line |
+|---|---|---|
+| `UDHDL` | `nitf:FH_UDHDL` | 233 |
+| `XHDL` | `nitf:FH_XHDL` | 241 |
+| `NROWS` | `nitf:IS_NROWS` | 322 |
+| `NCOLS` | `nitf:IS_NCOLS` | 324 |
+| `ICORDS` | `nitf:IS_ICORDS` | 338 |
+| `IC` | `nitf:IS_IC` | 350 |
+| `NBANDS` | `nitf:IS_NBANDS` | 356 |
+| `UDIDL` | `nitf:IS_UDIDL` | 401 |
+| `IXSHDL` | `nitf:IS_IXSHDL` | 409 |
+| `SXSHDL` | `nitf:GS_SXSHDL` | 495 |
+| `TXSHDL` | `nitf:TS_TXSHDL` | 574 |
+| `DESID` | `nitf:DES_DESID` | 598 |
+| `DESSHL` | `nitf:DES_DESSHL` | 644 |
+| `RESSHL` | `nitf:RES_RESSHL` | 707 |
+
+Verify each one yourself before editing. If any referenced name has no matching field, or matches more than one, stop and report — that is a profile defect, not a rename.
+
+- [ ] **Step 3: Rewrite the three non-HEL expressions**
+
+```turtle
+# nitf.ttl:353 — HEL has no `not in`, and NC/NM must be string literals.
+bddo:isPresentIf "IS_IC != 'NC' and IS_IC != 'NM'"
+
+# nitf.ttl:718 / :720 — xsd:integer() is not a HEL function; the profile's
+# numeric fields are text, so the explicit coercion is toNumber().
+hexplain:valueExpression "toNumber(IS_NROWS)"
+hexplain:valueExpression "toNumber(IS_NCOLS)"
+```
+
+Leave `hexplain:valueDatatype xsd:integer` on those two lines unchanged — it declares the lifted RDF datatype, not an expression.
+
+- [ ] **Step 4: Prefix every remaining name reference**
+
+Apply the Step 2 mapping to each expression. For example line 236 becomes `bddo:isPresentIf "FH_UDHDL != '00000'"` and line 239 becomes `bddo:sizeFromExpression "toNumber(FH_UDHDL) - 3"`.
+
+Change only the expression strings. Do not touch `bddo:dataType`, `bddo:size`, resource-valued `*FromField` predicates, or anything else, and do not reformat the file.
+
+- [ ] **Step 5: Verify no unprefixed reference survives**
+
+Every name inside a HEL string must now match `[A-Z]+_[A-Z0-9]+`, be a HEL function, or be a quoted literal. Devise a check that demonstrates this and report both the check and its output — a bare eyeball pass is not sufficient for 27 expressions.
+
+- [ ] **Step 6: Confirm the profile still validates**
+
+Run the repo's harness — `python tools/shacl_check.py specification/profiles/nitf/nitf.ttl` — not a bare two-graph `pyshacl` invocation. Expected: `Conforms: True`. Report exactly what you ran.
+
+Note that SHACL validates the RDF shape of these strings, not HEL grammar. Proof that the profile compiles comes from Task 8's re-run, not from here.
+
+- [ ] **Step 7: Commit**
+
+```bash
+cd /d/work/hexplain.io
+git add specification/profiles/nitf/nitf.ttl
+git commit -m "fix(nitf): express every profile expression as valid, prefixed HEL"
+```
+
+---
+
 ### Task 9: Transcribe the file-header requirements
 
 **Repo:** `hexplain.io`
