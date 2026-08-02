@@ -163,6 +163,7 @@ struct Chunk {
 | numeric base | `anum[2] @base 16` | `numericBase` |
 | conditional type | `switch <expr?> { <val|when expr> => <Struct> … }` | `hasConditionalDataType` (`DataTypeRule` list) |
 | conditional endianness | `@endian switch { when ByteOrder == 0x4949 => little, when ByteOrder == 0x4D4D => big }` | `hasConditionalEndianness` (`EndiannessRule` list) |
+| key (in a header) | `"samples" : anum means araster:width` | `key` |
 
 `offsetBase` keywords: `stream-start stream-end parent-start current`. `@fixed` accepts a
 hex byte string, an integer, or a string literal.
@@ -193,6 +194,28 @@ field FirstIFD : IFD @at ifdOffset from stream-start   // atOffsetFromField + of
 ```
 (`field` at top level declares a standalone `bddo:Field`, for fields shared across structs
 or defined out of line, mirroring the standalone subjects in the TIFF sketch.)
+
+### 6.5 Delimited text (`header` / `table`)
+
+```
+header EnviHeader @separator "=" @comment ";" @trim @ci {
+  "samples" : anum means araster:width
+  "lines"   : anum means araster:height
+}
+
+table PointCsv @separator "," @quote '"' @skip 1 {
+  x : adec
+  y : adec
+  z : adec
+}
+```
+
+`header` → `bddo:KeyValueHeader`, `table` → `bddo:DelimitedTable`. Annotations:
+`@record-separator` (default LF) → `recordDelimiter`; `@separator` →
+`keyValueSeparator` on a `header`, `fieldDelimiter` on a `table`; `@quote` →
+`quoteChar`; `@escape` → `escapeChar`; `@comment` → `commentPrefix`; `@skip` →
+`skipRecords`; `@trim` → `trimWhitespace`; `@ci` → `keyIsCaseInsensitive`. A
+quoted field name in a `header` is its `bddo:key`.
 
 ## 7. Field references → HEL (first-class expressions)
 
@@ -365,6 +388,11 @@ Mapping of clause → YAML key: `size`, `repeat` (`{ count: … }` | `{ until: �
 `raw-turtle` (string). Bundles under a top-level `bundles:` map; expressions are strings
 and use the identical bare-name→HEL resolution.
 
+`header`/`table` mirror under top-level `headers:` and `tables:` maps, keyed by name, with
+`separator`, `record-separator`, `quote`, `escape`, `comment`, `skip`, `trim`, `ci` (same
+meaning as the `@`-annotations in §6.5) and an ordered `fields:` sequence; a `header`
+entry's `key` gives its `bddo:key` (a `table` entry has none — its position is the key).
+
 ## 12. Escape hatch, compilation & validation
 
 **Escape hatch (guarantees full coverage against the evolving ontology):**
@@ -393,7 +421,7 @@ Each diagnostic carries a `.hx`/`.hx.yaml` line/column.
 
 ```ebnf
 document     = { use-decl | format-decl | struct-decl | field-decl | enum-decl
-               | bundle-decl | asset-decl } ;
+               | header-decl | table-decl | bundle-decl | asset-decl } ;
 use-decl     = "use" PREFIX IRIREF ;
 format-decl  = "format" IDENT { "@namespace" STRING | "@endian" endian
                               | "@bit-order" bitorder } ;
@@ -434,6 +462,11 @@ bundle-decl  = "bundle" IDENT [ "as" IDENT ] "@bound-by" binding "{" { partspec 
 partspec     = "part" STRING "role" role-ref [ "required" | "optional" ] [ "primary" ]
                [ "carries" PREFIX ] [ "described-by" struct-ref ] ;
 asset-decl   = "asset" IDENT "conforms" IDENT { asset-annot } "{" { assetpart } "}" ;
+header-decl  = "header" IDENT { delim-annot } "{" { entry-decl } "}" ;
+table-decl   = "table" IDENT { delim-annot } "{" { field-decl } "}" ;
+delim-annot  = "@separator" STRING | "@record-separator" STRING | "@quote" STRING
+             | "@escape" STRING | "@comment" STRING | "@skip" INT | "@trim" | "@ci" ;
+entry-decl   = STRING ":" type { clause } ;
 expr         = (* HEL expression; bare identifiers = sibling refs, see §7 *) ;
 ```
 

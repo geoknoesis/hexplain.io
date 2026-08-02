@@ -1,0 +1,45 @@
+# Two shapes of delimited text: an ENVI-style key = value header, and a CSV table.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix ex:   <https://hexplain.io/test/delim#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+
+# This fixture's ontology closure is bddo/dlv/core only (see tools/test_vocab_shapes.py);
+# the raster aspect ontology that normally declares these terms is not loaded, so restate
+# their type locally for hexplain:MapsToPropertyShape. Matches specification/aspect/raster/raster.ttl.
+araster:width a owl:DatatypeProperty .
+araster:height a owl:DatatypeProperty .
+
+# --- ENVI-style header: "samples = 5000" one per line ---
+ex:EnviHeader a bddo:KeyValueHeader ;
+    rdfs:label "ENVI .hdr" ;
+    bddo:recordDelimiter "0A"^^xsd:hexBinary ;
+    bddo:keyValueSeparator "3D"^^xsd:hexBinary ;
+    bddo:commentPrefix ";" ;
+    bddo:trimWhitespace true ;
+    bddo:keyIsCaseInsensitive true ;
+    bddo:hasField ( ex:EnviHeader.samples ex:EnviHeader.lines ) .
+
+ex:EnviHeader.samples a bddo:Field ;
+    bddo:key "samples" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary ;
+    hexplain:mapsToProperty araster:width .
+
+ex:EnviHeader.lines a bddo:Field ;
+    bddo:key "lines" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary ;
+    hexplain:mapsToProperty araster:height .
+
+# --- CSV table: positional columns, one header row skipped ---
+ex:PointCsv a bddo:DelimitedTable ;
+    rdfs:label "XYZ point CSV" ;
+    bddo:recordDelimiter "0A"^^xsd:hexBinary ;
+    bddo:fieldDelimiter "2C"^^xsd:hexBinary ;
+    bddo:quoteChar "22"^^xsd:hexBinary ;
+    bddo:skipRecords "1"^^xsd:nonNegativeInteger ;
+    bddo:hasField ( ex:PointCsv.x ex:PointCsv.y ex:PointCsv.z ) .
+
+ex:PointCsv.x a bddo:Field ; bddo:dataType bddo:asciiDecimal ; bddo:terminator "2C"^^xsd:hexBinary .
+ex:PointCsv.y a bddo:Field ; bddo:dataType bddo:asciiDecimal ; bddo:terminator "2C"^^xsd:hexBinary .
+ex:PointCsv.z a bddo:Field ; bddo:dataType bddo:asciiDecimal ; bddo:terminator "0A"^^xsd:hexBinary .

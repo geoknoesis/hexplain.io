@@ -1,0 +1,15 @@
+# Two violations: a KeyValueHeader whose field declares no bddo:key, and a
+# KeyValueHeader with no keyValueSeparator.
+# Expected to trip bddo:KeyValueHeaderShape.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/delim-invalid#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:BadHeader a bddo:KeyValueHeader ;
+    rdfs:comment "Expected to trip bddo:KeyValueHeaderShape (no keyValueSeparator; field has no key)." ;
+    bddo:recordDelimiter "0A"^^xsd:hexBinary ;
+    bddo:hasField ( ex:BadHeader.orphan ) .
+
+ex:BadHeader.orphan a bddo:Field ;
+    bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary .
