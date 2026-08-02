@@ -442,6 +442,158 @@ git commit -m "fix(nitf): express TRE-area termination as eof() instead of an un
 
 ---
 
+### Task 4b: Bound a repeating struct field by its own declared size
+
+**Repo:** `hexplain-tools`
+
+**Files:**
+- Modify: `core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt` (`readFieldBody`, the struct-sequence dispatch)
+- Test: `core/src/test/kotlin/io/hexplain/core/metacodec/FieldRegionSequenceTest.kt`
+
+**Interfaces:**
+- Consumes: `applyRegion(buffer, start, size, outerLimit, structName)`, region-aware `streamCtx` (Task 3), `RecoveryPolicy`/`ParseDiagnostics`.
+- Produces: no new types. A struct-typed field that carries `repeatUntil` **and** a declared size (`size`, `sizeFromField` or `sizeFromExpression`) has its sequence bounded to that many bytes.
+
+**Why this task exists.** Added after Task 4's review. The plan assumed `eof()` would bound the NITF TRE areas because they declare `bddo:sizeFromExpression`. It does not: `applyRegion`/`resolveStructSize` fire only from **struct**-level sizing, and when a struct-typed field carries `repeatUntil`, `readFieldBody` dispatches straight to `parseStructSequence`, which never consults the field's own size. A reviewer proved this with a live repro — the sequence over-consumed past the declared boundary and starved the following field with `BufferUnderflowException`. Task 3 fixed the struct-level case; this is its field-level mirror, and Task 8 needs it to parse the real profile.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `core/src/test/kotlin/io/hexplain/core/metacodec/FieldRegionSequenceTest.kt`:
+
+```kotlin
+package io.hexplain.core.metacodec
+
+import io.hexplain.core.hel.HelParser
+import io.hexplain.core.hel.Lexer
+import io.hexplain.core.ir.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+
+/**
+ * A struct-typed field carrying repeatUntil must respect its OWN declared size. The NITF TRE
+ * areas are shaped exactly this way (sizeFromExpression "UDHDL - 3" plus repeatUntil), and
+ * without this bound the sequence runs past the area and consumes the following field.
+ */
+class FieldRegionSequenceTest {
+
+    private val bytesType = DataTypeIR(name = "bddo:Bytes", baseType = BaseType.BYTES, bitWidth = 8)
+    private fun hel(src: String) = HelParser(Lexer(src).tokenize()).parse()
+
+    /** LEN(2 ascii) AREA(struct sequence, LEN bytes) TRAILER(4). */
+    private fun formatIR(): FormatIR {
+        val record = StructIR(
+            name = "t:Record",
+            fields = listOf(FieldIR(name = "R", dataType = bytesType, size = 2)),
+        )
+        val root = StructIR(
+            name = "t:Outer",
+            fields = listOf(
+                FieldIR(name = "LEN", dataType = DataTypeIR(name = "bddo:string", baseType = BaseType.STRING, bitWidth = 8), size = 2),
+                FieldIR(
+                    name = "AREA",
+                    dataType = DataTypeIR(name = "t:Record", baseType = BaseType.BYTES, bitWidth = 8),
+                    sizeFromExpression = hel("LEN"),
+                    repeatUntil = hel("eof()"),
+                ),
+                FieldIR(name = "TRAILER", dataType = bytesType, size = 4),
+            ),
+        )
+        return FormatIR(
+            name = "test",
+            rootStruct = "t:Outer",
+            structs = mapOf("t:Outer" to root, "t:Record" to record),
+        )
+    }
+
+    @Test
+    fun `a repeating struct field stops at its declared size and leaves the trailer intact`() {
+        // LEN=04 -> AREA is 4 bytes -> exactly two 2-byte records; TRAILER must still read ZZZZ.
+        @Suppress("UNCHECKED_CAST")
+        val result = Metaparser(formatIR()).parse("04AABBZZZZ".toByteArray()) as Map<String, Any>
+
+        @Suppress("UNCHECKED_CAST")
+        val area = result["AREA"] as List<Map<String, Any>>
+        assertEquals(2, area.size)
+        assertEquals("AA", String(area[0]["R"] as ByteArray))
+        assertEquals("BB", String(area[1]["R"] as ByteArray))
+        assertEquals("ZZZZ", String(result["TRAILER"] as ByteArray))
+    }
+
+    @Test
+    fun `a zero-length area yields no records and consumes no bytes`() {
+        // NITF writes UDHDL="00000" for an absent TRE area; the sequence must be empty, not
+        // an error and not a consumer of the following field.
+        @Suppress("UNCHECKED_CAST")
+        val result = Metaparser(formatIR()).parse("00ZZZZ".toByteArray()) as Map<String, Any>
+
+        @Suppress("UNCHECKED_CAST")
+        val area = result["AREA"] as List<Map<String, Any>>
+        assertEquals(0, area.size)
+        assertEquals("ZZZZ", String(result["TRAILER"] as ByteArray))
+    }
+}
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `cd /d/work/hexplain-tools && ./gradlew :core:test --tests "io.hexplain.core.metacodec.FieldRegionSequenceTest"`
+Expected: FAIL — the sequence consumes past the area, so `AREA` holds too many records and `TRAILER` underflows.
+
+- [ ] **Step 3: Bound the sequence before dispatching**
+
+In `readFieldBody`, at the branch that dispatches a struct-typed field with `repeatUntil` to `parseStructSequence`, resolve the field's own declared size first and cap the buffer for the duration of the sequence:
+
+```kotlin
+                // A repeating struct field may declare its own extent (NITF's TRE areas do:
+                // sizeFromExpression "UDHDL - 3" plus repeatUntil). applyRegion only ever fires
+                // for STRUCT-level sizing, so bound the sequence here or it runs past the area
+                // and eats the following field.
+                val declared: Int? = when {
+                    fieldDef.size != null -> fieldDef.size.toInt()
+                    fieldDef.sizeFromField != null ->
+                        (context[fieldDef.sizeFromField] as? Number)?.toInt()
+                            ?: (context[fieldDef.sizeFromField] as? String)?.trim()?.toIntOrNull()
+                    fieldDef.sizeFromExpression != null ->
+                        (HelEvaluator(context, parentContext, rootContext, streamContext = streamCtx(buffer))
+                            .evaluate(fieldDef.sizeFromExpression) as? Number)?.toInt()
+                    else -> null
+                }
+                if (declared != null) {
+                    // A negative or zero extent means the area is absent. NITF writes
+                    // UDHDL="00000", and "UDHDL - 3" is then negative — that is an empty area,
+                    // not an error.
+                    val extent = declared.coerceAtLeast(0)
+                    val outer = buffer.limit()
+                    val end = applyRegion(buffer, buffer.position(), extent, outer, structDef.name)
+                    val seq = parseStructSequence(nestedStructDef, buffer, context, rootContext, fieldDef.repeatUntil, fieldDef.name, baseOffset)
+                    buffer.limit(outer)
+                    buffer.position(end)
+                    return seq
+                }
+```
+
+Read the surrounding code before editing: use the parameter names actually in scope at that point (`context`, `parentContext`, `rootContext`, `nestedStructDef`, `structDef`, `baseOffset`), and keep the existing unbounded call as the `else` path so fields with no declared size behave exactly as before.
+
+- [ ] **Step 4: Run the tests**
+
+Run: `cd /d/work/hexplain-tools && ./gradlew test`
+Expected: PASS — both new tests, and both module baselines still green.
+
+- [ ] **Step 5: Prove the fix bites**
+
+Remove the `if (declared != null)` block so the unbounded call is always taken, re-run, confirm BOTH new tests FAIL, restore. Report the observation.
+
+- [ ] **Step 6: Commit**
+
+```bash
+cd /d/work/hexplain-tools
+git add core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt \
+        core/src/test/kotlin/io/hexplain/core/metacodec/FieldRegionSequenceTest.kt
+git commit -m "fix(metacodec): bound a repeating struct field by its own declared size"
+```
+
+---
+
 ### Task 5: Validate fixed values on string fields
 
 **Repo:** `hexplain-tools`
