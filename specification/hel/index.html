@@ -91,7 +91,7 @@ Unary        = [ "-" / "~" ] Primary
 Primary      = FunctionCall / Accessor / Literal / ( "(" WS Expression WS ")" )
 
 FunctionCall = FunctionName "(" WS [ Expression *( WS "," WS Expression ) ] WS ")"
-FunctionName = "sizeof" / "len" / "count" / "eof" / "trim" / "substringBefore" / "substringAfter" / "number"
+FunctionName = "sizeof" / "len" / "count" / "eof" / "trim" / "substringBefore" / "substringAfter" / "toNumber"
 
 Accessor     = Root *( Step )
 Step         = "." ( "parent" / IDENTIFIER ) / "[" WS Expression WS "]"
@@ -133,7 +133,7 @@ eof()                             ; true when the cursor is at end of stream
                     <tr><td><code>trim(string)</code></td><td>The string with leading and trailing whitespace removed.</td></tr>
                     <tr><td><code>substringBefore(string, sep)</code></td><td>The part of <code>string</code> before the first occurrence of <code>sep</code>; the empty string if <code>sep</code> does not occur.</td></tr>
                     <tr><td><code>substringAfter(string, sep)</code></td><td>The part of <code>string</code> after the first occurrence of <code>sep</code>; the empty string if <code>sep</code> does not occur.</td></tr>
-                    <tr><td><code>number(string)</code></td><td>The numeric value of <code>string</code>, as Integer when the string's lexical form contains no <code>.</code> and no exponent, and Float otherwise (so <code>"10"</code> is an Integer and <code>"10.0"</code> is a Float). A runtime error if the string is not numeric.</td></tr>
+                    <tr><td><code>toNumber(string)</code></td><td>The numeric value of <code>string</code>, as Integer when the string's lexical form contains no <code>.</code> and no exponent, and Float otherwise (so <code>"10"</code> is an Integer and <code>"10.0"</code> is a Float). A runtime error if the string is not numeric. Needed only for numbers carried in a <code>bddo:string</code> field; a field typed <code>bddo:asciiInteger</code> or <code>bddo:asciiDecimal</code> already yields a number.</td></tr>
                 </tbody>
             </table>
         </section>
@@ -204,7 +204,7 @@ eof()                             ; true when the cursor is at end of stream
             <dt>Trimming a delimited header value</dt>
             <dd><pre>hexplain:valueExpression "trim(instance.parent.description)"</pre></dd>
             <dt>Splitting a compound header value</dt>
-            <dd><pre>hexplain:valueExpression "number(substringBefore(instance.parent.mapInfo, ','))"</pre></dd>
+            <dd><pre>hexplain:valueExpression "toNumber(substringBefore(instance.parent.mapInfo, ','))"</pre></dd>
         </dl>
     </section>
 </body>

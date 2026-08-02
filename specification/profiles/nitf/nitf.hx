@@ -5,26 +5,30 @@
 // emits HDL's dotted-IRI structs (e.g. nitf:FileHeader.FHDR) rather than the TTL's
 // FH_/IS_ names, so the two are structurally equivalent, not byte-isomorphic.
 //
-// *** STALE — DO NOT REGENERATE nitf.ttl FROM THIS FILE (as of feat/nitf-p1) ***
-// nitf.ttl is authoritative and has since diverged from this authoring surface. This
-// file still carries three expression defects that feat/nitf-p1 found and fixed only
-// in nitf.ttl; regenerating from this file would reintroduce all of them:
-//   1. `@prop bddo:repeatUntil "end-of-region"` (6 sites: UDHD, XHD, UDID, IXSHD, SXSHD,
-//      TXSHD) — "end-of-region" is not a supported HEL sentinel; nitf.ttl uses "eof()".
-//   2. Unprefixed, unwrapped size expressions, e.g. `"UDHDL - 3"` (6 sites: the
-//      sizeFromExpression on the same six TRE-area fields above) — the compiled field
-//      name is `FH_UDHDL`/`IS_UDIDL`/etc., not the bare `UDHDL`/`UDIDL`, and HEL has no
-//      bare arithmetic-only expression form; nitf.ttl uses `"toNumber(FH_UDHDL) - 3"`
-//      (prefixed name, wrapped in the toNumber() coercion).
-//   3. `hexplain:valueExpression "xsd:integer(NROWS)"` / `"(NCOLS)"` (NROWS/NCOLS on
-//      ImageSubheader) — there is no `xsd:integer()` HEL function and the names are
-//      unprefixed; nitf.ttl uses `"toNumber(IS_NROWS)"` / `"toNumber(IS_NCOLS)"`.
-// Until this file is regenerated/reconciled against nitf.ttl, treat it as documentation
-// of the intended HDL surface only — not as a source to compile or diff against.
+// STATUS — aligned with the P0 vocabulary extensions (2026-08-02).
+// nitf.ttl remains authoritative; this file is the authoring surface and is kept in step
+// with it. The three expression defects previously recorded here are resolved, because
+// each was a workaround for something the vocabulary could not express before P0:
+//   1. `@prop bddo:repeatUntil "end-of-region"` — that was never a HEL sentinel.
+//      Now written with the native clause `repeat until eof()`.
+//   2. `@prop bddo:sizeFromExpression "UDHDL - 3"` failed because `ascii[5]` parses to a
+//      String and HEL rejects arithmetic on a non-numeric operand. The length fields are
+//      now `anum[5]` (bddo:asciiInteger), whose HEL value is an Integer, so the
+//      subtraction is valid without any coercion.
+//   3. `@prop hexplain:valueExpression "xsd:integer(NROWS)"` invoked a function that does
+//      not exist. NROWS/NCOLS are now `anum[8]` and yield Integers natively, so the
+//      coercion is simply deleted rather than renamed.
+// Where a number must still be read out of a genuinely textual field, HEL's function is
+// `toNumber(...)` — not `number(...)`, and not `xsd:integer(...)`.
+//
+// Caveat: the hexplain-tools compiler does not yet implement the P0 surfaces (`anum`,
+// `adec`, `@base`, `@endian switch`, `chunk`/`chunks`, `header`/`table`). This file is
+// therefore correct against the specification but not yet compilable.
 //
 // Idiomatic choices (vs the hand-written TTL):
-//   * BCS-A / BCS-N text fields are modeled as ascii[N] (the BCS-N vs BCS-A distinction
-//     in the TTL is documentary only — BDDO has no character-class facet).
+//   * BCS-A text fields are modeled as ascii[N]; BCS-N positive integers as anum[N]
+//     (the digits-only restriction remains documentary — BDDO has no character-class
+//     facet — but the numeric-vs-text distinction is now load-bearing, not cosmetic).
 //   * Field IRIs are HDL's dotted form, e.g. nitf:ImageSubheader.NROWS.
 //   * The 16-field security block, repeated inline six times in the TTL, is factored into
 //     one reusable `SecurityMarking` struct included as a nested field. This attaches the
@@ -129,12 +133,12 @@ struct FileHeader {
   deSegs      : DESegLen      repeat NUMDES
   NUMRES   : ascii[3]
   resSegs     : RESegLen      repeat NUMRES
-  UDHDL    : ascii[5]
-  UDHOFL   : ascii[3]  if UDHDL != "00000"
-  UDHD     : TRE if UDHDL != "00000" @prop bddo:sizeFromExpression "UDHDL - 3" @prop bddo:repeatUntil "end-of-region"
-  XHDL     : ascii[5]
-  XHDLOFL  : ascii[3]  if XHDL != "00000"
-  XHD      : TRE if XHDL != "00000" @prop bddo:sizeFromExpression "XHDL - 3" @prop bddo:repeatUntil "end-of-region"
+  UDHDL    : anum[5]
+  UDHOFL   : ascii[3]  if UDHDL != 0
+  UDHD     : TRE if UDHDL != 0 @prop bddo:sizeFromExpression "UDHDL - 3" repeat until eof()
+  XHDL     : anum[5]
+  XHDLOFL  : ascii[3]  if XHDL != 0
+  XHD      : TRE if XHDL != 0 @prop bddo:sizeFromExpression "XHDL - 3" repeat until eof()
 }
 
 // =========================================================
@@ -149,8 +153,8 @@ struct ImageSubheader means gv:RasterDataset {
   security : SecurityMarking
   ENCRYP   : ascii[1]
   ISORCE   : ascii[42]
-  NROWS    : ascii[8]  means araster:height @prop hexplain:valueExpression "xsd:integer(NROWS)" @prop hexplain:valueDatatype xsd:integer
-  NCOLS    : ascii[8]  means araster:width  @prop hexplain:valueExpression "xsd:integer(NCOLS)" @prop hexplain:valueDatatype xsd:integer
+  NROWS    : anum[8]  means araster:height
+  NCOLS    : anum[8]  means araster:width
   PVTYPE   : ascii[3]  enum { "INT"=>Int, "B"=>BiLevel, "SI"=>Signed, "R"=>Real, "C"=>Complex }
   IREP     : ascii[8]  // enum over MONO/RGB/RGB-LUT/MULTI/NODISPLY/NVECTOR/POLAR/VPH/YCbCr601
   ICAT     : ascii[8]
@@ -176,12 +180,12 @@ struct ImageSubheader means gv:RasterDataset {
   IALVL    : ascii[3]
   ILOC     : ascii[10]
   IMAG     : ascii[4]
-  UDIDL    : ascii[5]
-  UDOFL    : ascii[3]  if UDIDL != "00000"
-  UDID     : TRE if UDIDL != "00000" @prop bddo:sizeFromExpression "UDIDL - 3" @prop bddo:repeatUntil "end-of-region"
-  IXSHDL   : ascii[5]
-  IXSOFL   : ascii[3]  if IXSHDL != "00000"
-  IXSHD    : TRE if IXSHDL != "00000" @prop bddo:sizeFromExpression "IXSHDL - 3" @prop bddo:repeatUntil "end-of-region"
+  UDIDL    : anum[5]
+  UDOFL    : ascii[3]  if UDIDL != 0
+  UDID     : TRE if UDIDL != 0 @prop bddo:sizeFromExpression "UDIDL - 3" repeat until eof()
+  IXSHDL   : anum[5]
+  IXSOFL   : ascii[3]  if IXSHDL != 0
+  IXSHD    : TRE if IXSHDL != 0 @prop bddo:sizeFromExpression "IXSHDL - 3" repeat until eof()
 }
 
 // =========================================================
@@ -202,9 +206,9 @@ struct GraphicSubheader {
   SCOLOR   : ascii[1]
   SBND2    : ascii[10]
   SRES2    : ascii[2]
-  SXSHDL   : ascii[5]
-  SXSOFL   : ascii[3]  if SXSHDL != "00000"
-  SXSHD    : TRE if SXSHDL != "00000" @prop bddo:sizeFromExpression "SXSHDL - 3" @prop bddo:repeatUntil "end-of-region"
+  SXSHDL   : anum[5]
+  SXSOFL   : ascii[3]  if SXSHDL != 0
+  SXSHD    : TRE if SXSHDL != 0 @prop bddo:sizeFromExpression "SXSHDL - 3" repeat until eof()
 }
 
 // =========================================================
@@ -219,9 +223,9 @@ struct TextSubheader {
   security : SecurityMarking
   ENCRYP   : ascii[1]
   TXTFMT   : ascii[3]  enum { "STA"=>Standard, "MTF"=>MessageTextFormat, "UT1"=>EcsText, "U8S"=>U8sText }
-  TXSHDL   : ascii[5]
-  TXSOFL   : ascii[3]  if TXSHDL != "00000"
-  TXSHD    : TRE if TXSHDL != "00000" @prop bddo:sizeFromExpression "TXSHDL - 3" @prop bddo:repeatUntil "end-of-region"
+  TXSHDL   : anum[5]
+  TXSOFL   : ascii[3]  if TXSHDL != 0
+  TXSHD    : TRE if TXSHDL != 0 @prop bddo:sizeFromExpression "TXSHDL - 3" repeat until eof()
 }
 
 // =========================================================
@@ -234,8 +238,8 @@ struct DESubheader {
   security : SecurityMarking
   DESOFLW  : ascii[6]  if DESID == "TRE_OVERFLOW"
   DESITEM  : ascii[3]  if DESID == "TRE_OVERFLOW"
-  DESSHL   : ascii[4]
-  DESSHF   : ascii[DESSHL] if DESSHL != "0000"
+  DESSHL   : anum[4]
+  DESSHF   : ascii[DESSHL] if DESSHL != 0
   DESDATA  : bytes[..]   // for DESID = TRE_OVERFLOW this is a TRE sequence
 }
 
@@ -247,8 +251,8 @@ struct RESubheader {
   RESID    : ascii[25]
   RESVER   : ascii[2]
   security : SecurityMarking
-  RESSHL   : ascii[4]
-  RESSHF   : ascii[RESSHL] if RESSHL != "0000"
+  RESSHL   : anum[4]
+  RESSHF   : ascii[RESSHL] if RESSHL != 0
   RESDATA  : bytes[..]
 }
 

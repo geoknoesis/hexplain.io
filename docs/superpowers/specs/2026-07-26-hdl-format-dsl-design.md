@@ -223,12 +223,20 @@ Within any expression clause, identifiers resolve as:
 
 - a **sibling field name** → canonical `instance.parent.<Name>` (so bare `length` in
   `bytes[length]` and bare `type` in `switch type` work directly);
-- the roots `instance parent root self stream` and the functions `sizeof len count eof`
-  pass through unchanged;
+- the roots `instance parent root self stream` and the functions `sizeof len count eof
+  trim substringBefore substringAfter toNumber` pass through unchanged;
 - dotted paths and subscripts pass through: `root.Directory[i].Entries[0].Tag`.
 
 Operators, precedence, and value/coercion semantics are exactly HEL's — the DSL does not
 introduce a new expression language, only nicer *references* into it.
+
+**On `toNumber` and the ASCII-numeric types.** A number written as text needs `toNumber`
+only when it is carried in a `str` field. Declare it `anum` (`bddo:asciiInteger`) or `adec`
+(`bddo:asciiDecimal`) instead and its HEL value *is* a number, so it drives `bytes[…]`,
+`@at`, and `repeat` directly. Prefer the typed form: `recordCount : anum[5]` then
+`entries : Entry repeat recordCount`, not `str[5]` with `toNumber(...)` at every use. The
+same applies to comparisons — a typed `anum` field is compared numerically
+(`if headerLength != 0`), never against a quoted literal (`if headerLength != "00000"`).
 
 Two payoffs: (1) authors never hand-write `instance.parent.…`; (2) the compiler validates
 that every bare name resolves to a declared sibling, so typos become source-located
