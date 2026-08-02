@@ -233,18 +233,18 @@ nitf:FH_LREn a bddo:Field ; rdfs:label "LREn — length of nth reserved extensio
 nitf:FH_UDHDL a bddo:Field ; rdfs:label "UDHDL — User-Defined Header Data Length" ;
     bddo:dataType nitf:BCSNpos ; bddo:size 5 .
 nitf:FH_UDHOFL a bddo:Field ; rdfs:label "UDHOFL — user-defined header overflow" ;
-    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "UDHDL != '00000'" .
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "FH_UDHDL != '00000'" .
 nitf:FH_UDHD a bddo:Field ; rdfs:label "UDHD — user-defined header data (TREs)" ;
-    bddo:dataType nitf:TRE ; bddo:isPresentIf "UDHDL != '00000'" ;
-    bddo:sizeFromExpression "toNumber(UDHDL) - 3" ; bddo:repeatUntil "eof()" .
+    bddo:dataType nitf:TRE ; bddo:isPresentIf "FH_UDHDL != '00000'" ;
+    bddo:sizeFromExpression "toNumber(FH_UDHDL) - 3" ; bddo:repeatUntil "eof()" .
 
 nitf:FH_XHDL a bddo:Field ; rdfs:label "XHDL — Extended Header Data Length" ;
     bddo:dataType nitf:BCSNpos ; bddo:size 5 .
 nitf:FH_XHDLOFL a bddo:Field ; rdfs:label "XHDLOFL — extended header overflow" ;
-    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "XHDL != '00000'" .
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "FH_XHDL != '00000'" .
 nitf:FH_XHD a bddo:Field ; rdfs:label "XHD — extended header data (TREs)" ;
-    bddo:dataType nitf:TRE ; bddo:isPresentIf "XHDL != '00000'" ;
-    bddo:sizeFromExpression "toNumber(XHDL) - 3" ; bddo:repeatUntil "eof()" .
+    bddo:dataType nitf:TRE ; bddo:isPresentIf "FH_XHDL != '00000'" ;
+    bddo:sizeFromExpression "toNumber(FH_XHDL) - 3" ; bddo:repeatUntil "eof()" .
 
 # ---------- NITF Image Subheader (Table A-3) ----------
 nitf:ImageSubheader a bddo:Struct ; rdfs:label "NITF Image Subheader (Table A-3)" ;
@@ -338,7 +338,7 @@ nitf:IS_PJUST a bddo:Field ; rdfs:label "PJUST — Pixel Justification" ;
 nitf:IS_ICORDS a bddo:Field ; rdfs:label "ICORDS — Image Coordinate Representation" ;
     bddo:dataType nitf:BCSA ; bddo:size 1 ; bddo:enumeration nitf:ICORDSEnum .
 nitf:IS_IGEOLO a bddo:Field ; rdfs:label "IGEOLO — Image Geographic Location" ;
-    bddo:dataType nitf:BCSA ; bddo:size 60 ; bddo:isPresentIf "ICORDS != ' '" .
+    bddo:dataType nitf:BCSA ; bddo:size 60 ; bddo:isPresentIf "IS_ICORDS != ' '" .
 
 # Comments (repeat loop driven by NICOM)
 nitf:IS_NICOM a bddo:Field ; rdfs:label "NICOM — Number of Image Comments" ;
@@ -350,13 +350,13 @@ nitf:IS_ICOM a bddo:Field ; rdfs:label "ICOMn — Image Comment n (× NICOM)" ;
 nitf:IS_IC a bddo:Field ; rdfs:label "IC — Image Compression" ;
     bddo:dataType nitf:BCSA ; bddo:size 2 ; bddo:enumeration nitf:ICEnum .
 nitf:IS_COMRAT a bddo:Field ; rdfs:label "COMRAT — Compression Rate Code" ;
-    bddo:dataType nitf:BCSA ; bddo:size 4 ; bddo:isPresentIf "IC not in (NC, NM)" .
+    bddo:dataType nitf:BCSA ; bddo:size 4 ; bddo:isPresentIf "IS_IC != 'NC' and IS_IC != 'NM'" .
 
 # Bands (repeat loop driven by NBANDS; XBANDS present only when NBANDS overflows to 0)
 nitf:IS_NBANDS a bddo:Field ; rdfs:label "NBANDS — Number of Bands" ;
     bddo:dataType nitf:BCSNpos ; bddo:size 1 .
 nitf:IS_XBANDS a bddo:Field ; rdfs:label "XBANDS — Number of Multispectral Bands" ;
-    bddo:dataType nitf:BCSNpos ; bddo:size 5 ; bddo:isPresentIf "NBANDS == 0" .
+    bddo:dataType nitf:BCSNpos ; bddo:size 5 ; bddo:isPresentIf "IS_NBANDS == 0" .
 nitf:IS_BandTable a bddo:Field ; rdfs:label "Band records (× NBANDS)" ;
     bddo:dataType nitf:ImageBand ; bddo:repeatCountFromField nitf:IS_NBANDS .
 
@@ -401,18 +401,18 @@ nitf:IS_IMAG a bddo:Field ; rdfs:label "IMAG — Image Magnification" ;
 nitf:IS_UDIDL a bddo:Field ; rdfs:label "UDIDL — User-Defined Image Data Length" ;
     bddo:dataType nitf:BCSNpos ; bddo:size 5 .
 nitf:IS_UDOFL a bddo:Field ; rdfs:label "UDOFL — user-defined image data overflow" ;
-    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "UDIDL != '00000'" .
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "IS_UDIDL != '00000'" .
 nitf:IS_UDID a bddo:Field ; rdfs:label "UDID — user-defined image data (TREs)" ;
-    bddo:dataType nitf:TRE ; bddo:isPresentIf "UDIDL != '00000'" ;
-    bddo:sizeFromExpression "toNumber(UDIDL) - 3" ; bddo:repeatUntil "eof()" .
+    bddo:dataType nitf:TRE ; bddo:isPresentIf "IS_UDIDL != '00000'" ;
+    bddo:sizeFromExpression "toNumber(IS_UDIDL) - 3" ; bddo:repeatUntil "eof()" .
 
 nitf:IS_IXSHDL a bddo:Field ; rdfs:label "IXSHDL — Image Extended Subheader Data Length" ;
     bddo:dataType nitf:BCSNpos ; bddo:size 5 .
 nitf:IS_IXSOFL a bddo:Field ; rdfs:label "IXSOFL — image extended subheader overflow" ;
-    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "IXSHDL != '00000'" .
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "IS_IXSHDL != '00000'" .
 nitf:IS_IXSHD a bddo:Field ; rdfs:label "IXSHD — image extended subheader data (TREs)" ;
-    bddo:dataType nitf:TRE ; bddo:isPresentIf "IXSHDL != '00000'" ;
-    bddo:sizeFromExpression "toNumber(IXSHDL) - 3" ; bddo:repeatUntil "eof()" .
+    bddo:dataType nitf:TRE ; bddo:isPresentIf "IS_IXSHDL != '00000'" ;
+    bddo:sizeFromExpression "toNumber(IS_IXSHDL) - 3" ; bddo:repeatUntil "eof()" .
 
 # ---------- NITF Graphic Subheader (Table A-5) ----------
 nitf:GraphicSubheader a bddo:Struct ; rdfs:label "NITF Graphic Subheader (Table A-5)" ;
@@ -495,10 +495,10 @@ nitf:GS_SRES2 a bddo:Field ; rdfs:label "SRES2 — Reserved for Future Use" ;
 nitf:GS_SXSHDL a bddo:Field ; rdfs:label "SXSHDL — Graphic Extended Subheader Data Length" ;
     bddo:dataType nitf:BCSNpos ; bddo:size 5 .
 nitf:GS_SXSOFL a bddo:Field ; rdfs:label "SXSOFL — graphic extended subheader overflow" ;
-    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "SXSHDL != '00000'" .
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "GS_SXSHDL != '00000'" .
 nitf:GS_SXSHD a bddo:Field ; rdfs:label "SXSHD — graphic extended subheader data (TREs)" ;
-    bddo:dataType nitf:TRE ; bddo:isPresentIf "SXSHDL != '00000'" ;
-    bddo:sizeFromExpression "toNumber(SXSHDL) - 3" ; bddo:repeatUntil "eof()" .
+    bddo:dataType nitf:TRE ; bddo:isPresentIf "GS_SXSHDL != '00000'" ;
+    bddo:sizeFromExpression "toNumber(GS_SXSHDL) - 3" ; bddo:repeatUntil "eof()" .
 
 # ---------- Text-specific enumeration (Table A-6) ----------
 nitf:TXTFMTEnum a bddo:Enumeration ; rdfs:label "Text Format" ;
@@ -574,10 +574,10 @@ nitf:TS_TXTFMT a bddo:Field ; rdfs:label "TXTFMT — Text Format" ;
 nitf:TS_TXSHDL a bddo:Field ; rdfs:label "TXSHDL — Text Extended Subheader Data Length" ;
     bddo:dataType nitf:BCSNpos ; bddo:size 5 .
 nitf:TS_TXSOFL a bddo:Field ; rdfs:label "TXSOFL — text extended subheader overflow" ;
-    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "TXSHDL != '00000'" .
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "TS_TXSHDL != '00000'" .
 nitf:TS_TXSHD a bddo:Field ; rdfs:label "TXSHD — text extended subheader data (TREs)" ;
-    bddo:dataType nitf:TRE ; bddo:isPresentIf "TXSHDL != '00000'" ;
-    bddo:sizeFromExpression "toNumber(TXSHDL) - 3" ; bddo:repeatUntil "eof()" .
+    bddo:dataType nitf:TRE ; bddo:isPresentIf "TS_TXSHDL != '00000'" ;
+    bddo:sizeFromExpression "toNumber(TS_TXSHDL) - 3" ; bddo:repeatUntil "eof()" .
 
 # ---------- NITF Data Extension Segment Subheader (Table A-8) ----------
 nitf:DESubheader a bddo:Struct ; rdfs:label "NITF Data Extension Segment Subheader (Table A-8)" ;
@@ -636,15 +636,15 @@ nitf:DES_DESCTLN a bddo:Field ; rdfs:label "DESCTLN — DES Security Control Num
 
 # Overflow (present only when DESID indicates a TRE_OVERFLOW DES)
 nitf:DES_DESOFLW a bddo:Field ; rdfs:label "DESOFLW — DES Overflowed Header Type" ;
-    bddo:dataType nitf:BCSA ; bddo:size 6 ; bddo:isPresentIf "DESID == 'TRE_OVERFLOW'" .
+    bddo:dataType nitf:BCSA ; bddo:size 6 ; bddo:isPresentIf "DES_DESID == 'TRE_OVERFLOW'" .
 nitf:DES_DESITEM a bddo:Field ; rdfs:label "DESITEM — DES Data Item Overflowed" ;
-    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "DESID == 'TRE_OVERFLOW'" .
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "DES_DESID == 'TRE_OVERFLOW'" .
 
 # User-defined subheader fields and payload
 nitf:DES_DESSHL a bddo:Field ; rdfs:label "DESSHL — DES User-Defined Subheader Length" ;
     bddo:dataType nitf:BCSNpos ; bddo:size 4 .
 nitf:DES_DESSHF a bddo:Field ; rdfs:label "DESSHF — DES User-Defined Subheader Fields" ;
-    bddo:dataType nitf:BCSA ; bddo:sizeFromField nitf:DES_DESSHL ; bddo:isPresentIf "DESSHL != '0000'" .
+    bddo:dataType nitf:BCSA ; bddo:sizeFromField nitf:DES_DESSHL ; bddo:isPresentIf "DES_DESSHL != '0000'" .
 nitf:DES_DESDATA a bddo:Field ; rdfs:label "DESDATA — DES Data Field" ;
     bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
     rdfs:comment "Bounded by the enclosing segment's LDn length from the file header's DES length table. When DESID = TRE_OVERFLOW, this field carries a nitf:TRE sequence rather than opaque bytes." .
@@ -707,7 +707,7 @@ nitf:RES_RECTLN a bddo:Field ; rdfs:label "RECTLN — RES Security Control Numbe
 nitf:RES_RESSHL a bddo:Field ; rdfs:label "RESSHL — RES User-Defined Subheader Length" ;
     bddo:dataType nitf:BCSNpos ; bddo:size 4 .
 nitf:RES_RESSHF a bddo:Field ; rdfs:label "RESSHF — RES User-Defined Subheader Fields" ;
-    bddo:dataType nitf:BCSA ; bddo:sizeFromField nitf:RES_RESSHL ; bddo:isPresentIf "RESSHL != '0000'" .
+    bddo:dataType nitf:BCSA ; bddo:sizeFromField nitf:RES_RESSHL ; bddo:isPresentIf "RES_RESSHL != '0000'" .
 nitf:RES_RESDATA a bddo:Field ; rdfs:label "RESDATA — RES Data Field" ;
     bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
     rdfs:comment "Bounded by the enclosing segment's LREn length from the file header's RES length table." .
@@ -715,9 +715,9 @@ nitf:RES_RESDATA a bddo:Field ; rdfs:label "RESDATA — RES Data Field" ;
 # ---------- Semantic lift (targets that exist today) ----------
 nitf:ImageSubheader hexplain:mapsToClass gv:RasterDataset .
 nitf:IS_NROWS hexplain:mapsToProperty araster:height ;
-    hexplain:valueExpression "xsd:integer(NROWS)" ; hexplain:valueDatatype xsd:integer .
+    hexplain:valueExpression "toNumber(IS_NROWS)" ; hexplain:valueDatatype xsd:integer .
 nitf:IS_NCOLS hexplain:mapsToProperty araster:width ;
-    hexplain:valueExpression "xsd:integer(NCOLS)" ; hexplain:valueDatatype xsd:integer .
+    hexplain:valueExpression "toNumber(IS_NCOLS)" ; hexplain:valueDatatype xsd:integer .
 nitf:FH_FSCLAS hexplain:mapsToProperty asec:classificationLevel .
 nitf:IS_ISCLAS hexplain:mapsToProperty asec:classificationLevel .
 
