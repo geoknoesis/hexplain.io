@@ -24,6 +24,21 @@ def _section(text, section_id):
     return m.group(1) if m else ""
 
 
+def turtle_graph(ttl_path):
+    """Parse a .ttl file from newline-normalised text.
+
+    Read via read_text (universal newlines) rather than handing rdflib the path:
+    with core.autocrlf the working tree may hold CRLF, and rdflib would then keep
+    the CR inside multi-line triple-quoted literals -- the SHACL sh:select strings
+    -- while the index.html side, also read via read_text, would not. That made
+    identical content compare unequal on a fresh checkout but not in a working tree
+    whose files had just been written with LF.
+    """
+    g = rdflib.Graph()
+    g.parse(data=ttl_path.read_text(encoding="utf-8"), format="turtle")
+    return g
+
+
 def embedded_graph(doc_path):
     """Parse the Turtle embedded in the page's normative sections."""
     text = doc_path.read_text(encoding="utf-8")
@@ -41,7 +56,7 @@ for mod in MODULES:
     if not ttl_path.exists() or not doc_path.exists():
         failures.append(f"{mod}: missing {ttl_path} or {doc_path}")
         continue
-    canonical = to_isomorphic(rdflib.Graph().parse(ttl_path, format="turtle"))
+    canonical = to_isomorphic(turtle_graph(ttl_path))
     embedded = to_isomorphic(embedded_graph(doc_path))
     if canonical == embedded:
         continue
