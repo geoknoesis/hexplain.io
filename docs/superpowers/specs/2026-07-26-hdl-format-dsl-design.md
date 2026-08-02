@@ -254,9 +254,9 @@ Dimensions are listed **slowest → fastest** (the `dlv:hasDimension` list order
 
 ```
 pixels : bytes[..] layout cell u8 {
-  dim axis Y    size height  stride rowBytes   // dimensionSizeFromField + dimensionStride
-  dim axis X    size width
-  dim axis Band size 3                         // literal ⇒ dimensionSize
+  dim axis Y size height chunk tileLength
+  dim axis X size width  chunk tileWidth
+  chunks offsets TileOffsets lengths TileByteCounts base stream-start order row-major
 }
 ```
 
@@ -265,6 +265,11 @@ pixels : bytes[..] layout cell u8 {
   `dlv:hasAxis dlv:axis<A>`, `dlv:dimensionSize`/`dlv:dimensionSizeFromField`, and optional
   `dlv:dimensionStride`.
 - Axes: `X Y Z Band Time` → `dlv:axisX/axisY/axisZ/axisBand/axisTime`.
+- `dim … chunk <int|sibling>` → `dlv:chunkSize` / `dlv:chunkSizeFromField`.
+- `chunks offsets <field> [lengths <field>] [base <offsetbase>] [order <order>]` →
+  `dlv:chunkOffsetsFromField`, `dlv:chunkLengthsFromField`, `dlv:chunkOffsetBase`,
+  `dlv:chunkOrder`. Orders: `row-major column-major morton hilbert`.
+  Required whenever any `dim` declares a `chunk` extent.
 
 ## 10. hx-bundle (profiles & instances)
 
@@ -415,11 +420,15 @@ clause       = "[" ( expr | ".." ) "]"                      (* byte size *)
              | "value" expr [ "@datatype" CURIE ]
              | "@encoded-with" CURIE
              | "map" "{" { maparm } "}"
-             | "layout" "cell" type "{" { dimdecl } "}"
+             | "layout" "cell" type "{" { dimdecl | chunkdecl } "}"
              | "@prop" CURIE value ;
 swarm        = ( value | "when" expr ) "=>" struct-ref ;
 maparm       = "when" expr "=>" CURIE [ "value" expr [ "@datatype" CURIE ] ] ;
-dimdecl      = "dim" "axis" AXIS "size" ( INT | ref ) [ "stride" ( INT | expr ) ] ;
+dimdecl      = "dim" "axis" AXIS "size" ( INT | ref ) [ "stride" ( INT | expr ) ]
+               [ "chunk" ( INT | ref ) ] ;
+chunkdecl    = "chunks" "offsets" ref [ "lengths" ref ] [ "base" offsetbase ]
+               [ "order" chunkorder ] ;
+chunkorder   = "row-major" | "column-major" | "morton" | "hilbert" ;
 enumpair     = value "=>" IDENT [ "(" STRING ")" ] ;
 bundle-decl  = "bundle" IDENT [ "as" IDENT ] "@bound-by" binding "{" { partspec } "}" ;
 partspec     = "part" STRING "role" role-ref [ "required" | "optional" ] [ "primary" ]

@@ -1,0 +1,14 @@
+# A chunked layout with no chunk offset table — the chunks cannot be located.
+# Expected to trip dlv:ChunkedLayoutShape.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix dlv:  <https://hexplain.io/ns/dlv#> .
+@prefix ex:   <https://hexplain.io/test/chunk-invalid#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Layout a dlv:DataLayout ;
+    rdfs:comment "Expected to trip dlv:ChunkedLayoutShape (chunked but no chunkOffsetsFromField)." ;
+    dlv:cellDataType bddo:uint8 ;
+    dlv:hasDimension ( ex:DimY ex:DimX ) .
+
+ex:DimY a dlv:Dimension ; dlv:hasAxis dlv:axisY ; dlv:dimensionSize 1024 ; dlv:chunkSize 256 .
+ex:DimX a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSize 1024 ; dlv:chunkSize 256 .
