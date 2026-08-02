@@ -1350,7 +1350,7 @@ The human ruled for prefixing the expressions rather than teaching HEL to resolv
 
 Run: `grep -n 'isPresentIf\|sizeFromExpression\|repeatUntil\|repeatCountFromExpression\|valueExpression' specification/profiles/nitf/nitf.ttl`
 
-Expect 27 expression strings across 21 lines. Six are `bddo:repeatUntil "eof()"` and reference no name — leave those alone. Work from your own inventory, not from this list, and report any expression it does not cover.
+Expect 33 expression strings across 27 lines. Six are `bddo:repeatUntil "eof()"` and reference no name — leave those alone. Work from your own inventory, not from this list, and report any expression it does not cover.
 
 - [ ] **Step 2: Map each referenced name to its declared field**
 

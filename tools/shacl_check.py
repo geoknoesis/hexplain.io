@@ -10,10 +10,12 @@ ONT = [
     "specification/aspect/raster/raster.ttl",
     "specification/aspect/security/security.ttl",
     "specification/gv/geo.ttl",
+    "specification/req/req.ttl",
 ]
 SHAPES = [
     "specification/bddo/bddo.ttl",
     "specification/hexplain/core.ttl",
+    "specification/req/shapes.ttl",
 ]
 
 def load(paths):

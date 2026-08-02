@@ -356,7 +356,7 @@ nitf:IS_COMRAT a bddo:Field ; rdfs:label "COMRAT — Compression Rate Code" ;
 nitf:IS_NBANDS a bddo:Field ; rdfs:label "NBANDS — Number of Bands" ;
     bddo:dataType nitf:BCSNpos ; bddo:size 1 .
 nitf:IS_XBANDS a bddo:Field ; rdfs:label "XBANDS — Number of Multispectral Bands" ;
-    bddo:dataType nitf:BCSNpos ; bddo:size 5 ; bddo:isPresentIf "IS_NBANDS == 0" .
+    bddo:dataType nitf:BCSNpos ; bddo:size 5 ; bddo:isPresentIf "IS_NBANDS == '0'" .
 nitf:IS_BandTable a bddo:Field ; rdfs:label "Band records (× NBANDS)" ;
     bddo:dataType nitf:ImageBand ; bddo:repeatCountFromField nitf:IS_NBANDS .
 
@@ -636,9 +636,9 @@ nitf:DES_DESCTLN a bddo:Field ; rdfs:label "DESCTLN — DES Security Control Num
 
 # Overflow (present only when DESID indicates a TRE_OVERFLOW DES)
 nitf:DES_DESOFLW a bddo:Field ; rdfs:label "DESOFLW — DES Overflowed Header Type" ;
-    bddo:dataType nitf:BCSA ; bddo:size 6 ; bddo:isPresentIf "DES_DESID == 'TRE_OVERFLOW'" .
+    bddo:dataType nitf:BCSA ; bddo:size 6 ; bddo:isPresentIf "trim(DES_DESID) == 'TRE_OVERFLOW'" .
 nitf:DES_DESITEM a bddo:Field ; rdfs:label "DESITEM — DES Data Item Overflowed" ;
-    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "DES_DESID == 'TRE_OVERFLOW'" .
+    bddo:dataType nitf:BCSNpos ; bddo:size 3 ; bddo:isPresentIf "trim(DES_DESID) == 'TRE_OVERFLOW'" .
 
 # User-defined subheader fields and payload
 nitf:DES_DESSHL a bddo:Field ; rdfs:label "DESSHL — DES User-Defined Subheader Length" ;
