@@ -139,6 +139,8 @@ struct Chunk {
 | `bytes` | `bddo:bytes` (needs a size/terminator) |
 | `str` | `bddo:string`, encoding `utf8` (default) |
 | `ascii utf8 utf16le utf16be latin1` | `bddo:string` + `bddo:encoding <that>` |
+| `anum` | `bddo:asciiInteger` — an integer written as text; needs a width, e.g. `anum[5]` |
+| `adec` | `bddo:asciiDecimal` — a decimal written as text; needs a width |
 | `bits[N]` | a field with `bddo:bitLength N` |
 | `<StructName>` | nested/typed field (`bddo:dataType <that Struct>`) |
 
@@ -158,7 +160,10 @@ struct Chunk {
 | bit slice | `flags : bits[3]` | `bitLength 3` |
 | terminator | `str @terminator 0x00` | `terminator` (`@trim-null` → `trimNull`) |
 | overrides | `@endian little` · `@align 4` · `@bit-order lsb` · `@encoding latin1` | per-field props |
+| numeric base | `anum[2] @base 16` | `numericBase` |
 | conditional type | `switch <expr?> { <val|when expr> => <Struct> … }` | `hasConditionalDataType` (`DataTypeRule` list) |
+| conditional endianness | `@endian switch { when ByteOrder == 0x4949 => little, when ByteOrder == 0x4D4D => big }` | `hasConditionalEndianness` (`EndiannessRule` list) |
+| key (in a header) | `"samples" : anum means araster:width` | `key` |
 
 `offsetBase` keywords: `stream-start stream-end parent-start current`. `@fixed` accepts a
 hex byte string, an integer, or a string literal.
@@ -189,6 +194,28 @@ field FirstIFD : IFD @at ifdOffset from stream-start   // atOffsetFromField + of
 ```
 (`field` at top level declares a standalone `bddo:Field`, for fields shared across structs
 or defined out of line, mirroring the standalone subjects in the TIFF sketch.)
+
+### 6.5 Delimited text (`header` / `table`)
+
+```
+header EnviHeader @separator "=" @comment ";" @trim @ci {
+  "samples" : anum means araster:width
+  "lines"   : anum means araster:height
+}
+
+table PointCsv @separator "," @quote '"' @skip 1 {
+  x : adec
+  y : adec
+  z : adec
+}
+```
+
+`header` → `bddo:KeyValueHeader`, `table` → `bddo:DelimitedTable`. Annotations:
+`@record-separator` (default LF) → `recordDelimiter`; `@separator` →
+`keyValueSeparator` on a `header`, `fieldDelimiter` on a `table`; `@quote` →
+`quoteChar`; `@escape` → `escapeChar`; `@comment` → `commentPrefix`; `@skip` →
+`skipRecords`; `@trim` → `trimWhitespace`; `@ci` → `keyIsCaseInsensitive`. A
+quoted field name in a `header` is its `bddo:key`.
 
 ## 7. Field references → HEL (first-class expressions)
 
@@ -248,6 +275,8 @@ text : str[..] map {
 A `layout` clause on a field emits `hexplain:hasDataLayout` → a `dlv:DataLayout`.
 Dimensions are listed **slowest → fastest** (the `dlv:hasDimension` list order).
 
+Plain contiguous (optionally strided) layout — no `chunk`, no `chunks`:
+
 ```
 pixels : bytes[..] layout cell u8 {
   dim axis Y    size height  stride rowBytes   // dimensionSizeFromField + dimensionStride
@@ -256,11 +285,29 @@ pixels : bytes[..] layout cell u8 {
 }
 ```
 
+Chunked (tiled/blocked) layout — every `dim` MAY carry a `chunk` extent, and the
+`chunks` clause says where the chunks are:
+
+```
+pixels : bytes[..] layout cell u8 {
+  dim axis Y size height chunk tileLength
+  dim axis X size width  chunk tileWidth
+  chunks offsets TileOffsets lengths TileByteCounts base stream-start order row-major
+}
+```
+
 - `layout cell <type> { … }` → `DataLayout` with `dlv:cellDataType <that bddo:DataType>`.
 - `dim axis <A> size <int|sibling> [stride <int|expr>]` → a `dlv:Dimension` with
   `dlv:hasAxis dlv:axis<A>`, `dlv:dimensionSize`/`dlv:dimensionSizeFromField`, and optional
   `dlv:dimensionStride`.
 - Axes: `X Y Z Band Time` → `dlv:axisX/axisY/axisZ/axisBand/axisTime`.
+- `dim … chunk <int|sibling>` → `dlv:chunkSize` / `dlv:chunkSizeFromField`. At most one of
+  the two per `dim`. In a chunked layout, a `dim` with no `chunk` is chunked at its full
+  `size`, and `stride` addresses cells within a chunk.
+- `chunks offsets <field> [lengths <field>] [base <offsetbase>] [order <order>]` →
+  `dlv:chunkOffsetsFromField`, `dlv:chunkLengthsFromField`, `dlv:chunkOffsetBase`,
+  `dlv:chunkOrder`. Orders: `row-major column-major morton hilbert`.
+  Required whenever any `dim` declares a `chunk` extent.
 
 ## 10. hx-bundle (profiles & instances)
 
@@ -356,6 +403,13 @@ Mapping of clause → YAML key: `size`, `repeat` (`{ count: … }` | `{ until: �
 `raw-turtle` (string). Bundles under a top-level `bundles:` map; expressions are strings
 and use the identical bare-name→HEL resolution.
 
+`header`/`table` mirror under top-level `headers:` and `tables:` maps, keyed by name, with
+`separator`, `record-separator`, `quote`, `escape`, `comment`, `skip`, `trim` (same
+meaning as the `@`-annotations in §6.5) and an ordered `fields:` sequence. `headers:`
+entries additionally take `ci` (`keyIsCaseInsensitive`); it has no meaning for a keyless
+`table`. A `header` entry's `key` gives its `bddo:key` (a `table` entry has none — its
+position is the key).
+
 ## 12. Escape hatch, compilation & validation
 
 **Escape hatch (guarantees full coverage against the evolving ontology):**
@@ -384,16 +438,17 @@ Each diagnostic carries a `.hx`/`.hx.yaml` line/column.
 
 ```ebnf
 document     = { use-decl | format-decl | struct-decl | field-decl | enum-decl
-               | bundle-decl | asset-decl } ;
+               | header-decl | table-decl | bundle-decl | asset-decl } ;
 use-decl     = "use" PREFIX IRIREF ;
 format-decl  = "format" IDENT { "@namespace" STRING | "@endian" endian
                               | "@bit-order" bitorder } ;
 struct-decl  = "struct" IDENT [ "as" IDENT ] [ "means" CURIE ]
                { struct-annot } "{" { field-decl | raw-block | prop-clause } "}" ;
-struct-annot = "@endian" endian | "@bit-order" bitorder
-             | "@size" ( INT | ref | "`" HEL "`" ) ;
+struct-annot = "@endian" endian | "@endian" "switch" "{" { endianarm } "}"
+             | "@bit-order" bitorder | "@size" ( INT | ref | "`" HEL "`" ) ;
+endianarm    = "when" expr "=>" endian ;
 field-decl   = [ "field" ] IDENT [ "as" IDENT ] ":" type { clause } ;
-type         = prim | "bytes" | strtype | "bits" "[" expr "]" | struct-ref ;
+type         = prim | "bytes" | strtype | "anum" | "adec" | "bits" "[" expr "]" | struct-ref ;
 strtype      = "str" | "ascii" | "utf8" | "utf16le" | "utf16be" | "latin1" ;
 clause       = "[" ( expr | ".." ) "]"                      (* byte size *)
              | "repeat" ( expr | "until" expr )
@@ -404,22 +459,31 @@ clause       = "[" ( expr | ".." ) "]"                      (* byte size *)
              | "@checksum" ALGO "(" ( ref ".." ref | "covers" "(" expr ")" ) ")"
              | "@terminator" HEXBYTES | "@trim-null"
              | "@endian" endian | "@align" INT | "@bit-order" bitorder
-             | "@encoding" enc
+             | "@encoding" enc | "@base" INT
              | "switch" [ expr ] "{" { swarm } "}"
              | "means" CURIE
              | "value" expr [ "@datatype" CURIE ]
              | "@encoded-with" CURIE
              | "map" "{" { maparm } "}"
-             | "layout" "cell" type "{" { dimdecl } "}"
+             | "layout" "cell" type "{" { dimdecl | chunkdecl } "}"
              | "@prop" CURIE value ;
 swarm        = ( value | "when" expr ) "=>" struct-ref ;
 maparm       = "when" expr "=>" CURIE [ "value" expr [ "@datatype" CURIE ] ] ;
-dimdecl      = "dim" "axis" AXIS "size" ( INT | ref ) [ "stride" ( INT | expr ) ] ;
+dimdecl      = "dim" "axis" AXIS "size" ( INT | ref ) [ "stride" ( INT | expr ) ]
+               [ "chunk" ( INT | ref ) ] ;
+chunkdecl    = "chunks" "offsets" ref [ "lengths" ref ] [ "base" offsetbase ]
+               [ "order" chunkorder ] ;
+chunkorder   = "row-major" | "column-major" | "morton" | "hilbert" ;
 enumpair     = value "=>" IDENT [ "(" STRING ")" ] ;
 bundle-decl  = "bundle" IDENT [ "as" IDENT ] "@bound-by" binding "{" { partspec } "}" ;
 partspec     = "part" STRING "role" role-ref [ "required" | "optional" ] [ "primary" ]
                [ "carries" PREFIX ] [ "described-by" struct-ref ] ;
 asset-decl   = "asset" IDENT "conforms" IDENT { asset-annot } "{" { assetpart } "}" ;
+header-decl  = "header" IDENT { delim-annot } "{" { entry-decl } "}" ;
+table-decl   = "table" IDENT { delim-annot } "{" { field-decl } "}" ;
+delim-annot  = "@separator" STRING | "@record-separator" STRING | "@quote" STRING
+             | "@escape" STRING | "@comment" STRING | "@skip" INT | "@trim" | "@ci" ;
+entry-decl   = STRING ":" type { clause } ;
 expr         = (* HEL expression; bare identifiers = sibling refs, see §7 *) ;
 ```
 

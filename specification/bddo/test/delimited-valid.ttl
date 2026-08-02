@@ -1,0 +1,42 @@
+# Two shapes of delimited text: an ENVI-style key = value header, and a CSV table.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix ex:   <https://hexplain.io/test/delim#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# --- ENVI-style header: "samples = 5000" one per line ---
+ex:EnviHeader a bddo:KeyValueHeader ;
+    rdfs:label "ENVI .hdr" ;
+    bddo:recordDelimiter "0A"^^xsd:hexBinary ;
+    bddo:keyValueSeparator "3D"^^xsd:hexBinary ;
+    bddo:commentPrefix ";" ;
+    bddo:trimWhitespace true ;
+    bddo:keyIsCaseInsensitive true ;
+    bddo:hasField ( ex:EnviHeader.samples ex:EnviHeader.lines ) .
+
+# A field of a delimited-record container takes its extent from the container's
+# recordDelimiter/keyValueSeparator; it declares no size or terminator of its own.
+ex:EnviHeader.samples a bddo:Field ;
+    bddo:key "samples" ; bddo:dataType bddo:asciiInteger ;
+    hexplain:mapsToProperty araster:width .
+
+ex:EnviHeader.lines a bddo:Field ;
+    bddo:key "lines" ; bddo:dataType bddo:asciiInteger ;
+    hexplain:mapsToProperty araster:height .
+
+# --- CSV table: positional columns, one header row skipped ---
+ex:PointCsv a bddo:DelimitedTable ;
+    rdfs:label "XYZ point CSV" ;
+    bddo:recordDelimiter "0A"^^xsd:hexBinary ;
+    bddo:fieldDelimiter "2C"^^xsd:hexBinary ;
+    bddo:quoteChar "22"^^xsd:hexBinary ;
+    bddo:skipRecords 1 ;
+    bddo:hasField ( ex:PointCsv.x ex:PointCsv.y ex:PointCsv.z ) .
+
+# Columns are positional: each ends at the container's fieldDelimiter, the last at
+# its recordDelimiter. No column restates a delimiter as its own terminator.
+ex:PointCsv.x a bddo:Field ; bddo:dataType bddo:asciiDecimal .
+ex:PointCsv.y a bddo:Field ; bddo:dataType bddo:asciiDecimal .
+ex:PointCsv.z a bddo:Field ; bddo:dataType bddo:asciiDecimal .

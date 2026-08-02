@@ -1,0 +1,31 @@
+# A tiled TIFF image: 256x256 tiles located through TileOffsets/TileByteCounts.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix dlv:  <https://hexplain.io/ns/dlv#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix ex:   <https://hexplain.io/test/chunk#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Image a bddo:Struct ;
+    bddo:hasField ( ex:Image.width ex:Image.height ex:Image.tileOffsets ex:Image.tileByteCounts ex:Image.pixels ) .
+
+ex:Image.width a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Image.height a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Image.tileOffsets a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:repeatUntil "eof()" .
+ex:Image.tileByteCounts a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:repeatUntil "eof()" .
+
+ex:Image.pixels a bddo:Field ;
+    bddo:dataType bddo:bytes ;
+    bddo:sizeToEndOfStream true ;
+    hexplain:hasDataLayout ex:PixelLayout .
+
+ex:PixelLayout a dlv:DataLayout ;
+    rdfs:label "Tiled 8-bit grid" ;
+    dlv:cellDataType bddo:uint8 ;
+    dlv:chunkOffsetsFromField ex:Image.tileOffsets ;
+    dlv:chunkLengthsFromField ex:Image.tileByteCounts ;
+    dlv:chunkOffsetBase bddo:streamStart ;
+    dlv:chunkOrder dlv:rowMajor ;
+    dlv:hasDimension ( ex:DimY ex:DimX ) .
+
+ex:DimY a dlv:Dimension ; dlv:hasAxis dlv:axisY ; dlv:dimensionSizeFromField ex:Image.height ; dlv:chunkSize 256 .
+ex:DimX a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSizeFromField ex:Image.width  ; dlv:chunkSize 256 .

@@ -34,6 +34,21 @@
 :EnumValue    a owl:Class ; rdfs:label "Enumeration Value" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :Checksum     a owl:Class ; rdfs:label "Checksum" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "A checksum/hash over a byte range: from the first byte of coversFromField to the last byte of coversToField (inclusive), or the [start,end) range yielded by coversExpression." .
+:EndiannessRule a owl:Class ; rdfs:label "Endianness Rule" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "One arm of a hasConditionalEndianness list: a HEL condition and the byte order it selects." .
+# ---------- Delimited text records ----------
+# Deliberately non-recursive: this models line- and character-delimited text
+# (key = value headers, CSV, whitespace-separated grids), NOT nested grammars
+# such as XML or JSON. Those remain out of scope for BDDO by design.
+:DelimitedRecords a owl:Class ; rdfs:subClassOf :Struct ; rdfs:label "Delimited Records" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A Struct whose children are located by delimiter position rather than byte offset: a byte run split into records by recordDelimiter, each record optionally split into values by fieldDelimiter." .
+:KeyValueHeader a owl:Class ; rdfs:subClassOf :DelimitedRecords ; rdfs:label "Key/Value Header" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "DelimitedRecords whose records are key/value pairs split by keyValueSeparator. Each expected key is a Field carrying bddo:key; record order is not significant." .
+:DelimitedTable a owl:Class ; rdfs:subClassOf :DelimitedRecords ; rdfs:label "Delimited Table" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "DelimitedRecords whose records are rows with a fixed column sequence. The hasField list gives the columns in order; the row structure repeats until the byte run is exhausted." .
 # Controlled-vocabulary classes (typed enumerated individuals)
 :Endianness       a owl:Class ; rdfs:label "Endianness" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :BitOrder         a owl:Class ; rdfs:label "Bit Order" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
@@ -50,6 +65,8 @@
     rdfs:comment "Ordered rdf:List of the Fields that make up a Struct." .
 :endianness   a owl:ObjectProperty ; rdfs:label "endianness" ; rdfs:range :Endianness ;
     rdfs:comment "Byte order for a Struct, Field, or DataType." .
+:hasConditionalEndianness a owl:ObjectProperty ; rdfs:label "has conditional endianness" ; rdfs:range rdf:List ;
+    rdfs:comment "Ordered rdf:List of EndiannessRule. The first rule whose condition holds selects the byte order for this Struct or Field and, as with bddo:endianness, for its descendants unless they override it. Use for formats that declare their own byte order, such as TIFF's 4949h/4D4Dh marker. Mutually exclusive with bddo:endianness." .
 :bitOrder     a owl:ObjectProperty ; rdfs:label "bit order" ; rdfs:range :BitOrder .
 :syncOnMarker a owl:DatatypeProperty ; rdfs:label "sync on marker" ; rdfs:range xsd:hexBinary .
 
@@ -64,6 +81,28 @@
 :trimNull               a owl:DatatypeProperty ; rdfs:label "trim null" ; rdfs:range xsd:boolean ;
     rdfs:comment "For a fixed-size (padded) string field, the emitted value ends at the first 0x00 byte within the field's width." .
 :encoding               a owl:ObjectProperty ; rdfs:label "encoding" ; rdfs:range :Encoding .
+:recordDelimiter        a owl:DatatypeProperty ; rdfs:label "record delimiter" ; rdfs:range xsd:hexBinary ;
+    rdfs:comment "Byte sequence separating records. Default 0A (LF); a CR LF pair is also accepted when this is 0A." .
+:fieldDelimiter         a owl:DatatypeProperty ; rdfs:label "field delimiter" ; rdfs:range xsd:hexBinary ;
+    rdfs:comment "Byte sequence separating values within one record. When absent, a record is a single value." .
+:keyValueSeparator      a owl:DatatypeProperty ; rdfs:label "key/value separator" ; rdfs:range xsd:hexBinary ;
+    rdfs:comment "Byte sequence separating a key from its value within a record of a KeyValueHeader." .
+:quoteChar              a owl:DatatypeProperty ; rdfs:label "quote character" ; rdfs:range xsd:hexBinary ;
+    rdfs:comment "Byte that quotes a value, allowing it to contain the field or record delimiter. A doubled quote inside a quoted value denotes a literal quote." .
+:escapeChar             a owl:DatatypeProperty ; rdfs:label "escape character" ; rdfs:range xsd:hexBinary ;
+    rdfs:comment "Byte that escapes the following byte, suppressing its delimiter or quote meaning." .
+:commentPrefix          a owl:DatatypeProperty ; rdfs:label "comment prefix" ; rdfs:range xsd:string ;
+    rdfs:comment "A record beginning with this string (after optional whitespace) is ignored." .
+:skipRecords            a owl:DatatypeProperty ; rdfs:label "skip records" ; rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "Number of leading records to discard before parsing, e.g. a CSV column-name row. Default 0." .
+:trimWhitespace         a owl:DatatypeProperty ; rdfs:label "trim whitespace" ; rdfs:range xsd:boolean ;
+    rdfs:comment "If true, leading and trailing whitespace is removed from every key and value. Default false." .
+:key                    a owl:DatatypeProperty ; rdfs:label "key" ; rdfs:range xsd:string ;
+    rdfs:comment "The key naming this Field within a KeyValueHeader. Replaces positional location: the Field takes the value of whichever record carries this key." .
+:keyIsCaseInsensitive   a owl:DatatypeProperty ; rdfs:label "key is case insensitive" ; rdfs:range xsd:boolean ;
+    rdfs:comment "If true, bddo:key matching ignores ASCII case. Default false." .
+:numericBase            a owl:DatatypeProperty ; rdfs:label "numeric base" ; rdfs:range xsd:positiveInteger ;
+    rdfs:comment "Radix used to read an :asciiInteger field: 8, 10 or 16. Default 10." .
 :bitLength              a owl:DatatypeProperty ; rdfs:label "bit length" ; rdfs:range xsd:positiveInteger .
 :repeatCount            a owl:DatatypeProperty ; rdfs:label "repeat count" ; rdfs:range xsd:nonNegativeInteger .
 :repeatCountFromField   a owl:ObjectProperty ; rdfs:label "repeat count from field" ; rdfs:range :Field .
@@ -87,6 +126,8 @@
     rdfs:comment "The RDF literal datatype produced when a value of this DataType is emitted." .
 :condition     a owl:DatatypeProperty ; rdfs:label "condition" ; rdfs:range xsd:string .
 :ruleDataType  a owl:ObjectProperty ; rdfs:label "rule data type" ; rdfs:range :DataTypeOrStruct .
+:ruleEndianness a owl:ObjectProperty ; rdfs:label "rule endianness" ; rdfs:range :Endianness ;
+    rdfs:comment "The byte order selected by an EndiannessRule." .
 :hasEnumValue  a owl:ObjectProperty ; rdfs:label "has enum value" ; rdfs:range :EnumValue .
 :enumRawValue  a owl:DatatypeProperty ; rdfs:label "enum raw value" .
 :enumSymbol    a owl:ObjectProperty ; rdfs:label "enum symbol" .
@@ -152,10 +193,21 @@
 :bytes  a :DataType ; rdfs:label "bytes"  ; :baseType :baseBytes  ; :xsdType xsd:hexBinary .
 :string a :DataType ; rdfs:label "string" ; :baseType :baseString ; :xsdType xsd:string .
 
+# ---------- ASCII-coded numeric types ----------
+# Numbers written as text in a fixed-width field (NITF BCS-N, FITS card values,
+# USGSDEM Fortran fields). The parsed HEL value is numeric, so these fields may
+# drive sizing, offset and repeat expressions — which bddo:string cannot.
+:asciiInteger a :DataType ; rdfs:label "asciiInteger" ; :baseType :baseInteger ; :encoding :ascii ; :xsdType xsd:integer ;
+    rdfs:comment "An integer written as text, occupying the field's declared width (bddo:size) or ending at its terminator. Surrounding space and a leading '+'/'-' are accepted. Radix is bddo:numericBase, default 10. Yields a HEL Integer." .
+:asciiDecimal a :DataType ; rdfs:label "asciiDecimal" ; :baseType :baseFloat ; :encoding :ascii ; :xsdType xsd:decimal ;
+    rdfs:comment "A fixed- or floating-point number written as text, occupying the field's declared width or ending at its terminator. Accepts leading sign, decimal point and exponent. Yields a HEL Float." .
+
 # =========================================================
 # SHACL shapes (domain + cardinality; refine the declared ranges)
 # =========================================================
-bddo:_prefixes sh:declare [ sh:prefix "bddo" ; sh:namespace "https://hexplain.io/ns/bddo#"^^xsd:anyURI ] .
+bddo:_prefixes sh:declare
+    [ sh:prefix "bddo" ; sh:namespace "https://hexplain.io/ns/bddo#"^^xsd:anyURI ] ,
+    [ sh:prefix "rdf" ; sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ] .
 
 bddo:StructShape a sh:NodeShape ;
     sh:targetClass bddo:Struct ;
@@ -223,6 +275,8 @@ bddo:FieldSizingShape a sh:NodeShape ;
         } GROUP BY $this HAVING (COUNT(DISTINCT ?p) > 1)""" ] .
 
 # A variable-length field (bytes/string) MUST declare exactly one sizing/termination.
+# Exempt: a field of a delimited-record container gets its extent from the container's
+# recordDelimiter/fieldDelimiter, not from its own size or terminator.
 bddo:VariableLengthFieldShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
     sh:sparql [ sh:message "A bddo:bytes or bddo:string field must declare a sizing or termination mechanism." ;
@@ -233,6 +287,11 @@ bddo:VariableLengthFieldShape a sh:NodeShape ;
                 $this ?p ?v .
                 FILTER(?p IN (bddo:size, bddo:sizeFromField, bddo:sizeFromExpression,
                               bddo:sizeToEndOfStream, bddo:terminator))
+            }
+            FILTER NOT EXISTS {
+                ?p bddo:hasField/rdf:rest*/rdf:first $this .
+                ?p a ?c .
+                FILTER(?c IN (bddo:DelimitedRecords, bddo:KeyValueHeader, bddo:DelimitedTable))
             }
         }""" ] .
 
@@ -289,3 +348,82 @@ bddo:ChecksumShape a sh:NodeShape ;
     sh:property [ sh:path bddo:coversFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:coversToField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:coversExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+
+# An ASCII-coded numeric field must have a width or a terminator, or it cannot be read.
+# Exempt: a field of a delimited-record container gets its extent from the container's
+# recordDelimiter/fieldDelimiter, not from its own size or terminator.
+bddo:AsciiNumericWidthShape a sh:NodeShape ;
+    sh:targetClass bddo:Field ;
+    sh:sparql [ sh:message "A bddo:asciiInteger / bddo:asciiDecimal field must declare a width (size / sizeFromField / sizeFromExpression) or a terminator." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:dataType ?dt .
+            FILTER(?dt IN (bddo:asciiInteger, bddo:asciiDecimal))
+            FILTER NOT EXISTS { $this bddo:size ?s }
+            FILTER NOT EXISTS { $this bddo:sizeFromField ?f }
+            FILTER NOT EXISTS { $this bddo:sizeFromExpression ?e }
+            FILTER NOT EXISTS { $this bddo:terminator ?t }
+            FILTER NOT EXISTS {
+                ?p bddo:hasField/rdf:rest*/rdf:first $this .
+                ?p a ?c .
+                FILTER(?c IN (bddo:DelimitedRecords, bddo:KeyValueHeader, bddo:DelimitedTable))
+            }
+        }""" ] .
+
+# numericBase is meaningful only for :asciiInteger.
+bddo:NumericBaseShape a sh:NodeShape ;
+    sh:targetSubjectsOf bddo:numericBase ;
+    sh:property [ sh:path bddo:numericBase ; sh:maxCount 1 ; sh:in ( 8 10 16 ) ;
+        sh:message "bddo:numericBase must be 8, 10 or 16." ] ;
+    sh:property [ sh:path bddo:dataType ; sh:hasValue bddo:asciiInteger ;
+        sh:message "bddo:numericBase applies only to a field whose bddo:dataType is bddo:asciiInteger." ] .
+
+bddo:EndiannessRuleShape a sh:NodeShape ;
+    sh:targetClass bddo:EndiannessRule ;
+    sh:property [ sh:path bddo:condition ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:ruleEndianness ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( bddo:BigEndian bddo:LittleEndian ) ;
+        sh:message "bddo:ruleEndianness must be bddo:BigEndian or bddo:LittleEndian." ] .
+
+bddo:ConditionalEndiannessShape a sh:NodeShape ;
+    sh:targetSubjectsOf bddo:hasConditionalEndianness ;
+    sh:property [ sh:path bddo:hasConditionalEndianness ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:message "bddo:hasConditionalEndianness must point to a single rdf:List." ] ;
+    sh:property [ sh:path bddo:endianness ; sh:maxCount 0 ;
+        sh:message "bddo:endianness and bddo:hasConditionalEndianness are mutually exclusive." ] ;
+    sh:property [ sh:path ( bddo:hasConditionalEndianness [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:class bddo:EndiannessRule ;
+        sh:message "Every member of a hasConditionalEndianness list must be a bddo:EndiannessRule." ] .
+
+bddo:DelimitedRecordsShape a sh:NodeShape ;
+    sh:targetClass bddo:DelimitedRecords ;
+    sh:property [ sh:path bddo:recordDelimiter ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:fieldDelimiter ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:keyValueSeparator ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:quoteChar ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:escapeChar ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:commentPrefix ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:skipRecords ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:trimWhitespace ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:hasField ; sh:minCount 1 ;
+        sh:message "A bddo:DelimitedRecords must declare at least one field." ] .
+
+# A KeyValueHeader needs a separator, and every one of its fields needs a key.
+bddo:KeyValueHeaderShape a sh:NodeShape ;
+    sh:targetClass bddo:KeyValueHeader ;
+    sh:property [ sh:path bddo:keyValueSeparator ; sh:minCount 1 ;
+        sh:message "A bddo:KeyValueHeader must declare bddo:keyValueSeparator." ] ;
+    sh:property [ sh:path ( bddo:hasField [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:node [ sh:property [ sh:path bddo:key ; sh:minCount 1 ; sh:maxCount 1 ;
+            sh:message "Every field of a bddo:KeyValueHeader must declare exactly one bddo:key." ] ] ] .
+
+# bddo:key is meaningful only inside a KeyValueHeader; a table's columns are positional.
+bddo:DelimitedTableShape a sh:NodeShape ;
+    sh:targetClass bddo:DelimitedTable ;
+    sh:property [ sh:path bddo:fieldDelimiter ; sh:minCount 1 ;
+        sh:message "A bddo:DelimitedTable must declare bddo:fieldDelimiter." ] ;
+    sh:property [ sh:path bddo:keyValueSeparator ; sh:maxCount 0 ;
+        sh:message "bddo:keyValueSeparator applies to a KeyValueHeader, not a DelimitedTable." ] ;
+    sh:property [ sh:path ( bddo:hasField [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:node [ sh:property [ sh:path bddo:key ; sh:maxCount 0 ;
+            sh:message "bddo:key applies to a field of a KeyValueHeader; a DelimitedTable's columns are located by position." ] ] ] .

@@ -1,0 +1,17 @@
+# Two violations: static and conditional endianness on the same struct, and a
+# rule-list member that is not an EndiannessRule.
+# Expected to trip bddo:ConditionalEndiannessShape.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/endian-invalid#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Clash a bddo:Struct ;
+    rdfs:comment "Expected to trip bddo:ConditionalEndiannessShape." ;
+    bddo:endianness bddo:LittleEndian ;
+    bddo:hasConditionalEndianness (
+        # Well-formed in itself, but the wrong kind of rule for this list.
+        [ a bddo:DataTypeRule ; bddo:condition "instance.Flag == 1" ; bddo:ruleDataType bddo:uint16be ]
+    ) ;
+    bddo:hasField ( ex:Clash.Flag ) .
+
+ex:Clash.Flag a bddo:Field ; bddo:dataType bddo:uint8 .

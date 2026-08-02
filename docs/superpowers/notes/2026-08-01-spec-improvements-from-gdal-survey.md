@@ -15,10 +15,10 @@ Baseline: 65 ✅ Full · 48 ◐ Container · 43 ◑ Payload-only · 89 ✗ Out o
 
 | # | Proposal | Module | Cost | Payoff |
 |---|---|---|---|---|
-| **P0-1** | Delimited-record primitive (line/`key = value`/CSV) | BDDO + HEL | M | **~35 ◑→✅, ~10 ✗→✅** |
-| **P0-2** | Tiled / chunked data layout | DLV | M | Correctness for ~40 drivers; **blocks NITF conformance today** |
-| **P0-3** | ASCII-numeric datatype | BDDO | **S** | Unblocks 10 already-listed ✅; **blocks NITF conformance today** |
-| **P0-4** | Data-dependent endianness | BDDO | **S** | **The shipped TIFF profile is knowingly wrong without it** |
+| **P0-1** | ✅ Delimited-record primitive (line/`key = value`/CSV) | BDDO + HEL | M | **~35 ◑→✅, ~10 ✗→✅** |
+| **P0-2** | ✅ Tiled / chunked data layout | DLV | M | Correctness for ~40 drivers; **blocks NITF conformance today** |
+| **P0-3** | ✅ ASCII-numeric datatype | BDDO | **S** | Unblocks 10 already-listed ✅; **blocks NITF conformance today** |
+| **P0-4** | ✅ Data-dependent endianness | BDDO | **S** | **The shipped TIFF profile is knowingly wrong without it** |
 | **P1-5** | Encoding pipelines with parameters | core | S | HDF5/Zarr/TIFF-predictor/Blosc/Parquet |
 | **P1-6** | Varint / zigzag datatypes | BDDO | **S** | MVT, PMTiles, OSM PBF, Parquet, OpenFileGDB |
 | **P1-7** | Bundle path patterns & cardinality | hx-bundle | S | AIG, GRASS, SAFE, SENTINEL2, Zarr, ESRIC, ADRG |
@@ -35,6 +35,9 @@ Cost: XS ≈ a few triples · S ≈ one property group + shapes · M ≈ a new c
 ## P0 — Blocking or highest-yield
 
 ### P0-1 · A delimited-record primitive
+
+> **Implemented** on `feat/hdl-p0-spec-extensions` — see
+> [the P0 plan](../plans/2026-08-01-hdl-p0-spec-extensions.md).
 
 **Evidence.** BDDO addresses bytes by offset and size only. Every sizing mechanism —
 `size`, `sizeFromField`, `sizeFromExpression`, `sizeToEndOfStream`, `terminator`
@@ -59,9 +62,15 @@ general grammar:
 - `bddo:DelimitedRecords` on a field: `recordDelimiter` (default `0x0A`), optional
   `fieldDelimiter`, `quoteChar`, `escapeChar`, `commentPrefix`, `skipRecords`.
 - `bddo:KeyValueHeader` as the named special case: `keyValueSeparator`, plus
-  `bddo:hasEntry [ bddo:key "samples" ; hexplain:mapsToProperty araster:width ]`.
+  `bddo:hasEntry [ bddo:key "samples" ; hexplain:mapsToProperty araster:width ]`
+  — **superseded**; see below.
 - HEL gains the minimum needed to consume it: `trim`, `substringBefore`, `substringAfter`,
   `number()`.
+
+**Implemented instead of `hasEntry`:** `bddo:DelimitedRecords` is `rdfs:subClassOf
+bddo:Struct`, so a `KeyValueHeader`'s entries are the inherited `bddo:hasField` list, and
+each entry is an ordinary `bddo:Field` carrying `bddo:key` (`bddo.ttl:43-51, 64, 100-101,
+396-402`). No `hasEntry` property or entry node was added.
 
 HDL surface:
 
@@ -85,6 +94,9 @@ ROI_PAC, RRASTER, RST, SAGA, SNODAS, NDF, PDS/ISIS PVL labels, VICAR, DOQ1/2, PN
 ---
 
 ### P0-2 · Tiled / chunked data layout
+
+> **Implemented** on `feat/hdl-p0-spec-extensions` — see
+> [the P0 plan](../plans/2026-08-01-hdl-p0-spec-extensions.md).
 
 **Evidence.** `dlv:DataLayout` describes exactly one contiguous strided N-d block:
 `hasDimension` (an ordered list), `cellDataType`, `dimensionSize`, `dimensionStride`
@@ -122,6 +134,9 @@ for COG and blocked NITF to be describable at all.
 
 ### P0-3 · An ASCII-numeric datatype
 
+> **Implemented** on `feat/hdl-p0-spec-extensions` — see
+> [the P0 plan](../plans/2026-08-01-hdl-p0-spec-extensions.md).
+
 **Evidence.** BDDO's primitives are fixed-width binary plus `bddo:string`
 ([bddo.ttl:126-153](../../../specification/bddo/bddo.ttl#L126-L153)). HEL's coercion rules
 make arithmetic on a non-numeric operand an error
@@ -153,6 +168,9 @@ UK .NTF, PCIDSK. Cost is roughly ten triples.
 
 ### P0-4 · Data-dependent endianness
 
+> **Implemented** on `feat/hdl-p0-spec-extensions` — see
+> [the P0 plan](../plans/2026-08-01-hdl-p0-spec-extensions.md).
+
 **Evidence.** `bddo:endianness` ranges over two individuals
 ([bddo.ttl:51-52](../../../specification/bddo/bddo.ttl#L51-L52)); there is no
 `endiannessFromField`. A file that *declares* its own byte order cannot be described.
@@ -167,20 +185,56 @@ answer:
 …while every struct in the same file carries `bddo:endianness bddo:LittleEndian`
 (lines 31, 65, 98). **The flagship profile is knowingly incorrect for big-endian TIFF.**
 
-**Proposal.** `bddo:endiannessFromExpression` (range `xsd:string`, a HEL expression yielding
-`"big"`/`"little"`), applicable at Struct and Field scope and inherited by descendants —
-matching how static `endianness` already inherits.
+**Implemented as a rule list, not an expression.** `bddo:hasConditionalEndianness` →
+an ordered list of `bddo:EndiannessRule` (`bddo:condition` + `bddo:ruleEndianness`),
+mirroring the existing `hasConditionalDataType` / `DataTypeRule` idiom. This needs no
+conditional operator in HEL, which the `endiannessFromExpression` form below (the original
+proposal) would have required.
+
+Original proposal, superseded: `bddo:endiannessFromExpression` (range `xsd:string`, a HEL
+expression yielding `"big"`/`"little"`), applicable at Struct and Field scope and inherited
+by descendants — matching how static `endianness` already inherits.
 
 ```
 struct TIFFHeader @endian-from `root.IFH.ByteOrder == 0x4D4D ? "big" : "little"` { … }
 ```
 
-(A conditional operator would be needed in HEL, or express it as two `switch` arms over
-struct variants — the latter needs no HEL change at all and is the cheaper first cut.)
+**Outstanding:** `hexplain-tools/core/src/main/resources/tiff-profile.ttl` still hardcodes
+`bddo:LittleEndian` (lines 31, 65, 98). Rewriting it to use `bddo:hasConditionalEndianness`
+is a separate change in the `hexplain-tools` repository.
 
 **Payoff.** Correctness for TIFF/GeoTIFF/COG/BigTIFF/LIBERTIFF/SNAP_TIFF (6 drivers, the
 most important format in the survey), plus netCDF, HDF4/5, ADRG, MFF, ENVI, ERS, and every
 other format with a byte-order flag.
+
+---
+
+### Delivered vs. proposed
+
+What landed on `feat/hdl-p0-spec-extensions` is not a 1:1 match with the proposals above.
+For a later reader:
+
+- **P0-4 shipped as a rule list, not an expression.** `bddo:hasConditionalEndianness` takes
+  an ordered `rdf:List` of `bddo:EndiannessRule`, not `bddo:endiannessFromExpression`. See
+  the design-change note above.
+- **P0-1 shipped the vocabulary and HEL surface only.** `bddo:DelimitedRecords`,
+  `KeyValueHeader`, `DelimitedTable`, and the associated properties exist in BDDO, and HEL
+  gained `trim`/`substringBefore`/`substringAfter`/`number` plus a String evaluation
+  context — but the HDL surface sketched above (`header EnviHeader @line-oriented …`) is
+  design prose, not a compiler feature. The `hexplain-tools` HDL compiler does not yet emit
+  or consume any of the P0-1/P0-2/P0-3/P0-4 vocabulary.
+- **P0-1's entries are Fields, not a bespoke `hasEntry` node.** `bddo:DelimitedRecords` is
+  `rdfs:subClassOf bddo:Struct`, so `KeyValueHeader` entries ride the inherited
+  `bddo:hasField` list and each entry is an ordinary `bddo:Field` carrying `bddo:key`,
+  rather than the `bddo:hasEntry [ bddo:key … ]` node proposed above. Subclassing `Struct`
+  lets an entry carry the full Field vocabulary — `hexplain:mapsToProperty`,
+  `bddo:enumeration`, `bddo:dataType`, and so on — for free, instead of duplicating it on a
+  bespoke entry node.
+- **All four P0 changes are additive vocabulary only.** No existing format profile has been
+  rewritten to use `DelimitedRecords`, chunked layouts, `asciiInteger`/`asciiDecimal`, or
+  `hasConditionalEndianness`. The TIFF profile in particular still hardcodes
+  `bddo:LittleEndian` (see the P0-4 outstanding note above) — nothing here has been
+  validated against a real file by a running parser.
 
 ---
 

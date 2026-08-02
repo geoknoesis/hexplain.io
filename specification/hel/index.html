@@ -91,7 +91,7 @@ Unary        = [ "-" / "~" ] Primary
 Primary      = FunctionCall / Accessor / Literal / ( "(" WS Expression WS ")" )
 
 FunctionCall = FunctionName "(" WS [ Expression *( WS "," WS Expression ) ] WS ")"
-FunctionName = "sizeof" / "len" / "count" / "eof"
+FunctionName = "sizeof" / "len" / "count" / "eof" / "trim" / "substringBefore" / "substringAfter" / "number"
 
 Accessor     = Root *( Step )
 Step         = "." ( "parent" / IDENTIFIER ) / "[" WS Expression WS "]"
@@ -130,6 +130,10 @@ eof()                             ; true when the cursor is at end of stream
                     <tr><td><code>sizeof(accessor)</code></td><td>Byte length of the parsed field or struct referenced.</td></tr>
                     <tr><td><code>len(accessor)</code>, <code>count(accessor)</code></td><td>Number of elements of an array node, or characters of a string.</td></tr>
                     <tr><td><code>eof()</code></td><td>Boolean: <code>true</code> if the parse cursor is at end of stream.</td></tr>
+                    <tr><td><code>trim(string)</code></td><td>The string with leading and trailing whitespace removed.</td></tr>
+                    <tr><td><code>substringBefore(string, sep)</code></td><td>The part of <code>string</code> before the first occurrence of <code>sep</code>; the empty string if <code>sep</code> does not occur.</td></tr>
+                    <tr><td><code>substringAfter(string, sep)</code></td><td>The part of <code>string</code> after the first occurrence of <code>sep</code>; the empty string if <code>sep</code> does not occur.</td></tr>
+                    <tr><td><code>number(string)</code></td><td>The numeric value of <code>string</code>, as Integer when the string's lexical form contains no <code>.</code> and no exponent, and Float otherwise (so <code>"10"</code> is an Integer and <code>"10.0"</code> is a Float). A runtime error if the string is not numeric.</td></tr>
                 </tbody>
             </table>
         </section>
@@ -156,7 +160,7 @@ eof()                             ; true when the cursor is at end of stream
         </section>
         <section>
             <h3>Value Types</h3>
-            <p>Every HEL value is one of: <b>Integer</b>, <b>Float</b>, <b>Boolean</b>, <b>String</b>, <b>Bytes</b>, or <b>Null</b> (an absent/optional field). A field's parsed value takes the natural HEL type of its <code>bddo:DataType</code> (integer types → Integer, float types → Float, <code>bddo:string</code> → String, <code>bddo:bytes</code> → Bytes).</p>
+            <p>Every HEL value is one of: <b>Integer</b>, <b>Float</b>, <b>Boolean</b>, <b>String</b>, <b>Bytes</b>, or <b>Null</b> (an absent/optional field). A field's parsed value takes the HEL type implied by its <code>bddo:DataType</code>'s <code>bddo:baseType</code>: <code>bddo:baseInteger</code> → Integer, <code>bddo:baseFloat</code> → Float, <code>bddo:baseString</code> → String, <code>bddo:baseBytes</code> → Bytes. This is determined by <code>baseType</code> alone, so the ASCII-coded numeric types <code>bddo:asciiInteger</code> and <code>bddo:asciiDecimal</code> yield Integer and Float respectively and may be used wherever a number is required.</p>
         </section>
         <section>
             <h3>Type Coercion &amp; Comparison Rules</h3>
@@ -179,7 +183,7 @@ eof()                             ; true when the cursor is at end of stream
             <li>Parse all valid expressions per the ABNF grammar.</li>
             <li>Implement the parsing context and all reserved roots (<code>instance</code>, <code>parent</code>, <code>root</code>, <code>self</code>, <code>stream</code>).</li>
             <li>Implement all operators and functions with the specified precedence, and the value-type and coercion rules.</li>
-            <li>Yield a Boolean in a boolean context (e.g. <code>bddo:isPresentIf</code>, <code>bddo:repeatUntil</code>, conditions) and an Integer in a numeric context (e.g. <code>bddo:sizeFromExpression</code>, <code>bddo:repeatCountFromExpression</code>, <code>bddo:atOffsetFromExpression</code>).</li>
+            <li>Yield a Boolean in a boolean context (e.g. <code>bddo:isPresentIf</code>, <code>bddo:repeatUntil</code>, conditions), an Integer in a numeric context (e.g. <code>bddo:sizeFromExpression</code>, <code>bddo:repeatCountFromExpression</code>, <code>bddo:atOffsetFromExpression</code>), and a String in a string context (e.g. a <code>hexplain:valueExpression</code> whose <code>hexplain:valueDatatype</code> is <code>xsd:string</code>).</li>
             <li>Report a runtime error (rather than silently continue) on type errors, division/modulo by zero, and references to undefined names.</li>
         </ol>
     </section>
@@ -197,6 +201,10 @@ eof()                             ; true when the cursor is at end of stream
             <dd><pre>bddo:repeatUntil "eof()"</pre></dd>
             <dt>Count-driven presence</dt>
             <dd><pre>bddo:isPresentIf "instance.parent.Flags &amp; 0x01 == 0x01"</pre></dd>
+            <dt>Trimming a delimited header value</dt>
+            <dd><pre>hexplain:valueExpression "trim(instance.parent.description)"</pre></dd>
+            <dt>Splitting a compound header value</dt>
+            <dd><pre>hexplain:valueExpression "number(substringBefore(instance.parent.mapInfo, ','))"</pre></dd>
         </dl>
     </section>
 </body>

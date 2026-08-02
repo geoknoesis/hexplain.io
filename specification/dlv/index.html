@@ -77,6 +77,12 @@
             <dd>Bytes to advance per step along a dimension (pitch). Optional; when absent, addressing is contiguous. Use for padded/aligned rows, e.g. BMP's 4-byte row padding.</dd>
             <dt><code>dlv:hasAxis</code></dt>
             <dd>Links a <code>dlv:Dimension</code> to its semantic <code>dlv:Axis</code>.</dd>
+            <dt><code>dlv:chunkSize</code> / <code>dlv:chunkSizeFromField</code></dt>
+            <dd>Extent of one chunk (tile/block) along this dimension, in cells. Declaring either on any dimension makes the layout chunked; at most one of the two MAY be present on a given dimension. A dimension of a chunked layout that declares neither is chunked at its <b>full extent</b> — a layout chunked on X alone has chunks spanning all of Y. Inside a chunked layout, <code>dlv:dimensionStride</code> addresses cells within one chunk, not across the whole grid.</dd>
+            <dt><code>dlv:chunkOffsetsFromField</code> / <code>dlv:chunkLengthsFromField</code></dt>
+            <dd>The repeating fields holding each chunk's byte offset and length — TIFF's <code>TileOffsets</code>/<code>TileByteCounts</code>, NITF's block offsets.</dd>
+            <dt><code>dlv:chunkOrder</code> / <code>dlv:chunkOffsetBase</code></dt>
+            <dd>Traversal order of the chunk table (default <code>dlv:rowMajor</code>) and what its offsets are relative to (default <code>bddo:streamStart</code>).</dd>
         </dl>
     </section>
 
@@ -115,8 +121,29 @@
 :cellDataType a owl:ObjectProperty ; rdfs:label "cell data type" ; rdfs:range bddo:DataType ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 :dimensionSize a owl:DatatypeProperty ; rdfs:label "dimension size" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 :dimensionSizeFromField a owl:ObjectProperty ; rdfs:label "dimension size from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
-:dimensionStride a owl:DatatypeProperty ; rdfs:label "dimension stride" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
+:dimensionStride a owl:DatatypeProperty ; rdfs:label "dimension stride" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "Bytes to advance per step along this dimension (pitch). When absent, addressing is contiguous (stride = size of the next-faster block). Use for padded/aligned rows, e.g. BMP's 4-byte row padding." .
 :hasAxis a owl:ObjectProperty ; rdfs:label "has axis" ; rdfs:range :Axis ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
+
+# ---------- Chunked (tiled/blocked) layout ----------
+:ChunkOrder a owl:Class ; rdfs:label "Chunk Order" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "The order in which chunks appear in the chunk offset table." .
+:chunkSize a owl:DatatypeProperty ; rdfs:label "chunk size" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "Extent of one chunk (tile/block) along this dimension, in cells. When any Dimension of a DataLayout declares a chunk extent, the layout is chunked: the grid is partitioned into chunks of this shape and each chunk is located through the layout's chunk offset table. A trailing partial chunk is padded to the full chunk extent. A Dimension of a chunked layout that declares neither dlv:chunkSize nor dlv:chunkSizeFromField is chunked at its full extent, i.e. its chunk extent is its dlv:dimensionSize (or the value read through dlv:dimensionSizeFromField); a layout chunked on X alone therefore has chunks spanning all of Y. Within a chunked layout, dlv:dimensionStride addresses cells inside one chunk, not across the whole grid." .
+:chunkSizeFromField a owl:ObjectProperty ; rdfs:label "chunk size from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
+:chunkOffsetsFromField a owl:ObjectProperty ; rdfs:label "chunk offsets from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "The repeating Field holding each chunk's byte offset, indexed in chunkOrder (e.g. TIFF TileOffsets, NITF block offsets)." .
+:chunkLengthsFromField a owl:ObjectProperty ; rdfs:label "chunk lengths from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "The repeating Field holding each chunk's byte length (e.g. TIFF TileByteCounts). Required when chunks are individually encoded; when absent, a chunk's length is its cell count times the cell width." .
+:chunkOffsetBase a owl:ObjectProperty ; rdfs:label "chunk offset base" ; rdfs:range bddo:OffsetBase ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "What the chunk offsets are relative to. Default bddo:streamStart." .
+:chunkOrder a owl:ObjectProperty ; rdfs:label "chunk order" ; rdfs:range :ChunkOrder ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "Traversal order of the chunk offset table. Default dlv:rowMajor (chunks vary fastest along the fastest-varying dimension)." .
+
+:rowMajor a owl:NamedIndividual, :ChunkOrder ; rdfs:label "Row-major chunk order" .
+:columnMajor a owl:NamedIndividual, :ChunkOrder ; rdfs:label "Column-major chunk order" .
+:morton a owl:NamedIndividual, :ChunkOrder ; rdfs:label "Morton (Z-order) chunk order" .
+:hilbert a owl:NamedIndividual, :ChunkOrder ; rdfs:label "Hilbert curve chunk order" .
 
 :axisX a :Axis ; rdfs:label "X Axis (Width)" .
 :axisY a :Axis ; rdfs:label "Y Axis (Height)" .
@@ -156,10 +183,41 @@ dlv:DimensionShape a sh:NodeShape ;
         [ sh:property [ sh:path dlv:dimensionSizeFromField ; sh:minCount 1 ] ;
           sh:property [ sh:path dlv:dimensionSize ; sh:maxCount 0 ] ]
     ) ;
+    # A chunk extent is optional, but the two mechanisms are mutually exclusive.
+    sh:xone (
+        [ sh:property [ sh:path dlv:chunkSize ; sh:maxCount 0 ] ;
+          sh:property [ sh:path dlv:chunkSizeFromField ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:chunkSize ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:chunkSizeFromField ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:chunkSizeFromField ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:chunkSize ; sh:maxCount 0 ] ]
+    ) ;
     sh:property [ sh:path dlv:dimensionSize ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:dimensionSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:dimensionStride ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:hasAxis ; sh:nodeKind sh:IRI ; sh:class dlv:Axis ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path dlv:hasAxis ; sh:nodeKind sh:IRI ; sh:class dlv:Axis ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:chunkSize ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:chunkSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] .
+
+dlv:_prefixes sh:declare
+    [ sh:prefix "dlv" ; sh:namespace "https://hexplain.io/ns/dlv#"^^xsd:anyURI ] ,
+    [ sh:prefix "rdf" ; sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ] .
+
+# A chunked layout must say where its chunks are.
+dlv:ChunkedLayoutShape a sh:NodeShape ;
+    sh:targetClass dlv:DataLayout ;
+    sh:property [ sh:path dlv:chunkOffsetsFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:chunkLengthsFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:chunkOffsetBase ; sh:maxCount 1 ;
+        sh:in ( bddo:streamStart bddo:streamEnd bddo:parentStart bddo:currentPosition ) ] ;
+    sh:property [ sh:path dlv:chunkOrder ; sh:maxCount 1 ; sh:class dlv:ChunkOrder ] ;
+    sh:sparql [ sh:message "A chunked dlv:DataLayout (any Dimension declaring dlv:chunkSize or dlv:chunkSizeFromField) must declare dlv:chunkOffsetsFromField." ;
+        sh:prefixes dlv:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this dlv:hasDimension/rdf:rest*/rdf:first ?d .
+            { ?d dlv:chunkSize ?c } UNION { ?d dlv:chunkSizeFromField ?c }
+            FILTER NOT EXISTS { $this dlv:chunkOffsetsFromField ?o }
+        }""" ] .
         </pre>
     </section>
 
@@ -170,13 +228,20 @@ dlv:DimensionShape a sh:NodeShape ;
   "@context": {
     "dlv": "https://hexplain.io/ns/dlv#",
     "bddo": "https://hexplain.io/ns/bddo#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
     "DataLayout": "dlv:DataLayout", "Dimension": "dlv:Dimension", "Axis": "dlv:Axis",
     "hasDimension": { "@id": "dlv:hasDimension", "@container": "@list" },
     "cellDataType": { "@id": "dlv:cellDataType", "@type": "@id" },
     "dimensionSize": { "@id": "dlv:dimensionSize", "@type": "xsd:positiveInteger" },
     "dimensionSizeFromField": { "@id": "dlv:dimensionSizeFromField", "@type": "@id" },
-    "dimensionStride": "dlv:dimensionStride",
-    "hasAxis": { "@id": "dlv:hasAxis", "@type": "@id" }
+    "dimensionStride": { "@id": "dlv:dimensionStride", "@type": "xsd:positiveInteger" },
+    "hasAxis": { "@id": "dlv:hasAxis", "@type": "@id" },
+    "chunkSize": { "@id": "dlv:chunkSize", "@type": "xsd:positiveInteger" },
+    "chunkSizeFromField": { "@id": "dlv:chunkSizeFromField", "@type": "@id" },
+    "chunkOffsetsFromField": { "@id": "dlv:chunkOffsetsFromField", "@type": "@id" },
+    "chunkLengthsFromField": { "@id": "dlv:chunkLengthsFromField", "@type": "@id" },
+    "chunkOffsetBase": { "@id": "dlv:chunkOffsetBase", "@type": "@id" },
+    "chunkOrder": { "@id": "dlv:chunkOrder", "@type": "@id" }
   }
 }
         </pre>

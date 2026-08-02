@@ -1,0 +1,12 @@
+# Smoke fixture: a minimal well-formed BDDO struct. Must conform.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/smoke#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Header a bddo:Struct ;
+    rdfs:label "Smoke header" ;
+    bddo:endianness bddo:BigEndian ;
+    bddo:hasField ( ex:Header.magic ex:Header.count ) .
+
+ex:Header.magic a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:hasFixedValue "0xCAFEBABE" .
+ex:Header.count a bddo:Field ; bddo:dataType bddo:uint16 .
