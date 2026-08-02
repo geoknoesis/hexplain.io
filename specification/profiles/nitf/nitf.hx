@@ -5,6 +5,23 @@
 // emits HDL's dotted-IRI structs (e.g. nitf:FileHeader.FHDR) rather than the TTL's
 // FH_/IS_ names, so the two are structurally equivalent, not byte-isomorphic.
 //
+// *** STALE — DO NOT REGENERATE nitf.ttl FROM THIS FILE (as of feat/nitf-p1) ***
+// nitf.ttl is authoritative and has since diverged from this authoring surface. This
+// file still carries three expression defects that feat/nitf-p1 found and fixed only
+// in nitf.ttl; regenerating from this file would reintroduce all of them:
+//   1. `@prop bddo:repeatUntil "end-of-region"` (6 sites: UDHD, XHD, UDID, IXSHD, SXSHD,
+//      TXSHD) — "end-of-region" is not a supported HEL sentinel; nitf.ttl uses "eof()".
+//   2. Unprefixed, unwrapped size expressions, e.g. `"UDHDL - 3"` (6 sites: the
+//      sizeFromExpression on the same six TRE-area fields above) — the compiled field
+//      name is `FH_UDHDL`/`IS_UDIDL`/etc., not the bare `UDHDL`/`UDIDL`, and HEL has no
+//      bare arithmetic-only expression form; nitf.ttl uses `"toNumber(FH_UDHDL) - 3"`
+//      (prefixed name, wrapped in the toNumber() coercion).
+//   3. `hexplain:valueExpression "xsd:integer(NROWS)"` / `"(NCOLS)"` (NROWS/NCOLS on
+//      ImageSubheader) — there is no `xsd:integer()` HEL function and the names are
+//      unprefixed; nitf.ttl uses `"toNumber(IS_NROWS)"` / `"toNumber(IS_NCOLS)"`.
+// Until this file is regenerated/reconciled against nitf.ttl, treat it as documentation
+// of the intended HDL surface only — not as a source to compile or diff against.
+//
 // Idiomatic choices (vs the hand-written TTL):
 //   * BCS-A / BCS-N text fields are modeled as ascii[N] (the BCS-N vs BCS-A distinction
 //     in the TTL is documentary only — BDDO has no character-class facet).
