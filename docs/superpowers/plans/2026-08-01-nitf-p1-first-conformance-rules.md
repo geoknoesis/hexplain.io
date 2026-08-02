@@ -594,6 +594,146 @@ git commit -m "fix(metacodec): bound a repeating struct field by its own declare
 
 ---
 
+### Task 4c: Add a `toNumber()` HEL builtin
+
+**Repo:** `hexplain-tools`
+
+**Files:**
+- Modify: `core/src/main/kotlin/io/hexplain/core/hel/HelEvaluator.kt` (the function dispatch `when`)
+- Test: `core/src/test/kotlin/io/hexplain/core/hel/HelToNumberTest.kt`
+- Test: `core/src/test/kotlin/io/hexplain/core/metacodec/FieldRegionSequenceTest.kt` (add the negative-extent case Task 4b could not write)
+
+**Interfaces:**
+- Consumes: `stringOperand`, `HelEvaluationException`, the existing function dispatch.
+- Produces: `toNumber(x)` — parses numeric text to a number. A `Number` passes through unchanged; a `String` or `ByteArray` is trimmed and parsed as `Long`, or as `Double` when it is not integral; anything else, and any text that is not numeric, raises `HelEvaluationException`.
+
+**Why this task exists.** Added after Task 4b's review, by human ruling. Every NITF numeric field is text: `nitf:BCSN` and `nitf:BCSNpos` both declare `bddo:baseType bddo:baseString` (`nitf.ttl:29-32`), so `context["UDHDL"]` is a Kotlin `String`. All six TRE areas size themselves with `bddo:sizeFromExpression "<LEN> - 3"`, and `HelEvaluator.arithmetic` rejects a non-`Number` operand outright (`HelEvaluator.kt:262-263`), throwing `HelEvaluationException` — a `RuntimeException`, **not** a `HexplainParsingException`, so `parseStruct`'s recovery catch never sees it and it aborts the whole parse even under COLLECT. Task 4b's field-level bound therefore cannot fire for the areas it was written for.
+
+The ruling rejected implicit coercion inside `arithmetic()` — it would change evaluation semantics for every format and silently mask genuine type errors — in favour of an explicit builtin at the call site. This is the same mechanism Task 10's note already named as the way to express the parked `HL <= FL` rule, so it closes that P2 candidate too.
+
+**Scope note:** P1's own fixture does not depend on this. The TRE fields carry `bddo:isPresentIf "UDHDL != '00000'"` and Task 7 writes `UDHDL="00000"`, so the field is skipped and the expression never evaluates. This task makes a TRE-bearing file parseable and lets Task 4b's `coerceAtLeast(0)` be tested at all.
+
+- [ ] **Step 1: Read the dispatch and the arity table**
+
+Run: `grep -n '"trim"\|"len"\|FIXED_ARITY' core/src/main/kotlin/io/hexplain/core/hel/HelEvaluator.kt`
+`toNumber` takes one argument. Single-argument builtins (`trim`, `len`) are **not** listed in `FIXED_ARITY` — follow that precedent rather than adding an entry.
+
+- [ ] **Step 2: Write the failing test**
+
+Create `core/src/test/kotlin/io/hexplain/core/hel/HelToNumberTest.kt`. Follow the construction idiom already used by `HelStringFunctionTest.kt` in the same package — read it first and match how it builds a context and evaluates an expression, rather than inventing a second idiom.
+
+Cases, each asserting one outcome (no `||`):
+
+```
+toNumber('00005')                 -> 5L          // zero-padded BCS-N
+toNumber('  42  ')                -> 42L         // surrounding space is trimmed
+toNumber('-7')                    -> -7L
+toNumber('3.5')                   -> 3.5         // non-integral falls to Double
+toNumber(UDHDL) - 3               -> 2L          // UDHDL = "00005"; THE NITF SHAPE
+toNumber(UDHDL) - 3               -> -3L         // UDHDL = "00000"; the absent-area shape
+toNumber(5)                       -> 5L          // a Number passes through
+toNumber('ABC')                   -> throws HelEvaluationException
+toNumber('')                      -> throws HelEvaluationException
+```
+
+The two `toNumber(UDHDL) - 3` cases are the point of the task: they are the exact expression the profile carries, over a `String` field value, and they must be present.
+
+- [ ] **Step 3: Run test to verify it fails**
+
+Run: `cd /d/work/hexplain-tools && ./gradlew :core:test --tests "io.hexplain.core.hel.HelToNumberTest"`
+Expected: FAIL — `HelEvaluationException: Unknown function 'toNumber'`.
+
+- [ ] **Step 4: Add the builtin**
+
+In the function dispatch `when`, beside the other single-argument string functions:
+
+```kotlin
+            // NITF and other text formats carry numbers as zero-padded text, and arithmetic
+            // deliberately refuses to coerce silently. toNumber() is the explicit opt-in.
+            "toNumber" -> {
+                val v = evaluate(node.args[0])
+                if (v is Number) v else {
+                    val s = stringOperand(v, "toNumber").trim()
+                    s.toLongOrNull() ?: s.toDoubleOrNull()
+                        ?: throw HelEvaluationException("toNumber() requires numeric text, got '$s'")
+                }
+            }
+```
+
+Do **not** touch `arithmetic()`. The ruling is that coercion is explicit at the call site and nowhere else.
+
+- [ ] **Step 5: Close Task 4b's untested guard**
+
+Task 4b bounds a repeating struct field by its declared size and coerces a negative extent to zero, but the negative case could not be tested — `hel("LEN - 3")` threw before reaching the guard. Add that case to `FieldRegionSequenceTest.kt` now: a field whose `sizeFromExpression` is `hel("toNumber(LEN) - 3")` with `LEN = "00"`, asserting an empty sequence and an intact trailer. Without it, `coerceAtLeast(0)` could be deleted and every test would still pass.
+
+- [ ] **Step 6: Run the tests**
+
+Run: `cd /d/work/hexplain-tools && ./gradlew test`
+Expected: PASS — the new tests plus both module baselines green. Report exact counts.
+
+- [ ] **Step 7: Prove the fix bites**
+
+Remove the `"toNumber"` branch, re-run `HelToNumberTest` and confirm every case fails with `Unknown function 'toNumber'`; restore. Then delete `coerceAtLeast(0)` in `Metaparser.kt`, re-run `FieldRegionSequenceTest`, and confirm the new negative-extent case FAILS; restore. Report both observations.
+
+- [ ] **Step 8: Commit**
+
+```bash
+cd /d/work/hexplain-tools
+git add core/src/main/kotlin/io/hexplain/core/hel/HelEvaluator.kt \
+        core/src/test/kotlin/io/hexplain/core/hel/HelToNumberTest.kt \
+        core/src/test/kotlin/io/hexplain/core/metacodec/FieldRegionSequenceTest.kt
+git commit -m "feat(hel): add toNumber() for formats that carry numbers as text"
+```
+
+---
+
+### Task 4d: Size the TRE areas with `toNumber()`
+
+**Repo:** `hexplain.io`
+
+**Files:**
+- Modify: `specification/profiles/nitf/nitf.ttl` lines 239, 247, 407, 415, 501, 580
+
+**Interfaces:**
+- Consumes: `toNumber()` (Task 4c) and Task 4b's field-level region bound.
+- Produces: six TRE areas whose declared extent actually evaluates. No Kotlin change.
+
+Why: the counterpart to Task 4c in the profile. Until these six sites say `toNumber(...)`, the builtin is unused and the areas still throw. Task 8 copies `nitf.ttl` into test resources, so this must land first.
+
+**CRITICAL staging note:** this repo has unrelated files under `specification/`. Stage only `specification/profiles/nitf/nitf.ttl`.
+
+- [ ] **Step 1: Confirm the six sites**
+
+Run: `cd /d/work/hexplain.io && grep -n 'sizeFromExpression' specification/profiles/nitf/nitf.ttl`
+Expected: exactly six, at lines 239, 247, 407, 415, 501, 580, reading `"UDHDL - 3"`, `"XHDL - 3"`, `"UDIDL - 3"`, `"IXSHDL - 3"`, `"SXSHDL - 3"`, `"TXSHDL - 3"`. If the count or the forms differ, stop and report.
+
+- [ ] **Step 2: Wrap each length field**
+
+Each becomes `toNumber(<LEN>) - 3` — for example line 239:
+
+```turtle
+    bddo:sizeFromExpression "toNumber(UDHDL) - 3" ; bddo:repeatUntil "eof()" .
+```
+
+Change only the `sizeFromExpression` strings. Leave `repeatUntil`, `isPresentIf` and every other predicate exactly as they are.
+
+Then verify: `grep -c 'toNumber(' specification/profiles/nitf/nitf.ttl` → 6, and
+`grep -c 'sizeFromExpression "[A-Z]' specification/profiles/nitf/nitf.ttl` → 0.
+
+- [ ] **Step 3: Confirm the profile still validates**
+
+Run the harness Task 4 used and recorded — `python tools/shacl_check.py` for the NITF profile, not a bare two-graph `pyshacl` invocation, which reports four spurious violations because it never merges `bddo.ttl` into the data graph. Expected: `Conforms: True`. Report exactly what you ran.
+
+- [ ] **Step 4: Commit**
+
+```bash
+cd /d/work/hexplain.io
+git add specification/profiles/nitf/nitf.ttl
+git commit -m "fix(nitf): size the TRE areas with toNumber() so the expression evaluates"
+```
+
+---
+
 ### Task 5: Validate fixed values on string fields
 
 **Repo:** `hexplain-tools`
