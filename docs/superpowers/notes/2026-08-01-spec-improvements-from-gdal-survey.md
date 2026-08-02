@@ -62,9 +62,15 @@ general grammar:
 - `bddo:DelimitedRecords` on a field: `recordDelimiter` (default `0x0A`), optional
   `fieldDelimiter`, `quoteChar`, `escapeChar`, `commentPrefix`, `skipRecords`.
 - `bddo:KeyValueHeader` as the named special case: `keyValueSeparator`, plus
-  `bddo:hasEntry [ bddo:key "samples" ; hexplain:mapsToProperty araster:width ]`.
+  `bddo:hasEntry [ bddo:key "samples" ; hexplain:mapsToProperty araster:width ]`
+  — **superseded**; see below.
 - HEL gains the minimum needed to consume it: `trim`, `substringBefore`, `substringAfter`,
   `number()`.
+
+**Implemented instead of `hasEntry`:** `bddo:DelimitedRecords` is `rdfs:subClassOf
+bddo:Struct`, so a `KeyValueHeader`'s entries are the inherited `bddo:hasField` list, and
+each entry is an ordinary `bddo:Field` carrying `bddo:key` (`bddo.ttl:43-51, 64, 100-101,
+396-402`). No `hasEntry` property or entry node was added.
 
 HDL surface:
 
@@ -217,6 +223,13 @@ For a later reader:
   context — but the HDL surface sketched above (`header EnviHeader @line-oriented …`) is
   design prose, not a compiler feature. The `hexplain-tools` HDL compiler does not yet emit
   or consume any of the P0-1/P0-2/P0-3/P0-4 vocabulary.
+- **P0-1's entries are Fields, not a bespoke `hasEntry` node.** `bddo:DelimitedRecords` is
+  `rdfs:subClassOf bddo:Struct`, so `KeyValueHeader` entries ride the inherited
+  `bddo:hasField` list and each entry is an ordinary `bddo:Field` carrying `bddo:key`,
+  rather than the `bddo:hasEntry [ bddo:key … ]` node proposed above. Subclassing `Struct`
+  lets an entry carry the full Field vocabulary — `hexplain:mapsToProperty`,
+  `bddo:enumeration`, `bddo:dataType`, and so on — for free, instead of duplicating it on a
+  bespoke entry node.
 - **All four P0 changes are additive vocabulary only.** No existing format profile has been
   rewritten to use `DelimitedRecords`, chunked layouts, `asciiInteger`/`asciiDecimal`, or
   `hasConditionalEndianness`. The TIFF profile in particular still hardcodes
