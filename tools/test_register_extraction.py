@@ -2,8 +2,21 @@
 trimmed aspect and its new register must equal the ORIGINAL aspect graph, after (a) rewriting
 concept/scheme IRIs into the register namespace and (b) removing skos:notation.
 
-Run against git HEAD~1 for the original. Guards a 111-concept mechanical move that no human
-will diff line by line.
+Guards a specific, one-time 111-concept mechanical move (commit 2596596) that no human will
+diff line by line. Two independent guards, on purpose:
+
+  1. A historical comparison against the commit immediately BEFORE that migration landed
+     (PRE_MIGRATION_SHA, below) -- pinned to a fixed sha, deliberately NOT HEAD or HEAD~1.
+     Both of those drift as later commits land; HEAD in particular went vacuous the moment
+     the migration itself was committed, since at that point HEAD *is* the post-extraction
+     tree and there is nothing left to diff against (this is exactly how this test broke the
+     first time -- see task-3-report.md, "Fix round 1", Finding 1). A fixed sha keeps this
+     half of the test meaningful forever, at the cost of it only ever describing this one
+     migration.
+  2. Durable invariants that don't touch git history at all (EXPECTED_COUNTS, the
+     no-notation check, and the no-leftover-concepts/-schemes/-collections check), so the
+     file keeps earning its place long after PRE_MIGRATION_SHA is ancient and largely
+     irrelevant.
 
 Two portability/scope fixes applied over the originally-drafted version, both verified against
 the actual us-nato-security extraction before being adopted (see task-3-report.md "Judgment
@@ -40,9 +53,28 @@ PAIRS = [("security", "us-nato-security"), ("encoding", "media-encoding"),
          ("color", "color"), ("integrity", "checksum"),
          ("bundle", "part-role"), ("geometry", "geometry-type")]
 
+# The commit immediately BEFORE the six-registers extraction (2596596) landed. Fixed on
+# purpose -- see the module docstring. Do not change this to HEAD/HEAD~1/a branch name.
+PRE_MIGRATION_SHA = "7e92f4b"
+
+# Durable, git-history-independent invariant: exact (schemes, concepts) per register, taken
+# from the migration's own design table. Any future edit to a register that changes these
+# counts must update this table deliberately, not by accident.
+EXPECTED_COUNTS = {
+    "us-nato-security": (6, 70),
+    "media-encoding": (2, 15),
+    "color": (1, 4),
+    "checksum": (1, 4),
+    "part-role": (1, 12),
+    "geometry-type": (1, 6),
+}
+
+# Types that mark an entity as belonging to the register, not the aspect, after extraction.
+MOVING_TYPES = (SKOS.Concept, SKOS.ConceptScheme, SKOS.Collection)
+
 def original(aspect):
     blob = subprocess.run(
-        ["git", "show", f"HEAD:specification/aspect/{aspect}/{aspect}.ttl"],
+        ["git", "show", f"{PRE_MIGRATION_SHA}:specification/aspect/{aspect}/{aspect}.ttl"],
         capture_output=True, text=True, encoding="utf-8", check=True).stdout
     g = rdflib.Graph(); g.parse(data=blob, format="turtle"); return g
 
@@ -62,9 +94,9 @@ for aspect, reg in PAIRS:
     # Entities that actually migrate: concepts, schemes, and collections (per the docstring's
     # "rewriting concept/scheme IRIs" scope) -- not every property/class that merely shares the
     # aspect namespace and stays put.
-    moving = (set(old.subjects(rdflib.RDF.type, SKOS.Concept))
-              | set(old.subjects(rdflib.RDF.type, SKOS.ConceptScheme))
-              | set(old.subjects(rdflib.RDF.type, SKOS.Collection)))
+    moving = set()
+    for t in MOVING_TYPES:
+        moving |= set(old.subjects(rdflib.RDF.type, t))
 
     old_wanted = {rewrite(t) for t in old
                   if t[0] in moving and t[1] not in (SKOS.notation, RDFS.isDefinedBy)}
@@ -72,14 +104,28 @@ for aspect, reg in PAIRS:
     missing = old_wanted - got
     if missing:
         problems.append(f"{aspect}: {len(missing)} triple(s) lost, e.g. {sorted(missing, key=str)[:3]}")
-    # notations must be gone everywhere
+
+    # durable: notations must be gone everywhere, independent of git history
     left = [t for t in got if t[1] == SKOS.notation]
     if left:
         problems.append(f"{aspect}: {len(left)} skos:notation triple(s) survived")
-    # the aspect must retain NO concepts
-    concepts = [s for s in new.subjects(rdflib.RDF.type, SKOS.Concept)]
-    if concepts:
-        problems.append(f"{aspect}: {len(concepts)} concept(s) still in the aspect")
+
+    # durable: the aspect must retain NO concepts, schemes, or collections of its own
+    for t in MOVING_TYPES:
+        leftover = list(new.subjects(rdflib.RDF.type, t))
+        if leftover:
+            kind = t.split("#")[-1]
+            problems.append(f"{aspect}: {len(leftover)} {kind}(s) still in the aspect")
+
+    # durable: the register must carry exactly the designed scheme/concept counts
+    exp_schemes, exp_concepts = EXPECTED_COUNTS[reg]
+    got_schemes = len(set(rgraph.subjects(rdflib.RDF.type, SKOS.ConceptScheme)))
+    got_concepts = len(set(rgraph.subjects(rdflib.RDF.type, SKOS.Concept)))
+    if (got_schemes, got_concepts) != (exp_schemes, exp_concepts):
+        problems.append(
+            f"{reg}: expected {exp_schemes} scheme(s)/{exp_concepts} concept(s), "
+            f"got {got_schemes}/{got_concepts}")
+
     # every migrated scheme must be rdfs:isDefinedBy the new register ontology, not the old aspect
     reg_ont = rdflib.URIRef(f"https://hexplain.io/ns/register/{reg}")
     for s in old.subjects(rdflib.RDF.type, SKOS.ConceptScheme):
