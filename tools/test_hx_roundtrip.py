@@ -192,6 +192,57 @@ def _is_tre_dispatch_triple(where, p, o):
     return where == "compiled" and str(p) == BDDO + "hasConditionalDataType"
 
 
+# `_is_tre_payload_subject` only matches the NAMED subjects of the TRE gap (the two
+# structs and their dotted-form fields). It misses the BLANK NODES that are part of the
+# exact same one-sided structure: the `rdf:first`/`rdf:rest` cells of `nitf:BLOCKA`'s and
+# `nitf:RPC00B`'s `bddo:hasField ( ... )` lists (whose members ARE the named subjects
+# `_is_tre_payload_subject` already matches), and the `rdf:first`/`rdf:rest` cells of
+# `nitf:TRE_CEDATA`'s `bddo:hasConditionalDataType ( ... )` list together with the two
+# `bddo:DataTypeRule` blank nodes that list's cells point at (whose own `bddo:ruleDataType`
+# is `nitf:BLOCKA`/`nitf:RPC00B`). None of these blank nodes can appear on the nitf.ttl side
+# for the same reason no named BLOCKA/RPC00B subject can: nitf.ttl doesn't declare the
+# structs those lists are built from, so it can't own list cells over their fields either.
+#
+# Found by walking the COMPILED graph from three anchors -- `nitf:BLOCKA`/`nitf:RPC00B` via
+# `bddo:hasField`, and `nitf:TRE_CEDATA` via `bddo:hasConditionalDataType` -- rather than by
+# any blank-node-shape heuristic, so an unrelated `rdf:List` elsewhere in the file (one not
+# reachable from these three anchors) is never swept in.
+_TRE_LIST_ANCHORS = (
+    ("BLOCKA", BDDO + "hasField"),
+    ("RPC00B", BDDO + "hasField"),
+    ("TRE_CEDATA", BDDO + "hasConditionalDataType"),
+)
+
+
+def _tre_payload_blank_nodes(g_compiled_canonical):
+    """The blank nodes reachable from the three `_TRE_LIST_ANCHORS` above, walking
+    `rdf:first`/`rdf:rest` list cells and any blank node an `rdf:first` points at (this is
+    what also picks up the two `bddo:DataTypeRule` nodes under `TRE_CEDATA`'s list, without
+    a separate walk: each is simply the `rdf:first` of one of that list's cells).
+
+    `g_compiled_canonical` MUST be `rdflib.compare.to_canonical_graph(<the compiled
+    graph>)` -- the same canonicalization `graph_diff` applies internally to build
+    `by_subject` -- so the blank-node labels found here line up with `by_subject`'s (see
+    the identical requirement on `_security_enum_subjects_and_values` above).
+    """
+    nitf = "https://hexplain.io/ns/profile/nitf#"
+    rdf_first, rdf_rest = rdflib.RDF.first, rdflib.RDF.rest
+    found = set()
+
+    def walk(node):
+        while isinstance(node, rdflib.BNode) and node not in found:
+            found.add(node)
+            for first in g_compiled_canonical.objects(node, rdf_first):
+                if isinstance(first, rdflib.BNode):
+                    found.add(first)
+            node = next(g_compiled_canonical.objects(node, rdf_rest), None)
+
+    for local, pred in _TRE_LIST_ANCHORS:
+        for head in g_compiled_canonical.objects(rdflib.URIRef(nitf + local), rdflib.URIRef(pred)):
+            walk(head)
+    return found
+
+
 # ---------------------------------------------------------------------------
 # ONTOLOGY_HEADER -- nitf.hx's format-level `raw-turtle` block (anchored on
 # FileHeader; see the comment at that block's use site) quotes nitf.ttl's
@@ -467,7 +518,8 @@ CATEGORIES = (
 )
 
 
-def classify(by_subject, security_enum_subjects=frozenset(), security_enum_values=frozenset()):
+def classify(by_subject, security_enum_subjects=frozenset(), security_enum_values=frozenset(),
+             tre_payload_blank_nodes=frozenset()):
     """Classify every differing subject as explained by (possibly several
     of) the named categories above, or as UNEXPLAINED.
 
@@ -484,7 +536,8 @@ def classify(by_subject, security_enum_subjects=frozenset(), security_enum_value
     from `_security_enum_subjects_and_values` (canonicalized so their blank
     nodes line up with `by_subject`'s), threaded through explicitly rather
     than read off a global so SECURITY_ASPECT_ENRICHMENT stays a pure
-    function of its inputs like every other category here.
+    function of its inputs like every other category here. `tre_payload_blank_nodes`
+    is the analogous precomputed set from `_tre_payload_blank_nodes` for TRE_PAYLOADS.
     """
     counts = {c: 0 for c in CATEGORIES}
     unexplained = {}
@@ -492,7 +545,7 @@ def classify(by_subject, security_enum_subjects=frozenset(), security_enum_value
         if _is_step3_security_block(s):
             counts["STEP3_SECURITY_BLOCK"] += 1
             continue
-        if _is_tre_payload_subject(s):
+        if _is_tre_payload_subject(s) or s in tre_payload_blank_nodes:
             counts["TRE_PAYLOADS"] += 1
             continue
         hit = set()
@@ -622,12 +675,15 @@ for s, p, o in only_compiled:
 # its OWN `to_canonical_graph` pass internally to build `by_subject`, so the
 # blank-node labels visible there belong to a canonical graph, not to
 # `g_compiled`/`iso_compiled`'s own (arbitrary) blank-node labels. Deriving
-# the security-enum value nodes from a canonical graph of the same content
-# is what makes their identities line up with `by_subject`'s.
-security_enum_subjects, security_enum_values = _security_enum_subjects_and_values(
-    to_canonical_graph(g_compiled)
+# the security-enum value nodes -- and the TRE_PAYLOADS blank-node cascade --
+# from a canonical graph of the same content is what makes their identities
+# line up with `by_subject`'s.
+_canonical_compiled = to_canonical_graph(g_compiled)
+security_enum_subjects, security_enum_values = _security_enum_subjects_and_values(_canonical_compiled)
+tre_payload_blank_nodes = _tre_payload_blank_nodes(_canonical_compiled)
+counts, unexplained = classify(
+    by_subject, security_enum_subjects, security_enum_values, tre_payload_blank_nodes
 )
-counts, unexplained = classify(by_subject, security_enum_subjects, security_enum_values)
 summary = format_summary(counts, len(unexplained), len(by_subject))
 
 if unexplained:

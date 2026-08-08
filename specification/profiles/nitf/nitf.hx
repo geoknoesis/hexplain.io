@@ -87,6 +87,7 @@ enum ICEnum @label "Image Compression" { "NC", "NM", "C1", "C3", "C4", "C5", "C6
        "C8", "I1", "M1", "M3", "M4", "M5", "M6", "M7", "M8" }
 enum IMODEEnum @label "Image Mode" { "B", "P", "R", "S" }
 enum TXTFMTEnum @label "Text Format" { "STA", "MTF", "UT1", "U8S" }
+enum ICORDSEnum @label "Image Coordinate Representation" { "U", "G", "N", "S", "D", " " }
 
 // ---------------------------------------------------------------------------
 // CONCEPT-VALUED named enumerations for the security-marking block (below). Unlike the
@@ -97,9 +98,10 @@ enum TXTFMTEnum @label "Text Format" { "STA", "MTF", "UT1", "U8S" }
 // field below that writes `enum <Name>` -- so the same CLAS/DCTP/DG/CATP/CRSN semantics
 // used identically across all six subheaders are declared once and shared six ways,
 // rather than compiled as six independent anonymous copies. This is a DIFFERENT thing
-// from nitf.ttl's own named nitf:FSCLASEnum (see the FileHeader security block note
-// below): nitf.ttl's enum is a plain valid-value set with no concept targets, so it
-// cannot replace these -- it is kept only as the source for each value's raw code.
+// from nitf.ttl's own named nitf:FSCLASEnum, declared just below (unattached -- see its
+// own comment): nitf.ttl's enum is a plain valid-value set with no concept targets, so it
+// cannot replace these; its raw codes are simply the source each concept-valued arm's
+// raw side was copied from.
 enum SecurityClassificationEnum @label "Security Classification level" {
   "T"=>asec:TopSecret, "S"=>asec:Secret, "C"=>asec:Confidential, "R"=>asec:Restricted, "U"=>asec:Unclassified
 }
@@ -115,6 +117,17 @@ enum ClassificationReasonEnum @label "Classification Reason" {
   "A"=>asec:ReasonA, "B"=>asec:ReasonB, "C"=>asec:ReasonC, "D"=>asec:ReasonD,
   "E"=>asec:ReasonE, "F"=>asec:ReasonF, "G"=>asec:ReasonG
 }
+
+// nitf.ttl's own named nitf:FSCLASEnum: a plain valid-value set (T/S/C/R/U, no concept
+// targets), declared here ONLY so the compiled graph carries the same bddo:Enumeration
+// individual nitf.ttl does -- it is deliberately left unattached to any field. Every
+// *CLAS field (FSCLAS/ISCLAS/SSCLAS/TSCLAS/DECLAS/RECLAS) already points at the
+// concept-valued SecurityClassificationEnum above via `enum SecurityClassificationEnum`,
+// and bddo:enumeration is sh:maxCount 1 (bddo.ttl's FieldShape) -- a field cannot carry
+// both, and the concept-valued mapping is the deliberate enrichment to keep. Attaching
+// FSCLASEnum to any of those fields instead/also would either lose the concept mapping
+// or violate the shape, so it stays declared-but-unreferenced.
+enum FSCLASEnum @label "Security Classification level" { "T", "S", "C", "R", "U" }
 
 // =========================================================
 // Reusable structs
@@ -147,7 +160,7 @@ struct ImageBand @label "Image band record (Table A-3 band loop)" {
   ISUBCAT  as IB_ISUBCAT  : nitf:BCSA[6] @label "ISUBCATn"
   IFC      as IB_IFC      : nitf:BCSA[1] @label "IFCn"
   IMFLT    as IB_IMFLT    : nitf:BCSA[3] @label "IMFLTn"
-  NLUTS    as IB_NLUTS    : nitf:BCSNpos[1] @label "NLUTSn (LUT sub-loop omitted in cut #1)" // when != 0, NELUT(5)+LUTD data follow (deferred)
+  NLUTS    as IB_NLUTS    : nitf:BCSNpos[1] @label "NLUTSn (LUT sub-loop omitted in cut #1)" @comment "When NLUTSn != 0, NELUTn(5) + LUTDnm data follow; LUT body deferred (see design non-goals)." // when != 0, NELUT(5)+LUTD data follow (deferred)
 }
 
 // =========================================================
@@ -211,7 +224,7 @@ struct FileHeader @label "NITF File Header (Table A-1)" {
   imageSegs   as FH_ImageSegTable   : ImageSegLen   repeat [NUMI] @label "Image segment length pairs (× NUMI)"
   NUMS     as FH_NUMS    : nitf:BCSNpos[3] @label "NUMS — Number of Graphic Segments"
   graphicSegs as FH_GraphicSegTable : GraphicSegLen repeat [NUMS] @label "Graphic segment length pairs (× NUMS)"
-  NUMX     as FH_NUMX    : nitf:BCSNpos[3]  @fixed "000" @label "NUMX — Reserved for Future Use"
+  NUMX     as FH_NUMX    : nitf:BCSNpos[3]  @label "NUMX — Reserved for Future Use"
   NUMT     as FH_NUMT    : nitf:BCSNpos[3] @label "NUMT — Number of Text Segments"
   textSegs    as FH_TextSegTable    : TextSegLen    repeat [NUMT] @label "Text segment length pairs (× NUMT)"
   NUMDES   as FH_NUMDES  : nitf:BCSNpos[3] @label "NUMDES — Number of Data Extension Segments"
@@ -301,7 +314,7 @@ struct ImageSubheader means gv:RasterDataset @label "NITF Image Subheader (Table
   ICAT     as IS_ICAT    : nitf:BCSA[8] @label "ICAT — Image Category"
   ABPP     as IS_ABPP    : nitf:BCSNpos[2] @label "ABPP — Actual Bits-Per-Pixel Per Band"
   PJUST    as IS_PJUST   : nitf:BCSA[1] @label "PJUST — Pixel Justification"
-  ICORDS   as IS_ICORDS  : nitf:BCSA[1] @label "ICORDS — Image Coordinate Representation"
+  ICORDS   as IS_ICORDS  : nitf:BCSA[1] enum ICORDSEnum @label "ICORDS — Image Coordinate Representation"
   // Bracketed guards below: HdlParser's exprFromAccessorRun() only recognizes an unaliased
   // `IDENT COLON` as "next field starts here", so once the following field carries its own `as`
   // alias a bare trailing expression here would swallow that field's name (verified against the
@@ -480,7 +493,7 @@ struct DESubheader @label "NITF Data Extension Segment Subheader (Table A-8)" {
   DESITEM  as DES_DESITEM : nitf:BCSNpos[3]  if [trim(DESID) == 'TRE_OVERFLOW'] @label "DESITEM — DES Data Item Overflowed"
   DESSHL   as DES_DESSHL  : nitf:BCSNpos[4] @label "DESSHL — DES User-Defined Subheader Length"
   DESSHF   as DES_DESSHF  : nitf:BCSA[DESSHL] if [DESSHL != 0] @label "DESSHF — DES User-Defined Subheader Fields"
-  DESDATA  as DES_DESDATA : bytes[..] @label "DESDATA — DES Data Field" // for DESID = TRE_OVERFLOW this is a TRE sequence
+  DESDATA  as DES_DESDATA : bytes[..] @label "DESDATA — DES Data Field" @comment "Bounded by the enclosing segment's LDn length from the file header's DES length table. When DESID = TRE_OVERFLOW, this field carries a nitf:TRE sequence rather than opaque bytes." // for DESID = TRE_OVERFLOW this is a TRE sequence
 }
 
 // =========================================================
@@ -515,7 +528,7 @@ struct RESubheader @label "NITF Reserved Extension Segment Subheader (Table A-9)
   // Bracketed guard: see the note on ImageSubheader.IGEOLO for why an unaliased-next-field
   // heuristic forces this once the following field (RESDATA) carries its own `as` alias.
   RESSHF   as RES_RESSHF  : nitf:BCSA[RESSHL] if [RESSHL != 0] @label "RESSHF — RES User-Defined Subheader Fields"
-  RESDATA  as RES_RESDATA : bytes[..] @label "RESDATA — RES Data Field"
+  RESDATA  as RES_RESDATA : bytes[..] @label "RESDATA — RES Data Field" @comment "Bounded by the enclosing segment's LREn length from the file header's RES length table."
 }
 
 // =========================================================
