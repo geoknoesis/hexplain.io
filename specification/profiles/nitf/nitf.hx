@@ -3,10 +3,18 @@
 // NOTE: compiles via the `hdl` module in hexplain-tools (io.hexplain.hdl.HdlCompiler;
 // `.hx`/`.yaml` CLI). nitf.ttl is the hand-written equivalent. Every field below carries an
 // `as FH_*`/`IS_*`/... alias so its minted IRI matches nitf.ttl's flat FH_/IS_ names exactly
-// (HDL's default, unaliased form is a dotted `nitf:FileHeader.FHDR`) -- except SecurityMarking's
-// 16 fields, which stay dotted: that struct is shared across six segments but the TTL inlines it
-// with six different segment-specific prefixes (FH_FS*, IS_IS*, GS_SS*, TS_TS*, DES_DE(S)*,
-// RES_RE*), so there is no single correct target name (a residual left for a future lift rule).
+// (HDL's default, unaliased form is a dotted `nitf:FileHeader.FHDR`).
+//
+// (2026-08-08) The 16-field security-marking block used to be factored into one reusable
+// `struct SecurityMarking` referenced as a nested field from all six subheaders -- HDL mints
+// one shared field IRI per struct (nitf:SecurityMarking.CLAS) but nitf.ttl inlines the same 16
+// fields six times under six different segment-specific prefixes (FH_FS*, IS_IS*, GS_SS*,
+// TS_TS*, DES_DE(S)*, RES_RE*), so no aliasing scheme could reconcile one shared subject
+// against six textually-identical but IRI-distinct copies. The struct is now flattened: each
+// of the six subheaders carries its own inline copy of the 16 fields, named to match nitf.ttl
+// exactly via `as`. Every copy keeps the richer modeling nitf.ttl does not have -- concept-
+// valued `enum` maps (e.g. "T"=>asec:TopSecret) and `means asec:*` mappings -- so the compiled
+// output is a strict superset of nitf.ttl's security-block triples, not a smaller copy of it.
 //
 // STATUS — aligned with the P0 vocabulary extensions (2026-08-02).
 // nitf.ttl remains authoritative; this file is the authoring surface and is kept in step
@@ -28,12 +36,16 @@
 //   * BCS-A text fields are modeled as ascii[N]; BCS-N positive integers as anum[N]
 //     (the digits-only restriction remains documentary — BDDO has no character-class
 //     facet — but the numeric-vs-text distinction is now load-bearing, not cosmetic).
-//   * The 16-field security block, repeated inline six times in the TTL, is factored into
-//     one reusable `SecurityMarking` struct included as a nested field (its own field IRIs are
-//     therefore left in HDL's dotted form, e.g. nitf:SecurityMarking.CLAS — see the file-header
-//     note above). This attaches the asec:* markings to a per-segment marking resource (vs
-//     flat-on-dataset in the TTL) — a deliberate HDL composition choice; a lift rule can flatten
-//     it if required.
+//   * The 16-field security block is inlined six times, once per subheader, matching nitf.ttl's
+//     own flat FH_FS*/IS_IS*/GS_SS*/TS_TS*/DES_DE(S)*/RES_RE* names exactly (see the file-header
+//     note above). Concept-valued fields (CLAS/DCTP/DG/CATP/CRSN) point at one of five named,
+//     concept-valued `.hx`-level enums (SecurityClassificationEnum..ClassificationReasonEnum,
+//     declared with the other named enums below) instead of nitf.ttl's named nitf:FSCLASEnum --
+//     HDL's enum maps are concept-valued, whereas the named TTL enumeration is a plain
+//     valid-value set, so the two are not interchangeable (see the enum note there). Declaring
+//     these once and referencing them from all six subheaders (rather than repeating an inline
+//     `enum { ... }` map at each of the 30 use sites) keeps the compiled output's enum structure
+//     shared six ways instead of independently duplicated.
 //   * TRE overflow areas (a sized region that then repeats TREs) use the @prop escape
 //     hatch — the one NITF construct without dedicated HDL sugar.
 
@@ -54,44 +66,68 @@ use nitf:    <https://hexplain.io/ns/profile/nitf#>
 use vann:    <http://purl.org/vocab/vann/>
 
 // =========================================================
+// Named enumerations (nitf.ttl declares these as labelled bddo:Enumeration
+// individuals and points fields at them, rather than repeating an anonymous copy
+// at each use site).
+//
+// These are VALID-VALUE SETS, not concept schemes: each value carries only its raw
+// code, exactly as nitf.ttl does. They deliberately mint no `=> Symbol` IRIs -- doing
+// so would fabricate undefined format-local individuals (nitf:C1, nitf:M3, ...) that
+// nothing defines and nothing else references. Where a value really does denote a
+// shared concept, bind it to a defined one instead -- see the five CONCEPT-VALUED named
+// enums directly below (SecurityClassificationEnum..ClassificationReasonEnum), each an
+// `raw=>Symbol` mapping into the asec:* security aspect vocabulary, used from the CLAS/
+// DCTP/DG/CATP/CRSN fields of every one of the six security blocks inlined into
+// FileHeader/ImageSubheader/GraphicSubheader/TextSubheader/DESubheader/RESubheader below.
+// =========================================================
+enum PVTYPEEnum @label "Pixel Value Type" { "INT", "B", "SI", "R", "C" }
+enum IREPEnum @label "Image Representation" { "MONO", "RGB", "RGB/LUT", "MULTI", "NODISPLY",
+       "NVECTOR", "POLAR", "VPH", "YCbCr601" }
+enum ICEnum @label "Image Compression" { "NC", "NM", "C1", "C3", "C4", "C5", "C6", "C7",
+       "C8", "I1", "M1", "M3", "M4", "M5", "M6", "M7", "M8" }
+enum IMODEEnum @label "Image Mode" { "B", "P", "R", "S" }
+enum TXTFMTEnum @label "Text Format" { "STA", "MTF", "UT1", "U8S" }
+
+// ---------------------------------------------------------------------------
+// CONCEPT-VALUED named enumerations for the security-marking block (below). Unlike the
+// five raw-value-only enums above, each of these carries `raw=>Symbol` arms into the
+// asec:* security aspect vocabulary -- HDL's `enum` grammar allows concept-valued arms on
+// a top-level named declaration exactly as on a field-inline one, and the compiler mints
+// ONE shared bddo:Enumeration individual for each, referenced (not re-inlined) by every
+// field below that writes `enum <Name>` -- so the same CLAS/DCTP/DG/CATP/CRSN semantics
+// used identically across all six subheaders are declared once and shared six ways,
+// rather than compiled as six independent anonymous copies. This is a DIFFERENT thing
+// from nitf.ttl's own named nitf:FSCLASEnum (see the FileHeader security block note
+// below): nitf.ttl's enum is a plain valid-value set with no concept targets, so it
+// cannot replace these -- it is kept only as the source for each value's raw code.
+enum SecurityClassificationEnum @label "Security Classification level" {
+  "T"=>asec:TopSecret, "S"=>asec:Secret, "C"=>asec:Confidential, "R"=>asec:Restricted, "U"=>asec:Unclassified
+}
+enum DeclassificationTypeEnum @label "Declassification Type" {
+  "DD"=>asec:DeclassifyOnDate, "DE"=>asec:DeclassifyOnEvent, "GD"=>asec:DowngradeOnDate,
+  "GE"=>asec:DowngradeOnEvent, "O"=>asec:Oadr, "X"=>asec:ExemptFromAutomatic
+}
+enum DowngradeToEnum @label "Downgrade To" { "S"=>asec:Secret, "C"=>asec:Confidential, "R"=>asec:Restricted }
+enum ClassificationAuthorityTypeEnum @label "Classification Authority Type" {
+  "O"=>asec:OriginalAuthority, "D"=>asec:DerivativeSingle, "M"=>asec:DerivativeMultiple
+}
+enum ClassificationReasonEnum @label "Classification Reason" {
+  "A"=>asec:ReasonA, "B"=>asec:ReasonB, "C"=>asec:ReasonC, "D"=>asec:ReasonD,
+  "E"=>asec:ReasonE, "F"=>asec:ReasonF, "G"=>asec:ReasonG
+}
+
+// =========================================================
 // Reusable structs
 // =========================================================
 
 // Generic Tagged Record Extension (Table A-7), with tag dispatch to specific payloads.
-struct TRE {
-  CETAG  as TRE_CETAG  : ascii[6]
-  CEL    as TRE_CEL    : ascii[5]
+struct TRE @label "Tagged Record Extension" {
+  CETAG  as TRE_CETAG  : nitf:BCSA[6] @label "CETAG/RETAG — 6-char tag"
+  CEL    as TRE_CEL    : nitf:BCSNpos[5] @label "CEL/REL — length of CEDATA"
   CEDATA as TRE_CEDATA : bytes[CEL] switch CETAG {
              "BLOCKA" => BLOCKA
              "RPC00B" => RPC00B
            }
-}
-
-// Security marking block (16 fields; identical layout across all NITF subheaders),
-// wired to the hx-security aspect. Concept-valued fields carry an enum raw->concept map;
-// large registers (codewords, exemptions) are left physical with a pointer comment.
-struct SecurityMarking {
-  CLAS : ascii[1]  enum { "T"=>asec:TopSecret, "S"=>asec:Secret, "C"=>asec:Confidential,
-                          "R"=>asec:Restricted, "U"=>asec:Unclassified } means asec:classification
-  CLSY : ascii[2]  means asec:classificationSystem
-  CODE : ascii[11] // codewords -> asec:compartment (asec:MarkingScheme; space-separated digraphs)
-  CTLH : ascii[2]  // control/handling -> asec:controlAndHandling (asec:MarkingScheme)
-  REL  : ascii[20] means asec:releasableTo
-  DCTP : ascii[2]  enum { "DD"=>asec:DeclassifyOnDate, "DE"=>asec:DeclassifyOnEvent,
-                          "GD"=>asec:DowngradeOnDate, "GE"=>asec:DowngradeOnEvent,
-                          "O"=>asec:Oadr, "X"=>asec:ExemptFromAutomatic } means asec:declassificationType
-  DCDT : ascii[8]  means asec:declassificationDate
-  DCXM : ascii[4]  // -> asec:declassificationExemption (asec:ExemptionScheme)
-  DG   : ascii[1]  enum { "S"=>asec:Secret, "C"=>asec:Confidential, "R"=>asec:Restricted } means asec:downgradeTo
-  DGDT : ascii[8]  means asec:downgradeDate
-  CLTX : ascii[43] means asec:classificationText
-  CATP : ascii[1]  enum { "O"=>asec:OriginalAuthority, "D"=>asec:DerivativeSingle,
-                          "M"=>asec:DerivativeMultiple } means asec:classificationAuthorityType
-  CAUT : ascii[40] means asec:classificationAuthority
-  CRSN : ascii[1]  enum { "A"=>asec:ReasonA, "B"=>asec:ReasonB, "C"=>asec:ReasonC, "D"=>asec:ReasonD,
-                          "E"=>asec:ReasonE, "F"=>asec:ReasonF, "G"=>asec:ReasonG } means asec:classificationReason
-  SRDT : ascii[8]  means asec:securitySourceDate
-  CTLN : ascii[15] means asec:securityControlNumber
 }
 
 // File-header segment-length table pairs (Table A-1). These pairs live inside the FileHeader's
@@ -99,42 +135,71 @@ struct SecurityMarking {
 // from these struct names -- FH_LISHn/FH_LIn etc. (RESegLen's ttl counterpart is even named
 // "LRESHn", not "LRSHn": the ttl author expanded "LRSH" to "LRESH" for the pair's label, so the
 // `as` target follows ttl's actual field name, not a mechanical prefix+DSL-name transform).
-struct ImageSegLen as ImageSegLenPair   { LISH as FH_LISHn  : ascii[6]  LI  as FH_LIn  : ascii[10] }
-struct GraphicSegLen as GraphicSegLenPair { LSSH as FH_LSSHn  : ascii[4]  LS  as FH_LSn  : ascii[6]  }
-struct TextSegLen as TextSegLenPair    { LTSH as FH_LTSHn  : ascii[4]  LT  as FH_LTn  : ascii[5]  }
-struct DESegLen as DESegLenPair      { LDSH as FH_LDSHn  : ascii[4]  LD  as FH_LDn  : ascii[9]  }
-struct RESegLen as RESegLenPair      { LRSH as FH_LRESHn : ascii[4]  LRE as FH_LREn : ascii[7]  }
+struct ImageSegLen as ImageSegLenPair   @label "{ LISHn, LIn }" { LISH as FH_LISHn  : ascii[6]  LI  as FH_LIn  : ascii[10] }
+struct GraphicSegLen as GraphicSegLenPair @label "{ LSSHn, LSn }" { LSSH as FH_LSSHn  : ascii[4]  LS  as FH_LSn  : ascii[6]  }
+struct TextSegLen as TextSegLenPair    @label "{ LTSHn, LTn }" { LTSH as FH_LTSHn  : ascii[4]  LT  as FH_LTn  : ascii[5]  }
+struct DESegLen as DESegLenPair      @label "{ LDSHn, LDn }" { LDSH as FH_LDSHn  : ascii[4]  LD  as FH_LDn  : ascii[9]  }
+struct RESegLen as RESegLenPair      @label "{ LRESHn, LREn }" { LRSH as FH_LRESHn : ascii[4]  LRE as FH_LREn : ascii[7]  }
 
 // Per-band record inside the image subheader (Table A-3 band loop).
-struct ImageBand {
-  IREPBAND as IB_IREPBAND : ascii[2]
-  ISUBCAT  as IB_ISUBCAT  : ascii[6]
-  IFC      as IB_IFC      : ascii[1]
-  IMFLT    as IB_IMFLT    : ascii[3]
-  NLUTS    as IB_NLUTS    : ascii[1]   // when != 0, NELUT(5)+LUTD data follow (deferred)
+struct ImageBand @label "Image band record (Table A-3 band loop)" {
+  IREPBAND as IB_IREPBAND : nitf:BCSA[2] @label "IREPBANDn"
+  ISUBCAT  as IB_ISUBCAT  : nitf:BCSA[6] @label "ISUBCATn"
+  IFC      as IB_IFC      : nitf:BCSA[1] @label "IFCn"
+  IMFLT    as IB_IMFLT    : nitf:BCSA[3] @label "IMFLTn"
+  NLUTS    as IB_NLUTS    : nitf:BCSNpos[1] @label "NLUTSn (LUT sub-loop omitted in cut #1)" // when != 0, NELUT(5)+LUTD data follow (deferred)
 }
 
 // =========================================================
 // File header (Table A-1)
 // =========================================================
-struct FileHeader {
-  FHDR     as FH_FHDR    : ascii[4]  @fixed "NITF"
-  FVER     as FH_FVER    : ascii[5]  @fixed "02.10"
-  CLEVEL   as FH_CLEVEL  : ascii[2]
-  STYPE    as FH_STYPE   : ascii[4]  @fixed "BF01"
-  OSTAID   as FH_OSTAID  : ascii[10]
-  FDT      as FH_FDT     : ascii[14]
-  FTITLE   as FH_FTITLE  : ascii[80]
-  security : SecurityMarking
-  FSCOP    as FH_FSCOP   : ascii[5]
-  FSCPYS   as FH_FSCPYS  : ascii[5]
-  ENCRYP   as FH_ENCRYP  : ascii[1]
-  FBKGC    as FH_FBKGC   : bytes[3]
-  ONAME    as FH_ONAME   : ascii[24]
-  OPHONE   as FH_OPHONE  : ascii[18]
-  FL       as FH_FL      : ascii[12]
-  HL       as FH_HL      : ascii[6]
-  NUMI     as FH_NUMI    : ascii[3]
+struct FileHeader @label "NITF File Header (Table A-1)" {
+  FHDR     as FH_FHDR    : nitf:BCSA[4]  @fixed "NITF" @label "FHDR — File Profile Name"
+  FVER     as FH_FVER    : nitf:BCSA[5]  @fixed "02.10" @label "FVER — File Version"
+  CLEVEL   as FH_CLEVEL  : nitf:BCSNpos[2] @label "CLEVEL — Complexity Level"
+  STYPE    as FH_STYPE   : nitf:BCSA[4]  @fixed "BF01" @label "STYPE — Standard Type"
+  OSTAID   as FH_OSTAID  : nitf:BCSA[10] @label "OSTAID — Originating Station ID"
+  FDT      as FH_FDT     : nitf:BCSN[14] @label "FDT — File Date and Time (CCYYMMDDhhmmss)"
+  FTITLE   as FH_FTITLE  : nitf:ECSA[80] @label "FTITLE — File Title"
+  // ---- Security block (FSCLAS..FSCTLN), wired to the hx-security aspect (asec:*) ----
+  // Concept-valued fields point at one of the five named CONCEPT-VALUED enums declared
+  // near the top of this file (SecurityClassificationEnum..ClassificationReasonEnum) --
+  // NOT at nitf.ttl's named nitf:FSCLASEnum, which is a plain valid-value set with no
+  // concept targets and so cannot carry this mapping (see the note at those declarations).
+  // CODE/CTLH/DCXM are large open-ended registers (codewords, control/handling markings,
+  // exemption codes) with no closed concept set today, so they stay physical-only with a
+  // pointer comment to where they would attach once the aspect vocab grows a MarkingScheme.
+  // FSCODE is nitf:BCSA here (unlike every other segment's CODE field, which is nitf:ECSA) --
+  // that is nitf.ttl's own irregularity, reproduced verbatim, not introduced by this file.
+  FSCLAS as FH_FSCLAS : nitf:ECSA[1]  enum SecurityClassificationEnum means asec:classification
+                           @label "FSCLAS — File Security Classification"
+  FSCLSY as FH_FSCLSY : nitf:ECSA[2]  means asec:classificationSystem @label "FSCLSY — File Security Classification System"
+  FSCODE as FH_FSCODE : nitf:BCSA[11] @label "FSCODE — File Codewords" // -> asec:compartment (asec:MarkingScheme; space-separated digraphs)
+  FSCTLH as FH_FSCTLH : nitf:ECSA[2]  @label "FSCTLH — File Control and Handling" // -> asec:controlAndHandling (asec:MarkingScheme)
+  FSREL  as FH_FSREL  : nitf:ECSA[20] means asec:releasableTo @label "FSREL — File Releasing Instructions"
+  FSDCTP as FH_FSDCTP : nitf:ECSA[2]  enum DeclassificationTypeEnum means asec:declassificationType
+                           @label "FSDCTP — File Declassification Type"
+  FSDCDT as FH_FSDCDT : nitf:ECSA[8]  means asec:declassificationDate @label "FSDCDT — File Declassification Date"
+  FSDCXM as FH_FSDCXM : nitf:ECSA[4]  @label "FSDCXM — File Declassification Exemption" // -> asec:declassificationExemption (asec:ExemptionScheme)
+  FSDG   as FH_FSDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradeTo @label "FSDG — File Downgrade"
+  FSDGDT as FH_FSDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "FSDGDT — File Downgrade Date"
+  FSCLTX as FH_FSCLTX : nitf:ECSA[43] means asec:classificationText @label "FSCLTX — File Classification Text"
+  FSCATP as FH_FSCATP : nitf:ECSA[1]  enum ClassificationAuthorityTypeEnum means asec:classificationAuthorityType
+                           @label "FSCATP — File Classification Authority Type"
+  FSCAUT as FH_FSCAUT : nitf:ECSA[40] means asec:classificationAuthority @label "FSCAUT — File Classification Authority"
+  FSCRSN as FH_FSCRSN : nitf:ECSA[1]  enum ClassificationReasonEnum means asec:classificationReason
+                           @label "FSCRSN — File Classification Reason"
+  FSSRDT as FH_FSSRDT : nitf:ECSA[8]  means asec:securitySourceDate @label "FSSRDT — File Security Source Date"
+  FSCTLN as FH_FSCTLN : nitf:ECSA[15] means asec:securityControlNumber @label "FSCTLN — File Security Control Number"
+  FSCOP    as FH_FSCOP   : nitf:BCSNpos[5] @label "FSCOP — File Copy Number"
+  FSCPYS   as FH_FSCPYS  : nitf:BCSNpos[5] @label "FSCPYS — File Number of Copies"
+  ENCRYP   as FH_ENCRYP  : nitf:BCSNpos[1] @label "ENCRYP — Encryption"
+  FBKGC    as FH_FBKGC   : bytes[3] @label "FBKGC — File Background Color (RGB)"
+  ONAME    as FH_ONAME   : nitf:ECSA[24] @label "ONAME — Originator's Name"
+  OPHONE   as FH_OPHONE  : nitf:ECSA[18] @label "OPHONE — Originator's Phone Number"
+  FL       as FH_FL      : nitf:BCSNpos[12] @label "FL — File Length"
+  HL       as FH_HL      : nitf:BCSNpos[6] @label "HL — NITF File Header Length"
+  NUMI     as FH_NUMI    : nitf:BCSNpos[3] @label "NUMI — Number of Image Segments"
   // `repeat [NUMI]` (bracketed) rather than bare `repeat NUMI`: HdlParser's exprFromAccessorRun()
   // detects "next field starts here" only via an unaliased `IDENT COLON` lookahead, so a bare run
   // would swallow the next field's own name once that field carries its own `as` alias (verified
@@ -143,28 +208,28 @@ struct FileHeader {
   // each precedes a field that is itself aliased below. HelSynth's rewriter only recognizes
   // single-quoted strings (core's HEL lexer, same rule), so literal comparisons use `'x'` inside
   // the brackets even though the unbracketed originals were DSL double-quoted `"x"`.
-  imageSegs   as FH_ImageSegTable   : ImageSegLen   repeat [NUMI]
-  NUMS     as FH_NUMS    : ascii[3]
-  graphicSegs as FH_GraphicSegTable : GraphicSegLen repeat [NUMS]
-  NUMX     as FH_NUMX    : ascii[3]  @fixed "000"
-  NUMT     as FH_NUMT    : ascii[3]
-  textSegs    as FH_TextSegTable    : TextSegLen    repeat [NUMT]
-  NUMDES   as FH_NUMDES  : ascii[3]
-  deSegs      as FH_DESegTable      : DESegLen      repeat [NUMDES]
-  NUMRES   as FH_NUMRES  : ascii[3]
-  resSegs     as FH_RESegTable      : RESegLen      repeat [NUMRES]
-  UDHDL    as FH_UDHDL   : anum[5]
-  UDHOFL   as FH_UDHOFL  : ascii[3]  if [UDHDL != 0]
-  UDHD     as FH_UDHD    : TRE if UDHDL != 0 @prop bddo:sizeFromExpression "UDHDL - 3" repeat until [eof()]
-  XHDL     as FH_XHDL    : anum[5]
-  XHDLOFL  as FH_XHDLOFL : ascii[3]  if [XHDL != 0]
+  imageSegs   as FH_ImageSegTable   : ImageSegLen   repeat [NUMI] @label "Image segment length pairs (× NUMI)"
+  NUMS     as FH_NUMS    : nitf:BCSNpos[3] @label "NUMS — Number of Graphic Segments"
+  graphicSegs as FH_GraphicSegTable : GraphicSegLen repeat [NUMS] @label "Graphic segment length pairs (× NUMS)"
+  NUMX     as FH_NUMX    : nitf:BCSNpos[3]  @fixed "000" @label "NUMX — Reserved for Future Use"
+  NUMT     as FH_NUMT    : nitf:BCSNpos[3] @label "NUMT — Number of Text Segments"
+  textSegs    as FH_TextSegTable    : TextSegLen    repeat [NUMT] @label "Text segment length pairs (× NUMT)"
+  NUMDES   as FH_NUMDES  : nitf:BCSNpos[3] @label "NUMDES — Number of Data Extension Segments"
+  deSegs      as FH_DESegTable      : DESegLen      repeat [NUMDES] @label "DES length pairs (× NUMDES)"
+  NUMRES   as FH_NUMRES  : nitf:BCSNpos[3] @label "NUMRES — Number of Reserved Extension Segments"
+  resSegs     as FH_RESegTable      : RESegLen      repeat [NUMRES] @label "RES length pairs (× NUMRES)"
+  UDHDL    as FH_UDHDL   : nitf:BCSNpos[5] @label "UDHDL — User-Defined Header Data Length"
+  UDHOFL   as FH_UDHOFL  : nitf:BCSNpos[3]  if [UDHDL != 0] @label "UDHOFL — user-defined header overflow"
+  UDHD     as FH_UDHD    : TRE if UDHDL != 0 @prop bddo:sizeFromExpression "FH_UDHDL - 3" repeat until [eof()] @label "UDHD — user-defined header data (TREs)"
+  XHDL     as FH_XHDL    : nitf:BCSNpos[5] @label "XHDL — Extended Header Data Length"
+  XHDLOFL  as FH_XHDLOFL : nitf:BCSNpos[3]  if [XHDL != 0] @label "XHDLOFL — extended header overflow"
   // Bracketed `repeat until [eof()]` here too, even though XHD looks like the struct's last field:
   // the `raw-turtle` keyword right after it is itself an IDENT token to the lexer (its `{...}` body
   // is lexed as a single opaque RAW_BLOCK, with no separate LBRACE the unbracketed accessor-run
   // loop could stop on), so an unbracketed trailing expression here would swallow both the
   // "raw-turtle" token and the entire RAW_BLOCK text into XHD's HEL expression -- verified against
   // the compiler; unbracketed reproducibly corrupts this field and silently drops the block below.
-  XHD      as FH_XHD     : TRE if XHDL != 0 @prop bddo:sizeFromExpression "XHDL - 3" repeat until [eof()]
+  XHD      as FH_XHD     : TRE if XHDL != 0 @prop bddo:sizeFromExpression "FH_XHDL - 3" repeat until [eof()] @label "XHD — extended header data (TREs)"
 
   // ---- Non-HDL-expressible triples, carried verbatim from nitf.ttl (Task 6 Part B) ----
   // Format-level `raw-turtle` does not exist: HdlParser.parseStruct() is the only place that
@@ -194,131 +259,253 @@ struct FileHeader {
 // =========================================================
 // Image subheader (Table A-3)
 // =========================================================
-struct ImageSubheader means gv:RasterDataset {
-  IM       as IS_IM      : ascii[2]  @fixed "IM"
-  IID1     as IS_IID1    : ascii[10]
-  IDATIM   as IS_IDATIM  : ascii[14]
-  TGTID    as IS_TGTID   : ascii[17]
-  IID2     as IS_IID2    : ascii[80]
-  security : SecurityMarking
-  ENCRYP   as IS_ENCRYP  : ascii[1]
-  ISORCE   as IS_ISORCE  : ascii[42]
-  NROWS    as IS_NROWS   : anum[8]  means araster:height
-  NCOLS    as IS_NCOLS   : anum[8]  means araster:width
-  PVTYPE   as IS_PVTYPE  : ascii[3]  enum { "INT"=>Int, "B"=>BiLevel, "SI"=>Signed, "R"=>Real, "C"=>Complex }
-  IREP     as IS_IREP    : ascii[8]  // enum over MONO/RGB/RGB-LUT/MULTI/NODISPLY/NVECTOR/POLAR/VPH/YCbCr601
-  ICAT     as IS_ICAT    : ascii[8]
-  ABPP     as IS_ABPP    : ascii[2]
-  PJUST    as IS_PJUST   : ascii[1]
-  ICORDS   as IS_ICORDS  : ascii[1]
+struct ImageSubheader means gv:RasterDataset @label "NITF Image Subheader (Table A-3)" {
+  IM       as IS_IM      : nitf:BCSA[2]  @fixed "IM" @label "IM — File Part Type"
+  IID1     as IS_IID1    : nitf:BCSA[10] @label "IID1 — Image Identifier 1"
+  IDATIM   as IS_IDATIM  : nitf:BCSN[14] @label "IDATIM — Image Date and Time (CCYYMMDDhhmmss)"
+  TGTID    as IS_TGTID   : nitf:BCSA[17] @label "TGTID — Target Identifier"
+  IID2     as IS_IID2    : nitf:ECSA[80] @label "IID2 — Image Identifier 2"
+  // ---- Security block (ISCLAS..ISCTLN) -- same modeling as FileHeader's FSCLAS..FSCTLN
+  // block above (concept enums inline, CODE/CTLH/DCXM physical-only): MIL-STD-2500C repeats
+  // the identical 16-field block verbatim in every subheader, just under a different prefix.
+  ISCLAS as IS_ISCLAS : nitf:ECSA[1]  enum SecurityClassificationEnum means asec:classification
+                           @label "ISCLAS — Image Security Classification"
+  ISCLSY as IS_ISCLSY : nitf:ECSA[2]  means asec:classificationSystem @label "ISCLSY — Image Security Classification System"
+  ISCODE as IS_ISCODE : nitf:ECSA[11] @label "ISCODE — Image Codewords" // -> asec:compartment (asec:MarkingScheme; space-separated digraphs)
+  ISCTLH as IS_ISCTLH : nitf:ECSA[2]  @label "ISCTLH — Image Control and Handling" // -> asec:controlAndHandling (asec:MarkingScheme)
+  ISREL  as IS_ISREL  : nitf:ECSA[20] means asec:releasableTo @label "ISREL — Image Releasing Instructions"
+  ISDCTP as IS_ISDCTP : nitf:ECSA[2]  enum DeclassificationTypeEnum means asec:declassificationType
+                           @label "ISDCTP — Image Declassification Type"
+  ISDCDT as IS_ISDCDT : nitf:ECSA[8]  means asec:declassificationDate @label "ISDCDT — Image Declassification Date"
+  ISDCXM as IS_ISDCXM : nitf:ECSA[4]  @label "ISDCXM — Image Declassification Exemption" // -> asec:declassificationExemption (asec:ExemptionScheme)
+  ISDG   as IS_ISDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradeTo @label "ISDG — Image Downgrade"
+  ISDGDT as IS_ISDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "ISDGDT — Image Downgrade Date"
+  ISCLTX as IS_ISCLTX : nitf:ECSA[43] means asec:classificationText @label "ISCLTX — Image Classification Text"
+  ISCATP as IS_ISCATP : nitf:ECSA[1]  enum ClassificationAuthorityTypeEnum means asec:classificationAuthorityType
+                           @label "ISCATP — Image Classification Authority Type"
+  ISCAUT as IS_ISCAUT : nitf:ECSA[40] means asec:classificationAuthority @label "ISCAUT — Image Classification Authority"
+  ISCRSN as IS_ISCRSN : nitf:ECSA[1]  enum ClassificationReasonEnum means asec:classificationReason
+                           @label "ISCRSN — Image Classification Reason"
+  ISSRDT as IS_ISSRDT : nitf:ECSA[8]  means asec:securitySourceDate @label "ISSRDT — Image Security Source Date"
+  ISCTLN as IS_ISCTLN : nitf:ECSA[15] means asec:securityControlNumber @label "ISCTLN — Image Security Control Number"
+  ENCRYP   as IS_ENCRYP  : nitf:BCSNpos[1] @label "ENCRYP — Encryption"
+  ISORCE   as IS_ISORCE  : nitf:ECSA[42] @label "ISORCE — Image Source"
+  NROWS    as IS_NROWS   : nitf:BCSNpos[8]  means araster:height @label "NROWS — Number of Significant Rows in image"
+  NCOLS    as IS_NCOLS   : nitf:BCSNpos[8]  means araster:width @label "NCOLS — Number of Significant Columns in image"
+  PVTYPE   as IS_PVTYPE  : nitf:BCSA[3] enum PVTYPEEnum @label "PVTYPE — Pixel Value Type"
+  // Raw values taken from nitf:IREPEnum in nitf.ttl (MIL-STD-2500C Table A-3), which is the
+  // authoritative spelling -- note "RGB/LUT" with a solidus, not the "RGB-LUT" this line used
+  // to carry as prose. Symbols are the codes themselves, so nothing about the standard's
+  // meaning is invented here; the solidus is not a legal identifier, hence RGB_LUT.
+  IREP     as IS_IREP    : nitf:BCSA[8] enum IREPEnum
+  ICAT     as IS_ICAT    : nitf:BCSA[8] @label "ICAT — Image Category"
+  ABPP     as IS_ABPP    : nitf:BCSNpos[2] @label "ABPP — Actual Bits-Per-Pixel Per Band"
+  PJUST    as IS_PJUST   : nitf:BCSA[1] @label "PJUST — Pixel Justification"
+  ICORDS   as IS_ICORDS  : nitf:BCSA[1] @label "ICORDS — Image Coordinate Representation"
   // Bracketed guards below: HdlParser's exprFromAccessorRun() only recognizes an unaliased
   // `IDENT COLON` as "next field starts here", so once the following field carries its own `as`
   // alias a bare trailing expression here would swallow that field's name (verified against the
   // compiler). HelSynth's rewriter (like core's HEL lexer) only recognizes single-quoted strings,
   // so literal comparisons use `'x'` inside the brackets even though the DSL source is `"x"`.
-  IGEOLO   as IS_IGEOLO  : ascii[60] if [ICORDS != ' ']
-  NICOM    as IS_NICOM   : ascii[1]
-  ICOM     as IS_ICOM    : ascii[80] repeat [NICOM]
-  IC       as IS_IC      : ascii[2]  // enum over NC/NM/C1/C3-C8/I1/M1/M3-M8
-  COMRAT   as IS_COMRAT  : ascii[4]  if [IC != 'NC' and IC != 'NM']
-  NBANDS   as IS_NBANDS  : ascii[1]
-  XBANDS   as IS_XBANDS  : ascii[5]  if [NBANDS == '0']
-  bands    as IS_BandTable : ImageBand repeat [NBANDS]
-  ISYNC    as IS_ISYNC   : ascii[1]
-  IMODE    as IS_IMODE   : ascii[1]  enum { "B"=>BlockInterleaved, "P"=>PixelInterleaved, "R"=>RowInterleaved, "S"=>BandSequential }
-  NBPR     as IS_NBPR    : ascii[4]
-  NBPC     as IS_NBPC    : ascii[4]
-  NPPBH    as IS_NPPBH   : ascii[4]
-  NPPBV    as IS_NPPBV   : ascii[4]
-  NBPP     as IS_NBPP    : ascii[2]
-  IDLVL    as IS_IDLVL   : ascii[3]
-  IALVL    as IS_IALVL   : ascii[3]
-  ILOC     as IS_ILOC    : ascii[10]
-  IMAG     as IS_IMAG    : ascii[4]
-  UDIDL    as IS_UDIDL   : anum[5]
-  UDOFL    as IS_UDOFL   : ascii[3]  if [UDIDL != 0]
-  UDID     as IS_UDID    : TRE if UDIDL != 0 @prop bddo:sizeFromExpression "UDIDL - 3" repeat until [eof()]
-  IXSHDL   as IS_IXSHDL  : anum[5]
-  IXSOFL   as IS_IXSOFL  : ascii[3]  if [IXSHDL != 0]
-  IXSHD    as IS_IXSHD   : TRE if IXSHDL != 0 @prop bddo:sizeFromExpression "IXSHDL - 3" repeat until eof()
+  IGEOLO   as IS_IGEOLO  : nitf:BCSA[60] if [ICORDS != ' '] @label "IGEOLO — Image Geographic Location"
+  NICOM    as IS_NICOM   : nitf:BCSNpos[1] @label "NICOM — Number of Image Comments"
+  ICOM     as IS_ICOM    : nitf:ECSA[80] repeat [NICOM] @label "ICOMn — Image Comment n (× NICOM)"
+  // Raw values taken from nitf:ICEnum in nitf.ttl (MIL-STD-2500C Table A-3). Symbols are the
+  // codes themselves rather than invented scheme names, so this encodes the valid-value set
+  // without asserting a meaning for any code.
+  IC       as IS_IC      : nitf:BCSA[2] enum ICEnum
+  COMRAT   as IS_COMRAT  : nitf:BCSA[4]  if [IC != 'NC' and IC != 'NM'] @label "COMRAT — Compression Rate Code"
+  NBANDS   as IS_NBANDS  : nitf:BCSNpos[1] @label "NBANDS — Number of Bands"
+  // Numeric `0`, not the string `'0'`: NBANDS is nitf:BCSNpos, whose bddo:baseType is
+  // bddo:baseInteger, so HEL sees an Integer here and a string comparison would never match.
+  // (nitf.ttl has always had the numeric form; this file's `'0'` was correct only while the
+  // field was a plain `ascii[1]`.)
+  XBANDS   as IS_XBANDS  : nitf:BCSNpos[5]  if [NBANDS == 0] @label "XBANDS — Number of Multispectral Bands"
+  bands    as IS_BandTable : ImageBand repeat [NBANDS] @label "Band records (× NBANDS)"
+  ISYNC    as IS_ISYNC   : nitf:BCSNpos[1] @label "ISYNC — Image Sync Code"
+  IMODE    as IS_IMODE   : nitf:BCSA[1] enum IMODEEnum @label "IMODE — Image Mode"
+  NBPR     as IS_NBPR    : nitf:BCSNpos[4] @label "NBPR — Number of Blocks Per Row"
+  NBPC     as IS_NBPC    : nitf:BCSNpos[4] @label "NBPC — Number of Blocks Per Column"
+  NPPBH    as IS_NPPBH   : nitf:BCSNpos[4] @label "NPPBH — Number of Pixels Per Block Horizontal"
+  NPPBV    as IS_NPPBV   : nitf:BCSNpos[4] @label "NPPBV — Number of Pixels Per Block Vertical"
+  NBPP     as IS_NBPP    : nitf:BCSNpos[2] @label "NBPP — Number of Bits Per Pixel Per Band"
+  IDLVL    as IS_IDLVL   : nitf:BCSNpos[3] @label "IDLVL — Image Display Level"
+  IALVL    as IS_IALVL   : nitf:BCSNpos[3] @label "IALVL — Image Attachment Level"
+  ILOC     as IS_ILOC    : nitf:BCSN[10] @label "ILOC — Image Location"
+  IMAG     as IS_IMAG    : nitf:BCSA[4] @label "IMAG — Image Magnification"
+  UDIDL    as IS_UDIDL   : nitf:BCSNpos[5] @label "UDIDL — User-Defined Image Data Length"
+  UDOFL    as IS_UDOFL   : nitf:BCSNpos[3]  if [UDIDL != 0] @label "UDOFL — user-defined image data overflow"
+  UDID     as IS_UDID    : TRE if UDIDL != 0 @prop bddo:sizeFromExpression "IS_UDIDL - 3" repeat until [eof()] @label "UDID — user-defined image data (TREs)"
+  IXSHDL   as IS_IXSHDL  : nitf:BCSNpos[5] @label "IXSHDL — Image Extended Subheader Data Length"
+  IXSOFL   as IS_IXSOFL  : nitf:BCSNpos[3]  if [IXSHDL != 0] @label "IXSOFL — image extended subheader overflow"
+  IXSHD    as IS_IXSHD   : TRE if IXSHDL != 0 @prop bddo:sizeFromExpression "IS_IXSHDL - 3" repeat until eof() @label "IXSHD — image extended subheader data (TREs)"
 }
 
 // =========================================================
 // Graphic subheader (Table A-5)
 // =========================================================
-struct GraphicSubheader {
-  SY       as GS_SY      : ascii[2]  @fixed "SY"
-  SID      as GS_SID     : ascii[10]
-  SNAME    as GS_SNAME   : ascii[20]
-  security : SecurityMarking
-  ENCRYP   as GS_ENCRYP  : ascii[1]
-  SFMT     as GS_SFMT    : ascii[1]  @fixed "C"
-  SSTRUCT  as GS_SSTRUCT : ascii[13]
-  SDLVL    as GS_SDLVL   : ascii[3]
-  SALVL    as GS_SALVL   : ascii[3]
-  SLOC     as GS_SLOC    : ascii[10]
-  SBND1    as GS_SBND1   : ascii[10]
-  SCOLOR   as GS_SCOLOR  : ascii[1]
-  SBND2    as GS_SBND2   : ascii[10]
-  SRES2    as GS_SRES2   : ascii[2]
-  SXSHDL   as GS_SXSHDL  : anum[5]
+struct GraphicSubheader @label "NITF Graphic Subheader (Table A-5)" {
+  SY       as GS_SY      : nitf:BCSA[2]  @fixed "SY" @label "SY — File Part Type"
+  SID      as GS_SID     : nitf:BCSA[10] @label "SID — Graphic Identifier"
+  SNAME    as GS_SNAME   : nitf:ECSA[20] @label "SNAME — Graphic Name"
+  // ---- Security block (SSCLAS..SSCTLN) -- same modeling as FileHeader's FSCLAS..FSCTLN above ----
+  SSCLAS as GS_SSCLAS : nitf:ECSA[1]  enum SecurityClassificationEnum means asec:classification
+                           @label "SSCLAS — Graphic Security Classification"
+  SSCLSY as GS_SSCLSY : nitf:ECSA[2]  means asec:classificationSystem @label "SSCLSY — Graphic Security Classification System"
+  SSCODE as GS_SSCODE : nitf:ECSA[11] @label "SSCODE — Graphic Codewords" // -> asec:compartment (asec:MarkingScheme; space-separated digraphs)
+  SSCTLH as GS_SSCTLH : nitf:ECSA[2]  @label "SSCTLH — Graphic Control and Handling" // -> asec:controlAndHandling (asec:MarkingScheme)
+  SSREL  as GS_SSREL  : nitf:ECSA[20] means asec:releasableTo @label "SSREL — Graphic Releasing Instructions"
+  SSDCTP as GS_SSDCTP : nitf:ECSA[2]  enum DeclassificationTypeEnum means asec:declassificationType
+                           @label "SSDCTP — Graphic Declassification Type"
+  SSDCDT as GS_SSDCDT : nitf:ECSA[8]  means asec:declassificationDate @label "SSDCDT — Graphic Declassification Date"
+  SSDCXM as GS_SSDCXM : nitf:ECSA[4]  @label "SSDCXM — Graphic Declassification Exemption" // -> asec:declassificationExemption (asec:ExemptionScheme)
+  SSDG   as GS_SSDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradeTo @label "SSDG — Graphic Downgrade"
+  SSDGDT as GS_SSDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "SSDGDT — Graphic Downgrade Date"
+  SSCLTX as GS_SSCLTX : nitf:ECSA[43] means asec:classificationText @label "SSCLTX — Graphic Classification Text"
+  SSCATP as GS_SSCATP : nitf:ECSA[1]  enum ClassificationAuthorityTypeEnum means asec:classificationAuthorityType
+                           @label "SSCATP — Graphic Classification Authority Type"
+  SSCAUT as GS_SSCAUT : nitf:ECSA[40] means asec:classificationAuthority @label "SSCAUT — Graphic Classification Authority"
+  SSCRSN as GS_SSCRSN : nitf:ECSA[1]  enum ClassificationReasonEnum means asec:classificationReason
+                           @label "SSCRSN — Graphic Classification Reason"
+  SSSRDT as GS_SSSRDT : nitf:ECSA[8]  means asec:securitySourceDate @label "SSSRDT — Graphic Security Source Date"
+  SSCTLN as GS_SSCTLN : nitf:ECSA[15] means asec:securityControlNumber @label "SSCTLN — Graphic Security Control Number"
+  ENCRYP   as GS_ENCRYP  : nitf:BCSNpos[1] @label "ENCRYP — Encryption"
+  SFMT     as GS_SFMT    : nitf:BCSA[1]  @fixed "C" @label "SFMT — Graphic Type"
+  SSTRUCT  as GS_SSTRUCT : nitf:BCSNpos[13] @label "SSTRUCT — Reserved for Future Use"
+  SDLVL    as GS_SDLVL   : nitf:BCSNpos[3] @label "SDLVL — Graphic Display Level"
+  SALVL    as GS_SALVL   : nitf:BCSNpos[3] @label "SALVL — Graphic Attachment Level"
+  SLOC     as GS_SLOC    : nitf:BCSN[10] @label "SLOC — Graphic Location"
+  SBND1    as GS_SBND1   : nitf:BCSN[10] @label "SBND1 — First Graphic Bound Location"
+  SCOLOR   as GS_SCOLOR  : nitf:BCSA[1] @label "SCOLOR — Graphic Color"
+  SBND2    as GS_SBND2   : nitf:BCSN[10] @label "SBND2 — Second Graphic Bound Location"
+  SRES2    as GS_SRES2   : nitf:BCSNpos[2] @label "SRES2 — Reserved for Future Use"
+  SXSHDL   as GS_SXSHDL  : nitf:BCSNpos[5] @label "SXSHDL — Graphic Extended Subheader Data Length"
   // Bracketed guard: see the note on ImageSubheader.IGEOLO for why an unaliased-next-field
   // heuristic forces this once the following field (SXSHD) carries its own `as` alias.
-  SXSOFL   as GS_SXSOFL  : ascii[3]  if [SXSHDL != 0]
-  SXSHD    as GS_SXSHD   : TRE if SXSHDL != 0 @prop bddo:sizeFromExpression "SXSHDL - 3" repeat until eof()
+  SXSOFL   as GS_SXSOFL  : nitf:BCSNpos[3]  if [SXSHDL != 0] @label "SXSOFL — graphic extended subheader overflow"
+  SXSHD    as GS_SXSHD   : TRE if SXSHDL != 0 @prop bddo:sizeFromExpression "GS_SXSHDL - 3" repeat until eof() @label "SXSHD — graphic extended subheader data (TREs)"
 }
 
 // =========================================================
 // Text subheader (Table A-6)
 // =========================================================
-struct TextSubheader {
-  TE       as TS_TE      : ascii[2]  @fixed "TE"
-  TEXTID   as TS_TEXTID  : ascii[7]
-  TXTALVL  as TS_TXTALVL : ascii[3]
-  TXTDT    as TS_TXTDT   : ascii[14]
-  TXTITL   as TS_TXTITL  : ascii[80]
-  security : SecurityMarking
-  ENCRYP   as TS_ENCRYP  : ascii[1]
-  TXTFMT   as TS_TXTFMT  : ascii[3]  enum { "STA"=>Standard, "MTF"=>MessageTextFormat, "UT1"=>EcsText, "U8S"=>U8sText }
-  TXSHDL   as TS_TXSHDL  : anum[5]
+struct TextSubheader @label "NITF Text Subheader (Table A-6)" {
+  TE       as TS_TE      : nitf:BCSA[2]  @fixed "TE" @label "TE — File Part Type"
+  TEXTID   as TS_TEXTID  : nitf:BCSA[7] @label "TEXTID — Text Identifier"
+  TXTALVL  as TS_TXTALVL : nitf:BCSNpos[3] @label "TXTALVL — Text Attachment Level"
+  TXTDT    as TS_TXTDT   : nitf:BCSN[14] @label "TXTDT — Text Date and Time (CCYYMMDDhhmmss)"
+  TXTITL   as TS_TXTITL  : nitf:ECSA[80] @label "TXTITL — Text Title"
+  // ---- Security block (TSCLAS..TSCTLN) -- same modeling as FileHeader's FSCLAS..FSCTLN above ----
+  TSCLAS as TS_TSCLAS : nitf:ECSA[1]  enum SecurityClassificationEnum means asec:classification
+                           @label "TSCLAS — Text Security Classification"
+  TSCLSY as TS_TSCLSY : nitf:ECSA[2]  means asec:classificationSystem @label "TSCLSY — Text Security Classification System"
+  TSCODE as TS_TSCODE : nitf:ECSA[11] @label "TSCODE — Text Codewords" // -> asec:compartment (asec:MarkingScheme; space-separated digraphs)
+  TSCTLH as TS_TSCTLH : nitf:ECSA[2]  @label "TSCTLH — Text Control and Handling" // -> asec:controlAndHandling (asec:MarkingScheme)
+  TSREL  as TS_TSREL  : nitf:ECSA[20] means asec:releasableTo @label "TSREL — Text Releasing Instructions"
+  TSDCTP as TS_TSDCTP : nitf:ECSA[2]  enum DeclassificationTypeEnum means asec:declassificationType
+                           @label "TSDCTP — Text Declassification Type"
+  TSDCDT as TS_TSDCDT : nitf:ECSA[8]  means asec:declassificationDate @label "TSDCDT — Text Declassification Date"
+  TSDCXM as TS_TSDCXM : nitf:ECSA[4]  @label "TSDCXM — Text Declassification Exemption" // -> asec:declassificationExemption (asec:ExemptionScheme)
+  TSDG   as TS_TSDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradeTo @label "TSDG — Text Downgrade"
+  TSDGDT as TS_TSDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "TSDGDT — Text Downgrade Date"
+  TSCLTX as TS_TSCLTX : nitf:ECSA[43] means asec:classificationText @label "TSCLTX — Text Classification Text"
+  TSCATP as TS_TSCATP : nitf:ECSA[1]  enum ClassificationAuthorityTypeEnum means asec:classificationAuthorityType
+                           @label "TSCATP — Text Classification Authority Type"
+  TSCAUT as TS_TSCAUT : nitf:ECSA[40] means asec:classificationAuthority @label "TSCAUT — Text Classification Authority"
+  TSCRSN as TS_TSCRSN : nitf:ECSA[1]  enum ClassificationReasonEnum means asec:classificationReason
+                           @label "TSCRSN — Text Classification Reason"
+  TSSRDT as TS_TSSRDT : nitf:ECSA[8]  means asec:securitySourceDate @label "TSSRDT — Text Security Source Date"
+  TSCTLN as TS_TSCTLN : nitf:ECSA[15] means asec:securityControlNumber @label "TSCTLN — Text Security Control Number"
+  ENCRYP   as TS_ENCRYP  : nitf:BCSNpos[1] @label "ENCRYP — Encryption"
+  TXTFMT   as TS_TXTFMT  : nitf:BCSA[3] enum TXTFMTEnum @label "TXTFMT — Text Format"
+  TXSHDL   as TS_TXSHDL  : nitf:BCSNpos[5] @label "TXSHDL — Text Extended Subheader Data Length"
   // Bracketed guard: see the note on ImageSubheader.IGEOLO for why an unaliased-next-field
   // heuristic forces this once the following field (TXSHD) carries its own `as` alias.
-  TXSOFL   as TS_TXSOFL  : ascii[3]  if [TXSHDL != 0]
-  TXSHD    as TS_TXSHD   : TRE if TXSHDL != 0 @prop bddo:sizeFromExpression "TXSHDL - 3" repeat until eof()
+  TXSOFL   as TS_TXSOFL  : nitf:BCSNpos[3]  if [TXSHDL != 0] @label "TXSOFL — text extended subheader overflow"
+  TXSHD    as TS_TXSHD   : TRE if TXSHDL != 0 @prop bddo:sizeFromExpression "TS_TXSHDL - 3" repeat until eof() @label "TXSHD — text extended subheader data (TREs)"
 }
 
 // =========================================================
 // Data Extension Segment subheader (Table A-8)
 // =========================================================
-struct DESubheader {
-  DE       as DES_DE     : ascii[2]  @fixed "DE"
-  DESID    as DES_DESID  : ascii[25]
-  DESVER   as DES_DESVER : ascii[2]
-  security : SecurityMarking
+struct DESubheader @label "NITF Data Extension Segment Subheader (Table A-8)" {
+  DE       as DES_DE     : nitf:BCSA[2]  @fixed "DE" @label "DE — File Part Type"
+  DESID    as DES_DESID  : nitf:BCSA[25] @label "DESID — Unique DES Type Identifier"
+  DESVER   as DES_DESVER : nitf:BCSNpos[2] @label "DESVER — Version of the Data Definition"
+  // ---- Security block (DECLAS..DESCTLN) -- same modeling as FileHeader's FSCLAS..FSCTLN
+  // above. Irregular name: MIL-STD-2500C's own field mnemonic for the first field is DECLAS
+  // (2-letter "DE" root), not DESCLAS -- every other field in this block happens to have a
+  // mnemonic that already starts with "DES" (DESCLSY, DESCODE, ...), so DES_DECLAS is the
+  // literal mnemonic prefixed with "DES_", reproduced verbatim from nitf.ttl, not an alias
+  // exception invented here.
+  DECLAS  as DES_DECLAS  : nitf:ECSA[1]  enum SecurityClassificationEnum means asec:classification
+                           @label "DECLAS — Data Extension Segment Security Classification"
+  DESCLSY as DES_DESCLSY : nitf:ECSA[2]  means asec:classificationSystem @label "DESCLSY — DES Security Classification System"
+  DESCODE as DES_DESCODE : nitf:ECSA[11] @label "DESCODE — DES Codewords" // -> asec:compartment (asec:MarkingScheme; space-separated digraphs)
+  DESCTLH as DES_DESCTLH : nitf:ECSA[2]  @label "DESCTLH — DES Control and Handling" // -> asec:controlAndHandling (asec:MarkingScheme)
+  DESREL  as DES_DESREL  : nitf:ECSA[20] means asec:releasableTo @label "DESREL — DES Releasing Instructions"
+  DESDCTP as DES_DESDCTP : nitf:ECSA[2]  enum DeclassificationTypeEnum means asec:declassificationType
+                           @label "DESDCTP — DES Declassification Type"
+  DESDCDT as DES_DESDCDT : nitf:ECSA[8]  means asec:declassificationDate @label "DESDCDT — DES Declassification Date"
+  DESDCXM as DES_DESDCXM : nitf:ECSA[4]  @label "DESDCXM — DES Declassification Exemption" // -> asec:declassificationExemption (asec:ExemptionScheme)
+  DESDG   as DES_DESDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradeTo @label "DESDG — DES Downgrade"
+  DESDGDT as DES_DESDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "DESDGDT — DES Downgrade Date"
+  DESCLTX as DES_DESCLTX : nitf:ECSA[43] means asec:classificationText @label "DESCLTX — DES Classification Text"
+  DESCATP as DES_DESCATP : nitf:ECSA[1]  enum ClassificationAuthorityTypeEnum means asec:classificationAuthorityType
+                           @label "DESCATP — DES Classification Authority Type"
+  DESCAUT as DES_DESCAUT : nitf:ECSA[40] means asec:classificationAuthority @label "DESCAUT — DES Classification Authority"
+  DESCRSN as DES_DESCRSN : nitf:ECSA[1]  enum ClassificationReasonEnum means asec:classificationReason
+                           @label "DESCRSN — DES Classification Reason"
+  DESSRDT as DES_DESSRDT : nitf:ECSA[8]  means asec:securitySourceDate @label "DESSRDT — DES Security Source Date"
+  DESCTLN as DES_DESCTLN : nitf:ECSA[15] means asec:securityControlNumber @label "DESCTLN — DES Security Control Number"
   // Bracketed guards: see the note on ImageSubheader.IGEOLO for why an unaliased-next-field
   // heuristic forces this once the following field carries its own `as` alias, and why literal
   // comparisons use `'x'` (HelSynth/HEL only recognize single-quoted strings) instead of the DSL's
   // own `"x"`.
-  DESOFLW  as DES_DESOFLW : ascii[6]  if [DESID == 'TRE_OVERFLOW']
-  DESITEM  as DES_DESITEM : ascii[3]  if [DESID == 'TRE_OVERFLOW']
-  DESSHL   as DES_DESSHL  : anum[4]
-  DESSHF   as DES_DESSHF  : ascii[DESSHL] if [DESSHL != 0]
-  DESDATA  as DES_DESDATA : bytes[..]   // for DESID = TRE_OVERFLOW this is a TRE sequence
+  // `trim(...)` is required, not cosmetic: DESID is ascii[25] and MIL-STD-2500C space-pads it,
+  // so the stored value is "TRE_OVERFLOW" followed by 13 spaces and a bare `==` comparison can
+  // never be true -- the two fields below would be silently omitted from every DES that has
+  // them. nitf.ttl's hand-written form has always had the trim; this file had lost it.
+  DESOFLW  as DES_DESOFLW : nitf:BCSA[6]  if [trim(DESID) == 'TRE_OVERFLOW'] @label "DESOFLW — DES Overflowed Header Type"
+  DESITEM  as DES_DESITEM : nitf:BCSNpos[3]  if [trim(DESID) == 'TRE_OVERFLOW'] @label "DESITEM — DES Data Item Overflowed"
+  DESSHL   as DES_DESSHL  : nitf:BCSNpos[4] @label "DESSHL — DES User-Defined Subheader Length"
+  DESSHF   as DES_DESSHF  : nitf:BCSA[DESSHL] if [DESSHL != 0] @label "DESSHF — DES User-Defined Subheader Fields"
+  DESDATA  as DES_DESDATA : bytes[..] @label "DESDATA — DES Data Field" // for DESID = TRE_OVERFLOW this is a TRE sequence
 }
 
 // =========================================================
 // Reserved Extension Segment subheader (Table A-9)
 // =========================================================
-struct RESubheader {
-  RE       as RES_RE     : ascii[2]  @fixed "RE"
-  RESID    as RES_RESID  : ascii[25]
-  RESVER   as RES_RESVER : ascii[2]
-  security : SecurityMarking
-  RESSHL   as RES_RESSHL  : anum[4]
+struct RESubheader @label "NITF Reserved Extension Segment Subheader (Table A-9)" {
+  RE       as RES_RE     : nitf:BCSA[2]  @fixed "RE" @label "RE — File Part Type"
+  RESID    as RES_RESID  : nitf:BCSA[25] @label "RESID — Unique RES Type Identifier"
+  RESVER   as RES_RESVER : nitf:BCSNpos[2] @label "RESVER — Version of the Data Definition"
+  // ---- Security block (RECLAS..RECTLN) -- same modeling as FileHeader's FSCLAS..FSCTLN above ----
+  RECLAS as RES_RECLAS : nitf:ECSA[1]  enum SecurityClassificationEnum means asec:classification
+                           @label "RECLAS — Reserved Extension Segment Security Classification"
+  RECLSY as RES_RECLSY : nitf:ECSA[2]  means asec:classificationSystem @label "RECLSY — RES Security Classification System"
+  RECODE as RES_RECODE : nitf:ECSA[11] @label "RECODE — RES Codewords" // -> asec:compartment (asec:MarkingScheme; space-separated digraphs)
+  RECTLH as RES_RECTLH : nitf:ECSA[2]  @label "RECTLH — RES Control and Handling" // -> asec:controlAndHandling (asec:MarkingScheme)
+  REREL  as RES_REREL  : nitf:ECSA[20] means asec:releasableTo @label "REREL — RES Releasing Instructions"
+  REDCTP as RES_REDCTP : nitf:ECSA[2]  enum DeclassificationTypeEnum means asec:declassificationType
+                           @label "REDCTP — RES Declassification Type"
+  REDCDT as RES_REDCDT : nitf:ECSA[8]  means asec:declassificationDate @label "REDCDT — RES Declassification Date"
+  REDCXM as RES_REDCXM : nitf:ECSA[4]  @label "REDCXM — RES Declassification Exemption" // -> asec:declassificationExemption (asec:ExemptionScheme)
+  REDG   as RES_REDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradeTo @label "REDG — RES Downgrade"
+  REDGDT as RES_REDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "REDGDT — RES Downgrade Date"
+  RECLTX as RES_RECLTX : nitf:ECSA[43] means asec:classificationText @label "RECLTX — RES Classification Text"
+  RECATP as RES_RECATP : nitf:ECSA[1]  enum ClassificationAuthorityTypeEnum means asec:classificationAuthorityType
+                           @label "RECATP — RES Classification Authority Type"
+  RECAUT as RES_RECAUT : nitf:ECSA[40] means asec:classificationAuthority @label "RECAUT — RES Classification Authority"
+  RECRSN as RES_RECRSN : nitf:ECSA[1]  enum ClassificationReasonEnum means asec:classificationReason
+                           @label "RECRSN — RES Classification Reason"
+  RESRDT as RES_RESRDT : nitf:ECSA[8]  means asec:securitySourceDate @label "RESRDT — RES Security Source Date"
+  RECTLN as RES_RECTLN : nitf:ECSA[15] means asec:securityControlNumber @label "RECTLN — RES Security Control Number"
+  RESSHL   as RES_RESSHL  : nitf:BCSNpos[4] @label "RESSHL — RES User-Defined Subheader Length"
   // Bracketed guard: see the note on ImageSubheader.IGEOLO for why an unaliased-next-field
   // heuristic forces this once the following field (RESDATA) carries its own `as` alias.
-  RESSHF   as RES_RESSHF  : ascii[RESSHL] if [RESSHL != 0]
-  RESDATA  as RES_RESDATA : bytes[..]
+  RESSHF   as RES_RESSHF  : nitf:BCSA[RESSHL] if [RESSHL != 0] @label "RESSHF — RES User-Defined Subheader Fields"
+  RESDATA  as RES_RESDATA : bytes[..] @label "RESDATA — RES Data Field"
 }
 
 // =========================================================
