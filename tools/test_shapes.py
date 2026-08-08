@@ -19,6 +19,11 @@ BASE = [
     "specification/aspect/spatialref/spatialref.ttl",
     "specification/aspect/tabular/tabular.ttl",
     "specification/aspect/fsmeta/fsmeta.ttl",
+    # Registers: the concepts the fixtures reference (rpr:GeometryCarrier etc.,
+    # rgeo:MultiLineString) were extracted out of their aspects into these standalone
+    # register documents; load them so partRole/geometryType values resolve.
+    "specification/register/part-role/part-role.ttl",
+    "specification/register/geometry-type/geometry-type.ttl",
     "specification/profiles/shapefile/shapefile.ttl",
 ]
 

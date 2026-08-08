@@ -13,6 +13,7 @@
 @prefix dcat:    <http://www.w3.org/ns/dcat#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix vann:    <http://purl.org/vocab/vann/> .
+@prefix rpr:     <https://hexplain.io/ns/register/part-role#> .
 
 <https://hexplain.io/ns/aspect/bundle> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.0> ; owl:versionInfo "1.0" ;
@@ -44,7 +45,7 @@
     rdfs:subPropertyOf :hasPart ; rdfs:range :Part ;
     rdfs:comment "The recognition anchor / manifest part (e.g. .shp, .gltf, .mpd)." .
 :partRole a owl:ObjectProperty ; rdfs:label "part role" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
-    rdfs:range skos:Concept ; rdfs:comment "The role a Part or PartSpec plays, from abnd:PartRoleScheme." .
+    rdfs:range skos:Concept ; rdfs:comment "The role a Part or PartSpec plays, from a part-role register bound by the profile." .
 :boundBy a owl:ObjectProperty ; rdfs:label "bound by" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
     rdfs:range :BindingKind .
 :partIndex a owl:DatatypeProperty ; rdfs:label "part index" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
@@ -78,22 +79,6 @@
 :Concatenation a owl:NamedIndividual, :BindingKind ; rdfs:label "Concatenation" ;
     rdfs:comment "Parts are ordered fragments of one logical byte stream (multi-volume archives)." .
 
-# ---------- Part-role register (SKOS, open) ----------
-:PartRoleScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
-    skos:prefLabel "Part Role Register"@en .
-:GeometryCarrier   a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Geometry carrier"@en .
-:AttributeTable    a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Attribute table"@en .
-:SpatialReference  a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Spatial reference"@en .
-:CharacterEncoding a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Character encoding"@en .
-:SpatialIndex      a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Spatial index"@en .
-:Manifest          a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Manifest"@en .
-:Segment           a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Segment"@en .
-:Sidecar           a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Sidecar"@en .
-:Metadata          a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Metadata"@en .
-:Thumbnail         a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Thumbnail"@en .
-:Checksum          a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Checksum"@en .
-:Payload           a skos:Concept ; skos:inScheme :PartRoleScheme ; skos:topConceptOf :PartRoleScheme ; skos:prefLabel "Payload"@en .
-
 # ---------- Structural SHACL ----------
 :AssetShape a sh:NodeShape ; sh:targetClass :Asset ;
     sh:property [ sh:path :boundBy ; sh:maxCount 1 ;
@@ -105,7 +90,8 @@
     sh:property [ sh:path :partRole ; sh:class skos:Concept ;
         sh:message "abnd:partRole must be a skos:Concept." ] ;
     sh:property [ sh:path :partRole ;
-        sh:node [ sh:property [ sh:path skos:inScheme ; sh:hasValue :PartRoleScheme ] ] ;
+        # INTERIM: replaced by a hexplain:usesRegister binding in Task 6.
+        sh:node [ sh:property [ sh:path skos:inScheme ; sh:hasValue rpr:PartRoleScheme ] ] ;
         sh:message "abnd:partRole must be drawn from abnd:PartRoleScheme." ] .
 
 # ---------- Facet lifting (SHACL-AF rule) ----------

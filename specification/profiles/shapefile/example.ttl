@@ -3,6 +3,8 @@
 @prefix abnd:    <https://hexplain.io/ns/aspect/bundle#> .
 @prefix fmt:     <https://hexplain.io/ns/profile/shapefile#> .
 @prefix ageom:   <https://hexplain.io/ns/aspect/geometry#> .
+@prefix rgeo:    <https://hexplain.io/ns/register/geometry-type#> .
+@prefix rpr:     <https://hexplain.io/ns/register/part-role#> .
 @prefix asref:   <https://hexplain.io/ns/aspect/spatialref#> .
 @prefix atab:    <https://hexplain.io/ns/aspect/tabular#> .
 @prefix afs:     <https://hexplain.io/ns/aspect/fsmeta#> .
@@ -13,11 +15,11 @@ ex:roads a abnd:Asset ; dcterms:conformsTo fmt:Shapefile ;
     abnd:primaryPart ex:roads.shp ;
     abnd:hasPart ex:roads.shp , ex:roads.shx , ex:roads.dbf , ex:roads.prj , ex:roads.cpg .
 
-ex:roads.shp a abnd:Part ; abnd:partRole abnd:GeometryCarrier ; afs:fileName "roads.shp" ;
-    ageom:geometryType ageom:MultiLineString ; ageom:dimensionality 2 .
-ex:roads.shx a abnd:Part ; abnd:partRole abnd:SpatialIndex ; afs:fileName "roads.shx" .
-ex:roads.dbf a abnd:Part ; abnd:partRole abnd:AttributeTable ; afs:fileName "roads.dbf" ;
+ex:roads.shp a abnd:Part ; abnd:partRole rpr:GeometryCarrier ; afs:fileName "roads.shp" ;
+    ageom:geometryType rgeo:MultiLineString ; ageom:dimensionality 2 .
+ex:roads.shx a abnd:Part ; abnd:partRole rpr:SpatialIndex ; afs:fileName "roads.shx" .
+ex:roads.dbf a abnd:Part ; abnd:partRole rpr:AttributeTable ; afs:fileName "roads.dbf" ;
     atab:rowCount 1200 ; atab:hasField [ atab:fieldName "NAME" ; atab:fieldDataType "C" ] .
-ex:roads.prj a abnd:Part ; abnd:partRole abnd:SpatialReference ; afs:fileName "roads.prj" ;
+ex:roads.prj a abnd:Part ; abnd:partRole rpr:SpatialReference ; afs:fileName "roads.prj" ;
     asref:wktString "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\"]]" ; asref:epsgCode 4326 .
-ex:roads.cpg a abnd:Part ; abnd:partRole abnd:CharacterEncoding ; afs:fileName "roads.cpg" .
+ex:roads.cpg a abnd:Part ; abnd:partRole rpr:CharacterEncoding ; afs:fileName "roads.cpg" .

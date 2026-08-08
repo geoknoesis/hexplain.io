@@ -1,0 +1,63 @@
+# Hexplain Register — Media Encoding 1.0
+# Controlled values for the hx-encoding aspect: codec and compression identifiers as
+# published by the relevant standards bodies (ISO/IEC MPEG, ITU-T, IETF). Split out of the
+# aspect so another jurisdiction or profile can publish a sibling register without forking
+# the aspect or minting into a namespace it does not own.
+# Codes are NOT here: a raw wire code (e.g. a fourCC) belongs to the format that encodes it,
+# and is carried by that profile's HDL enum.
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/register/media-encoding> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/register/media-encoding/1.0> ; owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Register — Media Encoding" ;
+    dcterms:created "2026-08-08"^^xsd:date ;
+    dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "menc" ;
+    vann:preferredNamespaceUri "https://hexplain.io/ns/register/media-encoding#" .
+
+# ---------- Codec Register (SKOS) ----------
+# Open, extensible. Grouped for convenience into video and audio collections.
+menc:CodecScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/media-encoding> ;
+    skos:prefLabel "Codec Register"@en .
+
+menc:VideoCodecs a skos:Collection ; skos:prefLabel "Video codecs"@en ;
+    skos:member menc:H264 , menc:HEVC , menc:ProRes , menc:VP9 , menc:AV1 .
+menc:AudioCodecs a skos:Collection ; skos:prefLabel "Audio codecs"@en ;
+    skos:member menc:AAC , menc:MP3 , menc:FLAC , menc:Opus , menc:PCM .
+
+menc:H264 a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
+    skos:prefLabel "H.264"@en ; skos:altLabel "AVC"@en , "MPEG-4 Part 10"@en ; skos:exactMatch <https://www.iso.org/standard/75400.html> .
+menc:HEVC a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
+    skos:prefLabel "H.265"@en ; skos:altLabel "HEVC"@en , "MPEG-H Part 2"@en .
+menc:ProRes a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
+    skos:prefLabel "Apple ProRes"@en ; skos:altLabel "ProRes"@en .
+menc:VP9 a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
+    skos:prefLabel "VP9"@en .
+menc:AV1 a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
+    skos:prefLabel "AV1"@en .
+menc:AAC a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
+    skos:prefLabel "AAC"@en ; skos:altLabel "Advanced Audio Coding"@en .
+menc:MP3 a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
+    skos:prefLabel "MP3"@en ; skos:altLabel "MPEG-1 Audio Layer III"@en .
+menc:FLAC a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
+    skos:prefLabel "FLAC"@en ; skos:altLabel "Free Lossless Audio Codec"@en .
+menc:Opus a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
+    skos:prefLabel "Opus"@en .
+menc:PCM a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
+    skos:prefLabel "Linear PCM"@en ; skos:altLabel "PCM"@en .
+
+# ---------- Compression Register (SKOS) ----------
+menc:CompressionScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/media-encoding> ;
+    skos:prefLabel "Compression Register"@en .
+menc:Store a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Store (none)"@en .
+menc:Deflate a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Deflate"@en .
+menc:Gzip a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "gzip"@en .
+menc:BZip2 a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "bzip2"@en .
+menc:LZMA a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "LZMA"@en .

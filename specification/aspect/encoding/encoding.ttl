@@ -17,53 +17,12 @@
 <https://hexplain.io/ns/aspect/encoding> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/aspect/encoding/1.0> ; owl:versionInfo "1.0" ;
     rdfs:label "Hexplain Aspect — Encoding (hx-encoding)" ;
-    rdfs:comment "Orthogonal aspect for how content is coded, compressed, or encrypted (codec, bitrate; compression and encryption to follow). Carries the Codec Register. Imported by any domain whose content is encoded." ;
+    rdfs:comment "Orthogonal aspect for how content is coded, compressed, or encrypted (codec, bitrate; compression and encryption to follow). Controlled values (codec, compression) come from an external register bound by the profile, not from a scheme hosted in this aspect. Imported by any domain whose content is encoded." ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "aenc" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/encoding#" .
 
 # ---------- Properties ----------
-:codec a owl:ObjectProperty ; rdfs:label "codec" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ; skos:closeMatch ma:hasFormat ; rdfs:range skos:Concept ; rdfs:comment "Codec, drawn from the Codec Register (aenc:CodecScheme)." .
+:codec a owl:ObjectProperty ; rdfs:label "codec" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ; skos:closeMatch ma:hasFormat ; rdfs:range skos:Concept ; rdfs:comment "Codec, drawn from the codec register bound by the profile." .
 :bitrate a owl:DatatypeProperty ; rdfs:label "bitrate" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ; skos:closeMatch ma:averageBitRate ; rdfs:range xsd:positiveInteger ; qudt:hasQuantityKind quantitykind:DataRate ; qudt:hasUnit unit:BIT-PER-SEC ; rdfs:comment "Average bitrate of the encoded stream, in bits per second." .
-:compression a owl:ObjectProperty ; rdfs:label "compression" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ; rdfs:range skos:Concept ; rdfs:comment "Lossless compression method, from the Compression Register (aenc:CompressionScheme)." .
-
-# ---------- Codec Register (SKOS) ----------
-# Open, extensible. Grouped for convenience into video and audio collections.
-:CodecScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ;
-    skos:prefLabel "Codec Register"@en .
-
-:VideoCodecs a skos:Collection ; skos:prefLabel "Video codecs"@en ;
-    skos:member :H264 , :HEVC , :ProRes , :VP9 , :AV1 .
-:AudioCodecs a skos:Collection ; skos:prefLabel "Audio codecs"@en ;
-    skos:member :AAC , :MP3 , :FLAC , :Opus , :PCM .
-
-:H264 a skos:Concept ; skos:inScheme :CodecScheme ; skos:topConceptOf :CodecScheme ;
-    skos:prefLabel "H.264"@en ; skos:altLabel "AVC"@en , "MPEG-4 Part 10"@en ;
-    skos:notation "avc1" ; skos:exactMatch <https://www.iso.org/standard/75400.html> .
-:HEVC a skos:Concept ; skos:inScheme :CodecScheme ; skos:topConceptOf :CodecScheme ;
-    skos:prefLabel "H.265"@en ; skos:altLabel "HEVC"@en , "MPEG-H Part 2"@en ; skos:notation "hvc1" .
-:ProRes a skos:Concept ; skos:inScheme :CodecScheme ; skos:topConceptOf :CodecScheme ;
-    skos:prefLabel "Apple ProRes"@en ; skos:altLabel "ProRes"@en ; skos:notation "apcn" .
-:VP9 a skos:Concept ; skos:inScheme :CodecScheme ; skos:topConceptOf :CodecScheme ;
-    skos:prefLabel "VP9"@en ; skos:notation "vp09" .
-:AV1 a skos:Concept ; skos:inScheme :CodecScheme ; skos:topConceptOf :CodecScheme ;
-    skos:prefLabel "AV1"@en ; skos:notation "av01" .
-:AAC a skos:Concept ; skos:inScheme :CodecScheme ; skos:topConceptOf :CodecScheme ;
-    skos:prefLabel "AAC"@en ; skos:altLabel "Advanced Audio Coding"@en ; skos:notation "mp4a" .
-:MP3 a skos:Concept ; skos:inScheme :CodecScheme ; skos:topConceptOf :CodecScheme ;
-    skos:prefLabel "MP3"@en ; skos:altLabel "MPEG-1 Audio Layer III"@en ; skos:notation "mp3" .
-:FLAC a skos:Concept ; skos:inScheme :CodecScheme ; skos:topConceptOf :CodecScheme ;
-    skos:prefLabel "FLAC"@en ; skos:altLabel "Free Lossless Audio Codec"@en ; skos:notation "flac" .
-:Opus a skos:Concept ; skos:inScheme :CodecScheme ; skos:topConceptOf :CodecScheme ;
-    skos:prefLabel "Opus"@en ; skos:notation "opus" .
-:PCM a skos:Concept ; skos:inScheme :CodecScheme ; skos:topConceptOf :CodecScheme ;
-    skos:prefLabel "Linear PCM"@en ; skos:altLabel "PCM"@en ; skos:notation "lpcm" .
-
-# ---------- Compression Register (SKOS) ----------
-:CompressionScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ;
-    skos:prefLabel "Compression Register"@en .
-:Store a skos:Concept ; skos:inScheme :CompressionScheme ; skos:topConceptOf :CompressionScheme ; skos:prefLabel "Store (none)"@en ; skos:notation "store" .
-:Deflate a skos:Concept ; skos:inScheme :CompressionScheme ; skos:topConceptOf :CompressionScheme ; skos:prefLabel "Deflate"@en ; skos:notation "deflate" .
-:Gzip a skos:Concept ; skos:inScheme :CompressionScheme ; skos:topConceptOf :CompressionScheme ; skos:prefLabel "gzip"@en ; skos:notation "gzip" .
-:BZip2 a skos:Concept ; skos:inScheme :CompressionScheme ; skos:topConceptOf :CompressionScheme ; skos:prefLabel "bzip2"@en ; skos:notation "bzip2" .
-:LZMA a skos:Concept ; skos:inScheme :CompressionScheme ; skos:topConceptOf :CompressionScheme ; skos:prefLabel "LZMA"@en ; skos:notation "lzma" .
+:compression a owl:ObjectProperty ; rdfs:label "compression" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ; rdfs:range skos:Concept ; rdfs:comment "Lossless compression method, from the compression register bound by the profile." .

@@ -1,0 +1,129 @@
+# Hexplain Register — US/NATO Security Marking 1.0
+# Controlled values for the hx-security aspect, as set by US/NATO policy (EO 12958,
+# DOD 5200.1-R, FIPS 10-4). Split out of the aspect so another jurisdiction can publish a
+# sibling register without forking the aspect or minting into a namespace it does not own.
+# Codes are NOT here: a raw wire code belongs to the format that encodes it, and is carried
+# by that profile's HDL enum (e.g. "T"=>usnato:TopSecret in nitf.hx).
+@prefix usnato: <https://hexplain.io/ns/register/us-nato-security#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/register/us-nato-security> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/register/us-nato-security/1.0> ; owl:versionInfo "1.0" ;
+    rdfs:label "Hexplain Register — US/NATO Security Marking" ;
+    dcterms:created "2026-08-08"^^xsd:date ;
+    dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "usnato" ;
+    vann:preferredNamespaceUri "https://hexplain.io/ns/register/us-nato-security#" .
+
+# ---------- Classification Level Register ----------
+usnato:ClassificationLevelScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
+    skos:prefLabel "Classification Level Register"@en ; owl:versionInfo "1.1" .
+usnato:Unclassified a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Unclassified"@en .
+usnato:Restricted   a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Restricted"@en .
+usnato:Confidential a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Confidential"@en .
+usnato:Secret       a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Secret"@en .
+usnato:TopSecret    a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Top Secret"@en .
+
+# ---------- Marking Register (compartments / dissemination / handling) ----------
+# Digraphs per NITF MIL-STD-2500C Table A-4 (exemplary; consult current security directives).
+# Collection membership is INDICATIVE — Table A-4 mixes categories and warns values change.
+usnato:MarkingScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
+    skos:prefLabel "Security Marking Register"@en ; owl:versionInfo "1.1" ;
+    skos:note "Digraph notations from NITF MIL-STD-2500C Table A-4; align to the current CAPCO Register when applying." .
+
+usnato:Atomal a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "ATOMAL"@en .
+usnato:Cnwdi a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Critical Nuclear Weapon Design Information"@en ; skos:altLabel "CNWDI"@en .
+usnato:Copyright a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Copyright"@en .
+usnato:Cosmic a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "COSMIC"@en .
+usnato:Crypto a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "CRYPTO"@en .
+usnato:Efto a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Encrypted For Transmission Only"@en ; skos:altLabel "EFTO"@en .
+usnato:FormerlyRestrictedData a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Formerly Restricted Data"@en ; skos:altLabel "FORMREST DATA"@en .
+usnato:Fouo a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "For Official Use Only"@en ; skos:altLabel "FOUO"@en .
+usnato:Genser a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "General Service"@en ; skos:altLabel "GENSER"@en .
+usnato:LimitedOfficialUse a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Limited Official Use (Unclassified)"@en ; skos:altLabel "LIM OFF USE"@en .
+usnato:LimitedDissemination a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Limited Dissemination"@en ; skos:altLabel "LIMDIS"@en .
+usnato:Nato a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "NATO"@en .
+usnato:NoContract a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "No Contract"@en ; skos:altLabel "NO CONTRACT"@en .
+usnato:NonCompartment a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Non-Compartmented"@en ; skos:altLabel "NONCOMPARTMENT"@en .
+usnato:Orcon a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Originator Controlled"@en ; skos:altLabel "ORCON"@en .
+usnato:PersonalData a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Personal Data"@en .
+usnato:Propin a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Proprietary Information"@en ; skos:altLabel "PROPIN"@en .
+usnato:RestrictedData a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Restricted Data"@en ; skos:altLabel "RESTRICTED DATA"@en .
+usnato:Sao a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Special Access Only"@en ; skos:altLabel "SAO"@en .
+usnato:Sao1 a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "SAO-1"@en .
+usnato:Sao2 a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "SAO-2"@en .
+usnato:Sao3 a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "SAO-3"@en .
+usnato:SaoSi2 a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "SAO-SI-2"@en .
+usnato:SaoSi3 a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "SAO-SI-3"@en .
+usnato:SaoSi4 a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "SAO-SI-4"@en .
+usnato:Siop a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "SIOP"@en .
+usnato:SiopEsi a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "SIOP-ESI"@en .
+usnato:SpecialControl a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Special Control"@en ; skos:altLabel "SPECIAL CONTROL"@en .
+usnato:SpecialIntel a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Special Intelligence"@en ; skos:altLabel "SPECIAL INTEL"@en .
+usnato:UsOnly a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "US Only"@en ; skos:altLabel "US ONLY"@en .
+usnato:WarningNotice a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Warning Notice"@en .
+usnato:Wnintel a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Warning Notice — Intelligence Sources or Methods"@en ; skos:altLabel "WNINTEL"@en .
+
+usnato:Compartments a skos:Collection ; skos:prefLabel "Compartments / SCI"@en ;
+    skos:member usnato:Atomal , usnato:Cosmic , usnato:Crypto , usnato:Sao , usnato:Sao1 , usnato:Sao2 , usnato:Sao3 , usnato:SaoSi2 , usnato:SaoSi3 , usnato:SaoSi4 , usnato:Siop , usnato:SiopEsi , usnato:SpecialIntel , usnato:SpecialControl , usnato:Cnwdi , usnato:RestrictedData .
+usnato:DisseminationControls a skos:Collection ; skos:prefLabel "Dissemination Controls"@en ;
+    skos:member usnato:Orcon , usnato:Propin , usnato:UsOnly , usnato:NoContract , usnato:Wnintel , usnato:Efto .
+usnato:HandlingCaveats a skos:Collection ; skos:prefLabel "Handling Caveats"@en ;
+    skos:member usnato:Fouo , usnato:LimitedDissemination , usnato:LimitedOfficialUse , usnato:PersonalData , usnato:NonCompartment , usnato:FormerlyRestrictedData , usnato:Genser , usnato:Nato , usnato:Copyright , usnato:WarningNotice .
+
+# ---------- Declassification Type Register ----------
+usnato:DeclassTypeScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
+    skos:prefLabel "Declassification Type Register"@en ; owl:versionInfo "1.1" .
+usnato:DeclassifyOnDate a skos:Concept ; skos:inScheme usnato:DeclassTypeScheme ; skos:topConceptOf usnato:DeclassTypeScheme ; skos:prefLabel "Declassify on a specific date"@en .
+usnato:DeclassifyOnEvent a skos:Concept ; skos:inScheme usnato:DeclassTypeScheme ; skos:topConceptOf usnato:DeclassTypeScheme ; skos:prefLabel "Declassify upon occurrence of an event"@en .
+usnato:DowngradeOnDate a skos:Concept ; skos:inScheme usnato:DeclassTypeScheme ; skos:topConceptOf usnato:DeclassTypeScheme ; skos:prefLabel "Downgrade to a specified level on a specific date"@en .
+usnato:DowngradeOnEvent a skos:Concept ; skos:inScheme usnato:DeclassTypeScheme ; skos:topConceptOf usnato:DeclassTypeScheme ; skos:prefLabel "Downgrade to a specified level upon an event"@en .
+usnato:Oadr a skos:Concept ; skos:inScheme usnato:DeclassTypeScheme ; skos:topConceptOf usnato:DeclassTypeScheme ; skos:prefLabel "Originating Agency Determination Required"@en ; skos:altLabel "OADR"@en .
+usnato:ExemptFromAutomatic a skos:Concept ; skos:inScheme usnato:DeclassTypeScheme ; skos:topConceptOf usnato:DeclassTypeScheme ; skos:prefLabel "Exempt from automatic declassification"@en .
+
+# ---------- Classification Authority Type Register ----------
+usnato:AuthorityTypeScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
+    skos:prefLabel "Classification Authority Type Register"@en ; owl:versionInfo "1.1" .
+usnato:OriginalAuthority a skos:Concept ; skos:inScheme usnato:AuthorityTypeScheme ; skos:topConceptOf usnato:AuthorityTypeScheme ; skos:prefLabel "Original classification authority"@en .
+usnato:DerivativeSingle a skos:Concept ; skos:inScheme usnato:AuthorityTypeScheme ; skos:topConceptOf usnato:AuthorityTypeScheme ; skos:prefLabel "Derivative from a single source"@en .
+usnato:DerivativeMultiple a skos:Concept ; skos:inScheme usnato:AuthorityTypeScheme ; skos:topConceptOf usnato:AuthorityTypeScheme ; skos:prefLabel "Derivative from multiple sources"@en .
+
+# ---------- Classification Reason Register (EO 12958 Sec 1.5(a)-(g)) ----------
+usnato:ClassificationReasonScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
+    skos:prefLabel "Classification Reason Register"@en ; owl:versionInfo "1.1" ;
+    skos:note "Values A-G correspond to the reasons for original classification per Executive Order 12958, Section 1.5(a) to (g)." .
+usnato:ReasonA a skos:Concept ; skos:inScheme usnato:ClassificationReasonScheme ; skos:topConceptOf usnato:ClassificationReasonScheme ; skos:prefLabel "Reason A (EO 12958 1.5(a))"@en .
+usnato:ReasonB a skos:Concept ; skos:inScheme usnato:ClassificationReasonScheme ; skos:topConceptOf usnato:ClassificationReasonScheme ; skos:prefLabel "Reason B (EO 12958 1.5(b))"@en .
+usnato:ReasonC a skos:Concept ; skos:inScheme usnato:ClassificationReasonScheme ; skos:topConceptOf usnato:ClassificationReasonScheme ; skos:prefLabel "Reason C (EO 12958 1.5(c))"@en .
+usnato:ReasonD a skos:Concept ; skos:inScheme usnato:ClassificationReasonScheme ; skos:topConceptOf usnato:ClassificationReasonScheme ; skos:prefLabel "Reason D (EO 12958 1.5(d))"@en .
+usnato:ReasonE a skos:Concept ; skos:inScheme usnato:ClassificationReasonScheme ; skos:topConceptOf usnato:ClassificationReasonScheme ; skos:prefLabel "Reason E (EO 12958 1.5(e))"@en .
+usnato:ReasonF a skos:Concept ; skos:inScheme usnato:ClassificationReasonScheme ; skos:topConceptOf usnato:ClassificationReasonScheme ; skos:prefLabel "Reason F (EO 12958 1.5(f))"@en .
+usnato:ReasonG a skos:Concept ; skos:inScheme usnato:ClassificationReasonScheme ; skos:topConceptOf usnato:ClassificationReasonScheme ; skos:prefLabel "Reason G (EO 12958 1.5(g))"@en .
+
+# ---------- Declassification Exemption Register (DOD 5200.1-R) ----------
+usnato:ExemptionScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
+    skos:prefLabel "Declassification Exemption Register"@en ; owl:versionInfo "1.1" ;
+    skos:note "X1-X8 per DOD 5200.1-R paragraphs 4-202b(1)-(8) (10-year rule); X251-X259 per 4-301a(1)-(9) (25-year system)." .
+usnato:X1 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X1"@en .
+usnato:X2 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X2"@en .
+usnato:X3 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X3"@en .
+usnato:X4 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X4"@en .
+usnato:X5 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X5"@en .
+usnato:X6 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X6"@en .
+usnato:X7 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X7"@en .
+usnato:X8 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X8"@en .
+usnato:X251 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X251"@en .
+usnato:X252 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X252"@en .
+usnato:X253 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X253"@en .
+usnato:X254 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X254"@en .
+usnato:X255 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X255"@en .
+usnato:X256 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X256"@en .
+usnato:X257 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X257"@en .
+usnato:X258 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X258"@en .
+usnato:X259 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X259"@en .
