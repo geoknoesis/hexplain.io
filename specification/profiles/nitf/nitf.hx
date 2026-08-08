@@ -127,7 +127,7 @@ struct TRE @label "Tagged Record Extension" {
   CEDATA as TRE_CEDATA : bytes[CEL] switch CETAG {
              "BLOCKA" => BLOCKA
              "RPC00B" => RPC00B
-           }
+           } @label "CEDATA/REDATA — user-defined data"
 }
 
 // File-header segment-length table pairs (Table A-1). These pairs live inside the FileHeader's
@@ -135,11 +135,11 @@ struct TRE @label "Tagged Record Extension" {
 // from these struct names -- FH_LISHn/FH_LIn etc. (RESegLen's ttl counterpart is even named
 // "LRESHn", not "LRSHn": the ttl author expanded "LRSH" to "LRESH" for the pair's label, so the
 // `as` target follows ttl's actual field name, not a mechanical prefix+DSL-name transform).
-struct ImageSegLen as ImageSegLenPair   @label "{ LISHn, LIn }" { LISH as FH_LISHn  : ascii[6]  LI  as FH_LIn  : ascii[10] }
-struct GraphicSegLen as GraphicSegLenPair @label "{ LSSHn, LSn }" { LSSH as FH_LSSHn  : ascii[4]  LS  as FH_LSn  : ascii[6]  }
-struct TextSegLen as TextSegLenPair    @label "{ LTSHn, LTn }" { LTSH as FH_LTSHn  : ascii[4]  LT  as FH_LTn  : ascii[5]  }
-struct DESegLen as DESegLenPair      @label "{ LDSHn, LDn }" { LDSH as FH_LDSHn  : ascii[4]  LD  as FH_LDn  : ascii[9]  }
-struct RESegLen as RESegLenPair      @label "{ LRESHn, LREn }" { LRSH as FH_LRESHn : ascii[4]  LRE as FH_LREn : ascii[7]  }
+struct ImageSegLen as ImageSegLenPair   @label "{ LISHn, LIn }" { LISH as FH_LISHn  : ascii[6] @label "LISHn — length of nth image subheader"  LI  as FH_LIn  : ascii[10] @label "LIn — length of nth image segment" }
+struct GraphicSegLen as GraphicSegLenPair @label "{ LSSHn, LSn }" { LSSH as FH_LSSHn  : ascii[4] @label "LSSHn — length of nth graphic subheader"  LS  as FH_LSn  : ascii[6] @label "LSn — length of nth graphic segment"  }
+struct TextSegLen as TextSegLenPair    @label "{ LTSHn, LTn }" { LTSH as FH_LTSHn  : ascii[4] @label "LTSHn — length of nth text subheader"  LT  as FH_LTn  : ascii[5] @label "LTn — length of nth text segment"  }
+struct DESegLen as DESegLenPair      @label "{ LDSHn, LDn }" { LDSH as FH_LDSHn  : ascii[4] @label "LDSHn — length of nth data extension segment subheader"  LD  as FH_LDn  : ascii[9] @label "LDn — length of nth data extension segment"  }
+struct RESegLen as RESegLenPair      @label "{ LRESHn, LREn }" { LRSH as FH_LRESHn : ascii[4] @label "LRESHn — length of nth reserved extension segment subheader"  LRE as FH_LREn : ascii[7] @label "LREn — length of nth reserved extension segment"  }
 
 // Per-band record inside the image subheader (Table A-3 band loop).
 struct ImageBand @label "Image band record (Table A-3 band loop)" {
@@ -297,7 +297,7 @@ struct ImageSubheader means gv:RasterDataset @label "NITF Image Subheader (Table
   // authoritative spelling -- note "RGB/LUT" with a solidus, not the "RGB-LUT" this line used
   // to carry as prose. Symbols are the codes themselves, so nothing about the standard's
   // meaning is invented here; the solidus is not a legal identifier, hence RGB_LUT.
-  IREP     as IS_IREP    : nitf:BCSA[8] enum IREPEnum
+  IREP     as IS_IREP    : nitf:BCSA[8] enum IREPEnum @label "IREP — Image Representation"
   ICAT     as IS_ICAT    : nitf:BCSA[8] @label "ICAT — Image Category"
   ABPP     as IS_ABPP    : nitf:BCSNpos[2] @label "ABPP — Actual Bits-Per-Pixel Per Band"
   PJUST    as IS_PJUST   : nitf:BCSA[1] @label "PJUST — Pixel Justification"
@@ -313,8 +313,18 @@ struct ImageSubheader means gv:RasterDataset @label "NITF Image Subheader (Table
   // Raw values taken from nitf:ICEnum in nitf.ttl (MIL-STD-2500C Table A-3). Symbols are the
   // codes themselves rather than invented scheme names, so this encodes the valid-value set
   // without asserting a meaning for any code.
-  IC       as IS_IC      : nitf:BCSA[2] enum ICEnum
-  COMRAT   as IS_COMRAT  : nitf:BCSA[4]  if [IC != 'NC' and IC != 'NM'] @label "COMRAT — Compression Rate Code"
+  IC       as IS_IC      : nitf:BCSA[2] enum ICEnum @label "IC — Image Compression"
+  // Raw HEL (backtick) here, not `[IC != 'NC' and IC != 'NM']`: HelUnparser.grouped()
+  // unconditionally parenthesizes BOTH operands of any binary op it round-trips, so the
+  // bracket form would compile to "(instance.IS_IC != 'NC') and (instance.IS_IC != 'NM')" --
+  // semantically identical to nitf.ttl's `bddo:isPresentIf "IS_IC != 'NC' and IS_IC != 'NM'"`
+  // but spelled differently, and HDL has no surface syntax to suppress those parens. Raw HEL
+  // is returned verbatim (HelSynth.toInstanceHel: `if (expr.rawHel) return src`), bypassing
+  // the parse/unparse round trip, so it reproduces nitf.ttl's exact string. Written with the
+  // post-alias name `IS_IC` (not the pre-alias DSL name `IC`) because raw HEL skips the
+  // sibling renamer too -- a bare accessor still resolves against the current instance (HEL
+  // has no separate "parent" root at struct scope), matching nitf.ttl's own spelling.
+  COMRAT   as IS_COMRAT  : nitf:BCSA[4]  if `IS_IC != 'NC' and IS_IC != 'NM'` @label "COMRAT — Compression Rate Code"
   NBANDS   as IS_NBANDS  : nitf:BCSNpos[1] @label "NBANDS — Number of Bands"
   // Numeric `0`, not the string `'0'`: NBANDS is nitf:BCSNpos, whose bddo:baseType is
   // bddo:baseInteger, so HEL sees an Integer here and a string comparison would never match.
