@@ -8,10 +8,19 @@ three defects because nothing checked it.
 Optional cross-repo gate: hexplain-tools is a sibling checkout, not a
 dependency of this repo, and its toolchain (Gradle + a JVM) is not always
 present. Mirrors tools/test_shapes.py's pyshacl skip: if the checkout,
-gradlew, Java, or the build itself is unavailable, SKIP (exit 0) so the
-rdflib-only suite stays green on machines without the Kotlin toolchain. Only
-a genuine content mismatch *in the compiled output* -- once we actually have
-one to compare -- FAILs.
+gradlew, or Java is *absent*, SKIP (exit 0) so the rdflib-only suite stays
+green on machines without the Kotlin toolchain.
+
+A build that is ATTEMPTED AND FAILS is NOT a skip. An earlier version of
+this gate treated every non-zero compiler exit as environmental and exited
+0, which meant a machine that could not start a JVM at all (Gradle daemon
+OOM -- "Could not reserve enough space for object heap") reported the same
+green tick as a clean round trip. That is the one failure mode a gate must
+never have: silence that is indistinguishable from success. So the toolchain
+being *missing* skips; the toolchain being *present and broken* FAILs, and
+prints the compiler's own diagnostics. Set
+HEXPLAIN_ROUNDTRIP_SKIP_ON_BUILD_ERROR=1 to downgrade that back to a SKIP on
+deliberately constrained machines -- an explicit opt-in, never the default.
 
 Full graph isomorphism is not achievable today. An earlier version of this
 gate tolerated exactly one excused category (the SecurityMarking block) and
@@ -31,36 +40,53 @@ category; a subject with even one additional, unexplained triple is NOT
 excused and surfaces in UNEXPLAINED. See "Known limitation" in
 docs/superpowers/plans/2026-08-02-hdl-compiler-p0-and-roundtrip.md.
 
-NOTE ON A LARGE RESIDUAL THAT IS *NOT* ONE OF THE CATEGORIES BELOW: nearly
-every field's `bddo:size` triple differs even when nothing about the field's
-shape actually changed, because the compiler's TurtleEmitter always mints
-size literals as `xsd:positiveInteger` (see `posInt()` in hexplain-tools'
-TurtleEmitter.kt) while nitf.ttl's hand-written bare integers ("2", "3", ...)
-default to `xsd:integer` under Turtle grammar -- and rdflib's Literal
-equality treats those as different values, not just different spellings of
-the same one. This was not caught by the investigation that produced the
-five categories below, is not something HDL authoring or the vocabulary can
-fix from this file, and is deliberately NOT given a category here -- adding
-one would defeat the point of this gate (see the per-category comments
-below, which explain why folding it in would hide, not explain, the
-divergence). It is the dominant reason UNEXPLAINED is still large on the
-current tree; see the round-trip task's report for the full count.
+HISTORICAL NOTE -- the `bddo:size` literal datatype is FIXED, do not
+re-add it as a residual. This docstring used to describe an
+`xsd:positiveInteger` (compiled) vs `xsd:integer` (hand-written) mismatch on
+nearly every field's `bddo:size` triple as "the dominant reason UNEXPLAINED
+is still large". hexplain-tools commit ae4d670 ("emit sizes and counts as
+xsd:integer, not xsd:positiveInteger") resolved it. Measured against the
+current tree: every `bddo:size` object on BOTH sides is now `xsd:integer`
+(nitf.ttl 209, compiled 157), and `bddo:size` no longer appears among the
+differing triples at all.
+
+WHAT ACTUALLY DRIVES UNEXPLAINED NOW (measured, not estimated -- compiled
+nitf.hx vs nitf.ttl, 1384 vs 1660 triples, 589 differing subjects of which
+338 are UNEXPLAINED):
+
+  * rdf:List cells (`rdf:first`/`rdf:rest`, ~384 triples) cascading from the
+    enum and conditional-dispatch lists below -- not independently
+    actionable.
+  * Enumeration shape: nitf.ttl declares 7 NAMED `bddo:Enumeration`
+    individuals carrying 50 values; the compiler emits 8 anonymous
+    (blank-node) enumerations carrying 37, and adds a `bddo:enumSymbol` that
+    nitf.ttl never uses. HDL has no syntax for a named enumeration.
+  * `bddo:isPresentIf`: 19 subjects carry one on both sides and ALL 19
+    differ -- zero match. This is a real compiler defect, not an authoring
+    choice: HDL rewrites a bare sibling reference to `parent.<name>`, but
+    HEL resolves `parent` to the ENCLOSING struct, so the reference dangles.
+    Arithmetic clauses (size/count) throw at parse time; boolean ones
+    silently evaluate true, so conditional fields are always read. Tracked
+    against hexplain-tools' HelSynth.rewriteBareNames.
+  * dataType/encoding -- see CUSTOM_DATATYPES below.
 """
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 
 import rdflib
-from rdflib.compare import graph_diff, to_isomorphic
+from rdflib.compare import graph_diff, to_canonical_graph, to_isomorphic
 
 NITF_HX = pathlib.Path("specification/profiles/nitf/nitf.hx")
 NITF_TTL = pathlib.Path("specification/profiles/nitf/nitf.ttl")
 MAX_REPORT_LINES = 40
 
 BDDO = "https://hexplain.io/ns/bddo#"
+ASPECT_SECURITY = "https://hexplain.io/ns/aspect/security#"
 RDFS_LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
 RDFS_COMMENT = "http://www.w3.org/2000/01/rdf-schema#comment"
 RDFS_SEE_ALSO = "http://www.w3.org/2000/01/rdf-schema#seeAlso"
@@ -211,15 +237,15 @@ def _is_ontology_header_triple(subject, where, p, o):
 # Closes when HDL gains syntax to reference a custom bddo:DataType
 # individual as a field's type (or an equivalent lift rule).
 #
-# WARNING: confirmed against the actual diff that this category, on its
-# own, currently explains very few subjects outright -- nearly every
-# ordinary field that hits this dataType/encoding swap also carries the
-# universal bddo:size xsd:positiveInteger-vs-xsd:integer difference
-# described in the module docstring, which is not covered by any category
-# and correctly lands the subject in UNEXPLAINED regardless (e.g.
-# nitf:FH_UDHOFL: this category correctly matches its dataType/encoding
-# triples, but the subject still lands in UNEXPLAINED because of its
-# leftover isPresentIf-rewrite and bddo:size triples). The category is
+# NOTE: this category now credits 93 subjects (measured). It used to credit
+# very few, because nearly every field it matched ALSO carried the universal
+# bddo:size xsd:positiveInteger-vs-xsd:integer difference, which no category
+# covered and which therefore dragged the subject into UNEXPLAINED anyway.
+# That size mismatch is fixed (see the HISTORICAL NOTE in the module
+# docstring), so the category's matches now stand on their own -- except on
+# fields that additionally carry the dangling `parent.` isPresentIf rewrite
+# (e.g. nitf:FH_UDHOFL), which still land in UNEXPLAINED for that separate,
+# real reason. The category is
 # still kept, named, and applied per-triple (not deleted) because (a) it is
 # real and correctly derived from the data, (b) it independently explains
 # other triples on subjects that otherwise fully match (e.g. nitf:DES_DESID
@@ -274,16 +300,174 @@ def _is_missing_label_triple(where, p, o):
     return where == "ttl" and str(p) == RDFS_LABEL
 
 
+# ---------------------------------------------------------------------------
+# HEL_SPELLING -- the two sides carry the SAME HEL expression written two ways.
+#
+# In HEL a bare leading name and an explicit `instance.` prefix are the same
+# thing: an implicit-instance accessor resolving against the struct the field
+# belongs to. core's HelParser strips INSTANCE while parsing, so `FH_UDHDL != 0`
+# and `instance.FH_UDHDL != 0` produce an identical AST. They serialize
+# differently only because nitf.ttl is hand-written in the short form while the
+# compiler round-trips every expression through HelUnparser, which emits the
+# explicit canonical form.
+#
+# This category is deliberately narrow: it credits a predicate ONLY when both
+# sides carry exactly one value for it and the two are equal after removing
+# `instance.` prefixes. Anything else about the expression differing -- a
+# changed operator, a dropped `trim(...)`, a different field name -- makes the
+# normalized forms unequal and the triple stays UNEXPLAINED. That is what keeps
+# this from being the "fold it in and hide it" move the module docstring warns
+# about: an expression whose MEANING differs still fails the gate.
+#
+# Closes by canonicalizing nitf.ttl's expressions to the emitter's spelling (or
+# by teaching the emitter to drop a redundant `instance.`) -- a cosmetic choice,
+# not a correctness one.
+_HEL_PREDICATES = {
+    BDDO + p for p in (
+        "isPresentIf", "sizeFromExpression", "repeatCountFromExpression",
+        "atOffsetFromExpression", "repeatUntil", "condition", "validIf",
+        "coversFromExpression", "coversToExpression",
+    )
+} | {
+    "https://hexplain.io/ns/core#" + p for p in ("condition", "valueExpression")
+}
+
+
+def _normalize_hel(text):
+    """Strip the redundant explicit implicit-instance prefix and collapse spacing."""
+    return re.sub(r"\s+", " ", re.sub(r"\binstance\.", "", str(text))).strip()
+
+
+def _hel_spelling_predicates(triples):
+    """Predicates on this subject whose ttl and compiled values are the same HEL
+    expression modulo the `instance.` prefix."""
+    by_pred = {}
+    for where, p, o in triples:
+        if str(p) in _HEL_PREDICATES:
+            by_pred.setdefault(str(p), {}).setdefault(where, []).append(o)
+    out = set()
+    for p, sides in by_pred.items():
+        t, c = sides.get("ttl", []), sides.get("compiled", [])
+        if len(t) == 1 and len(c) == 1 and _normalize_hel(t[0]) == _normalize_hel(c[0]):
+            out.add(p)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# SECURITY_ASPECT_ENRICHMENT -- nitf.hx models the SecurityMarking block's
+# ~10 classification/declassification/downgrade/release fields per segment
+# against the `asec:` (https://hexplain.io/ns/aspect/security#) security
+# aspect far more richly than nitf.ttl does: each field carries a
+# `core:mapsToProperty asec:<name>` triple (78 of them; nitf.ttl has 2), and
+# five of the fields are typed with a CONCEPT-VALUED enumeration --
+# `SecurityClassificationEnum`, `ClassificationAuthorityTypeEnum`,
+# `ClassificationReasonEnum`, `DeclassificationTypeEnum`, `DowngradeToEnum`
+# -- whose values carry a `bddo:enumSymbol` pointing at an `asec:` concept
+# individual (`"T" => asec:TopSecret`, ...), where nitf.ttl's equivalent
+# enums (e.g. `FSCLASEnum`) are plain value sets with no concepts at all.
+# This is a DELIBERATE surplus, preserved on purpose: deleting it to shrink
+# the diff would strip security-aspect modeling from the certification
+# target. It is not a defect.
+#
+# Most of the SecurityMarking FIELD subjects carrying these triples (the 78
+# `mapsToProperty` ones) are already excused by STEP3_SECURITY_BLOCK above,
+# which is a whole-subject match that never inspects individual triples.
+# What that category does NOT reach is the five enum subjects themselves and
+# their EnumValue children -- they are their own, separately-diffing
+# subjects, unrelated to the SecurityMarking field-inlining decision -- and
+# it is those this category exists for.
+#
+# The five enum IRIs are derived from the compiled graph, not hardcoded: a
+# concept-valued enumeration is one whose bddo:hasEnumValue children carry a
+# bddo:enumSymbol in the asec: namespace (see
+# _security_enum_subjects_and_values below). A sixth one added to nitf.hx
+# later, or one of the five dropped, is picked up automatically -- no edit
+# needed here.
+#
+# GUARDRAIL: this category excuses compiled-only triples ONLY (checked
+# first thing in the predicate below). A ttl-only triple that happens to
+# mention `asec:` is NEVER excused by it -- nitf.ttl carrying LESS than
+# nitf.hx is exactly the "compiler forgot something" signal this gate exists
+# to catch, not a thing to hide.
+#
+# Closes when nitf.ttl's SecurityMarking fields are enriched with the same
+# `asec:` mapsToProperty/concept-enum modeling nitf.hx already carries (the
+# richer side becomes the shared target), or when a decision is made that
+# nitf.hx should NOT carry this security-aspect modeling and it is removed
+# from the .hx source instead. Until one of those happens, this category is
+# expected to stay populated -- it is a recorded design choice, not a bug
+# tracker entry.
+def _security_enum_subjects_and_values(g_compiled):
+    """Return (enum_subjects, value_nodes): the concept-valued enumeration
+    subjects in `g_compiled` -- ones whose bddo:hasEnumValue children carry a
+    bddo:enumSymbol in the security-aspect namespace -- and the set of their
+    EnumValue child (blank) nodes.
+
+    `g_compiled` MUST be `rdflib.compare.to_canonical_graph(<the compiled
+    graph>)`, the same canonicalization `graph_diff` applies internally to
+    build `by_subject` -- otherwise the blank-node identities computed here
+    (arbitrary per-parse labels) won't match the hash-based labels the diff
+    uses, and every value-node lookup below silently misses.
+    """
+    enumeration_t = rdflib.URIRef(BDDO + "Enumeration")
+    has_enum_value = rdflib.URIRef(BDDO + "hasEnumValue")
+    enum_symbol = rdflib.URIRef(BDDO + "enumSymbol")
+    enum_subjects = set()
+    for enum_subj in g_compiled.subjects(rdflib.RDF.type, enumeration_t):
+        values = list(g_compiled.objects(enum_subj, has_enum_value))
+        if any(
+            str(sym).startswith(ASPECT_SECURITY)
+            for val in values
+            for sym in g_compiled.objects(val, enum_symbol)
+        ):
+            enum_subjects.add(enum_subj)
+    value_nodes = set()
+    for enum_subj in enum_subjects:
+        value_nodes.update(g_compiled.objects(enum_subj, has_enum_value))
+    return enum_subjects, value_nodes
+
+
+def _is_security_aspect_enrichment_triple(s, where, p, o, enum_subjects, value_nodes):
+    if where != "compiled":
+        return False
+    sp = str(p)
+    # The 78 `mapsToProperty -> asec:*` mappings and the enum values'
+    # `enumSymbol -> asec:TopSecret`-style concept bindings: identified
+    # purely by the object landing in the security-aspect namespace, on
+    # whatever subject/predicate carries it.
+    if str(o).startswith(ASPECT_SECURITY):
+        return True
+    # The five enum subjects' own defining triples...
+    if s in enum_subjects:
+        if sp == str(rdflib.RDF.type) and str(o) == BDDO + "Enumeration":
+            return True
+        if sp in (BDDO + "hasEnumValue", RDFS_LABEL):
+            return True
+    # ...and their EnumValue children's defining triples (enumSymbol itself
+    # is already covered by the object-namespace check above).
+    if s in value_nodes:
+        if sp == str(rdflib.RDF.type) and str(o) == BDDO + "EnumValue":
+            return True
+        if sp in (BDDO + "enumRawValue", RDFS_LABEL):
+            return True
+    # ...and the bddo:enumeration pointers FROM fields TO one of the five.
+    if sp == BDDO + "enumeration" and o in enum_subjects:
+        return True
+    return False
+
+
 CATEGORIES = (
     "STEP3_SECURITY_BLOCK",
     "TRE_PAYLOADS",
     "ONTOLOGY_HEADER",
     "CUSTOM_DATATYPES",
     "MISSING_LABELS",
+    "HEL_SPELLING",
+    "SECURITY_ASPECT_ENRICHMENT",
 )
 
 
-def classify(by_subject):
+def classify(by_subject, security_enum_subjects=frozenset(), security_enum_values=frozenset()):
     """Classify every differing subject as explained by (possibly several
     of) the named categories above, or as UNEXPLAINED.
 
@@ -295,6 +479,12 @@ def classify(by_subject):
     they count how many subjects each category contributed to explaining,
     not a disjoint partition. What IS exclusive is explained-vs-
     UNEXPLAINED, which is the actual pass/fail signal.
+
+    `security_enum_subjects`/`security_enum_values` are the precomputed sets
+    from `_security_enum_subjects_and_values` (canonicalized so their blank
+    nodes line up with `by_subject`'s), threaded through explicitly rather
+    than read off a global so SECURITY_ASPECT_ENRICHMENT stays a pure
+    function of its inputs like every other category here.
     """
     counts = {c: 0 for c in CATEGORIES}
     unexplained = {}
@@ -307,8 +497,11 @@ def classify(by_subject):
             continue
         hit = set()
         leftover = []
+        spelling = _hel_spelling_predicates(triples)
         for where, p, o in triples:
-            if _is_ontology_header_triple(s, where, p, o):
+            if str(p) in spelling:
+                hit.add("HEL_SPELLING")
+            elif _is_ontology_header_triple(s, where, p, o):
                 hit.add("ONTOLOGY_HEADER")
             elif _is_tre_dispatch_triple(where, p, o):
                 hit.add("TRE_PAYLOADS")
@@ -316,6 +509,10 @@ def classify(by_subject):
                 hit.add("CUSTOM_DATATYPES")
             elif _is_missing_label_triple(where, p, o):
                 hit.add("MISSING_LABELS")
+            elif _is_security_aspect_enrichment_triple(
+                s, where, p, o, security_enum_subjects, security_enum_values
+            ):
+                hit.add("SECURITY_ASPECT_ENRICHMENT")
             else:
                 leftover.append((where, p, o))
         if hit and not leftover:
@@ -363,24 +560,38 @@ with tempfile.TemporaryDirectory(prefix="hx_roundtrip_") as tmp:
     in_hx = NITF_HX.resolve()
     gradle_args = f"{in_hx.as_posix()} -o {out_ttl.as_posix()}"
     cmd = [str(gradlew), "-q", "--offline", ":hdl:run", f"--args={gradle_args}"]
+    # An explicit opt-in for machines that cannot build (see the module
+    # docstring). Absent it, a failed build is a FAIL, not a skip.
+    soft = os.environ.get("HEXPLAIN_ROUNDTRIP_SKIP_ON_BUILD_ERROR") == "1"
+
+    def build_failed(reason, detail=""):
+        verdict = "SKIP" if soft else "FAIL"
+        print(f"{verdict}: the HDL compiler is present but did not run: {reason}\n"
+              f"  command: {' '.join(cmd)}\n"
+              f"{detail}"
+              "  This is NOT 'no toolchain installed' -- the checkout, gradlew and\n"
+              "  java were all found, so the round trip genuinely could not be\n"
+              "  checked. Set HEXPLAIN_ROUNDTRIP_SKIP_ON_BUILD_ERROR=1 to downgrade\n"
+              "  this to a skip on a machine that deliberately cannot build.")
+        sys.exit(0 if soft else 1)
+
     try:
         proc = subprocess.run(
             cmd, cwd=str(tools_dir), capture_output=True, text=True, timeout=300,
         )
     except (OSError, subprocess.TimeoutExpired) as e:
-        print(f"SKIP: could not run the HDL compiler ({e})")
-        sys.exit(0)
+        build_failed(f"{type(e).__name__}: {e}")
 
     # SLF4J warnings on stderr are routine noise from Gradle's own logging,
     # not a build failure -- judge success by exit code and by whether the
     # output file actually got written.
     if proc.returncode != 0 or not out_ttl.exists():
-        print("SKIP: HDL compiler build did not succeed (treated as environmental)\n"
-              f"  command: {' '.join(cmd)}\n"
-              f"  exit code: {proc.returncode}\n"
-              f"  stdout (tail): {proc.stdout[-2000:]}\n"
-              f"  stderr (tail): {proc.stderr[-2000:]}")
-        sys.exit(0)
+        build_failed(
+            f"exit code {proc.returncode}"
+            + ("" if out_ttl.exists() else ", no output file written"),
+            f"  stdout (tail): {proc.stdout[-2000:]}\n"
+            f"  stderr (tail): {proc.stderr[-2000:]}\n",
+        )
 
     compiled_text = out_ttl.read_text(encoding="utf-8")
 
@@ -407,7 +618,16 @@ for s, p, o in only_ttl:
 for s, p, o in only_compiled:
     by_subject.setdefault(s, []).append(("compiled", p, o))
 
-counts, unexplained = classify(by_subject)
+# Canonicalized separately from `iso_compiled` above: `graph_diff` applies
+# its OWN `to_canonical_graph` pass internally to build `by_subject`, so the
+# blank-node labels visible there belong to a canonical graph, not to
+# `g_compiled`/`iso_compiled`'s own (arbitrary) blank-node labels. Deriving
+# the security-enum value nodes from a canonical graph of the same content
+# is what makes their identities line up with `by_subject`'s.
+security_enum_subjects, security_enum_values = _security_enum_subjects_and_values(
+    to_canonical_graph(g_compiled)
+)
+counts, unexplained = classify(by_subject, security_enum_subjects, security_enum_values)
 summary = format_summary(counts, len(unexplained), len(by_subject))
 
 if unexplained:
