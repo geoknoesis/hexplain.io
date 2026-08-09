@@ -94,6 +94,25 @@
     rdfs:range xsd:boolean .
 :extension a owl:DatatypeProperty ; rdfs:label "extension" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
     rdfs:range xsd:string ; rdfs:comment "Filename extension identifying this member (e.g. \".dbf\"). MULTIPLE values are alternatives, not a requirement for several files: the part is whichever ONE of them is present. Some formats name a single member by its content rather than a fixed suffix -- an ESRI .hdr labelled raster carries its grid in .bil, .bip or .bsq according to the LAYOUT keyword, and .flt when floating point -- so one PartSpec with several extensions describes one part, not three. A profile that genuinely expects several files declares several PartSpecs." .
+# ---------- Locating a part beyond a flat sibling file ----------
+# abnd:extension names a part by suffix, which assumes every member is a sibling of the
+# others sharing one stem. That covers the two-file sidecar cases and nothing else. A
+# directory-structured asset -- Sentinel-1/2 SAFE, a GRASS mapset, a Zarr store, an Esri
+# compact cache -- puts its members at known PATHS, often several matching one description,
+# and the flat model cannot say so at all.
+:pathPattern a owl:DatatypeProperty ; rdfs:label "path pattern" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range xsd:string ;
+    rdfs:comment "A glob matching this member's path relative to the asset root, e.g. \"measurement/*.tiff\". `*` matches within one path segment, `**` across segments, `?` one character. As with abnd:extension, MULTIPLE values are ALTERNATIVES. Mutually exclusive with abnd:extension, which is the flat-sibling shorthand for the pattern \"*<ext>\"." .
+:minParts a owl:DatatypeProperty ; rdfs:label "minimum parts" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "Fewest files that must match this spec. Defaults to 1 when abnd:required is true and 0 otherwise, so the boolean remains sufficient for a single-file member; declare a count only when a spec matches MANY files, which a pattern makes possible and an extension never did." .
+:maxParts a owl:DatatypeProperty ; rdfs:label "maximum parts" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "Most files that may match this spec. Absent means unbounded -- the normal case for a pattern like \"measurement/*.tiff\", where the count is a property of the data rather than of the format." .
+:nestedProfile a owl:ObjectProperty ; rdfs:label "nested profile" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range :BundleProfile ;
+    rdfs:comment "For a member that is itself a structured directory: the BundleProfile its contents conform to, rooted at that member. Lets a profile compose rather than flatten -- a SAFE product describes its annotation directory once instead of enumerating every file in it." .
+
 :primary a owl:DatatypeProperty ; rdfs:label "primary" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
     rdfs:range xsd:boolean ; rdfs:comment "Marks the PartSpec whose instance is the Asset's primaryPart." .
 
@@ -155,3 +174,28 @@ WHERE {
   }
 }
 """ ] .
+
+abnd:_prefixes sh:declare
+    [ sh:prefix "abnd" ; sh:namespace "https://hexplain.io/ns/aspect/bundle#"^^xsd:anyURI ] .
+
+# A part is located one way or the other, and a count range must be satisfiable.
+abnd:PartSpecShape a sh:NodeShape ;
+    sh:targetClass abnd:PartSpec ;
+    sh:property [ sh:path abnd:pathPattern ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path abnd:minParts ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path abnd:maxParts ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path abnd:nestedProfile ; sh:class abnd:BundleProfile ; sh:maxCount 1 ] ;
+    sh:not [ sh:and (
+        [ sh:property [ sh:path abnd:extension ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path abnd:pathPattern ; sh:minCount 1 ] ] ) ] ;
+    sh:sparql [ sh:message "abnd:maxParts must not be less than abnd:minParts." ;
+        sh:prefixes abnd:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this abnd:minParts ?lo ; abnd:maxParts ?hi .
+            FILTER(?hi < ?lo)
+        }""" ] ;
+    sh:sparql [ sh:message "A required part spec must not declare abnd:minParts 0 -- the two contradict." ;
+        sh:prefixes abnd:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this abnd:required true ; abnd:minParts 0 .
+        }""" ] .

@@ -1,0 +1,24 @@
+# Three contradictions, one per spec:
+#   - located BOTH by extension and by path pattern
+#   - maxParts below minParts, an unsatisfiable range
+#   - required true alongside minParts 0
+# Expected to trip abnd:PartSpecShape.
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix rpr:  <https://hexplain.io/ns/register/part-role#> .
+@prefix ex:   <https://hexplain.io/test/pathpattern-invalid#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:BothWays a abnd:PartSpec ;
+    rdfs:comment "Expected to trip abnd:PartSpecShape (extension and pathPattern together)." ;
+    abnd:extension ".tiff" ; abnd:pathPattern "measurement/*.tiff" ;
+    abnd:partRole rpr:Payload ; abnd:required true .
+
+ex:BadRange a abnd:PartSpec ;
+    rdfs:comment "Expected to trip abnd:PartSpecShape (maxParts < minParts)." ;
+    abnd:pathPattern "data/*.bin" ; abnd:partRole rpr:Payload ;
+    abnd:minParts 3 ; abnd:maxParts 1 .
+
+ex:RequiredButZero a abnd:PartSpec ;
+    rdfs:comment "Expected to trip abnd:PartSpecShape (required true with minParts 0)." ;
+    abnd:pathPattern "index/*.idx" ; abnd:partRole rpr:SpatialIndex ;
+    abnd:required true ; abnd:minParts 0 .

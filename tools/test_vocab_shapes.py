@@ -34,20 +34,29 @@ def load(paths):
 def ontologies_for(fixture_path):
     """Core vocabularies plus the owning module's own vocabulary and shapes.
 
-    A fixture lives at specification/<mod>/test/<feature>-{valid,invalid}.ttl.
-    Some modules keep their SHACL beside the vocabulary (bddo.ttl); others put
-    it in a sibling shapes.ttl (conf, req). Load whichever exist.
+    A fixture lives in a `test/` directory beside the module it exercises, at either
+    depth: specification/<mod>/test/ (bddo, dlv, conf, req) or
+    specification/<group>/<mod>/test/ (aspect/bundle, profiles/nitf). Resolve against
+    the module directory itself rather than assuming a depth, and load every .ttl
+    beside it -- some modules keep their SHACL in the vocabulary file (bddo.ttl),
+    others in a sibling shapes.ttl (conf, req).
     """
-    mod = pathlib.Path(fixture_path).parent.parent.name
+    mod_dir = pathlib.Path(fixture_path).parent.parent
     paths = list(CORE)
-    for extra in (f"specification/{mod}/{mod}.ttl", f"specification/{mod}/shapes.ttl"):
-        if os.path.exists(extra) and extra not in paths:
-            paths.append(extra)
+    for extra in sorted(mod_dir.glob("*.ttl")):
+        s = extra.as_posix()
+        if s not in paths:
+            paths.append(s)
     return paths
 
 
-fixtures = sorted(glob.glob("specification/*/test/*-valid.ttl")) + sorted(
-    glob.glob("specification/*/test/*-invalid.ttl")
+# Two depths: specification/<mod>/test/ and specification/<group>/<mod>/test/. The
+# one-level glob silently skipped every aspect and profile fixture -- they were written,
+# committed and never run.
+_PATTERNS = ("specification/*/test/", "specification/*/*/test/")
+fixtures = sorted(
+    f for pat in _PATTERNS for suffix in ("*-valid.ttl", "*-invalid.ttl")
+    for f in glob.glob(pat + suffix)
 )
 if not fixtures:
     sys.exit("FAIL: no fixtures found (wrong working directory?)")

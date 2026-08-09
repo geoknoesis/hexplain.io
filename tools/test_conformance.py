@@ -12,15 +12,21 @@ BASE = [
     "specification/profiles/shapefile/shapefile.ttl",
 ]
 
-# Grab the authored SELECT from the constraint.
+# Grab the authored SELECT from the required-parts constraint SPECIFICALLY. Taking
+# whichever sh:select turned up last worked only while bundle.ttl held exactly one; it
+# now has several (PartSpecShape adds its own), and RDF iteration order is arbitrary, so
+# the test silently began validating an unrelated constraint and passed the invalid
+# fixture. Navigate from the named shape instead.
+ABND = rdflib.Namespace("https://hexplain.io/ns/aspect/bundle#")
 gb = rdflib.Graph()
 for f in BASE:
     gb.parse(f, format="turtle")
 select = None
-for _, _, q in gb.triples((None, SH.select, None)):
-    select = str(q)
+for constraint in gb.objects(ABND.RequiredPartsShape, SH.sparql):
+    for q in gb.objects(constraint, SH.select):
+        select = str(q)
 if select is None:
-    print("FAIL: no sh:select constraint found in bundle.ttl")
+    print("FAIL: no sh:select found on abnd:RequiredPartsShape")
     sys.exit(1)
 
 def violations(instance_file):

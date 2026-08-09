@@ -1,0 +1,50 @@
+# A directory-structured asset, the shape abnd:extension could not express at all: members
+# at known PATHS rather than as siblings sharing a stem, several files matching one
+# description, and a subdirectory that is itself structured.
+#
+# Modelled on a Sentinel SAFE product:
+#   manifest.safe
+#   measurement/s1a-iw-grd-vv-001.tiff
+#   measurement/s1a-iw-grd-vh-001.tiff
+#   annotation/s1a-iw-grd-vv-001.xml
+#
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix rpr:  <https://hexplain.io/ns/register/part-role#> .
+@prefix ex:   <https://hexplain.io/test/pathpattern#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:SafeLike a abnd:BundleProfile ; rdfs:label "Directory-structured product" ;
+    abnd:boundBy abnd:ManifestReference ;
+    abnd:partSpec ex:manifestSpec , ex:measurementSpec , ex:annotationSpec .
+
+# A single file at a fixed path. required true implies minParts 1, so no count is needed.
+ex:manifestSpec a abnd:PartSpec ; rdfs:label "manifest" ;
+    abnd:pathPattern "manifest.safe" ;
+    abnd:partRole rpr:Manifest ; abnd:required true ; abnd:primary true .
+
+# One spec, MANY files: one measurement raster per polarisation. maxParts is absent because
+# the count is a property of the acquisition, not of the format.
+ex:measurementSpec a abnd:PartSpec ; rdfs:label "measurement rasters" ;
+    abnd:pathPattern "measurement/*.tiff" , "measurement/*.tif" ;
+    abnd:partRole rpr:Payload ; abnd:required true ; abnd:minParts 1 .
+
+# A structured subdirectory, described by composing another profile rather than by
+# enumerating its contents here.
+ex:annotationSpec a abnd:PartSpec ; rdfs:label "annotation directory" ;
+    abnd:pathPattern "annotation/**" ;
+    abnd:partRole rpr:Metadata ; abnd:required false ; abnd:minParts 0 ;
+    abnd:nestedProfile ex:AnnotationDir .
+
+ex:AnnotationDir a abnd:BundleProfile ; rdfs:label "Annotation directory" ;
+    abnd:boundBy abnd:NamingConvention ;
+    abnd:partSpec ex:annXmlSpec .
+ex:annXmlSpec a abnd:PartSpec ; abnd:extension ".xml" ;
+    abnd:partRole rpr:Metadata ; abnd:required true .
+
+# The flat sibling form still works unchanged -- patterns are an addition, not a migration.
+ex:FlatPair a abnd:BundleProfile ; rdfs:label "Flat sidecar pair" ;
+    abnd:boundBy abnd:NamingConvention ;
+    abnd:partSpec ex:hdrSpec , ex:datSpec .
+ex:hdrSpec a abnd:PartSpec ; abnd:extension ".hdr" ; abnd:partRole rpr:Metadata ; abnd:required true .
+ex:datSpec a abnd:PartSpec ; abnd:extension ".dat" ; abnd:partRole rpr:Payload ;
+    abnd:required true ; abnd:primary true .
