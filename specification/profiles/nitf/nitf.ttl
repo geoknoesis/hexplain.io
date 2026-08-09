@@ -4,6 +4,7 @@
 @prefix hexplain:<https://hexplain.io/ns/core#> .
 @prefix gv:      <https://hexplain.io/ns/geo#> .
 @prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix asamp:   <https://hexplain.io/ns/aspect/sampling#> .
 @prefix asec:    <https://hexplain.io/ns/aspect/security#> .
 @prefix usnato:  <https://hexplain.io/ns/register/us-nato-security#> .
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
@@ -772,6 +773,10 @@ nitf:RES_RESDATA a bddo:Field ; rdfs:label "RESDATA — RES Data Field" ;
 nitf:ImageSubheader hexplain:mapsToClass gv:RasterDataset .
 nitf:IS_NROWS hexplain:mapsToProperty araster:height .
 nitf:IS_NCOLS hexplain:mapsToProperty araster:width .
+# hx-sampling (imported by hx-raster) already carries these: componentCount is defined
+# as "colour channels/bands for raster", bitDepth as bits per component/sample.
+nitf:IS_NBANDS hexplain:mapsToProperty asamp:componentCount .
+nitf:IS_NBPP hexplain:mapsToProperty asamp:bitDepth .
 nitf:FH_FSCLAS hexplain:mapsToProperty asec:classificationLevel .
 nitf:IS_ISCLAS hexplain:mapsToProperty asec:classificationLevel .
 
@@ -873,9 +878,10 @@ nitf:RES_RESRDT  hexplain:mapsToProperty asec:securitySourceDate .
 
 # ---------- SEMANTIC GAP LOG (backlog for a future "extend vocabs" sub-project) ----------
 # The following NITF fields have no semantic target in current vocabularies and remain
-# physical-only until the aspect vocabularies are extended:
-#   NBANDS            -> raster band count            (needs araster:bandCount)
-#   NBPP / ABPP       -> bit depth                    (needs araster:bitDepth)
+# physical-only until the aspect vocabularies are extended.
+# (NBANDS and NBPP were listed here in error and are now mapped: hx-sampling already
+# defines componentCount and bitDepth, and hx-raster imports it. ABPP -- the ACTUAL
+# bits used within NBPP -- still has no term; it is not the same quantity.)
 #   IGEOLO + BLOCKA corners -> geospatial footprint   (needs spatialref corner/bbox term)
 #   RPC00B            -> rational-polynomial sensor model (needs a sensor-model vocab)
 #   ISCODE/ISCTLH/ISREL/ISDCTP…ISCTLN (15 ISM fields) -> ISM-aligned security register

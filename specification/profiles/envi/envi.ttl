@@ -26,6 +26,7 @@
 @prefix abnd:    <https://hexplain.io/ns/aspect/bundle#> .
 @prefix rpr:     <https://hexplain.io/ns/register/part-role#> .
 @prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix asamp:   <https://hexplain.io/ns/aspect/sampling#> .
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
@@ -66,9 +67,11 @@ envi:Header.lines a bddo:Field ; rdfs:label "lines — number of lines per band"
     bddo:key "lines" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary ;
     hexplain:mapsToProperty araster:height .
 
-# No semantic target: hx-raster has no band-count term (see the gap log below).
+# asamp:componentCount is defined as "colour channels/bands for raster" -- hx-raster
+# imports hx-sampling, so the band count already has a home.
 envi:Header.bands a bddo:Field ; rdfs:label "bands — number of bands" ;
-    bddo:key "bands" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary .
+    bddo:key "bands" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary ;
+    hexplain:mapsToProperty asamp:componentCount .
 
 envi:Header.headerOffset a bddo:Field ; rdfs:label "header offset — bytes to skip in the data file" ;
     bddo:key "header offset" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary .
@@ -166,5 +169,3 @@ envi:imgSpec a abnd:PartSpec ; abnd:extension ".img" ; abnd:partRole rpr:Payload
 #    enumeration documents the rest.
 # 4. `description = { ... }` spans braces and can wrap across lines. The delimited-record
 #    primitive is deliberately non-recursive, so that key is not modelled.
-# 5. `bands` has no semantic target: hx-raster defines only width, height and noDataValue
-#    (survey item P2-10, add a band model).

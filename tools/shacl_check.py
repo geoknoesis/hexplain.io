@@ -11,16 +11,19 @@ import sys
 from rdflib import Graph
 from pyshacl import validate
 
+# Every aspect and every register is loaded, rather than a hand-picked few. A profile may
+# map a field to any aspect property, and hexplain:MapsToPropertyShape requires the target
+# to be a known property -- so a missing aspect reports the profile as broken when only the
+# loader was. That misfired three times running (bundle, then the registers, then sampling)
+# before this became a glob.
 ONT = [
     "specification/bddo/bddo.ttl",
     "specification/dlv/dlv.ttl",
     "specification/hexplain/core.ttl",
-    "specification/aspect/raster/raster.ttl",
-    "specification/aspect/security/security.ttl",
-    "specification/aspect/bundle/bundle.ttl",
     "specification/gv/geo.ttl",
     "specification/req/req.ttl",
-] + sorted(glob.glob("specification/register/*/*.ttl"))
+] + sorted(glob.glob("specification/aspect/*/*.ttl")) \
+  + sorted(glob.glob("specification/register/*/*.ttl"))
 SHAPES = [
     "specification/bddo/bddo.ttl",
     "specification/hexplain/core.ttl",

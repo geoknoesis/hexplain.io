@@ -55,6 +55,7 @@ format nitf
   @endian big
 
 use araster: <https://hexplain.io/ns/aspect/raster#>
+use asamp:   <https://hexplain.io/ns/aspect/sampling#>
 use asec:    <https://hexplain.io/ns/aspect/security#>
 // Controlled security-marking concepts (classification levels, declassification/authority/
 // reason codes) were split out of the asec: aspect into this standalone, swappable register
@@ -356,6 +357,7 @@ struct ImageSubheader means gv:RasterDataset @label "NITF Image Subheader (Table
   // has no separate "parent" root at struct scope), matching nitf.ttl's own spelling.
   COMRAT   as IS_COMRAT  : nitf:BCSA[4]  if `IS_IC != 'NC' and IS_IC != 'NM'` @label "COMRAT — Compression Rate Code"
   NBANDS   as IS_NBANDS  : nitf:BCSNpos[1] @label "NBANDS — Number of Bands"
+                           means asamp:componentCount
   // Numeric `0`, not the string `'0'`: NBANDS is nitf:BCSNpos, whose bddo:baseType is
   // bddo:baseInteger, so HEL sees an Integer here and a string comparison would never match.
   // (nitf.ttl has always had the numeric form; this file's `'0'` was correct only while the
@@ -369,6 +371,7 @@ struct ImageSubheader means gv:RasterDataset @label "NITF Image Subheader (Table
   NPPBH    as IS_NPPBH   : nitf:BCSNpos[4] @label "NPPBH — Number of Pixels Per Block Horizontal"
   NPPBV    as IS_NPPBV   : nitf:BCSNpos[4] @label "NPPBV — Number of Pixels Per Block Vertical"
   NBPP     as IS_NBPP    : nitf:BCSNpos[2] @label "NBPP — Number of Bits Per Pixel Per Band"
+                           means asamp:bitDepth
   IDLVL    as IS_IDLVL   : nitf:BCSNpos[3] @label "IDLVL — Image Display Level"
   IALVL    as IS_IALVL   : nitf:BCSNpos[3] @label "IALVL — Image Attachment Level"
   ILOC     as IS_ILOC    : nitf:BCSN[10] @label "ILOC — Image Location"
