@@ -73,8 +73,8 @@
             <dd>The data type of each cell. Value MUST be a <code>bddo:DataType</code>.</dd>
             <dt><code>dlv:dimensionSize</code> / <code>dlv:dimensionSizeFromField</code></dt>
             <dd>The length of a <code>dlv:Dimension</code>: a fixed <code>xsd:positiveInteger</code>, or read from a <code>bddo:Field</code>. Exactly one MUST be present.</dd>
-            <dt><code>dlv:dimensionStride</code></dt>
-            <dd>Bytes to advance per step along a dimension (pitch). Optional; when absent, addressing is contiguous. Use for padded/aligned rows, e.g. BMP's 4-byte row padding.</dd>
+            <dt><code>dlv:dimensionStride</code> / <code>dlv:dimensionStrideFromField</code> / <code>dlv:dimensionStrideFromExpression</code></dt>
+            <dd>Bytes to advance per step along a dimension (pitch): a fixed literal, a value read from a <code>bddo:Field</code>, or a computed <a href="../hel/index.html">HEL</a> expression. Optional, but at most one mechanism may be used; when none is present, addressing is contiguous. The expression form is what padded rows actually need — BMP's row pitch is <code>((width * bitsPerPixel + 31) / 32) * 4</code>, which no literal can express.</dd>
             <dt><code>dlv:hasAxis</code></dt>
             <dd>Links a <code>dlv:Dimension</code> to its semantic <code>dlv:Axis</code>.</dd>
             <dt><code>dlv:chunkSize</code> / <code>dlv:chunkSizeFromField</code></dt>
@@ -122,7 +122,11 @@
 :dimensionSize a owl:DatatypeProperty ; rdfs:label "dimension size" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 :dimensionSizeFromField a owl:ObjectProperty ; rdfs:label "dimension size from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 :dimensionStride a owl:DatatypeProperty ; rdfs:label "dimension stride" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
-    rdfs:comment "Bytes to advance per step along this dimension (pitch). When absent, addressing is contiguous (stride = size of the next-faster block). Use for padded/aligned rows, e.g. BMP's 4-byte row padding." .
+    rdfs:comment "Bytes to advance per step along this dimension (pitch), as a fixed literal. When no stride is declared by any mechanism, addressing is contiguous (stride = size of the next-faster block)." .
+:dimensionStrideFromField a owl:ObjectProperty ; rdfs:label "dimension stride from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "The Field whose parsed value is this dimension's stride in bytes. Use when the pitch is carried in the format rather than fixed, e.g. an explicit row-bytes header field." .
+:dimensionStrideFromExpression a owl:DatatypeProperty ; rdfs:label "dimension stride from expression" ; rdfs:range xsd:string ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "A HEL expression giving this dimension's stride in bytes. Use when the pitch is computed rather than stored -- BMP's row padding is ((width * bitsPerPixel + 31) / 32) * 4, which no literal can express. Mirrors dimensionSize/dimensionSizeFromField: a lone sibling name takes the FromField form, anything else this one." .
 :hasAxis a owl:ObjectProperty ; rdfs:label "has axis" ; rdfs:range :Axis ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 
 # ---------- Chunked (tiled/blocked) layout ----------
@@ -183,6 +187,14 @@ dlv:DimensionShape a sh:NodeShape ;
         [ sh:property [ sh:path dlv:dimensionSizeFromField ; sh:minCount 1 ] ;
           sh:property [ sh:path dlv:dimensionSize ; sh:maxCount 0 ] ]
     ) ;
+    # A stride is optional, but at most one of the three mechanisms may be used.
+    sh:sparql [ sh:message "A dlv:Dimension must use at most one stride mechanism (dimensionStride / dimensionStrideFromField / dimensionStrideFromExpression)." ;
+        sh:prefixes dlv:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this ?p ?v .
+            FILTER(?p IN (dlv:dimensionStride, dlv:dimensionStrideFromField,
+                          dlv:dimensionStrideFromExpression))
+        } GROUP BY $this HAVING (COUNT(DISTINCT ?p) &gt; 1)""" ] ;
     # A chunk extent is optional, but the two mechanisms are mutually exclusive.
     sh:xone (
         [ sh:property [ sh:path dlv:chunkSize ; sh:maxCount 0 ] ;
@@ -195,6 +207,8 @@ dlv:DimensionShape a sh:NodeShape ;
     sh:property [ sh:path dlv:dimensionSize ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:dimensionSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:dimensionStride ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:dimensionStrideFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:dimensionStrideFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:hasAxis ; sh:nodeKind sh:IRI ; sh:class dlv:Axis ; sh:minCount 1 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:chunkSize ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:chunkSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] .
@@ -235,6 +249,8 @@ dlv:ChunkedLayoutShape a sh:NodeShape ;
     "dimensionSize": { "@id": "dlv:dimensionSize", "@type": "xsd:positiveInteger" },
     "dimensionSizeFromField": { "@id": "dlv:dimensionSizeFromField", "@type": "@id" },
     "dimensionStride": { "@id": "dlv:dimensionStride", "@type": "xsd:positiveInteger" },
+    "dimensionStrideFromField": { "@id": "dlv:dimensionStrideFromField", "@type": "@id" },
+    "dimensionStrideFromExpression": "dlv:dimensionStrideFromExpression",
     "hasAxis": { "@id": "dlv:hasAxis", "@type": "@id" },
     "chunkSize": { "@id": "dlv:chunkSize", "@type": "xsd:positiveInteger" },
     "chunkSizeFromField": { "@id": "dlv:chunkSizeFromField", "@type": "@id" },

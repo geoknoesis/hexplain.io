@@ -1,0 +1,39 @@
+# The three stride mechanisms, one per dimension: a fixed literal, a value read from a
+# field, and a computed expression. BMP is the motivating case for the last one -- its row
+# pitch is ((width * bitsPerPixel + 31) / 32) * 4, which no literal can express.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix dlv:  <https://hexplain.io/ns/dlv#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix ex:   <https://hexplain.io/test/stride#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Image a bddo:Struct ;
+    bddo:hasField ( ex:Image.width ex:Image.height ex:Image.bpp ex:Image.rowBytes ex:Image.pixels ) .
+
+ex:Image.width    a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Image.height   a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Image.bpp      a bddo:Field ; bddo:dataType bddo:uint16 .
+ex:Image.rowBytes a bddo:Field ; bddo:dataType bddo:uint32 .
+
+ex:Image.pixels a bddo:Field ;
+    bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasDataLayout ex:Layout .
+
+ex:Layout a dlv:DataLayout ;
+    rdfs:label "Row-padded 8-bit grid" ;
+    dlv:cellDataType bddo:uint8 ;
+    dlv:hasDimension ( ex:DimY ex:DimX ex:DimBand ) .
+
+# Stride read from a field carrying the pitch.
+ex:DimY a dlv:Dimension ; dlv:hasAxis dlv:axisY ;
+    dlv:dimensionSizeFromField ex:Image.height ;
+    dlv:dimensionStrideFromField ex:Image.rowBytes .
+
+# Stride computed -- the BMP row-padding formula.
+ex:DimX a dlv:Dimension ; dlv:hasAxis dlv:axisX ;
+    dlv:dimensionSizeFromField ex:Image.width ;
+    dlv:dimensionStrideFromExpression "((instance.width * instance.bpp + 31) / 32) * 4" .
+
+# Stride as a fixed literal, the pre-existing form.
+ex:DimBand a dlv:Dimension ; dlv:hasAxis dlv:axisBand ;
+    dlv:dimensionSize 3 ; dlv:dimensionStride 1 .
