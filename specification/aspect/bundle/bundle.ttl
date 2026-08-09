@@ -60,7 +60,36 @@
     rdfs:comment "The aspect ontology whose properties this part contributes. Drives facet lifting. An annotation-style link, NOT an owl:import — orthogonality is preserved." .
 :describedBy a owl:ObjectProperty ; rdfs:label "described by" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
     rdfs:range <https://hexplain.io/ns/bddo#Struct> ;
-    rdfs:comment "The BDDO byte-layout struct describing this part's bytes (optional)." .
+    rdfs:comment "The BDDO byte-layout struct describing this part's bytes (optional). The struct's local name also NAMES the part for cross-part references: HEL's `asset` root resolves `asset.<StructLocalName>.<field>` through this property, so a sidecar described by a struct named Header is reached as asset.Header. Two PartSpecs of one BundleProfile therefore MUST NOT be describedBy structs sharing a local name." .
+
+# ---------- Cross-part references ----------
+# A part's description may name a field of ANOTHER part of the same asset. This is not an
+# edge case: it is the defining shape of every raw-grid-plus-sidecar raster (ENVI, EHdr,
+# GenBin, PAux, MFF, ISCE, ROI_PAC, RRASTER, SAGA, SNODAS, ...), where the grid's extents,
+# sample type and byte order all live in the header file and the payload file carries
+# nothing but bytes.
+#
+# Two mechanisms carry such a reference, and both were already expressible before this was
+# written down -- what was missing was the resolution rule:
+#
+#   * A `...FromField` object property (bddo:sizeFromField, bddo:atOffsetFromField,
+#     dlv:dimensionSizeFromField, ...). Its range is bddo:Field with no same-struct
+#     restriction, so it may name a field of any part's struct.
+#   * A HEL expression using the `asset` root, e.g. "asset.Header.byteOrder == 0".
+#
+# Resolution. Both are resolved against the enclosing abnd:Asset, by locating the part whose
+# abnd:PartSpec is abnd:describedBy the struct that owns the named field. A description
+# carrying a cross-part reference is therefore only meaningful when parsed as part of an
+# asset; parsing such a part standalone MUST raise an error rather than yield Null, since a
+# silently absent extent would produce a plausible but wrong grid.
+#
+# Ordering. The referenced part MUST be parsed before the referring one. A processor SHOULD
+# derive that order from the references themselves; abnd:primary does not imply it, and in
+# the sidecar case the primary part is the payload, which is the DEPENDENT one.
+#
+# Requiredness. A cross-part reference SHOULD name a part whose PartSpec is abnd:required
+# true. Depending on an optional part means the referring description cannot be resolved
+# when that part is absent, which is a defect in the profile rather than in the data.
 :required a owl:DatatypeProperty ; rdfs:label "required" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
     rdfs:range xsd:boolean .
 :extension a owl:DatatypeProperty ; rdfs:label "extension" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;

@@ -57,7 +57,8 @@
                 <tbody>
                     <tr><td><code>instance</code></td><td><b>The current node</b> — the parsed node the expression is attached to (its Field, or the Struct/Field a rule governs).</td></tr>
                     <tr><td><code>parent</code></td><td>Shorthand for <code>instance.parent</code>: the containing Struct node. Sibling fields are reached via <code>parent.SiblingName</code> (equivalently <code>instance.parent.SiblingName</code>).</td></tr>
-                    <tr><td><code>root</code></td><td>The top-level parsed instance (the outermost Struct of the description).</td></tr>
+                    <tr><td><code>root</code></td><td>The top-level parsed instance (the outermost Struct of the description). Scoped to <b>one part</b>: in a multi-part asset each part has its own <code>root</code>, so <code>root</code> never crosses a part boundary — use <code>asset</code> for that.</td></tr>
+                    <tr><td><code>asset</code></td><td>The enclosing <code>abnd:Asset</code>. Its named children are the asset's parts, each named by the local name of the <code>bddo:Struct</code> the part's <code>abnd:PartSpec</code> points at with <code>abnd:describedBy</code> — so <code>asset.Header.samples</code> reads the <code>samples</code> field of the part described by the struct <code>Header</code>. Undefined, and a runtime error, when the description is not being parsed as part of an asset.</td></tr>
                     <tr><td><code>self</code></td><td>Within a <code>bddo:repeatUntil</code> expression, the array element most recently parsed (the one under test). Undefined elsewhere.</td></tr>
                     <tr><td><code>stream</code></td><td>Stream metadata: <code>stream.length</code>, <code>stream.position</code>, <code>stream.remaining</code> (all byte counts, integers).</td></tr>
                 </tbody>
@@ -96,7 +97,7 @@ FunctionName = "sizeof" / "len" / "count" / "eof" / "trim" / "substringBefore" /
 
 Accessor     = Root *( Step )
 Step         = "." ( "parent" / IDENTIFIER ) / "[" WS Expression WS "]"
-Root         = "instance" / "parent" / "root" / "self" / "stream"
+Root         = "instance" / "parent" / "root" / "self" / "stream" / "asset"
 
 CompOp       = "==" / "!=" / "&lt;=" / "&gt;=" / "&lt;" / "&gt;"
 Literal      = StringLiteral / HexLiteral / FloatLiteral / IntegerLiteral / BooleanLiteral
@@ -186,7 +187,7 @@ eof()                             ; true when the cursor is at end of stream
         <p>A conforming HEL implementation MUST:</p>
         <ol>
             <li>Parse all valid expressions per the ABNF grammar.</li>
-            <li>Implement the parsing context and all reserved roots (<code>instance</code>, <code>parent</code>, <code>root</code>, <code>self</code>, <code>stream</code>).</li>
+            <li>Implement the parsing context and all reserved roots (<code>instance</code>, <code>parent</code>, <code>root</code>, <code>self</code>, <code>stream</code>, <code>asset</code>). A processor that does not parse multi-part assets MAY leave <code>asset</code> unimplemented, but MUST then raise a runtime error on an expression that uses it rather than resolving it to Null.</li>
             <li>Implement all operators and functions with the specified precedence, and the value-type and coercion rules.</li>
             <li>Yield a Boolean in a boolean context (e.g. <code>bddo:isPresentIf</code>, <code>bddo:repeatUntil</code>, conditions), an Integer in a numeric context (e.g. <code>bddo:sizeFromExpression</code>, <code>bddo:repeatCountFromExpression</code>, <code>bddo:atOffsetFromExpression</code>), and a String in a string context (e.g. a <code>hexplain:valueExpression</code> whose <code>hexplain:valueDatatype</code> is <code>xsd:string</code>).</li>
             <li>Report a runtime error (rather than silently continue) on type errors, division/modulo by zero, and references to undefined names.</li>

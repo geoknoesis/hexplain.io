@@ -115,9 +115,9 @@ envi:ByteOrderEnum a bddo:Enumeration ; rdfs:label "ENVI byte order" ;
 # TIFF profile uses for its II/MM marker.
 envi:Raster a bddo:Struct ; rdfs:label "ENVI raster data file" ;
     bddo:hasConditionalEndianness (
-        [ a bddo:EndiannessRule ; bddo:condition "root.Header.byteOrder == 0" ;
+        [ a bddo:EndiannessRule ; bddo:condition "asset.Header.byteOrder == 0" ;
           bddo:ruleEndianness bddo:LittleEndian ]
-        [ a bddo:EndiannessRule ; bddo:condition "root.Header.byteOrder == 1" ;
+        [ a bddo:EndiannessRule ; bddo:condition "asset.Header.byteOrder == 1" ;
           bddo:ruleEndianness bddo:BigEndian ]
     ) ;
     bddo:hasField ( envi:Raster.pixels ) .
@@ -154,13 +154,12 @@ envi:imgSpec a abnd:PartSpec ; abnd:extension ".img" ; abnd:partRole rpr:Payload
     abnd:required true ; abnd:primary true ; abnd:describedBy envi:Raster .
 
 # ---------- LIMITS OF THIS DESCRIPTION (honest gaps, not omissions) ----------
-# 1. CROSS-PART FIELD REFERENCES. The layout's extents and the raster's byte order name
-#    fields of envi:Header, which lives in the OTHER part of the bundle. The vocabulary
-#    permits it -- dlv:dimensionSizeFromField ranges over bddo:Field with no same-struct
-#    restriction -- and it states the truth about the format. But nothing defines how an
-#    expression root like `root.Header.byteOrder` resolves ACROSS parts of an abnd:Asset,
-#    and no shape checks it. This is the first profile to need it, and it is the main thing
-#    ENVI proves is missing.
+# 1. CROSS-PART FIELD REFERENCES are now defined (hx-bundle, "Cross-part references"),
+#    which this profile prompted. The layout's extents name fields of envi:Header through
+#    dlv:dimensionSizeFromField, and the byte order reads it through HEL's `asset` root as
+#    `asset.Header.byteOrder`. Both resolve via the enclosing abnd:Asset. What remains is
+#    runtime: parsing envi:Raster standalone must error rather than silently yield Null,
+#    since a missing extent would produce a plausible but wrong grid.
 # 2. INTERLEAVE SELECTS A LAYOUT, and only BSQ is described here. `bil` and `bip` are the
 #    same three axes in a different order, so expressing all three needs a conditional
 #    layout (a dlv analogue of bddo:hasConditionalDataType), which does not exist.
