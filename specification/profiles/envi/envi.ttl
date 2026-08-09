@@ -1,0 +1,170 @@
+# Hexplain Profile — ENVI .hdr labelled raster 1.0
+#
+# The canonical "raw grid + key = value sidecar" format, and the first profile to use the
+# delimited-record primitive (bddo:KeyValueHeader). Roughly twenty GDAL drivers share this
+# exact shape -- EHdr, GenBin, PAux, MFF, ISCE, ROI_PAC, RRASTER, SAGA, SNODAS and the rest
+# differ only in key spellings -- so this file is the template for all of them.
+#
+# An ENVI header is line-oriented `key = value` text. Note the keys contain SPACES
+# ("header offset", "data type", "byte order"): splitting at the FIRST separator is what
+# makes that work, and it is why bddo:key matches on the key text rather than on position.
+#
+#   ENVI
+#   description = { example }
+#   samples = 5000
+#   lines   = 3000
+#   bands   = 7
+#   header offset = 0
+#   data type = 4
+#   interleave = bsq
+#   byte order = 0
+#
+@prefix envi:    <https://hexplain.io/ns/profile/envi#> .
+@prefix bddo:    <https://hexplain.io/ns/bddo#> .
+@prefix dlv:     <https://hexplain.io/ns/dlv#> .
+@prefix hexplain:<https://hexplain.io/ns/core#> .
+@prefix abnd:    <https://hexplain.io/ns/aspect/bundle#> .
+@prefix rpr:     <https://hexplain.io/ns/register/part-role#> .
+@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/profile/envi> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/profile/envi/1.0> ; owl:versionInfo "1.0" ;
+    owl:imports <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:label "Hexplain Profile — ENVI .hdr labelled raster" ;
+    rdfs:comment "Two-part raster: a line-oriented key = value text header beside a headerless binary grid, bound by shared basename." ;
+    dcterms:created "2026-08-09"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "envi" ; vann:preferredNamespaceUri "https://hexplain.io/ns/profile/envi#" .
+
+<https://hexplain.io/ns/profile/envi> hexplain:usesRegister
+    [ a hexplain:RegisterBinding ; hexplain:forProperty abnd:partRole ;
+      hexplain:register rpr:PartRoleScheme ] .
+
+# ---------- The .hdr text header ----------
+# keyValueSeparator is "=" (3D). trimWhitespace absorbs the padding authors use to align
+# values, so `lines   = 3000` and `lines = 3000` read alike. Keys are matched
+# case-insensitively: ENVI writes them lowercase by convention, not by rule.
+envi:Header a bddo:KeyValueHeader ; rdfs:label "ENVI header (.hdr)" ;
+    bddo:recordDelimiter "0A"^^xsd:hexBinary ;
+    bddo:keyValueSeparator "3D"^^xsd:hexBinary ;
+    bddo:trimWhitespace true ;
+    bddo:keyIsCaseInsensitive true ;
+    bddo:hasField ( envi:Header.samples envi:Header.lines envi:Header.bands
+                    envi:Header.headerOffset envi:Header.dataType
+                    envi:Header.interleave envi:Header.byteOrder ) .
+
+envi:Header.samples a bddo:Field ; rdfs:label "samples — pixels per line" ;
+    bddo:key "samples" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary ;
+    hexplain:mapsToProperty araster:width .
+
+envi:Header.lines a bddo:Field ; rdfs:label "lines — number of lines per band" ;
+    bddo:key "lines" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary ;
+    hexplain:mapsToProperty araster:height .
+
+# No semantic target: hx-raster has no band-count term (see the gap log below).
+envi:Header.bands a bddo:Field ; rdfs:label "bands — number of bands" ;
+    bddo:key "bands" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary .
+
+envi:Header.headerOffset a bddo:Field ; rdfs:label "header offset — bytes to skip in the data file" ;
+    bddo:key "header offset" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary .
+
+envi:Header.dataType a bddo:Field ; rdfs:label "data type — ENVI sample type code" ;
+    bddo:key "data type" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary ;
+    bddo:enumeration envi:DataTypeEnum .
+
+envi:Header.interleave a bddo:Field ; rdfs:label "interleave — band/pixel ordering" ;
+    bddo:key "interleave" ; bddo:dataType bddo:string ; bddo:encoding bddo:ascii ;
+    bddo:terminator "0A"^^xsd:hexBinary ; bddo:enumeration envi:InterleaveEnum .
+
+envi:Header.byteOrder a bddo:Field ; rdfs:label "byte order — 0 little-endian, 1 big-endian" ;
+    bddo:key "byte order" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary ;
+    bddo:enumeration envi:ByteOrderEnum .
+
+envi:DataTypeEnum a bddo:Enumeration ; rdfs:label "ENVI data type code" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue 1 ; rdfs:label "8-bit unsigned byte" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue 2 ; rdfs:label "16-bit signed integer" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue 3 ; rdfs:label "32-bit signed integer" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue 4 ; rdfs:label "32-bit float" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue 5 ; rdfs:label "64-bit double" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue 12 ; rdfs:label "16-bit unsigned integer" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue 13 ; rdfs:label "32-bit unsigned integer" ] .
+
+envi:InterleaveEnum a bddo:Enumeration ; rdfs:label "ENVI interleave" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue "bsq" ; rdfs:label "Band sequential" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "bil" ; rdfs:label "Band interleaved by line" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "bip" ; rdfs:label "Band interleaved by pixel" ] .
+
+envi:ByteOrderEnum a bddo:Enumeration ; rdfs:label "ENVI byte order" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue 0 ; rdfs:label "Little-endian (host)" ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue 1 ; rdfs:label "Big-endian (IEEE)" ] .
+
+# ---------- The binary data file ----------
+# Byte order is declared by the header, not fixed by the format, so the raster reads it
+# through hasConditionalEndianness rather than hardcoding one -- the same construct the
+# TIFF profile uses for its II/MM marker.
+envi:Raster a bddo:Struct ; rdfs:label "ENVI raster data file" ;
+    bddo:hasConditionalEndianness (
+        [ a bddo:EndiannessRule ; bddo:condition "root.Header.byteOrder == 0" ;
+          bddo:ruleEndianness bddo:LittleEndian ]
+        [ a bddo:EndiannessRule ; bddo:condition "root.Header.byteOrder == 1" ;
+          bddo:ruleEndianness bddo:BigEndian ]
+    ) ;
+    bddo:hasField ( envi:Raster.pixels ) .
+
+envi:Raster.pixels a bddo:Field ; rdfs:label "pixels — the sample grid" ;
+    bddo:dataType bddo:bytes ;
+    bddo:atOffsetFromField envi:Header.headerOffset ; bddo:offsetBase bddo:streamStart ;
+    bddo:sizeToEndOfStream true ;
+    hexplain:hasDataLayout envi:BsqLayout .
+
+# Band-sequential: whole band, then the next. Dimensions are listed slowest to fastest, so
+# Band is outermost. The extents come from the HEADER's fields -- a cross-part reference,
+# see the note below.
+envi:BsqLayout a dlv:DataLayout ; rdfs:label "Band-sequential sample grid" ;
+    dlv:cellDataType bddo:float32 ;
+    dlv:hasDimension ( envi:DimBand envi:DimY envi:DimX ) .
+
+envi:DimBand a dlv:Dimension ; dlv:hasAxis dlv:axisBand ;
+    dlv:dimensionSizeFromField envi:Header.bands .
+envi:DimY a dlv:Dimension ; dlv:hasAxis dlv:axisY ;
+    dlv:dimensionSizeFromField envi:Header.lines .
+envi:DimX a dlv:Dimension ; dlv:hasAxis dlv:axisX ;
+    dlv:dimensionSizeFromField envi:Header.samples .
+
+# ---------- Bundle ----------
+envi:Envi a abnd:BundleProfile ; rdfs:label "ENVI .hdr labelled raster" ;
+    abnd:boundBy abnd:NamingConvention ;
+    abnd:partSpec envi:hdrSpec , envi:imgSpec .
+
+envi:hdrSpec a abnd:PartSpec ; abnd:extension ".hdr" ; abnd:partRole rpr:Metadata ;
+    abnd:required true ; abnd:describedBy envi:Header ;
+    abnd:carriesAspect <https://hexplain.io/ns/aspect/raster> .
+envi:imgSpec a abnd:PartSpec ; abnd:extension ".img" ; abnd:partRole rpr:Payload ;
+    abnd:required true ; abnd:primary true ; abnd:describedBy envi:Raster .
+
+# ---------- LIMITS OF THIS DESCRIPTION (honest gaps, not omissions) ----------
+# 1. CROSS-PART FIELD REFERENCES. The layout's extents and the raster's byte order name
+#    fields of envi:Header, which lives in the OTHER part of the bundle. The vocabulary
+#    permits it -- dlv:dimensionSizeFromField ranges over bddo:Field with no same-struct
+#    restriction -- and it states the truth about the format. But nothing defines how an
+#    expression root like `root.Header.byteOrder` resolves ACROSS parts of an abnd:Asset,
+#    and no shape checks it. This is the first profile to need it, and it is the main thing
+#    ENVI proves is missing.
+# 2. INTERLEAVE SELECTS A LAYOUT, and only BSQ is described here. `bil` and `bip` are the
+#    same three axes in a different order, so expressing all three needs a conditional
+#    layout (a dlv analogue of bddo:hasConditionalDataType), which does not exist.
+# 3. CELL TYPE IS CONDITIONAL likewise: `data type = 4` means float32, `= 2` int16, and so
+#    on. dlv:cellDataType takes one bddo:DataType, so float32 is asserted here and the
+#    enumeration documents the rest.
+# 4. `description = { ... }` spans braces and can wrap across lines. The delimited-record
+#    primitive is deliberately non-recursive, so that key is not modelled.
+# 5. `bands` has no semantic target: hx-raster defines only width, height and noDataValue
+#    (survey item P2-10, add a band model).

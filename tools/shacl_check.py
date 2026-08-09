@@ -1,4 +1,12 @@
-# tools/shacl_check.py — validate a Hexplain TTL against bddo + core SHACL shapes.
+# tools/shacl_check.py — validate a Hexplain TTL against the family's SHACL shapes.
+#
+# The aspect vocabularies and every concept register are loaded as context. Register
+# membership matters: hx-bundle constrains abnd:partRole to be skos:inScheme the register
+# a profile binds, so without the registers in the data graph EVERY bundle profile fails
+# with "not skos:inScheme the declared register" -- not because it is wrong, but because
+# the concepts naming its parts were never loaded. Both shipped bundle profiles reported
+# false failures this way before the registers were added here.
+import glob
 import sys
 from rdflib import Graph
 from pyshacl import validate
@@ -9,12 +17,14 @@ ONT = [
     "specification/hexplain/core.ttl",
     "specification/aspect/raster/raster.ttl",
     "specification/aspect/security/security.ttl",
+    "specification/aspect/bundle/bundle.ttl",
     "specification/gv/geo.ttl",
     "specification/req/req.ttl",
-]
+] + sorted(glob.glob("specification/register/*/*.ttl"))
 SHAPES = [
     "specification/bddo/bddo.ttl",
     "specification/hexplain/core.ttl",
+    "specification/aspect/bundle/bundle.ttl",
     "specification/req/shapes.ttl",
 ]
 
