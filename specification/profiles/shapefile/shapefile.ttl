@@ -4,6 +4,7 @@
 @prefix fmt:     <https://hexplain.io/ns/profile/shapefile#> .
 @prefix abnd:    <https://hexplain.io/ns/aspect/bundle#> .
 @prefix rpr:     <https://hexplain.io/ns/register/part-role#> .
+@prefix hexplain:<https://hexplain.io/ns/core#> .
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
@@ -18,6 +19,14 @@
     dcterms:created "2026-07-26"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "fmt" ; vann:preferredNamespaceUri "https://hexplain.io/ns/profile/shapefile#" .
+
+# ---------- Register bindings ----------
+# abnd:partRole is drawn from the part-role register (Task 3 moved the controlled concepts
+# out of the hx-bundle aspect so a different role vocabulary could be swapped in without
+# forking abnd:). One binding suffices since every PartSpec here uses the same property.
+<https://hexplain.io/ns/profile/shapefile> hexplain:usesRegister
+    [ a hexplain:RegisterBinding ; hexplain:forProperty abnd:partRole ;
+      hexplain:register rpr:PartRoleScheme ] .
 
 fmt:Shapefile a abnd:BundleProfile ; rdfs:label "Esri Shapefile" ;
     abnd:boundBy abnd:NamingConvention ;

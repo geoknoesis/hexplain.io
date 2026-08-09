@@ -12,9 +12,13 @@ except ImportError:
     sys.exit(0)
 import rdflib
 
-SHAPES = "specification/aspect/bundle/bundle.ttl"
+BUNDLE = "specification/aspect/bundle/bundle.ttl"
+# core.ttl supplies hexplain:RegisterBindingShape, the generic SHACL-SPARQL shape that
+# enforces every hexplain:usesRegister declaration (e.g. the shapefile profile's
+# abnd:partRole -> rpr:PartRoleScheme binding) -- it must be in the shapes graph too.
+SHAPES = [BUNDLE, "specification/hexplain/core.ttl"]
 BASE = [
-    SHAPES,
+    BUNDLE,
     "specification/aspect/geometry/geometry.ttl",
     "specification/aspect/spatialref/spatialref.ttl",
     "specification/aspect/tabular/tabular.ttl",
@@ -32,7 +36,8 @@ def conforms(instance):
     for f in BASE + [instance]:
         data.parse(f, format="turtle")
     shapes = rdflib.Graph()
-    shapes.parse(SHAPES, format="turtle")
+    for f in SHAPES:
+        shapes.parse(f, format="turtle")
     ok, _, text = validate(data, shacl_graph=shapes, advanced=True)
     return ok, text
 
