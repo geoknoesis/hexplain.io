@@ -61,7 +61,7 @@
                 <dt><code>hexplain:hasDataLayout</code></dt>
                 <dd>Links a <code>bddo:Field</code> that contains multi-dimensional data to a <code>dlv:DataLayout</code> describing how to interpret it (see <a href="../dlv/index.html">DLV</a>).</dd>
                 <dt><code>hexplain:isEncodedWith</code></dt>
-                <dd>Specifies the algorithm needed to interpret a block of data — a <code>skos:Concept</code> from the encoding registers (<code>aenc:CompressionScheme</code> / <code>aenc:CodecScheme</code>). A processor MUST decode the block; when the field's data type is a <code>bddo:Struct</code>, it MUST re-parse the decoded bytes against it as a bounded sub-stream.</dd>
+                <dd>Specifies the algorithm needed to interpret a block of data — a <code>skos:Concept</code> from whichever codec or compression register the profile binds. A processor MUST decode the block; when the field's data type is a <code>bddo:Struct</code>, it MUST re-parse the decoded bytes against it as a bounded sub-stream.</dd>
                 <dt><code>hexplain:valueExpression</code> / <code>hexplain:valueDatatype</code></dt>
                 <dd>A HEL expression computing the value to emit for the mapped property instead of the raw parsed value (e.g. fixed-point or unit scaling), with an optional result datatype.</dd>
                 <dt><code>hexplain:mapsToObjectProperty</code></dt>
@@ -151,7 +151,7 @@
     rdfs:comment "Relates a bddo:Field to a dlv:DataLayout describing its multi-dimensional interpretation." .
 :isEncodedWith a owl:ObjectProperty ; rdfs:label "is encoded with" ; rdfs:range skos:Concept ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    rdfs:comment "The algorithm needed to interpret a data block, drawn from the encoding aspect registers (aenc:CompressionScheme for compression, aenc:CodecScheme for codecs). A processor decodes the block, then re-parses the decoded bytes against the field's data type when it is a bddo:Struct." .
+    rdfs:comment "The algorithm needed to interpret a data block, drawn from whichever codec or compression register the profile binds. A processor decodes the block, then re-parses the decoded bytes against the field's data type when it is a bddo:Struct." .
 :hasConditionalMapping a owl:ObjectProperty ; rdfs:label "has conditional mapping" ; rdfs:range rdf:List ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
 :condition a owl:DatatypeProperty ; rdfs:label "condition" ; rdfs:range xsd:string ;
