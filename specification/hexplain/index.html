@@ -64,6 +64,12 @@
                 <dd>Specifies the algorithm needed to interpret a block of data — a <code>skos:Concept</code> from the encoding registers (<code>aenc:CompressionScheme</code> / <code>aenc:CodecScheme</code>). A processor MUST decode the block; when the field's data type is a <code>bddo:Struct</code>, it MUST re-parse the decoded bytes against it as a bounded sub-stream.</dd>
                 <dt><code>hexplain:valueExpression</code> / <code>hexplain:valueDatatype</code></dt>
                 <dd>A HEL expression computing the value to emit for the mapped property instead of the raw parsed value (e.g. fixed-point or unit scaling), with an optional result datatype.</dd>
+                <dt><code>hexplain:mapsToObjectProperty</code></dt>
+                <dd>Links a <code>bddo:Field</code> to the <code>owl:ObjectProperty</code> whose object is an <b>IRI</b> rather than a literal — the resource minted for a nested <code>bddo:Struct</code> instance, or the field's enumeration symbol IRI. Use <code>hexplain:mapsToProperty</code> for literal-valued fields and this property for IRI-valued edges, so a described format yields a connected RDF graph rather than isolated literals.</dd>
+                <dt><code>hexplain:unit</code></dt>
+                <dd>The unit of measure of the quantity a <code>bddo:Field</code> carries, as an IRI drawn from a unit vocabulary (e.g. QUDT or UCUM). Annotation only: it records the physical unit of the emitted value and does not rescale it — use <code>hexplain:valueExpression</code> for numeric conversion.</dd>
+                <dt><code>hexplain:language</code> / <code>hexplain:languageFromField</code></dt>
+                <dd>Emit a language-tagged string literal for a <code>bddo:Field</code>: a fixed BCP-47 tag (<code>hexplain:language</code>), or the tag read from a sibling field (<code>hexplain:languageFromField</code>). Mutually exclusive.</dd>
             </dl>
         </section>
         <section>
@@ -78,6 +84,10 @@
                 <dd>A <a href="../hel/index.html">HEL</a> expression string that evaluates to a boolean.</dd>
                 <dt><code>hexplain:semanticProperty</code></dt>
                 <dd>The <code>rdf:Property</code> applied to the field when the rule's condition is <code>true</code>.</dd>
+                <dt><code>hexplain:hasConditionalClassMapping</code></dt>
+                <dd>Links a <code>bddo:Struct</code> to an <code>rdf:List</code> of <code>hexplain:ClassMappingRule</code>; the class the Struct maps to is the <code>hexplain:semanticClass</code> of the first rule whose condition holds. Models <b>tagged unions / variant records</b>, where a record's type depends on a discriminator field. Mutually exclusive with <code>hexplain:mapsToClass</code>.</dd>
+                <dt><code>hexplain:ClassMappingRule</code> / <code>hexplain:semanticClass</code></dt>
+                <dd>A single conditional class mapping: a <code>hexplain:condition</code> and the <code>owl:Class</code> (<code>hexplain:semanticClass</code>) selected when it holds.</dd>
             </dl>
         </section>
     </section>
@@ -112,6 +122,8 @@
 
 :MappingRule a owl:Class ; rdfs:label "Mapping Rule" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
     rdfs:comment "A rule for conditionally mapping a physical field to a semantic property." .
+:ClassMappingRule a owl:Class ; rdfs:label "Class Mapping Rule" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "A rule selecting the owl:Class a bddo:Struct represents based on a discriminator condition; used in a hexplain:hasConditionalClassMapping list to model tagged unions / variant records." .
 
 # Mapping properties (OWL 2 punning; domain in SHACL). rdfs:range declared.
 :mapsToClass a owl:ObjectProperty ; rdfs:label "maps to class" ; rdfs:range owl:Class ;
@@ -138,6 +150,30 @@
 :valueDatatype a owl:ObjectProperty ; rdfs:label "value datatype" ; rdfs:range rdfs:Datatype ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
     rdfs:comment "The xsd datatype of a computed hexplain:valueExpression result; defaults to the natural datatype of the HEL result type." .
+
+# Object-valued edges: the mapped triple's object is an IRI, not a literal.
+:mapsToObjectProperty a owl:ObjectProperty ; rdfs:label "maps to object property" ; rdfs:range owl:ObjectProperty ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "Relates a bddo:Field to the owl:ObjectProperty whose object is an IRI rather than a literal: the resource minted for a nested Struct instance, or the field's enumeration symbol IRI. Use hexplain:mapsToProperty for literal-valued fields and this property for IRI-valued edges." .
+
+# Conditional class mapping (tagged unions / variant records).
+:hasConditionalClassMapping a owl:ObjectProperty ; rdfs:label "has conditional class mapping" ; rdfs:range rdf:List ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "Ordered rdf:List of hexplain:ClassMappingRule on a bddo:Struct. The class the Struct maps to is the hexplain:semanticClass of the first rule whose hexplain:condition holds. Mutually exclusive with hexplain:mapsToClass." .
+:semanticClass a owl:ObjectProperty ; rdfs:label "semantic class" ; rdfs:range owl:Class ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "The owl:Class selected by a hexplain:ClassMappingRule when its condition holds." .
+
+# Unit of measure and language tag annotations.
+:unit a owl:ObjectProperty ; rdfs:label "unit" ; rdfs:range skos:Concept ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "The unit of measure of the quantity a bddo:Field carries, as an IRI (e.g. QUDT or UCUM). Annotation only: it records the physical unit and does not rescale the value." .
+:language a owl:DatatypeProperty ; rdfs:label "language" ; rdfs:range xsd:language ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "A fixed BCP-47 language tag applied to the string literal emitted for a bddo:Field. Mutually exclusive with hexplain:languageFromField." .
+:languageFromField a owl:ObjectProperty ; rdfs:label "language from field" ; rdfs:range bddo:Field ;
+    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "The bddo:Field whose parsed string value supplies the BCP-47 language tag for this field's emitted string literal. Mutually exclusive with hexplain:language." .
         </pre>
     </section>
 
@@ -193,6 +229,37 @@ hexplain:MappingRuleShape a sh:NodeShape ;
     sh:property [ sh:path hexplain:semanticProperty ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:or ( [ sh:class rdf:Property ] [ sh:class owl:DatatypeProperty ]
                 [ sh:class owl:ObjectProperty ] [ sh:class owl:AnnotationProperty ] ) ] .
+hexplain:MapsToObjectPropertyShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:mapsToObjectProperty ;
+    sh:class bddo:Field ;
+    sh:property [ sh:path hexplain:mapsToObjectProperty ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
+        sh:or ( [ sh:class rdf:Property ] [ sh:class owl:ObjectProperty ] ) ] .
+hexplain:HasConditionalClassMappingShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:hasConditionalClassMapping ;
+    sh:class bddo:Struct ;
+    sh:property [ sh:path hexplain:mapsToClass ; sh:maxCount 0 ;
+        sh:message "hexplain:mapsToClass and hexplain:hasConditionalClassMapping are mutually exclusive." ] ;
+    sh:property [ sh:path ( hexplain:hasConditionalClassMapping [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:class hexplain:ClassMappingRule ;
+        sh:message "Every member of a hasConditionalClassMapping list must be a hexplain:ClassMappingRule." ] .
+hexplain:ClassMappingRuleShape a sh:NodeShape ;
+    sh:targetClass hexplain:ClassMappingRule ;
+    sh:property [ sh:path hexplain:condition ; sh:nodeKind sh:Literal ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:semanticClass ; sh:nodeKind sh:IRI ; sh:class owl:Class ; sh:minCount 1 ; sh:maxCount 1 ] .
+hexplain:UnitShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:unit ;
+    sh:class bddo:Field ;
+    sh:property [ sh:path hexplain:unit ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+hexplain:LanguageShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:language ;
+    sh:class bddo:Field ;
+    sh:property [ sh:path hexplain:language ; sh:datatype xsd:language ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:languageFromField ; sh:maxCount 0 ;
+        sh:message "hexplain:language and hexplain:languageFromField are mutually exclusive." ] .
+hexplain:LanguageFromFieldShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:languageFromField ;
+    sh:class bddo:Field ;
+    sh:property [ sh:path hexplain:languageFromField ; sh:class bddo:Field ; sh:maxCount 1 ] .
         </pre>
     </section>
 
@@ -209,10 +276,17 @@ hexplain:MappingRuleShape a sh:NodeShape ;
     "isEncodedWith": { "@id": "hexplain:isEncodedWith", "@type": "@id" },
     "valueExpression": "hexplain:valueExpression",
     "valueDatatype": { "@id": "hexplain:valueDatatype", "@type": "@id" },
+    "mapsToObjectProperty": { "@id": "hexplain:mapsToObjectProperty", "@type": "@id" },
+    "unit": { "@id": "hexplain:unit", "@type": "@id" },
+    "language": "hexplain:language",
+    "languageFromField": { "@id": "hexplain:languageFromField", "@type": "@id" },
     "hasConditionalMapping": { "@id": "hexplain:hasConditionalMapping", "@container": "@list" },
     "MappingRule": "hexplain:MappingRule",
     "condition": "hexplain:condition",
-    "semanticProperty": { "@id": "hexplain:semanticProperty", "@type": "@id" }
+    "semanticProperty": { "@id": "hexplain:semanticProperty", "@type": "@id" },
+    "hasConditionalClassMapping": { "@id": "hexplain:hasConditionalClassMapping", "@container": "@list" },
+    "ClassMappingRule": "hexplain:ClassMappingRule",
+    "semanticClass": { "@id": "hexplain:semanticClass", "@type": "@id" }
   }
 }
         </pre>
