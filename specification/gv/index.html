@@ -102,10 +102,11 @@
     vann:preferredNamespacePrefix "gv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/geo#" .
 
 # ---------- Domain classes (compositions) ----------
-:GeospatialDataset a owl:Class ; rdfs:label "Geospatial Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch geosparql:Feature .
-:RasterDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Raster Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:comment "Composes araster:* with asref:*." .
-:VectorDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Vector Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:comment "Composes ageom:* with asref:*." .
-:PointCloud a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Point Cloud" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:comment "Composes apc:* with asref:*." .
+:GeospatialDataset a owl:Class ; rdfs:label "Geospatial Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; skos:closeMatch geosparql:Feature ;
+    rdfs:comment "Georeferenced dataset. Carries the spatial-reference aspect (asref:) and, by kind, raster/geometry/point-cloud aspects, plus optional provenance and security." .
+:RasterDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Raster Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:comment "Composes araster:* (width, height, noDataValue) with asref:*." .
+:VectorDataset a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Vector Dataset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:comment "Composes ageom:* (geometryType, dimensionality) with asref:*." .
+:PointCloud a owl:Class ; rdfs:subClassOf :GeospatialDataset ; rdfs:label "Point Cloud" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ; rdfs:comment "Composes apc:* (pointCount, pointDataLayout) with asref:*." .
 
 # Imported aspects provide: CRS/GeoTransform + registration in asref: ; AcquisitionInfo/SensorModel/Platform + acquisition* in aprov: ;
 # noDataValue in araster: ; pointCount/pointDataLayout in apc: ; classificationLevel in asec: ; geometry* in ageom:.

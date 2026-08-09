@@ -10,7 +10,23 @@ import sys
 import rdflib
 from rdflib.compare import graph_diff, to_isomorphic
 
-MODULES = ["bddo", "dlv"]
+# Discovered, not listed. This gate covered two modules by name for as long as it existed,
+# so the other eight shipped a second copy of their vocabulary that nothing compared -- and
+# gv and hexplain had both drifted, in each case an rdfs:comment that was elaborated in the
+# .ttl and left at its older, shorter wording on the page. Nothing was missing, which is
+# precisely why nobody caught it by reading.
+#
+# A module qualifies when it has both <mod>.ttl and index.html; aspects and registers sit
+# one level deeper and are picked up the same way. A module that later gains a page joins
+# the gate on its own.
+def _modules():
+    found = []
+    for ttl in sorted(pathlib.Path("specification").glob("*/*.ttl")) + \
+               sorted(pathlib.Path("specification").glob("*/*/*.ttl")):
+        doc = ttl.parent / "index.html"
+        if doc.exists():
+            found.append((ttl.parent.relative_to("specification").as_posix(), ttl, doc))
+    return found
 # Only the normative sections are the vocabulary's second copy. Non-normative
 # example blocks are valid Turtle too, but they are meant to differ from the
 # .ttl, so comparing them would be measuring the wrong thing.
@@ -49,13 +65,12 @@ def embedded_graph(doc_path):
     return g
 
 
+modules = _modules()
+if not modules:
+    sys.exit("FAIL: no module has both a .ttl and an index.html (wrong working directory?)")
+
 failures = []
-for mod in MODULES:
-    ttl_path = pathlib.Path(f"specification/{mod}/{mod}.ttl")
-    doc_path = pathlib.Path(f"specification/{mod}/index.html")
-    if not ttl_path.exists() or not doc_path.exists():
-        failures.append(f"{mod}: missing {ttl_path} or {doc_path}")
-        continue
+for mod, ttl_path, doc_path in modules:
     canonical = to_isomorphic(turtle_graph(ttl_path))
     embedded = to_isomorphic(embedded_graph(doc_path))
     if canonical == embedded:
@@ -71,4 +86,4 @@ for mod in MODULES:
 if failures:
     print("FAIL:\n" + "\n\n".join(failures))
     sys.exit(1)
-print(f"PASS: {len(MODULES)} modules' index.html match their .ttl")
+print(f"PASS: {len(modules)} modules' index.html match their .ttl")

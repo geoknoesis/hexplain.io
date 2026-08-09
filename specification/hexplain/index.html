@@ -192,12 +192,12 @@
 # Object-valued edges: the mapped triple's object is an IRI, not a literal.
 :mapsToObjectProperty a owl:ObjectProperty ; rdfs:label "maps to object property" ; rdfs:range owl:ObjectProperty ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    rdfs:comment "Relates a bddo:Field to the owl:ObjectProperty whose object is an IRI rather than a literal: the resource minted for a nested Struct instance, or the field's enumeration symbol IRI. Use hexplain:mapsToProperty for literal-valued fields and this property for IRI-valued edges." .
+    rdfs:comment "Relates a bddo:Field to the owl:ObjectProperty whose object is an IRI rather than a literal: the resource minted for a nested Struct instance (when the field's bddo:dataType is a bddo:Struct) or the field's enumeration symbol IRI (when it carries a bddo:enumeration whose bddo:enumSymbol values are IRIs). Use hexplain:mapsToProperty for literal-valued fields and this property for IRI-valued edges, so that a described format yields a connected RDF graph rather than isolated literals." .
 
 # Conditional class mapping (tagged unions / variant records).
 :hasConditionalClassMapping a owl:ObjectProperty ; rdfs:label "has conditional class mapping" ; rdfs:range rdf:List ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    rdfs:comment "Ordered rdf:List of hexplain:ClassMappingRule on a bddo:Struct. The class the Struct maps to is the hexplain:semanticClass of the first rule whose hexplain:condition holds. Mutually exclusive with hexplain:mapsToClass." .
+    rdfs:comment "Ordered rdf:List of hexplain:ClassMappingRule on a bddo:Struct. The class the Struct maps to is the hexplain:semanticClass of the first rule whose hexplain:condition holds — modelling tagged unions and variant records, where a record's type depends on a discriminator field. Mutually exclusive with hexplain:mapsToClass." .
 :semanticClass a owl:ObjectProperty ; rdfs:label "semantic class" ; rdfs:range owl:Class ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
     rdfs:comment "The owl:Class selected by a hexplain:ClassMappingRule when its condition holds." .
@@ -205,13 +205,13 @@
 # Unit of measure and language tag annotations.
 :unit a owl:ObjectProperty ; rdfs:label "unit" ; rdfs:range skos:Concept ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    rdfs:comment "The unit of measure of the quantity a bddo:Field carries, as an IRI (e.g. QUDT or UCUM). Annotation only: it records the physical unit and does not rescale the value." .
+    rdfs:comment "The unit of measure of the quantity a bddo:Field carries, as an IRI drawn from a unit vocabulary (e.g. QUDT or UCUM; the range is skos:Concept but any unit IRI is permitted). Annotation only: it records the physical unit of the emitted value and does not rescale it — use hexplain:valueExpression for numeric conversion." .
 :language a owl:DatatypeProperty ; rdfs:label "language" ; rdfs:range xsd:language ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    rdfs:comment "A fixed BCP-47 language tag applied to the string literal emitted for a bddo:Field. Mutually exclusive with hexplain:languageFromField." .
+    rdfs:comment "A fixed BCP-47 language tag applied to the string literal emitted for a bddo:Field, producing a language-tagged literal. Mutually exclusive with hexplain:languageFromField." .
 :languageFromField a owl:ObjectProperty ; rdfs:label "language from field" ; rdfs:range bddo:Field ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    rdfs:comment "The bddo:Field whose parsed string value supplies the BCP-47 language tag for this field's emitted string literal. Mutually exclusive with hexplain:language." .
+    rdfs:comment "The bddo:Field whose parsed string value supplies the BCP-47 language tag for this field's emitted string literal, for formats that carry a text run's language in a sibling field. Mutually exclusive with hexplain:language." .
 
 # Register bindings: which controlled register supplies a property's values.
 hexplain:RegisterBinding a owl:Class ; rdfs:label "register binding" ;
