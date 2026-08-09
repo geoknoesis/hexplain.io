@@ -1,0 +1,46 @@
+# A layout whose cell type and axis order are both chosen by header fields -- the ENVI /
+# EHdr shape. The two conditionals are independent, which is the point: three order rules
+# and three cell-type rules cover nine combinations over the SAME three Dimension nodes,
+# where one conditional DataLayout would have needed nine whole layouts.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix dlv:  <https://hexplain.io/ns/dlv#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix ex:   <https://hexplain.io/test/condlayout#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Hdr a bddo:Struct ;
+    bddo:hasField ( ex:Hdr.rows ex:Hdr.cols ex:Hdr.bands ex:Hdr.nbits ex:Hdr.layout ) .
+ex:Hdr.rows   a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Hdr.cols   a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Hdr.bands  a bddo:Field ; bddo:dataType bddo:uint16 .
+ex:Hdr.nbits  a bddo:Field ; bddo:dataType bddo:uint16 .
+ex:Hdr.layout a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:ascii ; bddo:size 3 .
+
+ex:Grid a bddo:Struct ; bddo:hasField ( ex:Grid.pixels ) .
+ex:Grid.pixels a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasDataLayout ex:Layout .
+
+ex:Layout a dlv:DataLayout ; rdfs:label "Interleave- and depth-dependent grid" ;
+    dlv:hasConditionalCellDataType (
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Hdr.nbits == 8"  ; dlv:ruleCellDataType bddo:uint8 ]
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Hdr.nbits == 16" ; dlv:ruleCellDataType bddo:uint16 ]
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Hdr.nbits == 32" ; dlv:ruleCellDataType bddo:float32 ]
+    ) ;
+    # The same three dimensions, permuted. BIL is (Y, Band, X); BIP (Y, X, Band); BSQ (Band, Y, X).
+    dlv:hasConditionalDimensionOrder (
+        [ a dlv:DimensionOrderRule ; bddo:condition "asset.Hdr.layout == 'BIL'" ;
+          dlv:ruleDimensionOrder ( ex:DimY ex:DimBand ex:DimX ) ]
+        [ a dlv:DimensionOrderRule ; bddo:condition "asset.Hdr.layout == 'BIP'" ;
+          dlv:ruleDimensionOrder ( ex:DimY ex:DimX ex:DimBand ) ]
+        [ a dlv:DimensionOrderRule ; bddo:condition "asset.Hdr.layout == 'BSQ'" ;
+          dlv:ruleDimensionOrder ( ex:DimBand ex:DimY ex:DimX ) ]
+    ) .
+
+ex:DimY    a dlv:Dimension ; dlv:hasAxis dlv:axisY    ; dlv:dimensionSizeFromField ex:Hdr.rows .
+ex:DimX    a dlv:Dimension ; dlv:hasAxis dlv:axisX    ; dlv:dimensionSizeFromField ex:Hdr.cols .
+ex:DimBand a dlv:Dimension ; dlv:hasAxis dlv:axisBand ; dlv:dimensionSizeFromField ex:Hdr.bands .
+
+# A fixed layout must still be valid -- the conditionals are alternatives, not replacements.
+ex:FixedLayout a dlv:DataLayout ; rdfs:label "Plain fixed grid" ;
+    dlv:cellDataType bddo:uint8 ;
+    dlv:hasDimension ( ex:DimY ex:DimX ) .

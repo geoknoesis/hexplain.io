@@ -154,6 +154,26 @@
 :axisZ a :Axis ; rdfs:label "Z Axis (Depth)" .
 :axisBand a :Axis ; rdfs:label "Band/Channel Axis" .
 :axisTime a :Axis ; rdfs:label "Time Axis" .
+
+# ---------- Conditional layout ----------
+# A raster's cell type and its axis order are routinely chosen by header fields rather than
+# fixed by the format: ENVI's `data type` and `interleave`, EHdr's NBITS and LAYOUT. These
+# are TWO conditionals rather than one conditional DataLayout on purpose. Making the whole
+# layout conditional multiplies the cases -- ENVI would need one layout per (interleave,
+# data type) pair, 3 x 7 = 21 -- whereas separating them needs 3 order rules and 7 cell-type
+# rules over the SAME three Dimension nodes. Both mirror bddo:hasConditionalDataType: an
+# ordered rdf:List of rules, first satisfied condition wins, conditions are HEL.
+:CellDataTypeRule a owl:Class ; rdfs:label "Cell Data Type Rule" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "One arm of a hasConditionalCellDataType list: a HEL condition and the cell type it selects." .
+:DimensionOrderRule a owl:Class ; rdfs:label "Dimension Order Rule" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "One arm of a hasConditionalDimensionOrder list: a HEL condition and the dimension order it selects." .
+:hasConditionalCellDataType a owl:ObjectProperty ; rdfs:label "has conditional cell data type" ; rdfs:range rdf:List ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "Ordered rdf:List of CellDataTypeRule. The first rule whose condition holds gives the layout's cell type. Mutually exclusive with dlv:cellDataType." .
+:ruleCellDataType a owl:ObjectProperty ; rdfs:label "rule cell data type" ; rdfs:range bddo:DataType ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
+:hasConditionalDimensionOrder a owl:ObjectProperty ; rdfs:label "has conditional dimension order" ; rdfs:range rdf:List ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "Ordered rdf:List of DimensionOrderRule. The first rule whose condition holds gives the layout's dimension order. Each rule names the SAME Dimension nodes in a different sequence -- band interleaving is a permutation of axes, not a different set of them. Mutually exclusive with dlv:hasDimension." .
+:ruleDimensionOrder a owl:ObjectProperty ; rdfs:label "rule dimension order" ; rdfs:range rdf:List ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "The ordered rdf:List of dlv:Dimension selected by a DimensionOrderRule, slowest- to fastest-varying." .
         </pre>
     </section>
 
@@ -175,11 +195,44 @@
 # SHACL shapes
 dlv:DataLayoutShape a sh:NodeShape ;
     sh:targetClass dlv:DataLayout ;
-    sh:property [ sh:path dlv:hasDimension ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
+    sh:property [ sh:path dlv:hasDimension ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
     sh:property [ sh:path ( dlv:hasDimension [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class dlv:Dimension ] ;
-    sh:property [ sh:path dlv:cellDataType ; sh:class bddo:DataType ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path dlv:cellDataType ; sh:class bddo:DataType ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:hasConditionalCellDataType ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
+    sh:property [ sh:path dlv:hasConditionalDimensionOrder ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
+    # The cell type is fixed or chosen, never both and never neither.
+    sh:xone (
+        [ sh:property [ sh:path dlv:cellDataType ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:hasConditionalCellDataType ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:hasConditionalCellDataType ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:cellDataType ; sh:maxCount 0 ] ]
+    ) ;
+    # ...and so is the dimension order.
+    sh:xone (
+        [ sh:property [ sh:path dlv:hasDimension ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:hasConditionalDimensionOrder ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:hasConditionalDimensionOrder ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:hasDimension ; sh:maxCount 0 ] ]
+    ) ;
+    sh:property [ sh:path ( dlv:hasConditionalCellDataType [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:class dlv:CellDataTypeRule ;
+        sh:message "Every member of a hasConditionalCellDataType list must be a dlv:CellDataTypeRule." ] ;
+    sh:property [ sh:path ( dlv:hasConditionalDimensionOrder [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:class dlv:DimensionOrderRule ;
+        sh:message "Every member of a hasConditionalDimensionOrder list must be a dlv:DimensionOrderRule." ] .
 
-dlv:DimensionShape a sh:NodeShape ;
+dlv:CellDataTypeRuleShape a sh:NodeShape ;
+    sh:targetClass dlv:CellDataTypeRule ;
+    sh:property [ sh:path bddo:condition ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:ruleCellDataType ; sh:class bddo:DataType ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+dlv:DimensionOrderRuleShape a sh:NodeShape ;
+    sh:targetClass dlv:DimensionOrderRule ;
+    sh:property [ sh:path bddo:condition ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:ruleDimensionOrder ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
+    sh:property [ sh:path ( dlv:ruleDimensionOrder [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:class dlv:Dimension ;
+        sh:message "Every member of a ruleDimensionOrder list must be a dlv:Dimension." ] .dlv:DimensionShape a sh:NodeShape ;
     sh:targetClass dlv:Dimension ;
     sh:xone (
         [ sh:property [ sh:path dlv:dimensionSize ; sh:minCount 1 ] ;
@@ -246,6 +299,10 @@ dlv:ChunkedLayoutShape a sh:NodeShape ;
     "DataLayout": "dlv:DataLayout", "Dimension": "dlv:Dimension", "Axis": "dlv:Axis",
     "hasDimension": { "@id": "dlv:hasDimension", "@container": "@list" },
     "cellDataType": { "@id": "dlv:cellDataType", "@type": "@id" },
+    "hasConditionalCellDataType": { "@id": "dlv:hasConditionalCellDataType", "@container": "@list" },
+    "ruleCellDataType": { "@id": "dlv:ruleCellDataType", "@type": "@id" },
+    "hasConditionalDimensionOrder": { "@id": "dlv:hasConditionalDimensionOrder", "@container": "@list" },
+    "ruleDimensionOrder": { "@id": "dlv:ruleDimensionOrder", "@container": "@list" },
     "dimensionSize": { "@id": "dlv:dimensionSize", "@type": "xsd:positiveInteger" },
     "dimensionSizeFromField": { "@id": "dlv:dimensionSizeFromField", "@type": "@id" },
     "dimensionStride": { "@id": "dlv:dimensionStride", "@type": "xsd:positiveInteger" },

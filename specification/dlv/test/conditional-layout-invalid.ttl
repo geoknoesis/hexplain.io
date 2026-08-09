@@ -1,0 +1,21 @@
+# A layout declaring BOTH a fixed cell type and a conditional one, and both a fixed
+# dimension list and a conditional order. Each is an either/or, never both.
+# Expected to trip dlv:DataLayoutShape's two sh:xone constraints.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix dlv:  <https://hexplain.io/ns/dlv#> .
+@prefix ex:   <https://hexplain.io/test/condlayout-invalid#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Both a dlv:DataLayout ;
+    rdfs:comment "Expected to trip dlv:DataLayoutShape (fixed and conditional cell type, and both dimension forms)." ;
+    dlv:cellDataType bddo:uint8 ;
+    dlv:hasConditionalCellDataType (
+        [ a dlv:CellDataTypeRule ; bddo:condition "instance.n == 1" ; dlv:ruleCellDataType bddo:uint16 ]
+    ) ;
+    dlv:hasDimension ( ex:DimX ) ;
+    dlv:hasConditionalDimensionOrder (
+        [ a dlv:DimensionOrderRule ; bddo:condition "instance.n == 1" ;
+          dlv:ruleDimensionOrder ( ex:DimX ) ]
+    ) .
+
+ex:DimX a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSize 16 .

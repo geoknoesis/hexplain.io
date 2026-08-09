@@ -134,14 +134,26 @@ ehdr:Raster.pixels a bddo:Field ; rdfs:label "the sample grid" ;
     bddo:dataType bddo:bytes ;
     bddo:atOffsetFromField ehdr:Header.skipBytes ; bddo:offsetBase bddo:streamStart ;
     bddo:sizeToEndOfStream true ;
-    hexplain:hasDataLayout ehdr:BilLayout .
+    hexplain:hasDataLayout ehdr:Grid .
 
-# BIL, the EHdr default: a line of band 1, then that line of band 2, and so on, then the
-# next line. Slowest to fastest that is Y, Band, X -- which is exactly why the dimension
-# LIST ORDER carries the interleave, and why BIP and BSQ are the same three axes permuted.
-ehdr:BilLayout a dlv:DataLayout ; rdfs:label "Band-interleaved-by-line sample grid" ;
-    dlv:cellDataType bddo:uint8 ;
-    dlv:hasDimension ( ehdr:DimY ehdr:DimBand ehdr:DimX ) .
+# LAYOUT chooses the axis order and NBITS the cell type, so both are conditional. The three
+# orders permute the SAME three Dimension nodes -- band interleaving is a permutation, not a
+# different set of axes -- which is why these are two independent conditionals rather than
+# one conditional layout per (LAYOUT, NBITS) pair.
+ehdr:Grid a dlv:DataLayout ; rdfs:label "EHdr sample grid" ;
+    dlv:hasConditionalCellDataType (
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Header.nbits == 8"  ; dlv:ruleCellDataType bddo:uint8 ]
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Header.nbits == 16" ; dlv:ruleCellDataType bddo:uint16 ]
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Header.nbits == 32" ; dlv:ruleCellDataType bddo:uint32 ]
+    ) ;
+    dlv:hasConditionalDimensionOrder (
+        [ a dlv:DimensionOrderRule ; bddo:condition "asset.Header.layout == 'BIL'" ;
+          dlv:ruleDimensionOrder ( ehdr:DimY ehdr:DimBand ehdr:DimX ) ]
+        [ a dlv:DimensionOrderRule ; bddo:condition "asset.Header.layout == 'BIP'" ;
+          dlv:ruleDimensionOrder ( ehdr:DimY ehdr:DimX ehdr:DimBand ) ]
+        [ a dlv:DimensionOrderRule ; bddo:condition "asset.Header.layout == 'BSQ'" ;
+          dlv:ruleDimensionOrder ( ehdr:DimBand ehdr:DimY ehdr:DimX ) ]
+    ) .
 
 ehdr:DimY a dlv:Dimension ; dlv:hasAxis dlv:axisY ;
     dlv:dimensionSizeFromField ehdr:Header.nrows .
@@ -170,17 +182,13 @@ ehdr:prjSpec a abnd:PartSpec ; abnd:extension ".prj" ; abnd:partRole rpr:Spatial
     abnd:required false ; abnd:carriesAspect <https://hexplain.io/ns/aspect/spatialref> .
 
 # ---------- LIMITS OF THIS DESCRIPTION ----------
-# 1. LAYOUT SELECTS THE DIMENSION ORDER, and only BIL is described. BIP is (Y, X, Band) and
-#    BSQ is (Band, Y, X) -- the same three axes permuted. Expressing all three needs a
-#    conditional layout, a dlv analogue of bddo:hasConditionalDataType, which does not
-#    exist. Same gap ENVI's `interleave` hit; two profiles now want it.
-# 2. CELL TYPE IS CONDITIONAL on NBITS (and on whether the file is .flt): 8 bits means
-#    uint8, 32 means uint32 or float32. dlv:cellDataType takes one bddo:DataType, so uint8
-#    is asserted and the header field carries the truth.
-# 3. PIXELTYPE (SIGNEDINT/UNSIGNEDINT/FLOAT) is not modelled. asamp:sampleFormat exists and
+# 1. .flt IS NOT DISTINGUISHED. NBITS 32 selects uint32 above, but the same width means
+#    float32 when the grid file is .flt. The cell-type rules condition on header fields; no
+#    condition can name which of the PartSpec's alternative extensions the part matched.
+# 2. PIXELTYPE (SIGNEDINT/UNSIGNEDINT/FLOAT) is not modelled. asamp:sampleFormat exists and
 #    would be its target; it is omitted only because it is an optional GDAL extension
 #    keyword rather than part of the base dialect.
-# 4. ULXMAP/ULYMAP MAP ONTO GEOGRAPHIC-NAMED PROPERTIES. hx-spatialref offers
+# 3. ULXMAP/ULYMAP MAP ONTO GEOGRAPHIC-NAMED PROPERTIES. hx-spatialref offers
 #    originLongitude/originLatitude, but an EHdr origin is in whatever CRS the .prj names --
 #    projected metres as often as degrees. The values are right and the property names are
 #    too narrow; a generic originX/originY (and the full six-coefficient affine, since these

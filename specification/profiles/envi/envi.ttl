@@ -126,14 +126,29 @@ envi:Raster.pixels a bddo:Field ; rdfs:label "pixels — the sample grid" ;
     bddo:dataType bddo:bytes ;
     bddo:atOffsetFromField envi:Header.headerOffset ; bddo:offsetBase bddo:streamStart ;
     bddo:sizeToEndOfStream true ;
-    hexplain:hasDataLayout envi:BsqLayout .
+    hexplain:hasDataLayout envi:Grid .
 
-# Band-sequential: whole band, then the next. Dimensions are listed slowest to fastest, so
-# Band is outermost. The extents come from the HEADER's fields -- a cross-part reference,
-# see the note below.
-envi:BsqLayout a dlv:DataLayout ; rdfs:label "Band-sequential sample grid" ;
-    dlv:cellDataType bddo:float32 ;
-    dlv:hasDimension ( envi:DimBand envi:DimY envi:DimX ) .
+# `interleave` chooses the axis order and `data type` the cell type, so both are
+# conditional; all seven data types and all three interleaves are covered over the same
+# three Dimension nodes. Extents come from the HEADER's fields -- a cross-part reference.
+envi:Grid a dlv:DataLayout ; rdfs:label "ENVI sample grid" ;
+    dlv:hasConditionalCellDataType (
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Header.dataType == 1"  ; dlv:ruleCellDataType bddo:uint8 ]
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Header.dataType == 2"  ; dlv:ruleCellDataType bddo:int16 ]
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Header.dataType == 3"  ; dlv:ruleCellDataType bddo:int32 ]
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Header.dataType == 4"  ; dlv:ruleCellDataType bddo:float32 ]
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Header.dataType == 5"  ; dlv:ruleCellDataType bddo:float64 ]
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Header.dataType == 12" ; dlv:ruleCellDataType bddo:uint16 ]
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Header.dataType == 13" ; dlv:ruleCellDataType bddo:uint32 ]
+    ) ;
+    dlv:hasConditionalDimensionOrder (
+        [ a dlv:DimensionOrderRule ; bddo:condition "asset.Header.interleave == 'bsq'" ;
+          dlv:ruleDimensionOrder ( envi:DimBand envi:DimY envi:DimX ) ]
+        [ a dlv:DimensionOrderRule ; bddo:condition "asset.Header.interleave == 'bil'" ;
+          dlv:ruleDimensionOrder ( envi:DimY envi:DimBand envi:DimX ) ]
+        [ a dlv:DimensionOrderRule ; bddo:condition "asset.Header.interleave == 'bip'" ;
+          dlv:ruleDimensionOrder ( envi:DimY envi:DimX envi:DimBand ) ]
+    ) .
 
 envi:DimBand a dlv:Dimension ; dlv:hasAxis dlv:axisBand ;
     dlv:dimensionSizeFromField envi:Header.bands .
@@ -160,11 +175,5 @@ envi:imgSpec a abnd:PartSpec ; abnd:extension ".img" ; abnd:partRole rpr:Payload
 #    `asset.Header.byteOrder`. Both resolve via the enclosing abnd:Asset. What remains is
 #    runtime: parsing envi:Raster standalone must error rather than silently yield Null,
 #    since a missing extent would produce a plausible but wrong grid.
-# 2. INTERLEAVE SELECTS A LAYOUT, and only BSQ is described here. `bil` and `bip` are the
-#    same three axes in a different order, so expressing all three needs a conditional
-#    layout (a dlv analogue of bddo:hasConditionalDataType), which does not exist.
-# 3. CELL TYPE IS CONDITIONAL likewise: `data type = 4` means float32, `= 2` int16, and so
-#    on. dlv:cellDataType takes one bddo:DataType, so float32 is asserted here and the
-#    enumeration documents the rest.
-# 4. `description = { ... }` spans braces and can wrap across lines. The delimited-record
+# 2. `description = { ... }` spans braces and can wrap across lines. The delimited-record
 #    primitive is deliberately non-recursive, so that key is not modelled.
