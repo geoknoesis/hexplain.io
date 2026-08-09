@@ -1,0 +1,41 @@
+# Cells narrower than a byte: a 1-bit mask, a 4-bit palette, and a GRIB2-style grid whose
+# packed width is named by the message rather than by the format.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix dlv:  <https://hexplain.io/ns/dlv#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix ex:   <https://hexplain.io/test/bitpack#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Img a bddo:Struct ; bddo:hasField ( ex:Img.w ex:Img.h ex:Img.nbits ex:Img.mask ex:Img.pal ex:Img.grib ) .
+ex:Img.w     a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Img.h     a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Img.nbits a bddo:Field ; bddo:dataType bddo:uint8 .
+
+# 1-bit mask. Rows pad to a byte boundary, so the stride is whole bytes while the cells
+# within a row are not -- which is exactly why stride stays byte-valued.
+ex:Img.mask a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasDataLayout ex:MaskLayout .
+ex:MaskLayout a dlv:DataLayout ; rdfs:label "1-bit mask" ;
+    dlv:cellDataType bddo:uint8 ; dlv:cellBitWidth 1 ; dlv:cellPackingOrder bddo:MSBFirst ;
+    dlv:hasDimension ( ex:DimY ex:DimX ) .
+
+# 4-bit palette indices, two per byte.
+ex:Img.pal a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasDataLayout ex:PalLayout .
+ex:PalLayout a dlv:DataLayout ; rdfs:label "4-bit palette indices" ;
+    dlv:cellDataType bddo:uint8 ; dlv:cellBitWidth 4 ;
+    dlv:hasDimension ( ex:DimY ex:DimX ) .
+
+# GRIB2 simple packing: the width comes from the data-representation section.
+ex:Img.grib a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasDataLayout ex:GribLayout .
+ex:GribLayout a dlv:DataLayout ; rdfs:label "GRIB2 simple-packed values" ;
+    dlv:cellDataType bddo:uint32 ; dlv:cellBitWidthFromField ex:Img.nbits ;
+    dlv:hasDimension ( ex:DimY ex:DimX ) .
+
+ex:DimY a dlv:Dimension ; dlv:hasAxis dlv:axisY ; dlv:dimensionSizeFromField ex:Img.h .
+ex:DimX a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSizeFromField ex:Img.w .
+
+# A byte-width layout is unaffected: cellBitWidth is an override, not a requirement.
+ex:PlainLayout a dlv:DataLayout ; dlv:cellDataType bddo:uint8 ;
+    dlv:hasDimension ( ex:DimY ex:DimX ) .

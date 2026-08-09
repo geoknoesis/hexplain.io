@@ -122,11 +122,28 @@
 :dimensionSize a owl:DatatypeProperty ; rdfs:label "dimension size" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 :dimensionSizeFromField a owl:ObjectProperty ; rdfs:label "dimension size from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 :dimensionStride a owl:DatatypeProperty ; rdfs:label "dimension stride" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
-    rdfs:comment "Bytes to advance per step along this dimension (pitch), as a fixed literal. When no stride is declared by any mechanism, addressing is contiguous (stride = size of the next-faster block)." .
+    rdfs:comment "Bytes to advance per step along this dimension (pitch), as a fixed literal. When no stride is declared by any mechanism, addressing is contiguous (stride = size of the next-faster block). Stride stays in BYTES even for a bit-packed layout: rows of a packed grid are normally padded to a byte boundary while the cells within a row are not, so the pitch is whole bytes and dlv:cellBitWidth governs only the packing inside one row." .
 :dimensionStrideFromField a owl:ObjectProperty ; rdfs:label "dimension stride from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
     rdfs:comment "The Field whose parsed value is this dimension's stride in bytes. Use when the pitch is carried in the format rather than fixed, e.g. an explicit row-bytes header field." .
 :dimensionStrideFromExpression a owl:DatatypeProperty ; rdfs:label "dimension stride from expression" ; rdfs:range xsd:string ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
     rdfs:comment "A HEL expression giving this dimension's stride in bytes. Use when the pitch is computed rather than stored -- BMP's row padding is ((width * bitsPerPixel + 31) / 32) * 4, which no literal can express. Mirrors dimensionSize/dimensionSizeFromField: a lone sibling name takes the FromField form, anything else this one." .
+# ---------- Sub-byte cells ----------
+# Every bddo:DataType is a whole number of bytes, so a grid whose cells are not could not be
+# addressed at all: a 1-bit mask, a 4-bit palette index, GRIB2 simple packing at whatever
+# width the header names, NITF's 1-bit imagery. dlv:cellBitWidth overrides the cell type's
+# intrinsic width, so the type keeps saying how to INTERPRET a cell (signed, unsigned,
+# float) while the width says how much room it takes.
+#
+# Distinct from asamp:bitDepth, which is a sampling concern: significant bits carried inside
+# a wider container, NITF's ABPP 12 within NBPP 16. That grid is padded, not packed, and its
+# cells stay two bytes apart. cellBitWidth is about PACKING -- consecutive cells sharing a
+# byte -- and the two can hold different values for the same raster.
+:cellBitWidth a owl:DatatypeProperty ; rdfs:label "cell bit width" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "Bits each cell occupies in the packed stream, when that is not the cell type's intrinsic width. Cells are contiguous in the bit stream and may straddle byte boundaries; a cell type is still required, to say how the bits are interpreted. Absent means cells occupy their type's natural width." .
+:cellBitWidthFromField a owl:ObjectProperty ; rdfs:label "cell bit width from field" ; rdfs:range bddo:Field ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "The Field whose parsed value is the packed cell width in bits. GRIB2 carries this in its data-representation section, so the width is a property of the message rather than of the format." .
+:cellPackingOrder a owl:ObjectProperty ; rdfs:label "cell packing order" ; rdfs:range bddo:BitOrder ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; ;
+    rdfs:comment "Whether the first cell of a byte occupies its most or least significant bits. Default bddo:MSBFirst, which is what GRIB2, NITF and the 1-bit and 4-bit image formats all use; LSB-first packing exists but is rare. Only meaningful alongside dlv:cellBitWidth." .
 :hasAxis a owl:ObjectProperty ; rdfs:label "has axis" ; rdfs:range :Axis ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/dlv&gt; .
 
 # ---------- Chunked (tiled/blocked) layout ----------
@@ -198,6 +215,21 @@ dlv:DataLayoutShape a sh:NodeShape ;
     sh:property [ sh:path dlv:hasDimension ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
     sh:property [ sh:path ( dlv:hasDimension [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class dlv:Dimension ] ;
     sh:property [ sh:path dlv:cellDataType ; sh:class bddo:DataType ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:cellBitWidth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:cellBitWidthFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:cellPackingOrder ; sh:maxCount 1 ;
+        sh:in ( bddo:MSBFirst bddo:LSBFirst ) ] ;
+    # A packed width is fixed or read, never both.
+    sh:not [ sh:and ( [ sh:property [ sh:path dlv:cellBitWidth ; sh:minCount 1 ] ]
+                      [ sh:property [ sh:path dlv:cellBitWidthFromField ; sh:minCount 1 ] ] ) ] ;
+    # Packing order describes packing, so it needs a packed width to describe.
+    sh:sparql [ sh:message "dlv:cellPackingOrder is only meaningful with dlv:cellBitWidth or dlv:cellBitWidthFromField." ;
+        sh:prefixes dlv:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this dlv:cellPackingOrder ?o .
+            FILTER NOT EXISTS { $this dlv:cellBitWidth ?w }
+            FILTER NOT EXISTS { $this dlv:cellBitWidthFromField ?f }
+        }""" ] ;
     sh:property [ sh:path dlv:hasConditionalCellDataType ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
     sh:property [ sh:path dlv:hasConditionalDimensionOrder ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
     # The cell type is fixed or chosen, never both and never neither.
@@ -219,9 +251,7 @@ dlv:DataLayoutShape a sh:NodeShape ;
         sh:message "Every member of a hasConditionalCellDataType list must be a dlv:CellDataTypeRule." ] ;
     sh:property [ sh:path ( dlv:hasConditionalDimensionOrder [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
         sh:class dlv:DimensionOrderRule ;
-        sh:message "Every member of a hasConditionalDimensionOrder list must be a dlv:DimensionOrderRule." ] .
-
-dlv:CellDataTypeRuleShape a sh:NodeShape ;
+        sh:message "Every member of a hasConditionalDimensionOrder list must be a dlv:DimensionOrderRule." ] .dlv:CellDataTypeRuleShape a sh:NodeShape ;
     sh:targetClass dlv:CellDataTypeRule ;
     sh:property [ sh:path bddo:condition ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:ruleCellDataType ; sh:class bddo:DataType ; sh:minCount 1 ; sh:maxCount 1 ] .
@@ -299,6 +329,9 @@ dlv:ChunkedLayoutShape a sh:NodeShape ;
     "DataLayout": "dlv:DataLayout", "Dimension": "dlv:Dimension", "Axis": "dlv:Axis",
     "hasDimension": { "@id": "dlv:hasDimension", "@container": "@list" },
     "cellDataType": { "@id": "dlv:cellDataType", "@type": "@id" },
+    "cellBitWidth": { "@id": "dlv:cellBitWidth", "@type": "xsd:positiveInteger" },
+    "cellBitWidthFromField": { "@id": "dlv:cellBitWidthFromField", "@type": "@id" },
+    "cellPackingOrder": { "@id": "dlv:cellPackingOrder", "@type": "@id" },
     "hasConditionalCellDataType": { "@id": "dlv:hasConditionalCellDataType", "@container": "@list" },
     "ruleCellDataType": { "@id": "dlv:ruleCellDataType", "@type": "@id" },
     "hasConditionalDimensionOrder": { "@id": "dlv:hasConditionalDimensionOrder", "@container": "@list" },

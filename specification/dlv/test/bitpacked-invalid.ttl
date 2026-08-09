@@ -1,0 +1,21 @@
+# Two contradictions: a packed width both fixed and read, and a packing order on a layout
+# that declares no packed width for it to describe.
+# Expected to trip dlv:DataLayoutShape.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix dlv:  <https://hexplain.io/ns/dlv#> .
+@prefix ex:   <https://hexplain.io/test/bitpack-invalid#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:N a bddo:Field ; bddo:dataType bddo:uint8 .
+
+ex:BothWidths a dlv:DataLayout ;
+    rdfs:comment "Expected to trip dlv:DataLayoutShape (cellBitWidth and cellBitWidthFromField together)." ;
+    dlv:cellDataType bddo:uint8 ; dlv:cellBitWidth 4 ; dlv:cellBitWidthFromField ex:N ;
+    dlv:hasDimension ( ex:DimX ) .
+
+ex:OrderWithoutPacking a dlv:DataLayout ;
+    rdfs:comment "Expected to trip dlv:DataLayoutShape (cellPackingOrder with no packed width)." ;
+    dlv:cellDataType bddo:uint8 ; dlv:cellPackingOrder bddo:MSBFirst ;
+    dlv:hasDimension ( ex:DimX ) .
+
+ex:DimX a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSize 64 .
