@@ -142,6 +142,9 @@ struct Chunk {
 | `ascii utf8 utf16le utf16be latin1` | `bddo:string` + `bddo:encoding <that>` |
 | `anum` | `bddo:asciiInteger` — an integer written as text; needs a width, e.g. `anum[5]` |
 | `adec` | `bddo:asciiDecimal` — a decimal written as text; needs a width |
+| `varuint` | `bddo:varuint` — unsigned LEB128; takes no width, its length is read from the bytes |
+| `varint` | `bddo:varint` — zigzag LEB128 (protobuf `sint32`/`sint64`) |
+| `sqvarint` | `bddo:sqliteVarint` — SQLite's 1–9 byte big-endian scheme, a different encoding from LEB128 |
 | `bits[N]` | a field with `bddo:bitLength N` |
 | `derive <expr>` | a **derived, zero-byte field** — `bddo:valueFromExpression` and NO `bddo:dataType`. Reads no bytes; its value is computed from `<expr>` and injected into the parse context so later sizing/offset/presence/mapping/validation expressions can reference it. |
 | `<StructName>` | nested/typed field (`bddo:dataType <that Struct>`) |

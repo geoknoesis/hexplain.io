@@ -1,0 +1,23 @@
+# A protobuf-style record: a varint key, a varint length, then that many payload bytes --
+# the shape MVT, OSM PBF and PMTiles are built from. The varint fields declare no width
+# because they have none; the payload's width comes FROM one of them.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/varint#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Record a bddo:Struct ; rdfs:label "Protobuf-style length-delimited record" ;
+    bddo:hasField ( ex:Record.key ex:Record.len ex:Record.payload ex:Record.delta ) .
+
+ex:Record.key a bddo:Field ; rdfs:label "field number and wire type" ;
+    bddo:dataType bddo:varuint .
+ex:Record.len a bddo:Field ; rdfs:label "payload length" ;
+    bddo:dataType bddo:varuint .
+ex:Record.payload a bddo:Field ;
+    bddo:dataType bddo:bytes ; bddo:sizeFromField ex:Record.len .
+# Zigzag: MVT geometry deltas are small and frequently negative.
+ex:Record.delta a bddo:Field ; rdfs:label "zigzag geometry delta" ;
+    bddo:dataType bddo:varint .
+
+# SQLite's scheme is a different encoding, not a dialect of LEB128.
+ex:SqliteCell a bddo:Struct ; bddo:hasField ( ex:SqliteCell.rowid ) .
+ex:SqliteCell.rowid a bddo:Field ; bddo:dataType bddo:sqliteVarint .

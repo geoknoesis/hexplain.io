@@ -1,0 +1,14 @@
+# Varint fields declaring a width. Their length is discovered from the bytes, so a size or
+# terminator has nothing to mean and contradicts the encoding.
+# Expected to trip bddo:VarintWidthShape.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/varint-invalid#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Bad a bddo:Struct ;
+    rdfs:comment "Expected to trip bddo:VarintWidthShape." ;
+    bddo:hasField ( ex:Bad.sized ex:Bad.terminated ) .
+
+ex:Bad.sized a bddo:Field ; bddo:dataType bddo:varuint ; bddo:size 4 .
+ex:Bad.terminated a bddo:Field ; bddo:dataType bddo:varint ; bddo:terminator "00"^^xsd:hexBinary .

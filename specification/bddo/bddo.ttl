@@ -208,6 +208,25 @@
 :asciiDecimal a :DataType ; rdfs:label "asciiDecimal" ; :baseType :baseFloat ; :encoding :ascii ; :xsdType xsd:decimal ;
     rdfs:comment "A fixed- or floating-point number written as text, occupying the field's declared width or ending at its terminator. Accepts leading sign, decimal point and exponent. Yields a HEL Float." .
 
+# ---------- Variable-length integers ----------
+# A varint's width is neither intrinsic (as with uint32) nor declared (as with
+# asciiInteger's bddo:size): it is DISCOVERED while reading, from the values of the bytes
+# themselves. These are therefore the first data types with no width at all, and a field
+# using one must not declare a size -- there is nothing for a size to mean, and stating one
+# would contradict the bytes. sizeof() on such a field still yields the length actually
+# consumed, once it is known.
+#
+# They are what modern container formats are built from: protobuf key/length prefixes (MVT,
+# OSM PBF), the PMTiles directory, Parquet's Thrift-compact footer, FlatGeobuf and
+# OpenFileGDB geometry. Framing those was already possible byte by byte; reconstructing the
+# VALUE was not, which is what kept them out of reach.
+:varuint a :DataType ; rdfs:label "varuint" ; :baseType :baseInteger ; :isSigned false ; :xsdType xsd:nonNegativeInteger ;
+    rdfs:comment "Unsigned base-128 varint (LEB128): 7 value bits per byte, little-endian, the high bit set on every byte but the last. Protobuf's plain varint." .
+:varint a :DataType ; rdfs:label "varint" ; :baseType :baseInteger ; :isSigned true ; :xsdType xsd:integer ;
+    rdfs:comment "Signed base-128 varint: LEB128 carrying a zigzag-encoded value, so small negatives stay short -- n maps to (n << 1) XOR (n >> 63). Protobuf's sint32/sint64. Distinct from reading an unsigned varint and reinterpreting the bits, which is protobuf's int32 and sign-extends instead." .
+:sqliteVarint a :DataType ; rdfs:label "sqliteVarint" ; :baseType :baseInteger ; :isSigned true ; :xsdType xsd:integer ;
+    rdfs:comment "SQLite's variable-length integer: one to nine BIG-endian bytes, high bit as continuation for the first eight, the ninth contributing all eight bits. A different scheme from LEB128, not a dialect of it; used by SQLite-backed formats (GeoPackage, MBTiles, Rasterlite)." .
+
 # =========================================================
 # SHACL shapes (domain + cardinality; refine the declared ranges)
 # =========================================================
@@ -455,3 +474,16 @@ bddo:DelimitedTableShape a sh:NodeShape ;
     sh:property [ sh:path ( bddo:hasField [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
         sh:node [ sh:property [ sh:path bddo:key ; sh:maxCount 0 ;
             sh:message "bddo:key applies to a field of a KeyValueHeader; a DelimitedTable's columns are located by position." ] ] ] .
+
+# A varint's length comes from the data, so declaring a width contradicts it.
+bddo:VarintWidthShape a sh:NodeShape ;
+    sh:targetClass bddo:Field ;
+    sh:sparql [ sh:message "A variable-length integer field (bddo:varuint, bddo:varint, bddo:sqliteVarint) must not declare a width or terminator: its length is discovered from the bytes." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:dataType ?dt .
+            FILTER(?dt IN (bddo:varuint, bddo:varint, bddo:sqliteVarint))
+            $this ?p ?v .
+            FILTER(?p IN (bddo:size, bddo:sizeFromField, bddo:sizeFromExpression,
+                          bddo:sizeToEndOfStream, bddo:terminator, bddo:bitLength))
+        }""" ] .
