@@ -225,7 +225,19 @@ take a **double-quoted string** (emitted as its UTF-8 bytes) or a **hex literal*
 (default LF) → `recordDelimiter`; `@separator` → `keyValueSeparator` on a `header`, `fieldDelimiter`
 on a `table`; `@quote` → `quoteChar`; `@escape` → `escapeChar`. String-valued: `@comment` →
 `commentPrefix`. Integer-valued: `@skip` → `skipRecords`. Flags (no value): `@trim` →
-`trimWhitespace`; `@ci` → `keyIsCaseInsensitive`. A quoted field name in a `header` is its `bddo:key`.
+`trimWhitespace`; `@ci` → `keyIsCaseInsensitive`; `@whitespace` → `whitespaceSeparated`.
+A quoted field name in a `header` is its `bddo:key`.
+
+`@whitespace` parts values by a RUN of whitespace rather than by a fixed `@separator`
+(the two are mutually exclusive). Column-aligned ASCII grids need it — the gap between
+two values is padding of arbitrary width, so a single-space separator would read a row
+of empty values. Omit `@record-separator` as well and the content is one flat stream of
+values instead of rows, which is how a grid whose lines wrap freely is read; the shape
+then comes from the field's `layout`, not from line breaks.
+
+```
+table AaiGrid @whitespace { cell : adec }      // rows may wrap; layout gives the shape
+```
 
 ## 7. Field references → HEL (first-class expressions)
 
@@ -550,7 +562,8 @@ asset-decl   = "asset" IDENT "conforms" IDENT { asset-annot } "{" { assetpart } 
 header-decl  = "header" IDENT { delim-annot } "{" { entry-decl } "}" ;
 table-decl   = "table" IDENT { delim-annot } "{" { field-decl } "}" ;
 delim-annot  = "@separator" STRING | "@record-separator" STRING | "@quote" STRING
-             | "@escape" STRING | "@comment" STRING | "@skip" INT | "@trim" | "@ci" ;
+             | "@escape" STRING | "@comment" STRING | "@skip" INT | "@trim" | "@ci"
+             | "@whitespace" ;
 entry-decl   = STRING ":" type { clause } ;
 expr         = (* HEL expression; bare identifiers = sibling refs, see §7 *) ;
 ```
