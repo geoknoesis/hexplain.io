@@ -91,13 +91,16 @@ ehdr:Header.skipBytes a bddo:Field ; rdfs:label "SKIPBYTES — bytes to skip bef
     bddo:key "SKIPBYTES" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary .
 
 # Georeferencing. ULXMAP/ULYMAP are the map coordinates of the CENTRE of the upper-left
-# pixel, so registration is pixel-centre; see limit 4 on the property names.
+# pixel, so registration is pixel-centre. They map to the CRS-neutral asref:originX/originY:
+# an EHdr origin is in whatever CRS the .prj names, projected metres as often as degrees.
+# EHdr states no rotation, so asref:skewX/skewY are simply absent (zero) rather than
+# inexpressible, which is what the four keywords actually mean.
 ehdr:Header.ulxMap a bddo:Field ; rdfs:label "ULXMAP — x of upper-left pixel centre" ;
     bddo:key "ULXMAP" ; bddo:dataType bddo:asciiDecimal ; bddo:terminator "0A"^^xsd:hexBinary ;
-    hexplain:mapsToProperty asref:originLongitude .
+    hexplain:mapsToProperty asref:originX .
 ehdr:Header.ulyMap a bddo:Field ; rdfs:label "ULYMAP — y of upper-left pixel centre" ;
     bddo:key "ULYMAP" ; bddo:dataType bddo:asciiDecimal ; bddo:terminator "0A"^^xsd:hexBinary ;
-    hexplain:mapsToProperty asref:originLatitude .
+    hexplain:mapsToProperty asref:originY .
 ehdr:Header.xDim a bddo:Field ; rdfs:label "XDIM — pixel width in map units" ;
     bddo:key "XDIM" ; bddo:dataType bddo:asciiDecimal ; bddo:terminator "0A"^^xsd:hexBinary ;
     hexplain:mapsToProperty asref:scaleX .
@@ -188,8 +191,4 @@ ehdr:prjSpec a abnd:PartSpec ; abnd:extension ".prj" ; abnd:partRole rpr:Spatial
 # 2. PIXELTYPE (SIGNEDINT/UNSIGNEDINT/FLOAT) is not modelled. asamp:sampleFormat exists and
 #    would be its target; it is omitted only because it is an optional GDAL extension
 #    keyword rather than part of the base dialect.
-# 3. ULXMAP/ULYMAP MAP ONTO GEOGRAPHIC-NAMED PROPERTIES. hx-spatialref offers
-#    originLongitude/originLatitude, but an EHdr origin is in whatever CRS the .prj names --
-#    projected metres as often as degrees. The values are right and the property names are
-#    too narrow; a generic originX/originY (and the full six-coefficient affine, since these
-#    four keywords cannot express rotation) is survey item P2-11.
+

@@ -7,6 +7,7 @@
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
 @prefix geosparql: <http://www.opengis.net/ont/geosparql#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix vann:    <http://purl.org/vocab/vann/> .
@@ -20,15 +21,70 @@
     vann:preferredNamespacePrefix "asref" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/spatialref#" .
 
 :CoordinateReferenceSystem a owl:Class ; rdfs:label "Coordinate Reference System" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> .
-:GeoTransform a owl:Class ; rdfs:label "GeoTransform" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> .
+:GeoTransform a owl:Class ; rdfs:label "GeoTransform" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    rdfs:comment "The affine mapping from pixel/line to ground coordinates, carrying the six coefficients asref:originX, scaleX, skewX, originY, skewY, scaleY -- GDAL's GT[0..5] in that order. A north-up raster leaves both skews zero; only the skews make a rotated grid expressible." .
 
 :wktString a owl:DatatypeProperty ; rdfs:label "WKT string" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; skos:closeMatch geosparql:asWKT ; rdfs:range xsd:string .
 :epsgCode a owl:DatatypeProperty ; rdfs:label "EPSG code" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:positiveInteger .
-:originLongitude a owl:DatatypeProperty ; rdfs:label "origin longitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
-:originLatitude a owl:DatatypeProperty ; rdfs:label "origin latitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
-:scaleX a owl:DatatypeProperty ; rdfs:label "X scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
-:scaleY a owl:DatatypeProperty ; rdfs:label "Y scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
+:originLongitude a owl:DatatypeProperty ; rdfs:label "origin longitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+    rdfs:comment "Origin easting expressed as a GEOGRAPHIC longitude. Use only when the CRS really is geographic; for an origin in projected units (metres, feet) use asref:originX, of which this is the geographic special case." .
+:originLatitude a owl:DatatypeProperty ; rdfs:label "origin latitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+    rdfs:comment "Origin northing expressed as a GEOGRAPHIC latitude. See asref:originLongitude; the general form is asref:originY." .
+:originX a owl:DatatypeProperty ; rdfs:label "origin X" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+    rdfs:comment "Easting of the grid origin in the units of the CRS, degrees or metres alike (affine coefficient GT[0]). The general form of asref:originLongitude, which presumes a geographic CRS and is therefore wrong for the projected rasters that make up most of the corpus." .
+:originY a owl:DatatypeProperty ; rdfs:label "origin Y" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+    rdfs:comment "Northing of the grid origin in the units of the CRS (affine coefficient GT[3]). The general form of asref:originLatitude." .
+:scaleX a owl:DatatypeProperty ; rdfs:label "X scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+    rdfs:comment "Ground distance per pixel along X (affine coefficient GT[1])." .
+:scaleY a owl:DatatypeProperty ; rdfs:label "Y scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+    rdfs:comment "Ground distance per pixel along Y (affine coefficient GT[5]). Conventionally NEGATIVE for a north-up raster, whose rows run southward while northings increase." .
+:skewX a owl:DatatypeProperty ; rdfs:label "X skew" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+    rdfs:comment "Rotation/shear term: ground X per pixel ROW (affine coefficient GT[2]). Zero for a north-up raster. Without this and asref:skewY a rotated or sheared grid cannot be georeferenced at all, only misplaced." .
+:skewY a owl:DatatypeProperty ; rdfs:label "Y skew" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+    rdfs:comment "Rotation/shear term: ground Y per pixel COLUMN (affine coefficient GT[4]). Zero for a north-up raster." .
+
+# ---------- Ground footprint ----------
+:footprintWKT a owl:DatatypeProperty ; rdfs:label "footprint WKT" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    skos:closeMatch geosparql:asWKT ; rdfs:range xsd:string ;
+    rdfs:comment "The ground area covered, as a WKT geometry in the resource's CRS -- typically a polygon of the four image corners. Formats that state corners directly rather than an affine (NITF's IGEOLO, the BLOCKA corner strings) have no scale or origin to give, so a footprint is the only georeference they carry." .
+
+# ---------- Ground control points ----------
+# The other way a format georeferences without an affine: an irregular scatter of
+# pixel-to-ground correspondences, to be fitted or interpolated by the consumer.
+:GroundControlPoint a owl:Class ; rdfs:label "Ground Control Point" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    rdfs:comment "One correspondence between a pixel position and a ground position. A set of these georeferences an image that no single affine can, e.g. an unrectified swath." .
+:hasGroundControlPoint a owl:ObjectProperty ; rdfs:label "has ground control point" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    rdfs:range :GroundControlPoint .
+:gcpPixelX a owl:DatatypeProperty ; rdfs:label "GCP pixel X" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+    rdfs:comment "Column position of the control point in the image grid." .
+:gcpPixelY a owl:DatatypeProperty ; rdfs:label "GCP pixel Y" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+    rdfs:comment "Row position of the control point in the image grid." .
+:gcpX a owl:DatatypeProperty ; rdfs:label "GCP ground X" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
+:gcpY a owl:DatatypeProperty ; rdfs:label "GCP ground Y" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
+:gcpZ a owl:DatatypeProperty ; rdfs:label "GCP ground Z" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+    rdfs:comment "Ground elevation of the control point. Optional: many formats give 2-D control only." .
+:gcpIdentifier a owl:DatatypeProperty ; rdfs:label "GCP identifier" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:string .
 :pixelRegistration a owl:ObjectProperty ; rdfs:label "pixel registration" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> .
 
 :PixelCorner a owl:NamedIndividual ; rdfs:label "Pixel Corner Registration" .
 :PixelCenter a owl:NamedIndividual ; rdfs:label "Pixel Center Registration" .
+
+# ---------- SHACL ----------
+asref:GeoTransformShape a sh:NodeShape ;
+    sh:targetClass asref:GeoTransform ;
+    sh:property [ sh:path asref:originX ; sh:datatype xsd:double ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:originY ; sh:datatype xsd:double ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:scaleX ; sh:datatype xsd:double ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:scaleY ; sh:datatype xsd:double ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:skewX ; sh:datatype xsd:double ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:skewY ; sh:datatype xsd:double ; sh:maxCount 1 ] .
+
+# A control point is useless without both halves of the correspondence.
+asref:GroundControlPointShape a sh:NodeShape ;
+    sh:targetClass asref:GroundControlPoint ;
+    sh:property [ sh:path asref:gcpPixelX ; sh:datatype xsd:double ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:gcpPixelY ; sh:datatype xsd:double ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:gcpX ; sh:datatype xsd:double ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:gcpY ; sh:datatype xsd:double ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:gcpZ ; sh:datatype xsd:double ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:gcpIdentifier ; sh:datatype xsd:string ; sh:maxCount 1 ] .
