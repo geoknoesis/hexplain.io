@@ -33,7 +33,7 @@
 :Enumeration  a owl:Class ; rdfs:label "Enumeration" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :EnumValue    a owl:Class ; rdfs:label "Enumeration Value" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :Checksum     a owl:Class ; rdfs:label "Checksum" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "A checksum/hash over a byte range: from the first byte of coversFromField to the last byte of coversToField (inclusive), or the [start,end) range yielded by coversExpression." .
+    rdfs:comment "A checksum/hash over a byte range. Each END of the range is stated independently: a field reference (coversFromField/coversToField) or a HEL expression yielding a byte offset (coversFromExpression/coversToExpression). The two ends may use different mechanisms -- a checksum covering everything from a named header field to a length carried elsewhere needs exactly that. Note the boundary convention differs by mechanism, because each follows what its inputs naturally give: the field form runs from the FIRST byte of coversFromField to the LAST byte of coversToField (inclusive), while the expression form is the half-open [start,end) that the two offsets delimit." .
 :EndiannessRule a owl:Class ; rdfs:label "Endianness Rule" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "One arm of a hasConditionalEndianness list: a HEL condition and the byte order it selects." .
 # ---------- Delimited text records ----------
@@ -142,7 +142,19 @@
 :checksumAlgorithm a owl:ObjectProperty ; rdfs:label "checksum algorithm" ; rdfs:range :ChecksumAlgorithm .
 :coversFromField   a owl:ObjectProperty ; rdfs:label "covers from field" ; rdfs:range :Field .
 :coversToField     a owl:ObjectProperty ; rdfs:label "covers to field" ; rdfs:range :Field .
-:coversExpression  a owl:DatatypeProperty ; rdfs:label "covers expression" ; rdfs:range xsd:string .
+# A single expression can only describe a range it computes whole, so a checksum whose start
+# is a named field and whose end is computed had no way to say so -- it had to abandon the
+# field reference and recompute that offset arithmetically too. Splitting coverage into two
+# independent bounds removes that all-or-nothing choice; either end may be a field or an
+# expression. Offsets are absolute byte positions in the same frame of reference a size or
+# offset expression on this struct would see.
+:coversFromExpression a owl:DatatypeProperty ; rdfs:label "covers from expression" ; rdfs:range xsd:string ;
+    rdfs:comment "HEL expression evaluating to the covered range's START byte offset, inclusive. Alternative to coversFromField for the same bound." .
+:coversToExpression a owl:DatatypeProperty ; rdfs:label "covers to expression" ; rdfs:range xsd:string ;
+    rdfs:comment "HEL expression evaluating to the covered range's END byte offset, EXCLUSIVE (one past the last covered byte). Alternative to coversToField for the same bound -- note coversToField names a field whose last byte is included, so the two forms do not take the same number." .
+:coversExpression  a owl:DatatypeProperty ; rdfs:label "covers expression" ; rdfs:range xsd:string ;
+    owl:deprecated true ;
+    rdfs:comment "Deprecated: a single expression yielding the whole [start,end) range. Superseded by the coversFromExpression/coversToExpression pair, which states each bound separately and so can mix field and expression ends. Retained for descriptions written against earlier BDDO." .
 
 # ---------- Enumerated individuals (typed with their controlled-vocabulary class) ----------
 :BigEndian a owl:NamedIndividual, :Endianness ; rdfs:label "Big Endian" .
@@ -390,7 +402,23 @@ bddo:ChecksumShape a sh:NodeShape ;
         sh:in ( bddo:crc16 bddo:crc32 bddo:adler32 bddo:md5 bddo:sha1 bddo:sha256 ) ] ;
     sh:property [ sh:path bddo:coversFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:coversToField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:coversExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+    sh:property [ sh:path bddo:coversExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:coversFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:coversToExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    # One mechanism per bound. Both would leave the reader to guess which wins, and the two
+    # forms do not even agree on whether the end byte is included, so the guess changes the
+    # bytes hashed.
+    sh:not [ sh:and ( [ sh:property [ sh:path bddo:coversFromField ; sh:minCount 1 ] ]
+                      [ sh:property [ sh:path bddo:coversFromExpression ; sh:minCount 1 ] ] ) ] ;
+    sh:not [ sh:and ( [ sh:property [ sh:path bddo:coversToField ; sh:minCount 1 ] ]
+                      [ sh:property [ sh:path bddo:coversToExpression ; sh:minCount 1 ] ] ) ] ;
+    # The deprecated whole-range form describes both bounds by itself, so pairing it with a
+    # per-bound property describes the same bound twice.
+    sh:not [ sh:and ( [ sh:property [ sh:path bddo:coversExpression ; sh:minCount 1 ] ]
+                      [ sh:or ( [ sh:property [ sh:path bddo:coversFromField ; sh:minCount 1 ] ]
+                                [ sh:property [ sh:path bddo:coversToField ; sh:minCount 1 ] ]
+                                [ sh:property [ sh:path bddo:coversFromExpression ; sh:minCount 1 ] ]
+                                [ sh:property [ sh:path bddo:coversToExpression ; sh:minCount 1 ] ] ) ] ) ] .
 
 # An ASCII-coded numeric field must have a width or a terminator, or it cannot be read.
 # Exempt: a field of a delimited-record container gets its extent from the container's

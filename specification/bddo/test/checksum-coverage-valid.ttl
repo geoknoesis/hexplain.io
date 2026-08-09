@@ -1,0 +1,36 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <http://example.org/cov#> .
+
+# The case the single-expression form could not express: one bound is a named field, the
+# other is computed. A PNG-style chunk CRC covers from the type field through a payload whose
+# length is only known by reading it, so the start is a field reference and the end is
+# arithmetic over the length field.
+ex:TypeField   a bddo:Field ; bddo:name "type"   ; bddo:dataType bddo:uint32 .
+ex:LengthField a bddo:Field ; bddo:name "length" ; bddo:dataType bddo:uint32 .
+
+ex:MixedCoverage a bddo:Checksum ;
+    rdfs:comment "Field start, expression end -- the mixed case." ;
+    bddo:checksumAlgorithm bddo:crc32 ;
+    bddo:coversFromField ex:TypeField ;
+    bddo:coversToExpression "self.offset + 8 + parent.length" .
+
+# Both bounds as expressions: the half-open [start,end) form.
+ex:ExpressionCoverage a bddo:Checksum ;
+    rdfs:comment "Both bounds computed." ;
+    bddo:checksumAlgorithm bddo:sha256 ;
+    bddo:coversFromExpression "root.headerSize" ;
+    bddo:coversToExpression "root.headerSize + root.dataSize" .
+
+# Both bounds as fields, unchanged from before the pair existed: inclusive of the last byte
+# of coversToField.
+ex:FieldCoverage a bddo:Checksum ;
+    bddo:checksumAlgorithm bddo:crc16 ;
+    bddo:coversFromField ex:TypeField ;
+    bddo:coversToField ex:LengthField .
+
+# The deprecated whole-range form, alone. Still legal -- descriptions written against earlier
+# BDDO keep working; it is only illegal to combine it with a per-bound property.
+ex:LegacyCoverage a bddo:Checksum ;
+    bddo:checksumAlgorithm bddo:adler32 ;
+    bddo:coversExpression "[root.start, root.end)" .

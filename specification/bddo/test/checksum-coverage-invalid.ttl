@@ -1,0 +1,16 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <http://example.org/cov#> .
+
+ex:TypeField a bddo:Field ; bddo:name "type" ; bddo:dataType bddo:uint32 .
+
+# Expected to trip bddo:ChecksumShape: the START bound is stated twice, once as a field and
+# once as an expression. Which wins is unguessable, and it matters -- the field form starts at
+# that field's first byte while the expression yields whatever offset it computes, so the two
+# readings hash different bytes and disagree about whether the file is intact.
+ex:DoubleStart a bddo:Checksum ;
+    rdfs:comment "Expected violation: coversFromField and coversFromExpression on one checksum." ;
+    bddo:checksumAlgorithm bddo:crc32 ;
+    bddo:coversFromField ex:TypeField ;
+    bddo:coversFromExpression "root.headerSize" ;
+    bddo:coversToExpression "root.end" .
