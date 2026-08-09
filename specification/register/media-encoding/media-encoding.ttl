@@ -61,3 +61,19 @@ menc:Deflate a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topCon
 menc:Gzip a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "gzip"@en .
 menc:BZip2 a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "bzip2"@en .
 menc:LZMA a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "LZMA"@en .
+menc:Zstd a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Zstandard"@en ; skos:notation "zstd" .
+menc:Snappy a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Snappy"@en ; skos:notation "snappy" .
+menc:LZ4 a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "LZ4"@en ; skos:notation "lz4" .
+menc:RunLength a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Run-length encoding"@en ; skos:notation "rle" .
+menc:Blosc a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Blosc"@en ; skos:notation "blosc" ;
+    skos:note "A meta-compressor: it wraps an inner codec and its own shuffle and level settings, which travel as hexplain:codecParameter on the step." .
+
+# Reversible TRANSFORMS rather than compressors. They shrink nothing on their own; they
+# rearrange bytes so that the compressor after them does better, and they only ever appear
+# as a step of a pipeline. They live in this register because that is what a pipeline step
+# draws from -- the alternative, a parallel filter register, would split one list in two.
+menc:Delta a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Delta / predictor"@en ; skos:notation "delta" ;
+    skos:note "Stores each value as its difference from the previous one. TIFF calls this a horizontal predictor and numbers its variants; the variant travels as a parameter." .
+menc:Shuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Byte shuffle"@en ; skos:notation "shuffle" ;
+    skos:note "Groups the Nth byte of every value together, so the high bytes of similar numbers become runs. HDF5 and Blosc both use it." .
+menc:BitShuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Bit shuffle"@en ; skos:notation "bitshuffle" .

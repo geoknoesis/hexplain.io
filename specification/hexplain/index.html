@@ -152,6 +152,30 @@
 :isEncodedWith a owl:ObjectProperty ; rdfs:label "is encoded with" ; rdfs:range skos:Concept ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
     rdfs:comment "The algorithm needed to interpret a data block, drawn from whichever codec or compression register the profile binds. A processor decodes the block, then re-parses the decoded bytes against the field's data type when it is a bddo:Struct." .
+# ---------- Encoding pipelines ----------
+# One codec is the exception, not the rule. A TIFF strip is horizontally differenced and
+# then deflated; an HDF5 dataset runs a filter pipeline (shuffle, then deflate); a Zarr
+# array chains delta into Blosc, itself parameterised by an inner codec, a shuffle mode and
+# a level; a Parquet page is dictionary- or run-length-encoded before Snappy. With a single
+# unparameterised codec, all of these could say only the last step and lost both the earlier
+# ones and every setting -- enough to identify the compression but never enough to undo it.
+#
+# ORDER IS ENCODE ORDER: the steps as the writer applied them, so a reader inverts them in
+# REVERSE. Stating this matters, because a pipeline read the wrong way round is still a
+# plausible-looking pipeline; TIFF's difference-then-deflate inverts to inflate-then-undifference.
+:EncodingStep a owl:Class ; rdfs:label "Encoding Step" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "One stage of an encoding pipeline: a codec, plus the parameters it was applied with." .
+:CodecParameter a owl:Class ; rdfs:label "Codec Parameter" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "A named setting of a codec. Deliberately a name/value pair rather than a fixed vocabulary: codec options are open-ended and vendor-specific, and enumerating them would date immediately." .
+:hasEncodingStep a owl:ObjectProperty ; rdfs:label "has encoding step" ; rdfs:range rdf:List ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "Ordered rdf:List of EncodingStep, in the order the ENCODER applied them; a decoder inverts them in reverse. Mutually exclusive with hexplain:isEncodedWith, which remains the shorthand for a single unparameterised codec." .
+:codec a owl:ObjectProperty ; rdfs:label "codec" ; rdfs:range skos:Concept ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "The algorithm this step applies, drawn from whichever codec or compression register the profile binds -- the same registers hexplain:isEncodedWith draws on." .
+:codecParameter a owl:ObjectProperty ; rdfs:label "codec parameter" ; rdfs:range :CodecParameter ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:parameterName a owl:DatatypeProperty ; rdfs:label "parameter name" ; rdfs:range xsd:string ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "The setting's name as the codec itself names it: \"clevel\", \"shuffle\", \"predictor\"." .
+:parameterValue a owl:DatatypeProperty ; rdfs:label "parameter value" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
+    rdfs:comment "The setting's value, as the literal the format carries. Left untyped: a level is an integer, a Blosc inner codec a string, a flag a boolean." .
 :hasConditionalMapping a owl:ObjectProperty ; rdfs:label "has conditional mapping" ; rdfs:range rdf:List ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
 :condition a owl:DatatypeProperty ; rdfs:label "condition" ; rdfs:range xsd:string ;
@@ -240,7 +264,31 @@ hexplain:HasDataLayoutShape a sh:NodeShape ;
     sh:property [ sh:path hexplain:hasDataLayout ; sh:class dlv:DataLayout ; sh:maxCount 1 ] .
 hexplain:IsEncodedWithShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:isEncodedWith ;
-    sh:property [ sh:path hexplain:isEncodedWith ; sh:nodeKind sh:IRI ; sh:class skos:Concept ; sh:maxCount 1 ] .
+    sh:property [ sh:path hexplain:isEncodedWith ; sh:nodeKind sh:IRI ; sh:class skos:Concept ; sh:maxCount 1 ] ;
+    # A block is encoded one way or the other: a single shorthand codec, or a pipeline.
+    sh:not [ sh:and ( [ sh:property [ sh:path hexplain:isEncodedWith ; sh:minCount 1 ] ]
+                      [ sh:property [ sh:path hexplain:hasEncodingStep ; sh:minCount 1 ] ] ) ] .
+
+hexplain:EncodingPipelineShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:hasEncodingStep ;
+    sh:property [ sh:path hexplain:hasEncodingStep ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:message "hexplain:hasEncodingStep must point to a single rdf:List." ] ;
+    sh:property [ sh:path ( hexplain:hasEncodingStep [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:class hexplain:EncodingStep ;
+        sh:message "Every member of a hasEncodingStep list must be a hexplain:EncodingStep." ] .
+
+hexplain:EncodingStepShape a sh:NodeShape ;
+    sh:targetClass hexplain:EncodingStep ;
+    sh:property [ sh:path hexplain:codec ; sh:nodeKind sh:IRI ; sh:class skos:Concept ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "An encoding step must name exactly one codec." ] ;
+    sh:property [ sh:path hexplain:codecParameter ; sh:class hexplain:CodecParameter ] .
+
+# A parameter without both halves says nothing.
+hexplain:CodecParameterShape a sh:NodeShape ;
+    sh:targetClass hexplain:CodecParameter ;
+    sh:property [ sh:path hexplain:parameterName ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:parameterValue ; sh:minCount 1 ; sh:maxCount 1 ] .
 hexplain:ValueExpressionShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:valueExpression ;
     sh:class bddo:Field ;

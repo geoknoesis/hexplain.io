@@ -20,6 +20,11 @@ CORE = [
     # targets with hexplain:mapsToProperty. Load them so fixtures reference the real
     # declarations instead of restating them locally.
     *sorted(glob.glob("specification/aspect/*/*.ttl")),
+    # Concept registers too. A fixture naming a register concept -- a codec in an encoding
+    # pipeline, a part role -- fails its shape's skos:Concept check when the register is
+    # absent, reporting the fixture as broken when only the loader was. Same gap that
+    # misfired repeatedly in shacl_check.py before it globbed.
+    *sorted(glob.glob("specification/register/*/*.ttl")),
     "specification/gv/geo.ttl",
 ]
 

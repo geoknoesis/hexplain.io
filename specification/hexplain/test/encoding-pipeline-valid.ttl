@@ -1,0 +1,38 @@
+# The three pipelines that motivated this, all of which a single codec could only half state.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix ex:   <https://hexplain.io/test/pipeline#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:S a bddo:Struct ; bddo:hasField ( ex:S.tiffStrip ex:S.zarrChunk ex:S.plain ) .
+
+# TIFF: horizontally differenced, THEN deflated. A reader inflates first and undoes the
+# predictor second -- which is why the list is encode order and the inversion is reversed.
+ex:S.tiffStrip a bddo:Field ; rdfs:label "TIFF strip, predictor + deflate" ;
+    bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep (
+        [ a hexplain:EncodingStep ; hexplain:codec menc:Delta ;
+          hexplain:codecParameter [ a hexplain:CodecParameter ;
+              hexplain:parameterName "predictor" ; hexplain:parameterValue 2 ] ]
+        [ a hexplain:EncodingStep ; hexplain:codec menc:Deflate ;
+          hexplain:codecParameter [ a hexplain:CodecParameter ;
+              hexplain:parameterName "level" ; hexplain:parameterValue 6 ] ]
+    ) .
+
+# Zarr: delta into Blosc, the latter parameterised by an inner codec, a shuffle mode and a
+# level. None of those settings had anywhere to go before.
+ex:S.zarrChunk a bddo:Field ; rdfs:label "Zarr chunk, delta + blosc" ;
+    bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep (
+        [ a hexplain:EncodingStep ; hexplain:codec menc:Delta ]
+        [ a hexplain:EncodingStep ; hexplain:codec menc:Blosc ;
+          hexplain:codecParameter
+            [ a hexplain:CodecParameter ; hexplain:parameterName "cname" ; hexplain:parameterValue "zstd" ] ,
+            [ a hexplain:CodecParameter ; hexplain:parameterName "clevel" ; hexplain:parameterValue 5 ] ,
+            [ a hexplain:CodecParameter ; hexplain:parameterName "shuffle" ; hexplain:parameterValue true ] ]
+    ) .
+
+# The single-codec shorthand is unchanged; pipelines are an addition, not a migration.
+ex:S.plain a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:isEncodedWith menc:Deflate .

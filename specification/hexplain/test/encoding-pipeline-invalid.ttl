@@ -1,0 +1,22 @@
+# Three contradictions: shorthand and pipeline together, a step naming no codec, and a
+# parameter with a name but no value.
+# Expected to trip IsEncodedWithShape, EncodingStepShape and CodecParameterShape.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix ex:   <https://hexplain.io/test/pipeline-invalid#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:BothForms a bddo:Field ;
+    rdfs:comment "Expected to trip IsEncodedWithShape (shorthand and pipeline together)." ;
+    bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:isEncodedWith menc:Deflate ;
+    hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:Gzip ] ) .
+
+ex:NoCodec a bddo:Field ;
+    rdfs:comment "Expected to trip EncodingStepShape (a step with no codec) and CodecParameterShape (a parameter with no value)." ;
+    bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep (
+        [ a hexplain:EncodingStep ;
+          hexplain:codecParameter [ a hexplain:CodecParameter ; hexplain:parameterName "level" ] ]
+    ) .
