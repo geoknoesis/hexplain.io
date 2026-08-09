@@ -6,40 +6,17 @@
 # with "not skos:inScheme the declared register" -- not because it is wrong, but because
 # the concepts naming its parts were never loaded. Both shipped bundle profiles reported
 # false failures this way before the registers were added here.
-import glob
 import sys
-from rdflib import Graph
 from pyshacl import validate
 
-# Every aspect and every register is loaded, rather than a hand-picked few. A profile may
-# map a field to any aspect property, and hexplain:MapsToPropertyShape requires the target
-# to be a known property -- so a missing aspect reports the profile as broken when only the
-# loader was. That misfired three times running (bundle, then the registers, then sampling)
-# before this became a glob.
-ONT = [
-    "specification/bddo/bddo.ttl",
-    "specification/dlv/dlv.ttl",
-    "specification/hexplain/core.ttl",
-    "specification/gv/geo.ttl",
-    "specification/req/req.ttl",
-] + sorted(glob.glob("specification/aspect/*/*.ttl")) \
-  + sorted(glob.glob("specification/register/*/*.ttl"))
-SHAPES = [
-    "specification/bddo/bddo.ttl",
-    "specification/hexplain/core.ttl",
-    "specification/aspect/bundle/bundle.ttl",
-    "specification/req/shapes.ttl",
-]
+# Context and shapes both come from specgraph, so a newly added aspect or register is
+# picked up here without anyone remembering to edit a list. See tools/specgraph.py for why.
+import specgraph
 
-def load(paths):
-    g = Graph()
-    for p in paths:
-        g.parse(p, format="turtle")
-    return g
 
 def main(targets):
-    data = load(ONT + list(targets))
-    shapes = load(SHAPES)
+    data = specgraph.ontologies(targets)
+    shapes = specgraph.shapes()
     conforms, _, report = validate(
         data, shacl_graph=shapes, inference="none", advanced=True, meta_shacl=False
     )

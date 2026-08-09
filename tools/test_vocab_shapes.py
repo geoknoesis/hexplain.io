@@ -5,35 +5,20 @@ specification/<mod>/test/<feature>-invalid.ttl must NOT. Each -invalid file
 carries an rdfs:comment naming the shape it is expected to trip.
 """
 import glob
-import os
 import pathlib
 import sys
 
-import rdflib
 from pyshacl import validate
 
-CORE = [
-    "specification/bddo/bddo.ttl",
-    "specification/dlv/dlv.ttl",
-    "specification/hexplain/core.ttl",
-    # Aspect ontologies (and the geo vocabulary) declare the domain terms a fixture
-    # targets with hexplain:mapsToProperty. Load them so fixtures reference the real
-    # declarations instead of restating them locally.
-    *sorted(glob.glob("specification/aspect/*/*.ttl")),
-    # Concept registers too. A fixture naming a register concept -- a codec in an encoding
-    # pipeline, a part role -- fails its shape's skos:Concept check when the register is
-    # absent, reporting the fixture as broken when only the loader was. Same gap that
-    # misfired repeatedly in shacl_check.py before it globbed.
-    *sorted(glob.glob("specification/register/*/*.ttl")),
-    "specification/gv/geo.ttl",
-]
+import specgraph
 
+# Every vocabulary, aspect and register in the family. A fixture targets aspect properties
+# with hexplain:mapsToProperty and names register concepts (a codec in an encoding pipeline,
+# a part role); when the term's home ontology is missing the shape reports the FIXTURE as
+# broken. specgraph globs, so a new aspect or register is context here the moment it lands.
+CORE = specgraph.ontology_paths()
 
-def load(paths):
-    g = rdflib.Graph()
-    for p in paths:
-        g.parse(p, format="turtle")
-    return g
+load = specgraph.load
 
 
 def ontologies_for(fixture_path):

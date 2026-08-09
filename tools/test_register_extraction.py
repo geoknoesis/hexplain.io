@@ -75,7 +75,12 @@ PRE_MIGRATION_SHA = "7e92f4bc020ba5d6a7ee24edae7c3cd4ded90eb1"
 # counts must update this table deliberately, not by accident.
 EXPECTED_COUNTS = {
     "us-nato-security": (6, 70),
-    "media-encoding": (2, 15),
+    # 15 at extraction, +8 for encoding pipelines (P1-5): the compressors a pipeline step
+    # actually names (Zstd, Snappy, LZ4, RunLength, Blosc) and the reversible transforms
+    # that only ever appear as a step (Delta, Shuffle, BitShuffle). Growth here is expected
+    # -- registers are meant to gain concepts; this line is the deliberate acknowledgement
+    # the docstring asks for, not a rubber stamp.
+    "media-encoding": (2, 23),
     "color": (1, 4),
     "checksum": (1, 4),
     "part-role": (1, 12),
