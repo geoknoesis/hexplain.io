@@ -115,6 +115,10 @@
 :alignment              a owl:DatatypeProperty ; rdfs:label "alignment" ; rdfs:range xsd:positiveInteger .
 :hasFixedValue          a owl:DatatypeProperty ; rdfs:label "has fixed value" .
 :isPresentIf            a owl:DatatypeProperty ; rdfs:label "is present if" ; rdfs:range xsd:string .
+:valueFromExpression    a owl:DatatypeProperty ; rdfs:label "value from expression" ; rdfs:range xsd:string ;
+    rdfs:comment "A HEL expression giving the value of a derived, zero-byte field. The field consumes no bytes; its computed value is placed in the parse context under the field's name so later sizing, offset, presence, mapping and validation expressions may reference it. A field with bddo:valueFromExpression declares no bddo:dataType and no sizing, offset or bit-length; the result's type is that of the HEL expression." .
+:validIf                a owl:DatatypeProperty ; rdfs:label "valid if" ; rdfs:range xsd:string ;
+    rdfs:comment "A HEL boolean expression that MUST hold once this field is parsed; if it evaluates false the parse fails with a validation error. Use for post-parse constraints such as a magic number or a bound on a count. Richer, graph-level constraints belong in SHACL at the semantic layer." .
 :enumeration            a owl:ObjectProperty ; rdfs:label "enumeration" ; rdfs:range :Enumeration .
 :checksum               a owl:ObjectProperty ; rdfs:label "checksum" ; rdfs:range :Checksum .
 
@@ -239,6 +243,7 @@ bddo:FieldShape a sh:NodeShape ;
     sh:or (
         [ sh:property [ sh:path bddo:dataType ; sh:minCount 1 ] ]
         [ sh:property [ sh:path bddo:hasConditionalDataType ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path bddo:valueFromExpression ; sh:minCount 1 ] ]
     ) ;
     sh:property [ sh:path bddo:dataType ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
         sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ] ;
@@ -261,6 +266,8 @@ bddo:FieldShape a sh:NodeShape ;
         sh:in ( bddo:streamStart bddo:streamEnd bddo:parentStart bddo:currentPosition ) ] ;
     sh:property [ sh:path bddo:enumeration ; sh:class bddo:Enumeration ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:checksum ; sh:class bddo:Checksum ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:valueFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:validIf ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:isPresentIf ; sh:datatype xsd:string ; sh:maxCount 1 ] .
 
 # At most one sizing mechanism per field.
@@ -315,6 +322,21 @@ bddo:FieldOffsetShape a sh:NodeShape ;
             $this ?p ?v .
             FILTER(?p IN (bddo:atOffset, bddo:atOffsetFromField, bddo:atOffsetFromExpression))
         } GROUP BY $this HAVING (COUNT(DISTINCT ?p) > 1)""" ] .
+
+# A derived (zero-byte) field computes its value from an expression and MUST NOT
+# also consume bytes via a data type, sizing, offset, bit-length or enumeration.
+bddo:DerivedFieldShape a sh:NodeShape ;
+    sh:targetClass bddo:Field ;
+    sh:sparql [ sh:message "A bddo:valueFromExpression (derived) field must not also declare a byte-consuming mechanism (dataType, hasConditionalDataType, size*, terminator, bitLength, atOffset* or enumeration)." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:valueFromExpression ?e .
+            $this ?p ?v .
+            FILTER(?p IN (bddo:dataType, bddo:hasConditionalDataType, bddo:size,
+                          bddo:sizeFromField, bddo:sizeFromExpression, bddo:sizeToEndOfStream,
+                          bddo:terminator, bddo:bitLength, bddo:atOffset, bddo:atOffsetFromField,
+                          bddo:atOffsetFromExpression, bddo:enumeration))
+        }""" ] .
 
 bddo:DataTypeShape a sh:NodeShape ;
     sh:targetClass bddo:DataType ;
