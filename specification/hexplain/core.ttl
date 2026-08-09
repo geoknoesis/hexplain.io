@@ -77,6 +77,25 @@
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "The bddo:Field whose parsed string value supplies the BCP-47 language tag for this field's emitted string literal, for formats that carry a text run's language in a sibling field. Mutually exclusive with hexplain:language." .
 
+#################### Register bindings ####################
+# A profile states which controlled register supplies the values of a property whose range is
+# skos:Concept. Aspects deliberately do NOT import registers -- that absence is what makes a
+# register swappable -- so the binding is declared here, per profile, and enforced by
+# hexplain:RegisterBindingShape.
+hexplain:RegisterBinding a owl:Class ; rdfs:label "register binding" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "A statement that one property draws its values from one controlled register." .
+hexplain:usesRegister a owl:ObjectProperty ; rdfs:label "uses register" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ; rdfs:range hexplain:RegisterBinding ;
+    rdfs:comment "Binds a property used by this profile to the register supplying its values." .
+hexplain:forProperty a owl:ObjectProperty ; rdfs:label "for property" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ; rdfs:domain hexplain:RegisterBinding ;
+    rdfs:comment "The property being bound." .
+hexplain:register a owl:ObjectProperty ; rdfs:label "register" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ; rdfs:domain hexplain:RegisterBinding ;
+    rdfs:range skos:ConceptScheme ;
+    rdfs:comment "The skos:ConceptScheme whose members are the permitted values." .
+
 # ---------- SHACL ----------
 hexplain:MapsToClassShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToClass ;
