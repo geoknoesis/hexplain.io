@@ -104,9 +104,10 @@ truth.
 - **Identifiers:** `[A-Za-z_][A-Za-z0-9_]*`. **CURIEs:** `prefix:local`.
 - **Literals:** integers (`42`, `0x2A`, `0b1010`), floats (`1.5`), strings (`"…"` with
   standard escapes), hex byte strings (`0x89504E47`), booleans (`true`/`false`).
-- **Annotations** start with `@` (`@endian`, `@at`, `@fixed`, …). **Keywords:** `format
-  struct enum bundle asset use means value map switch when repeat until if from cell dim
-  axis role required optional primary carries described-by as raw-turtle`.
+- **Annotations** start with `@` (`@endian`, `@at`, `@fixed`, `@valid`, `@object`, `@unit`,
+  `@lang`, `@lang-from`, …). **Keywords:** `format struct enum bundle asset use means
+  means-when derive value map switch when repeat until if from cell dim axis role required
+  optional primary carries described-by as raw-turtle`.
 
 ## 6. Structural syntax (BDDO)
 
@@ -142,6 +143,7 @@ struct Chunk {
 | `anum` | `bddo:asciiInteger` — an integer written as text; needs a width, e.g. `anum[5]` |
 | `adec` | `bddo:asciiDecimal` — a decimal written as text; needs a width |
 | `bits[N]` | a field with `bddo:bitLength N` |
+| `derive <expr>` | a **derived, zero-byte field** — `bddo:valueFromExpression` and NO `bddo:dataType`. Reads no bytes; its value is computed from `<expr>` and injected into the parse context so later sizing/offset/presence/mapping/validation expressions can reference it. |
 | `<StructName>` | nested/typed field (`bddo:dataType <that Struct>`) |
 
 `[n]` after `bytes`/a string type sets the **byte size** (see §6.2).
@@ -154,6 +156,7 @@ struct Chunk {
 | array count | `IFDEntry repeat numEntries` · `Item repeat until eof()` | `repeatCountFromField`/`…FromExpression` · `repeatUntil` |
 | offset | `@at ifdOffset from stream-start` | `atOffset*` + `offsetBase` |
 | presence | `if hasGamma == 1` | `isPresentIf` |
+| validity | `u32 @valid width <= 65535` | `bddo:validIf` — a HEL boolean checked after the field is parsed; false ⇒ a validation error |
 | fixed value | `@fixed 0x89504E470D0A1A0A` | `hasFixedValue` |
 | enum | `u8 enum { 0=>Grayscale, 2=>RGB, 3=>Indexed }` · `enum flags {…}` · `enum ColorType` | inline/`ref` `Enumeration`+`EnumValue`, `enumIsFlags` |
 | checksum | `@checksum crc32(type .. data)` · `@checksum crc32 covers(<expr>)` | inline `Checksum` (`coversFromField..coversToField` / `coversExpression`) |
@@ -167,6 +170,13 @@ struct Chunk {
 
 `offsetBase` keywords: `stream-start stream-end parent-start current`. `@fixed` accepts a
 hex byte string, an integer, or a string literal.
+
+**Struct annotations** (after the struct name, before the `{`): `@endian big|little` (or
+`@endian switch { when <expr> => big|little, … }` for `hasConditionalEndianness`), `@bit-order
+msb|lsb` (`bddo:bitOrder`), `@sync <hex>` (`bddo:syncOnMarker` — a marker to scan for before
+parsing this struct), and `@size <int | sibling | expr>` (`bddo:size` / `sizeFromField` /
+`sizeFromExpression` — the struct's bounded byte region). Bare names in an `@endian switch` or
+`@size` expression resolve against the struct itself (implicit-instance), like `means-when` (§7).
 
 ### 6.3 The field-form vs expression-form rule (normative)
 
@@ -203,19 +213,19 @@ header EnviHeader @separator "=" @comment ";" @trim @ci {
   "lines"   : anum means araster:height
 }
 
-table PointCsv @separator "," @quote '"' @skip 1 {
+table PointCsv @separator "," @quote 0x22 @skip 1 {
   x : adec
   y : adec
   z : adec
 }
 ```
 
-`header` → `bddo:KeyValueHeader`, `table` → `bddo:DelimitedTable`. Annotations:
-`@record-separator` (default LF) → `recordDelimiter`; `@separator` →
-`keyValueSeparator` on a `header`, `fieldDelimiter` on a `table`; `@quote` →
-`quoteChar`; `@escape` → `escapeChar`; `@comment` → `commentPrefix`; `@skip` →
-`skipRecords`; `@trim` → `trimWhitespace`; `@ci` → `keyIsCaseInsensitive`. A
-quoted field name in a `header` is its `bddo:key`.
+`header` → `bddo:KeyValueHeader`, `table` → `bddo:DelimitedTable`. Delimiter-valued annotations
+take a **double-quoted string** (emitted as its UTF-8 bytes) or a **hex literal**: `@record-separator`
+(default LF) → `recordDelimiter`; `@separator` → `keyValueSeparator` on a `header`, `fieldDelimiter`
+on a `table`; `@quote` → `quoteChar`; `@escape` → `escapeChar`. String-valued: `@comment` →
+`commentPrefix`. Integer-valued: `@skip` → `skipRecords`. Flags (no value): `@trim` →
+`trimWhitespace`; `@ci` → `keyIsCaseInsensitive`. A quoted field name in a `header` is its `bddo:key`.
 
 ## 7. Field references → HEL (first-class expressions)
 
@@ -226,6 +236,16 @@ Within any expression clause, identifiers resolve as:
 - the roots `instance parent root self stream` and the functions `sizeof len count eof
   trim substringBefore substringAfter toNumber` pass through unchanged;
 - dotted paths and subscripts pass through: `root.Directory[i].Entries[0].Tag`.
+
+**Instance-scoped clauses (normative).** Three clauses instead resolve a bare name to the
+**current struct's own field** (`Name` → `instance.Name`), because they are evaluated with the
+struct itself as `instance`, not a field: a **derived field** (`derive <expr>`), a **validity
+constraint** (`@valid <expr>`), and a struct-level **`means-when`** condition. So
+`total : derive width * height` and `count : u32 @valid count <= max` read `width`/`height`/
+`count`/`max` as sibling fields of *this* struct. To reach an enclosing struct from one of these,
+qualify explicitly (`parent.<Name>`). (The other expression clauses — `size`/`@at`/`repeat`/`if`/
+`switch`/`map`/`value` — keep the parent-relative rule above, matching how a nested payload
+references its container.)
 
 Operators, precedence, and value/coercion semantics are exactly HEL's — the DSL does not
 introduce a new expression language, only nicer *references* into it.
@@ -262,7 +282,11 @@ struct IHDR_ChunkData means araster:RasterImage {
 |---|---|
 | `means <Class>` (struct) | `hexplain:mapsToClass <Class>` |
 | `means <Property>` (field) | `hexplain:mapsToProperty <Property>` |
+| `@object <Property>` (field) | `hexplain:mapsToObjectProperty <Property>` — an IRI-valued edge (nested struct instance or enum symbol) |
 | `value <expr> @datatype <dt>` | `hexplain:valueExpression "…HEL…"` [+ `hexplain:valueDatatype <dt>`] |
+| `@unit <UnitIRI>` (field) | `hexplain:unit <UnitIRI>` — the emitted quantity's unit of measure (annotation only) |
+| `@lang <tag>` (field) | `hexplain:language "<tag>"` — a fixed BCP-47 language tag on the emitted string literal |
+| `@lang-from <field>` (field) | `hexplain:languageFromField <that field>` — the tag read from a sibling |
 | `@encoded-with <concept>` | `hexplain:isEncodedWith <concept>` |
 
 A field's `value` expression may reference itself by its own name (`gamma` →
@@ -277,6 +301,23 @@ text : str[..] map {
 ```
 → a `hexplain:MappingRule` list, each with `hexplain:condition` + `hexplain:semanticProperty`
 (and optional per-arm `valueExpression`/`valueDatatype`).
+
+**Conditional class mapping** (tagged unions / variant records) selects the *class* a struct
+maps to from a discriminator, via one or more struct-body `means-when` arms (mutually exclusive
+with a fixed `means` on the same struct):
+
+```
+struct Record {
+  Kind : u8
+  Body : bytes[..]
+  means-when Kind == 1 => ex:AudioRecord
+  means-when Kind == 2 => ex:VideoRecord
+}
+```
+→ `hexplain:hasConditionalClassMapping`, an ordered `hexplain:ClassMappingRule` list, each with
+`hexplain:condition` + `hexplain:semanticClass`. Unlike a field clause, a `means-when` condition
+resolves against the struct **itself** (its discriminator is a sibling *field* of the struct), so
+bare names compile to implicit-instance HEL (`Kind` → `instance.Kind`), not `parent.<name>`.
 
 ## 9. Multi-dimensional layout (DLV)
 
@@ -403,12 +444,14 @@ structs:
 ```
 
 Mapping of clause → YAML key: `size`, `repeat` (`{ count: … }` | `{ until: … }`), `at`
-(`{ offset: …, from: … }`), `if`, `fixed`, `enum` (`{ flags: bool, values: { raw: symbol }}`),
+(`{ offset: …, from: … }`), `if`, `valid`, `fixed`, `enum` (`{ flags: bool, values: { raw: symbol }}`),
 `checksum`, `bits`, `terminator`, `trim-null`, `endian`/`align`/`bit-order`/`encoding`,
-`switch` (`{ on, cases }` | `{ when: [ {cond, type} ] }`), `means`, `value`
-(`{ expr, datatype }`), `encoded-with`, `map` (list of `{ when, property, value }`),
+`switch` (`{ on, cases }` | `{ when: [ {cond, type} ] }`), `means`, `object`, `unit`, `lang`,
+`lang-from`, `value` (`{ expr, datatype }`), `encoded-with`, `map` (list of `{ when, property, value }`),
 `layout` (`{ cell, dims: [ { axis, size, stride } ] }`), `prop` (`{ curie: value }`),
-`raw-turtle` (string). Bundles under a top-level `bundles:` map; expressions are strings
+`raw-turtle` (string). A **derived field** omits `type:` and carries `derive: "<expr>"`. A struct's
+**conditional class mapping** is a `means-when:` sequence of `{ when: "<expr>", class: <curie> }`.
+Bundles under a top-level `bundles:` map; expressions are strings
 and use the identical bare-name→HEL resolution.
 
 `header`/`table` mirror under top-level `headers:` and `tables:` maps, keyed by name, with
@@ -442,6 +485,13 @@ Each diagnostic carries a `.hx`/`.hx.yaml` line/column.
 
 **Output:** one `<format>.ttl` per format module. Round-trip is out of scope (§2.1).
 
+**Runtime-consumption status (informative).** Every construct in this spec emits valid,
+SHACL-conformant BDDO/DLV Turtle. The reference *parser* (core `Metaparser`) currently consumes
+the sequential/offset/array/enum/checksum/bit/derive/validity model plus `@sync` and struct
+`@size`. Conditional endianness (`@endian switch`), delimited text (`header`/`table`), and chunked
+layout (`chunks`) emit correct Turtle but are **not yet wired into the parser** — the ontology
+defines them and the DSL authors them, ahead of runtime support.
+
 ## 13. Grammar sketch (text surface, informal EBNF)
 
 ```ebnf
@@ -451,17 +501,21 @@ use-decl     = "use" PREFIX IRIREF ;
 format-decl  = "format" IDENT { "@namespace" STRING | "@endian" endian
                               | "@bit-order" bitorder } ;
 struct-decl  = "struct" IDENT [ "as" IDENT ] [ "means" CURIE ]
-               { struct-annot } "{" { field-decl | raw-block | prop-clause } "}" ;
+               { struct-annot } "{" { field-decl | raw-block | prop-clause | classmap } "}" ;
+classmap     = "means-when" expr "=>" CURIE ;   (* conditional class mapping (tagged union) *)
 struct-annot = "@endian" endian | "@endian" "switch" "{" { endianarm } "}"
-             | "@bit-order" bitorder | "@size" ( INT | ref | "`" HEL "`" ) ;
+             | "@bit-order" bitorder | "@size" ( INT | ref | "`" HEL "`" )
+             | "@sync" HEXBYTES ;                    (* scan-to-marker: bddo:syncOnMarker *)
 endianarm    = "when" expr "=>" endian ;
 field-decl   = [ "field" ] IDENT [ "as" IDENT ] ":" type { clause } ;
-type         = prim | "bytes" | strtype | "anum" | "adec" | "bits" "[" expr "]" | struct-ref ;
+type         = prim | "bytes" | strtype | "anum" | "adec" | "bits" "[" expr "]"
+             | "derive" expr | struct-ref ;   (* derive ⇒ bddo:valueFromExpression, zero-byte field *)
 strtype      = "str" | "ascii" | "utf8" | "utf16le" | "utf16be" | "latin1" ;
 clause       = "[" ( expr | ".." ) "]"                      (* byte size *)
              | "repeat" ( expr | "until" expr )
              | "@at" expr [ "from" offsetbase ]
              | "if" expr
+             | "@valid" expr
              | "@fixed" ( HEXBYTES | INT | STRING )
              | "enum" [ "flags" ] ( IDENT | "{" enumpair { "," enumpair } "}" )
              | "@checksum" ALGO "(" ( ref ".." ref | "covers" "(" expr ")" ) ")"
@@ -470,6 +524,9 @@ clause       = "[" ( expr | ".." ) "]"                      (* byte size *)
              | "@encoding" enc | "@base" INT
              | "switch" [ expr ] "{" { swarm } "}"
              | "means" CURIE
+             | "@object" CURIE
+             | "@unit" CURIE
+             | "@lang" ( STRING | IDENT ) | "@lang-from" IDENT
              | "value" expr [ "@datatype" CURIE ]
              | "@encoded-with" CURIE
              | "map" "{" { maparm } "}"
