@@ -41,9 +41,9 @@
 //     own flat FH_FS*/IS_IS*/GS_SS*/TS_TS*/DES_DE(S)*/RES_RE* names exactly (see the file-header
 //     note above). Concept-valued fields (CLAS/DCTP/DG/CATP/CRSN) point at one of five named,
 //     concept-valued `.hx`-level enums (SecurityClassificationEnum..ClassificationReasonEnum,
-//     declared with the other named enums below) instead of nitf.ttl's named nitf:FSCLASEnum --
-//     HDL's enum maps are concept-valued, whereas the named TTL enumeration is a plain
-//     valid-value set, so the two are not interchangeable (see the enum note there). Declaring
+//     declared with the other named enums below). nitf.ttl now carries the same five concept
+//     enumerations, drawing their concepts from the us-nato-security register named by its
+//     register bindings; they subsumed its former raw-only nitf:FSCLASEnum. Declaring
 //     these once and referencing them from all six subheaders (rather than repeating an inline
 //     `enum { ... }` map at each of the 30 use sites) keeps the compiled output's enum structure
 //     shared six ways instead of independently duplicated.
@@ -110,11 +110,10 @@ enum ICORDSEnum @label "Image Coordinate Representation" { "U", "G", "N", "S", "
 // ONE shared bddo:Enumeration individual for each, referenced (not re-inlined) by every
 // field below that writes `enum <Name>` -- so the same CLAS/DCTP/DG/CATP/CRSN semantics
 // used identically across all six subheaders are declared once and shared six ways,
-// rather than compiled as six independent anonymous copies. This is a DIFFERENT thing
-// from nitf.ttl's own named nitf:FSCLASEnum, declared just below (unattached -- see its
-// own comment): nitf.ttl's enum is a plain valid-value set with no concept targets, so it
-// cannot replace these; its raw codes are simply the source each concept-valued arm's
-// raw side was copied from.
+// rather than compiled as six independent anonymous copies. nitf.ttl declares the same five
+// shared enumerations with the same raw codes and the same usnato: concepts, so the two
+// descriptions agree; together they subsumed its former raw-only nitf:FSCLASEnum, which
+// carried the five classification codes with no concept attached.
 enum SecurityClassificationEnum @label "Security Classification level" {
   "T"=>usnato:TopSecret, "S"=>usnato:Secret, "C"=>usnato:Confidential, "R"=>usnato:Restricted, "U"=>usnato:Unclassified
 }
@@ -131,16 +130,6 @@ enum ClassificationReasonEnum @label "Classification Reason" {
   "E"=>usnato:ReasonE, "F"=>usnato:ReasonF, "G"=>usnato:ReasonG
 }
 
-// nitf.ttl's own named nitf:FSCLASEnum: a plain valid-value set (T/S/C/R/U, no concept
-// targets), declared here ONLY so the compiled graph carries the same bddo:Enumeration
-// individual nitf.ttl does -- it is deliberately left unattached to any field. Every
-// *CLAS field (FSCLAS/ISCLAS/SSCLAS/TSCLAS/DECLAS/RECLAS) already points at the
-// concept-valued SecurityClassificationEnum above via `enum SecurityClassificationEnum`,
-// and bddo:enumeration is sh:maxCount 1 (bddo.ttl's FieldShape) -- a field cannot carry
-// both, and the concept-valued mapping is the deliberate enrichment to keep. Attaching
-// FSCLASEnum to any of those fields instead/also would either lose the concept mapping
-// or violate the shape, so it stays declared-but-unreferenced.
-enum FSCLASEnum @label "Security Classification level" { "T", "S", "C", "R", "U" }
 
 // =========================================================
 // Reusable structs
@@ -189,9 +178,9 @@ struct FileHeader @label "NITF File Header (Table A-1)" {
   FTITLE   as FH_FTITLE  : nitf:ECSA[80] @label "FTITLE — File Title"
   // ---- Security block (FSCLAS..FSCTLN), wired to the hx-security aspect (asec:*) ----
   // Concept-valued fields point at one of the five named CONCEPT-VALUED enums declared
-  // near the top of this file (SecurityClassificationEnum..ClassificationReasonEnum) --
-  // NOT at nitf.ttl's named nitf:FSCLASEnum, which is a plain valid-value set with no
-  // concept targets and so cannot carry this mapping (see the note at those declarations).
+  // near the top of this file (SecurityClassificationEnum..ClassificationReasonEnum).
+  // nitf.ttl declares the same five, drawing their concepts from the us-nato-security
+  // register named by its register bindings.
   // CODE/CTLH/DCXM are large open-ended registers (codewords, control/handling markings,
   // exemption codes) with no closed concept set today, so they stay physical-only with a
   // pointer comment to where they would attach once the aspect vocab grows a MarkingScheme.

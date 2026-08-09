@@ -88,11 +88,44 @@ nitf:ICEnum a bddo:Enumeration ; rdfs:label "Image Compression" ;
       [ a bddo:EnumValue ; bddo:enumRawValue "M4" ] , [ a bddo:EnumValue ; bddo:enumRawValue "M5" ] ,
       [ a bddo:EnumValue ; bddo:enumRawValue "M6" ] , [ a bddo:EnumValue ; bddo:enumRawValue "M7" ] ,
       [ a bddo:EnumValue ; bddo:enumRawValue "M8" ] .
-nitf:FSCLASEnum a bddo:Enumeration ; rdfs:label "Security Classification level" ;
+# Concept-valued security enumerations. Each maps the raw NITF code to a concept in the
+# us-nato-security register named by this profile's register bindings (top of file).
+# These replace the former raw-only nitf:FSCLASEnum, which carried the same five values
+# with no concept and is therefore subsumed.
+nitf:SecurityClassificationEnum a bddo:Enumeration ; rdfs:label "Security Classification level" ;
     bddo:hasEnumValue
-      [ a bddo:EnumValue ; bddo:enumRawValue "T" ] , [ a bddo:EnumValue ; bddo:enumRawValue "S" ] ,
-      [ a bddo:EnumValue ; bddo:enumRawValue "C" ] , [ a bddo:EnumValue ; bddo:enumRawValue "R" ] ,
-      [ a bddo:EnumValue ; bddo:enumRawValue "U" ] .
+      [ a bddo:EnumValue ; bddo:enumRawValue "C" ; bddo:enumSymbol usnato:Confidential ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "R" ; bddo:enumSymbol usnato:Restricted ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "S" ; bddo:enumSymbol usnato:Secret ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "T" ; bddo:enumSymbol usnato:TopSecret ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "U" ; bddo:enumSymbol usnato:Unclassified ] .
+nitf:DeclassificationTypeEnum a bddo:Enumeration ; rdfs:label "Declassification Type" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue "DD" ; bddo:enumSymbol usnato:DeclassifyOnDate ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "DE" ; bddo:enumSymbol usnato:DeclassifyOnEvent ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "GD" ; bddo:enumSymbol usnato:DowngradeOnDate ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "GE" ; bddo:enumSymbol usnato:DowngradeOnEvent ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "O" ; bddo:enumSymbol usnato:Oadr ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "X" ; bddo:enumSymbol usnato:ExemptFromAutomatic ] .
+nitf:DowngradeToEnum a bddo:Enumeration ; rdfs:label "Downgrade To" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue "C" ; bddo:enumSymbol usnato:Confidential ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "R" ; bddo:enumSymbol usnato:Restricted ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "S" ; bddo:enumSymbol usnato:Secret ] .
+nitf:ClassificationAuthorityTypeEnum a bddo:Enumeration ; rdfs:label "Classification Authority Type" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue "D" ; bddo:enumSymbol usnato:DerivativeSingle ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "M" ; bddo:enumSymbol usnato:DerivativeMultiple ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "O" ; bddo:enumSymbol usnato:OriginalAuthority ] .
+nitf:ClassificationReasonEnum a bddo:Enumeration ; rdfs:label "Classification Reason" ;
+    bddo:hasEnumValue
+      [ a bddo:EnumValue ; bddo:enumRawValue "A" ; bddo:enumSymbol usnato:ReasonA ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "B" ; bddo:enumSymbol usnato:ReasonB ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "C" ; bddo:enumSymbol usnato:ReasonC ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "D" ; bddo:enumSymbol usnato:ReasonD ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "E" ; bddo:enumSymbol usnato:ReasonE ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "F" ; bddo:enumSymbol usnato:ReasonF ] ,
+      [ a bddo:EnumValue ; bddo:enumRawValue "G" ; bddo:enumSymbol usnato:ReasonG ] .
 
 # ---------- Generic Tagged Record Extension (Table A-7) ----------
 nitf:TRE a bddo:Struct ; rdfs:label "Tagged Record Extension" ;
@@ -143,7 +176,7 @@ nitf:FH_FTITLE a bddo:Field ; rdfs:label "FTITLE — File Title" ;
 
 # Security block (FSCLAS..FSCTLN)
 nitf:FH_FSCLAS a bddo:Field ; rdfs:label "FSCLAS — File Security Classification" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:FSCLASEnum .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:SecurityClassificationEnum .
 nitf:FH_FSCLSY a bddo:Field ; rdfs:label "FSCLSY — File Security Classification System" ;
     bddo:dataType nitf:ECSA ; bddo:size 2 .
 nitf:FH_FSCODE a bddo:Field ; rdfs:label "FSCODE — File Codewords" ;
@@ -153,23 +186,23 @@ nitf:FH_FSCTLH a bddo:Field ; rdfs:label "FSCTLH — File Control and Handling" 
 nitf:FH_FSREL a bddo:Field ; rdfs:label "FSREL — File Releasing Instructions" ;
     bddo:dataType nitf:ECSA ; bddo:size 20 .
 nitf:FH_FSDCTP a bddo:Field ; rdfs:label "FSDCTP — File Declassification Type" ;
-    bddo:dataType nitf:ECSA ; bddo:size 2 .
+    bddo:dataType nitf:ECSA ; bddo:size 2 ; bddo:enumeration nitf:DeclassificationTypeEnum .
 nitf:FH_FSDCDT a bddo:Field ; rdfs:label "FSDCDT — File Declassification Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:FH_FSDCXM a bddo:Field ; rdfs:label "FSDCXM — File Declassification Exemption" ;
     bddo:dataType nitf:ECSA ; bddo:size 4 .
 nitf:FH_FSDG a bddo:Field ; rdfs:label "FSDG — File Downgrade" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:DowngradeToEnum .
 nitf:FH_FSDGDT a bddo:Field ; rdfs:label "FSDGDT — File Downgrade Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:FH_FSCLTX a bddo:Field ; rdfs:label "FSCLTX — File Classification Text" ;
     bddo:dataType nitf:ECSA ; bddo:size 43 .
 nitf:FH_FSCATP a bddo:Field ; rdfs:label "FSCATP — File Classification Authority Type" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:ClassificationAuthorityTypeEnum .
 nitf:FH_FSCAUT a bddo:Field ; rdfs:label "FSCAUT — File Classification Authority" ;
     bddo:dataType nitf:ECSA ; bddo:size 40 .
 nitf:FH_FSCRSN a bddo:Field ; rdfs:label "FSCRSN — File Classification Reason" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:ClassificationReasonEnum .
 nitf:FH_FSSRDT a bddo:Field ; rdfs:label "FSSRDT — File Security Source Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:FH_FSCTLN a bddo:Field ; rdfs:label "FSCTLN — File Security Control Number" ;
@@ -305,7 +338,7 @@ nitf:IS_IID2 a bddo:Field ; rdfs:label "IID2 — Image Identifier 2" ;
 
 # Security block (ISCLAS..ISCTLN) — identical sizes to FS* block; ISCODE is ECS-A here (unlike file FSCODE)
 nitf:IS_ISCLAS a bddo:Field ; rdfs:label "ISCLAS — Image Security Classification" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:FSCLASEnum .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:SecurityClassificationEnum .
 nitf:IS_ISCLSY a bddo:Field ; rdfs:label "ISCLSY — Image Security Classification System" ;
     bddo:dataType nitf:ECSA ; bddo:size 2 .
 nitf:IS_ISCODE a bddo:Field ; rdfs:label "ISCODE — Image Codewords" ;
@@ -315,23 +348,23 @@ nitf:IS_ISCTLH a bddo:Field ; rdfs:label "ISCTLH — Image Control and Handling"
 nitf:IS_ISREL a bddo:Field ; rdfs:label "ISREL — Image Releasing Instructions" ;
     bddo:dataType nitf:ECSA ; bddo:size 20 .
 nitf:IS_ISDCTP a bddo:Field ; rdfs:label "ISDCTP — Image Declassification Type" ;
-    bddo:dataType nitf:ECSA ; bddo:size 2 .
+    bddo:dataType nitf:ECSA ; bddo:size 2 ; bddo:enumeration nitf:DeclassificationTypeEnum .
 nitf:IS_ISDCDT a bddo:Field ; rdfs:label "ISDCDT — Image Declassification Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:IS_ISDCXM a bddo:Field ; rdfs:label "ISDCXM — Image Declassification Exemption" ;
     bddo:dataType nitf:ECSA ; bddo:size 4 .
 nitf:IS_ISDG a bddo:Field ; rdfs:label "ISDG — Image Downgrade" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:DowngradeToEnum .
 nitf:IS_ISDGDT a bddo:Field ; rdfs:label "ISDGDT — Image Downgrade Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:IS_ISCLTX a bddo:Field ; rdfs:label "ISCLTX — Image Classification Text" ;
     bddo:dataType nitf:ECSA ; bddo:size 43 .
 nitf:IS_ISCATP a bddo:Field ; rdfs:label "ISCATP — Image Classification Authority Type" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:ClassificationAuthorityTypeEnum .
 nitf:IS_ISCAUT a bddo:Field ; rdfs:label "ISCAUT — Image Classification Authority" ;
     bddo:dataType nitf:ECSA ; bddo:size 40 .
 nitf:IS_ISCRSN a bddo:Field ; rdfs:label "ISCRSN — Image Classification Reason" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:ClassificationReasonEnum .
 nitf:IS_ISSRDT a bddo:Field ; rdfs:label "ISSRDT — Image Security Source Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:IS_ISCTLN a bddo:Field ; rdfs:label "ISCTLN — Image Security Control Number" ;
@@ -460,7 +493,7 @@ nitf:GS_SNAME a bddo:Field ; rdfs:label "SNAME — Graphic Name" ;
 
 # Security block (SSCLAS..SSCTLN) — identical sizes to FS* block
 nitf:GS_SSCLAS a bddo:Field ; rdfs:label "SSCLAS — Graphic Security Classification" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:FSCLASEnum .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:SecurityClassificationEnum .
 nitf:GS_SSCLSY a bddo:Field ; rdfs:label "SSCLSY — Graphic Security Classification System" ;
     bddo:dataType nitf:ECSA ; bddo:size 2 .
 nitf:GS_SSCODE a bddo:Field ; rdfs:label "SSCODE — Graphic Codewords" ;
@@ -470,23 +503,23 @@ nitf:GS_SSCTLH a bddo:Field ; rdfs:label "SSCTLH — Graphic Control and Handlin
 nitf:GS_SSREL a bddo:Field ; rdfs:label "SSREL — Graphic Releasing Instructions" ;
     bddo:dataType nitf:ECSA ; bddo:size 20 .
 nitf:GS_SSDCTP a bddo:Field ; rdfs:label "SSDCTP — Graphic Declassification Type" ;
-    bddo:dataType nitf:ECSA ; bddo:size 2 .
+    bddo:dataType nitf:ECSA ; bddo:size 2 ; bddo:enumeration nitf:DeclassificationTypeEnum .
 nitf:GS_SSDCDT a bddo:Field ; rdfs:label "SSDCDT — Graphic Declassification Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:GS_SSDCXM a bddo:Field ; rdfs:label "SSDCXM — Graphic Declassification Exemption" ;
     bddo:dataType nitf:ECSA ; bddo:size 4 .
 nitf:GS_SSDG a bddo:Field ; rdfs:label "SSDG — Graphic Downgrade" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:DowngradeToEnum .
 nitf:GS_SSDGDT a bddo:Field ; rdfs:label "SSDGDT — Graphic Downgrade Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:GS_SSCLTX a bddo:Field ; rdfs:label "SSCLTX — Graphic Classification Text" ;
     bddo:dataType nitf:ECSA ; bddo:size 43 .
 nitf:GS_SSCATP a bddo:Field ; rdfs:label "SSCATP — Graphic Classification Authority Type" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:ClassificationAuthorityTypeEnum .
 nitf:GS_SSCAUT a bddo:Field ; rdfs:label "SSCAUT — Graphic Classification Authority" ;
     bddo:dataType nitf:ECSA ; bddo:size 40 .
 nitf:GS_SSCRSN a bddo:Field ; rdfs:label "SSCRSN — Graphic Classification Reason" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:ClassificationReasonEnum .
 nitf:GS_SSSRDT a bddo:Field ; rdfs:label "SSSRDT — Graphic Security Source Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:GS_SSCTLN a bddo:Field ; rdfs:label "SSCTLN — Graphic Security Control Number" ;
@@ -555,7 +588,7 @@ nitf:TS_TXTITL a bddo:Field ; rdfs:label "TXTITL — Text Title" ;
 
 # Security block (TSCLAS..TSCTLN) — identical sizes to FS* block
 nitf:TS_TSCLAS a bddo:Field ; rdfs:label "TSCLAS — Text Security Classification" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:FSCLASEnum .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:SecurityClassificationEnum .
 nitf:TS_TSCLSY a bddo:Field ; rdfs:label "TSCLSY — Text Security Classification System" ;
     bddo:dataType nitf:ECSA ; bddo:size 2 .
 nitf:TS_TSCODE a bddo:Field ; rdfs:label "TSCODE — Text Codewords" ;
@@ -565,23 +598,23 @@ nitf:TS_TSCTLH a bddo:Field ; rdfs:label "TSCTLH — Text Control and Handling" 
 nitf:TS_TSREL a bddo:Field ; rdfs:label "TSREL — Text Releasing Instructions" ;
     bddo:dataType nitf:ECSA ; bddo:size 20 .
 nitf:TS_TSDCTP a bddo:Field ; rdfs:label "TSDCTP — Text Declassification Type" ;
-    bddo:dataType nitf:ECSA ; bddo:size 2 .
+    bddo:dataType nitf:ECSA ; bddo:size 2 ; bddo:enumeration nitf:DeclassificationTypeEnum .
 nitf:TS_TSDCDT a bddo:Field ; rdfs:label "TSDCDT — Text Declassification Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:TS_TSDCXM a bddo:Field ; rdfs:label "TSDCXM — Text Declassification Exemption" ;
     bddo:dataType nitf:ECSA ; bddo:size 4 .
 nitf:TS_TSDG a bddo:Field ; rdfs:label "TSDG — Text Downgrade" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:DowngradeToEnum .
 nitf:TS_TSDGDT a bddo:Field ; rdfs:label "TSDGDT — Text Downgrade Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:TS_TSCLTX a bddo:Field ; rdfs:label "TSCLTX — Text Classification Text" ;
     bddo:dataType nitf:ECSA ; bddo:size 43 .
 nitf:TS_TSCATP a bddo:Field ; rdfs:label "TSCATP — Text Classification Authority Type" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:ClassificationAuthorityTypeEnum .
 nitf:TS_TSCAUT a bddo:Field ; rdfs:label "TSCAUT — Text Classification Authority" ;
     bddo:dataType nitf:ECSA ; bddo:size 40 .
 nitf:TS_TSCRSN a bddo:Field ; rdfs:label "TSCRSN — Text Classification Reason" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:ClassificationReasonEnum .
 nitf:TS_TSSRDT a bddo:Field ; rdfs:label "TSSRDT — Text Security Source Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:TS_TSCTLN a bddo:Field ; rdfs:label "TSCTLN — Text Security Control Number" ;
@@ -625,7 +658,7 @@ nitf:DES_DESVER a bddo:Field ; rdfs:label "DESVER — Version of the Data Defini
 
 # Security block (DECLAS..DESCTLN) — identical sizes to FS* block
 nitf:DES_DECLAS a bddo:Field ; rdfs:label "DECLAS — Data Extension Segment Security Classification" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:FSCLASEnum .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:SecurityClassificationEnum .
 nitf:DES_DESCLSY a bddo:Field ; rdfs:label "DESCLSY — DES Security Classification System" ;
     bddo:dataType nitf:ECSA ; bddo:size 2 .
 nitf:DES_DESCODE a bddo:Field ; rdfs:label "DESCODE — DES Codewords" ;
@@ -635,23 +668,23 @@ nitf:DES_DESCTLH a bddo:Field ; rdfs:label "DESCTLH — DES Control and Handling
 nitf:DES_DESREL a bddo:Field ; rdfs:label "DESREL — DES Releasing Instructions" ;
     bddo:dataType nitf:ECSA ; bddo:size 20 .
 nitf:DES_DESDCTP a bddo:Field ; rdfs:label "DESDCTP — DES Declassification Type" ;
-    bddo:dataType nitf:ECSA ; bddo:size 2 .
+    bddo:dataType nitf:ECSA ; bddo:size 2 ; bddo:enumeration nitf:DeclassificationTypeEnum .
 nitf:DES_DESDCDT a bddo:Field ; rdfs:label "DESDCDT — DES Declassification Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:DES_DESDCXM a bddo:Field ; rdfs:label "DESDCXM — DES Declassification Exemption" ;
     bddo:dataType nitf:ECSA ; bddo:size 4 .
 nitf:DES_DESDG a bddo:Field ; rdfs:label "DESDG — DES Downgrade" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:DowngradeToEnum .
 nitf:DES_DESDGDT a bddo:Field ; rdfs:label "DESDGDT — DES Downgrade Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:DES_DESCLTX a bddo:Field ; rdfs:label "DESCLTX — DES Classification Text" ;
     bddo:dataType nitf:ECSA ; bddo:size 43 .
 nitf:DES_DESCATP a bddo:Field ; rdfs:label "DESCATP — DES Classification Authority Type" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:ClassificationAuthorityTypeEnum .
 nitf:DES_DESCAUT a bddo:Field ; rdfs:label "DESCAUT — DES Classification Authority" ;
     bddo:dataType nitf:ECSA ; bddo:size 40 .
 nitf:DES_DESCRSN a bddo:Field ; rdfs:label "DESCRSN — DES Classification Reason" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:ClassificationReasonEnum .
 nitf:DES_DESSRDT a bddo:Field ; rdfs:label "DESSRDT — DES Security Source Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:DES_DESCTLN a bddo:Field ; rdfs:label "DESCTLN — DES Security Control Number" ;
@@ -694,7 +727,7 @@ nitf:RES_RESVER a bddo:Field ; rdfs:label "RESVER — Version of the Data Defini
 
 # Security block (RECLAS..RECTLN) — identical sizes to FS* block
 nitf:RES_RECLAS a bddo:Field ; rdfs:label "RECLAS — Reserved Extension Segment Security Classification" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:FSCLASEnum .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:SecurityClassificationEnum .
 nitf:RES_RECLSY a bddo:Field ; rdfs:label "RECLSY — RES Security Classification System" ;
     bddo:dataType nitf:ECSA ; bddo:size 2 .
 nitf:RES_RECODE a bddo:Field ; rdfs:label "RECODE — RES Codewords" ;
@@ -704,23 +737,23 @@ nitf:RES_RECTLH a bddo:Field ; rdfs:label "RECTLH — RES Control and Handling" 
 nitf:RES_REREL a bddo:Field ; rdfs:label "REREL — RES Releasing Instructions" ;
     bddo:dataType nitf:ECSA ; bddo:size 20 .
 nitf:RES_REDCTP a bddo:Field ; rdfs:label "REDCTP — RES Declassification Type" ;
-    bddo:dataType nitf:ECSA ; bddo:size 2 .
+    bddo:dataType nitf:ECSA ; bddo:size 2 ; bddo:enumeration nitf:DeclassificationTypeEnum .
 nitf:RES_REDCDT a bddo:Field ; rdfs:label "REDCDT — RES Declassification Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:RES_REDCXM a bddo:Field ; rdfs:label "REDCXM — RES Declassification Exemption" ;
     bddo:dataType nitf:ECSA ; bddo:size 4 .
 nitf:RES_REDG a bddo:Field ; rdfs:label "REDG — RES Downgrade" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:DowngradeToEnum .
 nitf:RES_REDGDT a bddo:Field ; rdfs:label "REDGDT — RES Downgrade Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:RES_RECLTX a bddo:Field ; rdfs:label "RECLTX — RES Classification Text" ;
     bddo:dataType nitf:ECSA ; bddo:size 43 .
 nitf:RES_RECATP a bddo:Field ; rdfs:label "RECATP — RES Classification Authority Type" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:ClassificationAuthorityTypeEnum .
 nitf:RES_RECAUT a bddo:Field ; rdfs:label "RECAUT — RES Classification Authority" ;
     bddo:dataType nitf:ECSA ; bddo:size 40 .
 nitf:RES_RECRSN a bddo:Field ; rdfs:label "RECRSN — RES Classification Reason" ;
-    bddo:dataType nitf:ECSA ; bddo:size 1 .
+    bddo:dataType nitf:ECSA ; bddo:size 1 ; bddo:enumeration nitf:ClassificationReasonEnum .
 nitf:RES_RESRDT a bddo:Field ; rdfs:label "RESRDT — RES Security Source Date" ;
     bddo:dataType nitf:ECSA ; bddo:size 8 .
 nitf:RES_RECTLN a bddo:Field ; rdfs:label "RECTLN — RES Security Control Number" ;
