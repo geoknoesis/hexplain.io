@@ -13,8 +13,9 @@
 // against six textually-identical but IRI-distinct copies. The struct is now flattened: each
 // of the six subheaders carries its own inline copy of the 16 fields, named to match nitf.ttl
 // exactly via `as`. Every copy keeps the richer modeling nitf.ttl does not have -- concept-
-// valued `enum` maps (e.g. "T"=>asec:TopSecret) and `means asec:*` mappings -- so the compiled
-// output is a strict superset of nitf.ttl's security-block triples, not a smaller copy of it.
+// valued `enum` maps (e.g. "T"=>usnato:TopSecret, drawn from the us-nato-security register)
+// and `means asec:*` mappings -- so the compiled output is a strict superset of nitf.ttl's
+// security-block triples, not a smaller copy of it.
 //
 // STATUS — aligned with the P0 vocabulary extensions (2026-08-02).
 // nitf.ttl remains authoritative; this file is the authoring surface and is kept in step
@@ -55,6 +56,12 @@ format nitf
 
 use araster: <https://hexplain.io/ns/aspect/raster#>
 use asec:    <https://hexplain.io/ns/aspect/security#>
+// Controlled security-marking concepts (classification levels, declassification/authority/
+// reason codes) were split out of the asec: aspect into this standalone, swappable register
+// (Task 3) -- the aspect keeps the *properties* (asec:classification, asec:downgradeTo, ...);
+// the register supplies the *concepts* those properties point at. See nitf.ttl's ontology
+// header for the corresponding hexplain:usesRegister bindings.
+use usnato:  <https://hexplain.io/ns/register/us-nato-security#>
 use gv:      <https://hexplain.io/ns/geo#>
 // nitf/vann below exist only so the format-scoped `raw-turtle` block in FileHeader (Task 6 Part B)
 // can quote nitf.ttl's ontology header and custom bddo:DataType individuals verbatim — bddo/rdfs/
@@ -76,9 +83,10 @@ use vann:    <http://purl.org/vocab/vann/>
 // nothing defines and nothing else references. Where a value really does denote a
 // shared concept, bind it to a defined one instead -- see the five CONCEPT-VALUED named
 // enums directly below (SecurityClassificationEnum..ClassificationReasonEnum), each an
-// `raw=>Symbol` mapping into the asec:* security aspect vocabulary, used from the CLAS/
-// DCTP/DG/CATP/CRSN fields of every one of the six security blocks inlined into
-// FileHeader/ImageSubheader/GraphicSubheader/TextSubheader/DESubheader/RESubheader below.
+// `raw=>Symbol` mapping into usnato:, the us-nato-security register (specification/register/
+// us-nato-security/us-nato-security.ttl), used from the CLAS/DCTP/DG/CATP/CRSN fields of
+// every one of the six security blocks inlined into FileHeader/ImageSubheader/
+// GraphicSubheader/TextSubheader/DESubheader/RESubheader below.
 // =========================================================
 enum PVTYPEEnum @label "Pixel Value Type" { "INT", "B", "SI", "R", "C" }
 enum IREPEnum @label "Image Representation" { "MONO", "RGB", "RGB/LUT", "MULTI", "NODISPLY",
@@ -91,8 +99,13 @@ enum ICORDSEnum @label "Image Coordinate Representation" { "U", "G", "N", "S", "
 
 // ---------------------------------------------------------------------------
 // CONCEPT-VALUED named enumerations for the security-marking block (below). Unlike the
-// five raw-value-only enums above, each of these carries `raw=>Symbol` arms into the
-// asec:* security aspect vocabulary -- HDL's `enum` grammar allows concept-valued arms on
+// five raw-value-only enums above, each of these carries `raw=>Symbol` arms into usnato:,
+// the us-nato-security register -- controlled security-marking concepts were split out of
+// the asec: aspect into this standalone, swappable register (Task 3), so the concept side
+// of each arm below is usnato:*, not asec:*; the `means asec:*` clause on the field that
+// uses the enum (declared with the fields themselves, further below) still names the
+// asec: *property* the enum's resolved concept is the value of -- that part is unchanged.
+// HDL's `enum` grammar allows concept-valued arms on
 // a top-level named declaration exactly as on a field-inline one, and the compiler mints
 // ONE shared bddo:Enumeration individual for each, referenced (not re-inlined) by every
 // field below that writes `enum <Name>` -- so the same CLAS/DCTP/DG/CATP/CRSN semantics
@@ -103,19 +116,19 @@ enum ICORDSEnum @label "Image Coordinate Representation" { "U", "G", "N", "S", "
 // cannot replace these; its raw codes are simply the source each concept-valued arm's
 // raw side was copied from.
 enum SecurityClassificationEnum @label "Security Classification level" {
-  "T"=>asec:TopSecret, "S"=>asec:Secret, "C"=>asec:Confidential, "R"=>asec:Restricted, "U"=>asec:Unclassified
+  "T"=>usnato:TopSecret, "S"=>usnato:Secret, "C"=>usnato:Confidential, "R"=>usnato:Restricted, "U"=>usnato:Unclassified
 }
 enum DeclassificationTypeEnum @label "Declassification Type" {
-  "DD"=>asec:DeclassifyOnDate, "DE"=>asec:DeclassifyOnEvent, "GD"=>asec:DowngradeOnDate,
-  "GE"=>asec:DowngradeOnEvent, "O"=>asec:Oadr, "X"=>asec:ExemptFromAutomatic
+  "DD"=>usnato:DeclassifyOnDate, "DE"=>usnato:DeclassifyOnEvent, "GD"=>usnato:DowngradeOnDate,
+  "GE"=>usnato:DowngradeOnEvent, "O"=>usnato:Oadr, "X"=>usnato:ExemptFromAutomatic
 }
-enum DowngradeToEnum @label "Downgrade To" { "S"=>asec:Secret, "C"=>asec:Confidential, "R"=>asec:Restricted }
+enum DowngradeToEnum @label "Downgrade To" { "S"=>usnato:Secret, "C"=>usnato:Confidential, "R"=>usnato:Restricted }
 enum ClassificationAuthorityTypeEnum @label "Classification Authority Type" {
-  "O"=>asec:OriginalAuthority, "D"=>asec:DerivativeSingle, "M"=>asec:DerivativeMultiple
+  "O"=>usnato:OriginalAuthority, "D"=>usnato:DerivativeSingle, "M"=>usnato:DerivativeMultiple
 }
 enum ClassificationReasonEnum @label "Classification Reason" {
-  "A"=>asec:ReasonA, "B"=>asec:ReasonB, "C"=>asec:ReasonC, "D"=>asec:ReasonD,
-  "E"=>asec:ReasonE, "F"=>asec:ReasonF, "G"=>asec:ReasonG
+  "A"=>usnato:ReasonA, "B"=>usnato:ReasonB, "C"=>usnato:ReasonC, "D"=>usnato:ReasonD,
+  "E"=>usnato:ReasonE, "F"=>usnato:ReasonF, "G"=>usnato:ReasonG
 }
 
 // nitf.ttl's own named nitf:FSCLASEnum: a plain valid-value set (T/S/C/R/U, no concept
@@ -187,13 +200,13 @@ struct FileHeader @label "NITF File Header (Table A-1)" {
   FSCLAS as FH_FSCLAS : nitf:ECSA[1]  enum SecurityClassificationEnum means asec:classification
                            @label "FSCLAS — File Security Classification"
   FSCLSY as FH_FSCLSY : nitf:ECSA[2]  means asec:classificationSystem @label "FSCLSY — File Security Classification System"
-  FSCODE as FH_FSCODE : nitf:BCSA[11] @label "FSCODE — File Codewords" // -> asec:compartment (asec:MarkingScheme; space-separated digraphs)
-  FSCTLH as FH_FSCTLH : nitf:ECSA[2]  @label "FSCTLH — File Control and Handling" // -> asec:controlAndHandling (asec:MarkingScheme)
+  FSCODE as FH_FSCODE : nitf:BCSA[11] @label "FSCODE — File Codewords" // -> asec:compartment (usnato:MarkingScheme; space-separated digraphs)
+  FSCTLH as FH_FSCTLH : nitf:ECSA[2]  @label "FSCTLH — File Control and Handling" // -> asec:controlAndHandling (usnato:MarkingScheme)
   FSREL  as FH_FSREL  : nitf:ECSA[20] means asec:releasableTo @label "FSREL — File Releasing Instructions"
   FSDCTP as FH_FSDCTP : nitf:ECSA[2]  enum DeclassificationTypeEnum means asec:declassificationType
                            @label "FSDCTP — File Declassification Type"
   FSDCDT as FH_FSDCDT : nitf:ECSA[8]  means asec:declassificationDate @label "FSDCDT — File Declassification Date"
-  FSDCXM as FH_FSDCXM : nitf:ECSA[4]  @label "FSDCXM — File Declassification Exemption" // -> asec:declassificationExemption (asec:ExemptionScheme)
+  FSDCXM as FH_FSDCXM : nitf:ECSA[4]  @label "FSDCXM — File Declassification Exemption" // -> asec:declassificationExemption (usnato:ExemptionScheme)
   FSDG   as FH_FSDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradeTo @label "FSDG — File Downgrade"
   FSDGDT as FH_FSDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "FSDGDT — File Downgrade Date"
   FSCLTX as FH_FSCLTX : nitf:ECSA[43] means asec:classificationText @label "FSCLTX — File Classification Text"
@@ -257,6 +270,21 @@ struct FileHeader @label "NITF File Header (Table A-1)" {
         dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
         vann:preferredNamespacePrefix "nitf" ; vann:preferredNamespaceUri "https://hexplain.io/ns/profile/nitf#" .
 
+    # Register bindings (Task 5) -- quoted verbatim from nitf.ttl's ontology header so the
+    # compiled graph stays isomorphic to it for this subject; see nitf.ttl for the rationale
+    # (one binding per asec: property that is actually concept-valued in this profile).
+    <https://hexplain.io/ns/profile/nitf> hexplain:usesRegister
+        [ a hexplain:RegisterBinding ; hexplain:forProperty asec:classification ;
+          hexplain:register usnato:ClassificationLevelScheme ] ,
+        [ a hexplain:RegisterBinding ; hexplain:forProperty asec:downgradeTo ;
+          hexplain:register usnato:ClassificationLevelScheme ] ,
+        [ a hexplain:RegisterBinding ; hexplain:forProperty asec:declassificationType ;
+          hexplain:register usnato:DeclassTypeScheme ] ,
+        [ a hexplain:RegisterBinding ; hexplain:forProperty asec:classificationAuthorityType ;
+          hexplain:register usnato:AuthorityTypeScheme ] ,
+        [ a hexplain:RegisterBinding ; hexplain:forProperty asec:classificationReason ;
+          hexplain:register usnato:ClassificationReasonScheme ] .
+
     nitf:BCSA a bddo:DataType ; rdfs:label "BCS-A (alphanumeric text)" ;
         bddo:baseType bddo:baseString ; bddo:encoding bddo:ascii ; bddo:xsdType xsd:string .
     nitf:BCSN a bddo:DataType ; rdfs:label "BCS-N (numeric text: digits + . / + -)" ;
@@ -284,13 +312,13 @@ struct ImageSubheader means gv:RasterDataset @label "NITF Image Subheader (Table
   ISCLAS as IS_ISCLAS : nitf:ECSA[1]  enum SecurityClassificationEnum means asec:classification
                            @label "ISCLAS — Image Security Classification"
   ISCLSY as IS_ISCLSY : nitf:ECSA[2]  means asec:classificationSystem @label "ISCLSY — Image Security Classification System"
-  ISCODE as IS_ISCODE : nitf:ECSA[11] @label "ISCODE — Image Codewords" // -> asec:compartment (asec:MarkingScheme; space-separated digraphs)
-  ISCTLH as IS_ISCTLH : nitf:ECSA[2]  @label "ISCTLH — Image Control and Handling" // -> asec:controlAndHandling (asec:MarkingScheme)
+  ISCODE as IS_ISCODE : nitf:ECSA[11] @label "ISCODE — Image Codewords" // -> asec:compartment (usnato:MarkingScheme; space-separated digraphs)
+  ISCTLH as IS_ISCTLH : nitf:ECSA[2]  @label "ISCTLH — Image Control and Handling" // -> asec:controlAndHandling (usnato:MarkingScheme)
   ISREL  as IS_ISREL  : nitf:ECSA[20] means asec:releasableTo @label "ISREL — Image Releasing Instructions"
   ISDCTP as IS_ISDCTP : nitf:ECSA[2]  enum DeclassificationTypeEnum means asec:declassificationType
                            @label "ISDCTP — Image Declassification Type"
   ISDCDT as IS_ISDCDT : nitf:ECSA[8]  means asec:declassificationDate @label "ISDCDT — Image Declassification Date"
-  ISDCXM as IS_ISDCXM : nitf:ECSA[4]  @label "ISDCXM — Image Declassification Exemption" // -> asec:declassificationExemption (asec:ExemptionScheme)
+  ISDCXM as IS_ISDCXM : nitf:ECSA[4]  @label "ISDCXM — Image Declassification Exemption" // -> asec:declassificationExemption (usnato:ExemptionScheme)
   ISDG   as IS_ISDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradeTo @label "ISDG — Image Downgrade"
   ISDGDT as IS_ISDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "ISDGDT — Image Downgrade Date"
   ISCLTX as IS_ISCLTX : nitf:ECSA[43] means asec:classificationText @label "ISCLTX — Image Classification Text"
@@ -375,13 +403,13 @@ struct GraphicSubheader @label "NITF Graphic Subheader (Table A-5)" {
   SSCLAS as GS_SSCLAS : nitf:ECSA[1]  enum SecurityClassificationEnum means asec:classification
                            @label "SSCLAS — Graphic Security Classification"
   SSCLSY as GS_SSCLSY : nitf:ECSA[2]  means asec:classificationSystem @label "SSCLSY — Graphic Security Classification System"
-  SSCODE as GS_SSCODE : nitf:ECSA[11] @label "SSCODE — Graphic Codewords" // -> asec:compartment (asec:MarkingScheme; space-separated digraphs)
-  SSCTLH as GS_SSCTLH : nitf:ECSA[2]  @label "SSCTLH — Graphic Control and Handling" // -> asec:controlAndHandling (asec:MarkingScheme)
+  SSCODE as GS_SSCODE : nitf:ECSA[11] @label "SSCODE — Graphic Codewords" // -> asec:compartment (usnato:MarkingScheme; space-separated digraphs)
+  SSCTLH as GS_SSCTLH : nitf:ECSA[2]  @label "SSCTLH — Graphic Control and Handling" // -> asec:controlAndHandling (usnato:MarkingScheme)
   SSREL  as GS_SSREL  : nitf:ECSA[20] means asec:releasableTo @label "SSREL — Graphic Releasing Instructions"
   SSDCTP as GS_SSDCTP : nitf:ECSA[2]  enum DeclassificationTypeEnum means asec:declassificationType
                            @label "SSDCTP — Graphic Declassification Type"
   SSDCDT as GS_SSDCDT : nitf:ECSA[8]  means asec:declassificationDate @label "SSDCDT — Graphic Declassification Date"
-  SSDCXM as GS_SSDCXM : nitf:ECSA[4]  @label "SSDCXM — Graphic Declassification Exemption" // -> asec:declassificationExemption (asec:ExemptionScheme)
+  SSDCXM as GS_SSDCXM : nitf:ECSA[4]  @label "SSDCXM — Graphic Declassification Exemption" // -> asec:declassificationExemption (usnato:ExemptionScheme)
   SSDG   as GS_SSDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradeTo @label "SSDG — Graphic Downgrade"
   SSDGDT as GS_SSDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "SSDGDT — Graphic Downgrade Date"
   SSCLTX as GS_SSCLTX : nitf:ECSA[43] means asec:classificationText @label "SSCLTX — Graphic Classification Text"
@@ -422,13 +450,13 @@ struct TextSubheader @label "NITF Text Subheader (Table A-6)" {
   TSCLAS as TS_TSCLAS : nitf:ECSA[1]  enum SecurityClassificationEnum means asec:classification
                            @label "TSCLAS — Text Security Classification"
   TSCLSY as TS_TSCLSY : nitf:ECSA[2]  means asec:classificationSystem @label "TSCLSY — Text Security Classification System"
-  TSCODE as TS_TSCODE : nitf:ECSA[11] @label "TSCODE — Text Codewords" // -> asec:compartment (asec:MarkingScheme; space-separated digraphs)
-  TSCTLH as TS_TSCTLH : nitf:ECSA[2]  @label "TSCTLH — Text Control and Handling" // -> asec:controlAndHandling (asec:MarkingScheme)
+  TSCODE as TS_TSCODE : nitf:ECSA[11] @label "TSCODE — Text Codewords" // -> asec:compartment (usnato:MarkingScheme; space-separated digraphs)
+  TSCTLH as TS_TSCTLH : nitf:ECSA[2]  @label "TSCTLH — Text Control and Handling" // -> asec:controlAndHandling (usnato:MarkingScheme)
   TSREL  as TS_TSREL  : nitf:ECSA[20] means asec:releasableTo @label "TSREL — Text Releasing Instructions"
   TSDCTP as TS_TSDCTP : nitf:ECSA[2]  enum DeclassificationTypeEnum means asec:declassificationType
                            @label "TSDCTP — Text Declassification Type"
   TSDCDT as TS_TSDCDT : nitf:ECSA[8]  means asec:declassificationDate @label "TSDCDT — Text Declassification Date"
-  TSDCXM as TS_TSDCXM : nitf:ECSA[4]  @label "TSDCXM — Text Declassification Exemption" // -> asec:declassificationExemption (asec:ExemptionScheme)
+  TSDCXM as TS_TSDCXM : nitf:ECSA[4]  @label "TSDCXM — Text Declassification Exemption" // -> asec:declassificationExemption (usnato:ExemptionScheme)
   TSDG   as TS_TSDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradeTo @label "TSDG — Text Downgrade"
   TSDGDT as TS_TSDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "TSDGDT — Text Downgrade Date"
   TSCLTX as TS_TSCLTX : nitf:ECSA[43] means asec:classificationText @label "TSCLTX — Text Classification Text"
@@ -464,13 +492,13 @@ struct DESubheader @label "NITF Data Extension Segment Subheader (Table A-8)" {
   DECLAS  as DES_DECLAS  : nitf:ECSA[1]  enum SecurityClassificationEnum means asec:classification
                            @label "DECLAS — Data Extension Segment Security Classification"
   DESCLSY as DES_DESCLSY : nitf:ECSA[2]  means asec:classificationSystem @label "DESCLSY — DES Security Classification System"
-  DESCODE as DES_DESCODE : nitf:ECSA[11] @label "DESCODE — DES Codewords" // -> asec:compartment (asec:MarkingScheme; space-separated digraphs)
-  DESCTLH as DES_DESCTLH : nitf:ECSA[2]  @label "DESCTLH — DES Control and Handling" // -> asec:controlAndHandling (asec:MarkingScheme)
+  DESCODE as DES_DESCODE : nitf:ECSA[11] @label "DESCODE — DES Codewords" // -> asec:compartment (usnato:MarkingScheme; space-separated digraphs)
+  DESCTLH as DES_DESCTLH : nitf:ECSA[2]  @label "DESCTLH — DES Control and Handling" // -> asec:controlAndHandling (usnato:MarkingScheme)
   DESREL  as DES_DESREL  : nitf:ECSA[20] means asec:releasableTo @label "DESREL — DES Releasing Instructions"
   DESDCTP as DES_DESDCTP : nitf:ECSA[2]  enum DeclassificationTypeEnum means asec:declassificationType
                            @label "DESDCTP — DES Declassification Type"
   DESDCDT as DES_DESDCDT : nitf:ECSA[8]  means asec:declassificationDate @label "DESDCDT — DES Declassification Date"
-  DESDCXM as DES_DESDCXM : nitf:ECSA[4]  @label "DESDCXM — DES Declassification Exemption" // -> asec:declassificationExemption (asec:ExemptionScheme)
+  DESDCXM as DES_DESDCXM : nitf:ECSA[4]  @label "DESDCXM — DES Declassification Exemption" // -> asec:declassificationExemption (usnato:ExemptionScheme)
   DESDG   as DES_DESDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradeTo @label "DESDG — DES Downgrade"
   DESDGDT as DES_DESDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "DESDGDT — DES Downgrade Date"
   DESCLTX as DES_DESCLTX : nitf:ECSA[43] means asec:classificationText @label "DESCLTX — DES Classification Text"
@@ -507,13 +535,13 @@ struct RESubheader @label "NITF Reserved Extension Segment Subheader (Table A-9)
   RECLAS as RES_RECLAS : nitf:ECSA[1]  enum SecurityClassificationEnum means asec:classification
                            @label "RECLAS — Reserved Extension Segment Security Classification"
   RECLSY as RES_RECLSY : nitf:ECSA[2]  means asec:classificationSystem @label "RECLSY — RES Security Classification System"
-  RECODE as RES_RECODE : nitf:ECSA[11] @label "RECODE — RES Codewords" // -> asec:compartment (asec:MarkingScheme; space-separated digraphs)
-  RECTLH as RES_RECTLH : nitf:ECSA[2]  @label "RECTLH — RES Control and Handling" // -> asec:controlAndHandling (asec:MarkingScheme)
+  RECODE as RES_RECODE : nitf:ECSA[11] @label "RECODE — RES Codewords" // -> asec:compartment (usnato:MarkingScheme; space-separated digraphs)
+  RECTLH as RES_RECTLH : nitf:ECSA[2]  @label "RECTLH — RES Control and Handling" // -> asec:controlAndHandling (usnato:MarkingScheme)
   REREL  as RES_REREL  : nitf:ECSA[20] means asec:releasableTo @label "REREL — RES Releasing Instructions"
   REDCTP as RES_REDCTP : nitf:ECSA[2]  enum DeclassificationTypeEnum means asec:declassificationType
                            @label "REDCTP — RES Declassification Type"
   REDCDT as RES_REDCDT : nitf:ECSA[8]  means asec:declassificationDate @label "REDCDT — RES Declassification Date"
-  REDCXM as RES_REDCXM : nitf:ECSA[4]  @label "REDCXM — RES Declassification Exemption" // -> asec:declassificationExemption (asec:ExemptionScheme)
+  REDCXM as RES_REDCXM : nitf:ECSA[4]  @label "REDCXM — RES Declassification Exemption" // -> asec:declassificationExemption (usnato:ExemptionScheme)
   REDG   as RES_REDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradeTo @label "REDG — RES Downgrade"
   REDGDT as RES_REDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "REDGDT — RES Downgrade Date"
   RECLTX as RES_RECLTX : nitf:ECSA[43] means asec:classificationText @label "RECLTX — RES Classification Text"

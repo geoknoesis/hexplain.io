@@ -87,6 +87,14 @@ MAX_REPORT_LINES = 40
 
 BDDO = "https://hexplain.io/ns/bddo#"
 ASPECT_SECURITY = "https://hexplain.io/ns/aspect/security#"
+# (Task 5, pluggable concept registers) The security-marking CONCEPTS the five enums below
+# point at (asec:TopSecret, asec:ReasonA, ...) moved out of the asec: aspect into this
+# standalone register -- the aspect kept only the *properties* (asec:classification, ...).
+# SECURITY_ASPECT_ENRICHMENT's namespace checks below must recognize both namespaces: the
+# `mapsToProperty -> asec:*` triples still land in ASPECT_SECURITY, while the enum values'
+# `enumSymbol -> usnato:*` triples now land here instead.
+REGISTER_US_NATO_SECURITY = "https://hexplain.io/ns/register/us-nato-security#"
+_SECURITY_ENRICHMENT_NAMESPACES = (ASPECT_SECURITY, REGISTER_US_NATO_SECURITY)
 RDFS_LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
 RDFS_COMMENT = "http://www.w3.org/2000/01/rdf-schema#comment"
 RDFS_SEE_ALSO = "http://www.w3.org/2000/01/rdf-schema#seeAlso"
@@ -413,12 +421,16 @@ def _hel_spelling_predicates(triples):
 # five of the fields are typed with a CONCEPT-VALUED enumeration --
 # `SecurityClassificationEnum`, `ClassificationAuthorityTypeEnum`,
 # `ClassificationReasonEnum`, `DeclassificationTypeEnum`, `DowngradeToEnum`
-# -- whose values carry a `bddo:enumSymbol` pointing at an `asec:` concept
-# individual (`"T" => asec:TopSecret`, ...), where nitf.ttl's equivalent
-# enums (e.g. `FSCLASEnum`) are plain value sets with no concepts at all.
-# This is a DELIBERATE surplus, preserved on purpose: deleting it to shrink
-# the diff would strip security-aspect modeling from the certification
-# target. It is not a defect.
+# -- whose values carry a `bddo:enumSymbol` pointing at a concept individual
+# (`"T" => usnato:TopSecret`, ...) in the us-nato-security REGISTER (Task 5,
+# pluggable concept registers, moved these concepts out of asec: into
+# https://hexplain.io/ns/register/us-nato-security# so a different
+# jurisdiction's register could be swapped in without forking the aspect --
+# the `mapsToProperty` side above still names the asec: *property*, only the
+# concept side moved), where nitf.ttl's equivalent enums (e.g. `FSCLASEnum`)
+# are plain value sets with no concepts at all. This is a DELIBERATE
+# surplus, preserved on purpose: deleting it to shrink the diff would strip
+# security-aspect modeling from the certification target. It is not a defect.
 #
 # Most of the SecurityMarking FIELD subjects carrying these triples (the 78
 # `mapsToProperty` ones) are already excused by STEP3_SECURITY_BLOCK above,
@@ -430,7 +442,7 @@ def _hel_spelling_predicates(triples):
 #
 # The five enum IRIs are derived from the compiled graph, not hardcoded: a
 # concept-valued enumeration is one whose bddo:hasEnumValue children carry a
-# bddo:enumSymbol in the asec: namespace (see
+# bddo:enumSymbol in the asec: aspect OR usnato: register namespace (see
 # _security_enum_subjects_and_values below). A sixth one added to nitf.hx
 # later, or one of the five dropped, is picked up automatically -- no edit
 # needed here.
@@ -467,7 +479,7 @@ def _security_enum_subjects_and_values(g_compiled):
     for enum_subj in g_compiled.subjects(rdflib.RDF.type, enumeration_t):
         values = list(g_compiled.objects(enum_subj, has_enum_value))
         if any(
-            str(sym).startswith(ASPECT_SECURITY)
+            str(sym).startswith(_SECURITY_ENRICHMENT_NAMESPACES)
             for val in values
             for sym in g_compiled.objects(val, enum_symbol)
         ):
@@ -486,7 +498,7 @@ def _is_security_aspect_enrichment_triple(s, where, p, o, enum_subjects, value_n
     # `enumSymbol -> asec:TopSecret`-style concept bindings: identified
     # purely by the object landing in the security-aspect namespace, on
     # whatever subject/predicate carries it.
-    if str(o).startswith(ASPECT_SECURITY):
+    if str(o).startswith(_SECURITY_ENRICHMENT_NAMESPACES):
         return True
     # The five enum subjects' own defining triples...
     if s in enum_subjects:

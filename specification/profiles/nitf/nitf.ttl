@@ -5,6 +5,7 @@
 @prefix gv:      <https://hexplain.io/ns/geo#> .
 @prefix araster: <https://hexplain.io/ns/aspect/raster#> .
 @prefix asec:    <https://hexplain.io/ns/aspect/security#> .
+@prefix usnato:  <https://hexplain.io/ns/register/us-nato-security#> .
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
@@ -21,6 +22,27 @@
     dcterms:created "2026-07-26"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "nitf" ; vann:preferredNamespaceUri "https://hexplain.io/ns/profile/nitf#" .
+
+# ---------- Register bindings ----------
+# NITF's security-marking concept-valued fields (CLAS/DCTP/DG/CATP/CRSN, see the enum note
+# below) draw their concepts from the us-nato-security register rather than from a scheme
+# hosted in the asec: aspect (Task 3 moved the controlled concepts out of the aspect so a
+# different jurisdiction's register could be swapped in without forking asec:). One binding
+# per asec: property that is actually concept-valued in this profile -- asec:compartment and
+# asec:controlAndHandling stay unbound because their NITF fields (FSCODE/FSCTLH, ...) are
+# still physical-only free text with no closed enum today (see nitf.hx's note at those
+# fields), and asec:declassificationExemption likewise has no enum wired to it here.
+<https://hexplain.io/ns/profile/nitf> hexplain:usesRegister
+    [ a hexplain:RegisterBinding ; hexplain:forProperty asec:classification ;
+      hexplain:register usnato:ClassificationLevelScheme ] ,
+    [ a hexplain:RegisterBinding ; hexplain:forProperty asec:downgradeTo ;
+      hexplain:register usnato:ClassificationLevelScheme ] ,
+    [ a hexplain:RegisterBinding ; hexplain:forProperty asec:declassificationType ;
+      hexplain:register usnato:DeclassTypeScheme ] ,
+    [ a hexplain:RegisterBinding ; hexplain:forProperty asec:classificationAuthorityType ;
+      hexplain:register usnato:AuthorityTypeScheme ] ,
+    [ a hexplain:RegisterBinding ; hexplain:forProperty asec:classificationReason ;
+      hexplain:register usnato:ClassificationReasonScheme ] .
 
 # ---------- Profile-local data types (NITF fields are BCS/ECS text) ----------
 nitf:BCSA a bddo:DataType ; rdfs:label "BCS-A (alphanumeric text)" ;
