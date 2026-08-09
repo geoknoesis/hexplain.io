@@ -1,0 +1,16 @@
+# A table declaring BOTH a fixed field delimiter and whitespace-run separation.
+# Those are two different separation rules and cannot both apply.
+# Expected to trip bddo:DelimitedRecordsShape's mutual-exclusion constraint.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/ws-invalid#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Both a bddo:DelimitedTable ;
+    rdfs:comment "Expected to trip bddo:DelimitedRecordsShape (fieldDelimiter and whitespaceSeparated together)." ;
+    bddo:recordDelimiter "0A"^^xsd:hexBinary ;
+    bddo:fieldDelimiter "2C"^^xsd:hexBinary ;
+    bddo:whitespaceSeparated true ;
+    bddo:hasField ( ex:Both.a ) .
+
+ex:Both.a a bddo:Field ; bddo:dataType bddo:asciiDecimal ; bddo:size 1 .

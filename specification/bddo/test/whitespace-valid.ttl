@@ -1,0 +1,50 @@
+# Whitespace-run separation, the two shapes that need it.
+#
+# ex:AaiHeader is an Arc/Info ASCII Grid header -- `ncols        100` -- where the key and
+# value are separated by a run of spaces of arbitrary width used to align a column.
+#
+# ex:AaiGrid is the same file's data section: numbers separated by whitespace, with rows
+# wrapping across lines freely. It declares no recordDelimiter, so the content is one flat
+# stream of values and the grid's shape comes from the layout, not from line breaks. A fixed
+# bddo:fieldDelimiter cannot express either case.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix dlv:  <https://hexplain.io/ns/dlv#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix ex:   <https://hexplain.io/test/ws#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:AaiHeader a bddo:KeyValueHeader ;
+    rdfs:label "Arc/Info ASCII Grid header" ;
+    bddo:recordDelimiter "0A"^^xsd:hexBinary ;
+    bddo:keyValueSeparator "20"^^xsd:hexBinary ;
+    bddo:trimWhitespace true ;
+    bddo:keyIsCaseInsensitive true ;
+    bddo:hasField ( ex:AaiHeader.ncols ex:AaiHeader.nrows ) .
+
+ex:AaiHeader.ncols a bddo:Field ;
+    bddo:key "ncols" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary ;
+    hexplain:mapsToProperty araster:width .
+ex:AaiHeader.nrows a bddo:Field ;
+    bddo:key "nrows" ; bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary ;
+    hexplain:mapsToProperty araster:height .
+
+# Data section: one flat stream of whitespace-separated values, no record delimiter.
+ex:AaiGrid a bddo:DelimitedTable ;
+    rdfs:label "Arc/Info ASCII Grid cell values" ;
+    bddo:whitespaceSeparated true ;
+    bddo:hasField ( ex:AaiGrid.cell ) .
+
+ex:AaiGrid.cell a bddo:Field ; bddo:dataType bddo:asciiDecimal ; bddo:size 1 .
+
+# A whitespace-separated table that DOES keep rows: one point per line, columns aligned.
+ex:XyzTable a bddo:DelimitedTable ;
+    rdfs:label "Whitespace-aligned XYZ points" ;
+    bddo:recordDelimiter "0A"^^xsd:hexBinary ;
+    bddo:whitespaceSeparated true ;
+    bddo:hasField ( ex:XyzTable.x ex:XyzTable.y ex:XyzTable.z ) .
+
+ex:XyzTable.x a bddo:Field ; bddo:dataType bddo:asciiDecimal ; bddo:size 1 .
+ex:XyzTable.y a bddo:Field ; bddo:dataType bddo:asciiDecimal ; bddo:size 1 .
+ex:XyzTable.z a bddo:Field ; bddo:dataType bddo:asciiDecimal ; bddo:size 1 .

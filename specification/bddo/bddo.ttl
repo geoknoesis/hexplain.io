@@ -95,6 +95,8 @@
     rdfs:comment "A record beginning with this string (after optional whitespace) is ignored." .
 :skipRecords            a owl:DatatypeProperty ; rdfs:label "skip records" ; rdfs:range xsd:nonNegativeInteger ;
     rdfs:comment "Number of leading records to discard before parsing, e.g. a CSV column-name row. Default 0." .
+:whitespaceSeparated    a owl:DatatypeProperty ; rdfs:label "whitespace separated" ; rdfs:range xsd:boolean ;
+    rdfs:comment "If true, values are separated by a RUN of one or more whitespace bytes (space, tab, CR, LF) rather than by a fixed bddo:fieldDelimiter. A run of any length separates exactly two values, so consecutive whitespace never yields an empty value, and leading or trailing whitespace on a record is ignored. This is what column-aligned ASCII grids need -- 'ncols        100', or a row of numbers padded to line up -- which a fixed delimiter cannot express. Mutually exclusive with bddo:fieldDelimiter. When bddo:recordDelimiter is also absent the content is one flat stream of whitespace-separated values rather than rows, which is how an ASCII grid whose rows wrap across lines is read; the grid's shape then comes from the field's dlv:DataLayout or repeat count, not from line breaks." .
 :trimWhitespace         a owl:DatatypeProperty ; rdfs:label "trim whitespace" ; rdfs:range xsd:boolean ;
     rdfs:comment "If true, leading and trailing whitespace is removed from every key and value. Default false." .
 :key                    a owl:DatatypeProperty ; rdfs:label "key" ; rdfs:range xsd:string ;
@@ -421,6 +423,10 @@ bddo:DelimitedRecordsShape a sh:NodeShape ;
     sh:targetClass bddo:DelimitedRecords ;
     sh:property [ sh:path bddo:recordDelimiter ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:fieldDelimiter ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:whitespaceSeparated ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
+    # A run of whitespace and a fixed delimiter are two different separation rules.
+    sh:not [ sh:and ( [ sh:property [ sh:path bddo:fieldDelimiter ; sh:minCount 1 ] ]
+                      [ sh:property [ sh:path bddo:whitespaceSeparated ; sh:hasValue true ] ] ) ] ;
     sh:property [ sh:path bddo:keyValueSeparator ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:quoteChar ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:escapeChar ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
@@ -442,8 +448,8 @@ bddo:KeyValueHeaderShape a sh:NodeShape ;
 # bddo:key is meaningful only inside a KeyValueHeader; a table's columns are positional.
 bddo:DelimitedTableShape a sh:NodeShape ;
     sh:targetClass bddo:DelimitedTable ;
-    sh:property [ sh:path bddo:fieldDelimiter ; sh:minCount 1 ;
-        sh:message "A bddo:DelimitedTable must declare bddo:fieldDelimiter." ] ;
+    sh:or ( [ sh:property [ sh:path bddo:fieldDelimiter ; sh:minCount 1 ] ]
+            [ sh:property [ sh:path bddo:whitespaceSeparated ; sh:hasValue true ] ] ) ;
     sh:property [ sh:path bddo:keyValueSeparator ; sh:maxCount 0 ;
         sh:message "bddo:keyValueSeparator applies to a KeyValueHeader, not a DelimitedTable." ] ;
     sh:property [ sh:path ( bddo:hasField [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
