@@ -289,6 +289,28 @@ hexplain:LanguageFromFieldShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:languageFromField ;
     sh:class bddo:Field ;
     sh:property [ sh:path hexplain:languageFromField ; sh:class bddo:Field ; sh:maxCount 1 ] .
+
+hexplain:_prefixes sh:declare
+    [ sh:prefix "hexplain" ; sh:namespace "https://hexplain.io/ns/core#"^^xsd:anyURI ] ,
+    [ sh:prefix "skos" ; sh:namespace "http://www.w3.org/2004/02/skos/core#"^^xsd:anyURI ] .
+
+# One shape enforces EVERY hexplain:usesRegister declaration, so adding a binding needs no new
+# shape and no generated artifact. Targets exactly those nodes that use a bound property.
+hexplain:RegisterBindingShape a sh:NodeShape ;
+    sh:target [ a sh:SPARQLTarget ;
+        sh:prefixes hexplain:_prefixes ;
+        sh:select """SELECT ?this WHERE {
+            ?binding hexplain:forProperty ?p .
+            ?this ?p ?v .
+        }""" ] ;
+    sh:sparql [
+        sh:message "Value {?value} of {?p} is not skos:inScheme the declared register {?scheme}." ;
+        sh:prefixes hexplain:_prefixes ;
+        sh:select """SELECT $this ?p ?value ?scheme WHERE {
+            ?binding hexplain:forProperty ?p ; hexplain:register ?scheme .
+            $this ?p ?value .
+            FILTER NOT EXISTS { ?value skos:inScheme ?scheme }
+        }""" ] .
         </pre>
     </section>
 
