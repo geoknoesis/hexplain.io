@@ -486,11 +486,14 @@ Each diagnostic carries a `.hx`/`.hx.yaml` line/column.
 **Output:** one `<format>.ttl` per format module. Round-trip is out of scope (§2.1).
 
 **Runtime-consumption status (informative).** Every construct in this spec emits valid,
-SHACL-conformant BDDO/DLV Turtle. The reference *parser* (core `Metaparser`) currently consumes
-the sequential/offset/array/enum/checksum/bit/derive/validity model plus `@sync` and struct
-`@size`. Conditional endianness (`@endian switch`), delimited text (`header`/`table`), and chunked
-layout (`chunks`) emit correct Turtle but are **not yet wired into the parser** — the ontology
-defines them and the DSL authors them, ahead of runtime support.
+SHACL-conformant BDDO/DLV Turtle, and the reference *parser* (core `Metaparser`) consumes almost
+all of it: the sequential/offset/array/enum/checksum/bit/derive/validity model, `@sync`, struct
+`@size`, **conditional endianness** (`@endian switch` — resolved mid-parse once the discriminator
+is read, e.g. TIFF's 4949h/4D4Dh), and **delimited text** (`header` → a key/value map matched by
+`bddo:key`; `table` → a list of positional row-maps, honoring quote/escape/comment/skip/trim).
+The one construct emitted but **not yet parsed** is **chunked layout** (`chunks`): the `DataLayout`
+is carried in the IR, but reading individual tiles by offset/length is deferred — the tiles are
+opaque (usually compressed) blocks and DLV's semantic output is a MAY.
 
 ## 13. Grammar sketch (text surface, informal EBNF)
 
