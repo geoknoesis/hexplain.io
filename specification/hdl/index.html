@@ -167,6 +167,83 @@ struct Chunk {
         </section>
     </section>
 
+    <section id="delimited">
+        <h2>Delimited Text Containers</h2>
+        <p>
+            Not every format addresses its bytes by offset. A great many raster formats pair a raw
+            binary grid with a text label — <code>key = value</code> lines, or whitespace-aligned
+            columns — and the label carries exactly the parameters the grid needs: its extents, its
+            sample type, its byte order. Two container forms cover them, declared like a
+            <code>struct</code> but located by delimiter rather than by position.
+        </p>
+        <pre class="nohighlight">
+header EnviHeader @record-separator 0x0A @separator 0x3D @trim @ci {
+  "samples"    : anum
+  "lines"      : anum
+  "byte order" : anum
+}
+
+table Points @record-separator 0x0A @whitespace @comment "#" @skip 1 {
+  x : adec
+  y : adec
+  z : adec
+}
+        </pre>
+        <p>
+            A <code>header</code> compiles to <code>bddo:KeyValueHeader</code>: its records are
+            key/value pairs, each field is located by the quoted key, and record ORDER is not
+            significant. A <code>table</code> compiles to <code>bddo:DelimitedTable</code>: its records
+            are rows with a fixed column sequence, so its fields are named rather than quoted and are
+            located by POSITION. The distinction is not cosmetic — it is why a header tolerates a
+            missing or reordered line and a table does not.
+        </p>
+        <table class="simple">
+            <thead><tr><th>Annotation</th><th>Effect</th></tr></thead>
+            <tbody>
+                <tr><td><code>@record-separator &lt;bytes&gt;</code></td><td><code>bddo:recordDelimiter</code> — what ends one record. Usually <code>0x0A</code>.</td></tr>
+                <tr><td><code>@separator &lt;bytes&gt;</code></td><td><code>bddo:keyValueSeparator</code> on a header, <code>bddo:fieldDelimiter</code> on a table.</td></tr>
+                <tr><td><code>@whitespace</code></td><td><code>bddo:whitespaceSeparated</code> — values are parted by a RUN of whitespace. For column-aligned text, where the gap between two values is padding of arbitrary width. Mutually exclusive with <code>@separator</code>, since they are two different separation rules.</td></tr>
+                <tr><td><code>@quote</code>, <code>@escape</code></td><td><code>bddo:quoteChar</code>, <code>bddo:escapeChar</code>.</td></tr>
+                <tr><td><code>@comment "&lt;prefix&gt;"</code></td><td><code>bddo:commentPrefix</code> — records starting with it are skipped.</td></tr>
+                <tr><td><code>@skip &lt;n&gt;</code></td><td><code>bddo:skipRecords</code> — leading records to ignore, for a banner or a column-title row.</td></tr>
+                <tr><td><code>@trim</code></td><td><code>bddo:trimWhitespace</code> — strip surrounding whitespace from each value.</td></tr>
+                <tr><td><code>@ci</code></td><td><code>bddo:keyIsCaseInsensitive</code> — match keys without regard to case.</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Nested labels</h3>
+        <p>
+            A flat container stops at the label formats that are otherwise the same shape. PVL/ODL
+            nests with <code>OBJECT = … END_OBJECT</code>, the ERMapper header with
+            <code>Name Begin … Name End</code>, and INI-style labels with bracketed sections.
+            <code>@group</code> declares which, and the two tokens that delimit a group:
+        </p>
+        <pre class="nohighlight">
+header Label @record-separator 0x0A @separator 0x3D @trim
+  @group keyed "OBJECT" "END_OBJECT"
+{
+  "RECORD_BYTES"    : anum
+  "IMAGE/LINES"     : anum
+  "IMAGE/BAND/NAME" : str
+}
+        </pre>
+        <p>
+            Styles are <code>keyed</code> (the record's KEY is the token, its VALUE names the group),
+            <code>valued</code> (the mirror image — ERMapper) and <code>section</code> (a bracketed
+            header opens a group and implicitly closes the previous one). Both tokens are required:
+            a grouping that says where a group starts but not where it ends cannot be read, because
+            every record after the first group would be inside it.
+        </p>
+        <p>
+            <b>The field syntax does not change.</b> A quoted name becomes a
+            <code>bddo:keyPath</code> instead of a <code>bddo:key</code> when — and only when — the
+            container declares a grouping. An author writes the same thing either way and the two
+            decisions cannot disagree, which is why HDL has no way to pair a path with a flat
+            container. <code>@path-separator "."</code> overrides the default <code>/</code>, needed
+            by any format whose group names may themselves contain a slash.
+        </p>
+    </section>
+
     <section id="expressions">
         <h2>Expressions</h2>
         <p>Expression clauses (sizes, offsets, counts, presence, conditions, computed values) are written in <a href="../hel/index.html">HEL</a>, with one authoring convenience: identifiers are resolved by context so that authors rarely write the full <code>instance.parent.&#8230;</code> form.</p>

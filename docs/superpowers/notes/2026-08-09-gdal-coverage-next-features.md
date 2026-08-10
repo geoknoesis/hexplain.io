@@ -70,7 +70,7 @@ pipelines already cover its chunk store), plus `ESRIJSON`, `GeoJSON`, `GeoJSONSe
 Worth designing alongside F1 rather than after it: both are "address a node in a tree and
 bind it to a field", and two unrelated designs for that would be a mistake.
 
-### F3 — Nested delimited records · 9 drivers · cheapest per driver
+### F3 — Nested delimited records · 9 drivers · ✅ DONE (7 of 9)
 
 `bddo:DelimitedRecords` is deliberately non-recursive. Lifting that — a record that may
 contain records, with an explicit open/close delimiter pair — unlocks the label formats that
@@ -84,6 +84,21 @@ INI). Possibly `GXF` and `VDV` from ✗.
 exist; this is a constraint to relax and a nesting rule to specify, not a new subsystem. It
 should probably go first even though F1 unlocks more, because it also settles how nesting is
 spelled before F1/F2 have to answer the same question.
+
+**Shipped 2026-08-10.** `bddo:RecordGrouping` with three styles — `keyedGroup` (PVL/ODL
+`OBJECT = … END_OBJECT`), `valuedGroup` (ERMapper `Name Begin … Name End`) and `sectionHeaded`
+(INI brackets) — plus `bddo:keyPath` / `bddo:pathSeparator` for addressing into the nesting, an
+HDL `@group` surface, and SHACL rejecting a half-declared grouping or a path in a flat
+container. Three styles rather than one grammar because each is fully described by two tokens
+plus where the group's name comes from; a general nested-grammar surface would be a parser
+generator.
+
+Reaches **7 of the 9**: PDS (raster and vector), ISIS2, ISIS3, VICAR on `keyedGroup`; ERS on
+`valuedGroup`; MiraMonRaster on `sectionHeaded`. `GXF` and `VDV` stay at ✗ — they are sectioned
+too, but with TYPED record kinds per section, which is a grammar rather than a nesting rule and
+belongs with F7.
+
+**Coverage: 97 → 104 of 196 reachable.**
 
 ### F4 — Self-describing record schemas · 8 drivers · architecturally the hardest
 
@@ -138,7 +153,7 @@ and revisiting only if one is specifically needed.
    and search. These are the two that push on "describe, don't execute", and deciding that
    deliberately is worth more than the 15 drivers.
 
-Doing 1–3 takes full coverage from **97 to 141 of 196**. Adding step 4 reaches **156**. The
+Doing 1–3 takes full coverage from **97 to 141 of 196** (step 1 is done: 104). Adding step 4 reaches **156**. The
 residue is then 34 entropy-coded ◐ drivers and 6 bespoke grammars — 40 drivers that are out of
 scope by design rather than by omission.
 

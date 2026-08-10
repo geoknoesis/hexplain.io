@@ -1,0 +1,86 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <http://example.org/nested#> .
+
+# The three ways a line-oriented text format marks a nested group. All three were out of reach
+# while bddo:DelimitedRecords was flat, which is what kept nine GDAL drivers at payload-only:
+# the payload was always a clean DLV block, and only the label could not be decomposed.
+
+# ---------- 1. Keyed groups: PVL/ODL ----------
+#   OBJECT = IMAGE
+#     LINES = 1024
+#     OBJECT = BAND
+#       NAME = "red"
+#     END_OBJECT = BAND
+#   END_OBJECT = IMAGE
+# The opening record's KEY is the token and its VALUE names the group. Used by PDS v3, ISIS2,
+# ISIS3 and VICAR -- four of the nine drivers on one style.
+ex:PvlLabel a bddo:KeyValueHeader ;
+    rdfs:label "PDS-style PVL label" ;
+    bddo:recordDelimiter "0a"^^xsd:hexBinary ;
+    bddo:keyValueSeparator "3d"^^xsd:hexBinary ;   # '='
+    bddo:trimWhitespace true ;
+    bddo:hasGrouping [ a bddo:RecordGrouping ;
+        bddo:groupingStyle bddo:keyedGroup ;
+        bddo:groupOpenToken "OBJECT" ;
+        bddo:groupCloseToken "END_OBJECT" ] ;
+    bddo:hasField ( ex:PvlLines ex:PvlBandName ex:PvlRecordBytes ) .
+
+ex:PvlLines a bddo:Field ; bddo:dataType bddo:asciiInteger ;
+    bddo:keyPath "IMAGE/LINES" .
+# Two levels deep -- the case a flat model cannot express at all, since NAME is ambiguous
+# without its enclosing groups.
+ex:PvlBandName a bddo:Field ; bddo:dataType bddo:string ;
+    bddo:keyPath "IMAGE/BAND/NAME" .
+# A key at the top level of a nested container still uses a path; it just has one segment.
+ex:PvlRecordBytes a bddo:Field ; bddo:dataType bddo:asciiInteger ;
+    bddo:keyPath "RECORD_BYTES" .
+
+# ---------- 2. Valued groups: ERMapper ----------
+#   CoordinateSpace Begin
+#     Datum = "WGS84"
+#   CoordinateSpace End
+# The mirror image: the VALUE is the token and the KEY names the group.
+ex:ErsHeader a bddo:KeyValueHeader ;
+    rdfs:label "ERMapper .ers header" ;
+    bddo:recordDelimiter "0a"^^xsd:hexBinary ;
+    bddo:keyValueSeparator "3d"^^xsd:hexBinary ;
+    bddo:trimWhitespace true ;
+    bddo:hasGrouping [ a bddo:RecordGrouping ;
+        bddo:groupingStyle bddo:valuedGroup ;
+        bddo:groupOpenToken "Begin" ;
+        bddo:groupCloseToken "End" ] ;
+    bddo:hasField ( ex:ErsDatum ) .
+
+ex:ErsDatum a bddo:Field ; bddo:dataType bddo:string ;
+    bddo:keyPath "DatasetHeader/CoordinateSpace/Datum" .
+
+# ---------- 3. Section headers: INI ----------
+#   [OVERVIEW]
+#   rows = 512
+# A section header opens a group and implicitly closes the previous one. Flat one deep, which
+# is what the style permits rather than a shortcoming of the model.
+ex:IniLabel a bddo:KeyValueHeader ;
+    rdfs:label "MiraMon-style sectioned label" ;
+    bddo:recordDelimiter "0a"^^xsd:hexBinary ;
+    bddo:keyValueSeparator "3d"^^xsd:hexBinary ;
+    # A ':' separator would collide with nothing here, but '/' would appear inside section
+    # names, so this label declares its own.
+    bddo:pathSeparator "." ;
+    bddo:hasGrouping [ a bddo:RecordGrouping ;
+        bddo:groupingStyle bddo:sectionHeaded ;
+        bddo:groupOpenToken "[" ;
+        bddo:groupCloseToken "]" ] ;
+    bddo:hasField ( ex:IniRows ) .
+
+ex:IniRows a bddo:Field ; bddo:dataType bddo:asciiInteger ;
+    bddo:keyPath "OVERVIEW.rows" .
+
+# ---------- Flat containers are unaffected ----------
+# No grouping, so bddo:key still locates a field and nothing about the old model changed.
+ex:FlatHeader a bddo:KeyValueHeader ;
+    bddo:recordDelimiter "0a"^^xsd:hexBinary ;
+    bddo:keyValueSeparator "3d"^^xsd:hexBinary ;
+    bddo:hasField ( ex:FlatSamples ) .
+ex:FlatSamples a bddo:Field ; bddo:dataType bddo:asciiInteger ; bddo:key "samples" .

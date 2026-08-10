@@ -49,6 +49,11 @@
 :DelimitedTable a owl:Class ; rdfs:subClassOf :DelimitedRecords ; rdfs:label "Delimited Table" ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "DelimitedRecords whose records are rows with a fixed column sequence. The hasField list gives the columns in order; the row structure repeats until the byte run is exhausted." .
+:RecordGrouping a owl:Class ; rdfs:label "Record Grouping" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "How a DelimitedRecords container nests: which records open a group, which close it, and where the group's name comes from. A container without one is flat, which is what every DelimitedRecords was before nesting existed." .
+:GroupingStyle a owl:Class ; rdfs:label "Grouping Style" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Which of the three ways a text format marks a nested group." .
+
 # Controlled-vocabulary classes (typed enumerated individuals)
 :Endianness       a owl:Class ; rdfs:label "Endianness" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :BitOrder         a owl:Class ; rdfs:label "Bit Order" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
@@ -99,6 +104,36 @@
     rdfs:comment "If true, values are separated by a RUN of one or more whitespace bytes (space, tab, CR, LF) rather than by a fixed bddo:fieldDelimiter. A run of any length separates exactly two values, so consecutive whitespace never yields an empty value, and leading or trailing whitespace on a record is ignored. This is what column-aligned ASCII grids need -- 'ncols        100', or a row of numbers padded to line up -- which a fixed delimiter cannot express. Mutually exclusive with bddo:fieldDelimiter. When bddo:recordDelimiter is also absent the content is one flat stream of whitespace-separated values rather than rows, which is how an ASCII grid whose rows wrap across lines is read; the grid's shape then comes from the field's dlv:DataLayout or repeat count, not from line breaks." .
 :trimWhitespace         a owl:DatatypeProperty ; rdfs:label "trim whitespace" ; rdfs:range xsd:boolean ;
     rdfs:comment "If true, leading and trailing whitespace is removed from every key and value. Default false." .
+# ---------- Nested records ----------
+# The flat key/value model reaches ESRI .hdr, ENVI and their kin, but stops at the label formats
+# that are otherwise the same shape: PVL/ODL (PDS, ISIS2, ISIS3, VICAR) nests with
+# OBJECT = ... END_OBJECT, ERMapper with <Name> Begin ... <Name> End, and INI-style labels with
+# bracketed section headers. Refusing to nest kept nine drivers at payload-only for want of a
+# closing token.
+#
+# Three styles rather than one general grammar. Each is fully described by two tokens plus where
+# the group's NAME comes from, and that is the whole of it -- a general nested-grammar surface
+# would be a parser generator, and this is not one.
+:hasGrouping a owl:ObjectProperty ; rdfs:label "has grouping" ; rdfs:range :RecordGrouping ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The nesting rule of a DelimitedRecords container. Absent means flat." .
+:groupingStyle a owl:ObjectProperty ; rdfs:label "grouping style" ; rdfs:range :GroupingStyle ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:groupOpenToken a owl:DatatypeProperty ; rdfs:label "group open token" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The literal that marks a record as opening a group: the key OBJECT, the value Begin, or the bracket [ -- read according to groupingStyle." .
+:groupCloseToken a owl:DatatypeProperty ; rdfs:label "group close token" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The literal that closes a group: END_OBJECT, End, or the bracket ]. For sectionHeaded it is the closing bracket of the header rather than a separate record, since a section is ended by the next one." .
+
+:keyedGroup a owl:NamedIndividual, :GroupingStyle ; rdfs:label "keyed group" ;
+    rdfs:comment "A record whose KEY equals groupOpenToken opens a group, and its VALUE names it; a record whose key equals groupCloseToken closes the innermost open group. PVL/ODL: OBJECT = IMAGE ... END_OBJECT = IMAGE. The closing record MAY repeat the name; a description need not say so, because the name is already known from the opening record." .
+:valuedGroup a owl:NamedIndividual, :GroupingStyle ; rdfs:label "valued group" ;
+    rdfs:comment "The mirror image: a record whose VALUE equals groupOpenToken opens a group, and its KEY names it. ERMapper: CoordinateSpace Begin ... CoordinateSpace End." .
+:sectionHeaded a owl:NamedIndividual, :GroupingStyle ; rdfs:label "section headed" ;
+    rdfs:comment "A record consisting of groupOpenToken, a name, and groupCloseToken opens a group and implicitly closes the previous one; the last runs to the end of the container. INI-style [Section] headers. Nesting is therefore FLAT ONE DEEP -- sections do not contain sections -- which is what the style actually permits, not a limitation of this model." .
+
+:keyPath a owl:DatatypeProperty ; rdfs:label "key path" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Locates a field inside nested groups, as group names and finally the key, joined by pathSeparator: 'IMAGE/BAND/NAME'. Mutually exclusive with bddo:key, which locates a field in a flat container -- a field cannot be found two ways, and a description that said both would leave a reader to guess which wins." .
+:pathSeparator a owl:DatatypeProperty ; rdfs:label "path separator" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The separator used in this container's keyPath values. Default '/'. Declared on the container rather than repeated per field, and needed because a format whose group names may contain '/' has to choose something else." .
+
 :key                    a owl:DatatypeProperty ; rdfs:label "key" ; rdfs:range xsd:string ;
     rdfs:comment "The key naming this Field within a KeyValueHeader. Replaces positional location: the Field takes the value of whichever record carries this key." .
 :keyIsCaseInsensitive   a owl:DatatypeProperty ; rdfs:label "key is case insensitive" ; rdfs:range xsd:boolean ;
@@ -488,9 +523,44 @@ bddo:KeyValueHeaderShape a sh:NodeShape ;
     sh:targetClass bddo:KeyValueHeader ;
     sh:property [ sh:path bddo:keyValueSeparator ; sh:minCount 1 ;
         sh:message "A bddo:KeyValueHeader must declare bddo:keyValueSeparator." ] ;
+    # Exactly one locator per field: bddo:key in a flat header, bddo:keyPath in a nested one.
     sh:property [ sh:path ( bddo:hasField [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
-        sh:node [ sh:property [ sh:path bddo:key ; sh:minCount 1 ; sh:maxCount 1 ;
-            sh:message "Every field of a bddo:KeyValueHeader must declare exactly one bddo:key." ] ] ] .
+        sh:node [ sh:xone (
+            [ sh:property [ sh:path bddo:key ; sh:minCount 1 ; sh:maxCount 1 ] ;
+              sh:property [ sh:path bddo:keyPath ; sh:maxCount 0 ] ]
+            [ sh:property [ sh:path bddo:keyPath ; sh:minCount 1 ; sh:maxCount 1 ] ;
+              sh:property [ sh:path bddo:key ; sh:maxCount 0 ] ] ) ;
+          sh:message "Every field of a bddo:KeyValueHeader must declare exactly one of bddo:key (flat) or bddo:keyPath (nested), never both." ] ] .
+
+# ---------- Nested records ----------
+bddo:RecordGroupingShape a sh:NodeShape ;
+    sh:targetClass bddo:RecordGrouping ;
+    sh:property [ sh:path bddo:groupingStyle ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( bddo:keyedGroup bddo:valuedGroup bddo:sectionHeaded ) ;
+        sh:message "A bddo:RecordGrouping must name exactly one style: keyedGroup, valuedGroup or sectionHeaded." ] ;
+    # Both tokens, always. A grouping that says where a group starts and not where it ends
+    # cannot be read: every record after the first group would be inside it.
+    sh:property [ sh:path bddo:groupOpenToken ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:groupCloseToken ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+bddo:GroupedRecordsShape a sh:NodeShape ;
+    sh:targetClass bddo:DelimitedRecords ;
+    sh:property [ sh:path bddo:hasGrouping ; sh:class bddo:RecordGrouping ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:pathSeparator ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+
+# A path has nothing to traverse unless its container nests.
+bddo:KeyPathShape a sh:NodeShape ;
+    sh:targetClass bddo:Field ;
+    sh:property [ sh:path bddo:keyPath ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:sparql [ sh:message "bddo:keyPath locates a field inside nested groups, so its container must declare bddo:hasGrouping; without one the container is flat and the path addresses nothing." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:keyPath ?path .
+            FILTER NOT EXISTS {
+                ?container bddo:hasField/rdf:rest*/rdf:first $this .
+                ?container bddo:hasGrouping ?g .
+            }
+        }""" ] .
 
 # bddo:key is meaningful only inside a KeyValueHeader; a table's columns are positional.
 bddo:DelimitedTableShape a sh:NodeShape ;

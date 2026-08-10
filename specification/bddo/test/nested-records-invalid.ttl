@@ -1,0 +1,19 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <http://example.org/nested-bad#> .
+
+# Expected to trip bddo:KeyPathShape: a keyPath in a container that does not nest.
+#
+# This is the mistake that produces a well-formed but unreadable description. The path looks
+# meaningful, the container parses, and a reader following the path finds nothing to descend
+# into -- so the field silently never matches instead of failing loudly.
+ex:FlatHeader a bddo:KeyValueHeader ;
+    rdfs:label "flat container, nested path" ;
+    bddo:recordDelimiter "0a"^^xsd:hexBinary ;
+    bddo:keyValueSeparator "3d"^^xsd:hexBinary ;
+    bddo:hasField ( ex:Orphan ) .
+
+ex:Orphan a bddo:Field ; bddo:dataType bddo:asciiInteger ;
+    rdfs:comment "Expected violation: bddo:keyPath with no bddo:hasGrouping on the container." ;
+    bddo:keyPath "IMAGE/LINES" .
