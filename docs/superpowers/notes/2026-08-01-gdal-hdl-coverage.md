@@ -1,6 +1,6 @@
 # GDAL Format Coverage in HDL
 
-**Date:** 2026-08-01 · **Status:** Survey / roadmap input
+**Date:** 2026-08-01 · **Re-tallied:** 2026-08-09 · **Status:** Survey / roadmap input
 **Scope:** all 245 driver entries in GDAL's raster (160) and vector (85) driver indexes,
 classified by whether the underlying *format* can be described in HDL.
 
@@ -85,15 +85,119 @@ highest-leverage change for GDAL coverage.
 
 ### Tally
 
-| | Raster | Vector | Total | Share |
-|---|---:|---:|---:|---:|
-| ✅ Full | 53 | 12 | **65** | 27% |
-| ◐ Container | 36 | 12 | **48** | 20% |
-| ◑ Payload-only | 39 | 4 | **43** | 18% |
-| ✗ Out of scope | 32 | 57 | **89** | 36% |
-| **Total drivers** | **160** | **85** | **245** | |
+Two columns: the survey as written on 2026-08-01, and a re-tally on 2026-08-09 after the
+vocabulary work this survey prompted. §2.1 accounts for every driver that moved.
 
-**156 of 245 driver entries (64%) are expressible in HDL to some useful degree; 65 (27%) fully.**
+| | 2026-08-01 | 2026-08-09 | Change |
+|---|---:|---:|---:|
+| ✅ Full | 65 (27%) | **97 (40%)** | +32 |
+| ◐ Container | 48 (20%) | **49 (20%)** | +1 |
+| ◑ Payload-only | 43 (18%) | **22 (9%)** | −21 |
+| ✗ Out of scope | 89 (36%) | **77 (31%)** | −12 |
+| **Total drivers** | **245** | **245** | |
+
+**168 of 245 driver entries (69%) are now expressible in HDL to some useful degree; 97 (40%)
+fully** — up from 156 (64%) and 65 (27%).
+
+The tier lists in §3–§6 below are the ORIGINAL classification and have deliberately not been
+rewritten in place; §2.1 is the delta against them.
+
+---
+
+## 2.1 What changed, and why (re-tally, 2026-08-09)
+
+This survey named two blockers. Both have shipped, which is what moved the numbers.
+
+**§1.1's "one real gap worth naming" — ASCII-coded numerics.** BDDO gained
+`bddo:asciiInteger` / `bddo:asciiDecimal` (+ `bddo:numericBase`), and HEL gained
+`toNumber()`. An ASCII-coded count or length now drives `sizeFromExpression`,
+`repeatCountFromExpression` and `atOffsetFromExpression` directly, instead of being a string
+coerced at the semantic layer into a value that could not size anything.
+
+**§1's "cannot express: delimiter-driven text ... `key = value` headers ... no vocabulary
+under it".** BDDO gained `bddo:DelimitedRecords` and its two specialisations —
+`KeyValueHeader` (line-oriented `key = value`) and `DelimitedTable` (separator- or
+whitespace-separated rows) — with record/field delimiters, quoting, escaping, comment
+prefixes, `skipRecords`, and `whitespaceSeparated` for column-aligned text.
+
+The survey predicted this would be "the largest single unlock available ... ~35 drivers from
+◑ to ✅". The re-tally puts it at 32 drivers moved to ✅ across both tiers, so that estimate
+was close and slightly optimistic.
+
+Four further changes contributed:
+
+- **Cross-part references** — HEL's `asset` root plus hx-bundle's resolution rules — let a
+  raw grid read its extents, sample type and byte order from a sibling header file. Without
+  it, a sidecar pair could be *listed* but the payload could not be *sized*, so the whole
+  raw-binary-plus-text-header class stayed ◑ no matter how well the header parsed.
+- **Conditional cell type and dimension order** (`dlv:hasConditionalCellDataType`,
+  `hasConditionalDimensionOrder`) handle interleave keywords (BIL/BIP/BSQ) and width
+  keywords, which nearly every format in that class uses.
+- **`partExtension()`** distinguishes alternatives within one PartSpec — the ESRI `.flt`
+  case, where the filename rather than the header decides integer versus float.
+- **Sub-byte cells, chunked layout, encoding pipelines and varints** improved fidelity
+  broadly without moving tiers on their own. One exception is noted below.
+
+### Drivers that moved
+
+**◑ → ✅ (21).** Raw binary payload + a flat `key = value` text sidecar, now fully
+describable as `KeyValueHeader` + `abnd:BundleProfile` + cross-part references:
+
+> `EHdr`, `ENVI`, `GenBin`, `EIR`, `PAux`, `MFF`, `ILWIS`, `ISCE`, `ROI_PAC`, `RRASTER`,
+> `RST`, `SAGA`, `SNODAS`, `NDF`, `COASP`, `CPG`, `ISG`, `DOQ1`, `DOQ2`, `PNM` (raster);
+> `IDRISI` (vector).
+
+`EHdr` and `ENVI` are not predictions — both are written, shipped and SHACL-conforming
+([ehdr.ttl](../../../specification/profiles/ehdr/ehdr.ttl),
+[envi.ttl](../../../specification/profiles/envi/envi.ttl)). They are the two hardest cases in
+the group (conditional cell type, conditional dimension order, cross-part sizing), so the
+rest of the class follows from a demonstrated pattern rather than an argued one.
+
+**✗(d) → ✅ (11).** Delimited or whitespace-separated text that needs a tokenizer but no
+recursive grammar:
+
+> `AAIGrid`, `GRASSASCIIGrid`, `XYZ`, `GSAG`, `ZMAP`, `MAP` (OziExplorer), `PRF` (raster);
+> `CSV`, `GMT`, `WAsP`, `GTFS` (vector).
+
+`GTFS` moves for a different reason than the rest: it is a ZIP of CSVs, and the survey
+already noted the ZIP container is fully expressible. `abnd:nestedProfile` supplies the
+missing piece — a part described by another profile — so container and members are now both
+in reach.
+
+**✗(d) → ◐ (1).** `DXF` is alternating group-code/value lines, which `DelimitedRecords`
+describes structurally; the entity grammar layered on top of those pairs is not expressible,
+so it lands at container level rather than full.
+
+### Drivers that did NOT move, and why
+
+Being explicit, since the tempting error is to assume a text surface solves all text:
+
+- **Nested or sectioned labels stay ◑.** `DelimitedRecords` is deliberately non-recursive.
+  PVL/ODL (`OBJECT = … END_OBJECT`) keeps `PDS`, `ISIS2`, `ISIS3` and `VICAR` at ◑; ERMapper's
+  `Begin/End` blocks keep `ERS`; sectioned INI keeps `MiraMonRaster`; directory-structured
+  databases keep `GRASS`, `MFF2` and `MiraMonVector`.
+- **XML and JSON labels stay ◑** — all eleven of them (`PDS4`, `DIMAP`, `SAFE`, `SENTINEL2`,
+  `RS2`, `TSX`, `RCM`, `CPHD`, `E57`, `TIL`, `Zarr`). Nothing here addresses recursive markup,
+  and `Zarr` is unchanged despite chunked layout and encoding pipelines both landing, because
+  its blocker was always `.zarray`/`.zattrs` being JSON.
+- **The ◐ tier is almost untouched**, as expected: its payloads are opaque because they are
+  entropy-coded, and describing a codec chain more precisely does not decode one.
+- **`MVT` is the one ◐ entry whose stated blocker is gone.** The survey recorded "varint
+  framing is expressible but HEL has no accumulator to reconstruct the value — needs the
+  escape hatch"; `bddo:varuint`/`varint`/`sqliteVarint` are now primitive types. It is left at
+  ◐ pending a real look at whether protobuf's data-driven field ordering is separately
+  blocking, rather than promoted on the strength of one removed obstacle.
+- **Reason codes (a), (b), (c), (e), (f) are structurally unreachable** — 49 drivers with no
+  byte stream to describe, or a closed one. No vocabulary change touches them, and the
+  ceiling for this survey is therefore 196, not 245.
+
+### Confidence
+
+The 21 ◑ movements rest on a demonstrated pattern (two shipped profiles) and are the firm
+part of this re-tally. The 11 ✗(d) movements are judgment calls made from each format's
+general shape rather than a re-reading of its specification, and are where an error would be:
+`ZMAP`, `PRF` and `MAP` are the three I would check first. `GXF`, `VDV`, `AVCE00` and `SOSI`
+were left at ✗ under the same uncertainty, so the error is not systematically one-directional.
 
 ---
 
