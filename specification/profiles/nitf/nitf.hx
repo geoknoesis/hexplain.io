@@ -60,7 +60,7 @@ use asec:    <https://hexplain.io/ns/aspect/security#>
 use asref:   <https://hexplain.io/ns/aspect/spatialref#>
 // Controlled security-marking concepts (classification levels, declassification/authority/
 // reason codes) were split out of the asec: aspect into this standalone, swappable register
-// (Task 3) -- the aspect keeps the *properties* (asec:sensitivityLevel, asec:downgradesTo, ...);
+// (Task 3) -- the aspect keeps the *properties* (asec:sensitivityLevel, asec:levelChangesTo, ...);
 // the register supplies the *concepts* those properties point at. See nitf.ttl's ontology
 // header for the corresponding hexplain:usesRegister bindings.
 use usnato:  <https://hexplain.io/ns/register/us-nato-security#>
@@ -198,8 +198,8 @@ struct FileHeader @label "NITF File Header (Table A-1)" {
                            @label "FSDCTP — File Declassification Type"
   FSDCDT as FH_FSDCDT : nitf:ECSA[8]  means asec:expiresOn @label "FSDCDT — File Declassification Date"
   FSDCXM as FH_FSDCXM : nitf:ECSA[4]  @label "FSDCXM — File Declassification Exemption" // -> asec:marking (usnato:ExemptionScheme)
-  FSDG   as FH_FSDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradesTo @label "FSDG — File Downgrade"
-  FSDGDT as FH_FSDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "FSDGDT — File Downgrade Date"
+  FSDG   as FH_FSDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:levelChangesTo @label "FSDG — File Downgrade"
+  FSDGDT as FH_FSDGDT : nitf:ECSA[8]  means asec:levelChangeDate @label "FSDGDT — File Downgrade Date"
   FSCLTX as FH_FSCLTX : nitf:ECSA[43] means asec:markingText @label "FSCLTX — File Classification Text"
   FSCATP as FH_FSCATP : nitf:ECSA[1]  enum ClassificationAuthorityTypeEnum means asec:marking
                            @label "FSCATP — File Classification Authority Type"
@@ -267,7 +267,7 @@ struct FileHeader @label "NITF File Header (Table A-1)" {
     <https://hexplain.io/ns/profile/nitf> hexplain:usesRegister
         [ a hexplain:RegisterBinding ; hexplain:forProperty asec:sensitivityLevel ;
           hexplain:register usnato:ClassificationLevelScheme ] ,
-        [ a hexplain:RegisterBinding ; hexplain:forProperty asec:downgradesTo ;
+        [ a hexplain:RegisterBinding ; hexplain:forProperty asec:levelChangesTo ;
           hexplain:register usnato:ClassificationLevelScheme ] ,
         [ a hexplain:RegisterBinding ; hexplain:forProperty asec:marking ;
           hexplain:register usnato:DeclassTypeScheme ] ,
@@ -310,8 +310,8 @@ struct ImageSubheader means gv:RasterDataset @label "NITF Image Subheader (Table
                            @label "ISDCTP — Image Declassification Type"
   ISDCDT as IS_ISDCDT : nitf:ECSA[8]  means asec:expiresOn @label "ISDCDT — Image Declassification Date"
   ISDCXM as IS_ISDCXM : nitf:ECSA[4]  @label "ISDCXM — Image Declassification Exemption" // -> asec:marking (usnato:ExemptionScheme)
-  ISDG   as IS_ISDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradesTo @label "ISDG — Image Downgrade"
-  ISDGDT as IS_ISDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "ISDGDT — Image Downgrade Date"
+  ISDG   as IS_ISDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:levelChangesTo @label "ISDG — Image Downgrade"
+  ISDGDT as IS_ISDGDT : nitf:ECSA[8]  means asec:levelChangeDate @label "ISDGDT — Image Downgrade Date"
   ISCLTX as IS_ISCLTX : nitf:ECSA[43] means asec:markingText @label "ISCLTX — Image Classification Text"
   ISCATP as IS_ISCATP : nitf:ECSA[1]  enum ClassificationAuthorityTypeEnum means asec:marking
                            @label "ISCATP — Image Classification Authority Type"
@@ -408,8 +408,8 @@ struct GraphicSubheader @label "NITF Graphic Subheader (Table A-5)" {
                            @label "SSDCTP — Graphic Declassification Type"
   SSDCDT as GS_SSDCDT : nitf:ECSA[8]  means asec:expiresOn @label "SSDCDT — Graphic Declassification Date"
   SSDCXM as GS_SSDCXM : nitf:ECSA[4]  @label "SSDCXM — Graphic Declassification Exemption" // -> asec:marking (usnato:ExemptionScheme)
-  SSDG   as GS_SSDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradesTo @label "SSDG — Graphic Downgrade"
-  SSDGDT as GS_SSDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "SSDGDT — Graphic Downgrade Date"
+  SSDG   as GS_SSDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:levelChangesTo @label "SSDG — Graphic Downgrade"
+  SSDGDT as GS_SSDGDT : nitf:ECSA[8]  means asec:levelChangeDate @label "SSDGDT — Graphic Downgrade Date"
   SSCLTX as GS_SSCLTX : nitf:ECSA[43] means asec:markingText @label "SSCLTX — Graphic Classification Text"
   SSCATP as GS_SSCATP : nitf:ECSA[1]  enum ClassificationAuthorityTypeEnum means asec:marking
                            @label "SSCATP — Graphic Classification Authority Type"
@@ -455,8 +455,8 @@ struct TextSubheader @label "NITF Text Subheader (Table A-6)" {
                            @label "TSDCTP — Text Declassification Type"
   TSDCDT as TS_TSDCDT : nitf:ECSA[8]  means asec:expiresOn @label "TSDCDT — Text Declassification Date"
   TSDCXM as TS_TSDCXM : nitf:ECSA[4]  @label "TSDCXM — Text Declassification Exemption" // -> asec:marking (usnato:ExemptionScheme)
-  TSDG   as TS_TSDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradesTo @label "TSDG — Text Downgrade"
-  TSDGDT as TS_TSDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "TSDGDT — Text Downgrade Date"
+  TSDG   as TS_TSDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:levelChangesTo @label "TSDG — Text Downgrade"
+  TSDGDT as TS_TSDGDT : nitf:ECSA[8]  means asec:levelChangeDate @label "TSDGDT — Text Downgrade Date"
   TSCLTX as TS_TSCLTX : nitf:ECSA[43] means asec:markingText @label "TSCLTX — Text Classification Text"
   TSCATP as TS_TSCATP : nitf:ECSA[1]  enum ClassificationAuthorityTypeEnum means asec:marking
                            @label "TSCATP — Text Classification Authority Type"
@@ -497,8 +497,8 @@ struct DESubheader @label "NITF Data Extension Segment Subheader (Table A-8)" {
                            @label "DESDCTP — DES Declassification Type"
   DESDCDT as DES_DESDCDT : nitf:ECSA[8]  means asec:expiresOn @label "DESDCDT — DES Declassification Date"
   DESDCXM as DES_DESDCXM : nitf:ECSA[4]  @label "DESDCXM — DES Declassification Exemption" // -> asec:marking (usnato:ExemptionScheme)
-  DESDG   as DES_DESDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradesTo @label "DESDG — DES Downgrade"
-  DESDGDT as DES_DESDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "DESDGDT — DES Downgrade Date"
+  DESDG   as DES_DESDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:levelChangesTo @label "DESDG — DES Downgrade"
+  DESDGDT as DES_DESDGDT : nitf:ECSA[8]  means asec:levelChangeDate @label "DESDGDT — DES Downgrade Date"
   DESCLTX as DES_DESCLTX : nitf:ECSA[43] means asec:markingText @label "DESCLTX — DES Classification Text"
   DESCATP as DES_DESCATP : nitf:ECSA[1]  enum ClassificationAuthorityTypeEnum means asec:marking
                            @label "DESCATP — DES Classification Authority Type"
@@ -540,8 +540,8 @@ struct RESubheader @label "NITF Reserved Extension Segment Subheader (Table A-9)
                            @label "REDCTP — RES Declassification Type"
   REDCDT as RES_REDCDT : nitf:ECSA[8]  means asec:expiresOn @label "REDCDT — RES Declassification Date"
   REDCXM as RES_REDCXM : nitf:ECSA[4]  @label "REDCXM — RES Declassification Exemption" // -> asec:marking (usnato:ExemptionScheme)
-  REDG   as RES_REDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:downgradesTo @label "REDG — RES Downgrade"
-  REDGDT as RES_REDGDT : nitf:ECSA[8]  means asec:downgradeDate @label "REDGDT — RES Downgrade Date"
+  REDG   as RES_REDG   : nitf:ECSA[1]  enum DowngradeToEnum means asec:levelChangesTo @label "REDG — RES Downgrade"
+  REDGDT as RES_REDGDT : nitf:ECSA[8]  means asec:levelChangeDate @label "REDGDT — RES Downgrade Date"
   RECLTX as RES_RECLTX : nitf:ECSA[43] means asec:markingText @label "RECLTX — RES Classification Text"
   RECATP as RES_RECATP : nitf:ECSA[1]  enum ClassificationAuthorityTypeEnum means asec:marking
                            @label "RECATP — RES Classification Authority Type"

@@ -6,10 +6,14 @@ describe a domain; the concept registers carry the controlled values; a profile 
 format. Every one of those boundaries is easy to cross by accident, in a way that reads as
 convenience at the time and as coupling a year later, so each is checked here:
 
-  1. NO FORMAT NAMES in a normative term. The moment `bddo:nitfSecurityBlock` exists, BDDO has
-     stopped being a byte vocabulary and started being NITF's. Exemptions are listed below,
-     each with its reason, so the judgment is visible and can be argued with rather than
-     silently absent.
+  1. NO FORMAT OR JURISDICTION NAMES in a normative term. The moment `bddo:nitfSecurityBlock`
+     exists, BDDO has stopped being a byte vocabulary and started being NITF's; the moment
+     `asec:ismDeclassException` exists, hx-security has become one country's policy wearing a
+     neutral namespace. The second half of this check was added after the first version missed
+     it entirely: it knew 61 format names and nothing about standards bodies or jurisdictions,
+     so it would happily have passed hx-security 1.1, whose whole property set was US IC ISM's.
+     Exemptions are listed below, each with its reason, so the judgment is visible and can be
+     argued with rather than silently absent.
 
   2. NORMATIVE VOCABULARIES MUST NOT REFERENCE A REGISTER. That absence is precisely what
      makes a register swappable: hx-security defines the properties of a security marking
@@ -47,8 +51,15 @@ def normative_files():
             "specification/hexplain/core.ttl"] + sorted(glob.glob("specification/aspect/*/*.ttl"))
 
 
-#: Names that would betray a format bias in a term. Matched against camelCase WORDS rather
-#: than as substrings -- "class" contains "las", and "declassification" contains it twice.
+#: Names that would betray a bias in a term. Matched against camelCase WORDS rather than as
+#: substrings -- "class" contains "las", and "declassification" contains it twice.
+#:
+#: Two kinds, checked identically. A FORMAT name ties the vocabulary to one file layout; a
+#: JURISDICTION or standards-body name ties it to one authority's rules. The second is the
+#: subtler failure, because a term like `declassificationExemption` reads as neutral English
+#: while naming a category that exists only under one national policy -- which is why the word
+#: list cannot be the whole defence, and the aspects themselves have to be designed so that a
+#: system's own categories arrive through a register rather than as properties.
 FORMAT_WORDS = {
     "nitf", "tiff", "geotiff", "png", "jpeg", "jpg", "gif", "bmp", "webp", "exr", "dds",
     "ktx", "avif", "heif", "jp2", "envi", "ehdr", "esri", "shapefile", "geopackage", "gpkg",
@@ -56,6 +67,10 @@ FORMAT_WORDS = {
     "dted", "fits", "zip", "pdf", "dwg", "dxf", "gml", "kml", "csv", "geojson", "parquet",
     "arrow", "protobuf", "mvt", "las", "laz", "e57", "sentinel", "landsat", "erdas",
     "idrisi", "saga", "ilwis", "pcidsk", "s57", "bag", "mrsid", "ecw", "shp", "dbf",
+    # Jurisdictions, standards bodies and national policy identifiers.
+    "ism", "nato", "capco", "fips", "dod", "dni", "nga", "nist", "iso", "ogc", "w3c", "ieee",
+    "itu", "gsc", "tlp", "eo", "usa", "us", "uk", "eu", "nsa", "cia", "fbi", "ansi", "din",
+    "jis", "milstd", "stanag", "ccitt", "etsi", "oasis", "niso",
 }
 
 #: Exempt terms, each with the reason it is not a bias. An ALGORITHM named after its
@@ -105,9 +120,10 @@ def main():
             hit = words(name) & FORMAT_WORDS
             if hit:
                 problems.append(
-                    f"{path}: term '{name}' names a format ({', '.join(sorted(hit))}). A "
-                    f"normative vocabulary describes any format, not one. Either rename it, "
-                    f"move it to a profile, or add it to EXEMPT with the reason."
+                    f"{path}: term '{name}' names a format or jurisdiction "
+                    f"({', '.join(sorted(hit))}). A normative vocabulary serves any format and "
+                    f"any authority's rules, not one. Either rename it, move it to a profile "
+                    f"or register, or add it to EXEMPT with the reason."
                 )
 
         # 2 -- normative vocabularies must not reference a register
@@ -151,7 +167,7 @@ def main():
     if problems:
         print("FAIL:\n  " + "\n  ".join(problems))
         return 1
-    print(f"PASS: {checked_terms} normative terms are format-neutral; "
+    print(f"PASS: {checked_terms} normative terms name no format or jurisdiction; "
           f"{len(EXEMPT)} reasoned exemption(s); register boundary holds both ways")
     return 0
 
