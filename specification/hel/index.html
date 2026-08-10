@@ -93,7 +93,8 @@ Unary        = [ "-" / "~" ] Primary
 Primary      = FunctionCall / Accessor / Literal / ( "(" WS Expression WS ")" )
 
 FunctionCall = FunctionName "(" WS [ Expression *( WS "," WS Expression ) ] WS ")"
-FunctionName = "sizeof" / "len" / "count" / "eof" / "trim" / "substringBefore" / "substringAfter" / "toNumber"
+FunctionName = "sizeof" / "len" / "count" / "eof" / "trim" / "substringBefore" / "substringAfter"
+             / "substring" / "concat" / "toNumber" / "partExtension"
 
 Accessor     = Root *( Step )
 Step         = "." ( "parent" / IDENTIFIER ) / "[" WS Expression WS "]"
@@ -139,10 +140,21 @@ partExtension(asset.Raster)       ; which of a PartSpec's alternative extensions
                     <tr><td><code>trim(string)</code></td><td>The string with leading and trailing whitespace removed.</td></tr>
                     <tr><td><code>substringBefore(string, sep)</code></td><td>The part of <code>string</code> before the first occurrence of <code>sep</code>; the empty string if <code>sep</code> does not occur.</td></tr>
                     <tr><td><code>substringAfter(string, sep)</code></td><td>The part of <code>string</code> after the first occurrence of <code>sep</code>; the empty string if <code>sep</code> does not occur.</td></tr>
+                    <tr><td><code>substring(string, start, length)</code></td><td><code>length</code> characters of <code>string</code> beginning at <code>start</code>, which is <b>0-based</b>, as array subscripts are. A <b>range error</b> if <code>start</code> is negative, <code>length</code> is negative, or <code>start + length</code> exceeds the string's length — a fixed-width subfield that runs off the end means the field was misread, and silently returning a short string would carry that error onward as plausible data.</td></tr>
+                    <tr><td><code>concat(string, string, …)</code></td><td>The arguments joined in order. Every argument MUST already be a String: there is no implicit conversion, so a number must be rendered deliberately rather than picking up whatever spelling the engine happens to use for it.</td></tr>
                     <tr><td><code>toNumber(string)</code></td><td>The numeric value of <code>string</code>, as Integer when the string's lexical form contains no <code>.</code> and no exponent, and Float otherwise (so <code>"10"</code> is an Integer and <code>"10.0"</code> is a Float). A runtime error if the string is not numeric. Needed only for numbers carried in a <code>bddo:string</code> field; a field typed <code>bddo:asciiInteger</code> or <code>bddo:asciiDecimal</code> already yields a number.</td></tr>
                     <tr><td><code>partExtension(accessor)</code></td><td>The filename extension of the asset part the accessor names, including the leading <code>.</code> and lower-cased (so <code>.FLT</code> and <code>.flt</code> compare alike); the empty string if the part's name has no extension. The accessor MUST be an <code>asset</code> accessor naming a part (e.g. <code>partExtension(asset.Raster)</code>); it is a runtime error otherwise, and — like <code>asset</code> itself — when the description is not being parsed as part of an asset.</td></tr>
                 </tbody>
             </table>
+            <p>
+                <code>substring</code> and <code>concat</code> are what make a
+                <code>hexplain:valueExpression</code> able to reshape a field rather than only rescale it.
+                Fixed-width records pack several quantities into one field with no separator between them, so
+                <code>substringBefore</code>/<code>substringAfter</code> have nothing to cut on: NITF's IGEOLO is
+                60 characters holding four corner coordinates, each a latitude and a longitude at known offsets.
+                Reading them needs slicing by position, and reporting them as one geometry needs joining the
+                slices back together.
+            </p>
             <p>
                 <code>partExtension</code> exists because an <code>abnd:PartSpec</code> may list several
                 <code>abnd:extension</code> values as ALTERNATIVES, and which one matched can change how the part is

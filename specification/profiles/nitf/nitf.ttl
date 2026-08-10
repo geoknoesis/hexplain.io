@@ -6,6 +6,7 @@
 @prefix araster: <https://hexplain.io/ns/aspect/raster#> .
 @prefix asamp:   <https://hexplain.io/ns/aspect/sampling#> .
 @prefix asec:    <https://hexplain.io/ns/aspect/security#> .
+@prefix asref:   <https://hexplain.io/ns/aspect/spatialref#> .
 @prefix usnato:  <https://hexplain.io/ns/register/us-nato-security#> .
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -394,8 +395,32 @@ nitf:IS_PJUST a bddo:Field ; rdfs:label "PJUST — Pixel Justification" ;
 # Coordinates
 nitf:IS_ICORDS a bddo:Field ; rdfs:label "ICORDS — Image Coordinate Representation" ;
     bddo:dataType nitf:BCSA ; bddo:size 1 ; bddo:enumeration nitf:ICORDSEnum .
+# IGEOLO is 60 characters holding FOUR corners at fixed offsets, and what those characters
+# mean is decided by ICORDS. Only 'D' is wired: its corners are decimal degrees, so the
+# footprint is the substrings rearranged, which a value expression can do. The others are not
+# omissions of effort but of capability, and each for its own reason -- see the note below.
+#
+# Corner i occupies bytes 15i..15i+15: latitude '+dd.ddd' (7) then longitude '+ddd.ddd' (8).
+# WKT is X-then-Y, so each pair is emitted longitude first, and the ring closes by repeating
+# corner 0.
 nitf:IS_IGEOLO a bddo:Field ; rdfs:label "IGEOLO — Image Geographic Location" ;
-    bddo:dataType nitf:BCSA ; bddo:size 60 ; bddo:isPresentIf "IS_ICORDS != ' '" .
+    bddo:dataType nitf:BCSA ; bddo:size 60 ; bddo:isPresentIf "IS_ICORDS != ' '" ;
+    # The conditional mapping picks the PROPERTY and the value expression computes the
+    # VALUE; the two compose, and neither alone is enough. Property alone would emit the
+    # raw 60 characters as a geometry; value alone would build a WKT polygon out of
+    # coordinates that are not decimal degrees. When ICORDS is anything but 'D' no rule
+    # matches, no property is selected, and nothing is emitted -- which is the point.
+    hexplain:hasConditionalMapping (
+      # Spelled with the explicit instance. prefix, unlike the bare form used elsewhere in
+      # this file: a mapping rule is a blank node, and the round-trip gate credits a HEL
+      # spelling difference only when both sides appear on ONE subject. A bnode whose
+      # condition string differs hashes to a different subject entirely, so the two sides
+      # never meet and the difference cannot be credited -- it can only be avoided.
+      [ a hexplain:MappingRule ; hexplain:condition "instance.IS_ICORDS == 'D'" ;
+        hexplain:semanticProperty asref:footprintWKT ]
+    ) ;
+    hexplain:valueDatatype xsd:string ;
+    hexplain:valueExpression "concat('POLYGON((', substring(instance.IS_IGEOLO, 7, 8), ' ', substring(instance.IS_IGEOLO, 0, 7), ', ', substring(instance.IS_IGEOLO, 22, 8), ' ', substring(instance.IS_IGEOLO, 15, 7), ', ', substring(instance.IS_IGEOLO, 37, 8), ' ', substring(instance.IS_IGEOLO, 30, 7), ', ', substring(instance.IS_IGEOLO, 52, 8), ' ', substring(instance.IS_IGEOLO, 45, 7), ', ', substring(instance.IS_IGEOLO, 7, 8), ' ', substring(instance.IS_IGEOLO, 0, 7), '))')" .
 
 # Comments (repeat loop driven by NICOM)
 nitf:IS_NICOM a bddo:Field ; rdfs:label "NICOM — Number of Image Comments" ;
@@ -882,9 +907,21 @@ nitf:RES_RESRDT  hexplain:mapsToProperty asec:securitySourceDate .
 # (NBANDS and NBPP were listed here in error and are now mapped: hx-sampling already
 # defines componentCount and bitDepth, and hx-raster imports it. ABPP -- the ACTUAL
 # bits used within NBPP -- still has no term; it is not the same quantity.)
-#   IGEOLO + BLOCKA corners -> geospatial footprint   (asref:footprintWKT now exists;
-#     wiring it needs the four corner strings assembled into one WKT polygon, which is a
-#     computed value across four fields rather than a per-field mapping)
+#   IGEOLO -> asref:footprintWKT is now wired for ICORDS 'D' only. The remaining three are
+#     each blocked differently, and none by the mapping layer:
+#       'G' decimal-degrees-minutes-seconds ddmmssXdddmmssY. Expressible in principle --
+#           degrees + minutes/60 + seconds/3600 -- but HEL has no way to render a computed
+#           NUMBER back into a string, and concat() takes only strings. A numberToString (or
+#           a formatted equivalent) would close it.
+#       'N'/'S' UTM and 'U' MGRS are PROJECTED coordinates. Turning them into a WKT polygon in
+#           any geographic CRS is a datum-aware reprojection, which is not an expression
+#           language's job at any level of string support. The honest answer is to record the
+#           grid coordinates with their zone and let a geospatial library reproject.
+#     One caveat on the wired case: the substrings are emitted exactly as NITF writes them,
+#     so a positive coordinate keeps its leading '+'. Most WKT readers accept it; it is not
+#     canonical, and removing it needs a replace() HEL has no reason to gain for this alone.
+#   BLOCKA corners -> footprint. Same shape as IGEOLO but the corners are separate TRE fields,
+#     so it needs no slicing at all -- only the TRE itself modelled, which it is not.
 #   RPC00B            -> rational-polynomial sensor model (needs a sensor-model vocab)
 #   ISCODE/ISCTLH/ISREL/ISDCTP…ISCTLN (15 ISM fields) -> ISM-aligned security register
 #     (Table A-4 gives the codeword digraphs for that future register)

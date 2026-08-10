@@ -291,7 +291,14 @@ hexplain:CodecParameterShape a sh:NodeShape ;
     sh:property [ sh:path hexplain:parameterValue ; sh:minCount 1 ; sh:maxCount 1 ] .
 hexplain:ValueExpressionShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:valueExpression ;
-    sh:class bddo:Field ;
+    # A Field computes one value; a MappingRule computes the value for the arm it belongs to.
+    # The second was rejected until now, which made conditional mapping able to choose the
+    # PROPERTY per condition but never the VALUE -- so a field meaning different things under
+    # different discriminators could name the right property and then emit the raw bytes into
+    # it. NITF's IGEOLO is the case: 60 characters that are decimal degrees, degrees-minutes-
+    # seconds, UTM or MGRS depending on ICORDS, and only the first two are even the same
+    # quantity.
+    sh:or ( [ sh:class bddo:Field ] [ sh:class hexplain:MappingRule ] ) ;
     sh:property [ sh:path hexplain:valueExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path hexplain:valueDatatype ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
 hexplain:HasConditionalMappingShape a sh:NodeShape ;
@@ -305,7 +312,10 @@ hexplain:MappingRuleShape a sh:NodeShape ;
     sh:property [ sh:path hexplain:condition ; sh:nodeKind sh:Literal ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
     sh:property [ sh:path hexplain:semanticProperty ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:or ( [ sh:class rdf:Property ] [ sh:class owl:DatatypeProperty ]
-                [ sh:class owl:ObjectProperty ] [ sh:class owl:AnnotationProperty ] ) ] .
+                [ sh:class owl:ObjectProperty ] [ sh:class owl:AnnotationProperty ] ) ] ;
+    # Optional: absent means the arm emits the field's parsed value unchanged.
+    sh:property [ sh:path hexplain:valueExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:valueDatatype ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
 hexplain:MapsToObjectPropertyShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToObjectProperty ;
     sh:class bddo:Field ;

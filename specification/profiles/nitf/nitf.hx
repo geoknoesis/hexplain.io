@@ -57,6 +57,7 @@ format nitf
 use araster: <https://hexplain.io/ns/aspect/raster#>
 use asamp:   <https://hexplain.io/ns/aspect/sampling#>
 use asec:    <https://hexplain.io/ns/aspect/security#>
+use asref:   <https://hexplain.io/ns/aspect/spatialref#>
 // Controlled security-marking concepts (classification levels, declassification/authority/
 // reason codes) were split out of the asec: aspect into this standalone, swappable register
 // (Task 3) -- the aspect keeps the *properties* (asec:classification, asec:downgradeTo, ...);
@@ -339,6 +340,11 @@ struct ImageSubheader means gv:RasterDataset @label "NITF Image Subheader (Table
   // compiler). HelSynth's rewriter (like core's HEL lexer) only recognizes single-quoted strings,
   // so literal comparisons use `'x'` inside the brackets even though the DSL source is `"x"`.
   IGEOLO   as IS_IGEOLO  : nitf:BCSA[60] if [ICORDS != ' '] @label "IGEOLO — Image Geographic Location"
+    // ICORDS decides what these 60 characters MEAN, so the footprint is a conditional
+    // mapping rather than a plain one. Only 'D' (decimal degrees) is expressible: see the
+    // LIMITS note in nitf.ttl for why 'G', 'N'/'S' and 'U' are not.
+    value `concat('POLYGON((', substring(instance.IS_IGEOLO, 7, 8), ' ', substring(instance.IS_IGEOLO, 0, 7), ', ', substring(instance.IS_IGEOLO, 22, 8), ' ', substring(instance.IS_IGEOLO, 15, 7), ', ', substring(instance.IS_IGEOLO, 37, 8), ' ', substring(instance.IS_IGEOLO, 30, 7), ', ', substring(instance.IS_IGEOLO, 52, 8), ' ', substring(instance.IS_IGEOLO, 45, 7), ', ', substring(instance.IS_IGEOLO, 7, 8), ' ', substring(instance.IS_IGEOLO, 0, 7), '))')` @datatype xsd:string
+    map { when [ICORDS == 'D'] => asref:footprintWKT }
   NICOM    as IS_NICOM   : nitf:BCSNpos[1] @label "NICOM — Number of Image Comments"
   ICOM     as IS_ICOM    : nitf:ECSA[80] repeat [NICOM] @label "ICOMn — Image Comment n (× NICOM)"
   // Raw values taken from nitf:ICEnum in nitf.ttl (MIL-STD-2500C Table A-3). Symbols are the
