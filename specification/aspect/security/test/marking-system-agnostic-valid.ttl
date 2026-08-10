@@ -1,0 +1,60 @@
+# hx-security must serve a marking system that shares nothing with US/NATO practice.
+#
+# This is the point of 2.0. Version 1.1 drew its VALUES from a swappable register but its
+# property SET was IC ISM's: declassificationExemption, classificationReason,
+# classificationAuthorityType. A system with none of those had to leave them empty and had
+# nowhere to put what it did have.
+#
+# Two systems are described below with the same twelve properties and no aspect change between
+# them. Neither is privileged; the aspect knows about neither.
+@prefix asec:  <https://hexplain.io/ns/aspect/security#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix tlp:   <http://example.org/register/tlp#> .
+@prefix uk:    <http://example.org/register/uk-gsc#> .
+@prefix ex:    <http://example.org/> .
+
+# ---------- System A: FIRST Traffic Light Protocol ----------
+# No levels-plus-compartments structure at all. TLP has four colours and a sharing rule, and
+# nothing resembling declassification, an originating authority, or a control number.
+tlp:Scheme a skos:ConceptScheme ; rdfs:label "TLP colours" .
+tlp:Amber a skos:Concept ; skos:inScheme tlp:Scheme ; skos:prefLabel "TLP:AMBER"@en .
+tlp:SharingScheme a skos:ConceptScheme ; rdfs:label "TLP sharing restrictions" .
+tlp:LimitedDisclosure a skos:Concept ; skos:inScheme tlp:SharingScheme ;
+    skos:prefLabel "Limited disclosure, recipients' organisation only"@en .
+
+ex:IncidentReport
+    asec:markingSystem        "TLP-2.0" ;
+    asec:sensitivityLevel     tlp:Amber ;
+    asec:sensitivityLevelText "TLP:AMBER" ;
+    # The sharing rule is not a compartment, a caveat or a handling control -- it is TLP's own
+    # notion, and it needs no new property because its scheme says what it is.
+    asec:marking              tlp:LimitedDisclosure ;
+    asec:releasableTo         "recipient-organisation" .
+
+# ---------- System B: a national protective-marking scheme ----------
+# Levels and caveats, a review date rather than a declassification date, and no compartments.
+uk:Scheme a skos:ConceptScheme ; rdfs:label "Protective markings" .
+uk:Official a skos:Concept ; skos:inScheme uk:Scheme ; skos:prefLabel "OFFICIAL"@en .
+uk:CaveatScheme a skos:ConceptScheme ; rdfs:label "Handling caveats" .
+uk:Sensitive a skos:Concept ; skos:inScheme uk:CaveatScheme ; skos:prefLabel "SENSITIVE"@en .
+
+ex:PolicyPaper
+    asec:markingSystem        "UK-GSC" ;
+    asec:sensitivityLevel     uk:Official ;
+    asec:sensitivityLevelText "OFFICIAL-SENSITIVE" ;
+    asec:marking              uk:Sensitive ;
+    asec:markingAuthority     "Information Asset Owner" ;
+    asec:markingDate          "2026-03-01"^^xsd:date ;
+    # The lifecycle property is named for the EVENT, not for one system's word for it, so a
+    # scheme that reviews rather than declassifies uses the same term.
+    asec:expiresOn            "2031-03-01"^^xsd:date .
+
+# ---------- Both at once ----------
+# A resource re-marked under a second system keeps both markings. Nothing in the aspect
+# privileges one, because nothing in the aspect knows either exists.
+ex:SharedAssessment
+    asec:markingSystem        "TLP-2.0" , "UK-GSC" ;
+    asec:sensitivityLevel     tlp:Amber , uk:Official ;
+    asec:marking              tlp:LimitedDisclosure , uk:Sensitive .
