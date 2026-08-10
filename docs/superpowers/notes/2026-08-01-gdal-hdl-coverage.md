@@ -191,6 +191,9 @@ Being explicit, since the tempting error is to assume a text surface solves all 
   byte stream to describe, or a closed one. No vocabulary change touches them, and the
   ceiling for this survey is therefore 196, not 245.
 
+**What would move it further** is analysed separately, driver by driver, in
+[2026-08-09-gdal-coverage-next-features.md](2026-08-09-gdal-coverage-next-features.md).
+
 ### Confidence
 
 The 21 ◑ movements rest on a demonstrated pattern (two shipped profiles) and are the firm
