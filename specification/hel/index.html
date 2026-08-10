@@ -127,6 +127,7 @@ len(instance.parent.Entries)      ; number of elements in an array
 instance.parent.Entries[0].Offset ; a field of the first (0-based) array element
 root.Directory[instance.Index].Tag; array index from a parsed field value
 eof()                             ; true when the cursor is at end of stream
+partExtension(asset.Raster)       ; which of a PartSpec's alternative extensions the part matched
             </pre>
             <table class="simple">
                 <caption>Functions</caption>
@@ -139,8 +140,25 @@ eof()                             ; true when the cursor is at end of stream
                     <tr><td><code>substringBefore(string, sep)</code></td><td>The part of <code>string</code> before the first occurrence of <code>sep</code>; the empty string if <code>sep</code> does not occur.</td></tr>
                     <tr><td><code>substringAfter(string, sep)</code></td><td>The part of <code>string</code> after the first occurrence of <code>sep</code>; the empty string if <code>sep</code> does not occur.</td></tr>
                     <tr><td><code>toNumber(string)</code></td><td>The numeric value of <code>string</code>, as Integer when the string's lexical form contains no <code>.</code> and no exponent, and Float otherwise (so <code>"10"</code> is an Integer and <code>"10.0"</code> is a Float). A runtime error if the string is not numeric. Needed only for numbers carried in a <code>bddo:string</code> field; a field typed <code>bddo:asciiInteger</code> or <code>bddo:asciiDecimal</code> already yields a number.</td></tr>
+                    <tr><td><code>partExtension(accessor)</code></td><td>The filename extension of the asset part the accessor names, including the leading <code>.</code> and lower-cased (so <code>.FLT</code> and <code>.flt</code> compare alike); the empty string if the part's name has no extension. The accessor MUST be an <code>asset</code> accessor naming a part (e.g. <code>partExtension(asset.Raster)</code>); it is a runtime error otherwise, and — like <code>asset</code> itself — when the description is not being parsed as part of an asset.</td></tr>
                 </tbody>
             </table>
+            <p>
+                <code>partExtension</code> exists because an <code>abnd:PartSpec</code> may list several
+                <code>abnd:extension</code> values as ALTERNATIVES, and which one matched can change how the part is
+                read. An ESRI <code>.hdr</code>-labelled raster is the case: <code>NBITS 32</code> means
+                <code>uint32</code> when the grid is <code>.bil</code>/<code>.bip</code>/<code>.bsq</code> and
+                <code>float32</code> when it is <code>.flt</code>. The width is in the header, but the choice between
+                integer and float is carried only by the filename, so without this the two are indistinguishable and
+                every sample of a float grid is decoded as a meaningless integer.
+            </p>
+            <p>
+                A part's IDENTITY — its name, and so its extension — is fixed when the asset is assembled, before any
+                part is parsed. So unlike a part's CONTENT, which <code>asset.X.field</code> can only read once part
+                <code>X</code> has been parsed, <code>partExtension</code> is available to every part's conditions
+                from the start, including a part asking about ITSELF. That self-reference is the common case: the
+                rule selecting a grid's cell type lives on that same grid's layout.
+            </p>
         </section>
         <section>
             <h3>Operators</h3>

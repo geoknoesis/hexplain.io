@@ -144,7 +144,13 @@ ehdr:Raster.pixels a bddo:Field ; rdfs:label "the sample grid" ;
 # different set of axes -- which is why these are two independent conditionals rather than
 # one conditional layout per (LAYOUT, NBITS) pair.
 ehdr:Grid a dlv:DataLayout ; rdfs:label "EHdr sample grid" ;
+    # FIRST MATCH WINS, so the .flt arm must precede the width arms: a float grid is also
+    # NBITS 32, and the integer rule would otherwise claim it. The width is in the header but
+    # the choice between integer and float is carried only by the filename -- gridSpec lists
+    # four extensions as alternatives, and partExtension says which one this part matched.
     dlv:hasConditionalCellDataType (
+        [ a dlv:CellDataTypeRule ; bddo:condition "partExtension(asset.Raster) == '.flt'" ;
+          dlv:ruleCellDataType bddo:float32 ]
         [ a dlv:CellDataTypeRule ; bddo:condition "asset.Header.nbits == 8"  ; dlv:ruleCellDataType bddo:uint8 ]
         [ a dlv:CellDataTypeRule ; bddo:condition "asset.Header.nbits == 16" ; dlv:ruleCellDataType bddo:uint16 ]
         [ a dlv:CellDataTypeRule ; bddo:condition "asset.Header.nbits == 32" ; dlv:ruleCellDataType bddo:uint32 ]
@@ -185,10 +191,9 @@ ehdr:prjSpec a abnd:PartSpec ; abnd:extension ".prj" ; abnd:partRole rpr:Spatial
     abnd:required false ; abnd:carriesAspect <https://hexplain.io/ns/aspect/spatialref> .
 
 # ---------- LIMITS OF THIS DESCRIPTION ----------
-# 1. .flt IS NOT DISTINGUISHED. NBITS 32 selects uint32 above, but the same width means
-#    float32 when the grid file is .flt. The cell-type rules condition on header fields; no
-#    condition can name which of the PartSpec's alternative extensions the part matched.
-# 2. PIXELTYPE (SIGNEDINT/UNSIGNEDINT/FLOAT) is not modelled. asamp:sampleFormat exists and
+# 1. PIXELTYPE (SIGNEDINT/UNSIGNEDINT/FLOAT) is not modelled. asamp:sampleFormat exists and
 #    would be its target; it is omitted only because it is an optional GDAL extension
-#    keyword rather than part of the base dialect.
+#    keyword rather than part of the base dialect. Note this leaves SIGNEDINT grids read as
+#    unsigned: the .flt rule above recovers float, which is the only one of the three the
+#    filename reveals, but nothing distinguishes int8 from uint8 in a .bil.
 

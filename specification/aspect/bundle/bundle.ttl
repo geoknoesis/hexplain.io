@@ -77,15 +77,28 @@
 #     restriction, so it may name a field of any part's struct.
 #   * A HEL expression using the `asset` root, e.g. "asset.Header.byteOrder == 0".
 #
+# Identity versus content. The two are available at different times, and conflating them makes
+# a legal description look circular. A part's CONTENT -- what asset.X.field reads -- exists only
+# once part X has been parsed. A part's IDENTITY, its name and so its extension, is fixed when
+# the asset is ASSEMBLED, before any part is parsed. HEL's partExtension() asks about identity,
+# so it is resolvable from the start and, unlike a content reference, a part may ask it about
+# ITSELF without any ordering problem. That self-reference is the ordinary case: a PartSpec
+# listing several abnd:extension values lists them as ALTERNATIVES, and which one matched can
+# decide how that same part is read -- an ESRI .hdr-labelled grid is uint32 at NBITS 32 but
+# float32 when the file is .flt, and only the filename distinguishes them.
+#
 # Resolution. Both are resolved against the enclosing abnd:Asset, by locating the part whose
 # abnd:PartSpec is abnd:describedBy the struct that owns the named field. A description
 # carrying a cross-part reference is therefore only meaningful when parsed as part of an
 # asset; parsing such a part standalone MUST raise an error rather than yield Null, since a
 # silently absent extent would produce a plausible but wrong grid.
 #
-# Ordering. The referenced part MUST be parsed before the referring one. A processor SHOULD
-# derive that order from the references themselves; abnd:primary does not imply it, and in
-# the sidecar case the primary part is the payload, which is the DEPENDENT one.
+# Ordering. A CONTENT reference's target part MUST be parsed before the referring one. A
+# processor SHOULD derive that order from the references themselves; abnd:primary does not
+# imply it, and in the sidecar case the primary part is the payload, which is the DEPENDENT
+# one. Identity references impose no order, per the paragraph above, so they must not be
+# counted when deriving it -- treating one as a dependency would report a false cycle for the
+# ordinary case of a part conditioning on its own extension.
 #
 # Requiredness. A cross-part reference SHOULD name a part whose PartSpec is abnd:required
 # true. Depending on an optional part means the referring description cannot be resolved
