@@ -447,6 +447,37 @@ bundle Shapefile @bound-by naming-convention {
 }
             </pre>
             <p>A <code>bundle</code> mints an <code>abnd:BundleProfile</code>; each <code>part</code> mints a <code>abnd:PartSpec</code>. <code>@bound-by</code> keywords <code>containment | naming-convention | manifest-reference | concatenation</code> map to the four <code>abnd:BindingKind</code> individuals. <code>role Name</code> resolves to the concept of that name in the part-role register (prefix <code>rpr</code>) (or a CURIE <code>role ns:Custom</code>); the <code>role:</code> and <code>rpr:</code> prefixes are both predeclared for it; <code>required</code>/<code>optional</code> &#8594; <code>abnd:required</code>; <code>primary</code> &#8594; <code>abnd:primary</code>; <code>described-by S</code> &#8594; <code>abnd:describedBy</code> the named struct.</p>
+        <p>
+            <code>part "&lt;ext&gt;"</code> is the flat-sibling shorthand: it assumes every member
+            is a sibling sharing one stem, which covers a two-file sidecar and nothing else. A
+            directory-structured product — a SAFE package, a GRASS mapset, a Zarr store, an Esri
+            compact cache — puts its members at known PATHS, often several matching one
+            description. <code>part pattern "&lt;glob&gt;"</code> says so:
+        </p>
+        <pre class="nohighlight">
+bundle Annotation @bound-by naming-convention {
+  part pattern "*.xml" role Metadata required
+}
+
+bundle Product @bound-by manifest-reference {
+  part "manifest.safe" role Manifest required
+  part pattern "measurement/s1a-*.tiff" role Payload required primary min 1 max 99 carries araster:
+  part pattern "annotation/**" role Metadata optional nested Annotation
+}
+        </pre>
+        <table class="simple">
+            <thead><tr><th>Clause</th><th>Effect</th></tr></thead>
+            <tbody>
+                <tr><td><code>pattern "&lt;glob&gt;"</code></td><td><code>abnd:pathPattern</code> — a glob against the path relative to the asset root. <code>*</code> matches within a segment, <code>**</code> across segments. Mutually exclusive with the extension form, which IS the shorthand for <code>*&lt;ext&gt;</code>.</td></tr>
+                <tr><td><code>min N</code> / <code>max N</code></td><td><code>abnd:minParts</code> / <code>abnd:maxParts</code> — how many files may match. Only meaningful with a pattern, since an extension names one member; using them without one is a compile error.</td></tr>
+                <tr><td><code>nested &lt;Bundle&gt;</code></td><td><code>abnd:nestedProfile</code> — the member is itself a structured directory, whose contents conform to that profile rooted at the member. Lets a profile compose rather than flatten: the annotation directory is described once instead of every file in it being enumerated.</td></tr>
+            </tbody>
+        </table>
+        <p>
+            The compiler rejects a part with no locator, a <code>min</code>/<code>max</code> without
+            a pattern, a <code>max</code> below its <code>min</code> (no file count could satisfy
+            it), and a <code>nested</code> naming a bundle the document does not declare.
+        </p>
             <p class="note"><code>carries</code> resolves to the aspect's <b>ontology IRI</b>, not its namespace IRI: <code>abnd:carriesAspect</code> has range <code>owl:Ontology</code>, so a single trailing <code>#</code> or <code>/</code> is stripped from the prefix's namespace (<code>ageom:</code> &#8594; <code>&lt;https://hexplain.io/ns/aspect/geometry&gt;</code>).</p>
         </section>
         <section id="asset">

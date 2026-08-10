@@ -144,13 +144,38 @@ commitment than any vocabulary here. **Note the shared payoff:** F5 plus F1 woul
 whole OGC GeoPackage stack fully expressible, which is disproportionate showcase value for
 seven drivers.
 
-### F6 — Directory-tree assets · 4 drivers
+### F6 — Directory-tree assets · 4 drivers · ✅ DONE (2 new, 2 already reachable)
 
 `GRASS` (raster and vector), `MFF2`, `MiraMonVector`. hx-bundle already has `pathPattern`,
 part alternatives and `nestedProfile`; what is missing is hierarchy — a part that is itself a
 directory with its own internal structure.
 
 Small, self-contained, and the vocabulary is nearly there.
+
+**Shipped 2026-08-10 — and the diagnosis above was wrong in an instructive way.** hx-bundle was
+not missing hierarchy: `abnd:nestedProfile` has meant "a member that is itself a structured
+directory" since P0. What was missing is that **HDL exposed none of it.** The DSL could say
+`part ".shp"` and nothing else — no `pathPattern`, no `minParts`/`maxParts`, no
+`nestedProfile` — so every directory-structured product was unauthorable no matter what the
+vocabulary said.
+
+`part pattern "<glob>" … min N max N nested <Bundle>` closes it, with the compiler rejecting a
+part with no locator, bounds without a pattern, a max below its min, and a nested profile the
+document does not declare.
+
+**Of the four drivers, only GRASS ×2 are newly reached.** `MFF2` is a directory with fixed
+member names, which `nestedProfile` already covered once HDL could express it; `MiraMonVector`
+is a flat binary/`.rel` sidecar pair whose `.rel` is sectioned INI, so F3 covered it. Counting
+all four would have been double-counting.
+
+**Coverage: 135 → 137 of 196 reachable.**
+
+The interesting part is why this went unnoticed for so long. `VocabCoverageTest` — added
+precisely to stop the DSL falling behind the specification — checked bddo, dlv and core, and
+not hx-bundle. Every other aspect is reached generically (`means araster:width`,
+`carries ageom:`), so no per-term surface is needed; hx-bundle is the exception, because
+`bundle`/`asset`/`part` are dedicated syntax and a term with no clause is a term no description
+can state. The gate is now widened, and verified to catch exactly what it had missed.
 
 ### F7 — Bespoke line grammars · 6 drivers · probably not worth it
 
@@ -171,7 +196,7 @@ and revisiting only if one is specifically needed.
    and search. These are the two that push on "describe, don't execute", and deciding that
    deliberately is worth more than the 15 drivers.
 
-Doing 1–3 takes full coverage from **97 to 141 of 196**. Steps 1 and 2 are done: **135**. Adding step 4 reaches **156**. The
+Doing 1–3 takes full coverage from **97 to 141 of 196**. Steps 1–3 are done: **137**. Adding step 4 reaches **156**. The
 residue is then 34 entropy-coded ◐ drivers and 6 bespoke grammars — 40 drivers that are out of
 scope by design rather than by omission.
 
