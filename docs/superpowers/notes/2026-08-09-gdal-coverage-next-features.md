@@ -163,12 +163,21 @@ vocabulary said.
 part with no locator, bounds without a pattern, a max below its min, and a nested profile the
 document does not declare.
 
-**Of the four drivers, only GRASS ×2 are newly reached.** `MFF2` is a directory with fixed
-member names, which `nestedProfile` already covered once HDL could express it; `MiraMonVector`
-is a flat binary/`.rel` sidecar pair whose `.rel` is sectioned INI, so F3 covered it. Counting
-all four would have been double-counting.
+**All four are now reached.** `GRASS` ×2 by the pattern-and-nesting surface itself; `MFF2` by
+`nestedProfile`, which covered it in vocabulary but which nothing could author until HDL
+exposed it; `MiraMonVector` by F3's `sectionHeaded`, its `.rel` being INI. The last two needed
+no new vocabulary — only for the DSL to reach what already existed.
 
-**Coverage: 135 → 137 of 196 reachable.**
+**Coverage: 135 → 139 of 196 reachable.**
+
+> **Correction.** This section first claimed only two of the four, reasoning that counting
+> `MFF2` and `MiraMonVector` would double-count F3 and `nestedProfile`. That was wrong: neither
+> had been counted anywhere, so excluding them dropped two real drivers rather than avoiding a
+> double count. Caught by reconciling the running total against the §1 partition — which left
+> exactly four drivers unaccounted, these two plus `GXF` and `VDV`, and the latter two genuinely
+> are not reached. A running total that is never reconciled against its partition drifts
+> silently, in whichever direction the last judgment call leaned; this one leaned conservative,
+> which is the more comfortable error and still an error.
 
 The interesting part is why this went unnoticed for so long. `VocabCoverageTest` — added
 precisely to stop the DSL falling behind the specification — checked bddo, dlv and core, and
@@ -196,7 +205,7 @@ and revisiting only if one is specifically needed.
    and search. These are the two that push on "describe, don't execute", and deciding that
    deliberately is worth more than the 15 drivers.
 
-Doing 1–3 takes full coverage from **97 to 141 of 196**. Steps 1–3 are done: **137**. Adding step 4 reaches **156**. The
+Doing 1–3 takes full coverage from **97 to 141 of 196**. Steps 1–3 are done: **139**. Adding step 4 reaches **156**. The
 residue is then 34 entropy-coded ◐ drivers and 6 bespoke grammars — 40 drivers that are out of
 scope by design rather than by omission.
 
