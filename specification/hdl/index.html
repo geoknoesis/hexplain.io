@@ -194,7 +194,7 @@ struct IHDR_ChunkData means araster:RasterImage {
   width  : u32 means araster:width
   height : u32 means araster:height
   gamma  : u32 means acolor:gamma value gamma / 100000 @datatype xsd:double
-  data   : bytes[..] @encoded-with aenc:deflate
+  data   : bytes[..] @encoded-with menc:Deflate
 }
         </pre>
         <table class="simple">
@@ -204,8 +204,27 @@ struct IHDR_ChunkData means araster:RasterImage {
                 <tr><td><code>means &lt;Property&gt;</code> (field)</td><td><code>hexplain:mapsToProperty &lt;Property&gt;</code></td></tr>
                 <tr><td><code>value &lt;expr&gt; @datatype &lt;dt&gt;</code></td><td><code>hexplain:valueExpression "&#8230;HEL&#8230;"</code> [+ <code>hexplain:valueDatatype &lt;dt&gt;</code>]</td></tr>
                 <tr><td><code>@encoded-with &lt;concept&gt;</code></td><td><code>hexplain:isEncodedWith &lt;concept&gt;</code></td></tr>
+                <tr><td><code>@pipeline { &lt;codec&gt;(&lt;name&gt; &lt;value&gt;, &#8230;), &#8230; }</code></td><td><code>hexplain:hasEncodingStep</code> &#8594; an ordered list of <code>hexplain:EncodingStep</code></td></tr>
             </tbody>
         </table>
+        <p>
+            One codec is the exception rather than the rule, so <code>@encoded-with</code> has a
+            pipeline form. A TIFF strip is horizontally differenced and then deflated; a Zarr array
+            chains delta into a Blosc parameterised by an inner codec, a shuffle mode and a level.
+            With only the single-codec shorthand a description could name the last step and lost
+            both the earlier ones and every setting &#8212; enough to identify the compression, never
+            enough to undo it. Parameters are juxtaposed rather than written
+            <code>name&nbsp;=&nbsp;value</code>, as everywhere else in the DSL.
+        </p>
+        <pre class="nohighlight">
+data : bytes[..] @pipeline { menc:Delta(predictor 2), menc:Blosc(cname "lz4", clevel 5) }
+        </pre>
+        <p>
+            <b>Order is ENCODE order</b> &#8212; the steps as the writer applied them, so a reader
+            inverts them in reverse. Stating this matters, because a pipeline read the wrong way
+            round is still a plausible-looking pipeline. The two forms are mutually exclusive:
+            <code>@encoded-with</code> remains the shorthand for a single unparameterised codec.
+        </p>
         <p>A field's <code>value</code> expression may reference the field by its own name. <b>Conditional mapping</b> (<code>hexplain:hasConditionalMapping</code>) is written with <code>map</code>, mirroring <code>switch</code>:</p>
         <pre class="nohighlight">
 text : str[..] map {
@@ -226,7 +245,79 @@ pixels : bytes[..] layout cell u8 {
   dim axis Band size 3
 }
         </pre>
-        <p>Axes: <code>X Y Z Band Time</code> &#8594; <code>dlv:axisX/axisY/axisZ/axisBand/axisTime</code>. <code>dlv:dimensionStride</code> is a positive-integer literal; a non-literal stride is not representable and is dropped.</p>
+        <p>Axes: <code>X Y Z Band Time</code> &#8594; <code>dlv:axisX/axisY/axisZ/axisBand/axisTime</code>. A stride follows the same field-form/expression-form rule as sizing: an integer literal &#8594; <code>dlv:dimensionStride</code>, a lone sibling &#8594; <code>dimensionStrideFromField</code>, anything else &#8594; <code>dimensionStrideFromExpression</code>.</p>
+
+        <h3>Conditional layouts</h3>
+        <p>
+            The cell type and the dimension order may each depend on something read earlier, because
+            the same bytes are read differently: an ESRI grid's <code>NBITS 32</code> is
+            <code>uint32</code> for a <code>.bil</code> and <code>float32</code> for a
+            <code>.flt</code>, and an ENVI cube's dimensions are ordered by its interleave keyword.
+            These are two independent conditionals over one set of dimensions rather than one
+            conditional layout, which would multiply into a case per (interleave, width) pair.
+        </p>
+        <pre class="nohighlight">
+pixels : bytes[..] layout {
+  cell switch {                                  // dlv:hasConditionalCellDataType
+    when partExtension(asset.Raster) == '.flt' =&gt; f32
+    when asset.Header.nbits == 8               =&gt; u8
+  }
+  dim axis Y    size nrows
+  dim axis Band size nbands
+  dim axis X    size ncols
+  order switch {                                 // dlv:hasConditionalDimensionOrder
+    when asset.Header.interleave == 'BIL' =&gt; Y Band X
+    when asset.Header.interleave == 'BSQ' =&gt; Band Y X
+  }
+}
+        </pre>
+        <p>
+            Rules are <b>first match wins</b>, so a more specific arm must precede a more general one
+            &#8212; the <code>.flt</code> arm above comes first because a float grid is also 32 bits
+            wide. The header form <code>layout cell &lt;type&gt; { &#8230; }</code> is unchanged and
+            mutually exclusive with <code>cell switch</code>. An <code>order</code> arm lists
+            <b>axes</b>, not new dimensions: the dimensions are declared once and each arm permutes
+            those same nodes, so an extent is written once and the arms cannot disagree about it. An
+            arm must list every declared axis exactly once; omitting one silently drops a dimension.
+        </p>
+
+        <h3>Sub-byte cells</h3>
+        <p>
+            Every <code>bddo:DataType</code> is a whole number of bytes, so a grid whose cells are
+            not &#8212; a 1-bit mask, a 4-bit palette index, GRIB2 packing, NITF 1-bit imagery
+            &#8212; needs its packed width stated separately. <code>cell-bits</code> overrides the
+            cell type's intrinsic width, so the type keeps saying how to <em>interpret</em> a cell
+            while the width says how much room it takes.
+        </p>
+        <pre class="nohighlight">
+mask : bytes[..] layout cell u8 { cell-bits 4  packing msb  dim axis Y size h  dim axis X size w }
+grib : bytes[..] layout cell u8 { cell-bits from nbits      dim axis X size n }
+        </pre>
+        <p>
+            <code>packing msb|lsb</code> &#8594; <code>dlv:cellPackingOrder</code>, defaulting to
+            MSB-first, which is what GRIB2, NITF and the 1-bit and 4-bit image formats all use. It
+            is only meaningful alongside a packed width, and a width is either fixed or read from a
+            field, never both. Distinct from <code>asamp:bitDepth</code>, which is significant bits
+            carried inside a <em>wider</em> container: that grid is padded, this one is packed, and
+            the two can hold different values for the same raster.
+        </p>
+    </section>
+
+    <section id="registers">
+        <h2>Register Bindings</h2>
+        <p>
+            Aspects deliberately do not import concept registers &#8212; that absence is what makes a
+            register swappable &#8212; so a profile states which register supplies the values of a
+            property it uses, and <code>hexplain:RegisterBindingShape</code> holds it to that.
+        </p>
+        <pre class="nohighlight">
+register abnd:partRole from rpr:PartRoleScheme
+        </pre>
+        <p>
+            Each declaration emits a <code>hexplain:RegisterBinding</code> on the format's ontology
+            IRI (the base namespace with its trailing <code>#</code> stripped), carrying
+            <code>hexplain:forProperty</code> and <code>hexplain:register</code>.
+        </p>
     </section>
 
     <section id="bundle">
