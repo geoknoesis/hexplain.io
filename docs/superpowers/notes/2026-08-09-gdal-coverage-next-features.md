@@ -118,13 +118,23 @@ belongs with F7.
 
 **Coverage: 97 → 104 of 196 reachable.**
 
-### F4 — Self-describing record schemas · 8 drivers · architecturally the hardest
+### F4 — Self-describing record schemas · 8 drivers · ◐ PARTLY DONE (3 of 8)
 
 Formats whose record layout is defined by a dictionary *inside the file*: `HFA` (Erdas `.img`
 dictionary string), `Arrow` and `FlatGeobuf` (flatbuffer vtables), `Parquet` (Thrift
 metadata), `MVT` (protobuf field ordering), and arguably `CAD`/`DWG`/`PGeo`.
 
 These are all ◐ → ✅ moves: framing is already describable, per-record layout is not.
+
+**Shipped 2026-08-10: the 3 drivers that were not the hard part.** The
+[design note](2026-08-10-f4-f5-design-note.md) split this bucket into three problems. Dynamic
+offsets with a static field set (Arrow, FlatGeobuf) turned out to be expressible already —
+HEL's array subscript inside `bddo:atOffsetFromExpression` reads a flatbuffer vtable as
+written. Protobuf skip-unknown (MVT) needed one HDL change and no vocabulary: `switch` in the
+TYPE position, so the dispatched struct determines the extent, which BDDO always permitted.
+
+The remaining 5 — HFA, Parquet, CAD, DWG, PGeo — are the schema-in-the-file case, and are the
+part that genuinely challenges the boundary. **Coverage: 139 → 142.**
 
 **This one challenges a design boundary rather than just needing work.** Everything HDL says
 today is fixed at authoring time. A schema read from the file is a description that does not
@@ -205,7 +215,7 @@ and revisiting only if one is specifically needed.
    and search. These are the two that push on "describe, don't execute", and deciding that
    deliberately is worth more than the 15 drivers.
 
-Doing 1–3 takes full coverage from **97 to 141 of 196**. Steps 1–3 are done: **139**. Adding step 4 reaches **156**. The
+Doing 1–3 takes full coverage from **97 to 141 of 196**. Steps 1–3 are done, plus F4's cheap half: **142**. Adding step 4 reaches **156**. The
 residue is then 34 entropy-coded ◐ drivers and 6 bespoke grammars — 40 drivers that are out of
 scope by design rather than by omission.
 

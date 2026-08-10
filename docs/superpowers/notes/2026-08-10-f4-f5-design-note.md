@@ -42,10 +42,22 @@ This is pointer-chasing, which BDDO already does with `bddo:atOffsetFromField` a
 is a **table indexed by field identity**. DLV has the positional analogue already —
 `dlv:chunkOffsetsFromField` is a table of offsets indexed by chunk number.
 
-**Verdict: inside the line, and small.** It needs a keyed-lookup form — read the offset for
-*this* field from *that* table, keyed by a number the description states. No loop, no state,
-no search; a table lookup at a computed index, which `atOffsetFromExpression` can nearly
-express today. Roughly the size of the chunked-layout work.
+**Verdict: already expressible. Nothing to build.**
+
+This was written expecting to need a keyed-lookup form. Testing it instead of reasoning about
+it showed HEL's array subscript already does the job, because `bddo:atOffsetFromExpression`
+takes an arbitrary expression and a repeating field is an array node:
+
+```
+slotCount : u16le
+vtable    : u16le repeat [slotCount]
+width     : u32le @at [vtable[0]] from stream-start
+height    : u32le @at [vtable[1]] from stream-start if [vtable[1] != 0]
+```
+
+compiles today to `bddo:atOffsetFromExpression "parent.vtable[0]"`, with flatbuffers'
+absent-means-zero convention falling out of `bddo:isPresentIf`. "Nearly express" was wrong;
+it expresses it exactly.
 
 ### (b) Skip-unknown — MVT, and protobuf generally · shares the 3 above
 
@@ -53,11 +65,33 @@ Protobuf requires a reader to skip fields it does not recognise, using the wire 
 determine the length. A description that enumerates known fields and stops is wrong on any
 file written by a newer producer.
 
-**Verdict: inside the line, and bounded.** This is a conditional length rule — given a wire
-type, the field is 1 varint, 8 bytes, 4 bytes, or a length prefix followed by that many bytes.
-`bddo:hasConditionalDataType` already dispatches on a discriminator. What is missing is an
-explicit "and anything else is skipped, with its length determined thus" arm, which is a
-default case rather than new machinery.
+**Verdict: BDDO already permits it; only HDL could not author it. Now fixed.**
+
+The diagnosis above — "a conditional length rule ... a default case rather than new machinery"
+— was wrong about where the difficulty lies. It is not the length rule. It is that the extent
+cannot be DECLARED at all: a varint ends when its continuation bit clears, and a
+length-delimited field begins with its length, so both are discovered by reading.
+
+`bddo:hasConditionalDataType` may point at Structs, and a field whose type is a Struct needs no
+size — the struct reads what it needs. So a protobuf entry validates against BDDO as written,
+by hand, today. What blocked it was purely the DSL: HDL's `switch` was a clause that
+REINTERPRETS a byte run of known length (`bytes[n] switch { … }`), which is right for a PNG
+chunk and impossible for a protobuf field.
+
+HDL now accepts `switch` in the TYPE position, where the dispatched struct determines both what
+the field is and how far it extends:
+
+```
+struct Entry {
+  key  : varuint
+  body : switch [key & 7] { 0 => VarintVal  1 => Fixed64Val  2 => LenDelimVal  5 => Fixed32Val }
+}
+```
+
+Same shape of gap as hx-bundle's `pathPattern`: vocabulary present, surface absent. And the
+same reason it went unseen — `VocabCoverageTest` asks whether the emitter MENTIONS a term, and
+`hasConditionalDataType` was mentioned, by the reinterpreting form. A term can be half-reachable
+and the gate cannot tell.
 
 ### (c) Schema in the file — HFA, Parquet, CAD/DWG, PGeo · 5 drivers
 
@@ -152,10 +186,15 @@ downstream — layouts, mappings, checksums — works unchanged.
 
 ## 5. Recommendation
 
-**Do F4(a) and F4(b) as ordinary vocabulary work.** Keyed offset lookup and a wire-type skip
-rule are inside the line by any reading, and they unlock Arrow, FlatGeobuf and MVT — 3 drivers
-— with no architectural question attached. These are the cheap half of F4 and should not wait
-for the expensive half.
+**~~Do F4(a) and F4(b) as ordinary vocabulary work.~~ Done, 2026-08-10, and neither needed
+vocabulary.** F4(a) was already expressible end to end; F4(b) needed one HDL change and no
+vocabulary at all. Arrow, FlatGeobuf and MVT — 3 drivers — with no architectural question
+attached, and none of the work this note predicted.
+
+The lesson is narrower than "the estimate was wrong": both verdicts came from reading the
+vocabulary and reasoning about it, and both were corrected in minutes by writing the
+description and compiling it. For a question of the form "can this already be said", the
+compiler is the cheaper oracle.
 
 **Prototype delegated access on F5 before committing to it**, and specifically on MBTiles
 rather than GPKG. MBTiles is the smallest honest test: one table, one blob column, an integer
@@ -168,7 +207,7 @@ thing is a *description*, not bytes, so it re-enters compilation rather than the
 That is a second mechanism wearing the same name, and it should be designed only once the
 simpler one has proven itself.
 
-**Expected coverage.** F4(a)+(b) takes 139 → 142. Delegated access on F5 takes it to 149; F4(c)
+**Expected coverage.** F4(a)+(b) has taken 139 → 142. Delegated access on F5 takes it to 149; F4(c)
 would reach 154. The residue is then 42: the entropy-coded ◐ tier (34), the bespoke line
 grammars (6), and `GXF`/`VDV` (2) — all out of scope by design rather than by omission.
 
