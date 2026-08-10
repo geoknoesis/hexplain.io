@@ -41,7 +41,8 @@
             <li><b>Modules are aspects (facets), not file types.</b> Each semantic module models one coherent, format-independent concern.</li>
             <li><b>Aspects are mutually independent.</b> Aspect modules import nothing from each other. Orthogonality = zero sideways coupling. The only permitted imports are downward, to a small set of base aspects.</li>
             <li><b>Domains are thin compositions.</b> "Video" = <code>import(raster) + import(time) + import(encoding)</code> + a few video-only terms. A format is a boolean AND of aspects; hybrids (a GeoPDF = raster ∧ vector) need no special module.</li>
-            <li><b>Registers are decoupled data.</b> A codec / colour-space register is referenced by an aspect's property but governed and versioned on its own; its members belong to no domain.</li>
+            <li><b>Registers are decoupled data.</b> A register is governed and versioned on its own, and an aspect does <em>not</em> reference it: hx-security defines what a security marking HAS, while a register supplies one set of values it may take. The binding is declared per profile with <code>hexplain:usesRegister</code>, which is what lets a profile using a different classification system bind a different register without touching the aspect. That absence of a reference is the whole mechanism, so it is checked in both directions by <code>tools/test_vocab_neutrality.py</code>.</li>
+            <li><b>Normative vocabularies name no format.</b> BDDO, DLV, core and every aspect describe <em>any</em> format; a profile describes one. The moment a term like <code>bddo:nitfSecurityBlock</code> exists, BDDO has stopped being a byte vocabulary and become NITF's. Naming a format in a <em>comment</em> is the opposite — that is the evidence a term is needed, and is encouraged. An ALGORITHM named for its specifying document (<code>crc32</code>, <code>sqliteVarint</code>) is not a violation: it is a general encoding that happens to be specified somewhere. The same gate enforces this, with every exemption carrying its reason so the judgment can be argued with rather than merely trusted.</li>
             <li><b>Map to external standards at the leaf.</b> Descriptive metadata, provenance, and rights reuse <code>dcterms:</code>, PROV, SOSA/SSN, ODRL directly (with <code>skos:closeMatch</code>/<code>owl:equivalentProperty</code>) rather than minting parallel terms.</li>
         </ol>
     </section>
@@ -173,7 +174,14 @@ DOMAINS = compositions           PROFILES = domain(s) + format-unique terms
         <h3>7.1 Naming</h3>
         <p>Aspect ontologies live under <code>https://hexplain.io/ns/aspect/&lt;name&gt;#</code> and are labelled <code>hx-&lt;name&gt;</code>. Prefixes carry a leading <code>a</code> to mark the aspect layer and avoid collisions with common prefixes (e.g. <code>time:</code> for OWL-Time): <code>atime</code>, <code>aenc</code>, <code>acolor</code>, <code>araster</code>, <code>ageom</code>, <code>asref</code>, <code>asamp</code>, <code>asig</code>, <code>aprov</code>, <code>asec</code>, …</p>
         <h3>7.2 Registers</h3>
-        <p>Controlled vocabularies are open <code>skos:ConceptScheme</code>s. In this release each register is hosted inside the aspect that references it (Codec Register in <code>hx-encoding</code>, Colour Space Register in <code>hx-color</code>); registers MAY later be split into standalone, independently-versioned artifacts without changing referencing IRIs' semantics.</p>
+        <p>Controlled vocabularies are open <code>skos:ConceptScheme</code>s living under <code>https://hexplain.io/ns/register/&lt;name&gt;#</code>, in <code>specification/register/&lt;name&gt;/</code>. They were originally hosted inside the aspect that referenced them; that split has since happened, moving 111 concepts out of six aspects into standalone registers (<code>us-nato-security</code>, <code>media-encoding</code>, <code>color</code>, <code>checksum</code>, <code>part-role</code>, <code>geometry-type</code>).</p>
+        <p>Three rules follow, all machine-checked:</p>
+        <ul>
+            <li>An aspect declares <b>no</b> <code>skos:Concept</code> of its own — concepts live in a register.</li>
+            <li>An aspect <b>never references</b> a register term. A profile declares the binding with <code>hexplain:usesRegister</code>.</li>
+            <li>A register <b>never references</b> an aspect term. The dependency runs one way, so a register can be reused by a second property and versioned alone.</li>
+        </ul>
+        <p>A register concept carries no <code>skos:notation</code>: a notation is one format's spelling of a concept (NITF's digraphs, a codec's short name), and belongs in the profile's mapping rather than in a format-neutral register.</p>
         <h3>7.3 Versioning &amp; compatibility</h3>
         <p>The family is pre-release. Every module is version 1.0 with no prior-version history: terms are defined (or placed during this refactor) directly, with no deprecation, no backward-compatibility layer, and no <code>owl:priorVersion</code>. A compatibility policy will be defined when the first version is released.</p>
     </section>
