@@ -30,7 +30,7 @@
     <section class="introductory">
         <h2>1. Motivation</h2>
         <p>The original domain vocabularies were carved by <b>file type</b> (image / video / audio / geo), but the concepts they carry are properties of <b>intrinsic aspects of data</b> that cut across file types. <code>colorSpace</code> belongs to any raster or vector-styled content (image, video, geo-raster); <code>codec</code> belongs to any encoded stream (audio, video, compressed image); <code>duration</code> belongs to any timeline (audio, video). When modules are partitioned by file type, every cross-cutting concept has an ambiguous home and is either duplicated or forced into a "shared" grab-bag.</p>
-        <p>Two symptoms made this concrete: <code>colorSpace</code> was defined in both the image and video vocabularies; and an interim "Media Vocabulary" whose membership rule was "terms shared by audio ∩ video" ended up bundling two unrelated concerns (visual colour and stream/time). A set-intersection of domains is not a concern. Meanwhile the <a href="../gv/index.html">Geospatial Vocabulary</a> fuses five concerns in one module (spatial reference, raster georeferencing, point-cloud geometry, sensor/acquisition provenance, and even a security marking, <code>classificationLevel</code>) — the same disease at a larger scale. Tellingly, the <b>layout layer already models data as a composition of independent axes</b> (<code>dlv:axisX</code>, <code>axisTime</code>, <code>axisBand</code>, …); the semantic layer should adopt the same facet discipline.</p>
+        <p>Two symptoms made this concrete: <code>colorSpace</code> was defined in both the image and video vocabularies; and an interim "Media Vocabulary" whose membership rule was "terms shared by audio ∩ video" ended up bundling two unrelated concerns (visual colour and stream/time). A set-intersection of domains is not a concern. Meanwhile the <a href="../gv/index.html">Geospatial Vocabulary</a> fuses five concerns in one module (spatial reference, raster georeferencing, point-cloud geometry, sensor/acquisition provenance, and even a security marking, then called <code>classificationLevel</code>) — the same disease at a larger scale. Tellingly, the <b>layout layer already models data as a composition of independent axes</b> (<code>dlv:axisX</code>, <code>axisTime</code>, <code>axisBand</code>, …); the semantic layer should adopt the same facet discipline.</p>
     </section>
 
     <section id="principles">
@@ -106,9 +106,22 @@
                 <tr><td><code>hx-descriptive</code></td><td>title, creator, date, subject, language, identifier</td><td>reuse dcterms / ma</td></tr>
                 <tr><td><code>hx-provenance</code> ✓</td><td>sensor, platform, acquisitionTime, activity, lineage</td><td>reuse PROV + SOSA/SSN</td></tr>
                 <tr><td><code>hx-rights</code></td><td>license, usage constraints</td><td>reuse dcterms:license / ODRL</td></tr>
-                <tr><td><code>hx-security</code> ✓</td><td>classificationLevel, caveats, dissemination, redaction</td><td>mint (align to a marking standard)</td></tr>
+                <tr><td><code>hx-security</code> ✓</td><td>sensitivityLevel, authority, lifecycle dates, and one open <code>marking</code> for whatever a system adds</td><td>mint, agnostic to the marking system (see below)</td></tr>
             </tbody>
         </table>
+        <p class="note">
+            <b>hx-security is the worked example of the register mechanism, and of getting it wrong
+            first.</b> Version 1.1 already drew its VALUES from a per-profile register, which looked
+            agnostic — but its property SET was US IC ISM's: <code>declassificationExemption</code>,
+            <code>classificationReason</code>, <code>classificationAuthorityType</code> are categories of
+            one national policy. A system that marks documents differently had to leave them empty and
+            had nowhere to put what it did have. Swappable values on a fixed skeleton is not agnostic.
+            2.0 keeps only what every system has and routes the rest through one open
+            <code>asec:marking</code> whose value's <code>skos:inScheme</code> identifies the kind, so
+            supporting a system means publishing registers rather than editing the aspect. The lesson
+            generalises: when an aspect enumerates the KINDS of something, check whose taxonomy those
+            kinds came from.
+        </p>
 
         <h3>3.7 Container &amp; system</h3>
         <table class="simple">
@@ -196,7 +209,7 @@ DOMAINS = compositions           PROFILES = domain(s) + format-unique terms
                 <tr><td><b>1. Media split</b></td><td>Dissolve the interim Media Vocabulary into <code>hx-time</code> + <code>hx-encoding</code> + <code>hx-color</code>; move <code>colorSpace</code> to <code>hx-color</code>; re-point ADV &amp; VDV imports.</td><td>✓ done</td></tr>
                 <tr><td><b>2. Raster + sampling</b></td><td>Create <code>hx-sampling</code>, <code>hx-raster</code>; migrate IDV + VDV dimensions (<code>frameWidth</code>≡<code>pixelWidth</code> → <code>araster:width</code>) and bit depth (image + audio → <code>asamp:bitDepth</code>); IDV gains semantic <code>acolor:colorSpace</code>.</td><td>✓ done</td></tr>
                 <tr><td><b>3. Signal</b></td><td><code>hx-signal</code> for ADV (sampleRate, channelLayout).</td><td>✓ done</td></tr>
-                <tr><td><b>4. Un-bundle GV</b></td><td>Extract <code>hx-spatialref</code>, <code>hx-provenance</code> (reuse PROV/SOSA), <code>hx-security</code> (<code>classificationLevel</code> out). GV → composition.</td><td>✓ done</td></tr>
+                <tr><td><b>4. Un-bundle GV</b></td><td>Extract <code>hx-spatialref</code>, <code>hx-provenance</code> (reuse PROV/SOSA), <code>hx-security</code> (the marking properties out; since generalised in 2.0). GV → composition.</td><td>✓ done</td></tr>
                 <tr><td><b>5. Vector / geometry</b></td><td><code>hx-geometry</code> (+ <code>hx-tabular</code>, <code>hx-pointcloud</code>); retrofit GV vector + point cloud, DFV glyphs, add an SVG profile.</td><td>✓ done</td></tr>
                 <tr><td><b>6. Governance &amp; container</b></td><td><code>hx-descriptive</code> (map dcterms), <code>hx-rights</code>, <code>hx-integrity</code>, <code>hx-packaging</code>, <code>hx-fsmeta</code>, <code>hx-networkflow</code>; apply to AXV/NPV/DFV.</td><td>✓ done</td></tr>
                 <tr><td><b>7. Thin domains + conformance</b></td><td>Reduce every domain vocab to <code>imports + unique terms</code>; SHACL asserting valid composition.</td><td>✓ done</td></tr>

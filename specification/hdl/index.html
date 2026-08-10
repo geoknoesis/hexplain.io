@@ -334,7 +334,7 @@ bundle Shapefile @bound-by naming-convention {
   part ".cpg" role CharacterEncoding optional          carries aenc:
 }
             </pre>
-            <p>A <code>bundle</code> mints an <code>abnd:BundleProfile</code>; each <code>part</code> mints a <code>abnd:PartSpec</code>. <code>@bound-by</code> keywords <code>containment | naming-convention | manifest-reference | concatenation</code> map to the four <code>abnd:BindingKind</code> individuals. <code>role X</code> resolves to the register concept <code>abnd:X</code> (or a CURIE <code>role ns:Custom</code>); <code>required</code>/<code>optional</code> &#8594; <code>abnd:required</code>; <code>primary</code> &#8594; <code>abnd:primary</code>; <code>described-by S</code> &#8594; <code>abnd:describedBy</code> the named struct.</p>
+            <p>A <code>bundle</code> mints an <code>abnd:BundleProfile</code>; each <code>part</code> mints a <code>abnd:PartSpec</code>. <code>@bound-by</code> keywords <code>containment | naming-convention | manifest-reference | concatenation</code> map to the four <code>abnd:BindingKind</code> individuals. <code>role Name</code> resolves to the concept of that name in the part-role register (prefix <code>rpr</code>) (or a CURIE <code>role ns:Custom</code>); the <code>role:</code> and <code>rpr:</code> prefixes are both predeclared for it; <code>required</code>/<code>optional</code> &#8594; <code>abnd:required</code>; <code>primary</code> &#8594; <code>abnd:primary</code>; <code>described-by S</code> &#8594; <code>abnd:describedBy</code> the named struct.</p>
             <p class="note"><code>carries</code> resolves to the aspect's <b>ontology IRI</b>, not its namespace IRI: <code>abnd:carriesAspect</code> has range <code>owl:Ontology</code>, so a single trailing <code>#</code> or <code>/</code> is stripped from the prefix's namespace (<code>ageom:</code> &#8594; <code>&lt;https://hexplain.io/ns/aspect/geometry&gt;</code>).</p>
         </section>
         <section id="asset">
@@ -353,7 +353,7 @@ asset roads conforms Shapefile @bound-by naming-convention @stem "roads" @primar
         <h2>Escape Hatch</h2>
         <p>Two constructs guarantee completeness against the evolving vocabularies:</p>
         <ul>
-            <li><code>raw-turtle { &#8230; }</code> at struct scope injects arbitrary Turtle triples into the output graph; its body is preserved verbatim. There is no field-scoped form, but a struct-scope block can still inject a triple about any of the struct's fields (e.g. <code>:S ageom:crs :Field .</code>).</li>
+            <li><code>raw-turtle { &#8230; }</code> at struct scope injects arbitrary Turtle triples into the output graph; its body is preserved verbatim. There is no field-scoped form, but a struct-scope block can still inject a triple about any of the struct's fields (e.g. <code>:S asref:wktString :Field .</code>).</li>
             <li><code>@prop &lt;curie&gt; &lt;value&gt;</code> sets any property the sugar does not know by name.</li>
         </ul>
         <pre class="nohighlight">

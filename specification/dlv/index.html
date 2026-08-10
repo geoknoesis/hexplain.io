@@ -52,7 +52,7 @@
             <dt><code>dlv:Dimension</code></dt>
             <dd>One dimension of the array (e.g. width, height, bands).</dd>
             <dt><code>dlv:Axis</code></dt>
-            <dd>A semantic descriptor for a dimension. DLV provides common axes; domain vocabularies define specialized ones.</dd>
+            <dd>A semantic descriptor for a dimension. DLV provides five: <code>dlv:axisX</code>, <code>dlv:axisY</code>, <code>dlv:axisZ</code>, <code>dlv:axisBand</code> and <code>dlv:axisTime</code>. Domain vocabularies define specialised ones — the geospatial vocabulary adds latitude, longitude, elevation and point axes and relates them back to these with <code>rdfs:seeAlso</code>.</dd>
         </dl>
     </section>
 
@@ -82,8 +82,59 @@
             <dt><code>dlv:chunkOffsetsFromField</code> / <code>dlv:chunkLengthsFromField</code></dt>
             <dd>The repeating fields holding each chunk's byte offset and length — TIFF's <code>TileOffsets</code>/<code>TileByteCounts</code>, NITF's block offsets.</dd>
             <dt><code>dlv:chunkOrder</code> / <code>dlv:chunkOffsetBase</code></dt>
-            <dd>Traversal order of the chunk table (default <code>dlv:rowMajor</code>) and what its offsets are relative to (default <code>bddo:streamStart</code>).</dd>
+            <dd>Traversal order of the chunk table and what its offsets are relative to. <code>dlv:chunkOrder</code> is one of <code>dlv:rowMajor</code> (the default), <code>dlv:columnMajor</code>, <code>dlv:morton</code> or <code>dlv:hilbert</code> — the last two being space-filling curves, used where chunk locality matters more than scan order. <code>dlv:chunkOffsetBase</code> defaults to <code>bddo:streamStart</code>.</dd>
+            <dt><code>dlv:cellBitWidth</code> / <code>dlv:cellBitWidthFromField</code> / <code>dlv:cellPackingOrder</code></dt>
+            <dd>
+                Sub-byte cells. Every <code>bddo:DataType</code> is a whole number of bytes, so a grid whose
+                cells are not — a 1-bit mask, a 4-bit palette index, GRIB2 packing, NITF 1-bit imagery —
+                could not be addressed at all. <code>dlv:cellBitWidth</code> overrides the cell type's
+                intrinsic width, so the type keeps saying how to <em>interpret</em> a cell (signed,
+                unsigned, float) while the width says how much room it takes; cells are contiguous in the
+                bit stream and MAY straddle byte boundaries. <code>dlv:cellBitWidthFromField</code> reads
+                that width from a field, which GRIB2 needs because it carries the width in its
+                data-representation section. <code>dlv:cellPackingOrder</code> says whether the first cell
+                of a byte occupies the most or least significant bits, defaulting to
+                <code>bddo:MSBFirst</code>; it is meaningful only alongside a packed width, and a width is
+                either fixed or read, never both.
+                <p class="note">
+                    Distinct from <code>asamp:bitDepth</code>, which is significant bits carried inside a
+                    <em>wider</em> container — NITF's ABPP 12 within NBPP 16. That grid is padded and its
+                    cells stay two bytes apart; this one is packed. The two can hold different values for
+                    the same raster. Note also that <code>dlv:dimensionStride</code> stays in BYTES even
+                    for a packed layout, because rows are normally padded to a byte boundary while the
+                    cells within a row are not.
+                </p>
+            </dd>
         </dl>
+    </section>
+
+    <section id="conditional">
+        <h2>Conditional Layout</h2>
+        <p>
+            The cell type and the dimension order may each depend on something read earlier, because the
+            same bytes are read differently depending on it. An ESRI <code>.hdr</code>-labelled grid's
+            <code>NBITS 32</code> means <code>uint32</code> for a <code>.bil</code> and
+            <code>float32</code> for a <code>.flt</code>; an ENVI cube's three dimensions are ordered by
+            its interleave keyword.
+        </p>
+        <p>
+            These are <b>two independent conditionals over one set of dimensions</b>, not one conditional
+            layout. Making the whole layout conditional multiplies the cases — ENVI would need a layout
+            per (interleave, width) pair, each restating every extent — whereas these are two small rule
+            lists over the same <code>dlv:Dimension</code> nodes, so an extent is written once and the
+            arms cannot disagree about it.
+        </p>
+        <dl>
+            <dt><code>dlv:hasConditionalCellDataType</code> → ordered list of <code>dlv:CellDataTypeRule</code></dt>
+            <dd>Each rule carries a <code>bddo:condition</code> (a <a href="../hel/index.html">HEL</a> expression) and a <code>dlv:ruleCellDataType</code>. Mutually exclusive with <code>dlv:cellDataType</code>.</dd>
+            <dt><code>dlv:hasConditionalDimensionOrder</code> → ordered list of <code>dlv:DimensionOrderRule</code></dt>
+            <dd>Each rule carries a <code>bddo:condition</code> and a <code>dlv:ruleDimensionOrder</code>, itself an ordered list of the same <code>dlv:Dimension</code> nodes in the order that arm selects. Mutually exclusive with <code>dlv:hasDimension</code>.</dd>
+        </dl>
+        <p>
+            Both are <b>first match wins</b>, so a more specific arm MUST precede a more general one: a
+            <code>.flt</code> arm has to come before a <code>NBITS 32</code> arm, because a float grid is
+            also 32 bits wide and the width arm would otherwise claim it.
+        </p>
     </section>
 
     <section id="normative-owl">

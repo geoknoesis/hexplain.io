@@ -103,6 +103,39 @@
                 <dt><code>hexplain:register</code></dt>
                 <dd>The <code>skos:ConceptScheme</code> whose members are the permitted values — for example, a profile might bind some <code>ex:status</code> property to an <code>ex:StatusCodes</code> scheme.</dd>
             </dl>
+            <p class="note">
+                A profile MAY bind the same property more than once, one binding per register, where a
+                property legitimately draws from several schemes. An aspect that models markings as one
+                open property whose value's scheme identifies its kind is the case this exists for.
+            </p>
+        </section>
+
+        <section>
+            <h3>Encoding Pipeline Properties</h3>
+            <p>
+                One codec is the exception rather than the rule. A TIFF strip is horizontally differenced
+                and then deflated; an HDF5 dataset runs a filter pipeline; a Zarr array chains delta into
+                a Blosc parameterised by an inner codec, a shuffle mode and a level; a Parquet page is
+                dictionary- or run-length-encoded before Snappy. With only
+                <code>hexplain:isEncodedWith</code>, a description could name the last step and lost both
+                the earlier ones and every setting — enough to identify the compression, never enough to
+                undo it.
+            </p>
+            <dl>
+                <dt><code>hexplain:hasEncodingStep</code></dt>
+                <dd>An ordered <code>rdf:List</code> of <code>hexplain:EncodingStep</code>. Mutually exclusive with <code>hexplain:isEncodedWith</code>, which remains the shorthand for a single unparameterised codec.</dd>
+                <dt><code>hexplain:EncodingStep</code> / <code>hexplain:codec</code></dt>
+                <dd>One stage: exactly one codec, drawn from whichever codec or compression register the profile binds — the same registers <code>hexplain:isEncodedWith</code> draws on.</dd>
+                <dt><code>hexplain:codecParameter</code> → <code>hexplain:CodecParameter</code></dt>
+                <dd>A setting the codec was applied with, as a <code>hexplain:parameterName</code> / <code>hexplain:parameterValue</code> pair. Deliberately a name/value pair rather than a fixed vocabulary: codec options are open-ended and vendor-specific, and enumerating them would date immediately. The value is left untyped — a level is an integer, a Blosc inner codec a string, a flag a boolean.</dd>
+            </dl>
+            <p>
+                <b>Order is ENCODE order</b> — the steps as the writer applied them, so a reader inverts
+                them in REVERSE. Stating this matters, because a pipeline read the wrong way round is
+                still a plausible-looking pipeline: TIFF's difference-then-deflate inverts to
+                inflate-then-undifference, and doing it in the written order produces noise rather than an
+                error.
+            </p>
         </section>
     </section>
 

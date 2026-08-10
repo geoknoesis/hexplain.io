@@ -142,6 +142,28 @@
                 <tr><td><code>bddo:string</code></td><td>Text. Requires a sizing or termination property; MAY have <code>bddo:encoding</code>.</td><td><code>xsd:string</code></td></tr>
             </tbody>
         </table>
+        <h3>Variable-Length Integers</h3>
+        <p>
+            An integer whose WIDTH is discovered from its own bytes rather than declared. Framing such a
+            field was always possible byte by byte; reconstructing the VALUE was not, which is what kept
+            protobuf-framed and SQLite-backed formats out of reach.
+        </p>
+        <table class="simple">
+            <thead><tr><th>IRI</th><th>Encoding</th><th>xsdType</th></tr></thead>
+            <tbody>
+                <tr><td><code>bddo:varuint</code></td><td>Unsigned base-128 (LEB128): seven value bits per byte, little-endian, high bit set on every byte but the last. Protobuf's plain varint.</td><td><code>xsd:nonNegativeInteger</code></td></tr>
+                <tr><td><code>bddo:varint</code></td><td>LEB128 carrying a zigzag-encoded value, so small negatives stay short. Protobuf's <code>sint32</code>/<code>sint64</code>. Distinct from reading a <code>varuint</code> and reinterpreting the bits, which sign-extends instead.</td><td><code>xsd:integer</code></td></tr>
+                <tr><td><code>bddo:sqliteVarint</code></td><td>One to nine BIG-endian bytes, high bit as continuation for the first eight, the ninth contributing all eight bits. A different scheme from LEB128, not a dialect of it; used by GeoPackage, MBTiles and Rasterlite.</td><td><code>xsd:integer</code></td></tr>
+            </tbody>
+        </table>
+        <p>
+            A field of one of these types MUST NOT declare a width or terminator — <code>bddo:size</code>,
+            <code>bddo:sizeFromField</code>, <code>bddo:sizeFromExpression</code>,
+            <code>bddo:sizeToEndOfStream</code>, <code>bddo:terminator</code> or <code>bddo:bitLength</code>
+            — because its length comes from the data and a declared one could contradict it.
+            <code>bddo:VarintWidthShape</code> enforces this.
+        </p>
+
         <h3>ASCII-Coded Numeric Types</h3>
         <p>Many record-oriented formats write numbers as text in fixed-width fields — NITF BCS-N, FITS card values, USGS DEM Fortran fields. <code>bddo:asciiInteger</code> and <code>bddo:asciiDecimal</code> read such a field as a number rather than a string, so its value may drive <code>bddo:sizeFromExpression</code>, <code>bddo:atOffsetFromExpression</code> and <code>bddo:repeatCountFromExpression</code>. The field's width comes from <code>bddo:size</code> (or a terminator), except for a field of a <code>bddo:DelimitedRecords</code>, whose extent comes from its container's delimiters; <code>bddo:numericBase</code> selects the radix.</p>
     </section>
@@ -224,7 +246,7 @@
                 <dt><code>bddo:hasEnumValue</code>, <code>bddo:enumRawValue</code>, <code>bddo:enumSymbol</code></dt>
                 <dd>An <code>bddo:Enumeration</code>'s members; each <code>bddo:EnumValue</code> pairs a raw literal (<code>bddo:enumRawValue</code>) with an optional symbolic IRI (<code>bddo:enumSymbol</code>) and/or <code>rdfs:label</code>.</dd>
                 <dt><code>bddo:checksumAlgorithm</code>, <code>bddo:coversFromField</code>, <code>bddo:coversToField</code>, <code>bddo:coversFromExpression</code>, <code>bddo:coversToExpression</code></dt>
-                <dd>A <code>bddo:Checksum</code>'s algorithm (e.g. <code>bddo:crc32</code>) and the byte range it protects. Each end of the range is stated independently, as a field reference or a <a href="../hel/index.html">HEL</a> expression, so a range may start at a named field and end at a computed offset. The field form is inclusive of <code>coversToField</code>'s last byte; the expression form is the half-open <code>[start,end)</code>. (<code>bddo:coversExpression</code>, a single expression for the whole range, is deprecated in favour of the pair.)</dd>
+                <dd>A <code>bddo:Checksum</code>'s algorithm and the byte range it protects. The algorithm is one of <code>bddo:crc16</code>, <code>bddo:crc32</code>, <code>bddo:adler32</code>, <code>bddo:md5</code>, <code>bddo:sha1</code> or <code>bddo:sha256</code> — a closed set, since a checksum names an algorithm a reader must already implement to verify anything. Each end of the range is stated independently, as a field reference or a <a href="../hel/index.html">HEL</a> expression, so a range may start at a named field and end at a computed offset. The field form is inclusive of <code>coversToField</code>'s last byte; the expression form is the half-open <code>[start,end)</code>. (<code>bddo:coversExpression</code>, a single expression for the whole range, is deprecated in favour of the pair.)</dd>
             </dl>
         </section>
     </section>

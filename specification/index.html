@@ -188,7 +188,7 @@
             While domain vocabularies provide general concepts, many formats have unique features. Hexplain handles this through <b>Profiles</b>: a specialized ontology that extends the core vocabularies to describe a single, specific format.
         </p>
         <p>
-            For example, a <b>PDF Profile</b> would define PDF-specific classes like <code>pdf:Object</code>, <code>pdf:Stream</code>, and <code>pdf:CrossReferenceTable</code>, then map them to the more general concepts in DFV (e.g. mapping a PDF <code>/Author</code> entry to <code>dfv:author</code>). Similarly, a <b>GeoTIFF Profile</b> would define TIFF tags and GeoKeys — using BDDO's offset-based addressing (<code>bddo:atOffsetFromField</code>) for the IFD structure — and map them to GV and IDV.
+            For example, a <b>PDF Profile</b> would define PDF-specific classes like <code>pdf:Object</code>, <code>pdf:Stream</code>, and <code>pdf:CrossReferenceTable</code>, then map them to the more general concepts in DFV (e.g. mapping a PDF <code>/Author</code> entry to <code>dcterms:creator</code>, which hx-docfont reuses rather than re-minting). Similarly, a <b>GeoTIFF Profile</b> would define TIFF tags and GeoKeys — using BDDO's offset-based addressing (<code>bddo:atOffsetFromField</code>) for the IFD structure — and map them to GV and IDV.
         </p>
     </section>
 
@@ -214,13 +214,13 @@
         <section>
             <h3>Geointelligence Analysis</h3>
             <p>
-                An intelligence agency has a massive archive of satellite imagery in various formats (GeoTIFF, NITF, HDF5). Using Hexplain, they create descriptions for each, all mapping to the Geospatial Vocabulary (GV). An analyst runs a single SPARQL query: <em>"Find all datasets from the 'WorldView-3' platform (<code>gv:platformName</code>) collected after January 1, 2024 (<code>gv:acquisitionTime</code>) that contain a Lidar point cloud (<code>gv:PointCloud</code>)."</em>
+                An intelligence agency has a massive archive of satellite imagery in various formats (GeoTIFF, NITF, HDF5). Using Hexplain, they create descriptions for each, all mapping to the Geospatial Vocabulary (GV). An analyst runs a single SPARQL query: <em>"Find all datasets from the 'WorldView-3' platform (<code>aprov:platformName</code>) collected after January 1, 2024 (<code>aprov:acquisitionTime</code>) that contain a Lidar point cloud (<code>gv:PointCloud</code>)."</em>
             </p>
         </section>
         <section>
             <h3>Digital Forensics</h3>
             <p>
-                An investigator analyzes a raw disk image with a Hexplain-powered tool. It uses <code>bddo:syncOnMarker</code> from each description to scan for file signatures, then parses each file, validates integrity using declared <code>bddo:Checksum</code>s, and extracts key metadata (<code>dfv:creationDate</code>, EXIF camera model). This automates file carving and metadata extraction.
+                An investigator analyzes a raw disk image with a Hexplain-powered tool. It uses <code>bddo:syncOnMarker</code> from each description to scan for file signatures, then parses each file, validates integrity using declared <code>bddo:Checksum</code>s, and extracts key metadata (<code>dcterms:created</code>, EXIF camera model). This automates file carving and metadata extraction.
             </p>
         </section>
         <section>
