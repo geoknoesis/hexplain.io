@@ -211,6 +211,41 @@ table Points @record-separator 0x0A @whitespace @comment "#" @skip 1 {
             </tbody>
         </table>
 
+        <h3>Tree documents</h3>
+        <p>
+            A <code>document</code> container compiles to <code>bddo:TreeDocument</code>: its bytes
+            go to a parser for the declared syntax, and each field names the node supplying its
+            value. Paths are an abbreviated XPath for <code>@xml</code> and RFC 6901 pointers for
+            <code>@json</code>.
+        </p>
+        <pre class="nohighlight">
+document Label @xml
+  @ns "pds"  "http://pds.nasa.gov/pds4/pds/v1"
+  @ns "disp" "http://pds.nasa.gov/pds4/disp/v1"
+{
+  "/pds:Product_Observational/pds:File_Area_Observational/pds:Array_2D_Image/pds:Axis_Array[1]/pds:elements" : anum
+  "/pds:Product_Observational/pds:Observation_Area/@unit" : str
+}
+
+document ArrayMeta @json {
+  "/shape/0"       : anum
+  "/dtype"         : str
+  "/compressor/id" : str
+}
+        </pre>
+        <p>
+            <code>@ns "&lt;prefix&gt;" "&lt;iri&gt;"</code> binds a prefix used in the paths, and an
+            XML document generally needs it: an unprefixed path against a namespaced document
+            matches nothing rather than failing. <code>@ns "" "&lt;iri&gt;"</code> binds the
+            <b>default</b> namespace, which an abbreviated XPath cannot otherwise reach.
+        </p>
+        <p>
+            As with a nested <code>header</code>, the field syntax does not change — a quoted name
+            becomes a <code>bddo:nodePath</code> because the container is a <code>document</code>.
+            One quoting convention across all three container forms, with the container deciding
+            what the quoted string means.
+        </p>
+
         <h3>Nested labels</h3>
         <p>
             A flat container stops at the label formats that are otherwise the same shape. PVL/ODL

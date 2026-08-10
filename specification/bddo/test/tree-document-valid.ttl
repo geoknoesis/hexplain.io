@@ -1,0 +1,73 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <http://example.org/tree#> .
+
+# XML and JSON labels wrap a payload that is otherwise already describable. PDS4, DIMAP, SAFE,
+# Sentinel-2, RadarSat-2, TerraSAR-X and CPHD all pair a clean binary array with a manifest
+# BDDO could not read; Zarr's chunk store was fully covered by chunked layout and encoding
+# pipelines while .zarray kept it at payload-only.
+
+# ---------- XML, namespaced ----------
+# PDS4's label is namespaced, which is the case an unprefixed path silently fails on: it
+# matches nothing and the field is simply absent, with no error anywhere.
+ex:Pds4Label a bddo:TreeDocument ;
+    rdfs:label "PDS4 XML label" ;
+    bddo:treeSyntax bddo:xml ;
+    bddo:hasNamespaceBinding
+        [ a bddo:NamespaceBinding ; bddo:namespacePrefix "pds" ;
+          bddo:namespaceIRI "http://pds.nasa.gov/pds4/pds/v1"^^xsd:anyURI ] ,
+        [ a bddo:NamespaceBinding ; bddo:namespacePrefix "disp" ;
+          bddo:namespaceIRI "http://pds.nasa.gov/pds4/disp/v1"^^xsd:anyURI ] ;
+    bddo:hasField ( ex:Pds4Lines ex:Pds4Samples ex:Pds4Unit ex:Pds4AxisName ) .
+
+ex:Pds4Lines a bddo:Field ; bddo:dataType bddo:asciiInteger ;
+    bddo:nodePath "/pds:Product_Observational/pds:File_Area_Observational/pds:Array_2D_Image/pds:Axis_Array[1]/pds:elements" .
+ex:Pds4Samples a bddo:Field ; bddo:dataType bddo:asciiInteger ;
+    bddo:nodePath "/pds:Product_Observational/pds:File_Area_Observational/pds:Array_2D_Image/pds:Axis_Array[2]/pds:elements" .
+# An attribute step. Common in XML labels for units and identifiers.
+ex:Pds4Unit a bddo:Field ; bddo:dataType bddo:string ;
+    bddo:nodePath "/pds:Product_Observational/pds:Observation_Area/pds:Time_Coordinates/@unit" .
+# A second namespace in one document, which is why bindings are a list rather than one value.
+ex:Pds4AxisName a bddo:Field ; bddo:dataType bddo:string ;
+    bddo:nodePath "/pds:Product_Observational/disp:Display_Settings/disp:axis_name" .
+
+# ---------- XML, default namespace ----------
+# The empty prefix binds the default namespace, which an abbreviated XPath cannot otherwise
+# reach -- an unprefixed step means "no namespace", not "the default one".
+ex:DimapLabel a bddo:TreeDocument ;
+    rdfs:label "DIMAP metadata" ;
+    bddo:treeSyntax bddo:xml ;
+    bddo:hasNamespaceBinding
+        [ a bddo:NamespaceBinding ; bddo:namespacePrefix "" ;
+          bddo:namespaceIRI "http://www.spotimage.fr/dimap"^^xsd:anyURI ] ;
+    bddo:hasField ( ex:DimapRows ) .
+ex:DimapRows a bddo:Field ; bddo:dataType bddo:asciiInteger ;
+    bddo:nodePath "/Dimap_Document/Raster_Dimensions/NROWS" .
+
+# ---------- JSON ----------
+# RFC 6901 pointers, adopted rather than invented: array indices are 0-based and the escaping
+# rules for '/' and '~' inside a member name are already specified.
+ex:ZarrArrayMeta a bddo:TreeDocument ;
+    rdfs:label "Zarr .zarray" ;
+    bddo:treeSyntax bddo:json ;
+    bddo:hasField ( ex:ZarrShape0 ex:ZarrChunk0 ex:ZarrDtype ex:ZarrCompressorId ) .
+
+ex:ZarrShape0 a bddo:Field ; bddo:dataType bddo:asciiInteger ; bddo:nodePath "/shape/0" .
+ex:ZarrChunk0 a bddo:Field ; bddo:dataType bddo:asciiInteger ; bddo:nodePath "/chunks/0" .
+ex:ZarrDtype a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath "/dtype" .
+# Nested object inside the document.
+ex:ZarrCompressorId a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath "/compressor/id" .
+
+# ---------- A repeating path ----------
+# A path selecting several nodes is legal when the field repeats; its value is those nodes in
+# document order. Without the repeat it would be an error, since one field cannot hold many.
+ex:GmlDoc a bddo:TreeDocument ;
+    bddo:treeSyntax bddo:xml ;
+    bddo:hasNamespaceBinding
+        [ a bddo:NamespaceBinding ; bddo:namespacePrefix "gml" ;
+          bddo:namespaceIRI "http://www.opengis.net/gml/3.2"^^xsd:anyURI ] ;
+    bddo:hasField ( ex:GmlPosList ) .
+ex:GmlPosList a bddo:Field ; bddo:dataType bddo:asciiDecimal ;
+    bddo:nodePath "/gml:FeatureCollection/gml:featureMember/gml:pos" ;
+    bddo:repeatUntil "eof()" .

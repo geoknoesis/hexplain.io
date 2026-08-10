@@ -41,7 +41,7 @@ coverage to **156 of 196**.
 
 ## 2. Features, ranked by drivers unlocked
 
-### F1 — XML element addressing · 25 drivers · the largest remaining unlock
+### F1 — XML element addressing · 25 drivers · ✅ DONE
 
 The direct analogue of what `bddo:DelimitedRecords` did for `key = value`. A vocabulary for
 addressing an element or attribute by path, and binding it to a field, so an XML label can
@@ -60,7 +60,25 @@ XML all the way down and are the harder half.
 **Watch for:** the same non-recursion trap as F3. An XML surface that cannot express nesting
 would unlock the manifests and none of the grammars.
 
-### F2 — JSON element addressing · 6 drivers
+**Shipped 2026-08-10, together with F2 as one mechanism.** `bddo:TreeDocument` addresses nodes
+in the tree a conforming parser produces — it does NOT describe the syntax of these documents,
+which is what keeps it from becoming an XML specification. One `bddo:nodePath` property, read
+according to `bddo:treeSyntax`: an abbreviated XPath (child, attribute and positional steps
+only) for `bddo:xml`, and RFC 6901 JSON Pointers for `bddo:json`. Both adopted rather than
+invented; the two index conventions (1-based predicates, 0-based pointers) are kept as their
+standards define them rather than normalised, which would surprise everyone who knows either.
+
+`bddo:hasNamespaceBinding` is the part that decides whether this works at all in practice: PDS4,
+DIMAP and SAFE are namespaced, and an unprefixed path against a namespaced document matches
+nothing rather than failing. An empty prefix binds the default namespace, which an abbreviated
+XPath cannot otherwise reach. A binding on a JSON document is rejected rather than ignored,
+because it signals a misunderstanding of what the paths will match.
+
+HDL gains a `document` container with `@xml`/`@json` and `@ns`. The field syntax is unchanged
+across all three container forms — a quoted name is a key, a key path or a node path according
+to the container, never according to the field.
+
+### F2 — JSON element addressing · 6 drivers · ✅ DONE
 
 Distinct grammar from XML, same shape of problem, much smaller. `Zarr` (◑ — its
 `.zarray`/`.zattrs` are the only thing keeping it there, since chunked layout and encoding
@@ -153,7 +171,7 @@ and revisiting only if one is specifically needed.
    and search. These are the two that push on "describe, don't execute", and deciding that
    deliberately is worth more than the 15 drivers.
 
-Doing 1–3 takes full coverage from **97 to 141 of 196** (step 1 is done: 104). Adding step 4 reaches **156**. The
+Doing 1–3 takes full coverage from **97 to 141 of 196**. Steps 1 and 2 are done: **135**. Adding step 4 reaches **156**. The
 residue is then 34 entropy-coded ◐ drivers and 6 bespoke grammars — 40 drivers that are out of
 scope by design rather than by omission.
 

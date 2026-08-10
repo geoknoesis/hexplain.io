@@ -37,9 +37,10 @@
 :EndiannessRule a owl:Class ; rdfs:label "Endianness Rule" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "One arm of a hasConditionalEndianness list: a HEL condition and the byte order it selects." .
 # ---------- Delimited text records ----------
-# Deliberately non-recursive: this models line- and character-delimited text
-# (key = value headers, CSV, whitespace-separated grids), NOT nested grammars
-# such as XML or JSON. Those remain out of scope for BDDO by design.
+# Line- and character-delimited text: key = value headers, CSV, whitespace-separated grids.
+# Records may nest, via bddo:hasGrouping, but only in the three token-delimited styles that
+# vocabulary describes -- this is not a general grammar. A document with real recursive
+# structure is a bddo:TreeDocument instead.
 :DelimitedRecords a owl:Class ; rdfs:subClassOf :Struct ; rdfs:label "Delimited Records" ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "A Struct whose children are located by delimiter position rather than byte offset: a byte run split into records by recordDelimiter, each record optionally split into values by fieldDelimiter." .
@@ -49,6 +50,22 @@
 :DelimitedTable a owl:Class ; rdfs:subClassOf :DelimitedRecords ; rdfs:label "Delimited Table" ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "DelimitedRecords whose records are rows with a fixed column sequence. The hasField list gives the columns in order; the row structure repeats until the byte run is exhausted." .
+# ---------- Tree documents ----------
+# XML and JSON labels wrap a payload that is otherwise already describable: PDS4, DIMAP, SAFE,
+# SENTINEL-2, RadarSat-2, TerraSAR-X, CPHD and Zarr all pair a clean binary array with a
+# manifest BDDO could not read, and the whole GML/KML/GeoJSON family is markup end to end.
+#
+# BDDO does not describe the SYNTAX of these documents -- it addresses nodes in the tree a
+# conforming parser produces. That distinction is what keeps this from becoming an XML
+# specification: the tree is someone else's output, and BDDO's job is only to say which node
+# supplies which field.
+:TreeDocument a owl:Class ; rdfs:subClassOf :Struct ; rdfs:label "Tree Document" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A Struct whose children are located by a path into a parsed node tree rather than by byte offset or delimiter. The byte run is handed to a parser for the declared syntax; each Field names the node supplying its value." .
+:TreeSyntax a owl:Class ; rdfs:label "Tree Syntax" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Which tree grammar a TreeDocument is written in, and therefore how its nodePath values are read." .
+:NamespaceBinding a owl:Class ; rdfs:label "Namespace Binding" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A prefix-to-IRI binding for the paths of an XML TreeDocument." .
+
 :RecordGrouping a owl:Class ; rdfs:label "Record Grouping" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "How a DelimitedRecords container nests: which records open a group, which close it, and where the group's name comes from. A container without one is flat, which is what every DelimitedRecords was before nesting existed." .
 :GroupingStyle a owl:Class ; rdfs:label "Grouping Style" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
@@ -104,6 +121,23 @@
     rdfs:comment "If true, values are separated by a RUN of one or more whitespace bytes (space, tab, CR, LF) rather than by a fixed bddo:fieldDelimiter. A run of any length separates exactly two values, so consecutive whitespace never yields an empty value, and leading or trailing whitespace on a record is ignored. This is what column-aligned ASCII grids need -- 'ncols        100', or a row of numbers padded to line up -- which a fixed delimiter cannot express. Mutually exclusive with bddo:fieldDelimiter. When bddo:recordDelimiter is also absent the content is one flat stream of whitespace-separated values rather than rows, which is how an ASCII grid whose rows wrap across lines is read; the grid's shape then comes from the field's dlv:DataLayout or repeat count, not from line breaks." .
 :trimWhitespace         a owl:DatatypeProperty ; rdfs:label "trim whitespace" ; rdfs:range xsd:boolean ;
     rdfs:comment "If true, leading and trailing whitespace is removed from every key and value. Default false." .
+# ---------- Tree document properties ----------
+:treeSyntax a owl:ObjectProperty ; rdfs:label "tree syntax" ; rdfs:range :TreeSyntax ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The grammar of a TreeDocument. Required, because it decides how every nodePath in the container is read." .
+:xml a owl:NamedIndividual, :TreeSyntax ; rdfs:label "XML" ;
+    rdfs:comment "Paths are ABBREVIATED XPATH: child steps, attribute steps (@name), and positional predicates ([n], 1-based). A deliberately small subset -- no axes, no functions, no comparison predicates -- because a description states where a value IS, and a path that can compute is a query engine's problem rather than a description's." .
+:json a owl:NamedIndividual, :TreeSyntax ; rdfs:label "JSON" ;
+    rdfs:comment "Paths are JSON POINTERS as defined by RFC 6901: /object/member, array indices as /list/0 (0-based). Adopted rather than invented, so its escaping rules for '/' and '~' inside a member name are already specified and already implemented." .
+
+:nodePath a owl:DatatypeProperty ; rdfs:label "node path" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Locates the node supplying this field's value, read according to the container's treeSyntax. A path selecting no node leaves the field absent; a path selecting several is an error unless the field repeats, in which case the field's value is the selected nodes in document order." .
+:hasNamespaceBinding a owl:ObjectProperty ; rdfs:label "has namespace binding" ; rdfs:range :NamespaceBinding ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Binds the prefixes used in this document's paths. XML only, and not optional in practice: PDS4, DIMAP and SAFE are all namespaced, and an unprefixed path against a namespaced document silently matches nothing rather than failing." .
+:namespacePrefix a owl:DatatypeProperty ; rdfs:label "namespace prefix" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The prefix as used in this container's nodePath values. The empty string binds the DEFAULT namespace, which an XPath subset cannot otherwise reach." .
+:namespaceIRI a owl:DatatypeProperty ; rdfs:label "namespace IRI" ; rdfs:range xsd:anyURI ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The namespace the prefix stands for, matched against the document's own declarations rather than against the prefix it happens to use -- a document may spell the same namespace with any prefix." .
+
 # ---------- Nested records ----------
 # The flat key/value model reaches ESRI .hdr, ENVI and their kin, but stops at the label formats
 # that are otherwise the same shape: PVL/ODL (PDS, ISIS2, ISIS3, VICAR) nests with
@@ -366,7 +400,13 @@ bddo:VariableLengthFieldShape a sh:NodeShape ;
             FILTER NOT EXISTS {
                 ?p bddo:hasField/rdf:rest*/rdf:first $this .
                 ?p a ?c .
-                FILTER(?c IN (bddo:DelimitedRecords, bddo:KeyValueHeader, bddo:DelimitedTable))
+                # Every container form that determines a field's extent ITSELF -- a delimited
+                # record ends at its delimiter, a tree node at its own boundary -- so a declared
+                # width would be a second, contradictory answer. Enumerated rather than inferred
+                # via rdfs:subClassOf, because these shapes run without inference; a new
+                # container form has to be added here too.
+                FILTER(?c IN (bddo:DelimitedRecords, bddo:KeyValueHeader, bddo:DelimitedTable,
+                              bddo:TreeDocument))
             }
         }""" ] .
 
@@ -472,7 +512,12 @@ bddo:AsciiNumericWidthShape a sh:NodeShape ;
             FILTER NOT EXISTS {
                 ?p bddo:hasField/rdf:rest*/rdf:first $this .
                 ?p a ?c .
-                FILTER(?c IN (bddo:DelimitedRecords, bddo:KeyValueHeader, bddo:DelimitedTable))
+                # Same exemption as bddo:VariableLengthFieldShape, and it must be kept in step
+                # with it: both ask "does the container decide this field's extent?", and a new
+                # container form has to be listed in both or a description conforms to one shape
+                # and not the other.
+                FILTER(?c IN (bddo:DelimitedRecords, bddo:KeyValueHeader, bddo:DelimitedTable,
+                              bddo:TreeDocument))
             }
         }""" ] .
 
@@ -531,6 +576,55 @@ bddo:KeyValueHeaderShape a sh:NodeShape ;
             [ sh:property [ sh:path bddo:keyPath ; sh:minCount 1 ; sh:maxCount 1 ] ;
               sh:property [ sh:path bddo:key ; sh:maxCount 0 ] ] ) ;
           sh:message "Every field of a bddo:KeyValueHeader must declare exactly one of bddo:key (flat) or bddo:keyPath (nested), never both." ] ] .
+
+# ---------- Tree documents ----------
+bddo:TreeDocumentShape a sh:NodeShape ;
+    sh:targetClass bddo:TreeDocument ;
+    sh:property [ sh:path bddo:treeSyntax ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( bddo:xml bddo:json ) ;
+        sh:message "A bddo:TreeDocument must declare exactly one bddo:treeSyntax: bddo:xml or bddo:json." ] ;
+    sh:property [ sh:path bddo:hasNamespaceBinding ; sh:class bddo:NamespaceBinding ] ;
+    sh:property [ sh:path bddo:hasField ; sh:minCount 1 ;
+        sh:message "A bddo:TreeDocument must declare at least one field." ] ;
+    # Every field is located by a path, and by nothing else. A byte offset or a record key in a
+    # tree document is a leftover from another container form and would address nothing.
+    sh:property [ sh:path ( bddo:hasField [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:node [
+            sh:property [ sh:path bddo:nodePath ; sh:minCount 1 ; sh:maxCount 1 ] ;
+            sh:property [ sh:path bddo:key ; sh:maxCount 0 ] ;
+            sh:property [ sh:path bddo:keyPath ; sh:maxCount 0 ] ;
+            sh:property [ sh:path bddo:atOffset ; sh:maxCount 0 ] ;
+            sh:message "Every field of a bddo:TreeDocument is located by exactly one bddo:nodePath, and not by a key, a key path or a byte offset." ] ] ;
+    # Namespaces bind prefixes in XPath. JSON Pointer has no prefixes to bind, so a binding on a
+    # JSON document is a misunderstanding worth catching rather than ignoring.
+    sh:sparql [ sh:message "bddo:hasNamespaceBinding applies to an XML tree document; JSON Pointer has no namespace prefixes." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:treeSyntax bddo:json .
+            $this bddo:hasNamespaceBinding ?b .
+        }""" ] .
+
+bddo:NamespaceBindingShape a sh:NodeShape ;
+    sh:targetClass bddo:NamespaceBinding ;
+    # The prefix MAY be the empty string -- that is how a default namespace is bound -- so
+    # minCount rather than a non-blank check.
+    sh:property [ sh:path bddo:namespacePrefix ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:namespaceIRI ; sh:datatype xsd:anyURI ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A namespace binding needs the IRI it binds to; a prefix alone names nothing." ] .
+
+# A path outside a tree document addresses nothing.
+bddo:NodePathShape a sh:NodeShape ;
+    sh:targetClass bddo:Field ;
+    sh:property [ sh:path bddo:nodePath ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:sparql [ sh:message "bddo:nodePath locates a node in a parsed tree, so its container must be a bddo:TreeDocument." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:nodePath ?p .
+            FILTER NOT EXISTS {
+                ?container bddo:hasField/rdf:rest*/rdf:first $this .
+                ?container a bddo:TreeDocument .
+            }
+        }""" ] .
 
 # ---------- Nested records ----------
 bddo:RecordGroupingShape a sh:NodeShape ;

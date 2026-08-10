@@ -1,0 +1,20 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <http://example.org/tree-bad#> .
+
+# Expected to trip bddo:TreeDocumentShape: a JSON document carrying namespace bindings.
+#
+# Not a harmless extra. JSON Pointer has no prefixes, so a binding here means the author
+# believes the paths below are namespaced and they are not — every `pds:`-looking segment would
+# be read as a literal member name containing a colon, and would match nothing. Ignoring the
+# binding would let that misunderstanding through silently.
+ex:ConfusedDocument a bddo:TreeDocument ;
+    rdfs:comment "Expected violation: namespace bindings on a JSON tree document." ;
+    bddo:treeSyntax bddo:json ;
+    bddo:hasNamespaceBinding
+        [ a bddo:NamespaceBinding ; bddo:namespacePrefix "pds" ;
+          bddo:namespaceIRI "http://pds.nasa.gov/pds4/pds/v1"^^xsd:anyURI ] ;
+    bddo:hasField ( ex:Member ) .
+
+ex:Member a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath "/pds:thing" .
