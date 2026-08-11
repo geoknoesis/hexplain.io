@@ -1,0 +1,32 @@
+# The bundle PROFILE for the specification's worked example, kept separate from the instances.
+#
+# Separate because both instances need it: a required-parts rule reaches the profile through
+# dcterms:conformsTo, so validating the negative instance without the profile in the graph
+# finds no required specs and reports no violation -- a fixture that passes for the wrong
+# reason, which is worse than one that fails.
+@prefix ex:      <https://example.org/spec/bundle#> .
+@prefix abnd:    <https://hexplain.io/ns/aspect/bundle#> .
+@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix asref:   <https://hexplain.io/ns/aspect/spatialref#> .
+@prefix afs:     <https://hexplain.io/ns/aspect/fsmeta#> .
+@prefix rpr:     <https://hexplain.io/ns/register/part-role#> .
+@prefix hexplain:<https://hexplain.io/ns/core#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://example.org/spec/bundle> hexplain:usesRegister
+    [ a hexplain:RegisterBinding ; hexplain:forProperty abnd:partRole ;
+      hexplain:register rpr:PartRoleScheme ] .
+
+ex:GridPair a abnd:BundleProfile ; rdfs:label "Grid-and-sidecar pair" ;
+    abnd:boundBy abnd:NamingConvention ;
+    abnd:partSpec ex:gridSpec , ex:worldSpec .
+
+ex:gridSpec a abnd:PartSpec ; abnd:extension ".grd" ; abnd:partRole rpr:Payload ;
+    abnd:required true ; abnd:primary true ;
+    abnd:carriesAspect <https://hexplain.io/ns/aspect/raster> .
+
+ex:worldSpec a abnd:PartSpec ; abnd:extension ".wld" ; abnd:partRole rpr:SpatialReference ;
+    abnd:required false ;
+    abnd:carriesAspect <https://hexplain.io/ns/aspect/spatialref> .
+

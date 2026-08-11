@@ -9,7 +9,7 @@ import rdflib
 SH = rdflib.Namespace("http://www.w3.org/ns/shacl#")
 BASE = [
     "specification/aspect/bundle/bundle.ttl",
-    "specification/profiles/shapefile/shapefile.ttl",
+    "specification/aspect/bundle/example/grid-pair-profile.ttl",
 ]
 
 # Grab the authored SELECT from the required-parts constraint SPECIFICALLY. Taking
@@ -35,13 +35,13 @@ def violations(instance_file):
         g.parse(f, format="turtle")
     return list(g.query(select))
 
-valid = violations("specification/profiles/shapefile/example.ttl")
-invalid = violations("specification/profiles/shapefile/example-invalid.ttl")
+valid = violations("specification/aspect/bundle/example/bundle-example.ttl")
+invalid = violations("specification/aspect/bundle/example/bundle-example-invalid.ttl")
 
 if valid:
     print("FAIL: valid instance reported violations:", valid)
     sys.exit(1)
 if not invalid:
-    print("FAIL: invalid instance (missing .shp) reported no violation")
+    print("FAIL: invalid instance (missing the required .grd part) reported no violation")
     sys.exit(1)
 print(f"PASS: valid=0 violations, invalid={len(invalid)} violation(s)")

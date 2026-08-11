@@ -4,22 +4,25 @@ composed graph (bundle + referenced aspects + shapefile profile + instance),
 so the test exercises the real normative query. rdflib only; no pyshacl needed.
 """
 import sys
+import glob
+
 import rdflib
 
 SH = rdflib.Namespace("http://www.w3.org/ns/shacl#")
 FILES = [
+    "specification/bddo/bddo.ttl",
+    "specification/hexplain/core.ttl",
     "specification/aspect/bundle/bundle.ttl",
-    "specification/aspect/geometry/geometry.ttl",
-    "specification/aspect/spatialref/spatialref.ttl",
-    "specification/aspect/tabular/tabular.ttl",
-    "specification/aspect/fsmeta/fsmeta.ttl",
-    # Register document: the geometry-type CONCEPT the .shp part's ageom:geometryType
-    # points at (rgeo:MultiLineString) was split out of the geometry aspect into this
-    # standalone, swappable register (pluggable-concept-registers migration, Task 3) --
-    # mirrors what that same task did to tools/test_shapes.py's BASE list.
-    "specification/register/geometry-type/geometry-type.ttl",
-    "specification/profiles/shapefile/shapefile.ttl",
-    "specification/profiles/shapefile/example.ttl",
+    "specification/aspect/bundle/example/grid-pair-profile.ttl",
+    # EVERY aspect and register, not a hand-picked few. The lift rule fires when a property's
+    # rdfs:isDefinedBy equals a spec's carriesAspect, so an aspect that is not loaded makes its
+    # facets SILENTLY not lift -- indistinguishable from a rule that does not work. The list
+    # here was chosen for the Shapefile example and did not include hx-raster, which is exactly
+    # how the synthetic replacement first appeared to fail.
+    *sorted(glob.glob("specification/aspect/*/*.ttl")),
+    *sorted(glob.glob("specification/register/*/*.ttl")),
+    # The instance being lifted onto.
+    "specification/aspect/bundle/example/bundle-example.ttl",
 ]
 
 g = rdflib.Graph()
@@ -38,33 +41,30 @@ if construct is None:
 for triple in g.query(construct):
     g.add(triple)
 
-roads = rdflib.URIRef("https://example.org/data/roads")
-AGEOM = rdflib.Namespace("https://hexplain.io/ns/aspect/geometry#")
+asset = rdflib.URIRef("https://example.org/spec/bundle#sample")
 ASREF = rdflib.Namespace("https://hexplain.io/ns/aspect/spatialref#")
-ATAB = rdflib.Namespace("https://hexplain.io/ns/aspect/tabular#")
+ARASTER = rdflib.Namespace("https://hexplain.io/ns/aspect/raster#")
 # The geometry-type register (see FILES above): ageom:geometryType is still the aspect
-# PROPERTY, but the CONCEPT it points at now lives here, not in AGEOM.
-RGEO = rdflib.Namespace("https://hexplain.io/ns/register/geometry-type#")
 
 # Compare by value, not by exact typed literal: the fixtures use bare integer
 # literals (rdflib types them xsd:integer) while the source properties declare
 # narrower ranges, so an exact-datatype match would give a false FAIL. Numeric
 # value comparison is the robust check that the facet lifted.
 def lifted_int(pred):
-    v = g.value(roads, pred)
+    v = g.value(asset, pred)
     return None if v is None else int(v.toPython())
 
 problems = []
-if (roads, AGEOM.geometryType, RGEO.MultiLineString) not in g:  # object is a URI — exact match is fine
-    problems.append("ageom:geometryType rgeo:MultiLineString not lifted from .shp")
+if lifted_int(ARASTER.width) != 256:
+    problems.append("araster:width 256 not lifted from the .grd part")
+if lifted_int(ARASTER.height) != 256:
+    problems.append("araster:height 256 not lifted from the .grd part")
 if lifted_int(ASREF.epsgCode) != 4326:
-    problems.append("asref:epsgCode 4326 not lifted from .prj")
-if lifted_int(ATAB.rowCount) != 1200:
-    problems.append("atab:rowCount 1200 not lifted from .dbf")
+    problems.append("asref:epsgCode 4326 not lifted from the .wld part")
 
 # Negative: fsmeta filename must NOT lift (no PartSpec declares afs as a carried aspect).
 AFS = rdflib.Namespace("https://hexplain.io/ns/aspect/fsmeta#")
-leaked = list(g.triples((roads, AFS.fileName, None)))
+leaked = list(g.triples((asset, AFS.fileName, None)))
 
 if problems:
     print("FAIL: not lifted onto Asset:", problems)

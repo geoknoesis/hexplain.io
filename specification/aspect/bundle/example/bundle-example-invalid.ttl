@@ -1,0 +1,21 @@
+# Expected to violate abnd:RequiredPartsShape: a required part is missing.
+#
+# The negative half of bundle-example.ttl. ex:gridSpec is abnd:required, so an asset claiming
+# to conform to ex:GridPair without a Payload part is incomplete — and incomplete in the way
+# that matters, because the missing part is the one carrying the data. An asset with only its
+# sidecar looks well-formed to anything that does not check the profile.
+@prefix ex:      <https://example.org/spec/bundle#> .
+@prefix abnd:    <https://hexplain.io/ns/aspect/bundle#> .
+@prefix asref:   <https://hexplain.io/ns/aspect/spatialref#> .
+@prefix afs:     <https://hexplain.io/ns/aspect/fsmeta#> .
+@prefix rpr:     <https://hexplain.io/ns/register/part-role#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:orphan a abnd:Asset ; dcterms:conformsTo ex:GridPair ;
+    rdfs:comment "Expected violation: the required Payload part (.grd) is absent." ;
+    abnd:boundBy abnd:NamingConvention ; abnd:stem "orphan" ;
+    abnd:hasPart ex:orphan.wld .
+
+ex:orphan.wld a abnd:Part ; abnd:partRole rpr:SpatialReference ; afs:fileName "orphan.wld" ;
+    asref:epsgCode 4326 .

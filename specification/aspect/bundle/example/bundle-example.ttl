@@ -1,0 +1,33 @@
+# A conforming INSTANCE of the worked example. Its profile is in grid-pair-profile.ttl.
+#
+# Three of the specification's gates -- test_lift, test_conformance and test_shapes -- need a
+# bundle profile plus a conforming instance to exercise. They used the Shapefile profile until
+# the profile library moved to its own repository, which was a dependency the wrong way round:
+# a normative gate should not need a description of a third-party format to run, and could not
+# be fixed without touching a file that is now someone else's to maintain.
+#
+# So this is a fictional two-part format with no real-world counterpart. It exercises exactly
+# what the shapes need -- a naming-convention bundle, a primary part, a carried aspect, a part
+# role from the register -- and nothing else, which also makes a failure point at the shape
+# rather than at some incidental property of a real format.
+@prefix ex:      <https://example.org/spec/bundle#> .
+@prefix abnd:    <https://hexplain.io/ns/aspect/bundle#> .
+@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix asref:   <https://hexplain.io/ns/aspect/spatialref#> .
+@prefix afs:     <https://hexplain.io/ns/aspect/fsmeta#> .
+@prefix rpr:     <https://hexplain.io/ns/register/part-role#> .
+@prefix hexplain:<https://hexplain.io/ns/core#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+
+# ---------- A conforming instance ----------
+ex:sample a abnd:Asset ; dcterms:conformsTo ex:GridPair ;
+    abnd:boundBy abnd:NamingConvention ; abnd:stem "sample" ;
+    abnd:primaryPart ex:sample.grd ;
+    abnd:hasPart ex:sample.grd , ex:sample.wld .
+
+ex:sample.grd a abnd:Part ; abnd:partRole rpr:Payload ; afs:fileName "sample.grd" ;
+    araster:width 256 ; araster:height 256 .
+
+ex:sample.wld a abnd:Part ; abnd:partRole rpr:SpatialReference ; afs:fileName "sample.wld" ;
+    asref:epsgCode 4326 .

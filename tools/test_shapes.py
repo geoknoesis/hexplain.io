@@ -18,6 +18,7 @@ BUNDLE = "specification/aspect/bundle/bundle.ttl"
 # abnd:partRole -> rpr:PartRoleScheme binding) -- it must be in the shapes graph too.
 SHAPES = [BUNDLE, "specification/hexplain/core.ttl"]
 BASE = [
+    "specification/aspect/bundle/example/grid-pair-profile.ttl",
     BUNDLE,
     "specification/aspect/geometry/geometry.ttl",
     "specification/aspect/spatialref/spatialref.ttl",
@@ -28,7 +29,6 @@ BASE = [
     # register documents; load them so partRole/geometryType values resolve.
     "specification/register/part-role/part-role.ttl",
     "specification/register/geometry-type/geometry-type.ttl",
-    "specification/profiles/shapefile/shapefile.ttl",
 ]
 
 def conforms(instance):
@@ -41,8 +41,8 @@ def conforms(instance):
     ok, _, text = validate(data, shacl_graph=shapes, advanced=True)
     return ok, text
 
-valid_ok, valid_text = conforms("specification/profiles/shapefile/example.ttl")
-invalid_ok, _ = conforms("specification/profiles/shapefile/example-invalid.ttl")
+valid_ok, valid_text = conforms("specification/aspect/bundle/example/bundle-example.ttl")
+invalid_ok, _ = conforms("specification/aspect/bundle/example/bundle-example-invalid.ttl")
 
 problems = []
 if not valid_ok:
