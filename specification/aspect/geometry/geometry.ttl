@@ -9,9 +9,10 @@
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix vann:    <http://purl.org/vocab/vann/> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
 
 <https://hexplain.io/ns/aspect/geometry> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/geometry/1.0> ; owl:versionInfo "1.0" ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/geometry/1.1> ; owl:versionInfo "1.1 working draft" ; owl:priorVersion <https://hexplain.io/ns/aspect/geometry/1.0> ; dcterms:modified "2026-09-05"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Geometry (hx-geometry)" ;
     rdfs:comment "Aspect for explicit (vector) geometry: geometry type, dimensionality, coordinate precision. Sibling of hx-raster. Shared by vector graphics, geospatial vector, and font glyphs." ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -21,3 +22,28 @@
 :geometryType a owl:ObjectProperty ; rdfs:label "geometry type" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ; rdfs:range skos:Concept ; rdfs:comment "Kind of geometry, from a geometry-type register bound by the profile." .
 :dimensionality a owl:DatatypeProperty ; rdfs:label "dimensionality" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ; rdfs:range xsd:positiveInteger ; rdfs:comment "Coordinate dimensionality (2 for XY, 3 for XYZ)." .
 :coordinatePrecision a owl:DatatypeProperty ; rdfs:label "coordinate precision" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ; rdfs:range xsd:integer ; rdfs:comment "Number of decimal places retained per coordinate." .
+
+:hasZ a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "has elevation ordinate" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ; rdfs:comment "Whether a geometry contains a Z ordinate. Independent of a measure ordinate; missing means unknown, not false." .
+:hasM a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "has measure ordinate" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ; rdfs:comment "Whether a geometry contains an M measure ordinate. A measure is not implicitly elevation or time. XYM and XYZ are distinct despite having three ordinates." .
+:OrdinateShape a sh:NodeShape ; sh:targetSubjectsOf :hasZ, :hasM ;
+    sh:property [ sh:path :hasZ ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :hasM ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .
+
+# BEGIN GENERATED TERM DOCUMENTATION
+# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
+<https://hexplain.io/ns/aspect/geometry> <http://www.w3.org/2004/02/skos/core#definition> "Aspect for explicit (vector) geometry: geometry type, dimensionality, coordinate precision. Sibling of hx-raster. Shared by vector graphics, geospatial vector, and font glyphs."@en .
+<https://hexplain.io/ns/aspect/geometry> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for explicit geometry semantics across vector graphics, geospatial features and glyph outlines. Spatial coordinates and measure ordinates must remain distinct."@en .
+<https://hexplain.io/ns/aspect/geometry#OrdinateShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for ageom:hasM, ageom:hasZ. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/aspect/geometry#OrdinateShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using ageom:hasM, ageom:hasZ Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/aspect/geometry#OrdinateShape> <http://www.w3.org/2000/01/rdf-schema#label> "Ordinate Shape"@en .
+<https://hexplain.io/ns/aspect/geometry#OrdinateShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/geometry> .
+<https://hexplain.io/ns/aspect/geometry#coordinatePrecision> <http://www.w3.org/2004/02/skos/core#definition> "Number of decimal places retained per coordinate."@en .
+<https://hexplain.io/ns/aspect/geometry#coordinatePrecision> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for explicit geometry semantics across vector graphics, geospatial features and glyph outlines. Spatial coordinates and measure ordinates must remain distinct. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/aspect/geometry#dimensionality> <http://www.w3.org/2004/02/skos/core#definition> "Coordinate dimensionality (2 for XY, 3 for XYZ)."@en .
+<https://hexplain.io/ns/aspect/geometry#dimensionality> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for explicit geometry semantics across vector graphics, geospatial features and glyph outlines. Spatial coordinates and measure ordinates must remain distinct. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/aspect/geometry#geometryType> <http://www.w3.org/2004/02/skos/core#definition> "Kind of geometry, from a geometry-type register bound by the profile."@en .
+<https://hexplain.io/ns/aspect/geometry#geometryType> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for explicit geometry semantics across vector graphics, geospatial features and glyph outlines. Spatial coordinates and measure ordinates must remain distinct. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/aspect/geometry#hasM> <http://www.w3.org/2004/02/skos/core#definition> "Whether a geometry contains an M measure ordinate. A measure is not implicitly elevation or time. XYM and XYZ are distinct despite having three ordinates."@en .
+<https://hexplain.io/ns/aspect/geometry#hasM> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for explicit geometry semantics across vector graphics, geospatial features and glyph outlines. Spatial coordinates and measure ordinates must remain distinct. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/aspect/geometry#hasZ> <http://www.w3.org/2004/02/skos/core#definition> "Whether a geometry contains a Z ordinate. Independent of a measure ordinate; missing means unknown, not false."@en .
+<https://hexplain.io/ns/aspect/geometry#hasZ> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for explicit geometry semantics across vector graphics, geospatial features and glyph outlines. Spatial coordinates and measure ordinates must remain distinct. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .

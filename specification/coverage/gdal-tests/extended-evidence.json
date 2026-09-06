@@ -1,0 +1,244 @@
+{
+  "scope": "Scoped runtime extension; not universal format support",
+  "counts": {
+    "equal": 611,
+    "not-implemented": 816,
+    "oracle-only": 3931,
+    "hexplain-unsupported": 248,
+    "hexplain-rejected": 15,
+    "documented-type-difference": 1
+  },
+  "tests": [
+    {
+      "name": "io.hexplain.core.raster.Signed24TiffTest",
+      "tests": 1
+    },
+    {
+      "name": "io.hexplain.core.raster.ZarrRasterDecoderTest",
+      "tests": 5
+    },
+    {
+      "name": "io.hexplain.core.raster.CompanionVectorTest",
+      "tests": 4
+    },
+    {
+      "name": "io.hexplain.core.raster.ExtendedDecoderTest",
+      "tests": 10
+    },
+    {
+      "name": "io.hexplain.core.raster.GdalSemanticTest",
+      "tests": 7
+    },
+    {
+      "name": "io.hexplain.core.raster.InteropAcceptanceTest",
+      "tests": 6
+    }
+  ],
+  "contracts": [
+    {
+      "name": "Zarr v2 numeric array",
+      "implementation": "Native Hexplain",
+      "scope": "Explicit local array directory or .zarray; rank 1\u20138; signed/unsigned 8/16/32/64-bit and Float32/64; C/F chunks; endian normalization; full edge chunks; explicit fill; none/zlib/gzip compression.",
+      "range": "RasterPixels: last axis X, penultimate Y, earlier axes flattened as BSQ bands; little-endian samples.",
+      "evidence": "29 GDAL entry-point matches; repeated directory/.zarray openings are not independent datasets.",
+      "limits": "Groups, v3, filters, other compressors, compound types and undefined missing-chunk fills remain unsupported. No CF axis/georeferencing inference."
+    },
+    {
+      "name": "HDF5 numeric dataset",
+      "implementation": "jHDF 0.13.0 adapter",
+      "scope": "Explicit dataset path or unique rank\u22652 dataset; integer and floating arrays; HDF5 storage may also contain NetCDF4.",
+      "range": "RasterPixels in storage axis order; no scale/offset or fill-to-mask conversion.",
+      "evidence": "12 GDAL HDF5Image matches plus four pinned offline GDAL vectors.",
+      "limits": "HDF-EOS multidimensional axis mapping unsupported. Four library/extent rejections retained. NetCDF4 conventions and arbitrary HDF links/filters are not certified. jHDF metadata requires worker-level resource isolation."
+    },
+    {
+      "name": "NetCDF classic variable",
+      "implementation": "Native Hexplain",
+      "scope": "CDF-1/CDF-2 named fixed-size numeric variable; separate NetCdfDatasetDecoder supports explicit regular 2D CF coordinates, north-up rows, unsigned hints and retained WKT.",
+      "range": "Raw decoding retains storage order and NC_BYTE Int8; the explicit CF dataset API returns canonical north-up samples, transform, WKT and nodata mask.",
+      "evidence": "CDF-1/CDF-2 storage-value tests plus upstream byte.nc CF semantics compared with fresh GDAL.",
+      "limits": "NetCdfDatasetDecoder additionally matches one explicitly selected CF variable against GDAL, including axes, unsigned values, geotransform, WKT and mask. Record variables, CDF-5, curvilinear axes, unsupported units, partial valid ranges and calibrated/packed values remain unsupported."
+    },
+    {
+      "name": "GeoPackage feature table",
+      "implementation": "SQLite JDBC 3.53.4.0 plus native geometry decoder",
+      "scope": "Explicit registered feature table, one geometry column, read-only SQL and bounded row/value collection.",
+      "range": "Column names/types, primitive values and GeoPackageGeometry carrying SRS identifier, envelope and GeometryValue.",
+      "evidence": "GDAL 2d_envelope.gpkg: both XYZ lines compared with independently recorded SQLite/Shapely values; file unchanged.",
+      "limits": "Fresh GDAL geometry comparison covers both XYZ lines. Raster tiles, extension compliance, CRS transformation and spatial indexing are not certified. SQLite native allocations require OS isolation; a Windows Job Object workload is now verified."
+    },
+    {
+      "name": "WKB / GeoPackage geometry",
+      "implementation": "Native Hexplain",
+      "scope": "ISO WKB types 1\u20137; XY/XYZ/XYM/XYZM; byte order, nesting/coordinate budgets, ring closure, empty flags and envelope containment.",
+      "range": "GeometryValue preserves coordinate order and dimensions; GeoPackage SRS ID is retained without CRS equivalence inference.",
+      "evidence": "Every coordinate in seven GDAL Parquet geometry families compared with Shapely, plus malformed/empty/envelope tests.",
+      "limits": "Curves, EWKB extensions, mixed-dimensional collections and full geometric topology validation are not supported."
+    },
+    {
+      "name": "LAS point records",
+      "implementation": "Native Hexplain",
+      "scope": "LAS 1.2 uncompressed point formats 0\u20133; bounded VLR extents, exact raw integers, scale/offset, return/classification flags, GPS and RGB.",
+      "range": "LasPoints retains raw and scaled XYZ, intensity and point attributes; CRS is not inferred.",
+      "evidence": "All coordinates of a deterministic laspy fixture, including signed int32 extrema; record/truncation tests.",
+      "limits": "No LAS samples were found in the pinned GDAL corpus; this is companion evidence. LAZ, waveform, extra bytes, LAS 1.3+ and VLR CRS semantics remain unsupported."
+    },
+    {
+      "name": "Parquet primitive table",
+      "implementation": "DuckDB JDBC 1.5.5.1 adapter",
+      "scope": "One explicit local file; primitive numeric/text/binary/boolean/null values; row and collected-byte limits; automatic extensions and GeoParquet conversion disabled.",
+      "range": "DecodedTable retains source column order/types and values. WKB binary may be passed explicitly to GeometryDecoder.",
+      "evidence": "All seven all_geoms.parquet binary values match PyArrow; decoded coordinates independently match Shapely.",
+      "limits": "No new GDAL differential pass. Nested/temporal/extension columns, Arrow IPC/Feather and GeoParquet CRS metadata are not certified. DuckDB native memory is not bounded by JVM heap; the Windows OS-limited workload is tested."
+    },
+    {
+      "name": "Georeferencing and nodata semantics",
+      "implementation": "Native mathematical helpers",
+      "scope": "Explicit GeoTIFF-style tiepoint/scale or affine matrix; PixelIsPoint half-cell correction; per-band nodata mask; scoped first-image embedded TIFF/CF extraction.",
+      "range": "Pixel-corner affine coordinates; mask bytes 0 invalid / 255 valid; exact integer comparisons through UInt64 and NaN-aware floating comparison.",
+      "evidence": "Fresh GDAL tests verify embedded transforms, pixel-center correction, CRS, all pixels and every nodata-mask byte; numeric unit tests cover UInt64, NaN and signed zero.",
+      "limits": "TiffDatasetDecoder and NetCdfDatasetDecoder now extract scoped embedded metadata; four TIFFs and one CF variable match GDAL. Internal/external masks, alpha, overviews, custom CRS equivalence and source precedence remain open."
+    }
+  ],
+  "retained_tiff_rejections": [
+    {
+      "path": "autotest/gcore/data/cog_sparse_strile_arrays_zeroified_when_possible.tif",
+      "gdal_driver": "GTiff",
+      "gdal_status": "decoded",
+      "status": "hexplain-rejected",
+      "reason": "Truncated TIFF LZW stream",
+      "assessment": "COG repair/optimized-read fixture with zeroed strile entries; no repair inference added.",
+      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/autotest/gcore/tiff_read.py#L4175"
+    },
+    {
+      "path": "autotest/gcore/data/cog_strile_arrays_zeroified_when_possible.tif",
+      "gdal_driver": "GTiff",
+      "gdal_status": "decoded",
+      "status": "hexplain-rejected",
+      "reason": "Truncated TIFF LZW stream",
+      "assessment": "COG repair/optimized-read fixture with zeroed strile entries; no repair inference added.",
+      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/autotest/gcore/tiff_read.py#L4175"
+    },
+    {
+      "path": "autotest/gcore/data/huge-implied-number-strips.tif",
+      "gdal_driver": "GTiff",
+      "gdal_status": "decoded",
+      "status": "hexplain-rejected",
+      "reason": "Missing TIFF block lengths",
+      "assessment": "Missing lengths and hostile implied layout; rejection retained. Further source-level classification pending.",
+      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/autotest/gcore/tiff_read.py"
+    },
+    {
+      "path": "autotest/gcore/data/minimum_tiff_tags_with_warning.tif",
+      "gdal_driver": "GTiff",
+      "gdal_status": "decoded",
+      "status": "hexplain-rejected",
+      "reason": "Missing TIFF block lengths",
+      "assessment": "Missing required lengths accepted by GDAL with warnings; no inferred extent added.",
+      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/autotest/gcore/tiff_read.py#L3507"
+    },
+    {
+      "path": "autotest/gcore/data/one_strip_nobytecount.tif",
+      "gdal_driver": "GTiff",
+      "gdal_status": "decoded",
+      "status": "hexplain-rejected",
+      "reason": "Missing TIFF block lengths",
+      "assessment": "Missing required lengths accepted by GDAL with warnings; no inferred extent added.",
+      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/autotest/gcore/tiff_read.py#L2819"
+    },
+    {
+      "path": "autotest/gcore/data/quad-lzw-old-style.tif",
+      "gdal_driver": "GTiff",
+      "gdal_status": "decoded",
+      "status": "hexplain-rejected",
+      "reason": "TIFF LZW must start with a clear code",
+      "assessment": "Legacy LZW variant; modern clear-code framing remains required.",
+      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/autotest/gcore/tiff_read.py#L3922"
+    },
+    {
+      "path": "autotest/gcore/data/size_of_stripbytecount_at_1_and_lower_than_stripcount.tif",
+      "gdal_driver": "GTiff",
+      "gdal_status": "decoded",
+      "status": "hexplain-rejected",
+      "reason": "Insufficient TIFF block offsets or lengths",
+      "assessment": "Incomplete/inconsistent declared strip arrays; missing blocks are not synthesized.",
+      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/autotest/gcore/tiff_read.py#L3802"
+    },
+    {
+      "path": "autotest/gcore/data/size_of_stripbytecount_lower_than_stripcount.tif",
+      "gdal_driver": "GTiff",
+      "gdal_status": "decoded",
+      "status": "hexplain-rejected",
+      "reason": "Insufficient TIFF block offsets or lengths",
+      "assessment": "Incomplete/inconsistent declared strip arrays; missing blocks are not synthesized.",
+      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/autotest/gcore/tiff_read.py#L3802"
+    },
+    {
+      "path": "autotest/gcore/data/sstgeo.tif",
+      "gdal_driver": "GTiff",
+      "gdal_status": "decoded",
+      "status": "hexplain-rejected",
+      "reason": "TIFF decoded block extent mismatch: 7920 bytes, row width 720, visible rows 6, stored rows 6",
+      "assessment": "Decoded strile exceeds declared row extent. Root cause remains unresolved; do not discard extra decoded rows silently.",
+      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/autotest/gcore/tiff_read.py"
+    },
+    {
+      "path": "autotest/gcore/data/stefan_full_rgba_photometric_rgb.tif",
+      "gdal_driver": "GTiff",
+      "gdal_status": "decoded",
+      "status": "hexplain-rejected",
+      "reason": "TIFF decoded block extent mismatch: 7776 bytes, row width 648, visible rows 6, stored rows 6",
+      "assessment": "Decoded strile exceeds declared row extent. Root cause remains unresolved; do not discard extra decoded rows silently.",
+      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/autotest/gcore/tiff_read.py"
+    },
+    {
+      "path": "autotest/gcore/data/stripbytecounts_count_not_same_as_stripoffsets_count.tif",
+      "gdal_driver": "GTiff",
+      "gdal_status": "decoded",
+      "status": "hexplain-rejected",
+      "reason": "Insufficient TIFF block offsets or lengths",
+      "assessment": "Incomplete/inconsistent declared strip arrays; missing blocks are not synthesized.",
+      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/autotest/gcore/tiff_read.py#L3802"
+    }
+  ],
+  "datatype_difference": [
+    {
+      "path": "autotest/gcore/data/int24.tif",
+      "sha256": "8b8282a4ce2433be3cf60954b85401acf2b15a8ae3a706527e1ef532408c576c",
+      "differences": {
+        "data_type": {
+          "hexplain": "Int32",
+          "gdal": [
+            "UInt32"
+          ]
+        }
+      },
+      "reason": "The fixture declares SampleFormat=2 and BitsPerSample=24. Pinned GDAL GTiffOddBitsBand explicitly maps signed 17-31-bit integer widths to UInt32; its constructor contains a FIXME naming int24.tif. Hexplain preserves the signed Int32 interpretation. Existing fixture pixel bits match; separate negative-boundary tests exercise sign extension. This is an explained datatype difference, not an interoperability pass.",
+      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/frmts/gtiff/gtiffoddbitsband.cpp#L30-L46"
+    }
+  ],
+  "companion_versions": {
+    "pyarrow": "21.0.0",
+    "shapely": "2.1.2",
+    "laspy": "2.7.0",
+    "scipy": "1.16.3"
+  },
+  "oracle_status": "The GDAL 3.13.3 pixel baseline is retained. Fresh semantic comparisons use pinned Rasterio 1.4.3 / GDAL 3.9.3 and Fiona 1.10.1 / GDAL 3.9.1 wheels. Five raster datasets (including a selected CF variable) and two XYZ features match. These are separate evidence sets; Docker remains unavailable.",
+  "scores": "Overall scores held at previous review values; this scoped pass does not establish >9.5 or production readiness.",
+  "sources": {
+    "core/src/main/kotlin/io/hexplain/core/raster/GdalCodecFixtures.kt": "55fea1ae89f17183ce9ddedd92cdcb7085c3100b36e77a6f74528198f3866041",
+    "core/src/main/kotlin/io/hexplain/core/raster/GeometryDecoder.kt": "aa4b5d322c010a8e0055cd282c8f4cce0f0240a7dfd451e83efc964ab9508bbe",
+    "core/src/main/kotlin/io/hexplain/core/raster/LasDecoder.kt": "d67d4e800826d9f4cde842042cd4fe5e74702b8c1cfca235ff90b741546a14dc",
+    "core/src/main/kotlin/io/hexplain/core/raster/NetCdfClassicDecoder.kt": "88c75558929281f7b915cb4aa95dc84e41c288c5cb7fc742d4816f51a042c283",
+    "core/src/main/kotlin/io/hexplain/core/raster/NetCdfDatasetDecoder.kt": "246ba7c179b955b7e00af6ae573d319a9544b655eb9d4b059fa62c707255afa1",
+    "core/src/main/kotlin/io/hexplain/core/raster/RasterDecoder.kt": "1824f101ca8264a72912058f737ebb5e8165e423e62bb8e9641ae13d00e29fe9",
+    "core/src/main/kotlin/io/hexplain/core/raster/RasterSemantics.kt": "bd76ea36eca9e2a891a71881afb2b68282fe20eb36068c0573d300bb3843c6d1",
+    "core/src/main/kotlin/io/hexplain/core/raster/TiffDatasetDecoder.kt": "80e5ea908790c11803a9c4fdc5e786417a2e2a9c50874d452b5cdcc1d4e5ca0a",
+    "core/src/main/kotlin/io/hexplain/core/raster/TiffRasterDecoder.kt": "6adb60562c0b19331032c27352ffea775e3e61d836483c81e4ea71d1c1c4a258",
+    "core/src/main/kotlin/io/hexplain/core/raster/ZarrRasterDecoder.kt": "f5e676539ef3e288fc5acde87abc59f1fb4f702fe43b4d92c11363783f803a89",
+    "adapters/src/main/kotlin/io/hexplain/core/raster/GdalProbe.kt": "85ea2b070f81b6eeee1ce8d6c2fc9771f247da5c546469832d36aa60cf0aed56",
+    "adapters/src/main/kotlin/io/hexplain/core/raster/HdfRasterDecoder.kt": "8366ae3736812683e11c05bcd7fff15f8f7f32e99a468dcd6ce40b2ad074ec58",
+    "adapters/src/main/kotlin/io/hexplain/core/raster/NativeAdapterProbe.kt": "dee990f55b1d6adbf2fddeda2e7855b42b76580be1f0ea098e0a5f88b26d8150",
+    "adapters/src/main/kotlin/io/hexplain/core/raster/TabularDecoder.kt": "e1bbfa993b78d72de80feeb4fdaf7f0d4c30bd87e5989f569940ac4bf0bdec57"
+  }
+}

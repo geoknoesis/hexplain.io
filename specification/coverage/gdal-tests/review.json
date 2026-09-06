@@ -1,0 +1,236 @@
+{
+  "scope": "New interoperability implementation and its published contracts; not a fresh whole-repository or SaaS review",
+  "score": 8.93,
+  "previous_score": 7.35,
+  "dimensions": [
+    {
+      "name": "Correctness and mathematical contracts",
+      "weight": 30,
+      "score": 9.25,
+      "reason": "All four defects have regression coverage, including exact numeric metadata and signed-zero closure. Wider unsupported variants remain explicit."
+    },
+    {
+      "name": "Architecture and maintainability",
+      "weight": 20,
+      "score": 9.0,
+      "reason": "Native dependencies are isolated in optional adapters; a build gate prevents leakage into core. Geometry allocations share a budget across rows."
+    },
+    {
+      "name": "Validation and test evidence",
+      "weight": 20,
+      "score": 9.0,
+      "reason": "Original reproductions now reject malformed input and accept the valid ring. Fresh GDAL checks cover embedded TIFF/CF transforms, pixels, WKT/masks and XYZ features."
+    },
+    {
+      "name": "Documentation and contract clarity",
+      "weight": 15,
+      "score": 9.0,
+      "reason": "Contracts identify optional dependencies, tested subsets, runtime versions, OS limits and remaining exclusions."
+    },
+    {
+      "name": "Delivery and operational readiness",
+      "weight": 15,
+      "score": 8.0,
+      "reason": "Windows Job Object limits pass denial/termination tests and a real native workload. Hosted Linux/container operational acceptance remains unverified."
+    }
+  ],
+  "findings": [
+    {
+      "id": "IR01",
+      "priority": "P1",
+      "kind": "Reproduced defect",
+      "title": "GeoPackage geometry registration can disagree with decoded features",
+      "trigger": "Change the pinned XYZ LINESTRING fixture registration to POINT with z=0 and m=0. The decoder still returns both XYZ lines.",
+      "impact": "Consumers cannot rely on the declared geometry schema; source metadata and returned values contradict one another without a diagnostic.",
+      "action": "Read geometry_type_name, z and m; enforce permitted geometry subtype/dimensions for every non-null geometry. Validate registered SRS consistency. Add positive generic-GEOMETRY and negative type/dimension cases.",
+      "reference": "https://www.geopackage.org/spec140/index.html#_geometry_columns",
+      "source": {
+        "file": "adapters/src/main/kotlin/io/hexplain/core/raster/TabularDecoder.kt",
+        "line": 45,
+        "href": "../../../../hexplain-tools/adapters/src/main/kotlin/io/hexplain/core/raster/TabularDecoder.kt",
+        "sha256": "e1bbfa993b78d72de80feeb4fdaf7f0d4c30bd87e5989f569940ac4bf0bdec57"
+      },
+      "status": "Fixed",
+      "resolution": "Registered geometry type, Z/M policy and SRS consistency are checked; generic GEOMETRY and optional dimensions retain valid inputs."
+    },
+    {
+      "id": "IR02",
+      "priority": "P2",
+      "kind": "Reproduced defect",
+      "title": "A missing registered geometry column is silently accepted",
+      "trigger": "Register absent_geom against a table containing only id. geoPackage returns a successful GeoPackageFeatures with no geometry values.",
+      "impact": "The explicit one-geometry-column contract is not enforced; malformed database metadata looks like a successfully decoded feature table.",
+      "action": "Check the selected schema contains exactly the registered geometry column before reading rows, including empty tables. Reject missing/mismatched columns before returning success.",
+      "reference": "https://www.geopackage.org/spec140/index.html#_geometry_columns",
+      "source": {
+        "file": "adapters/src/main/kotlin/io/hexplain/core/raster/TabularDecoder.kt",
+        "line": 26,
+        "href": "../../../../hexplain-tools/adapters/src/main/kotlin/io/hexplain/core/raster/TabularDecoder.kt",
+        "sha256": "e1bbfa993b78d72de80feeb4fdaf7f0d4c30bd87e5989f569940ac4bf0bdec57"
+      },
+      "status": "Fixed",
+      "resolution": "The selected schema must contain the registered geometry column, including empty tables."
+    },
+    {
+      "id": "IR03",
+      "priority": "P2",
+      "kind": "Reproduced defect",
+      "title": "Zarr version validation truncates fractional numbers",
+      "trigger": "An otherwise ordinary one-cell array with zarr_format=2.5 decodes value 42 successfully.",
+      "impact": "Invalid metadata is admitted as version 2. This repeats the numeric narrowing problem previously fixed elsewhere in the engine.",
+      "action": "Require a JSON number representing an exact integer equal to 2, before any narrowing. Test fractions, strings, booleans, huge exponents and valid 2.",
+      "reference": "https://zarr-specs.readthedocs.io/en/latest/v2/v2.0.html#metadata",
+      "source": {
+        "file": "core/src/main/kotlin/io/hexplain/core/raster/ZarrRasterDecoder.kt",
+        "line": 32,
+        "href": "../../../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/raster/ZarrRasterDecoder.kt",
+        "sha256": "f5e676539ef3e288fc5acde87abc59f1fb4f702fe43b4d92c11363783f803a89"
+      },
+      "status": "Fixed",
+      "resolution": "Zarr version must be numeric and exactly integral before conversion. Fractional/string/boolean/overflow cases reject."
+    },
+    {
+      "id": "IR04",
+      "priority": "P2",
+      "kind": "Reproduced defect",
+      "title": "Polygon closure compares signed-zero representations instead of coordinates",
+      "trigger": "A triangular WKB ring begins at (+0,0) and closes at (-0,0). Hexplain reports Unclosed polygon ring; Shapely reports the same ring valid and closed.",
+      "impact": "A numerically closed geometry is rejected because Kotlin list equality distinguishes boxed Double signed zeros.",
+      "action": "Compare ordinates numerically after nonfinite validation; preserve source coordinates. Add both signed-zero closure cases and a genuinely unclosed control.",
+      "reference": null,
+      "source": {
+        "file": "core/src/main/kotlin/io/hexplain/core/raster/GeometryDecoder.kt",
+        "line": 48,
+        "href": "../../../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/raster/GeometryDecoder.kt",
+        "sha256": "aa4b5d322c010a8e0055cd282c8f4cce0f0240a7dfd451e83efc964ab9508bbe"
+      },
+      "status": "Fixed",
+      "resolution": "Ring endpoints compare numeric ordinates, preserving signed-zero representations while accepting numeric closure."
+    },
+    {
+      "id": "IR05",
+      "priority": "P1 before hosted exposure",
+      "kind": "Known operational gap",
+      "title": "Collected-byte limits do not bound native or geometry memory",
+      "trigger": "HDF metadata/dataFlat and JDBC values may allocate before adapter accounting; GeoPackage geometry allocation is additional to raw blob accounting.",
+      "impact": "The published 64 MiB limits are not a process-memory guarantee. No exploit or production exposure is claimed: the adapters are currently offline.",
+      "action": "Use an optional adapter module and a worker with OS-enforced memory/time limits; add aggregate geometry budgets and native allocation stress tests before connecting uploads.",
+      "reference": null,
+      "source": {
+        "file": "tests/gdal/windows_worker.py",
+        "line": 29,
+        "href": "../../../../hexplain-tools/tests/gdal/windows_worker.py",
+        "sha256": "89fb23a02b064dc8f298f00da2933ad1a88df32b017998f800c1f0f4486049e6"
+      },
+      "status": "Scoped mitigation",
+      "resolution": "Shared geometry accounting plus a Windows Job Object launcher: memory and process limits precede execution; wall-clock expiry kills the job. Four OS tests and real HDF5/Parquet/GeoPackage/TIFF execution pass. This is resource containment, not filesystem/network isolation or hosted Linux certification."
+    },
+    {
+      "id": "IR06",
+      "priority": "P2",
+      "kind": "Known interoperability gap",
+      "title": "Storage-order decoding does not establish geospatial semantic parity",
+      "trigger": "NetCDF lacks CF/record handling, HDF-EOS axis mapping rejects, and transform/mask helpers do not extract metadata from files.",
+      "impact": "611 pixel matches cannot be interpreted as coordinate, CRS, nodata, alpha or mask equivalence. Companion references are valuable but do not replace the missing GDAL comparisons.",
+      "action": "Run selected-variable and feature comparisons against a functioning pinned GDAL runtime; compare complete values, geometry ordinates, axis mapping, geotransforms and masks independently.",
+      "reference": null,
+      "source": {
+        "file": "core/src/main/kotlin/io/hexplain/core/raster/NetCdfDatasetDecoder.kt",
+        "line": 14,
+        "href": "../../../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/raster/NetCdfDatasetDecoder.kt",
+        "sha256": "246ba7c179b955b7e00af6ae573d319a9544b655eb9d4b059fa62c707255afa1"
+      },
+      "status": "Scoped mitigation",
+      "resolution": "Fresh GDAL 3.9.3/3.9.1 checks match four GeoTIFFs, one selected CF variable and two XYZ features. Embedded metadata is extracted and compared. Broader HDF-EOS/CF, alpha/internal masks and custom CRS variants remain out of scope."
+    },
+    {
+      "id": "IR07",
+      "priority": "P2",
+      "kind": "Architecture gap",
+      "title": "Offline native adapters become dependencies of every core consumer",
+      "trigger": "jHDF, SQLite JDBC and DuckDB JDBC are implementation dependencies in core/build.gradle.kts, despite not being exposed through hosted decoding.",
+      "impact": "All consumers inherit native packaging/platform and update obligations even when they need only the native parser or compiler.",
+      "action": "Move library-backed adapters and their probes into an optional module with an explicit capability boundary; keep native codecs independently usable.",
+      "reference": null,
+      "source": {
+        "file": "adapters/build.gradle.kts",
+        "line": 20,
+        "href": "../../../../hexplain-tools/adapters/build.gradle.kts",
+        "sha256": "84fc2583a386c40fbe4995cdcb7fe4a094524a801f4858126063ca9e4a980d77"
+      },
+      "status": "Fixed",
+      "resolution": "jHDF, SQLite and DuckDB are optional adapters dependencies. verifyCoreIsolation checks core runtime resolution excludes all three."
+    }
+  ],
+  "observations": {
+    "fractional_zarr_version_accepted": false,
+    "missing_registered_geometry_column_accepted": false,
+    "valid_geopackage_control_rows": 2,
+    "declared_point_xy_accepts_linestring_xyz": false,
+    "signed_zero_ring_closure_rejected": false
+  },
+  "metrics": {
+    "core": 565,
+    "adapters": 27,
+    "hdl": 223
+  },
+  "windows_worker": {
+    "platform": "win32",
+    "tests": 4,
+    "normal": {
+      "exit_code": 0,
+      "timed_out": false,
+      "elapsed_seconds": 0.469,
+      "memory_limit_bytes": 67108864,
+      "peak_job_memory_bytes": 8577024,
+      "process_limit": 1
+    },
+    "memory": {
+      "exit_code": 73,
+      "timed_out": false,
+      "elapsed_seconds": 0.422,
+      "memory_limit_bytes": 67108864,
+      "peak_job_memory_bytes": 8622080,
+      "process_limit": 1
+    },
+    "timeout": {
+      "exit_code": 124,
+      "timed_out": true,
+      "elapsed_seconds": 0.516,
+      "memory_limit_bytes": 67108864,
+      "peak_job_memory_bytes": 8802304,
+      "process_limit": 1
+    },
+    "children": {
+      "exit_code": 74,
+      "timed_out": false,
+      "elapsed_seconds": 0.281,
+      "memory_limit_bytes": 67108864,
+      "peak_job_memory_bytes": 8896512,
+      "process_limit": 1
+    }
+  },
+  "native_workload": {
+    "exit_code": 0,
+    "timed_out": false,
+    "elapsed_seconds": 8.031,
+    "memory_limit_bytes": 536870912,
+    "peak_job_memory_bytes": 231653376,
+    "process_limit": 1,
+    "arguments_sha256": "fc4d37b591b418b16a6795993ab0a54c1603e1fa3a97d63be03fc464c6b00975",
+    "output_sha256": "230e159a6cf1f751a5cef93d228f587f8aee0ad080c3dc790bb33298103f85b0"
+  },
+  "semantic_runtime": {
+    "rasterio": "1.4.3",
+    "rasterio_gdal": "3.9.3",
+    "fiona": "1.10.1",
+    "fiona_gdal": "3.9.1",
+    "proj_db_sha256": "25109ada474d1b7198d7015af5b99afa2f21504c77e07dcba74d4e0681b67914"
+  },
+  "semantic_cases": {
+    "tiff": 4,
+    "netcdf_variables": 1,
+    "xyz_features": 2
+  },
+  "decision": "All four reproduced defects and the optional-dependency issue are fixed. Resource/semantic gaps now have measured scoped mitigations; broader hosted and format-wide certification is not claimed."
+}

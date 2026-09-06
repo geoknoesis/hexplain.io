@@ -1,0 +1,168 @@
+{
+  "scope": "New interoperability implementation and its published contracts; not a fresh whole-repository or SaaS review",
+  "score": 7.35,
+  "dimensions": [
+    {
+      "name": "Correctness and mathematical contracts",
+      "weight": 30,
+      "score": 7.5,
+      "reason": "Exact-value fixtures and numeric limits are useful, but four reproduced input/geometry defects remain."
+    },
+    {
+      "name": "Architecture and maintainability",
+      "weight": 20,
+      "score": 7.0,
+      "reason": "Adapters are readable and separate storage from some semantics, but native dependencies are mandatory core dependencies and limits are not shared across libraries/geometry allocation."
+    },
+    {
+      "name": "Validation and test evidence",
+      "weight": 20,
+      "score": 8.0,
+      "reason": "611 full-pixel comparisons and independent companion references are strong. Only 20 new cases cover eight contracts; GDAL vector/mask/CF parity and adversarial breadth remain missing."
+    },
+    {
+      "name": "Documentation and contract clarity",
+      "weight": 15,
+      "score": 8.5,
+      "reason": "Scope/range/limits and library provenance are explicit. The pages need a clear new-scope score and defect list rather than carrying forward old global scores."
+    },
+    {
+      "name": "Delivery and operational readiness",
+      "weight": 15,
+      "score": 5.5,
+      "reason": "This is an offline increment, not a hosted feature. Native allocation isolation and reproducible live GDAL semantic runs are not demonstrated."
+    }
+  ],
+  "findings": [
+    {
+      "id": "IR01",
+      "priority": "P1",
+      "kind": "Reproduced defect",
+      "title": "GeoPackage geometry registration can disagree with decoded features",
+      "trigger": "Change the pinned XYZ LINESTRING fixture registration to POINT with z=0 and m=0. The decoder still returns both XYZ lines.",
+      "impact": "Consumers cannot rely on the declared geometry schema; source metadata and returned values contradict one another without a diagnostic.",
+      "action": "Read geometry_type_name, z and m; enforce permitted geometry subtype/dimensions for every non-null geometry. Validate registered SRS consistency. Add positive generic-GEOMETRY and negative type/dimension cases.",
+      "reference": "https://www.geopackage.org/spec140/index.html#_geometry_columns",
+      "source": {
+        "file": "core/src/main/kotlin/io/hexplain/core/raster/TabularDecoder.kt",
+        "line": 64,
+        "href": "../../../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/raster/TabularDecoder.kt",
+        "sha256": "97f07b729b263f3351fa5919e22edc9e8c37fb6ff998fb24e7e13fdd231ae82e"
+      }
+    },
+    {
+      "id": "IR02",
+      "priority": "P2",
+      "kind": "Reproduced defect",
+      "title": "A missing registered geometry column is silently accepted",
+      "trigger": "Register absent_geom against a table containing only id. geoPackage returns a successful GeoPackageFeatures with no geometry values.",
+      "impact": "The explicit one-geometry-column contract is not enforced; malformed database metadata looks like a successfully decoded feature table.",
+      "action": "Check the selected schema contains exactly the registered geometry column before reading rows, including empty tables. Reject missing/mismatched columns before returning success.",
+      "reference": "https://www.geopackage.org/spec140/index.html#_geometry_columns",
+      "source": {
+        "file": "core/src/main/kotlin/io/hexplain/core/raster/TabularDecoder.kt",
+        "line": 37,
+        "href": "../../../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/raster/TabularDecoder.kt",
+        "sha256": "97f07b729b263f3351fa5919e22edc9e8c37fb6ff998fb24e7e13fdd231ae82e"
+      }
+    },
+    {
+      "id": "IR03",
+      "priority": "P2",
+      "kind": "Reproduced defect",
+      "title": "Zarr version validation truncates fractional numbers",
+      "trigger": "An otherwise ordinary one-cell array with zarr_format=2.5 decodes value 42 successfully.",
+      "impact": "Invalid metadata is admitted as version 2. This repeats the numeric narrowing problem previously fixed elsewhere in the engine.",
+      "action": "Require a JSON number representing an exact integer equal to 2, before any narrowing. Test fractions, strings, booleans, huge exponents and valid 2.",
+      "reference": "https://zarr-specs.readthedocs.io/en/latest/v2/v2.0.html#metadata",
+      "source": {
+        "file": "core/src/main/kotlin/io/hexplain/core/raster/ZarrRasterDecoder.kt",
+        "line": 30,
+        "href": "../../../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/raster/ZarrRasterDecoder.kt",
+        "sha256": "60283368f8b81971483474ca1d82f31b81e92faa515a29daeb065724f668328c"
+      }
+    },
+    {
+      "id": "IR04",
+      "priority": "P2",
+      "kind": "Reproduced defect",
+      "title": "Polygon closure compares signed-zero representations instead of coordinates",
+      "trigger": "A triangular WKB ring begins at (+0,0) and closes at (-0,0). Hexplain reports Unclosed polygon ring; Shapely reports the same ring valid and closed.",
+      "impact": "A numerically closed geometry is rejected because Kotlin list equality distinguishes boxed Double signed zeros.",
+      "action": "Compare ordinates numerically after nonfinite validation; preserve source coordinates. Add both signed-zero closure cases and a genuinely unclosed control.",
+      "reference": null,
+      "source": {
+        "file": "core/src/main/kotlin/io/hexplain/core/raster/GeometryDecoder.kt",
+        "line": 30,
+        "href": "../../../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/raster/GeometryDecoder.kt",
+        "sha256": "54cfdda17d236df16b04748064fb2c65419135e250ecd4eb8e7ed5e36b3202e9"
+      }
+    },
+    {
+      "id": "IR05",
+      "priority": "P1 before hosted exposure",
+      "kind": "Known operational gap",
+      "title": "Collected-byte limits do not bound native or geometry memory",
+      "trigger": "HDF metadata/dataFlat and JDBC values may allocate before adapter accounting; GeoPackage geometry allocation is additional to raw blob accounting.",
+      "impact": "The published 64 MiB limits are not a process-memory guarantee. No exploit or production exposure is claimed: the adapters are currently offline.",
+      "action": "Use an optional adapter module and a worker with OS-enforced memory/time limits; add aggregate geometry budgets and native allocation stress tests before connecting uploads.",
+      "reference": null,
+      "source": {
+        "file": "core/src/main/kotlin/io/hexplain/core/raster/TabularDecoder.kt",
+        "line": 30,
+        "href": "../../../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/raster/TabularDecoder.kt",
+        "sha256": "97f07b729b263f3351fa5919e22edc9e8c37fb6ff998fb24e7e13fdd231ae82e"
+      }
+    },
+    {
+      "id": "IR06",
+      "priority": "P2",
+      "kind": "Known interoperability gap",
+      "title": "Storage-order decoding does not establish geospatial semantic parity",
+      "trigger": "NetCDF lacks CF/record handling, HDF-EOS axis mapping rejects, and transform/mask helpers do not extract metadata from files.",
+      "impact": "611 pixel matches cannot be interpreted as coordinate, CRS, nodata, alpha or mask equivalence. Companion references are valuable but do not replace the missing GDAL comparisons.",
+      "action": "Run selected-variable and feature comparisons against a functioning pinned GDAL runtime; compare complete values, geometry ordinates, axis mapping, geotransforms and masks independently.",
+      "reference": null,
+      "source": {
+        "file": "core/src/main/kotlin/io/hexplain/core/raster/RasterSemantics.kt",
+        "line": 33,
+        "href": "../../../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/raster/RasterSemantics.kt",
+        "sha256": "bd76ea36eca9e2a891a71881afb2b68282fe20eb36068c0573d300bb3843c6d1"
+      }
+    },
+    {
+      "id": "IR07",
+      "priority": "P2",
+      "kind": "Architecture gap",
+      "title": "Offline native adapters become dependencies of every core consumer",
+      "trigger": "jHDF, SQLite JDBC and DuckDB JDBC are implementation dependencies in core/build.gradle.kts, despite not being exposed through hosted decoding.",
+      "impact": "All consumers inherit native packaging/platform and update obligations even when they need only the native parser or compiler.",
+      "action": "Move library-backed adapters and their probes into an optional module with an explicit capability boundary; keep native codecs independently usable.",
+      "reference": null,
+      "source": {
+        "file": "core/build.gradle.kts",
+        "line": 14,
+        "href": "../../../../hexplain-tools/core/build.gradle.kts",
+        "sha256": "73c4e79084220afc0a2a0ac111f4e8c38fe0dba6000ab07abd4207b3104371c0"
+      }
+    }
+  ],
+  "observations": {
+    "fractional_zarr_version_accepted": true,
+    "missing_registered_geometry_column_accepted": true,
+    "valid_geopackage_control_rows": 2,
+    "declared_point_xy_accepts_linestring_xyz": true,
+    "signed_zero_ring_closure_rejected": true
+  },
+  "evidence_counts": {
+    "equal": 611,
+    "not-implemented": 816,
+    "oracle-only": 3931,
+    "hexplain-unsupported": 248,
+    "hexplain-rejected": 15,
+    "documented-type-difference": 1
+  },
+  "existing_suite": "579 core + 223 HDL + 68 SaaS tests passed in the preceding implementation pass. This review ran dedicated observations and rechecked evidence; it did not rerun all 870 tests.",
+  "decision": "Useful experimental/offline increment; not 9.5-ready. No production code was changed by this review.",
+  "prior_scores": "9.38 specification / 9.28 engine / 7.70 SaaS are historical broader assessments, not scores for this increment."
+}

@@ -20,13 +20,14 @@ from rdflib.compare import graph_diff, to_isomorphic
 # one level deeper and are picked up the same way. A module that later gains a page joins
 # the gate on its own.
 def _modules():
-    found = []
+    found = {}
     for ttl in sorted(pathlib.Path("specification").glob("*/*.ttl")) + \
                sorted(pathlib.Path("specification").glob("*/*/*.ttl")):
         doc = ttl.parent / "index.html"
         if doc.exists():
-            found.append((ttl.parent.relative_to("specification").as_posix(), ttl, doc))
-    return found
+            key = ttl.parent.relative_to("specification").as_posix()
+            found.setdefault(key, ([], doc))[0].append(ttl)
+    return [(key, paths, doc) for key, (paths, doc) in sorted(found.items())]
 # Only the normative sections are the vocabulary's second copy. Non-normative
 # example blocks are valid Turtle too, but they are meant to differ from the
 # .ttl, so comparing them would be measuring the wrong thing.
@@ -70,8 +71,11 @@ if not modules:
     sys.exit("FAIL: no module has both a .ttl and an index.html (wrong working directory?)")
 
 failures = []
-for mod, ttl_path, doc_path in modules:
-    canonical = to_isomorphic(turtle_graph(ttl_path))
+for mod, ttl_paths, doc_path in modules:
+    combined = rdflib.Graph()
+    for ttl_path in ttl_paths:
+        combined += turtle_graph(ttl_path)
+    canonical = to_isomorphic(combined)
     embedded = to_isomorphic(embedded_graph(doc_path))
     if canonical == embedded:
         continue
