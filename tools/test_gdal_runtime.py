@@ -27,7 +27,7 @@ print(f"PASS: {len(evidence['inventory'])} GDAL documentation entries, {len(evid
 
 extended=json.loads((root/'extended-evidence.json').read_text(encoding='utf-8'))
 assert extended['counts']==evidence['counts']
-assert sum(t['tests'] for t in extended['tests'])==33
+assert sum(t['tests'] for t in extended['tests'])==39
 assert len(extended['contracts'])==8
 assert len(extended['retained_tiff_rejections'])==11
 assert all(c[k] for c in extended['contracts'] for k in ['name','implementation','scope','range','evidence','limits'])
@@ -35,4 +35,4 @@ engine=Path('../hexplain-tools')
 for name,digest in extended['sources'].items():
     assert hashlib.sha256((engine/name).read_bytes()).hexdigest()==digest, name
 assert 'NOT a GDAL' in Path('../hexplain-tools/adapters/src/test/resources/extended-vectors.json').read_text(encoding='utf-8')
-print('PASS: 8 scoped adapter contracts, 33 tests, source hashes and separate companion evidence')
+print('PASS: 8 scoped adapter contracts, 39 tests, source hashes and separate companion evidence')

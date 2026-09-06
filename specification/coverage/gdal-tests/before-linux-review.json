@@ -1,6 +1,6 @@
 {
   "scope": "New interoperability implementation and its published contracts; not a fresh whole-repository or SaaS review",
-  "score": 9.18,
+  "score": 8.93,
   "previous_score": 7.35,
   "dimensions": [
     {
@@ -18,8 +18,8 @@
     {
       "name": "Validation and test evidence",
       "weight": 20,
-      "score": 9.5,
-      "reason": "Pinned GDAL 3.13.3 independently verifies nine TIFFs, CF and XYZ semantics; mask precedence and malformed mask regressions pass. Six Linux containment cases and a real native workload pass."
+      "score": 9.0,
+      "reason": "Original reproductions now reject malformed input and accept the valid ring. Fresh GDAL checks cover embedded TIFF/CF transforms, pixels, WKT/masks and XYZ features."
     },
     {
       "name": "Documentation and contract clarity",
@@ -30,8 +30,8 @@
     {
       "name": "Delivery and operational readiness",
       "weight": 15,
-      "score": 9.0,
-      "reason": "Windows and Linux resource limits are measured. Linux additionally verifies read-only root, disabled networking and an unprivileged native workload. Hosted service deployment/load acceptance remains separate."
+      "score": 8.0,
+      "reason": "Windows Job Object limits pass denial/termination tests and a real native workload. Hosted Linux/container operational acceptance remains unverified."
     }
   ],
   "findings": [
@@ -117,13 +117,13 @@
       "action": "Use an optional adapter module and a worker with OS-enforced memory/time limits; add aggregate geometry budgets and native allocation stress tests before connecting uploads.",
       "reference": null,
       "source": {
-        "file": "tests/gdal/container_worker.py",
-        "line": 38,
-        "href": "../../../../hexplain-tools/tests/gdal/container_worker.py",
-        "sha256": "18cf4a7355c223cedbcfba31d3ac191313db859decd811a9c7508e42a7c18eb9"
+        "file": "tests/gdal/windows_worker.py",
+        "line": 29,
+        "href": "../../../../hexplain-tools/tests/gdal/windows_worker.py",
+        "sha256": "89fb23a02b064dc8f298f00da2933ad1a88df32b017998f800c1f0f4486049e6"
       },
-      "status": "Fixed",
-      "resolution": "Offline adapters have shared geometry budgets and pre-execution Windows/Linux OS limits. Six Linux tests verify OOM, process count, deadline, read-only filesystem and disabled networking. Real HDF5/Parquet/GeoPackage/TIFF execution passes as an unprivileged user under 512 MiB with swap disabled. Hosted route integration remains a separate acceptance task."
+      "status": "Scoped mitigation",
+      "resolution": "Shared geometry accounting plus a Windows Job Object launcher: memory and process limits precede execution; wall-clock expiry kills the job. Four OS tests and real HDF5/Parquet/GeoPackage/TIFF execution pass. This is resource containment, not filesystem/network isolation or hosted Linux certification."
     },
     {
       "id": "IR06",
@@ -140,8 +140,8 @@
         "href": "../../../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/raster/NetCdfDatasetDecoder.kt",
         "sha256": "246ba7c179b955b7e00af6ae573d319a9544b655eb9d4b059fa62c707255afa1"
       },
-      "status": "Fixed",
-      "resolution": "The requested selected-variable/feature comparisons now run against pinned GDAL 3.13.3: nine TIFFs, one CF variable and two XYZ features. Every pixel, transform and mask is compared. Byte alpha and one full-resolution internal TIFF mask now decode with tested precedence over nodata/alpha. Broader HDF-EOS/CF, external masks and custom CRS remain explicit capability exclusions."
+      "status": "Scoped mitigation",
+      "resolution": "Fresh GDAL 3.9.3/3.9.1 checks match four GeoTIFFs, one selected CF variable and two XYZ features. Embedded metadata is extracted and compared. Broader HDF-EOS/CF, alpha/internal masks and custom CRS variants remain out of scope."
     },
     {
       "id": "IR07",
@@ -156,7 +156,7 @@
         "file": "adapters/build.gradle.kts",
         "line": 20,
         "href": "../../../../hexplain-tools/adapters/build.gradle.kts",
-        "sha256": "52c37f0f6e95ad2f89dcbd2c3bb58d276f5b0d271113cbd72598dfad742de468"
+        "sha256": "84fc2583a386c40fbe4995cdcb7fe4a094524a801f4858126063ca9e4a980d77"
       },
       "status": "Fixed",
       "resolution": "jHDF, SQLite and DuckDB are optional adapters dependencies. verifyCoreIsolation checks core runtime resolution excludes all three."
@@ -171,7 +171,7 @@
   },
   "metrics": {
     "core": 565,
-    "adapters": 33,
+    "adapters": 27,
     "hdl": 223
   },
   "windows_worker": {
@@ -220,133 +220,6 @@
     "arguments_sha256": "fc4d37b591b418b16a6795993ab0a54c1603e1fa3a97d63be03fc464c6b00975",
     "output_sha256": "230e159a6cf1f751a5cef93d228f587f8aee0ad080c3dc790bb33298103f85b0"
   },
-  "linux_worker": {
-    "tests": 6,
-    "cases": {
-      "normal": {
-        "exit_code": 0,
-        "timed_out": false,
-        "oom_killed": false,
-        "elapsed_seconds": 0.655,
-        "image": "ghcr.io/osgeo/gdal@sha256:2dd0f81ef927ff4c3d4dbe4f73c029dc86d4073974c0564f8e196f6e1412e2e0",
-        "memory_limit_bytes": 67108864,
-        "swap_limit_bytes": 0,
-        "process_limit": 64,
-        "read_only": true,
-        "network": "none",
-        "user": "65534:65534"
-      },
-      "memory": {
-        "exit_code": 137,
-        "timed_out": false,
-        "oom_killed": true,
-        "elapsed_seconds": 0.875,
-        "image": "ghcr.io/osgeo/gdal@sha256:2dd0f81ef927ff4c3d4dbe4f73c029dc86d4073974c0564f8e196f6e1412e2e0",
-        "memory_limit_bytes": 67108864,
-        "swap_limit_bytes": 0,
-        "process_limit": 64,
-        "read_only": true,
-        "network": "none",
-        "user": "65534:65534"
-      },
-      "timeout": {
-        "exit_code": 124,
-        "timed_out": true,
-        "oom_killed": false,
-        "elapsed_seconds": 1.64,
-        "image": "ghcr.io/osgeo/gdal@sha256:2dd0f81ef927ff4c3d4dbe4f73c029dc86d4073974c0564f8e196f6e1412e2e0",
-        "memory_limit_bytes": 67108864,
-        "swap_limit_bytes": 0,
-        "process_limit": 64,
-        "read_only": true,
-        "network": "none",
-        "user": "65534:65534"
-      },
-      "children": {
-        "exit_code": 0,
-        "timed_out": false,
-        "oom_killed": false,
-        "elapsed_seconds": 0.504,
-        "image": "ghcr.io/osgeo/gdal@sha256:2dd0f81ef927ff4c3d4dbe4f73c029dc86d4073974c0564f8e196f6e1412e2e0",
-        "memory_limit_bytes": 67108864,
-        "swap_limit_bytes": 0,
-        "process_limit": 1,
-        "read_only": true,
-        "network": "none",
-        "user": "65534:65534"
-      },
-      "filesystem": {
-        "exit_code": 0,
-        "timed_out": false,
-        "oom_killed": false,
-        "elapsed_seconds": 0.761,
-        "image": "ghcr.io/osgeo/gdal@sha256:2dd0f81ef927ff4c3d4dbe4f73c029dc86d4073974c0564f8e196f6e1412e2e0",
-        "memory_limit_bytes": 67108864,
-        "swap_limit_bytes": 0,
-        "process_limit": 64,
-        "read_only": true,
-        "network": "none",
-        "user": "65534:65534"
-      },
-      "network": {
-        "exit_code": 0,
-        "timed_out": false,
-        "oom_killed": false,
-        "elapsed_seconds": 0.559,
-        "image": "ghcr.io/osgeo/gdal@sha256:2dd0f81ef927ff4c3d4dbe4f73c029dc86d4073974c0564f8e196f6e1412e2e0",
-        "memory_limit_bytes": 67108864,
-        "swap_limit_bytes": 0,
-        "process_limit": 64,
-        "read_only": true,
-        "network": "none",
-        "user": "65534:65534"
-      }
-    }
-  },
-  "linux_native": {
-    "exit_code": 0,
-    "timed_out": false,
-    "oom_killed": false,
-    "elapsed_seconds": 9.347,
-    "image": "eclipse-temurin@sha256:7a65df4b22d2de92d4e04056e884f3b9122d70b21e2847fd66084278bd0ce037",
-    "memory_limit_bytes": 536870912,
-    "swap_limit_bytes": 0,
-    "process_limit": 64,
-    "read_only": true,
-    "network": "none",
-    "user": "65534:65534",
-    "output_sha256": "230e159a6cf1f751a5cef93d228f587f8aee0ad080c3dc790bb33298103f85b0",
-    "native_allocation_stress": {
-      "exit_code": 137,
-      "timed_out": false,
-      "oom_killed": true,
-      "elapsed_seconds": 6.269,
-      "image": "eclipse-temurin@sha256:7a65df4b22d2de92d4e04056e884f3b9122d70b21e2847fd66084278bd0ce037",
-      "memory_limit_bytes": 268435456,
-      "swap_limit_bytes": 0,
-      "process_limit": 64,
-      "read_only": true,
-      "network": "none",
-      "user": "65534:65534"
-    }
-  },
-  "pinned_semantics": {
-    "gdal": "GDAL 3.13.3 \"Iowa City\", released 2026/08/13",
-    "checks": [
-      "area.tif",
-      "point.tif",
-      "rotated.tif",
-      "nan.tif",
-      "alpha.tif",
-      "alpha-nodata.tif",
-      "internal.tif",
-      "internal-nodata.tif",
-      "internal-alpha.tif",
-      "CF Band1 pixels/CRS/transform/mask",
-      "GeoPackage XYZ feature ordinates"
-    ],
-    "passed": 11
-  },
   "semantic_runtime": {
     "rasterio": "1.4.3",
     "rasterio_gdal": "3.9.3",
@@ -355,9 +228,9 @@
     "proj_db_sha256": "25109ada474d1b7198d7015af5b99afa2f21504c77e07dcba74d4e0681b67914"
   },
   "semantic_cases": {
-    "tiff": 9,
+    "tiff": 4,
     "netcdf_variables": 1,
     "xyz_features": 2
   },
-  "decision": "All seven findings are addressed within the reviewed offline adapter contracts. Linux containment and pinned GDAL semantic acceptance are measured. This does not certify all GDAL formats or a deployed hosted service."
+  "decision": "All four reproduced defects and the optional-dependency issue are fixed. Resource/semantic gaps now have measured scoped mitigations; broader hosted and format-wide certification is not claimed."
 }
