@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hexplain validation contracts and releases</title>
+<style>body{font:17px/1.7 system-ui,sans-serif;color:#17333d;max-width:1100px;margin:3rem auto;padding:0 24px}a{color:#006b60}table{border-collapse:collapse;width:100%}td,th{padding:12px;text-align:left;border-bottom:1px solid #ccd9d5}pre{padding:18px;background:#edf4f1;overflow:auto}:focus-visible{outline:3px solid #078779;outline-offset:3px}.table{overflow:auto}</style></head>
+<body><nav><a href="../index.html">Specification family</a> · <a href="../reference/index.html">Term reference</a> · <a href="../../releases/index.html">Pinned snapshots</a></nav>
+<h1>Validation contracts</h1><p>A format description, a binary decode and a semantic graph answer different conformance questions. Record each stage separately. Passing one stage does not imply passing the others.</p>
+<div class="table"><table><thead><tr><th>Stage</th><th>Subject and selection</th><th>Evidence and limits</th></tr></thead><tbody>
+<tr><td>Description SHACL</td><td>Profile graph, with BDDO/Core/DLV shapes and the supporting vocabulary.</td><td>Checks declarations. It neither parses a file nor validates the graph produced by lifting.</td></tr>
+<tr><td>Binary processing</td><td>Compiled format IR, a particular input and explicitly supported engine capabilities.</td><td>Parser diagnostics, resource limits and source bytes. Unsupported physical contracts must fail explicitly.</td></tr>
+<tr><td>Emitted-instance SHACL</td><td>Produced graph, explicitly selected aspect/domain shape modules and supporting vocabulary.</td><td>A complete SHACL report plus module byte hashes, selection, processor version, source identifier, triple counts and entailment policy.</td></tr>
+<tr><td>Interoperability</td><td>Matched source fixtures and independently measured reference output.</td><td><a href="../coverage/gdal-tests/index.html">GDAL comparisons</a> currently cover selected raster pixels; they do not establish vector, CRS or mask equivalence.</td></tr>
+</tbody></table></div>
+<h2>Ontology and shape semantics</h2><p>Ontology range axioms describe interpretation. They do not replace runtime validation. Optional aspect properties activate local value constraints when present; they do not require every dataset to describe every aspect. A domain profile may add completeness requirements. An absent property means no assertion, not a zero value. RDF term cardinality and numeric equality remain different checks.</p>
+<p>The engine uses SHACL 1.0 Core and SPARQL constraints through Apache Jena. It performs no OWL or RDFS materialization. SHACL class targets and class constraints still traverse explicit subclass declarations in the supplied vocabulary. Imports are resolved from the bundled family only; validation does not fetch namespace URLs. Helper shapes from unselected modules are available for references, while their targets are inactive. Unsupported entailment requests fail. These choices follow the <a href="https://www.w3.org/TR/shacl/#validation">W3C SHACL validation contract</a>.</p>
+<h2>Engine usage</h2><pre><code>val validator = InstanceGraphValidator.fromBundledShapes(
+    "vocab/aspect/raster.ttl",
+    "vocab/aspect/sampling.ttl",
+    maxInputTriples = 100_000
+)
+val result = processAndValidateSemanticGraph(
+    profile, rootStructUri, baseUri, bytes, validator
+)
+// Inspect result.validation.conforms and its full report.
+// Nonconforming output remains available as result.graph.</code></pre>
+<p>The caller's graph is not mutated by validation. The source identifier is supplied by the caller; it is not a content checksum. Resource SHA-256 values identify the exact bundled Turtle bytes, not canonical RDF graph hashes. A true report may be vacuous when no instances match selected targets. Target-declaration counts are not focus-node coverage. Triple limits and interruption checks do not provide a hard SHACL query deadline; hard service guarantees require isolated execution.</p>
+<h2>Sampling and signal revision 1.1</h2><p>Bit depth and component count accept positive XML Schema integer-family values, with one value per property. Zero, fractions, numeric strings and conflicting values fail. Sample interpretation is one of SignedInteger, UnsignedInteger or Float in this revision. More numeric interpretations require an explicit vocabulary revision.</p>
+<p>Sample rate is a positive decimal or integer-family value in hertz. Decimal 0.5 means one sample instant every two seconds. Rates count sample instants, independently of channel count. Decimal values preserve finite decimal fractions exactly; they do not claim exact representation of every rational number. NaN, infinity, binary floating literals and nonpositive rates fail this contract. Convert binary approximations explicitly, preserving the original value where needed.</p>
+<h2>Executable competency and compatibility evidence</h2><p>The <a href="test/competency.tsv">36-case shared corpus</a> covers sampling, signal, time, packaging and raster values, including invalid cases and expected result paths. The same source cases run in pySHACL and Apache Jena. They supplement the existing geospatial, packaging, numeric and video suites; they are not exhaustive coverage of every vocabulary term.</p>
+<p>Each <a href="../../releases/index.html">snapshot</a> pins its original corpus and ontology bytes. The release gate verifies hashes and replays that corpus against both archived and current shapes. New invalid-case rejection is a validation compatibility change even if term IRIs remain stable. Retain old artifacts and document migrations instead of overwriting them. Live HTTP namespace negotiation and external consumer acceptance remain deployment checks.</p>
+</body></html>

@@ -1,4 +1,4 @@
-# Hexplain Aspect — Sampling (hx-sampling) 1.0
+# Hexplain Aspect â€” Sampling (hx-sampling) 1.0
 # Base aspect: quantised sample values. Shared by any sampled representation
 # (raster pixels, audio samples, point-cloud attributes). Imports nothing.
 @prefix :       <https://hexplain.io/ns/aspect/sampling#> .
@@ -14,17 +14,53 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/aspect/sampling> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/sampling/1.0> ; owl:versionInfo "1.0" ;
-    rdfs:label "Hexplain Aspect — Sampling (hx-sampling)" ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/sampling/1.1> ; owl:versionInfo "1.1" ;
+    rdfs:label "Hexplain Aspect â€” Sampling (hx-sampling)" ;
     rdfs:comment "Base aspect for quantised sample values (bit depth, component count, sample format). Shared by raster, signal, and point-cloud representations." ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "asamp" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/sampling#" .
 
 :bitDepth a owl:DatatypeProperty ; rdfs:label "bit depth" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ; rdfs:range xsd:positiveInteger ; qudt:hasQuantityKind quantitykind:InformationEntropy ; qudt:hasUnit unit:BIT ; rdfs:comment "Bits per component/sample of the quantised data (e.g. 8, 16, 24)." .
-:componentCount a owl:DatatypeProperty ; rdfs:label "component count" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ; rdfs:range xsd:positiveInteger ; rdfs:comment "Number of components per sample — colour channels/bands for raster, channels for signal." .
+:componentCount a owl:DatatypeProperty ; rdfs:label "component count" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ; rdfs:range xsd:positiveInteger ; rdfs:comment "Number of components per sample â€” colour channels/bands for raster, channels for signal." .
 :sampleFormat a owl:ObjectProperty ; rdfs:label "sample format" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ; rdfs:comment "Numeric interpretation of each stored sample." .
 
 :SignedInteger a owl:NamedIndividual ; rdfs:label "Signed integer" .
 :UnsignedInteger a owl:NamedIndividual ; rdfs:label "Unsigned integer" .
 :Float a owl:NamedIndividual ; rdfs:label "Floating point" .
+
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+# Optional properties: declaring one activates value checks, not a completeness requirement.
+:PositiveIntegerShape a sh:NodeShape ; rdfs:label "Positive sample count" ;
+    skos:definition "A positive integral quantity using an XML Schema integer-family datatype. Fractional values and numeric strings are not counts."@en ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 .
+:SamplingShape a sh:NodeShape ; rdfs:label "Sampling values" ;
+    skos:definition "Validates optional sample precision, component count and numeric interpretation wherever those sampling properties occur."@en ;
+    sh:targetSubjectsOf :bitDepth, :componentCount, :sampleFormat ;
+    sh:property [ sh:path :bitDepth ; sh:node :PositiveIntegerShape ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :componentCount ; sh:node :PositiveIntegerShape ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :sampleFormat ; sh:in ( :SignedInteger :UnsignedInteger :Float ) ; sh:maxCount 1 ] .
+
+# BEGIN GENERATED TERM DOCUMENTATION
+# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
+<https://hexplain.io/ns/aspect/sampling> <http://www.w3.org/2004/02/skos/core#definition> "Base aspect for quantised sample values (bit depth, component count, sample format). Shared by raster, signal, and point-cloud representations."@en .
+<https://hexplain.io/ns/aspect/sampling> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for quantized sample interpretation shared by raster, signal and point-cloud data. Precision, component organization and numeric interpretation are separate declarations."@en .
+<https://hexplain.io/ns/aspect/sampling#Float> <http://www.w3.org/2004/02/skos/core#definition> "Sample interpretation using floating-point numeric values rather than integer quantization codes."@en .
+<https://hexplain.io/ns/aspect/sampling#Float> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for quantized sample interpretation shared by raster, signal and point-cloud data. Precision, component organization and numeric interpretation are separate declarations. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/aspect/sampling#Float> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/sampling> .
+<https://hexplain.io/ns/aspect/sampling#PositiveIntegerShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/aspect/sampling#PositiveIntegerShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/sampling> .
+<https://hexplain.io/ns/aspect/sampling#SamplingShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using asamp:bitDepth, asamp:componentCount, asamp:sampleFormat Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/aspect/sampling#SamplingShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/sampling> .
+<https://hexplain.io/ns/aspect/sampling#SignedInteger> <http://www.w3.org/2004/02/skos/core#definition> "Sample interpretation admitting negative and nonnegative integral values; precision is stated separately."@en .
+<https://hexplain.io/ns/aspect/sampling#SignedInteger> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for quantized sample interpretation shared by raster, signal and point-cloud data. Precision, component organization and numeric interpretation are separate declarations. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/aspect/sampling#SignedInteger> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/sampling> .
+<https://hexplain.io/ns/aspect/sampling#UnsignedInteger> <http://www.w3.org/2004/02/skos/core#definition> "Sample interpretation admitting only nonnegative integral values; precision is stated separately."@en .
+<https://hexplain.io/ns/aspect/sampling#UnsignedInteger> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for quantized sample interpretation shared by raster, signal and point-cloud data. Precision, component organization and numeric interpretation are separate declarations. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/aspect/sampling#UnsignedInteger> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/sampling> .
+<https://hexplain.io/ns/aspect/sampling#bitDepth> <http://www.w3.org/2004/02/skos/core#definition> "Bits per component/sample of the quantised data (e.g. 8, 16, 24)."@en .
+<https://hexplain.io/ns/aspect/sampling#bitDepth> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for quantized sample interpretation shared by raster, signal and point-cloud data. Precision, component organization and numeric interpretation are separate declarations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/aspect/sampling#componentCount> <http://www.w3.org/2004/02/skos/core#definition> "Number of components per sample â€” colour channels/bands for raster, channels for signal."@en .
+<https://hexplain.io/ns/aspect/sampling#componentCount> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for quantized sample interpretation shared by raster, signal and point-cloud data. Precision, component organization and numeric interpretation are separate declarations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/aspect/sampling#sampleFormat> <http://www.w3.org/2004/02/skos/core#definition> "Numeric interpretation of each stored sample."@en .
+<https://hexplain.io/ns/aspect/sampling#sampleFormat> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for quantized sample interpretation shared by raster, signal and point-cloud data. Precision, component organization and numeric interpretation are separate declarations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .

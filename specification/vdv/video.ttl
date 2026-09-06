@@ -27,11 +27,11 @@
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "vdv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/video#" .
 
-:VideoContainer a owl:Class ; rdfs:label "Video Container" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; skos:closeMatch ma:MediaResource .
-:VideoStream a owl:Class ; rdfs:label "Video Stream" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; skos:closeMatch ma:VideoTrack .
+:VideoContainer a owl:Class ; rdfs:label "Video Container" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:seeAlso ma:MediaResource .
+:VideoStream a owl:Class ; rdfs:label "Video Stream" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:seeAlso ma:VideoTrack .
 :VideoTrack a owl:Class ; rdfs:label "Video Track" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> .
 
-:frameRate a owl:DatatypeProperty ; rdfs:label "frame rate" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; skos:closeMatch ma:frameRate ; rdfs:range xsd:decimal ; qudt:hasQuantityKind quantitykind:Frequency ; qudt:hasUnit unit:HZ .
+:frameRate a owl:DatatypeProperty ; rdfs:label "frame rate" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:seeAlso ma:frameRate ; rdfs:range xsd:decimal ; qudt:hasQuantityKind quantitykind:Frequency ; qudt:hasUnit unit:HZ .
 # Frame dimensions come from the raster aspect: araster:width / araster:height.
 # duration (atime), bitrate + codec (aenc), colorSpace (acolor) are imported from the aspect layer.
 :aspectRatio a owl:DatatypeProperty ; rdfs:label "aspect ratio" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:string ; rdfs:comment "Display aspect ratio as a W:H string, e.g. \"16:9\"." .
@@ -44,13 +44,78 @@
 :axisFrame a dlv:Axis ; rdfs:label "Frame Axis" ; rdfs:seeAlso dlv:axisTime .
 
 # ---------- SHACL ----------
-vdv:StreamShape a sh:NodeShape ; sh:targetSubjectsOf vdv:frameRate ;
+vdv:StreamShape a sh:NodeShape ; sh:targetClass vdv:VideoStream, vdv:VideoTrack ;
+    sh:targetSubjectsOf vdv:frameRate, vdv:frameCount, vdv:aspectRatio, vdv:scanType, vdv:audioChannels, vdv:frameRateNumerator, vdv:frameRateDenominator ;
     sh:property [ sh:path araster:width ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path araster:height ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:frameRate ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
-    sh:property [ sh:path atime:duration ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path vdv:frameRate ; sh:or ( [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path atime:duration ; sh:or ( [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] ) ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path aenc:bitrate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path vdv:frameCount ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:unsignedLong ] ) ; sh:minInclusive 0 ; sh:maxInclusive 18446744073709551615 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path vdv:audioChannels ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path vdv:scanType ; sh:maxCount 1 ; sh:in ( vdv:Progressive vdv:Interlaced ) ] ;
     sh:property [ sh:path aenc:codec ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] ;
     sh:property [ sh:path acolor:colorSpace ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] ;
     sh:property [ sh:path vdv:aspectRatio ; sh:datatype xsd:string ; sh:pattern "^[0-9]+(\\.[0-9]+)?:[0-9]+(\\.[0-9]+)?$" ; sh:maxCount 1 ] .
+
+# Exact nominal rate. For variable-rate streams this does not imply duration = count/rate.
+:frameRateNumerator a owl:DatatypeProperty ; rdfs:label "frame rate numerator" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:positiveInteger ; rdfs:comment "Numerator of the exact nominal frame rate in frames per second; used with frameRateDenominator. A decimal frameRate is a display approximation." .
+:frameRateDenominator a owl:DatatypeProperty ; rdfs:label "frame rate denominator" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:positiveInteger ; rdfs:comment "Positive denominator of the exact nominal frame rate, for example 1001 with numerator 30000. Both components must be supplied together." .
+:RateShape a sh:NodeShape ; sh:targetSubjectsOf :frameRateNumerator, :frameRateDenominator ;
+    sh:property [ sh:path :frameRateNumerator ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] ) ; sh:minExclusive 0 ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :frameRateDenominator ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] ) ; sh:minExclusive 0 ; sh:minCount 1 ; sh:maxCount 1 ] .
+:PositiveAspectRatioShape a sh:NodeShape ; sh:targetSubjectsOf :aspectRatio ;
+    sh:sparql [ sh:message "Both aspect-ratio components must be positive." ; sh:select """
+        PREFIX v: <https://hexplain.io/ns/video#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+        SELECT $this WHERE {
+            $this v:aspectRatio ?ratio .
+            FILTER(xsd:decimal(STRBEFORE(STR(?ratio), ":")) <= 0 || xsd:decimal(STRAFTER(STR(?ratio), ":")) <= 0)
+        }
+    """ ] .
+
+# BEGIN GENERATED TERM DOCUMENTATION
+# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
+<https://hexplain.io/ns/video> <http://www.w3.org/2004/02/skos/core#definition> "Semantic vocabulary for video stream and container properties."@en .
+<https://hexplain.io/ns/video> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline."@en .
+<https://hexplain.io/ns/video#Interlaced> <http://www.w3.org/2004/02/skos/core#definition> "Scanning convention in which successive fields carry different line subsets of an image frame."@en .
+<https://hexplain.io/ns/video#Interlaced> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/video#Interlaced> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/video> .
+<https://hexplain.io/ns/video#PositiveAspectRatioShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Positive Aspect Ratio. Both aspect-ratio components must be positive."@en .
+<https://hexplain.io/ns/video#PositiveAspectRatioShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using vdv:aspectRatio Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/video#PositiveAspectRatioShape> <http://www.w3.org/2000/01/rdf-schema#label> "Positive Aspect Ratio Shape"@en .
+<https://hexplain.io/ns/video#PositiveAspectRatioShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/video> .
+<https://hexplain.io/ns/video#Progressive> <http://www.w3.org/2004/02/skos/core#definition> "Scanning convention in which a frame represents a full image rather than alternating interlaced fields."@en .
+<https://hexplain.io/ns/video#Progressive> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/video#Progressive> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/video> .
+<https://hexplain.io/ns/video#RateShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for vdv:frameRateDenominator, vdv:frameRateNumerator. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/video#RateShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using vdv:frameRateDenominator, vdv:frameRateNumerator Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/video#RateShape> <http://www.w3.org/2000/01/rdf-schema#label> "Rate Shape"@en .
+<https://hexplain.io/ns/video#RateShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/video> .
+<https://hexplain.io/ns/video#StreamShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for acolor:colorSpace, aenc:bitrate, aenc:codec, araster:height, araster:width, atime:duration, vdv:aspectRatio, vdv:audioChannels, vdv:frameCount, vdv:frameRate, vdv:scanType. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/video#StreamShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of vdv:VideoStream, vdv:VideoTrack; subjects using vdv:aspectRatio, vdv:audioChannels, vdv:frameCount, vdv:frameRate, vdv:frameRateDenominator, vdv:frameRateNumerator, vdv:scanType Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/video#StreamShape> <http://www.w3.org/2000/01/rdf-schema#label> "Stream Shape"@en .
+<https://hexplain.io/ns/video#StreamShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/video> .
+<https://hexplain.io/ns/video#VideoContainer> <http://www.w3.org/2004/02/skos/core#definition> "A containing resource for one or more video streams and associated tracks or metadata."@en .
+<https://hexplain.io/ns/video#VideoContainer> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/video#VideoStream> <http://www.w3.org/2004/02/skos/core#definition> "An ordered video sequence with timing and display properties independent of its container encoding."@en .
+<https://hexplain.io/ns/video#VideoStream> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/video#VideoTrack> <http://www.w3.org/2004/02/skos/core#definition> "A container-level track carrying a video sequence; track identity is distinct from individual frames."@en .
+<https://hexplain.io/ns/video#VideoTrack> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/video#aspectRatio> <http://www.w3.org/2004/02/skos/core#definition> "Display aspect ratio as a W:H string, e.g. \"16:9\"."@en .
+<https://hexplain.io/ns/video#aspectRatio> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/video#audioChannels> <http://www.w3.org/2004/02/skos/core#definition> "The declared number of audio channels associated with the video resource."@en .
+<https://hexplain.io/ns/video#audioChannels> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/video#axisFrame> <http://www.w3.org/2004/02/skos/core#definition> "The layout axis indexing successive video frames rather than rows or sample components within a frame."@en .
+<https://hexplain.io/ns/video#axisFrame> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/video#axisFrame> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/video> .
+<https://hexplain.io/ns/video#frameCount> <http://www.w3.org/2004/02/skos/core#definition> "The declared number of frames in a video sequence; it does not by itself establish duration for variable-rate material."@en .
+<https://hexplain.io/ns/video#frameCount> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/video#frameRate> <http://www.w3.org/2004/02/skos/core#definition> "The nominal number of frames per second expressed as a decimal or integer value. Exact non-terminating rational rates require the numerator/denominator properties."@en .
+<https://hexplain.io/ns/video#frameRate> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/video#frameRateDenominator> <http://www.w3.org/2004/02/skos/core#definition> "Positive denominator of the exact nominal frame rate, for example 1001 with numerator 30000. Both components must be supplied together."@en .
+<https://hexplain.io/ns/video#frameRateDenominator> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/video#frameRateNumerator> <http://www.w3.org/2004/02/skos/core#definition> "Numerator of the exact nominal frame rate in frames per second; used with frameRateDenominator. A decimal frameRate is a display approximation."@en .
+<https://hexplain.io/ns/video#frameRateNumerator> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/video#scanType> <http://www.w3.org/2004/02/skos/core#definition> "The scanning convention used to organize image lines into frames or fields."@en .
+<https://hexplain.io/ns/video#scanType> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .

@@ -22,4 +22,19 @@
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "atime" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/time#" .
 
-:duration a owl:DatatypeProperty ; rdfs:label "duration" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/time> ; skos:closeMatch ma:duration ; rdfs:range xsd:decimal ; qudt:hasQuantityKind quantitykind:Time ; qudt:hasUnit unit:SEC ; rdfs:comment "Playing time in seconds." .
+:duration a owl:DatatypeProperty ; rdfs:label "duration" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/time> ; rdfs:seeAlso ma:duration ; rdfs:range xsd:decimal ; qudt:hasQuantityKind quantitykind:Time ; qudt:hasUnit unit:SEC ; rdfs:comment "Playing time in seconds." .
+
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+:DurationShape a sh:NodeShape ; sh:targetSubjectsOf :duration ;
+    sh:property [ sh:path :duration ; sh:or ( [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] ) ; sh:minInclusive 0 ; sh:maxCount 1 ] .
+
+# BEGIN GENERATED TERM DOCUMENTATION
+# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
+<https://hexplain.io/ns/aspect/time> <http://www.w3.org/2004/02/skos/core#definition> "Orthogonal aspect for the temporal extent and structure of data (duration, and — as the aspect grows — timebase, frame count, timecode). Imported by any domain whose data has a timeline."@en .
+<https://hexplain.io/ns/aspect/time> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for temporal metadata of content. Numeric durations and frame/sample counts are not interchangeable without a timing model."@en .
+<https://hexplain.io/ns/aspect/time#DurationShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for atime:duration. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/aspect/time#DurationShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using atime:duration Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/aspect/time#DurationShape> <http://www.w3.org/2000/01/rdf-schema#label> "Duration Shape"@en .
+<https://hexplain.io/ns/aspect/time#DurationShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/time> .
+<https://hexplain.io/ns/aspect/time#duration> <http://www.w3.org/2004/02/skos/core#definition> "The elapsed playing time of content expressed in seconds. It is a temporal extent, distinct from a timestamp or a count of frames or samples."@en .
+<https://hexplain.io/ns/aspect/time#duration> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for temporal metadata of content. Numeric durations and frame/sample counts are not interchangeable without a timing model. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .

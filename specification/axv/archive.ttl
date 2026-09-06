@@ -15,7 +15,7 @@
 @prefix menc:   <https://hexplain.io/ns/register/media-encoding#> .
 
 <https://hexplain.io/ns/archive> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/archive/1.0> ; owl:versionInfo "1.0" ;
+    owl:versionIRI <https://hexplain.io/ns/archive/1.1> ; owl:versionInfo "1.1" ;
     owl:imports <https://hexplain.io/ns/aspect/packaging> , <https://hexplain.io/ns/aspect/fsmeta> , <https://hexplain.io/ns/aspect/integrity> , <https://hexplain.io/ns/aspect/encoding> ;
     rdfs:label "Hexplain Archive Vocabulary (AXV)" ;
     rdfs:comment "Semantic vocabulary for archive and container file properties." ;
@@ -40,9 +40,10 @@
 :entryComment a owl:DatatypeProperty ; rdfs:label "entry comment" ; rdfs:isDefinedBy <https://hexplain.io/ns/archive> ; rdfs:range xsd:string .
 
 # ---------- SHACL ----------
-axv:ArchiveShape a sh:NodeShape ; sh:targetSubjectsOf apkg:hasEntry ;
+axv:ArchiveShape a sh:NodeShape ; sh:targetClass axv:Archive ;
     sh:property [ sh:path apkg:hasEntry ; sh:class axv:ArchiveEntry ] .
-axv:EntryShape a sh:NodeShape ; sh:targetSubjectsOf afs:fileName ;
+axv:EntryShape a sh:NodeShape ; sh:targetClass axv:ArchiveEntry ;
+    sh:targetSubjectsOf axv:compressedSize, axv:entryComment ;
     sh:property [ sh:path afs:fileName ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path afs:fileSize ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path axv:compressedSize ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
@@ -50,3 +51,26 @@ axv:EntryShape a sh:NodeShape ; sh:targetSubjectsOf afs:fileName ;
     sh:property [ sh:path afs:modificationTime ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
     sh:property [ sh:path afs:isDirectory ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
     sh:property [ sh:path aenc:compression ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+
+# BEGIN GENERATED TERM DOCUMENTATION
+# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
+<https://hexplain.io/ns/archive> <http://www.w3.org/2004/02/skos/core#definition> "Semantic vocabulary for archive and container file properties."@en .
+<https://hexplain.io/ns/archive> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for archive resources and member entries. Distinguish stored compressed bytes from logical member content."@en .
+<https://hexplain.io/ns/archive#Archive> <http://www.w3.org/2004/02/skos/core#definition> "A container resource packaging independently identifiable member entries."@en .
+<https://hexplain.io/ns/archive#Archive> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for archive resources and member entries. Distinguish stored compressed bytes from logical member content. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/archive#ArchiveEntry> <http://www.w3.org/2004/02/skos/core#definition> "One member of an archive, including its payload and associated entry metadata."@en .
+<https://hexplain.io/ns/archive#ArchiveEntry> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for archive resources and member entries. Distinguish stored compressed bytes from logical member content. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/archive#ArchiveShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for apkg:hasEntry. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/archive#ArchiveShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of axv:Archive Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/archive#ArchiveShape> <http://www.w3.org/2000/01/rdf-schema#label> "Archive Shape"@en .
+<https://hexplain.io/ns/archive#ArchiveShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/archive> .
+<https://hexplain.io/ns/archive#CentralDirectory> <http://www.w3.org/2004/02/skos/core#definition> "An index component describing archive entries and the information needed to locate them."@en .
+<https://hexplain.io/ns/archive#CentralDirectory> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for archive resources and member entries. Distinguish stored compressed bytes from logical member content. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/archive#EntryShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for axv:compressedSize, aenc:compression, afs:fileName, afs:fileSize, afs:isDirectory, afs:modificationTime, aintg:checksum. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/archive#EntryShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of axv:ArchiveEntry; subjects using axv:compressedSize, axv:entryComment Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/archive#EntryShape> <http://www.w3.org/2000/01/rdf-schema#label> "Entry Shape"@en .
+<https://hexplain.io/ns/archive#EntryShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/archive> .
+<https://hexplain.io/ns/archive#compressedSize> <http://www.w3.org/2004/02/skos/core#definition> "The number of bytes occupied by an archive entry's compressed representation, distinct from its logical uncompressed size."@en .
+<https://hexplain.io/ns/archive#compressedSize> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for archive resources and member entries. Distinguish stored compressed bytes from logical member content. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/archive#entryComment> <http://www.w3.org/2004/02/skos/core#definition> "Free-text commentary associated with an individual archive entry."@en .
+<https://hexplain.io/ns/archive#entryComment> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for archive resources and member entries. Distinguish stored compressed bytes from logical member content. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .

@@ -439,7 +439,7 @@
       </a>
       <a href="specification/index.html" class="btn btn-primary">Read the spec</a>
     </div>
-    <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
+    <button class="hamburger" id="hamburger" aria-controls="mobileMenu" aria-label="Open menu" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
     </button>
   </div>
@@ -949,10 +949,14 @@
   burger.addEventListener('click', function(){
     var open = menu.classList.toggle('open');
     burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    if(open) menu.querySelector('a').focus();
   });
   menu.querySelectorAll('a').forEach(function(a){
     a.addEventListener('click', function(){ menu.classList.remove('open'); burger.setAttribute('aria-expanded','false'); });
   });
+
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && menu.classList.contains('open')) { menu.classList.remove('open'); burger.setAttribute('aria-expanded','false'); burger.setAttribute('aria-label','Open menu'); burger.focus(); } });
 
   // scroll reveal
   var motionOK = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;

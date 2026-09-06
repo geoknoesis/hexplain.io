@@ -80,7 +80,7 @@ EXPECTED_COUNTS = {
     # that only ever appear as a step (Delta, Shuffle, BitShuffle). Growth here is expected
     # -- registers are meant to gain concepts; this line is the deliberate acknowledgement
     # the docstring asks for, not a rubber stamp.
-    "media-encoding": (2, 23),
+    "media-encoding": (2, 24),  # +1 explicit RFC 1950 Zlib framing concept
     "color": (1, 4),
     "checksum": (1, 4),
     "part-role": (1, 12),

@@ -1,0 +1,2 @@
+
+const search=document.getElementById('search'),remaining=document.getElementById('remaining');function filter(){let n=0;const q=search.value.trim().toLowerCase();document.querySelectorAll('article[data-repo]').forEach(a=>{a.hidden=!(a.textContent.toLowerCase().includes(q)&&(!remaining.checked||a.dataset.open==='true'));if(!a.hidden)n++});document.getElementById('count').textContent=n+' assessments shown';}search.addEventListener('input',filter);remaining.addEventListener('change',filter);

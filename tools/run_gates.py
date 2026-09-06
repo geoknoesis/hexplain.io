@@ -1,8 +1,6 @@
 """Run every gate in this directory and report a single verdict.
 
-There is no CI here, so "run the gates" has meant running the ones you remember. That list
-grew to nine while the remembered version stayed at seven, and the forgotten one
-(test_register_extraction) was failing for two commits before anyone ran it.
+CI and local checks share this runner so newly added gates cannot be forgotten.
 
 So this discovers gates rather than listing them, and does it by EXCLUSION: everything in
 tools/ is a gate unless named below. An include-pattern (test_*.py) would have silently

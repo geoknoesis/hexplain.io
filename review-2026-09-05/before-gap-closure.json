@@ -1,0 +1,751 @@
+{
+  "date": "2026-09-05",
+  "scores": {
+    "spec": 8.75,
+    "engine": 7.65,
+    "saas": 7.58
+  },
+  "dimensions": [
+    [
+      "Correctness and mathematical contracts",
+      30,
+      9,
+      7.5,
+      8.5
+    ],
+    [
+      "Architecture and maintainability",
+      20,
+      9,
+      8,
+      8.5
+    ],
+    [
+      "Validation and test evidence",
+      20,
+      8.5,
+      8.5,
+      8
+    ],
+    [
+      "Documentation, UX and accessibility",
+      15,
+      8.5,
+      7,
+      7.5
+    ],
+    [
+      "Delivery and operational readiness",
+      15,
+      8.5,
+      7,
+      4
+    ]
+  ],
+  "metrics": {
+    "core": {
+      "tests": 431,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "hdl": {
+      "tests": 223,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "backend": {
+      "tests": 57,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "gates": 16,
+    "frontend": 6,
+    "npm_vulnerabilities": 0,
+    "terms": 731,
+    "shapes": 93,
+    "modules": 35
+  },
+  "findings": [
+    {
+      "repo": "spec",
+      "id": "SP01",
+      "severity": "High",
+      "status": "Fixed",
+      "title": "Finite-value constraints accepted infinity under another spelling",
+      "impact": "A calibration literal \"1e309\"^^xsd:double passed the lexical blacklist although its numeric value is infinite. This can contaminate georeferencing or calibrated values.",
+      "evidence": "Both positive and negative overflow spellings passed before the fix. Nine pySHACL boundary cases now pass; Jena independently verifies nonfinite rejection and finite extremes.",
+      "action": "Added numeric bounds excluding both infinities while preserving valid finite extremes and signed zero. No-data NaN remains allowed in its separate contract.",
+      "sources": [
+        {
+          "file": "hexplain.io/specification/aspect/raster/raster.ttl",
+          "href": "../specification/aspect/raster/raster.ttl",
+          "line": 65,
+          "sha256": "7cbf1a0306bf0bccd41e1351cc58abe03017b70dda864dd51061d4545d047d4c"
+        },
+        {
+          "file": "hexplain.io/specification/aspect/spatialref/spatialref.ttl",
+          "href": "../specification/aspect/spatialref/spatialref.ttl",
+          "line": 80,
+          "sha256": "dd1b42926c4dc4b3e7518746f7296734733efce4e281120bb73c3a6f61df657f"
+        },
+        {
+          "file": "hexplain.io/tools/test_numeric_boundaries.py",
+          "href": "../tools/test_numeric_boundaries.py",
+          "line": null,
+          "sha256": "56996c95313d662989e563e9691cb39fb35426ab1e08cff6635139f726f28fa2"
+        },
+        {
+          "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/rdf/NumericShapeBoundaryTest.kt",
+          "href": "../../hexplain-tools/core/src/test/kotlin/io/hexplain/core/rdf/NumericShapeBoundaryTest.kt",
+          "line": null,
+          "sha256": "ae5e29d844265c4fa540edd9686feeaa52e69009b36b089ac4a3bcdd168c8537"
+        }
+      ]
+    },
+    {
+      "repo": "spec",
+      "id": "SP02",
+      "severity": "High",
+      "status": "Fixed",
+      "title": "Band-index uniqueness confused RDF identity with numeric equality",
+      "impact": "Two bands could both occupy numeric index 1 when one index was xsd:integer and the other xsd:unsignedInt.",
+      "evidence": "The counterexample conformed before correction. It now fails in pySHACL and Jena.",
+      "action": "Join the two index values independently and compare them numerically. Band resources themselves are compared by RDF term identity.",
+      "sources": [
+        {
+          "file": "hexplain.io/specification/aspect/raster/raster.ttl",
+          "href": "../specification/aspect/raster/raster.ttl",
+          "line": 74,
+          "sha256": "7cbf1a0306bf0bccd41e1351cc58abe03017b70dda864dd51061d4545d047d4c"
+        },
+        {
+          "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/rdf/NumericShapeBoundaryTest.kt",
+          "href": "../../hexplain-tools/core/src/test/kotlin/io/hexplain/core/rdf/NumericShapeBoundaryTest.kt",
+          "line": null,
+          "sha256": "ae5e29d844265c4fa540edd9686feeaa52e69009b36b089ac4a3bcdd168c8537"
+        }
+      ]
+    },
+    {
+      "repo": "spec",
+      "id": "SP03",
+      "severity": "High",
+      "status": "Fixed",
+      "title": "Malformed coefficient lists hid duplicate equal-valued literals",
+      "impact": "Two different lexical double literals with equal numeric value could both be rdf:first on one coefficient cell. The list was not well formed, yet value inequality failed to detect it.",
+      "evidence": "A valid 20-cell vector passes; adding a second equal-valued but distinct rdf:first now fails. Repeated values in separate cells remain legal.",
+      "action": "Use sameTerm for list multiplicity checks in raster and spatial-reference constraints. Numeric equality remains appropriate for quantities, not graph cardinality.",
+      "sources": [
+        {
+          "file": "hexplain.io/specification/aspect/spatialref/spatialref.ttl",
+          "href": "../specification/aspect/spatialref/spatialref.ttl",
+          "line": 153,
+          "sha256": "dd1b42926c4dc4b3e7518746f7296734733efce4e281120bb73c3a6f61df657f"
+        },
+        {
+          "file": "hexplain.io/tools/test_numeric_boundaries.py",
+          "href": "../tools/test_numeric_boundaries.py",
+          "line": null,
+          "sha256": "56996c95313d662989e563e9691cb39fb35426ab1e08cff6635139f726f28fa2"
+        }
+      ]
+    },
+    {
+      "repo": "spec",
+      "id": "SP04",
+      "severity": "High",
+      "status": "Fixed",
+      "title": "Compression framing needed an explicit zlib concept",
+      "impact": "The documented raw DEFLATE meaning and engine dispatch disagreed. A profile identifier did not reliably identify the byte framing.",
+      "evidence": "The raw RFC 1951 dispatch regression failed before correction. The register now has 24 codec/compression concepts and the PNG resource uses Zlib.",
+      "action": "Added menc:Zlib; retained distinct Deflate and Gzip meanings; documented the required migration for profiles relying on the old alias.",
+      "sources": [
+        {
+          "file": "hexplain.io/specification/register/media-encoding/media-encoding.ttl",
+          "href": "../specification/register/media-encoding/media-encoding.ttl",
+          "line": 60,
+          "sha256": "f6e3142779e280b9842e2cdb4311355e92c6c0bd73d30c277df9c718bb3fb66e"
+        },
+        {
+          "file": "hexplain.io/specification/reference/boundary-revision.md",
+          "href": "../specification/reference/boundary-revision.md",
+          "line": null,
+          "sha256": "d0cf1552b33febcdb3a0ad6220c95403a26ecc082003a534de590f7700c563ff"
+        },
+        {
+          "file": "hexplain-tools/core/src/main/resources/png-profile.ttl",
+          "href": "../../hexplain-tools/core/src/main/resources/png-profile.ttl",
+          "line": 209,
+          "sha256": "3e754db97abfd31c68f9ae99b4e9b4803382222b4efabb691f666b7b9a18eb18"
+        }
+      ]
+    },
+    {
+      "repo": "spec",
+      "id": "SP05",
+      "severity": "Medium",
+      "status": "Verified strength",
+      "title": "Complete references are synchronized with canonical RDF",
+      "impact": "Hand-maintained descriptions can drift from the vocabulary and its shapes, especially across imported aspects.",
+      "evidence": "731 named resources, 93 named shapes and 35 modules pass annotation, reference, fragment-link and embedded-RDF checks. There are 16 specification gates.",
+      "action": "Keep generation and the completeness gate in CI. Term coverage establishes documentation presence, not independent semantic review of every definition.",
+      "sources": [
+        {
+          "file": "hexplain.io/tools/test_term_reference.py",
+          "href": "../tools/test_term_reference.py",
+          "line": null,
+          "sha256": "021c6200f0b984ecea717592f19869d5a2af2e34405e9b2705a7a8bcaff04e98"
+        },
+        {
+          "file": "hexplain.io/tools/test_html_sync.py",
+          "href": "../tools/test_html_sync.py",
+          "line": null,
+          "sha256": "cf8bcb33105fe03d1624a092cf00a27bb0915f60d3d608817359da85c495b9c5"
+        },
+        {
+          "file": "hexplain.io/specification/reference/index.html",
+          "href": "../specification/reference/index.html",
+          "line": null,
+          "sha256": "f0307d0fa7b69a65b47835dccdd8e77ceebe9f8cd5559d9e515d6203193827ca"
+        }
+      ]
+    },
+    {
+      "repo": "spec",
+      "id": "SP06",
+      "severity": "High",
+      "status": "Open",
+      "title": "GDAL inventory is not binary interoperability evidence",
+      "impact": "A vocabulary can describe a format family while its parser, payload decoder or semantic output remains unsupported.",
+      "evidence": "The inventory pins 246 GDAL documentation pages and distinguishes capability levels. It does not supply a driver-by-driver binary corpus or independently compared outputs.",
+      "action": "Build versioned corpora for representative GDAL families, compare metadata and decoded values against GDAL, and record tested driver/version/options and negative cases.",
+      "sources": [
+        {
+          "file": "hexplain.io/specification/coverage/index.html",
+          "href": "../specification/coverage/index.html",
+          "line": null,
+          "sha256": "8fa7eb4057a56d6c71772680b725c492295d1e8bd1923a9491e6f1a303e03a40"
+        },
+        {
+          "file": "hexplain.io/tools/test_gdal_inventory.py",
+          "href": "../tools/test_gdal_inventory.py",
+          "line": null,
+          "sha256": "ae723210982e97fede9caac1e30cd4558f7fcfd0647a963fad4cca671fccdc50"
+        }
+      ]
+    },
+    {
+      "repo": "spec",
+      "id": "SP07",
+      "severity": "Medium",
+      "status": "Open",
+      "title": "Semantic competency evidence remains narrower than vocabulary coverage",
+      "impact": "Generated definitions and broad module scope notes cannot establish that all combinations of terms model real formats correctly.",
+      "evidence": "Geospatial tests cover 40 semantic cases and 121 exact affine round trips, plus the new numeric cases. Equivalent depth is not established for all 731 resources.",
+      "action": "Add concrete positive/negative examples and competency questions for packaging, security-register bindings, timing, bit packing and compound datasets. Seek independent ontology review.",
+      "sources": [
+        {
+          "file": "hexplain.io/tools/test_geospatial_model.py",
+          "href": "../tools/test_geospatial_model.py",
+          "line": null,
+          "sha256": "390fc0e795457f300f837ccf3e5989fb7055c6448aec7ed37c0a0e20c8819ea5"
+        },
+        {
+          "file": "hexplain.io/tools/_reference.py",
+          "href": "../tools/_reference.py",
+          "line": null,
+          "sha256": "91d11263efcfffeb0dd165e172a6a8d2fdef34c15369752c030265f0271ff343"
+        },
+        {
+          "file": "hexplain.io/specification/ontology-design/index.html",
+          "href": "../specification/ontology-design/index.html",
+          "line": null,
+          "sha256": "cca769f552034f008fea0f1a539d1681511878dc6141375d25f6c2b079c91a68"
+        }
+      ]
+    },
+    {
+      "repo": "spec",
+      "id": "SP08",
+      "severity": "Medium",
+      "status": "Open",
+      "title": "Working drafts need a release and compatibility process",
+      "impact": "Stricter shape validation can reject previously accepted graphs, even when term IRIs remain stable.",
+      "evidence": "Raster/spatial-reference drafts are versioned and this pass records migrations. Live namespace negotiation, archived releases and external consumer compatibility were not tested.",
+      "action": "Publish immutable release artifacts, validate dereferencing/content negotiation, and maintain a compatibility corpus per released version.",
+      "sources": [
+        {
+          "file": "hexplain.io/specification/reference/boundary-revision.md",
+          "href": "../specification/reference/boundary-revision.md",
+          "line": null,
+          "sha256": "d0cf1552b33febcdb3a0ad6220c95403a26ecc082003a534de590f7700c563ff"
+        },
+        {
+          "file": "hexplain.io/specification/ontology-design/index.html",
+          "href": "../specification/ontology-design/index.html",
+          "line": null,
+          "sha256": "cca769f552034f008fea0f1a539d1681511878dc6141375d25f6c2b079c91a68"
+        }
+      ]
+    },
+    {
+      "repo": "engine",
+      "id": "EN01",
+      "severity": "High",
+      "status": "Fixed",
+      "title": "Sizes and repeat counts narrowed before validation",
+      "impact": "A fixed size of 4,294,967,297 bytes wrapped to one byte. Fractional counts were truncated, and a large count could trigger a large allocation before reading input.",
+      "evidence": "The fixed-size and count counterexamples failed the new expected-correctness tests before this pass. Exact conversion and uint64/count tests now pass.",
+      "action": "Validate integral finite values before narrowing; bound byte/string allocations by remaining input; start repetition storage with a modest capacity. Existing recovery semantics are retained.",
+      "sources": [
+        {
+          "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt",
+          "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt",
+          "line": 788,
+          "sha256": "3ecbb8a205e1cef7c4453b15d1e6d8a5c1cf7b38f814ae3d6e4e020b68ba10b8"
+        },
+        {
+          "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/ReviewBoundaryTest.kt",
+          "href": "../../hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/ReviewBoundaryTest.kt",
+          "line": null,
+          "sha256": "75d11aa6f333824aa03314673a9663ea622a9c0dbefc9b72d74b1e8eeb98fb25"
+        }
+      ]
+    },
+    {
+      "repo": "engine",
+      "id": "EN02",
+      "severity": "High",
+      "status": "Fixed",
+      "title": "Array access could return wrong signed values or aliased cells",
+      "impact": "Signed -1 decoded as 255; uint32/uint64 values narrowed silently. Missing/extra indices, invalid logical coordinates and overflowing strides could access an unrelated byte.",
+      "evidence": "Pre-fix tests reproduced signedness, index and stride failures. Final tests cover uint64 maximum, float64 precision, bounds, rank and truncated cells.",
+      "action": "Added exact getInteger/getLong and getDouble accessors. Narrowing getInt fails outside its range. Checked long arithmetic and complete-cell bounds protect every array access.",
+      "sources": [
+        {
+          "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/MultiDimensionalData.kt",
+          "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/MultiDimensionalData.kt",
+          "line": null,
+          "sha256": "9ed97c903b83f1c5d904fe1297514114e1a96b3be596c815d7b682668fe37ff5"
+        },
+        {
+          "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/ReviewBoundaryTest.kt",
+          "href": "../../hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/ReviewBoundaryTest.kt",
+          "line": null,
+          "sha256": "75d11aa6f333824aa03314673a9663ea622a9c0dbefc9b72d74b1e8eeb98fb25"
+        }
+      ]
+    },
+    {
+      "repo": "engine",
+      "id": "EN03",
+      "severity": "High",
+      "status": "Fixed",
+      "title": "Inflater termination could mean partial success or endless waiting",
+      "impact": "A truncated compressed block returned partial data; a preset-dictionary request could repeatedly make no progress. Native resources were not released on every failure path.",
+      "evidence": "Every truncated prefix of sample zlib/raw DEFLATE payloads is now rejected. Dictionary, empty-stream, output-budget and trailing-byte cases pass.",
+      "action": "Require stream completion, fail on missing dictionaries or stalled progress, and release native resources in finally. Correct RFC 1951 and Deflate dispatch to raw framing.",
+      "sources": [
+        {
+          "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/codec/BuiltInCodecs.kt",
+          "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/codec/BuiltInCodecs.kt",
+          "line": null,
+          "sha256": "3d8edcb4b0a637e6196b44ab4de88ccf293cb5342df6e31244a98b8530229a6a"
+        },
+        {
+          "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/codec/CodecRegistry.kt",
+          "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/codec/CodecRegistry.kt",
+          "line": null,
+          "sha256": "2826b7e7931cff4b9793f9aa4fa33315940bd8184295608892bf65e51779003e"
+        },
+        {
+          "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/codec/CodecBoundaryTest.kt",
+          "href": "../../hexplain-tools/core/src/test/kotlin/io/hexplain/core/codec/CodecBoundaryTest.kt",
+          "line": null,
+          "sha256": "8de5504907b1ea27a8e0eaffb4c8bf4a5f51aa059b10eee1c0ecdd7bfd03b532"
+        }
+      ]
+    },
+    {
+      "repo": "engine",
+      "id": "EN04",
+      "severity": "High",
+      "status": "Fixed",
+      "title": "Unsupported DLV features disappeared during IR lowering",
+      "impact": "Chunk addressing, conditional layouts, packed-cell declarations or dynamic strides could be expressed in RDF but were absent from the IR, leaving a misleading ordinary-layout interpretation.",
+      "evidence": "The compiler now rejects the known unsupported declarations with their names. A supported contiguous layout still compiles; the regression tests cover both paths.",
+      "action": "Keep this explicit capability gate until the relevant IR, parser, writer and semantic-output support exist. This is safe rejection, not implementation of those formats.",
+      "sources": [
+        {
+          "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/rdf/RdfToIrCompiler.kt",
+          "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/rdf/RdfToIrCompiler.kt",
+          "line": 494,
+          "sha256": "444166e7c4d0b334c4ea9611573604c7399552b81a1b074e249d80af35379add"
+        },
+        {
+          "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/ir/Model.kt",
+          "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/ir/Model.kt",
+          "line": 152,
+          "sha256": "6942d44aa882f53e598a780165e3667b10fb9a8e87703479f347eff9c5ef2fb4"
+        },
+        {
+          "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/rdf/UnsupportedLayoutTest.kt",
+          "href": "../../hexplain-tools/core/src/test/kotlin/io/hexplain/core/rdf/UnsupportedLayoutTest.kt",
+          "line": null,
+          "sha256": "9357003c153ecd0e12a7a2522ab828b593b5629c7f6646f0789cc562a629a61b"
+        }
+      ]
+    },
+    {
+      "repo": "engine",
+      "id": "EN05",
+      "severity": "High",
+      "status": "Fixed",
+      "title": "Unsigned 64-bit output became zero",
+      "impact": "The writer converted only Number values; Kotlin ULong values produced by the parser were not Numbers and fell back to zero. Small-width integer output also wrapped out-of-range inputs.",
+      "evidence": "The uint64 maximum now survives parse/write exactly. Fractional, nonfinite, nonnumeric, negative unsigned and overflowing integer values are rejected.",
+      "action": "Check the exact integer against its signed/unsigned width before writing its bit pattern. Float conversion and bitfield writing have separate contracts and are not certified by these tests.",
+      "sources": [
+        {
+          "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metawriter.kt",
+          "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metawriter.kt",
+          "line": 294,
+          "sha256": "263385d8724afe70e250866368df524bb42e6a188b12911618447f8ef32b2a35"
+        },
+        {
+          "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/WriterIntegerBoundaryTest.kt",
+          "href": "../../hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/WriterIntegerBoundaryTest.kt",
+          "line": null,
+          "sha256": "dfc0d1c56baaad4811db24b085b18846eea475d1e086a1ebe32a3ba3d6de0385"
+        }
+      ]
+    },
+    {
+      "repo": "engine",
+      "id": "EN06",
+      "severity": "High",
+      "status": "Scoped mitigation",
+      "title": "Decoded-byte limits do not bound a whole parse",
+      "impact": "A small compressed input can create a large result. Multiple blocks, recursive structures or zero-byte repetitions can still consume excessive total memory or CPU.",
+      "evidence": "All built-in codecs enforce configurable per-block output limits; the core default is 64 MiB. Tests use small budgets and valid empty streams.",
+      "action": "Add a shared parse budget for total emitted bytes/nodes, nesting depth and operations, with cancellation propagated through decoding and evaluation. Keep worker isolation at service boundaries.",
+      "sources": [
+        {
+          "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/codec/BuiltInCodecs.kt",
+          "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/codec/BuiltInCodecs.kt",
+          "line": 7,
+          "sha256": "3d8edcb4b0a637e6196b44ab4de88ccf293cb5342df6e31244a98b8530229a6a"
+        },
+        {
+          "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt",
+          "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt",
+          "line": null,
+          "sha256": "3ecbb8a205e1cef7c4453b15d1e6d8a5c1cf7b38f814ae3d6e4e020b68ba10b8"
+        },
+        {
+          "file": "hexplain-tools/docs/review-boundaries.md",
+          "href": "../../hexplain-tools/docs/review-boundaries.md",
+          "line": null,
+          "sha256": "b166fcc5c1826c4f76bfcaaac41ccf0deece1c90d3d71637d46746b725f47f36"
+        }
+      ]
+    },
+    {
+      "repo": "engine",
+      "id": "EN07",
+      "severity": "High",
+      "status": "Open",
+      "title": "Writer symmetry and large-output behavior remain incomplete",
+      "impact": "Correct scalar output does not make the writer the inverse of every parser feature. Explicit offsets/alignment and bounded structures are not replayed by the current sequential writer; capacity estimates and unchecked size conversion are additional limits.",
+      "evidence": "Source inspection: writeStruct walks fields sequentially; estimateCapacity assigns a small estimate to byte-array values; resolveSize still narrows values. These paths are not covered by the new scalar integer fix.",
+      "action": "Introduce explicit writer capability rejection, checked sizing and a growing or streaming output sink. Require round trips for every supported feature and negative tests for unsupported profiles before advertising general write support.",
+      "sources": [
+        {
+          "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metawriter.kt",
+          "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metawriter.kt",
+          "line": 56,
+          "sha256": "263385d8724afe70e250866368df524bb42e6a188b12911618447f8ef32b2a35"
+        },
+        {
+          "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metawriter.kt",
+          "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metawriter.kt",
+          "line": 264,
+          "sha256": "263385d8724afe70e250866368df524bb42e6a188b12911618447f8ef32b2a35"
+        },
+        {
+          "file": "hexplain-tools/docs/review-boundaries.md",
+          "href": "../../hexplain-tools/docs/review-boundaries.md",
+          "line": null,
+          "sha256": "b166fcc5c1826c4f76bfcaaac41ccf0deece1c90d3d71637d46746b725f47f36"
+        }
+      ]
+    },
+    {
+      "repo": "engine",
+      "id": "EN08",
+      "severity": "Medium",
+      "status": "Open",
+      "title": "Description validation is distinct from emitted-instance validation",
+      "impact": "A valid profile does not establish that the produced raster, geometry or timing graph conforms to all applicable semantic shapes.",
+      "evidence": "ProfileLoader explicitly limits its default shape graph to BDDO/Core/DLV. New Jena tests opt into raster shapes; this is not automatic semantic validation on every run.",
+      "action": "Add a separately named emitted-graph validation stage with declared entailment, shape selection and provenance. Preserve the distinction in API results.",
+      "sources": [
+        {
+          "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/rdf/ProfileLoader.kt",
+          "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/rdf/ProfileLoader.kt",
+          "line": 159,
+          "sha256": "f779f07350cff1bb0c8f2fff7f29d28c34aa6320b4f1d75d8fc20eb83da9a6b6"
+        },
+        {
+          "file": "hexplain-saas/backend/engine/src/main/kotlin/io/hexplain/saas/engine/HexplainFormatEngine.kt",
+          "href": "../../hexplain-saas/backend/engine/src/main/kotlin/io/hexplain/saas/engine/HexplainFormatEngine.kt",
+          "line": 138,
+          "sha256": "aab1e927f8b815713329ed161928b2aecec2936d2dbf8b714696a3849a1234c6"
+        }
+      ]
+    },
+    {
+      "repo": "engine",
+      "id": "EN09",
+      "severity": "Medium",
+      "status": "Open",
+      "title": "Independent parser and writer assurance is still limited",
+      "impact": "A large unit suite can share assumptions with the implementation, and it does not establish support for every registered codec or GDAL format.",
+      "evidence": "431 core and 223 HDL tests pass. New Jena/pySHACL checks give independent evidence for selected semantic constraints, not all binary parsing paths.",
+      "action": "Add differential parsing, property-based boundary tests, mutation corpora and fuzzing; expand codec implementations only with framing-specific fixtures and resource limits.",
+      "sources": [
+        {
+          "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/ReviewBoundaryTest.kt",
+          "href": "../../hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/ReviewBoundaryTest.kt",
+          "line": null,
+          "sha256": "75d11aa6f333824aa03314673a9663ea622a9c0dbefc9b72d74b1e8eeb98fb25"
+        },
+        {
+          "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/codec/CodecRegistry.kt",
+          "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/codec/CodecRegistry.kt",
+          "line": null,
+          "sha256": "2826b7e7931cff4b9793f9aa4fa33315940bd8184295608892bf65e51779003e"
+        },
+        {
+          "file": "hexplain.io/specification/coverage/index.html",
+          "href": "../specification/coverage/index.html",
+          "line": null,
+          "sha256": "8fa7eb4057a56d6c71772680b725c492295d1e8bd1923a9491e6f1a303e03a40"
+        }
+      ]
+    },
+    {
+      "repo": "saas",
+      "id": "SA01",
+      "severity": "High",
+      "status": "Fixed",
+      "title": "Mutable sample bytes invalidated stored digests and cached results",
+      "impact": "A caller could mutate the original or returned byte array after save, changing content while keeping the stored SHA-256 and run references.",
+      "evidence": "The new repository test failed before correction. It now mutates ingress, save return, single lookup and list lookup arrays without altering storage.",
+      "action": "Store and return defensive byte copies, and verify declared length and SHA-256 against the stored snapshot. This protects in-process identity; durable content storage remains open.",
+      "sources": [
+        {
+          "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/adapter/memory/InMemoryRepositories.kt",
+          "href": "../../hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/adapter/memory/InMemoryRepositories.kt",
+          "line": 80,
+          "sha256": "04fd6bf386c0a4aaaea122d1f4b99fc8ac728cb3212877fbd8f9cfd932feea00"
+        },
+        {
+          "file": "hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/RepositoryIntegrityTest.kt",
+          "href": "../../hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/RepositoryIntegrityTest.kt",
+          "line": null,
+          "sha256": "edc114c2c0d8ca3fcd52f9a7ebccc10f11d00f8408c246daa03395cbea50c0b6"
+        }
+      ]
+    },
+    {
+      "repo": "saas",
+      "id": "SA02",
+      "severity": "High",
+      "status": "Fixed",
+      "title": "File and format identities could be overwritten",
+      "impact": "Saving an existing file ID replaced the bytes referenced by historical runs; replacing a format could change the workspace owner of existing versions.",
+      "evidence": "Both overwrite counterexamples failed before the fix and now reject replacement while preserving the first resource.",
+      "action": "Reject duplicate file/format IDs. A future persistence layer must enforce equivalent unique constraints transactionally.",
+      "sources": [
+        {
+          "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/adapter/memory/InMemoryRepositories.kt",
+          "href": "../../hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/adapter/memory/InMemoryRepositories.kt",
+          "line": 36,
+          "sha256": "04fd6bf386c0a4aaaea122d1f4b99fc8ac728cb3212877fbd8f9cfd932feea00"
+        },
+        {
+          "file": "hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/RepositoryIntegrityTest.kt",
+          "href": "../../hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/RepositoryIntegrityTest.kt",
+          "line": null,
+          "sha256": "edc114c2c0d8ca3fcd52f9a7ebccc10f11d00f8408c246daa03395cbea50c0b6"
+        }
+      ]
+    },
+    {
+      "repo": "saas",
+      "id": "SA03",
+      "severity": "High",
+      "status": "Scoped mitigation",
+      "title": "Validation and viewing now limit decoded blocks",
+      "impact": "The interactive input limit alone did not stop compression expansion inside either execution path.",
+      "evidence": "An integration test supplies a small compressed payload expanding beyond 8 MiB; validation and viewing both fail with the budget explanation.",
+      "action": "Both paths use the same 8 MiB per-block limit. Whole-run quotas, cancellation and isolated workers are still needed for hostile or resource-heavy profiles.",
+      "sources": [
+        {
+          "file": "hexplain-saas/backend/engine/src/main/kotlin/io/hexplain/saas/engine/HexplainFormatEngine.kt",
+          "href": "../../hexplain-saas/backend/engine/src/main/kotlin/io/hexplain/saas/engine/HexplainFormatEngine.kt",
+          "line": 51,
+          "sha256": "aab1e927f8b815713329ed161928b2aecec2936d2dbf8b714696a3849a1234c6"
+        },
+        {
+          "file": "hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/ExecutionBudgetTest.kt",
+          "href": "../../hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/ExecutionBudgetTest.kt",
+          "line": null,
+          "sha256": "9325431180d0969fc2dd01b4bff1717c20a4c8c93e0042b2a7d3957bfc53b6a2"
+        }
+      ]
+    },
+    {
+      "repo": "saas",
+      "id": "SA04",
+      "severity": "Medium",
+      "status": "Fixed",
+      "title": "Unexpected HTTP 422 responses could masquerade as successful data",
+      "impact": "The shared client treated every 422 as a typed success. Error objects could reach screens expecting a compile result or collection, while ordinary errors displayed raw JSON.",
+      "evidence": "New API tests check rejected compile requests, readable error explanations and structured INVALID publication diagnostics. Both .ts and .tsx tests are discovered.",
+      "action": "Only publication accepts a structured 422 result. Other failing statuses reject with a readable server explanation; CSRF handling remains in the shared client.",
+      "sources": [
+        {
+          "file": "hexplain-saas/frontend/lib/api.ts",
+          "href": "../../hexplain-saas/frontend/lib/api.ts",
+          "line": 165,
+          "sha256": "29e86be78c20b5ed5e0638afa9a0c390610852594734f7f7084d054a3f204deb"
+        },
+        {
+          "file": "hexplain-saas/frontend/tests/api.test.ts",
+          "href": "../../hexplain-saas/frontend/tests/api.test.ts",
+          "line": null,
+          "sha256": "7c519ce79d5cb1664c28baed2fdaa728a5f5c0e26944f92afcd9c0714aba011f"
+        },
+        {
+          "file": "hexplain-saas/frontend/vitest.config.mts",
+          "href": "../../hexplain-saas/frontend/vitest.config.mts",
+          "line": null,
+          "sha256": "785e7bf7e0f5408e02ccb9f010fb3fcd56e97d5b923c23b54ba08e41ec486826"
+        }
+      ]
+    },
+    {
+      "repo": "saas",
+      "id": "SA05",
+      "severity": "High",
+      "status": "Open",
+      "title": "In-memory storage cannot provide durable service guarantees",
+      "impact": "A restart loses stored formats, versions, runs and findings. In-process synchronization does not coordinate multiple service instances.",
+      "evidence": "The repository adapters use in-memory maps. Publish concurrency is protected within one process only.",
+      "action": "Introduce durable transactional metadata, immutable object storage, schema migrations, uniqueness constraints, and backup/restore tests. Demonstrate crash recovery before a production readiness claim.",
+      "sources": [
+        {
+          "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/adapter/memory/InMemoryRepositories.kt",
+          "href": "../../hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/adapter/memory/InMemoryRepositories.kt",
+          "line": null,
+          "sha256": "04fd6bf386c0a4aaaea122d1f4b99fc8ac728cb3212877fbd8f9cfd932feea00"
+        },
+        {
+          "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/service/RegistryService.kt",
+          "href": "../../hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/service/RegistryService.kt",
+          "line": 107,
+          "sha256": "7bc09c679a88b4bd9a0815e638b93992c7f17d4133909a0e54d340031888f214"
+        }
+      ]
+    },
+    {
+      "repo": "saas",
+      "id": "SA06",
+      "severity": "High",
+      "status": "Open",
+      "title": "Authentication currently protects one configured workspace",
+      "impact": "The implemented deployment does not provide tenant-aware authorization, per-project roles or distributed execution isolation.",
+      "evidence": "Authentication, CSRF and foreign-object tests pass. WorkspaceAccess uses a server-configured workspace ID for the deployment.",
+      "action": "Retain this supported deployment scope. For a multi-tenant product, derive authorization from authenticated memberships and isolate storage and worker execution by tenant.",
+      "sources": [
+        {
+          "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/config/SecurityConfig.kt",
+          "href": "../../hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/config/SecurityConfig.kt",
+          "line": 44,
+          "sha256": "6bd4723d8043cd9ac41e23a32026edba903f34b42d1d7bd04dd3b242a9a02aab"
+        },
+        {
+          "file": "hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/SecurityBoundaryTest.kt",
+          "href": "../../hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/SecurityBoundaryTest.kt",
+          "line": null,
+          "sha256": "14ce7ec635dedd8862b4f91776a4a2d1ae07dce1f33f416457a5289206485401"
+        }
+      ]
+    },
+    {
+      "repo": "saas",
+      "id": "SA07",
+      "severity": "Medium",
+      "status": "Open",
+      "title": "Browser accessibility and operational performance need acceptance evidence",
+      "impact": "Component tests cannot establish real screen-reader behavior, responsive rendering, actual keyboard focus across navigation, or latency under concurrent runs.",
+      "evidence": "Six frontend tests and the production build are checked in this pass. No manual browser, screen-reader, load, restart or distributed deployment test was performed.",
+      "action": "Run keyboard and screen-reader walkthroughs, responsive screenshots, realistic corpus timing and concurrent-run load tests. Keep the 1 MiB viewer limit visible until larger-file interaction is implemented.",
+      "sources": [
+        {
+          "file": "hexplain-saas/frontend/tests/workflows.test.tsx",
+          "href": "../../hexplain-saas/frontend/tests/workflows.test.tsx",
+          "line": null,
+          "sha256": "412a03ee3cb8a955a3fc47fa14b9c155f3bf25df0f96093eaadfac1fe95dad5b"
+        },
+        {
+          "file": "hexplain-saas/frontend/app/files/[id]/page.tsx",
+          "href": "../../hexplain-saas/frontend/app/files/[id]/page.tsx",
+          "line": null,
+          "sha256": "92da6b047ef845e01c0d6c501bdbab10e92d780a77514f867fa93ed64fd53081"
+        },
+        {
+          "file": "hexplain-saas/REVIEW-FIXES.md",
+          "href": "../../hexplain-saas/REVIEW-FIXES.md",
+          "line": null,
+          "sha256": "6efa43e3b24be3105b75ec2d258e1373892d138e162c8409bb53533c47dd7b51"
+        }
+      ]
+    },
+    {
+      "repo": "saas",
+      "id": "SA08",
+      "severity": "Medium",
+      "status": "Verified strength",
+      "title": "Engine changes are pinned and the patch can be regenerated",
+      "impact": "An application tested against an edited sibling engine is not reproducible if new files are omitted from its delivery patch.",
+      "evidence": "The refresh tool includes tracked changes plus new source/test files, checks the pinned base, and validates reverse application. npm audit reports zero known npm vulnerabilities at review time; no equivalent JVM advisory audit was performed.",
+      "action": "Run the new patch check locally after engine edits and run the existing clean-checkout CI. Upstream the patch into a versioned engine release; remote CI execution is not claimed here.",
+      "sources": [
+        {
+          "file": "hexplain-saas/tools/refresh_engine_patch.py",
+          "href": "../../hexplain-saas/tools/refresh_engine_patch.py",
+          "line": null,
+          "sha256": "3b9366fbc06befc9e97db4182175ff76411d07854fa1e6baf5d7d6f9bdd47076"
+        },
+        {
+          "file": "hexplain-saas/engine-revision.txt",
+          "href": "../../hexplain-saas/engine-revision.txt",
+          "line": null,
+          "sha256": "2b6d4deb9eedc8c290ac161738845c5cc8c4f2087cb2d53b882ab8aeed9f1add"
+        },
+        {
+          "file": "hexplain-saas/.github/workflows/verify.yml",
+          "href": "../../hexplain-saas/.github/workflows/verify.yml",
+          "line": null,
+          "sha256": "9b2db2b4659207067a34a20d80dfca75298bef5e1f61e570b96fad5086d04d2b"
+        }
+      ]
+    }
+  ]
+}

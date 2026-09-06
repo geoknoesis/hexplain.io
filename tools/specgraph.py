@@ -52,19 +52,19 @@ def ontology_paths():
     """Every vocabulary, aspect and register in the family, deduplicated and ordered."""
     seen, out = set(), []
     for p in (
-        *_ROOTS,
+        *sorted(glob.glob("specification/*/*.ttl")),
         *sorted(glob.glob("specification/aspect/*/*.ttl")),
         *sorted(glob.glob("specification/register/*/*.ttl")),
     ):
         if p not in seen and glob.glob(p):
             seen.add(p)
             out.append(p)
-    return out
+    return [p.replace("\\", "/") for p in out]
 
 
 def shape_paths():
     """The files whose SHACL should be applied when validating anything in the family."""
-    return _existing(_SHAPE_FILES)
+    return ontology_paths()
 
 
 def load(paths):

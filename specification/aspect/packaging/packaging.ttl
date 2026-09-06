@@ -9,9 +9,11 @@
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 
 <https://hexplain.io/ns/aspect/packaging> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/packaging/1.0> ; owl:versionInfo "1.0" ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/packaging/1.1> ; owl:versionInfo "1.1" ;
     owl:imports <https://hexplain.io/ns/aspect/bundle> ;
     rdfs:label "Hexplain Aspect — Packaging (hx-packaging)" ;
     rdfs:comment "Aspect for multi-entry container membership: containers, entries, and paths. Shared by archives and box/atom media containers." ;
@@ -28,3 +30,42 @@
 :Container rdfs:subClassOf abnd:Asset .
 :Entry     rdfs:subClassOf abnd:Part .
 :hasEntry  rdfs:subPropertyOf abnd:hasPart .
+
+# Shapes constrain an explicitly selected data graph; RDFS range assertions alone
+# are inferential statements, not a check that a publisher supplied valid values.
+:ContainerShape a sh:NodeShape ;
+    rdfs:label "Container membership shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/packaging> ;
+    rdfs:comment "Checks resource-valued, explicitly typed entry membership. Empty containers and repeated paths on distinct entries remain legal."@en ;
+    skos:scopeNote "Apply to emitted packaging metadata with entry types in the data graph; no inference or network import fetching is required. This shape does not inspect binary archive bytes."@en ;
+    sh:targetClass :Container ; sh:targetSubjectsOf :hasEntry ;
+    sh:property [ sh:path :hasEntry ; sh:name "Member entry"@en ;
+        sh:description "Each member must be a resource typed as an Entry. Membership is optional and repeatable."@en ;
+        sh:nodeKind sh:BlankNodeOrIRI ; sh:class :Entry ;
+        sh:message "Container members must be resources typed as packaging Entry."@en ] .
+
+:EntryShape a sh:NodeShape ;
+    rdfs:label "Entry path shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/packaging> ;
+    rdfs:comment "Checks the optional single verbatim string path of an entry. A path is metadata, not an extraction destination or a globally unique identifier."@en ;
+    skos:scopeNote "Applies to Entry instances and subjects of entryPath. Paths may be absent in unnamed box containers; empty paths, traversal-looking paths and duplicate paths across distinct entries are preserved for inspection. Extraction software must apply its own destination policy."@en ;
+    sh:targetClass :Entry ; sh:targetSubjectsOf :entryPath ;
+    sh:property [ sh:path :entryPath ; sh:name "Verbatim entry path"@en ;
+        sh:description "Zero or one xsd:string per entry resource; no uniqueness or filesystem normalization is implied."@en ;
+        sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "An entry has at most one verbatim xsd:string path."@en ] .
+
+# BEGIN GENERATED TERM DOCUMENTATION
+# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
+<https://hexplain.io/ns/aspect/packaging> <http://www.w3.org/2004/02/skos/core#definition> "Aspect for multi-entry container membership: containers, entries, and paths. Shared by archives and box/atom media containers."@en .
+<https://hexplain.io/ns/aspect/packaging> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for membership and packaging metadata shared by archive and compound-resource descriptions."@en .
+<https://hexplain.io/ns/aspect/packaging#Container> <http://www.w3.org/2004/02/skos/core#definition> "A file that holds member entries."@en .
+<https://hexplain.io/ns/aspect/packaging#Container> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for membership and packaging metadata shared by archive and compound-resource descriptions. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/aspect/packaging#ContainerShape> <http://www.w3.org/2004/02/skos/core#definition> "Checks resource-valued, explicitly typed entry membership. Empty containers and repeated paths on distinct entries remain legal."@en .
+<https://hexplain.io/ns/aspect/packaging#Entry> <http://www.w3.org/2004/02/skos/core#definition> "An individually identifiable member of a packaging container, with membership and content metadata described separately."@en .
+<https://hexplain.io/ns/aspect/packaging#Entry> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for membership and packaging metadata shared by archive and compound-resource descriptions. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/aspect/packaging#EntryShape> <http://www.w3.org/2004/02/skos/core#definition> "Checks the optional single verbatim string path of an entry. A path is metadata, not an extraction destination or a globally unique identifier."@en .
+<https://hexplain.io/ns/aspect/packaging#entryPath> <http://www.w3.org/2004/02/skos/core#definition> "Path of the entry within the container."@en .
+<https://hexplain.io/ns/aspect/packaging#entryPath> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for membership and packaging metadata shared by archive and compound-resource descriptions. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/aspect/packaging#hasEntry> <http://www.w3.org/2004/02/skos/core#definition> "A member entry contained in a packaging resource; the relation does not by itself prescribe the member's encoding."@en .
+<https://hexplain.io/ns/aspect/packaging#hasEntry> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for membership and packaging metadata shared by archive and compound-resource descriptions. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
