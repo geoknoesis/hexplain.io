@@ -11,7 +11,7 @@ for pred in [SKOS.closeMatch,SKOS.exactMatch,SKOS.broadMatch,SKOS.narrowMatch,SK
         assert not types.intersection(g.objects(subject,RDF.type)),f'SKOS concept mapping used for ontology entity {subject}'
 for module in ['raster','spatialref','geometry']:
     ns=f'https://hexplain.io/ns/aspect/{module}'
-    assert (URIRef(ns),OWL.versionIRI,URIRef(ns+'/1.1')) in g
+    assert (URIRef(ns),OWL.versionIRI,URIRef(ns+('/1.2' if module == 'geometry' else '/1.1'))) in g
     for subject in set(g.subjects()):
         if not str(subject).startswith(ns+'#') or not types.intersection(g.objects(subject,RDF.type)):continue
         assert g.value(subject,RDFS.label),f'Missing label: {subject}'

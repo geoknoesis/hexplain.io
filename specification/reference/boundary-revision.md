@@ -25,3 +25,33 @@ The [validation contract](../validation/index.html) distinguishes description ch
 The engine's TIFF and PNG profiles now declare their mapping targets and pass description SHACL without the former expected residual violations. TIFF physical tag metadata moves from undeclared image-vocabulary names to the profile-owned `https://hexplain.io/formats/tiff#` namespace. Width, height and bit depth use the raster/sampling aspect IRIs. TIFF scalar meanings are emitted only after resolving the inline value; RATIONAL pointers are no longer emitted as resolutions. Extraction still covers the first classic-TIFF directory, not complete TIFF semantics.
 
 PNG's unscaled gAMA integer, pHYs counts/unit and tIME second component now use explicit profile-owned raw properties (`gammaEncoded`, `pixelsPerUnitX`, `pixelsPerUnitY`, `unitSpecifier`, `modificationSecond`); a second component is not a complete modification date. Text titles and authors use `dcterms:title` and `dcterms:creator`. Consumers of the previous emitted IRIs must migrate deliberately. These profile corrections do not change the independent raster pixel adapter's GDAL comparison scope.
+
+
+## DLV and Bundle 1.1: integral quantities (6 September 2026)
+
+DLV cellBitWidth, dimensionSize, dimensionStride and chunkSize now require positive XML Schema integer-family literals. Bundle minParts and maxParts require nonnegative integer-family literals. Decimal values (including 3.0), floating-point values and strings are rejected; migrate exact whole values to xsd:integer. Fractional quantities cannot represent these counts. Term IRIs are unchanged; this is a stricter validation contract and ontology versions advance to 1.1. Archived snapshots remain unchanged.
+
+The shared layout-competency.tsv has 47 positive/negative cases. It tests fixed/dynamic packing, bit order, numeric boundaries, required compound roles, nested assets, primary-part typing and count contradictions without inference or SHACL-AF rule execution. It does not certify decoded pixel arithmetic, arbitrary nesting, every vocabulary combination, or external ontology review. Missing profile definitions are not proof of conformance to an unavailable profile.
+
+Datatype alternatives follow the [SHACL datatype constraint](https://www.w3.org/TR/shacl/#DatatypeConstraintComponent): datatype identity is checked explicitly rather than inferred from numeric comparisons.
+
+
+## Bundle 1.2: explicit primary membership (6 September 2026)
+
+Required-role checks now follow both hasPart and primaryPart without relying on RDFS materialization. A primary-only carrier with the required role satisfies that requirement. AssetShape now rejects literal and untyped hasPart values; assert Part explicitly on each member. Unrelated resources remain outside the Asset target scope. This stricter member-typing contract advances Bundle to 1.2. The layout/compound corpus grows from 47 to 52 cases; prior immutable snapshots are retained.
+
+This change does not materialize subproperties or run facet-lifting rules. Profile definitions must still be supplied; generic SHACL validation cannot infer unavailable external profile requirements.
+
+
+## Geometry-type register 1.1 (6 September 2026)
+
+Adds GeometryCollection, the missing concept for ISO WKB type 7. The existing six simple-feature concepts retain their IRIs. A collection does not imply identical member types; dimensional homogeneity remains a format-profile constraint. No globally shared CRS, topology or nonemptiness is inferred from collection membership. This addition completes the seven-family mapping used by the measured GDAL WKB corpus; it does not add curve, surface or mesh concepts.
+
+
+## Geometry 1.2 validation (production follow-up)
+
+Selecting geometry shapes now validates geometryType as an explicitly typed SKOS concept IRI and dimensionality as one positive integer-family value. Zero, negative, decimal and string dimensions reject. This tightens conformance without changing property IRIs. Supply concept definitions in the selected data/vocabulary graph. Missing dimensionality and Z/M flags remain unknown; no false values are inferred and no fixed 2?4 dimensional limit is imposed globally.
+
+## Fixed terminated fields and scan budgets
+
+The writer rejects fixedValue plus terminator explicitly: existing raw fixed-value validation does not define a compatible framing contract. It no longer returns incomplete wire data for this combination. Ordinary terminated fields retain their tested contract. Automatic fixed-length inference remains a separately restricted contract. Parser sentinel scanning is linear-time, accounts for the failure table before allocation and charges scanned bytes plus the copied result to materialization limits. Inputs close to old materialization limits may now fail earlier; raise limits only within the deployment's memory budget.

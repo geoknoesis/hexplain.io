@@ -12,7 +12,7 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/dlv> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/dlv/1.0> ; owl:versionInfo "1.0" ;
+    owl:versionIRI <https://hexplain.io/ns/dlv/1.1> ; owl:versionInfo "1.1" ;
     owl:imports <https://hexplain.io/ns/bddo> ;
     rdfs:label "Hexplain Data Layout Vocabulary (DLV)" ;
     rdfs:comment "Vocabulary for describing multi-dimensional array layout within a flat byte stream." ;
@@ -108,12 +108,12 @@ dlv:DataLayoutShape a sh:NodeShape ;
     sh:property [ sh:path dlv:hasDimension ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
     sh:property [ sh:path ( dlv:hasDimension [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class dlv:Dimension ] ;
     sh:property [ sh:path dlv:cellDataType ; sh:class bddo:DataType ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:cellBitWidth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:cellBitWidth ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:cellBitWidthFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:cellPackingOrder ; sh:maxCount 1 ;
         sh:in ( bddo:MSBFirst bddo:LSBFirst ) ] ;
     # A packed width is fixed or read, never both.
-    sh:not [ sh:and ( [ sh:property [ sh:path dlv:cellBitWidth ; sh:minCount 1 ] ]
+    sh:not [ sh:and ( [ sh:property [ sh:path dlv:cellBitWidth ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minCount 1 ] ]
                       [ sh:property [ sh:path dlv:cellBitWidthFromField ; sh:minCount 1 ] ] ) ] ;
     # Packing order describes packing, so it needs a packed width to describe.
     sh:sparql [ sh:message "dlv:cellPackingOrder is only meaningful with dlv:cellBitWidth or dlv:cellBitWidthFromField." ;
@@ -162,7 +162,7 @@ dlv:DimensionOrderRuleShape a sh:NodeShape ;
 dlv:DimensionShape a sh:NodeShape ;
     sh:targetClass dlv:Dimension ;
     sh:xone (
-        [ sh:property [ sh:path dlv:dimensionSize ; sh:minCount 1 ] ;
+        [ sh:property [ sh:path dlv:dimensionSize ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minCount 1 ] ;
           sh:property [ sh:path dlv:dimensionSizeFromField ; sh:maxCount 0 ] ]
         [ sh:property [ sh:path dlv:dimensionSizeFromField ; sh:minCount 1 ] ;
           sh:property [ sh:path dlv:dimensionSize ; sh:maxCount 0 ] ]
@@ -179,18 +179,18 @@ dlv:DimensionShape a sh:NodeShape ;
     sh:xone (
         [ sh:property [ sh:path dlv:chunkSize ; sh:maxCount 0 ] ;
           sh:property [ sh:path dlv:chunkSizeFromField ; sh:maxCount 0 ] ]
-        [ sh:property [ sh:path dlv:chunkSize ; sh:minCount 1 ] ;
+        [ sh:property [ sh:path dlv:chunkSize ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minCount 1 ] ;
           sh:property [ sh:path dlv:chunkSizeFromField ; sh:maxCount 0 ] ]
         [ sh:property [ sh:path dlv:chunkSizeFromField ; sh:minCount 1 ] ;
           sh:property [ sh:path dlv:chunkSize ; sh:maxCount 0 ] ]
     ) ;
-    sh:property [ sh:path dlv:dimensionSize ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:dimensionSize ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:dimensionSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:dimensionStride ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:dimensionStride ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:dimensionStrideFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:dimensionStrideFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:hasAxis ; sh:nodeKind sh:IRI ; sh:class dlv:Axis ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:chunkSize ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:chunkSize ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:chunkSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] .
 
 dlv:_prefixes sh:declare

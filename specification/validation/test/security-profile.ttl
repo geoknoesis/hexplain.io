@@ -1,0 +1,25 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sec: <https://hexplain.io/ns/aspect/security#> .
+@prefix ex: <urn:hexplain:security-example:> .
+
+# An opt-in example profile, NOT a new global security policy or authorization rule.
+ex:MarkingShape a sh:NodeShape ;
+  rdfs:label "Example marked-resource profile" ;
+  rdfs:comment "Applies only to explicitly selected Marked resources. Values use the profile's level register. Repeated controls and unrelated resources remain valid; marking does not grant access or propagate to container members." ;
+  sh:targetClass ex:Marked ;
+  sh:property [ sh:path sec:markingSystem ; sh:name "Profile marking system" ;
+    sh:description "Exactly one verbatim system identifier for this example profile." ;
+    sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+  sh:property [ sh:path sec:sensitivityLevel ; sh:name "Resolved profile level" ;
+    sh:description "One explicitly typed SKOS concept in the example level register; no global level order is asserted." ;
+    sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class skos:Concept ;
+    sh:node [ sh:property [ sh:path skos:inScheme ; sh:hasValue ex:Levels ] ] ] ;
+  sh:property [ sh:path sec:sensitivityLevelText ; sh:name "Verbatim level text" ;
+    sh:description "Optional original text is retained independently of the resolved concept." ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+  sh:property [ sh:path sec:marking ; sh:name "Additional controls" ;
+    sh:description "Zero or more explicitly typed concepts; controls may come from different schemes." ; sh:nodeKind sh:IRI ; sh:class skos:Concept ] ;
+  sh:property [ sh:path sec:markingDate ; sh:name "Marking date" ;
+    sh:description "Optional date as represented in this example profile; no UTC conversion or date-order policy is implied." ; sh:datatype xsd:date ; sh:maxCount 1 ] .
