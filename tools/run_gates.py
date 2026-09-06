@@ -25,7 +25,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 #: Not gates. `specgraph` is a library; `shacl_check` is an interactive CLI that validates a
 #: file you name, so it has no fixed subject to check and nothing to assert without one.
-NOT_GATES = {"run_gates", "specgraph", "shacl_check"}
+# Live publication is an explicit network/deployment check, not an offline RDF gate.
+NOT_GATES = {"run_gates", "specgraph", "shacl_check", "check_live_publication"}
 
 
 def main(filters):

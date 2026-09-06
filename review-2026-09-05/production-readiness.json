@@ -1,0 +1,311 @@
+{
+  "date": "2026-09-06",
+  "scope": "Current engine HEAD plus working-tree changes; specifications local working tree; SaaS excluded",
+  "engine_head": "7c23153377662cfd01842ccff6eeb65d7a523410",
+  "engine_dirty": true,
+  "score_kind": "production readiness, not historical implementation quality",
+  "scores": {
+    "spec": 7.6,
+    "engine": 8.05
+  },
+  "dimensions": [
+    [
+      "Correctness and semantic contracts",
+      30,
+      9.0,
+      9.0
+    ],
+    [
+      "Architecture and capability clarity",
+      20,
+      9.0,
+      8.5
+    ],
+    [
+      "Validation and independent evidence",
+      20,
+      8.5,
+      8.5
+    ],
+    [
+      "Release and deployment verification",
+      20,
+      4.5,
+      6.5
+    ],
+    [
+      "Operational and governance acceptance",
+      10,
+      5.0,
+      6.5
+    ]
+  ],
+  "metrics": {
+    "core": {
+      "tests": 782,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "adapters": {
+      "tests": 37,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "hdl": {
+      "tests": 223,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "findings": [
+    {
+      "id": "PR01",
+      "component": "Engine",
+      "severity": "High",
+      "title": "FixedValue plus terminator rejects before output",
+      "evidence": "The reproduced incomplete-output path now throws an explicit unsupported-framing error. Fixed-value raw-byte semantics are preserved; no incompatible terminator semantics are invented. Regression cases cover nonempty, empty and embedded-sentinel fixed payloads.",
+      "impact": "The writer no longer returns malformed data for this unsupported combination.",
+      "action": "Use an ordinary terminated payload or explicit supported fixed-width framing. Supporting this combination in future requires a matching parser/writer contract.",
+      "sources": [
+        {
+          "repo": "engine",
+          "path": "core/src/main/kotlin/io/hexplain/core/metacodec/Metawriter.kt",
+          "line": 528,
+          "sha256": "ed9527c24617e218e8c0d8a49bf9db100984427f7bb5c4473e96f2d6c718a9e1"
+        },
+        {
+          "repo": "spec",
+          "path": "review-2026-09-05/ProductionReadinessProbeTest.kt",
+          "line": null,
+          "sha256": "934c6e079fbb11acd06f615409dd2017f14389ae82c6fe5e8d43951ef5279b37"
+        },
+        {
+          "repo": "engine",
+          "path": "core/src/test/kotlin/io/hexplain/core/metacodec/ProductionBoundaryRegressionTest.kt",
+          "line": null,
+          "sha256": "03372a7e4177ab98fff392e60400eb453578f6e0c66b0b01351a5f790ed87a62"
+        }
+      ],
+      "status": "Fixed by rejection"
+    },
+    {
+      "id": "PR02",
+      "component": "Specification",
+      "severity": "High",
+      "title": "Geometry 1.2 validates dimensions and concept values",
+      "evidence": "OrdinateShape activation now includes dimensionality and geometryType. Positive integer-family dimensions and explicitly typed concept IRIs are enforced. Nine Python cases with result-path checks and a Jena regression cover the original counterexamples and valid/unknown values.",
+      "impact": "Selecting the module no longer accepts the two reproduced out-of-range values. Missing values remain unknown, not implicitly false.",
+      "action": "Migrate decimal/string dimensions to valid integer-family literals and supply required concept definitions. The stricter contract is documented and included in snapshot 2026-09-06.2.",
+      "sources": [
+        {
+          "repo": "spec",
+          "path": "specification/aspect/geometry/geometry.ttl",
+          "line": 28,
+          "sha256": "dbe625d57f0dae6bd877a18772093d75bff63e5eb7f8944e1f36c22a4e16a457"
+        },
+        {
+          "repo": "spec",
+          "path": "review-2026-09-05/production-spec-probes.json",
+          "line": null,
+          "sha256": "1d69fca8bb067240e209ece5e49878d84514e6e434a8c2147d353f438f41a1ce"
+        },
+        {
+          "repo": "spec",
+          "path": "tools/test_geometry_contract.py",
+          "line": null,
+          "sha256": "b0c10a10ad4943308c1d54b6a3dc00a43322f4d86fed903e89eac0b1b1dd1793"
+        },
+        {
+          "repo": "spec",
+          "path": "releases/2026-09-06.2/manifest.json",
+          "line": null,
+          "sha256": "78720f3f0ec3cbd8f495fef0fa740c2cf506910e909c99e4d26924770bad2de7"
+        }
+      ],
+      "status": "Fixed"
+    },
+    {
+      "id": "PR03",
+      "component": "Specification",
+      "severity": "High",
+      "title": "Live machine-readable publication is broken",
+      "evidence": "Fresh read-only checks still receive HTTP 200 text/html for the security namespace requested as Turtle and for the immutable JSON manifest. The responses have the same SHA-256.",
+      "impact": "Production consumers cannot reliably resolve the intended vocabulary or release manifest. Local archive correctness does not establish a functioning published contract.",
+      "action": "Correct actual hosting routes/content types and rerun the live publication check. Keep this blocked until deployed responses match the canonical RDF and immutable manifest. The actual host/deployment configuration is still unavailable; no guessed deployment was performed.",
+      "sources": [
+        {
+          "repo": "spec",
+          "path": "tools/check_live_publication.py",
+          "line": null,
+          "sha256": "13cc7329871edfdc9af12c30386c60d8ec59a545af581ce21697393813c6825a"
+        },
+        {
+          "repo": "spec",
+          "path": "review-2026-09-05/live-publication.json",
+          "line": null,
+          "sha256": "c201efa67e9f3fe19a0b0f8d3495a52424be34a6aae34ac17c4bb5683cc2ed06"
+        }
+      ],
+      "status": "Blocked externally"
+    },
+    {
+      "id": "PR04",
+      "component": "Engine",
+      "severity": "High",
+      "title": "Untrusted whole-request execution still requires an external containment contract",
+      "evidence": "Terminator scanning now uses linear-time KMP, charges the failure table before allocation, and accounts for scanned bytes and the copied result. Empty terminators produce explicit validation diagnostics. Long-prefix and overlap regressions pass. HEL limits and existing worker protections remain; synchronous SHACL/custom-codec/native work still requires externally verified process containment.",
+      "impact": "Core library calls alone do not provide hard wall-time or aggregate process-memory guarantees for arbitrary descriptions/data. A passing local suite is not a hostile-workload or deployed-isolation acceptance test.",
+      "action": "The repeated-prefix scan gap is corrected for both terminators and synchronization markers; 4,000 deterministic differential cases pass. Complete deployed worker acceptance for compilation, arbitrary codecs and SHACL before treating untrusted whole-request execution as certified.",
+      "sources": [
+        {
+          "repo": "engine",
+          "path": "core/src/main/kotlin/io/hexplain/core/rdf/InstanceGraphValidator.kt",
+          "line": 52,
+          "sha256": "04c65cbe444362dfc5c9343bfc4098a30bc941c3c2ce9f5586edac088bbc8be4"
+        },
+        {
+          "repo": "engine",
+          "path": "core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt",
+          "line": 1326,
+          "sha256": "a24b9b6a98af27bf29e29f8191e1843d9b95ce8bf4b63a53efab28469e48cd4e"
+        },
+        {
+          "repo": "engine",
+          "path": "core/src/main/kotlin/io/hexplain/core/metacodec/ParseLimits.kt",
+          "line": null,
+          "sha256": "9d5af23b219b76440c9db76a2764cff2dfaa082dfb1ff11610e0b971b723f3b0"
+        }
+      ],
+      "status": "Scoped mitigation"
+    },
+    {
+      "id": "PR05",
+      "component": "Both",
+      "severity": "High",
+      "title": "Current candidate lacks clean remote release acceptance",
+      "evidence": "The current engine is 7c23153 plus uncommitted follow-ups. Fresh local tests pass. CI and private Maven publishing are now configured, but the latest visible remote run is the earlier 1e54ef7 failure; its recorded reason is account billing/spending restrictions before test execution. No successful remote run for this candidate was found. Default artifact version is 0.1.0-SNAPSHOT. A local-only Maven repository now stages core/HDL/adapters at a readiness coordinate. A separate consumer resolves the published core API and bundled vocabulary and verifies native adapters are absent from core. No composite sibling-source dependency is used.",
+      "impact": "A tested working tree is not a reproducibly accepted, distributed release. Current billing state was not inferred from the old annotation; successful current-revision CI is the missing evidence.",
+      "action": "Local package installation is verified. Clean current-revision remote CI, a production release coordinate, dependency advisory review and deployed rollback acceptance remain outstanding.",
+      "sources": [
+        {
+          "repo": "engine",
+          "path": "build.gradle.kts",
+          "line": 22,
+          "sha256": "2aefef8c35c75a16a1f8e60b6af2ceb5b6f2bb7079dda623babfdb55e84a3737"
+        },
+        {
+          "repo": "engine",
+          "path": ".github/workflows/ci.yml",
+          "line": null,
+          "sha256": "98f4c37a4bd127c5277e1ecaf5ee779da1254d51fff54d9216a6652906a20b5b"
+        },
+        {
+          "repo": "spec",
+          "path": "review-2026-09-05/remote-ci.json",
+          "line": null,
+          "sha256": "8081cb3315761c4ff86bc215a94deba850e876cca2bc9670b688f3b8f477a1b7"
+        },
+        {
+          "repo": "engine",
+          "path": "tests/release/README.md",
+          "line": null,
+          "sha256": "121a3b9357389992da79d9ca9fd110afc6cba61bf2ee9b3663e74b998cab68a5"
+        },
+        {
+          "repo": "spec",
+          "path": "review-2026-09-05/production-fixes.json",
+          "line": null,
+          "sha256": "7b70f08659378f36dd5264710e0922c4eb6a9c006ad4a56ed8ec1bcbc02f5abf"
+        }
+      ],
+      "status": "Scoped mitigation"
+    },
+    {
+      "id": "PR06",
+      "component": "Engine",
+      "severity": "Medium",
+      "title": "DLV expressiveness still exceeds executable array access",
+      "evidence": "Current IR preserves packed-cell, chunk and dynamic-stride declarations, but MultiDimensionalData.requireExecutable rejects them. This is a deliberate safe boundary, not silent corruption. Delimited writer containers and encoded struct repeat-until remain outside the writer subset.",
+      "impact": "Users can describe layouts that the generic accessor cannot execute. A production feature claim must distinguish ontology/IR representation from decoding and writing.",
+      "action": "The versioned capability matrix now distinguishes IR representation, executable accessors, writer subsets and rejection behavior. Unsupported execution remains rejected; implementing the remaining layouts is future feature work.",
+      "sources": [
+        {
+          "repo": "engine",
+          "path": "core/src/main/kotlin/io/hexplain/core/metacodec/MultiDimensionalData.kt",
+          "line": 65,
+          "sha256": "c9d74288c3aaf091fb5b2a7b31428d9f844d36d5706f93692f73782c003df341"
+        },
+        {
+          "repo": "engine",
+          "path": "docs/review-boundaries.md",
+          "line": null,
+          "sha256": "04c784995a83e2bee3d9c1813908fe3389d32667bbd2379a39fa2481b7345f49"
+        },
+        {
+          "repo": "engine",
+          "path": "docs/capability-matrix.md",
+          "line": null,
+          "sha256": "10d29df7327b5b3a77dd4d687085d6776801f94a8253c8a8d6af87a587b1d7b5"
+        }
+      ],
+      "status": "Documented limitation"
+    },
+    {
+      "id": "PR07",
+      "component": "Specification",
+      "severity": "Medium",
+      "title": "Independent ontology review is prepared but not completed",
+      "evidence": "The candidate pins 737 resources in 35 modules with a reviewer checklist; reviewer and decision remain null. Generated definitions, paired SHACL engines and an implementing-assistant review do not supply an independent modeling judgment.",
+      "impact": "Cross-module composition, unknown-value semantics and profile completeness lack external acceptance. The two reproduced geometry gaps illustrate the difference between documented vocabulary and complete constraints.",
+      "action": "Obtain a named independent reviewer, complete module coverage and counterexamples, resolve findings and record an explicit decision against hashes. Do not count package preparation as approval. The candidate was refreshed for Geometry 1.2; reviewer and decision remain unset.",
+      "sources": [
+        {
+          "repo": "spec",
+          "path": "specification/ontology-review/review-manifest.json",
+          "line": null,
+          "sha256": "8280731870e19db443062aa68eabbc99990e529d09c224e4577e12dd031361e6"
+        },
+        {
+          "repo": "spec",
+          "path": "specification/ontology-review/review-instructions.md",
+          "line": null,
+          "sha256": "376dd4ae8b25f74d1a5dd8ab10b558943d5600e395ab789cf308f191a854ffee"
+        }
+      ],
+      "status": "Blocked externally"
+    },
+    {
+      "id": "PR08",
+      "component": "Both",
+      "severity": "Medium",
+      "title": "Interoperability evidence is substantial but remains scoped",
+      "evidence": "Retained evidence includes 611 raster matches, 112 generated WKB cases and 60 GeoPackage rows. The vector fixture covers seven geometry families and four ordinate layouts, not seven native file drivers. Native Shapefile/FlatGeobuf/GeoParquet, broader CF/HDF variants, reprojection and topology are not established by those counts.",
+      "impact": "Format-wide or general geospatial-equivalence claims would exceed the measured contracts. Signed-24-bit GDAL divergence remains explicitly excluded from equality passes.",
+      "action": "Production capability claims are now explicitly bounded by the capability matrix. Additional native drivers and broader semantic equivalence are not claimed; they remain feature/acceptance work.",
+      "sources": [
+        {
+          "repo": "spec",
+          "path": "specification/coverage/gdal-tests/vector-depth.html",
+          "line": null,
+          "sha256": "04c25a9390b7a35db2c73956d072361d5ff01df6259c761c3bb3bece7addad50"
+        },
+        {
+          "repo": "spec",
+          "path": "review-2026-09-05/vector-depth.json",
+          "line": null,
+          "sha256": "01c615646ccdb2be58e93b0dc38cc6f32f7661c4344b8f0cc609303616798934"
+        },
+        {
+          "repo": "engine",
+          "path": "tests/gdal/expected-deviations.json",
+          "line": null,
+          "sha256": "064e71269de109cf60781650f52eb3e033b6e2a2dc66d305de8af0bc4b49d6f0"
+        }
+      ],
+      "status": "Documented limitation"
+    }
+  ]
+}

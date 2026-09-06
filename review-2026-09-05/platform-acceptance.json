@@ -1,0 +1,60 @@
+{
+  "postgres": {
+    "image": "postgres@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2",
+    "server": "17.7",
+    "checks": [
+      "real PostgreSQL migrations and valid tenant graph",
+      "three direct-SQL cross-tenant/version references rejected",
+      "SIGKILL recovery retains committed graph and rolls back active transaction",
+      "pg_dump restore retains metadata findings and exact blob bytes"
+    ],
+    "migrations": {
+      "V1__durable_registry.sql": "5bbb322578621b77a490b47cf74563f461df0ad94002a13f8d0a931295d596d2",
+      "V2__workspace_memberships.sql": "0049fdfdf62982590914ef60d97ef96cb6913d0d2a40950c2bf278efc7f2cd85",
+      "V3__tenant_reference_integrity.sql": "e17e0a135cba2eaf73214a0964484cd0422b1706bf9a6d31624ddd1df4c62cb6"
+    }
+  },
+  "browser": {
+    "startTime": "2026-09-06T14:09:58.741Z",
+    "duration": 101770.186,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "scope": "Local PostgreSQL and Chromium acceptance; controlled browser API fixtures; not production deployment",
+  "engine_revision": "1e54ef7",
+  "backend": {
+    "tests": 71,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "engine_revision": "1e54ef7",
+    "isolation": "separate engine git worktree"
+  },
+  "frontend": {
+    "component_tests": 6,
+    "production_build": "passed",
+    "typecheck": "passed"
+  },
+  "npm_vulnerabilities": 0,
+  "worker_final_regressions": 4,
+  "distributed_admission": {
+    "status": "passed",
+    "checks": [
+      "cross-replica tenant exclusion",
+      "global two-slot bound",
+      "slot release and reuse",
+      "lost PostgreSQL session fails closed"
+    ],
+    "scope": "actual JDBC against disposable PostgreSQL; session-preserving connections required"
+  },
+  "security_competency": {
+    "cases": 13,
+    "engines": [
+      "pySHACL",
+      "Apache Jena"
+    ],
+    "scope": "opt-in security profile; not authorization or global policy"
+  }
+}

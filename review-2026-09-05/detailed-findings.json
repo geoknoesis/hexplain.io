@@ -2,15 +2,15 @@
   "date": "2026-09-05",
   "scores": {
     "spec": 9.38,
-    "engine": 9.28,
-    "saas": 7.7
+    "engine": 9.33,
+    "saas": 8.33
   },
   "dimensions": [
     [
       "Correctness and mathematical contracts",
       30,
       9.5,
-      9.5,
+      9.6,
       8.75
     ],
     [
@@ -24,22 +24,22 @@
       "Validation and test evidence",
       20,
       9.5,
-      9.5,
-      8.25
+      9.6,
+      8.75
     ],
     [
       "Documentation, UX and accessibility",
       15,
       9.5,
       9.5,
-      7.5
+      8
     ],
     [
       "Delivery and operational readiness",
       15,
       9,
       8,
-      4
+      7
     ]
   ],
   "metrics": {
@@ -62,15 +62,15 @@
       "skipped": 0
     },
     "backend": {
-      "tests": 68,
+      "tests": 71,
       "failures": 0,
       "errors": 0,
       "skipped": 0
     },
-    "gates": 20,
+    "gates": 22,
     "frontend": 6,
     "npm_vulnerabilities": 0,
-    "terms": 736,
+    "terms": 737,
     "shapes": 98,
     "modules": 35
   },
@@ -179,7 +179,7 @@
           "file": "hexplain.io/specification/reference/boundary-revision.md",
           "href": "../specification/reference/boundary-revision.md",
           "line": null,
-          "sha256": "ddcdfd83f662ba3584376ae7a0598a1f2bdc5b2fb41eed9911043bfb087a24ae"
+          "sha256": "66f8e82df477b3e6e4edb294f79086f9d86962f065bf083254d5ba26a134300d"
         },
         {
           "file": "hexplain-tools/core/src/main/resources/png-profile.ttl",
@@ -215,7 +215,7 @@
           "file": "hexplain.io/specification/reference/index.html",
           "href": "../specification/reference/index.html",
           "line": null,
-          "sha256": "7eb42afc1444763a219100565cee26f3656362a208a9ce1dce265def4dd59db4"
+          "sha256": "5a4099e4ef75d1b2d6c6437788a8ea9e9830b88a8531670c9b6447a7de02fd97"
         }
       ]
     },
@@ -226,8 +226,8 @@
       "status": "Scoped mitigation",
       "title": "Pinned GDAL samples now have executable interoperability evidence",
       "impact": "A vocabulary inventory alone does not establish binary interoperability. Formats, GDAL drivers, documentation pages and sample files remain different denominators.",
-      "evidence": "The complete checked-in raster/vector/core fixture set was downloaded with companions and verified against pinned Git blobs. 5,622 isolated GDAL probes observe 153 drivers. 136 of 246 documentation pages map to sample evidence. Hexplain achieves 611 full-pixel matches across supported variants of six raster drivers; three encoder outputs independently decode in GDAL.",
-      "action": "Published every inventory entry with runtime mappings, samples, source hashes and explicit outcomes. Zarr v2 and jHDF-backed HDF5 now add 41 pixel matches. Scoped NetCDF, GeoPackage/WKB, LAS and Parquet adapters have companion-reference tests. GDAL vector/semantic parity, wider variants and metadata extraction remain open. One signed-24-bit datatype discrepancy is documented and is not counted as equality.",
+      "evidence": "The complete checked-in raster/vector/core fixture set was downloaded with companions and verified against pinned Git blobs. 5,622 isolated GDAL probes observe 153 drivers. 136 of 246 documentation pages map to sample evidence. Hexplain achieves 611 full-pixel matches across supported variants of six raster drivers; three encoder outputs independently decode in GDAL. Fresh pinned GDAL 3.13.3 adds 112 generated ISO-WKB cases and 60 GeoPackage rows across XY/XYZ/XYM/XYZM, all seven simple-feature families, empty/null geometry and exact 64-bit attributes. Subset-envelope comparisons exposed and fixed XYZM handling.",
+      "action": "The pinned GDAL 3.13.3 image independently verifies nine TIFF semantic datasets, one selected CF variable and both XYZ features. TIFF alpha/internal masks and precedence are measured. HDF-EOS, broader CF, external masks and wider variants remain explicit exclusions; signed-24-bit compatibility remains a non-pass. Vector evidence now covers the seven ISO-WKB families and one generated GeoPackage container. Native Shapefile/FlatGeobuf/GeoParquet, reprojection, topology and broader upstream vector fixtures remain unmeasured.",
       "sources": [
         {
           "file": "hexplain.io/specification/coverage/gdal-tests/index.html",
@@ -257,13 +257,25 @@
           "file": "hexplain.io/specification/coverage/gdal-tests/extended-evidence.json",
           "href": "../specification/coverage/gdal-tests/extended-evidence.json",
           "line": null,
-          "sha256": "4cac2217c60c8c5a7866a93fda6ae431222f81ad1dad70c21a4a3be275f3cabb"
+          "sha256": "c9873a459afc51260c594b7ed82fab105d60f301f97417b0a65ccd3c0ef9dfeb"
         },
         {
           "file": "hexplain-tools/tests/gdal/README.md",
           "href": "../../hexplain-tools/tests/gdal/README.md",
           "line": null,
-          "sha256": "660ec640cbd505b028536ed13560207d187f3f515d3b85723de3d159bb159b97"
+          "sha256": "0282224ece7f08f7978c481d8c1af900fe32185578e2a86a372fa2cc01bc881c"
+        },
+        {
+          "file": "hexplain.io/specification/coverage/gdal-tests/vector-depth.html",
+          "href": "../specification/coverage/gdal-tests/vector-depth.html",
+          "line": null,
+          "sha256": "04c25a9390b7a35db2c73956d072361d5ff01df6259c761c3bb3bece7addad50"
+        },
+        {
+          "file": "hexplain.io/review-2026-09-05/vector-depth.json",
+          "href": "vector-depth.json",
+          "line": null,
+          "sha256": "01c615646ccdb2be58e93b0dc38cc6f32f7661c4344b8f0cc609303616798934"
         }
       ]
     },
@@ -272,28 +284,52 @@
       "id": "SP07",
       "severity": "Medium",
       "status": "Scoped mitigation",
-      "title": "Semantic competency evidence remains narrower than vocabulary coverage",
+      "title": "Bit-packing and compound competency gaps now have shared regressions",
       "impact": "Generated definitions and broad module scope notes cannot establish that all combinations of terms model real formats correctly.",
-      "evidence": "Geospatial tests cover 40 semantic cases and 121 exact affine round trips, plus the new numeric cases. Eleven new packaging competency cases establish target scoping, typed membership and path contracts. Equivalent depth is not established for all 736 resources, despite the added shared 36-case corpus.",
-      "action": "Packaging now has concrete positive/negative cases with result-path assertions and inference disabled. The shared 36-case corpus adds sampling, signal, time, packaging and raster checks in both Jena and pySHACL. Extend depth across security, bit packing and compound datasets; independent ontology review remains needed.",
+      "evidence": "The retained semantic corpora are supplemented by 13 security cases and 52 layout/compound cases passing in pySHACL and Apache Jena without inference or rule execution. The fractional packed-width counterexample passed before correction. Tests cover integer boundaries, fixed/dynamic widths, bit order, nested required roles, primary typing and count contradictions. Five added cases reproduce and fix primary-only required membership and reject literal/untyped compound members.",
+      "action": "DLV and Bundle 1.1 reject fractional layout quantities and part counts; generated references and migration notes are updated. The security/bit-packing/compound increment is implemented. Independent ontology review and equivalent depth across all vocabulary combinations remain outstanding. Bundle 1.2 follows primaryPart explicitly in required-role checks with inference disabled; Asset member typing is now enforced. Missing external profile definitions and independent ontology review remain explicit evidence limits. A hash-pinned independent-review candidate now covers 737 resources in 35 modules, with a module checklist and explicit reviewer/disposition requirements. Review is pending; the preparation is not external approval.",
       "sources": [
         {
-          "file": "hexplain.io/tools/test_geospatial_model.py",
-          "href": "../tools/test_geospatial_model.py",
+          "file": "hexplain.io/tools/test_layout_competency.py",
+          "href": "../tools/test_layout_competency.py",
           "line": null,
-          "sha256": "390fc0e795457f300f837ccf3e5989fb7055c6448aec7ed37c0a0e20c8819ea5"
+          "sha256": "cb9123a86e5887fb3cfc4d91af4b48d15299983ad95f1bd5b4923f83d2a45500"
         },
         {
-          "file": "hexplain.io/tools/_reference.py",
-          "href": "../tools/_reference.py",
+          "file": "hexplain.io/specification/validation/competency-depth.html",
+          "href": "../specification/validation/competency-depth.html",
           "line": null,
-          "sha256": "91d11263efcfffeb0dd165e172a6a8d2fdef34c15369752c030265f0271ff343"
+          "sha256": "8728ec40f3d8395c113b8f2bc37c3b544ed10cc7a65b60313932a5c45530c18f"
         },
         {
-          "file": "hexplain.io/specification/ontology-design/index.html",
-          "href": "../specification/ontology-design/index.html",
+          "file": "hexplain.io/review-2026-09-05/layout-competency.json",
+          "href": "layout-competency.json",
           "line": null,
-          "sha256": "cca769f552034f008fea0f1a539d1681511878dc6141375d25f6c2b079c91a68"
+          "sha256": "f21f45ff732d55d380eacd66f5c25ce186262ae1f6ace052af4c56fdcd1a4537"
+        },
+        {
+          "file": "hexplain.io/specification/reference/boundary-revision.md",
+          "href": "../specification/reference/boundary-revision.md",
+          "line": null,
+          "sha256": "66f8e82df477b3e6e4edb294f79086f9d86962f065bf083254d5ba26a134300d"
+        },
+        {
+          "file": "hexplain.io/tools/test_security_profile.py",
+          "href": "../tools/test_security_profile.py",
+          "line": null,
+          "sha256": "38149662e9bd8585ed6fa955e09fbc64b0d08a3f76e46b916491a0c65d629758"
+        },
+        {
+          "file": "hexplain.io/specification/ontology-review/review-manifest.json",
+          "href": "../specification/ontology-review/review-manifest.json",
+          "line": null,
+          "sha256": "8280731870e19db443062aa68eabbc99990e529d09c224e4577e12dd031361e6"
+        },
+        {
+          "file": "hexplain.io/specification/ontology-review/review-instructions.md",
+          "href": "../specification/ontology-review/review-instructions.md",
+          "line": null,
+          "sha256": "376dd4ae8b25f74d1a5dd8ab10b558943d5600e395ab789cf308f191a854ffee"
         }
       ]
     },
@@ -301,11 +337,11 @@
       "repo": "spec",
       "id": "SP08",
       "severity": "Medium",
-      "status": "Scoped mitigation",
+      "status": "Blocked externally",
       "title": "Immutable draft snapshots now replay their original compatibility corpus",
       "impact": "A stricter shape can reject previously accepted data even when vocabulary term IRIs are unchanged. Mutable downloads cannot identify the exact historical validation contract.",
-      "evidence": "Snapshot 2026-09-05.1 pins 38 files with archive and per-file SHA-256, ontology versions and the shared 36-case corpus. The gate replays its original cases against archived and current graphs; the snapshot tool refuses overwrite.",
-      "action": "Local artifacts and compatibility replay are implemented. Live namespace dereferencing, media types, externally hosted immutable retention and external consumer acceptance remain unverified. Hashes are not signatures and repository review must prevent coordinated manifest/archive edits.",
+      "evidence": "Snapshot 2026-09-05.1 pins 38 files with archive and per-file SHA-256, ontology versions and the shared 36-case corpus. The gate replays its original cases against archived and current graphs; the snapshot tool refuses overwrite. New draft 2026-09-06.1 pins 41 files including DLV/Bundle 1.1 and security/layout competency corpora. Archived/current replay now covers these suites as well.",
+      "action": "Live probes return HTTP 200 text/html with identical bodies for the security namespace and immutable release manifest. Configure the hosting routes and media negotiation, then pass the new live publication workflow. Local snapshot validation does not close this deployment defect.",
       "sources": [
         {
           "file": "hexplain.io/releases/2026-09-05.1/manifest.json",
@@ -317,19 +353,43 @@
           "file": "hexplain.io/releases/index.html",
           "href": "../releases/index.html",
           "line": null,
-          "sha256": "f66258ab5635bd46387263f56d4f0b54cab6edb8ae31cc953c5fb6b7cccdec8c"
+          "sha256": "d71726d4fd6acf27246b55e48db2be95b005136567cae2e58e068c24cfd8fa9a"
         },
         {
           "file": "hexplain.io/tools/test_release_contract.py",
           "href": "../tools/test_release_contract.py",
           "line": null,
-          "sha256": "3f8974ea00ca5d0721143a94c6a7b9d334575e3447d9af39e4b4bc74c72e268f"
+          "sha256": "ec9299dc0a32a9e3d623beb2068e3b7cbccac0008b930fdffa98d09b797a1f3d"
         },
         {
           "file": "hexplain.io/tools/_snapshot_release.py",
           "href": "../tools/_snapshot_release.py",
           "line": null,
-          "sha256": "c77dd79068376922d10a85b367d66ae9bbe8fdb184580266a80a1488f4f49e19"
+          "sha256": "c78332de44b01663c7cead39fd15ed4f7490bd7c6358e2ef72f00cd3e54d4f55"
+        },
+        {
+          "file": "hexplain.io/review-2026-09-05/live-publication.json",
+          "href": "live-publication.json",
+          "line": null,
+          "sha256": "c201efa67e9f3fe19a0b0f8d3495a52424be34a6aae34ac17c4bb5683cc2ed06"
+        },
+        {
+          "file": "hexplain.io/tools/check_live_publication.py",
+          "href": "../tools/check_live_publication.py",
+          "line": null,
+          "sha256": "d7148f080e385453d29fb0ab799612b32ecfd8ed6fedcc4c1ec51616f1078cc6"
+        },
+        {
+          "file": "hexplain.io/releases/2026-09-06.1/manifest.json",
+          "href": "../releases/2026-09-06.1/manifest.json",
+          "line": null,
+          "sha256": "a5784d05c67e363d3aee2c31fad445e5665b821534d2cbf2ab58dc0a8f2bd9db"
+        },
+        {
+          "file": "hexplain.io/tools/test_release_contract.py",
+          "href": "../tools/test_release_contract.py",
+          "line": null,
+          "sha256": "ec9299dc0a32a9e3d623beb2068e3b7cbccac0008b930fdffa98d09b797a1f3d"
         }
       ]
     },
@@ -365,7 +425,7 @@
           "file": "hexplain.io/specification/reference/boundary-revision.md",
           "href": "../specification/reference/boundary-revision.md",
           "line": null,
-          "sha256": "ddcdfd83f662ba3584376ae7a0598a1f2bdc5b2fb41eed9911043bfb087a24ae"
+          "sha256": "66f8e82df477b3e6e4edb294f79086f9d86962f065bf083254d5ba26a134300d"
         }
       ]
     },
@@ -383,7 +443,7 @@
           "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt",
           "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt",
           "line": 818,
-          "sha256": "1e42f0db1e9889752b4252a87c02252cea62c3c37a03f89305cbd97c222c7e8f"
+          "sha256": "b4c0423e6d984a2110857ff444a355936b302e1bb6c25dd6ba4b7b4024e10e0d"
         },
         {
           "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/ReviewBoundaryTest.kt",
@@ -407,7 +467,7 @@
           "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/MultiDimensionalData.kt",
           "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/MultiDimensionalData.kt",
           "line": null,
-          "sha256": "9ed97c903b83f1c5d904fe1297514114e1a96b3be596c815d7b682668fe37ff5"
+          "sha256": "c9d74288c3aaf091fb5b2a7b31428d9f844d36d5706f93692f73782c003df341"
         },
         {
           "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/ReviewBoundaryTest.kt",
@@ -460,20 +520,20 @@
         {
           "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/rdf/RdfToIrCompiler.kt",
           "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/rdf/RdfToIrCompiler.kt",
-          "line": 494,
-          "sha256": "444166e7c4d0b334c4ea9611573604c7399552b81a1b074e249d80af35379add"
+          "line": 495,
+          "sha256": "bf917313f55389dae8d555fb2870b8a149b5e1a227744f7fa0c1617727565b24"
         },
         {
           "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/ir/Model.kt",
           "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/ir/Model.kt",
-          "line": 152,
-          "sha256": "6942d44aa882f53e598a780165e3667b10fb9a8e87703479f347eff9c5ef2fb4"
+          "line": 164,
+          "sha256": "873b76dce17e637336e1da25c2b2d8e5ad973f86ea49eb39ae0548f819255bba"
         },
         {
           "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/rdf/UnsupportedLayoutTest.kt",
           "href": "../../hexplain-tools/core/src/test/kotlin/io/hexplain/core/rdf/UnsupportedLayoutTest.kt",
           "line": null,
-          "sha256": "9357003c153ecd0e12a7a2522ab828b593b5629c7f6646f0789cc562a629a61b"
+          "sha256": "83931fb3ffcfcbdcf85b45e2f5373214826067fc1de59f81062a01691a280d4a"
         }
       ]
     },
@@ -490,8 +550,8 @@
         {
           "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metawriter.kt",
           "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metawriter.kt",
-          "line": 385,
-          "sha256": "5fb8c02c677251531ea1d23c18421e82f0f504cc7df0165e2adaa12bf2b8c157"
+          "line": 384,
+          "sha256": "ed9527c24617e218e8c0d8a49bf9db100984427f7bb5c4473e96f2d6c718a9e1"
         },
         {
           "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/WriterIntegerBoundaryTest.kt",
@@ -521,7 +581,7 @@
           "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt",
           "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt",
           "line": 81,
-          "sha256": "1e42f0db1e9889752b4252a87c02252cea62c3c37a03f89305cbd97c222c7e8f"
+          "sha256": "b4c0423e6d984a2110857ff444a355936b302e1bb6c25dd6ba4b7b4024e10e0d"
         },
         {
           "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/ParseLimitsTest.kt",
@@ -533,7 +593,7 @@
           "file": "hexplain-tools/docs/review-boundaries.md",
           "href": "../../hexplain-tools/docs/review-boundaries.md",
           "line": null,
-          "sha256": "0900dd08af184961e9941ebda0f653f6d8e1ff02ded62eea5f066f0e3e4b2578"
+          "sha256": "471a7bd7af591af4477d71c7b4b7400988c9a237d2f96939e23db05ffaf12f5b"
         }
       ]
     },
@@ -544,14 +604,14 @@
       "status": "Scoped mitigation",
       "title": "Writer now resolves addressed, aligned and bounded layouts",
       "impact": "Pointer writes previously lacked supported placement semantics. Detached payload sizing could not faithfully measure nested regions or crossing length dependencies in their actual file positions.",
-      "evidence": "The previous 26 writer tests retain independent expected bytes and parse/write equality, including 100 seeded varied layouts. Nineteen additional tests cover conditional byte order, encoded substreams, counted element sizes and failure boundaries, using literal PackBits vectors and independent JDK inflation. They cover all four offset origins, absolute alignment, sparse growth, aliases, recursive regions, bounded EOF/sentinel sequences, crossing/shared lengths, physically trailing length fields, stream reuse and nonconvergence rejection.",
-      "action": "Added bounded layout passes with occurrence-specific inferred lengths, cursor restoration and high-water output preservation. Limits span all passes. Explicit outputSize supports whole-file end-relative placement. Conditional struct byte order and sized encoded nested structs now compose with the layout passes. Delimited containers, encoded struct repeat-until arrays and some inferred-length forms still reject; arbitrary HEL inversion and hard execution isolation remain outside the contract.",
+      "evidence": "The previous 26 writer tests retain independent expected bytes and parse/write equality, including 100 seeded varied layouts. Nineteen additional tests cover conditional byte order, encoded substreams, counted element sizes and failure boundaries, using literal PackBits vectors and independent JDK inflation. They cover all four offset origins, absolute alignment, sparse growth, aliases, recursive regions, bounded EOF/sentinel sequences, crossing/shared lengths, physically trailing length fields, stream reuse and nonconvergence rejection. Nine terminated-field regressions add literal wire vectors, empty and UTF-8 payloads, counted element extents, budget rejection, unsupported numeric rejection and 434 independent short-binary first-occurrence comparisons.",
+      "action": "Added bounded layout passes with occurrence-specific inferred lengths, cursor restoration and high-water output preservation. Limits span all passes. Explicit outputSize supports whole-file end-relative placement. Conditional struct byte order and sized encoded nested structs now compose with the layout passes. Delimited containers, encoded struct repeat-until arrays still reject; arbitrary HEL inversion and hard execution isolation remain outside the contract. Terminator-inclusive automatic lengths now work for byte/string payloads without fixedValue. Ambiguous embedded or boundary-overlapping terminators reject in linear time; encoded struct terminators remain unsupported.",
       "sources": [
         {
           "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metawriter.kt",
           "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metawriter.kt",
-          "line": 355,
-          "sha256": "5fb8c02c677251531ea1d23c18421e82f0f504cc7df0165e2adaa12bf2b8c157"
+          "line": 354,
+          "sha256": "ed9527c24617e218e8c0d8a49bf9db100984427f7bb5c4473e96f2d6c718a9e1"
         },
         {
           "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/GrowingWriteBuffer.kt",
@@ -575,13 +635,25 @@
           "file": "hexplain-tools/docs/review-boundaries.md",
           "href": "../../hexplain-tools/docs/review-boundaries.md",
           "line": null,
-          "sha256": "0900dd08af184961e9941ebda0f653f6d8e1ff02ded62eea5f066f0e3e4b2578"
+          "sha256": "471a7bd7af591af4477d71c7b4b7400988c9a237d2f96939e23db05ffaf12f5b"
         },
         {
           "file": "hexplain.io/specification/coverage/writer-tests/index.html",
           "href": "../specification/coverage/writer-tests/index.html",
           "line": null,
-          "sha256": "90a32fa49442289532425e8f15e7bd905caf5246cf005675662b864090c805eb"
+          "sha256": "87fa303c302dbad9a489f61fd409898aa28a736c161ec41046a07a3ecb67bd24"
+        },
+        {
+          "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/WriterTerminatedLengthTest.kt",
+          "href": "../../hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/WriterTerminatedLengthTest.kt",
+          "line": null,
+          "sha256": "1e9af42dc4dbc84e554d11601756b20ce2de846f66d0d01e1f94412752daf8b6"
+        },
+        {
+          "file": "hexplain.io/review-2026-09-05/terminated-writer.json",
+          "href": "terminated-writer.json",
+          "line": null,
+          "sha256": "2d2d51b4ae94f9251eeec0ce1890097d421bdd8b51ecee3780ac9bea890ea8f2"
         }
       ]
     },
@@ -599,7 +671,7 @@
           "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt",
           "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt",
           "line": null,
-          "sha256": "1e42f0db1e9889752b4252a87c02252cea62c3c37a03f89305cbd97c222c7e8f"
+          "sha256": "b4c0423e6d984a2110857ff444a355936b302e1bb6c25dd6ba4b7b4024e10e0d"
         },
         {
           "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/WriterSymmetryTest.kt",
@@ -611,7 +683,7 @@
           "file": "hexplain-tools/docs/review-boundaries.md",
           "href": "../../hexplain-tools/docs/review-boundaries.md",
           "line": null,
-          "sha256": "0900dd08af184961e9941ebda0f653f6d8e1ff02ded62eea5f066f0e3e4b2578"
+          "sha256": "471a7bd7af591af4477d71c7b4b7400988c9a237d2f96939e23db05ffaf12f5b"
         }
       ]
     },
@@ -655,11 +727,11 @@
       "repo": "engine",
       "id": "EN09",
       "severity": "Medium",
-      "status": "Scoped mitigation",
+      "status": "Blocked externally",
       "title": "Independent decoding and encoding comparisons now exercise real fixtures",
       "impact": "Round trips can hide shared mistakes. File-count totals can also overstate independent evidence when upstream fixtures duplicate bytes or contain sparse images.",
       "evidence": "611 files match all pixel bits, dimensions, band counts and datatypes against GDAL 3.13.3; the evidence also records distinct input and output counts. Thirteen GDAL-derived golden vectors run offline, including four HDF5 vectors. Thirty-three scoped cases cover scoped scientific, vector, point-cloud, columnar and mathematical adapters; companion-library tests are not GDAL passes. Reverse tests cover Hexplain zlib, TIFF LZW and PackBits output. 248 unsupported variants and 15 rejected fixtures are not passes.",
-      "action": "Added bounded raster adapters, explicitly framed TIFF codecs, a pinned corpus fetcher, isolated GDAL workers, strict differential comparison and a manually triggered CI workflow. Expand vector/semantic/codec coverage and independently investigate rejected files; remote CI has not been run.",
+      "action": "Added bounded raster adapters, explicitly framed TIFF codecs, a pinned corpus fetcher, isolated GDAL workers, strict differential comparison and a manually triggered CI workflow. Expand vector/semantic/codec coverage and independently investigate rejected files; remote CI has not been run. GitHub Actions run 34038098217 did not start any test steps: account payment/spending-limit restrictions blocked execution. Account-owner billing resolution is required before remote acceptance can run.",
       "sources": [
         {
           "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/raster/RasterDecoder.kt",
@@ -684,6 +756,12 @@
           "href": "../../hexplain-tools/core/src/test/kotlin/io/hexplain/core/raster/GdalGoldenVectorTest.kt",
           "line": null,
           "sha256": "3b4350671a31992d798f892a8ee02b03cf4a2b508ec4ae66e2cc9d37f5b3c767"
+        },
+        {
+          "file": "hexplain.io/review-2026-09-05/remote-ci.json",
+          "href": "remote-ci.json",
+          "line": null,
+          "sha256": "8081cb3315761c4ff86bc215a94deba850e876cca2bc9670b688f3b8f477a1b7"
         }
       ]
     },
@@ -721,11 +799,11 @@
       "repo": "engine",
       "id": "EN11",
       "severity": "Medium",
-      "status": "Open",
-      "title": "Packed signed 24-bit TIFF has a GDAL datatype discrepancy",
+      "status": "Documented deviation",
+      "title": "Signed 24-bit TIFF retains the correct signed contract",
       "impact": "Matching pixel bytes do not establish matching numeric interpretation: this fixture is exposed as Int32 by Hexplain and UInt32 by the pinned GDAL build.",
       "evidence": "The input hash and exact datatype-only difference are pinned in expected-deviations.json. All pixel bits and dimensions agree. A golden test preserves the difference explicitly; it is not counted among the 611 equality cases.",
-      "action": "Retain signed TIFF SampleFormat semantics. Pinned GDAL GTiffOddBitsBand explicitly maps signed 17?31-bit integers to UInt32 and has a FIXME naming int24.tif. A separate negative-boundary test now verifies signed Int32 values; compatibility remains a non-pass. Any additional or changed difference fails the comparator instead of falling under a broad exclusion.",
+      "action": "Retain signed TIFF SampleFormat semantics. Pinned GDAL GTiffOddBitsBand explicitly maps signed 17\u201331-bit integers to UInt32 and has a FIXME naming int24.tif. A separate negative-boundary test now verifies signed Int32 values; compatibility remains a non-pass. Any additional or changed difference fails the comparator instead of falling under a broad exclusion. This is a bounded upstream compatibility deviation, not an unresolved Hexplain signedness defect.",
       "sources": [
         {
           "file": "hexplain-tools/tests/gdal/expected-deviations.json",
@@ -755,7 +833,7 @@
       "title": "Mutable sample bytes invalidated stored digests and cached results",
       "impact": "A caller could mutate the original or returned byte array after save, changing content while keeping the stored SHA-256 and run references.",
       "evidence": "The new repository test failed before correction. It now mutates ingress, save return, single lookup and list lookup arrays without altering storage.",
-      "action": "Store and return defensive byte copies, and verify declared length and SHA-256 against the stored snapshot. This protects in-process identity; durable content storage remains open.",
+      "action": "Defensive copies and digest/length checks protect byte identity; production JDBC storage now persists content-addressed bytes and verifies them on read. PostgreSQL recovery and restore checks cover exact bytes.",
       "sources": [
         {
           "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/adapter/memory/InMemoryRepositories.kt",
@@ -779,7 +857,7 @@
       "title": "File and format identities could be overwritten",
       "impact": "Saving an existing file ID replaced the bytes referenced by historical runs; replacing a format could change the workspace owner of existing versions.",
       "evidence": "Both overwrite counterexamples failed before the fix and now reject replacement while preserving the first resource.",
-      "action": "Reject duplicate file/format IDs. A future persistence layer must enforce equivalent unique constraints transactionally.",
+      "action": "Duplicate identities reject in memory and SQL. Database uniqueness and composite foreign keys protect historical ownership and version references.",
       "sources": [
         {
           "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/adapter/memory/InMemoryRepositories.kt",
@@ -803,7 +881,7 @@
       "title": "Validation and viewing share parser-wide resource limits",
       "impact": "The interactive input limit alone did not stop compression expansion inside either execution path.",
       "evidence": "Integration tests reject a compressed payload expanding beyond 8 MiB and a profile requesting over two billion zero-byte repetitions. Validation and COLLECT-mode viewing both fail explicitly.",
-      "action": "Both paths enforce the same 8 MiB block cap, 32 MiB aggregate decoding cap, 100,000 nodes, depth 32, byte budgets and cooperative five-second parse deadline. Thread interruption is observed. Whole-request quotas and isolated workers remain open.",
+      "action": "Isolated workers now acquire PostgreSQL session advisory locks shared across replicas: one active request per workspace and two global slots. Real JDBC probes verify exclusion, reuse and lost-session rejection; worker tests verify release on launch failure and deadlines beginning before preparation. Session-preserving database connections are required. Rate quotas, network-partition behavior and deployed load acceptance remain open.",
       "sources": [
         {
           "file": "hexplain-saas/backend/engine/src/main/kotlin/io/hexplain/saas/engine/HexplainFormatEngine.kt",
@@ -816,6 +894,30 @@
           "href": "../../hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/ExecutionBudgetTest.kt",
           "line": null,
           "sha256": "287bb927309dda2b2226fb4af0b5c18d3e54fb22b3626cc5fa0951b34ba5e401"
+        },
+        {
+          "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/worker/IsolatedFormatEngine.kt",
+          "href": "../../hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/worker/IsolatedFormatEngine.kt",
+          "line": null,
+          "sha256": "62aa4d5fa8740c51ba7ad6a0ae753e580fa29e2aca3b975dbb91445902d3d205"
+        },
+        {
+          "file": "hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/WorkerIsolationTest.kt",
+          "href": "../../hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/WorkerIsolationTest.kt",
+          "line": null,
+          "sha256": "7fa7eeb984cbccca2a0116e4ab25a327922f2ed5ac2d46669ab7b463e00c8546"
+        },
+        {
+          "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/worker/PostgresAdmission.kt",
+          "href": "../../hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/worker/PostgresAdmission.kt",
+          "line": null,
+          "sha256": "bfcabb949ced49634ce48a4e1910d6c60f0bab3f37b535b1e90f19df34469e39"
+        },
+        {
+          "file": "hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/PostgresAdmissionProbe.kt",
+          "href": "../../hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/PostgresAdmissionProbe.kt",
+          "line": null,
+          "sha256": "bfa142af2084240b4e22e4444fff046cb49fce0ac96e441f3b5a9a17619f4c48"
         }
       ]
     },
@@ -853,23 +955,35 @@
       "repo": "saas",
       "id": "SA05",
       "severity": "High",
-      "status": "Open",
-      "title": "In-memory storage cannot provide durable service guarantees",
-      "impact": "A restart loses stored formats, versions, runs and findings. In-process synchronization does not coordinate multiple service instances.",
-      "evidence": "The repository adapters use in-memory maps. Publish concurrency is protected within one process only.",
-      "action": "Introduce durable transactional metadata, immutable object storage, schema migrations, uniqueness constraints, and backup/restore tests. Demonstrate crash recovery before a production readiness claim.",
+      "status": "Fixed",
+      "title": "Durable SQL storage now has crash and restore evidence",
+      "impact": "The former memory-only production path could not retain resources across restart.",
+      "evidence": "JDBC repositories and migrations persist metadata and immutable bytes. Pinned PostgreSQL 17.7 passes direct-SQL tenant/version rejection, SIGKILL recovery during an active transaction, and pg_dump restore with exact bytes/findings. H2 repository tests cover publication races and rollback.",
+      "action": "V3 adds composite tenant/version foreign keys. Existing invalid provenance causes migration to fail for investigation. Deployed backups, replication, retention and recovery objectives still require operator acceptance.",
       "sources": [
         {
-          "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/adapter/memory/InMemoryRepositories.kt",
-          "href": "../../hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/adapter/memory/InMemoryRepositories.kt",
+          "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/adapter/jdbc/JdbcRepositories.kt",
+          "href": "../../hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/adapter/jdbc/JdbcRepositories.kt",
           "line": null,
-          "sha256": "9fe416f36a3bc7f28894ef87b6b4653a40a7fd50725c7359ddc427d6470bf196"
+          "sha256": "02917444d32977c30d264b63d0567e4a64e68a9535a00d76a6643d1609bb8c5b"
         },
         {
-          "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/service/RegistryService.kt",
-          "href": "../../hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/service/RegistryService.kt",
-          "line": 108,
-          "sha256": "3f5c8e71b78ff63190da1cc1ba124b2ee66786a3d58eddd88041c7332a23621e"
+          "file": "hexplain-saas/backend/app/src/main/resources/db/migration/V3__tenant_reference_integrity.sql",
+          "href": "../../hexplain-saas/backend/app/src/main/resources/db/migration/V3__tenant_reference_integrity.sql",
+          "line": null,
+          "sha256": "e17e0a135cba2eaf73214a0964484cd0422b1706bf9a6d31624ddd1df4c62cb6"
+        },
+        {
+          "file": "hexplain-saas/tools/test_postgres_acceptance.py",
+          "href": "../../hexplain-saas/tools/test_postgres_acceptance.py",
+          "line": null,
+          "sha256": "37e9988c9721116e9d20f71c425b649060d9418d4ac1349b94199f09f2e726e2"
+        },
+        {
+          "file": "hexplain.io/review-2026-09-05/platform-acceptance.json",
+          "href": "platform-acceptance.json",
+          "line": null,
+          "sha256": "ec264d371895884d843fe2468b4d878794ff5726fc305721ef45682c0eba74bd"
         }
       ]
     },
@@ -877,23 +991,29 @@
       "repo": "saas",
       "id": "SA06",
       "severity": "High",
-      "status": "Open",
-      "title": "Authentication currently protects one configured workspace",
-      "impact": "The implemented deployment does not provide tenant-aware authorization, per-project roles or distributed execution isolation.",
-      "evidence": "Authentication, CSRF and foreign-object tests pass. WorkspaceAccess uses a server-configured workspace ID for the deployment.",
-      "action": "Retain this supported deployment scope. For a multi-tenant product, derive authorization from authenticated memberships and isolate storage and worker execution by tenant.",
+      "status": "Fixed",
+      "title": "Workspace authorization derives from authenticated memberships",
+      "impact": "The previous report described an obsolete single-workspace configuration.",
+      "evidence": "OIDC issuer plus subject selects memberships; viewer mutations, foreign identifiers, conflicting selectors and identical subjects from another issuer are rejected. Database constraints independently reject cross-tenant graph edges.",
+      "action": "Hosted identity uses OIDC; form credentials are limited to test/demo. Membership provisioning, real identity-provider login and distributed quotas remain deployment acceptance tasks.",
       "sources": [
+        {
+          "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/config/Memberships.kt",
+          "href": "../../hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/config/Memberships.kt",
+          "line": null,
+          "sha256": "7e39791c5dcf068cbb3a5463dbf929c3f248216c6b898f920d8fb67b6e3e7411"
+        },
         {
           "file": "hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/config/SecurityConfig.kt",
           "href": "../../hexplain-saas/backend/app/src/main/kotlin/io/hexplain/saas/config/SecurityConfig.kt",
-          "line": 49,
-          "sha256": "bf5940a21cdf3817b0a68263c9226a26672314b71543761f0109dc020a3f7b24"
+          "line": null,
+          "sha256": "3da674f9ae557854762fc1a0af9c1e2effebd4397ad4cb750abef8856b330afa"
         },
         {
-          "file": "hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/SecurityBoundaryTest.kt",
-          "href": "../../hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/SecurityBoundaryTest.kt",
+          "file": "hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/TenantAccessTest.kt",
+          "href": "../../hexplain-saas/backend/app/src/test/kotlin/io/hexplain/saas/TenantAccessTest.kt",
           "line": null,
-          "sha256": "14ce7ec635dedd8862b4f91776a4a2d1ae07dce1f33f416457a5289206485401"
+          "sha256": "e3f2a839ee1107d06b04d233b52bfdb6b0f4b2a50de8f065a46df4ba6f96295a"
         }
       ]
     },
@@ -901,29 +1021,47 @@
       "repo": "saas",
       "id": "SA07",
       "severity": "Medium",
-      "status": "Open",
-      "title": "Browser accessibility and operational performance need acceptance evidence",
+      "status": "Scoped mitigation",
+      "title": "Real browser checks exposed and fixed contrast and keyboard gaps",
       "impact": "Component tests cannot establish real screen-reader behavior, responsive rendering, actual keyboard focus across navigation, or latency under concurrent runs.",
-      "evidence": "The preceding pass verified six frontend tests and the production build; that unchanged-frontend evidence is retained here. The test harness now uses one thread worker after repeat Windows fork startup timeouts. No manual browser, screen-reader, load, restart or distributed deployment test was performed.",
-      "action": "Run keyboard and screen-reader walkthroughs, responsive screenshots, realistic corpus timing and concurrent-run load tests. Keep the 1 MiB viewer limit visible until larger-file interaction is implemented.",
+      "evidence": "Three Chromium tests pass at 390/1440 pixels and in the byte viewer. Axe WCAG A/AA scans have zero detected violations in these states. Skip-link focus, keyboard tree expansion, pagination and responsive screenshots are verified with controlled API fixtures. A fourth Chromium test verifies the configured session cookie survives a cross-site top-level GET callback. SameSite=Lax fixes the Strict policy that could lose the saved authorization request.",
+      "action": "Raised muted-text contrast, added a skip link and keyboard-focusable table regions. Real OIDC/backend browser integration, human screen-reader walkthroughs and production concurrent-run latency remain unverified.",
       "sources": [
         {
-          "file": "hexplain-saas/frontend/tests/workflows.test.tsx",
-          "href": "../../hexplain-saas/frontend/tests/workflows.test.tsx",
+          "file": "hexplain-saas/frontend/browser-tests/accessibility.spec.ts",
+          "href": "../../hexplain-saas/frontend/browser-tests/accessibility.spec.ts",
           "line": null,
-          "sha256": "412a03ee3cb8a955a3fc47fa14b9c155f3bf25df0f96093eaadfac1fe95dad5b"
+          "sha256": "ef2cf310da05c2b36e16391982a69df99cbcbd456c7f9ca0c1d4d8477506774d"
         },
         {
-          "file": "hexplain-saas/frontend/app/files/[id]/page.tsx",
-          "href": "../../hexplain-saas/frontend/app/files/[id]/page.tsx",
+          "file": "hexplain-saas/frontend/app/globals.css",
+          "href": "../../hexplain-saas/frontend/app/globals.css",
           "line": null,
-          "sha256": "92da6b047ef845e01c0d6c501bdbab10e92d780a77514f867fa93ed64fd53081"
+          "sha256": "76c2da4eca3d95e5e7d8f633a0f1b1df69918d01d588df967e9477828f9e1763"
         },
         {
-          "file": "hexplain-saas/REVIEW-FIXES.md",
-          "href": "../../hexplain-saas/REVIEW-FIXES.md",
+          "file": "hexplain-saas/frontend/app/layout.tsx",
+          "href": "../../hexplain-saas/frontend/app/layout.tsx",
           "line": null,
-          "sha256": "e4d440dadcb8b15f8a43644ad63766a9b7d974d280ce6b4f1843ba24fbed062f"
+          "sha256": "a7e0565a33b7d04d7c06ba7dcce2ee7894bf04acb26f09f4731cf5f62f62eb65"
+        },
+        {
+          "file": "hexplain.io/review-2026-09-05/platform-acceptance.json",
+          "href": "platform-acceptance.json",
+          "line": null,
+          "sha256": "ec264d371895884d843fe2468b4d878794ff5726fc305721ef45682c0eba74bd"
+        },
+        {
+          "file": "hexplain-saas/frontend/browser-tests/oidc-cookie.spec.ts",
+          "href": "../../hexplain-saas/frontend/browser-tests/oidc-cookie.spec.ts",
+          "line": null,
+          "sha256": "7ab12a97ae5e0d6667bfdf615951eeaf21f21cf620bc75055f8b87820a2562d7"
+        },
+        {
+          "file": "hexplain-saas/backend/app/src/main/resources/application.yml",
+          "href": "../../hexplain-saas/backend/app/src/main/resources/application.yml",
+          "line": null,
+          "sha256": "96534a110b260b2aaf9ba011c6efc0338b0c7a5a117953cd1767da7b340c7e2b"
         }
       ]
     },
@@ -953,7 +1091,7 @@
           "file": "hexplain-saas/.github/workflows/verify.yml",
           "href": "../../hexplain-saas/.github/workflows/verify.yml",
           "line": null,
-          "sha256": "9b2db2b4659207067a34a20d80dfca75298bef5e1f61e570b96fad5086d04d2b"
+          "sha256": "a756cabe74d3fb3518357c15096b4a8b3215b17dc278057ff425a515082ba219"
         }
       ]
     },
@@ -1019,7 +1157,7 @@
           "file": "hexplain.io/specification/reference/boundary-revision.md",
           "href": "../specification/reference/boundary-revision.md",
           "line": null,
-          "sha256": "ddcdfd83f662ba3584376ae7a0598a1f2bdc5b2fb41eed9911043bfb087a24ae"
+          "sha256": "66f8e82df477b3e6e4edb294f79086f9d86962f065bf083254d5ba26a134300d"
         }
       ]
     },
@@ -1055,7 +1193,7 @@
           "file": "hexplain.io/specification/reference/boundary-revision.md",
           "href": "../specification/reference/boundary-revision.md",
           "line": null,
-          "sha256": "ddcdfd83f662ba3584376ae7a0598a1f2bdc5b2fb41eed9911043bfb087a24ae"
+          "sha256": "66f8e82df477b3e6e4edb294f79086f9d86962f065bf083254d5ba26a134300d"
         }
       ]
     },
@@ -1072,8 +1210,8 @@
         {
           "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metawriter.kt",
           "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metawriter.kt",
-          "line": 322,
-          "sha256": "5fb8c02c677251531ea1d23c18421e82f0f504cc7df0165e2adaa12bf2b8c157"
+          "line": 321,
+          "sha256": "ed9527c24617e218e8c0d8a49bf9db100984427f7bb5c4473e96f2d6c718a9e1"
         },
         {
           "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/WriterEncodedStructTest.kt",
@@ -1097,7 +1235,7 @@
           "file": "hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt",
           "href": "../../hexplain-tools/core/src/main/kotlin/io/hexplain/core/metacodec/Metaparser.kt",
           "line": 923,
-          "sha256": "1e42f0db1e9889752b4252a87c02252cea62c3c37a03f89305cbd97c222c7e8f"
+          "sha256": "b4c0423e6d984a2110857ff444a355936b302e1bb6c25dd6ba4b7b4024e10e0d"
         },
         {
           "file": "hexplain-tools/core/src/test/kotlin/io/hexplain/core/metacodec/WriterEncodedStructTest.kt",
@@ -1109,7 +1247,7 @@
           "file": "hexplain.io/specification/coverage/writer-tests/index.html",
           "href": "../specification/coverage/writer-tests/index.html",
           "line": null,
-          "sha256": "90a32fa49442289532425e8f15e7bd905caf5246cf005675662b864090c805eb"
+          "sha256": "87fa303c302dbad9a489f61fd409898aa28a736c161ec41046a07a3ecb67bd24"
         }
       ]
     }
