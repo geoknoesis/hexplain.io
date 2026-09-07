@@ -100,7 +100,7 @@
             <li><b>Bracketed expressions.</b> the text between a matching <code>[ ]</code> pair is captured whole (§<a href="#expressions">Expressions</a>).</li>
             <li><b>Backtick expressions.</b> a <code>`&#8230;`</code> literal denotes a raw HEL expression (§<a href="#raw-hel">Raw HEL</a>).</li>
         </ul>
-        <p><b>Keywords:</b> <code>format struct enum bundle asset field use means value map switch when repeat until if from cell dim axis role required optional primary carries described-by conforms as raw-turtle module import extend dispatch on default</code>.</p>
+        <p><b>Keywords:</b> <code>format struct enum bundle asset field use means value map switch when repeat until if from cell dim axis role required optional primary carries described-by conforms as raw-turtle module import extend dispatch on default derive</code>.</p>
     </section>
 
     <section id="structure">
@@ -136,6 +136,7 @@ struct Chunk {
                     <tr><td><code>ascii utf8 utf16le utf16be latin1</code></td><td><code>bddo:string</code> + <code>bddo:encoding</code></td></tr>
                     <tr><td><code>bits[N]</code></td><td>a field with <code>bddo:bitLength N</code>, plus <code>bddo:dataType</code> set to whichever of <code>bddo:uint8</code>/<code>uint16</code>/<code>uint32</code>/<code>uint64</code> is the narrowest fit for N bits (the engine reads <code>N</code> bits from the bit cursor; the data type only fixes the value's integer width)</td></tr>
                     <tr><td><code>&lt;StructName&gt;</code></td><td>a nested/typed field (<code>bddo:dataType</code> that Struct)</td></tr>
+                    <tr><td><code>derive &lt;expr&gt;</code></td><td>a derived, zero-byte field: <code>bddo:valueFromExpression</code>, no <code>bddo:dataType</code> and no other byte-consuming clause</td></tr>
                 </tbody>
             </table>
             <p>An <code>[n]</code> immediately after a <code>bytes</code> or string type sets the <b>byte size</b> (§<a href="#clauses">Clauses</a>).</p>
@@ -555,7 +556,7 @@ disparm      = ( STRING / INT ) "=&gt;" struct-ref
 struct-decl  = [ "@root" ] "struct" IDENT [ "as" IDENT ] [ "means" CURIE ]
                *struct-annot "{" *( field-decl / raw-block / prop-clause ) "}"
 field-decl   = [ "field" ] IDENT [ "as" IDENT ] ":" type *clause
-type         = prim / "bytes" / strtype / "bits" "[" expr "]" / struct-ref
+type         = prim / "bytes" / strtype / "bits" "[" expr "]" / "derive" expr / struct-ref
 clause       = "[" ( expr / ".." ) "]"                      ; byte size
              / "repeat" ( expr / "until" expr )
              / "@at" expr [ "from" offsetbase ]
@@ -609,7 +610,7 @@ module heif @namespace "https://hexplain.io/ns/profile/heif#"
 import "../iso-bmff/iso-bmff.hx" as iso
 extend dispatch iso:BoxPayload { "ispe" =&gt; ImageSpatialExtents }
 struct ImageSpatialExtents { hdr : iso:FullBoxHeader  width : u32  height : u32 }</pre>
-        <p>The <code>@size</code> clause above is written as a backtick raw-HEL expression, not a bracketed one, because the lexer drops a bare <code>?</code> when it appears outside a bracketed expression; the same ternary written as a bracket expression must take the form <code>derive [ cond ? a : b ]</code>.</p>
+        <p>The <code>@size</code> clause above is written as backtick raw HEL, but a bracketed expression would work identically: the lexer drops a bare <code>?</code> only when it appears in an <em>unbracketed</em> expression, since that form is captured as a run of tokens that stops at the next clause keyword and does not treat <code>?</code> specially. A <code>[ &#8230; ]</code> pair is captured raw as a single token and keeps everything inside it, <code>?</code> included, so a <code>?:</code> ternary must be written inside <code>[ &#8230; ]</code> &#8212; or in backticks as raw HEL &#8212; in every expression position that would otherwise be unbracketed: <code>if [ &#8230; ]</code>, <code>repeat [ &#8230; ]</code>, <code>@size [ &#8230; ]</code>, <code>value [ &#8230; ]</code>, and a derived field, e.g. <code>count : derive [ v == 0 ? a : b ]</code>. (<code>derive &lt;expr&gt;</code> is itself the zero-byte computed-field <em>type</em> &#8212; <code>name : derive &lt;expr&gt;</code>, lowering to <code>bddo:valueFromExpression</code> &#8212; not a modifier applied to <code>@size</code>.)</p>
         <p><b>Keyed dispatch.</b> <code>dispatch &lt;Name&gt; on &lt;expr&gt; [default &lt;Struct&gt;] { &lt;key&gt; =&gt; &lt;Struct&gt; … }</code> lowers to a named <code>bddo:DispatchTable</code> whose arms are independent <code>bddo:DispatchArm</code> resources (<code>bddo:armTable</code>, <code>bddo:armKey</code>, <code>bddo:armDataType</code>). A lone sibling in <code>on</code> becomes <code>bddo:dispatchOnField</code>; any other expression becomes <code>bddo:dispatchOnExpression</code>, resolved like a <code>switch</code> condition. Keys are string or integer literals and typed: the string <code>"7"</code> and the integer <code>7</code> are distinct arms. Keys are unique per table across the declaring document and every <code>extend dispatch</code> on it — including an extension targeting an imported table — but uniqueness is not checked across separate modules; the loader and the <code>bddo:DispatchKeyUniquenessShape</code> SHACL shape both enforce this. <code>switch</code> remains the form for ordered, possibly overlapping guards; a field uses one or the other. <code>extend dispatch</code> at top level contributes arms to a table declared in this document or in an imported module — the mechanism for open type registries.</p>
         <p><b>Seek scope.</b> <code>@seek stream</code> on an offset-addressed field (<code>bddo:seekScope bddo:streamScope</code>) lets that one read leave the innermost bounded region; the default <code>@seek region</code> keeps the Processing Model's containment rule. <code>@seek</code> on a field with no <code>@at</code> clause is a compile-time error, since seek scope only bounds an offset-addressed read that must already exist. An item-location table inside a <code>meta</code> box that points into <code>mdat</code> is the motivating case.</p>
         <p>The YAML surface has no <code>imports:</code> key yet; a document that imports must use the text surface.</p>
