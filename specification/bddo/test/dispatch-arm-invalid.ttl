@@ -1,0 +1,31 @@
+# Two violations, both on arms, and nothing else: one arm declares no bddo:armTable, so it
+# belongs to no table and can never be selected; another carries a boolean bddo:armKey, which
+# is neither of the two key types a table matches by equality. Everything around them -- the
+# struct, the field, the table, the two well-formed arms -- is valid, so this fixture isolates
+# bddo:DispatchArmShape from the table-level and field-level dispatch shapes.
+# Expected to trip bddo:DispatchArmShape only.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/dispatch-arm-invalid#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Record a bddo:Struct ; bddo:endianness bddo:BigEndian ;
+    rdfs:comment "Expected to trip bddo:DispatchArmShape only." ;
+    bddo:hasField ( ex:Record.tag ex:Record.body ) .
+ex:Record.tag a bddo:Field ; bddo:dataType bddo:string ; bddo:size 4 ; bddo:encoding bddo:ascii .
+ex:Record.body a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    bddo:hasDispatchTable ex:BodyDispatch .
+
+ex:BodyDispatch a bddo:DispatchTable ;
+    bddo:dispatchOnField ex:Record.tag .
+
+ex:Header a bddo:Struct ; bddo:hasField ( ex:Header.v ) .
+ex:Header.v a bddo:Field ; bddo:dataType bddo:uint32 .
+
+# Well-formed, for contrast: the fixture is not simply broken everywhere.
+[] a bddo:DispatchArm ; bddo:armTable ex:BodyDispatch ; bddo:armKey "hdr " ; bddo:armDataType ex:Header .
+
+# Violation 1: no bddo:armTable (sh:minCount 1).
+[] a bddo:DispatchArm ; bddo:armKey "orphan" ; bddo:armDataType bddo:uint8 .
+
+# Violation 2: a boolean bddo:armKey (sh:or of xsd:string / xsd:integer).
+[] a bddo:DispatchArm ; bddo:armTable ex:BodyDispatch ; bddo:armKey true ; bddo:armDataType bddo:uint16 .
