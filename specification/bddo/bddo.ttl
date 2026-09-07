@@ -36,6 +36,12 @@
     rdfs:comment "A checksum/hash over a byte range. Each END of the range is stated independently: a field reference (coversFromField/coversToField) or a HEL expression yielding a byte offset (coversFromExpression/coversToExpression). The two ends may use different mechanisms -- a checksum covering everything from a named header field to a length carried elsewhere needs exactly that. Note the boundary convention differs by mechanism, because each follows what its inputs naturally give: the field form runs from the FIRST byte of coversFromField to the LAST byte of coversToField (inclusive), while the expression form is the half-open [start,end) that the two offsets delimit." .
 :EndiannessRule a owl:Class ; rdfs:label "Endianness Rule" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "One arm of a hasConditionalEndianness list: a HEL condition and the byte order it selects." .
+:DispatchTable a owl:Class ; rdfs:label "Dispatch Table" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A keyed, open selection of a Field's effective type. The value of the key (dispatchOnField or dispatchOnExpression) is matched by equality against the armKey of the table's DispatchArms; the matching arm's armDataType is the effective type, else dispatchDefault, else the Field's dataType. Arms are independent resources rather than list members, so a description that imports this one can contribute an arm without rewriting anything. Contrast hasConditionalDataType, whose ordered predicate rules are closed and may overlap." .
+:DispatchArm a owl:Class ; rdfs:label "Dispatch Arm" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "One key-to-type association of a DispatchTable: the type a field takes when the table's key equals armKey. Keys are unique within a table across every graph that contributes to it." .
+:SeekScope a owl:Class ; rdfs:label "Seek Scope" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "How far an offset-addressed read may reach: the innermost bounded region (the default, regionScope) or the whole stream (streamScope)." .
 # ---------- Delimited text records ----------
 # Line- and character-delimited text: key = value headers, CSV, whitespace-separated grids.
 # Records may nest, via bddo:hasGrouping, but only in the three token-delimited styles that
@@ -95,6 +101,22 @@
 # ---------- Field properties ----------
 :dataType               a owl:ObjectProperty ; rdfs:label "data type" ; rdfs:range :DataTypeOrStruct .
 :hasConditionalDataType a owl:ObjectProperty ; rdfs:label "has conditional data type" ; rdfs:range rdf:List .
+:hasDispatchTable       a owl:ObjectProperty ; rdfs:label "has dispatch table" ; rdfs:range :DispatchTable ;
+    rdfs:comment "The keyed DispatchTable that selects this Field's effective type. Mutually exclusive with hasConditionalDataType." .
+:dispatchOnField        a owl:ObjectProperty ; rdfs:label "dispatch on field" ; rdfs:range :Field ;
+    rdfs:comment "The sibling Field whose parsed value is the dispatch key." .
+:dispatchOnExpression   a owl:DatatypeProperty ; rdfs:label "dispatch on expression" ; rdfs:range xsd:string ;
+    rdfs:comment "A HEL expression whose value is the dispatch key, evaluated as a hasConditionalDataType condition is." .
+:dispatchDefault        a owl:ObjectProperty ; rdfs:label "dispatch default" ; rdfs:range :DataTypeOrStruct ;
+    rdfs:comment "The type selected when no arm's key equals the dispatch key. Absent means the Field's own dataType applies." .
+:armTable               a owl:ObjectProperty ; rdfs:label "arm table" ; rdfs:range :DispatchTable ;
+    rdfs:comment "The DispatchTable this DispatchArm contributes to. Declared on the arm so that any graph may add arms to a table defined elsewhere." .
+:armKey                 a owl:DatatypeProperty ; rdfs:label "arm key" ;
+    rdfs:comment "The key value this arm matches: an xsd:string compared by code points, or an xsd:integer compared numerically." .
+:armDataType            a owl:ObjectProperty ; rdfs:label "arm data type" ; rdfs:range :DataTypeOrStruct ;
+    rdfs:comment "The datatype or structure selected when this arm's key matches." .
+:seekScope              a owl:ObjectProperty ; rdfs:label "seek scope" ; rdfs:range :SeekScope ;
+    rdfs:comment "For an offset-addressed Field, whether the read may leave the innermost bounded region (streamScope) or is confined to it (regionScope, the default). The region bound is suspended only for that one read. Used where a table inside one length-delimited container locates payloads stored in another." .
 :size                   a owl:DatatypeProperty ; rdfs:label "size (bytes)" ; rdfs:range xsd:positiveInteger .
 :sizeFromField          a owl:ObjectProperty ; rdfs:label "size from field" ; rdfs:range :Field .
 :sizeFromExpression     a owl:DatatypeProperty ; rdfs:label "size from expression" ; rdfs:range xsd:string .
@@ -238,6 +260,10 @@
 :streamEnd   a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: stream end" .
 :parentStart a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: parent start" .
 :currentPosition a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: current position" .
+:regionScope a owl:NamedIndividual, :SeekScope ; rdfs:label "Seek scope: bounded region" ;
+    rdfs:comment "The default: an offset-addressed read must stay within the innermost enclosing bounded region." .
+:streamScope a owl:NamedIndividual, :SeekScope ; rdfs:label "Seek scope: whole stream" ;
+    rdfs:comment "The read is resolved against the whole stream; the enclosing region bound does not apply to it." .
 :utf8 a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-8" .
 :ascii a owl:NamedIndividual, :Encoding ; rdfs:label "US-ASCII" .
 :utf16le a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 LE" .
@@ -346,12 +372,15 @@ bddo:FieldShape a sh:NodeShape ;
         [ sh:property [ sh:path bddo:dataType ; sh:minCount 1 ] ]
         [ sh:property [ sh:path bddo:hasConditionalDataType ; sh:minCount 1 ] ]
         [ sh:property [ sh:path bddo:valueFromExpression ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path bddo:hasDispatchTable ; sh:minCount 1 ] ]
     ) ;
     sh:property [ sh:path bddo:dataType ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
         sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ] ;
     sh:property [ sh:path ( bddo:hasConditionalDataType [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
         sh:class bddo:DataTypeRule ;
         sh:message "Every member of a hasConditionalDataType list must be a bddo:DataTypeRule." ] ;
+    sh:property [ sh:path bddo:hasDispatchTable ; sh:maxCount 1 ; sh:class bddo:DispatchTable ] ;
+    sh:property [ sh:path bddo:seekScope ; sh:maxCount 1 ; sh:in ( bddo:regionScope bddo:streamScope ) ] ;
     sh:property [ sh:path bddo:size ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:sizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:sizeFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
@@ -460,6 +489,56 @@ bddo:DataTypeRuleShape a sh:NodeShape ;
     sh:property [ sh:path bddo:condition ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:ruleDataType ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
         sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ] .
+
+bddo:DispatchTableShape a sh:NodeShape ;
+    sh:targetClass bddo:DispatchTable ;
+    sh:xone (
+        [ sh:property [ sh:path bddo:dispatchOnField ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path bddo:dispatchOnExpression ; sh:minCount 1 ] ]
+    ) ;
+    sh:property [ sh:path bddo:dispatchOnField ; sh:maxCount 1 ; sh:class bddo:Field ] ;
+    sh:property [ sh:path bddo:dispatchOnExpression ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path bddo:dispatchDefault ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+        sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ] .
+
+bddo:DispatchArmShape a sh:NodeShape ;
+    sh:targetClass bddo:DispatchArm ;
+    sh:property [ sh:path bddo:armTable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class bddo:DispatchTable ] ;
+    sh:property [ sh:path bddo:armKey ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:or ( [ sh:datatype xsd:string ] [ sh:datatype xsd:integer ] ) ] ;
+    sh:property [ sh:path bddo:armDataType ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+        sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ] .
+
+# Keys are unique per table across every contributing graph: two arms with one key would make
+# the selection depend on graph order, which is exactly what a keyed table exists to rule out.
+bddo:DispatchKeyUniquenessShape a sh:NodeShape ;
+    sh:targetClass bddo:DispatchTable ;
+    sh:sparql [ sh:message "Two DispatchArms of one DispatchTable declare the same armKey." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this ?key WHERE {
+            ?a bddo:armTable $this ; bddo:armKey ?key .
+            ?b bddo:armTable $this ; bddo:armKey ?key .
+            FILTER(?a != ?b)
+        }""" ] .
+
+# A field selects its type one way: keyed (open, disjoint) or ordered predicates (closed).
+bddo:TypeSelectionExclusivityShape a sh:NodeShape ;
+    sh:targetClass bddo:Field ;
+    sh:sparql [ sh:message "A bddo:Field must not declare both hasDispatchTable and hasConditionalDataType." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:hasDispatchTable ?t ; bddo:hasConditionalDataType ?c .
+        }""" ] .
+
+# seekScope describes an offset-addressed read; on a sequential field it describes nothing.
+bddo:SeekScopeShape a sh:NodeShape ;
+    sh:targetClass bddo:Field ;
+    sh:sparql [ sh:message "bddo:seekScope is only meaningful on an offset-addressed Field (atOffset / atOffsetFromField / atOffsetFromExpression)." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:seekScope ?s .
+            FILTER NOT EXISTS { $this ?p ?v . FILTER(?p IN (bddo:atOffset, bddo:atOffsetFromField, bddo:atOffsetFromExpression)) }
+        }""" ] .
 
 bddo:EnumerationShape a sh:NodeShape ;
     sh:targetClass bddo:Enumeration ;
@@ -737,6 +816,22 @@ bddo:VarintWidthShape a sh:NodeShape ;
 <https://hexplain.io/ns/bddo#DerivedFieldShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of bddo:Field Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/bddo#DerivedFieldShape> <http://www.w3.org/2000/01/rdf-schema#label> "Derived Field Shape"@en .
 <https://hexplain.io/ns/bddo#DerivedFieldShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#DispatchArm> <http://www.w3.org/2004/02/skos/core#definition> "One key-to-type association contributed to a dispatch table; keys are unique within a table across all contributing graphs."@en .
+<https://hexplain.io/ns/bddo#DispatchArm> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/bddo#DispatchArmShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for bddo:armDataType, bddo:armKey, bddo:armTable. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/bddo#DispatchArmShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of bddo:DispatchArm Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/bddo#DispatchArmShape> <http://www.w3.org/2000/01/rdf-schema#label> "Dispatch Arm Shape"@en .
+<https://hexplain.io/ns/bddo#DispatchArmShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#DispatchKeyUniquenessShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Dispatch Key Uniqueness. Two DispatchArms of one DispatchTable declare the same armKey."@en .
+<https://hexplain.io/ns/bddo#DispatchKeyUniquenessShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of bddo:DispatchTable Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/bddo#DispatchKeyUniquenessShape> <http://www.w3.org/2000/01/rdf-schema#label> "Dispatch Key Uniqueness Shape"@en .
+<https://hexplain.io/ns/bddo#DispatchKeyUniquenessShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#DispatchTable> <http://www.w3.org/2004/02/skos/core#definition> "A keyed, open selection of a field's effective type: the dispatch key is matched by equality against the keys of arms that any importing description may contribute."@en .
+<https://hexplain.io/ns/bddo#DispatchTable> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/bddo#DispatchTableShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for bddo:dispatchDefault, bddo:dispatchOnExpression, bddo:dispatchOnField. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/bddo#DispatchTableShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of bddo:DispatchTable Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/bddo#DispatchTableShape> <http://www.w3.org/2000/01/rdf-schema#label> "Dispatch Table Shape"@en .
+<https://hexplain.io/ns/bddo#DispatchTableShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
 <https://hexplain.io/ns/bddo#Encoding> <http://www.w3.org/2004/02/skos/core#definition> "A character encoding used to convert a sequence of bytes to text."@en .
 <https://hexplain.io/ns/bddo#Encoding> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/bddo#Endianness> <http://www.w3.org/2004/02/skos/core#definition> "The order in which the bytes of a multi-byte value contribute to its significance."@en .
@@ -769,7 +864,7 @@ bddo:VarintWidthShape a sh:NodeShape ;
 <https://hexplain.io/ns/bddo#FieldRepetitionShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of bddo:Field Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/bddo#FieldRepetitionShape> <http://www.w3.org/2000/01/rdf-schema#label> "Field Repetition Shape"@en .
 <https://hexplain.io/ns/bddo#FieldRepetitionShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
-<https://hexplain.io/ns/bddo#FieldShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for bddo:alignment, bddo:atOffset, bddo:atOffsetFromExpression, bddo:atOffsetFromField, bddo:bitLength, bddo:checksum, bddo:dataType, bddo:encoding, bddo:enumeration, bddo:hasConditionalDataType, bddo:isPresentIf, bddo:offsetBase, bddo:size, bddo:sizeFromExpression, bddo:sizeFromField, bddo:sizeToEndOfStream, bddo:terminator, bddo:trimNull, bddo:validIf, bddo:valueFromExpression. Every member of a hasConditionalDataType list must be a bddo:DataTypeRule."@en .
+<https://hexplain.io/ns/bddo#FieldShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for bddo:alignment, bddo:atOffset, bddo:atOffsetFromExpression, bddo:atOffsetFromField, bddo:bitLength, bddo:checksum, bddo:dataType, bddo:encoding, bddo:enumeration, bddo:hasConditionalDataType, bddo:hasDispatchTable, bddo:isPresentIf, bddo:offsetBase, bddo:seekScope, bddo:size, bddo:sizeFromExpression, bddo:sizeFromField, bddo:sizeToEndOfStream, bddo:terminator, bddo:trimNull, bddo:validIf, bddo:valueFromExpression. Every member of a hasConditionalDataType list must be a bddo:DataTypeRule."@en .
 <https://hexplain.io/ns/bddo#FieldShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of bddo:Field Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/bddo#FieldShape> <http://www.w3.org/2000/01/rdf-schema#label> "Field Shape"@en .
 <https://hexplain.io/ns/bddo#FieldShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
@@ -824,6 +919,12 @@ bddo:VarintWidthShape a sh:NodeShape ;
 <https://hexplain.io/ns/bddo#RecordGroupingShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of bddo:RecordGrouping Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/bddo#RecordGroupingShape> <http://www.w3.org/2000/01/rdf-schema#label> "Record Grouping Shape"@en .
 <https://hexplain.io/ns/bddo#RecordGroupingShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#SeekScope> <http://www.w3.org/2004/02/skos/core#definition> "The reach of an offset-addressed read: the innermost bounded region, or the whole stream."@en .
+<https://hexplain.io/ns/bddo#SeekScope> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/bddo#SeekScopeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Seek Scope. bddo:seekScope is only meaningful on an offset-addressed Field (atOffset / atOffsetFromField / atOffsetFromExpression)."@en .
+<https://hexplain.io/ns/bddo#SeekScopeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of bddo:Field Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/bddo#SeekScopeShape> <http://www.w3.org/2000/01/rdf-schema#label> "Seek Scope Shape"@en .
+<https://hexplain.io/ns/bddo#SeekScopeShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
 <https://hexplain.io/ns/bddo#Struct> <http://www.w3.org/2004/02/skos/core#definition> "An ordered sequence of fields; a container in a binary format."@en .
 <https://hexplain.io/ns/bddo#Struct> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/bddo#StructShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for bddo:bitOrder, bddo:endianness, bddo:hasField, bddo:size, bddo:sizeFromExpression, bddo:sizeFromField, bddo:syncOnMarker. Every member of a Struct's hasField list must be a bddo:Field. bddo:hasField must point to a single rdf:List."@en .
@@ -842,6 +943,10 @@ bddo:VarintWidthShape a sh:NodeShape ;
 <https://hexplain.io/ns/bddo#TreeDocumentShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
 <https://hexplain.io/ns/bddo#TreeSyntax> <http://www.w3.org/2004/02/skos/core#definition> "Which tree grammar a TreeDocument is written in, and therefore how its nodePath values are read."@en .
 <https://hexplain.io/ns/bddo#TreeSyntax> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/bddo#TypeSelectionExclusivityShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Type Selection Exclusivity. A bddo:Field must not declare both hasDispatchTable and hasConditionalDataType."@en .
+<https://hexplain.io/ns/bddo#TypeSelectionExclusivityShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of bddo:Field Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/bddo#TypeSelectionExclusivityShape> <http://www.w3.org/2000/01/rdf-schema#label> "Type Selection Exclusivity Shape"@en .
+<https://hexplain.io/ns/bddo#TypeSelectionExclusivityShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
 <https://hexplain.io/ns/bddo#VariableLengthFieldShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Variable Length Field. A bddo:bytes or bddo:string field must declare a sizing or termination mechanism."@en .
 <https://hexplain.io/ns/bddo#VariableLengthFieldShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of bddo:Field Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/bddo#VariableLengthFieldShape> <http://www.w3.org/2000/01/rdf-schema#label> "Variable Length Field Shape"@en .
@@ -860,6 +965,15 @@ bddo:VarintWidthShape a sh:NodeShape ;
 <https://hexplain.io/ns/bddo#alignment> <http://www.w3.org/2004/02/skos/core#definition> "A positive byte-boundary requirement applied when positioning a field under the processing model."@en .
 <https://hexplain.io/ns/bddo#alignment> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/bddo#alignment> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#armDataType> <http://www.w3.org/2004/02/skos/core#definition> "The datatype or structure selected when an arm's key matches."@en .
+<https://hexplain.io/ns/bddo#armDataType> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/bddo#armDataType> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#armKey> <http://www.w3.org/2004/02/skos/core#definition> "The string or integer key value an arm matches by equality."@en .
+<https://hexplain.io/ns/bddo#armKey> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/bddo#armKey> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#armTable> <http://www.w3.org/2004/02/skos/core#definition> "The dispatch table an arm contributes to."@en .
+<https://hexplain.io/ns/bddo#armTable> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/bddo#armTable> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
 <https://hexplain.io/ns/bddo#ascii> <http://www.w3.org/2004/02/skos/core#definition> "US-ASCII character encoding using seven-bit character values."@en .
 <https://hexplain.io/ns/bddo#ascii> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/bddo#ascii> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
@@ -944,6 +1058,15 @@ bddo:VarintWidthShape a sh:NodeShape ;
 <https://hexplain.io/ns/bddo#dataType> <http://www.w3.org/2004/02/skos/core#definition> "The primitive datatype or nested structure used to interpret a physical field when a conditional type does not replace it."@en .
 <https://hexplain.io/ns/bddo#dataType> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/bddo#dataType> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#dispatchDefault> <http://www.w3.org/2004/02/skos/core#definition> "The type selected when no arm matches the dispatch key."@en .
+<https://hexplain.io/ns/bddo#dispatchDefault> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/bddo#dispatchDefault> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#dispatchOnExpression> <http://www.w3.org/2004/02/skos/core#definition> "A HEL expression whose value is the dispatch key."@en .
+<https://hexplain.io/ns/bddo#dispatchOnExpression> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/bddo#dispatchOnExpression> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#dispatchOnField> <http://www.w3.org/2004/02/skos/core#definition> "The sibling field whose parsed value is the dispatch key."@en .
+<https://hexplain.io/ns/bddo#dispatchOnField> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/bddo#dispatchOnField> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
 <https://hexplain.io/ns/bddo#encoding> <http://www.w3.org/2004/02/skos/core#definition> "The character encoding applied when interpreting a textual field."@en .
 <https://hexplain.io/ns/bddo#encoding> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/bddo#encoding> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
@@ -998,6 +1121,9 @@ bddo:VarintWidthShape a sh:NodeShape ;
 <https://hexplain.io/ns/bddo#hasConditionalEndianness> <http://www.w3.org/2004/02/skos/core#definition> "Ordered rdf:List of EndiannessRule. The first rule whose condition holds selects the byte order for this Struct or Field and, as with bddo:endianness, for its descendants unless they override it. Use for formats that declare their own byte order, such as TIFF's 4949h/4D4Dh marker. Mutually exclusive with bddo:endianness."@en .
 <https://hexplain.io/ns/bddo#hasConditionalEndianness> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/bddo#hasConditionalEndianness> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#hasDispatchTable> <http://www.w3.org/2004/02/skos/core#definition> "The keyed dispatch table that selects this field's effective type; exclusive with the ordered conditional datatype rules."@en .
+<https://hexplain.io/ns/bddo#hasDispatchTable> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/bddo#hasDispatchTable> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
 <https://hexplain.io/ns/bddo#hasEnumValue> <http://www.w3.org/2004/02/skos/core#definition> "An enumeration member associating a raw value or mask with a symbol."@en .
 <https://hexplain.io/ns/bddo#hasEnumValue> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/bddo#hasEnumValue> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
@@ -1093,6 +1219,9 @@ bddo:VarintWidthShape a sh:NodeShape ;
 <https://hexplain.io/ns/bddo#recordDelimiter> <http://www.w3.org/2004/02/skos/core#definition> "Byte sequence separating records. Default 0A (LF); a CR LF pair is also accepted when this is 0A."@en .
 <https://hexplain.io/ns/bddo#recordDelimiter> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/bddo#recordDelimiter> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#regionScope> <http://www.w3.org/2004/02/skos/core#definition> "Seek scope confining an offset-addressed read to the innermost bounded region; the default."@en .
+<https://hexplain.io/ns/bddo#regionScope> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/bddo#regionScope> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
 <https://hexplain.io/ns/bddo#repeatCount> <http://www.w3.org/2004/02/skos/core#definition> "The fixed number of occurrences of a repeated field. Zero denotes an empty repetition."@en .
 <https://hexplain.io/ns/bddo#repeatCount> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/bddo#repeatCount> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
@@ -1114,6 +1243,9 @@ bddo:VarintWidthShape a sh:NodeShape ;
 <https://hexplain.io/ns/bddo#sectionHeaded> <http://www.w3.org/2004/02/skos/core#definition> "A record consisting of groupOpenToken, a name, and groupCloseToken opens a group and implicitly closes the previous one; the last runs to the end of the container. INI-style [Section] headers. Nesting is therefore FLAT ONE DEEP -- sections do not contain sections -- which is what the style actually permits, not a limitation of this model."@en .
 <https://hexplain.io/ns/bddo#sectionHeaded> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/bddo#sectionHeaded> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#seekScope> <http://www.w3.org/2004/02/skos/core#definition> "Whether an offset-addressed read is confined to its bounded region or resolved against the whole stream."@en .
+<https://hexplain.io/ns/bddo#seekScope> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/bddo#seekScope> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
 <https://hexplain.io/ns/bddo#sha1> <http://www.w3.org/2004/02/skos/core#definition> "The SHA-1 message-digest identifier, producing a 160-bit digest; this term does not claim suitability for collision-resistant security uses."@en .
 <https://hexplain.io/ns/bddo#sha1> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/bddo#sha1> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
@@ -1141,6 +1273,9 @@ bddo:VarintWidthShape a sh:NodeShape ;
 <https://hexplain.io/ns/bddo#streamEnd> <http://www.w3.org/2004/02/skos/core#definition> "Offset reference at the end of the applicable bounded stream; interpretation follows the offset rules of the processing model."@en .
 <https://hexplain.io/ns/bddo#streamEnd> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/bddo#streamEnd> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#streamScope> <http://www.w3.org/2004/02/skos/core#definition> "Seek scope resolving an offset-addressed read against the whole stream, suspending the region bound for that read."@en .
+<https://hexplain.io/ns/bddo#streamScope> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/bddo#streamScope> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
 <https://hexplain.io/ns/bddo#streamStart> <http://www.w3.org/2004/02/skos/core#definition> "Offset reference at the beginning of the applicable bounded stream."@en .
 <https://hexplain.io/ns/bddo#streamStart> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/bddo#streamStart> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .

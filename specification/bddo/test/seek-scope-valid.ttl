@@ -1,0 +1,10 @@
+# A pointer read allowed to leave its bounded region. Must conform.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/seek-valid#> .
+
+ex:Extent a bddo:Struct ; bddo:hasField ( ex:Extent.offset ex:Extent.length ex:Extent.data ) .
+ex:Extent.offset a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Extent.length a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Extent.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromField ex:Extent.length ;
+    bddo:atOffsetFromField ex:Extent.offset ; bddo:offsetBase bddo:streamStart ;
+    bddo:seekScope bddo:streamScope .
