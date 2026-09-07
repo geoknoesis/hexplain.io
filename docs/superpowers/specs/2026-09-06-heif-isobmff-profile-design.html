@@ -268,7 +268,7 @@ struct IpmaAssoc16 { essential : bits[1]  propertyIndex : bits[15] }</code></pre
 <h2>5. Four gaps, and what to do about each</h2>
 
 <div class="callout good">
-<p><strong>Implemented 2026-09:</strong> G1 (modules/import), G2 (dispatch tables), G3 (as G3c) &mdash; see <code>docs/superpowers/plans/2026-09-06-heif-isobmff-profile.md</code>. G4 is open. Two implementation findings not anticipated below: the compiler now emits <code>bddo:dataType</code> (the narrowest of <code>uint8</code>/<code>16</code>/<code>32</code>/<code>64</code>) alongside <code>bddo:bitLength</code> for every <code>bits[N]</code> field, and the HDL lexer drops a bare <code>?</code> outside a bracketed expression, so a ternary must be written <code>derive [ cond ? a : b ]</code> or as backtick raw HEL.</p>
+<p><strong>Implemented 2026-09:</strong> G1 (modules/import), G2 (dispatch tables), G3 (as G3c) &mdash; see <code>docs/superpowers/plans/2026-09-06-heif-isobmff-profile.md</code>. G4 is open. Two implementation findings not anticipated below: the compiler now emits <code>bddo:dataType</code> (the narrowest of <code>uint8</code>/<code>16</code>/<code>32</code>/<code>64</code>) alongside <code>bddo:bitLength</code> for every <code>bits[N]</code> field, and the HDL lexer drops a bare <code>?</code> in an unbracketed expression, so a <code>?:</code> ternary must be written inside <code>[ &#8230; ]</code> (e.g. <code>@size [ &#8230; ]</code>, or a derived field <code>count : derive [ v == 0 ? a : b ]</code>) or as backtick raw HEL &#8212; <code>derive &lt;expr&gt;</code> itself being the zero-byte computed-field type, not a modifier on <code>@size</code>.</p>
 </div>
 
 <article>
@@ -404,7 +404,7 @@ hexplain:ipmaItemRef a hexplain:ValueJoin ;
 <tbody>
 <tr><td>G1 modules</td><td>HDL only</td><td>none (language, not vocabulary)</td><td>Compiler: <code>module</code>, <code>import</code>, qualified names; loader for option B</td><td>1 (inline) / 3 (imports)</td></tr>
 <tr><td>G2 keyed dispatch</td><td>BDDO + Processing Model</td><td>6 + 1 shape</td><td><code>RdfToIrCompiler</code> arm collection; <code>Metaparser</code> map lookup</td><td>2</td></tr>
-<tr><td>G3 extent tables</td><td>BDDO (+ DLV if G3a)</td><td>4 + 2 offset terms</td><td><code>LayoutExecutor</code> entry point; region-scope opt-out</td><td>2</td></tr>
+<tr><td>G3 stream-scoped extent reads</td><td>BDDO</td><td><code>SeekScope</code> class, <code>seekScope</code> property, <code>regionScope</code>/<code>streamScope</code> individuals</td><td>Stream-scoped pointer read in <code>Metaparser.readField</code>/<code>resolveOffsetTarget</code></td><td>2 (done)</td></tr>
 <tr><td>G4 value joins</td><td>Core + Processing Model</td><td>5</td><td>Post-parse resolution pass</td><td>4 (or never, if SPARQL wins)</td></tr>
 </tbody>
 </table>
@@ -490,7 +490,7 @@ hexplain:ipmaItemRef a hexplain:ValueJoin ;
 <tbody>
 <tr><td><b>M0</b> Decide</td><td>Review this document; settle G3a-vs-G3b and the G4 question (declared joins vs shipped SPARQL)</td><td>—</td><td>—</td></tr>
 <tr><td><b>M1</b> Box walker</td><td><code>iso-bmff.hx</code> as one self-contained format: box framing, <code>ftyp</code>, container recursion, unknown boxes as opaque bytes. No items, no reuse, inline lowering</td><td><code>test_profile_library</code>; a behavioural test parsing a real <code>.heic</code> and enumerating its box tree &rarr; <code>parse-verified</code></td><td>nothing</td></tr>
-<tr><td><b>M2</b> Items</td><td>G2 (keyed dispatch) and G3 (extent tables) in BDDO and the engine; <code>meta</code>, <code>iloc</code>, <code>iinf</code>, <code>iref</code>, <code>iprp</code>; item payload extraction</td><td>BDDO SHACL; Metaparser tests; extracting the primary item's HEVC bytes and byte-comparing against libheif's own extraction</td><td>M1</td></tr>
+<tr><td><b>M2</b> Items</td><td>G2 (keyed dispatch) and G3 (stream-scoped extent reads) in BDDO and the engine; <code>meta</code>, <code>iloc</code>, <code>iinf</code>, <code>iref</code>, <code>iprp</code>; item payload extraction</td><td>BDDO SHACL; Metaparser tests; extracting the primary item's HEVC bytes and byte-comparing against libheif's own extraction</td><td>M1</td></tr>
 <tr><td><b>M3</b> Modules</td><td>G1 in HDL; split <code>iso-bmff</code> / <code>heif</code> / <code>codec-hevc</code> / <code>heic</code>; <code>avif</code> added as the proof that the base is genuinely reusable</td><td>Round-trip of the split against M2's monolith — same triples, different files. <code>test_profile_library</code> extended to validate a module with its imports</td><td>M2</td></tr>
 <tr><td><b>M4</b> Semantics</td><td>G4; <code>ispe</code>/<code>pixi</code>/<code>colr</code>/<code>irot</code> mapped through associations to items; aspect extensions from &sect;6.2</td><td>A SPARQL query answering <code>?image araster:width ?w</code> on a real file, matching libheif's reported dimensions</td><td>M3, aspect changes</td></tr>
 <tr><td><b>M5</b> Breadth</td><td><code>miaf</code> constraints; <code>grid</code>/<code>iovl</code>; <code>vvcC</code>, <code>uncC</code>; sequences via <code>iso-bmff-tracks</code>; MP4 as the second consumer of the base</td><td>Conformance report on a brand-tagged corpus</td><td>M4</td></tr>
@@ -521,7 +521,7 @@ hexplain:ipmaItemRef a hexplain:ValueJoin ;
 
 <h3>9.2 Open questions for review</h3>
 <ol>
-<li><strong>G3a or G3b</strong> — generalise DLV's chunk table, or add a neutral extent table to BDDO? The recommendation is G3b, but G3a reuses <code>LayoutExecutor</code> with no new concept at all.</li>
+<li><strong>G3</strong> — resolved as G3c during implementation (pointer read at the extent + <code>bddo:seekScope</code>); extent tables remain a possible later generalisation if a format needs offsets not co-located with lengths.</li>
 <li><strong>G4 now or later</strong> — declared value joins in Core, or shipped SPARQL alongside the profile until a second format needs it? This decides whether the profile is semantic or merely structural at M4.</li>
 <li><strong>Module naming</strong> — <code>iso-bmff</code> or <code>iso14496-12</code>? The latter is precise and ages well against amendments; the former is what people search for.</li>
 <li><strong>Does <code>module</code> earn its keyword</strong>, or is a <code>format</code> with no root struct enough? A separate keyword is clearer and lets the compiler refuse to treat a module as a format; it is also one more thing in the grammar.</li>
