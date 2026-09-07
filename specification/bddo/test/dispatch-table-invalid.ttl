@@ -1,0 +1,20 @@
+# Three violations: two arms share a key; a field declares both selection mechanisms; a table
+# names neither a key field nor a key expression.
+# Expected to trip bddo:DispatchKeyUniquenessShape, bddo:TypeSelectionExclusivityShape and
+# bddo:DispatchTableShape.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/dispatch-invalid#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Record a bddo:Struct ;
+    rdfs:comment "Expected to trip bddo:DispatchKeyUniquenessShape, bddo:TypeSelectionExclusivityShape and bddo:DispatchTableShape." ;
+    bddo:hasField ( ex:Record.tag ex:Record.body ) .
+ex:Record.tag a bddo:Field ; bddo:dataType bddo:string ; bddo:size 4 .
+ex:Record.body a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    bddo:hasDispatchTable ex:BodyDispatch ;
+    bddo:hasConditionalDataType ( [ a bddo:DataTypeRule ; bddo:condition "parent.tag == 'x'" ; bddo:ruleDataType bddo:uint8 ] ) .
+
+ex:BodyDispatch a bddo:DispatchTable .
+
+[] a bddo:DispatchArm ; bddo:armTable ex:BodyDispatch ; bddo:armKey "dup" ; bddo:armDataType bddo:uint8 .
+[] a bddo:DispatchArm ; bddo:armTable ex:BodyDispatch ; bddo:armKey "dup" ; bddo:armDataType bddo:uint16 .

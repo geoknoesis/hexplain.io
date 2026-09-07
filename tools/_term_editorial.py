@@ -75,6 +75,19 @@ utf16be|UTF-16 character encoding with each 16-bit code unit stored in big-endia
 latin1|ISO-8859-1 character encoding mapping each byte to the corresponding Latin-1 character value.
 bytes|Variable-length primitive byte-sequence datatype; its extent is supplied by the field's sizing mechanism.
 string|Variable-length primitive text datatype; its byte extent and character encoding are supplied by the field/profile.
+DispatchTable|A keyed, open selection of a field's effective type: the dispatch key is matched by equality against the keys of arms that any importing description may contribute.
+DispatchArm|One key-to-type association contributed to a dispatch table; keys are unique within a table across all contributing graphs.
+SeekScope|The reach of an offset-addressed read: the innermost bounded region, or the whole stream.
+hasDispatchTable|The keyed dispatch table that selects this field's effective type; exclusive with the ordered conditional datatype rules.
+dispatchOnField|The sibling field whose parsed value is the dispatch key.
+dispatchOnExpression|A HEL expression whose value is the dispatch key.
+dispatchDefault|The type selected when no arm matches the dispatch key.
+armTable|The dispatch table an arm contributes to.
+armKey|The string or integer key value an arm matches by equality.
+armDataType|The datatype or structure selected when an arm's key matches.
+seekScope|Whether an offset-addressed read is confined to its bounded region or resolved against the whole stream.
+regionScope|Seek scope confining an offset-addressed read to the innermost bounded region; the default.
+streamScope|Seek scope resolving an offset-addressed read against the whole stream, suspending the region bound for that read.
 ''')
 group('dlv','''
 DataLayout|A declaration of how logical array cells are addressed in a physical byte region, including dimensions, strides, cell type and optional chunking.

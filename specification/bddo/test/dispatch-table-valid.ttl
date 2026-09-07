@@ -1,0 +1,23 @@
+# A keyed dispatch table declared on one field, with one arm contributed "from outside" (a
+# separate subject, not a list member), an integer-keyed arm, and a default. Must conform.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/dispatch-valid#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Record a bddo:Struct ; bddo:endianness bddo:BigEndian ;
+    bddo:hasField ( ex:Record.tag ex:Record.body ) .
+ex:Record.tag a bddo:Field ; bddo:dataType bddo:string ; bddo:size 4 ; bddo:encoding bddo:ascii .
+ex:Record.body a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    bddo:hasDispatchTable ex:BodyDispatch .
+
+ex:BodyDispatch a bddo:DispatchTable ;
+    bddo:dispatchOnField ex:Record.tag ;
+    bddo:dispatchDefault ex:Unknown .
+
+ex:Unknown a bddo:Struct ; bddo:hasField ( ex:Unknown.raw ) .
+ex:Unknown.raw a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true .
+ex:Header a bddo:Struct ; bddo:hasField ( ex:Header.v ) .
+ex:Header.v a bddo:Field ; bddo:dataType bddo:uint32 .
+
+[] a bddo:DispatchArm ; bddo:armTable ex:BodyDispatch ; bddo:armKey "hdr " ; bddo:armDataType ex:Header .
+[] a bddo:DispatchArm ; bddo:armTable ex:BodyDispatch ; bddo:armKey 7 ; bddo:armDataType bddo:uint32 .
