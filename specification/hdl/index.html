@@ -157,6 +157,7 @@ struct Chunk {
                     <tr><td>terminator</td><td><code>str @terminator 0x00</code> &middot; <code>@trim-null</code></td><td><code>terminator</code> / <code>trimNull</code></td></tr>
                     <tr><td>overrides</td><td><code>@endian little</code> &middot; <code>@align 4</code> &middot; <code>@bit-order lsb</code> &middot; <code>@encoding latin1</code></td><td>per-field properties</td></tr>
                     <tr><td>conditional type</td><td><code>switch &lt;expr?&gt; { &lt;val|when expr&gt; =&gt; &lt;Struct&gt; &#8230; }</code></td><td><code>hasConditionalDataType</code> (<code>DataTypeRule</code> list)</td></tr>
+                    <tr><td>root key</td><td><code>@root-key &lt;sibling&gt;</code></td><td><code>rootKeyFromField</code> &mdash; also bind this field's value in the root context under the sibling's value (first occurrence wins), so a later field can say <code>root.&lt;key&gt;.&#8230;</code> about a record inside a repeated sequence</td></tr>
                     <tr><td>keyed dispatch</td><td><code>dispatch &lt;Name&gt; on &lt;expr&gt; [default &lt;Struct&gt;] { &lt;key&gt; =&gt; &lt;Struct&gt; &#8230; }</code></td><td><code>hasDispatchTable</code> (a named <code>DispatchTable</code> + its <code>DispatchArm</code>s)</td></tr>
                     <tr><td>seek scope</td><td><code>@seek stream</code> &middot; <code>@seek region</code></td><td><code>seekScope</code></td></tr>
                 </tbody>
@@ -565,6 +566,7 @@ clause       = "[" ( expr / ".." ) "]"                      ; byte size
              / "@seek" ( "stream" / "region" )
              / "if" expr
              / "@fixed" ( HEXBYTES / INT / STRING )
+             / "@root-key" IDENT
              / "enum" [ "flags" ] "{" enumpair *( "," enumpair ) "}"
              / "@checksum" ALGO "(" ( ref ".." ref / "covers" "(" expr ")" ) ")"
              / "@terminator" HEXBYTES / "@trim-null"
