@@ -1,0 +1,581 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design — Hexplain profile for HEIF, on a reusable ISO base media file format core</title>
+<style>
+:root{--ink:#18323b;--muted:#536974;--green:#006d60;--line:#ceded8;--paper:#f2f6f3;--code:#0f2b33}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.7 system-ui,Segoe UI,sans-serif}
+a{color:var(--green);text-underline-offset:3px}
+.skip{position:absolute;left:12px;top:-60px;background:#fff;padding:8px}.skip:focus{top:10px}
+header{background:#12333d;color:#fff;padding:56px max(24px,calc((100vw - 1120px)/2)) 42px}
+header p{color:#d5e5e6;max-width:900px}
+header .meta{color:#9fc3c0}
+h1{font-size:clamp(30px,4vw,50px);line-height:1.12;letter-spacing:-1px;max-width:1000px;margin:.2em 0}
+h2{font-size:28px;line-height:1.25;margin-top:0}
+h3{font-size:20px;line-height:1.4;margin:26px 0 8px}
+h4{font-size:16px;margin:18px 0 6px}
+main{max-width:1168px;margin:auto;padding:28px 24px 60px}
+nav{display:flex;gap:18px;flex-wrap:wrap;font-size:14px}
+section{margin:42px 0;scroll-margin-top:16px}
+.eyebrow,.meta{font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:750}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.stat,article,.panel{padding:24px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.stat strong{display:block;font-size:42px;line-height:1.3}
+.stat p{margin:0;color:var(--muted);font-size:14px}
+article{margin:18px 0}
+.lede{max-width:960px;color:var(--muted);font-size:17px}
+.badge{padding:3px 8px;background:#e0f0e8;border-radius:5px;color:#245541;font-size:12px;font-weight:700;white-space:nowrap}
+.badge.open{background:#fff1db;color:#835418}
+.badge.gap{background:#fde8e4;color:#8a2d1c}
+.badge.new{background:#e6ecfb;color:#26407e}
+.callout{border-left:5px solid #b27730;background:#fff5e7;padding:18px 24px;border-radius:0 10px 10px 0;margin:18px 0}
+.callout.good{border-left-color:#078779;background:#e8f4f0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+thead{background:#e2eee8}
+.table-wrap{overflow-x:auto;margin:14px 0}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.92em;background:#e7efe9;padding:1px 5px;border-radius:4px}
+pre{background:var(--code);color:#dbeae4;padding:16px 18px;border-radius:10px;overflow-x:auto;font-size:13.5px;line-height:1.55}
+pre code{background:none;color:inherit;padding:0;font-size:inherit}
+.stack{display:flex;flex-direction:column;gap:8px;margin:18px 0}
+.layer{border:1px solid var(--line);border-radius:10px;padding:14px 18px;background:#fff}
+.layer b{display:inline-block;min-width:230px}
+.layer span{color:var(--muted);font-size:14px}
+.layer.base{background:#e8f4f0;border-color:#9ec9bd}
+.layer.derived{background:#fbfdfc}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+ul.tight li{margin:5px 0}
+footer{border-top:1px solid var(--line);padding-top:22px;margin-top:40px;font-size:13px;color:var(--muted)}
+:focus-visible{outline:3px solid #078779;outline-offset:3px}
+@media(max-width:760px){.stats,.cols{grid-template-columns:1fr}header{padding:34px 24px}article{padding:18px}}
+@media print{body{background:#fff}header{background:#fff;color:var(--ink);padding:16px 0}header p,header .meta{color:var(--ink)}pre{background:#f4f7f5;color:#111;border:1px solid #ddd}article{break-inside:avoid}nav,.skip{display:none}}
+</style></head><body>
+<a class="skip" href="#main">Skip to content</a>
+<header>
+  <p class="meta">Design document &middot; not an implementation &middot; 2026-09-06</p>
+  <h1>A Hexplain profile for HEIF, on a reusable ISO base media file format core</h1>
+  <p class="lede">Scoped to what <a href="https://github.com/strukturag/libheif">libheif</a> actually implements, and answering the question that shapes the whole design: can the ISO/IEC 14496-12 box machinery be described <em>once</em> and reused by HEIC, AVIF, HEIF sequences, MP4, JPEG&nbsp;2000-in-BMFF and JPEG&nbsp;XL, rather than re-described per format?</p>
+  <p class="meta">Status: draft for review &middot; Author: Stephane Fellah &middot; Repos in scope: <code>hexplain.io</code> (specification), <code>hexplain-tools</code> (HDL compiler + engine), <code>hexplain-profiles</code> (profile library)</p>
+</header>
+<main id="main">
+
+<nav aria-label="Contents">
+  <a href="#answer">1. The answer</a>
+  <a href="#scope">2. Scope</a>
+  <a href="#stack">3. Module stack</a>
+  <a href="#works">4. What HDL already expresses</a>
+  <a href="#gaps">5. Four gaps</a>
+  <a href="#semantics">6. Semantic mapping</a>
+  <a href="#conformance">7. Conformance and brands</a>
+  <a href="#plan">8. Delivery plan</a>
+  <a href="#risks">9. Risks and open questions</a>
+  <a href="#appendix">10. Box inventory</a>
+</nav>
+
+<section id="answer">
+<h2>1. The answer, up front</h2>
+<div class="stats">
+  <div class="stat"><strong>~70%</strong><p>of a HEIF description is ISO/IEC 14496-12 box and item machinery, shareable verbatim with every other BMFF-derived format</p></div>
+  <div class="stat"><strong>4</strong><p>specification changes needed before that sharing is real rather than copy-paste (&sect;5)</p></div>
+  <div class="stat"><strong>0</strong><p>format-named terms this design adds to a normative vocabulary — the neutrality gate stays green</p></div>
+</div>
+
+<article>
+<h3>Yes — and the reuse belongs at the RDF level, not the text level</h3>
+<p><strong>Yes, a reusable ISO base block is the right architecture, and HEIF is close to the ideal case for it.</strong> HEIF adds almost nothing structural to ISO/IEC 14496-12: the box header, the <code>meta</code> box, item location (<code>iloc</code>), item information (<code>iinf</code>/<code>infe</code>), item references (<code>iref</code>), item properties (<code>iprp</code>/<code>ipco</code>/<code>ipma</code>), item data (<code>idat</code>), entity groups (<code>grpl</code>) and data information (<code>dinf</code>/<code>dref</code>) are all defined by 14496-12 itself. What ISO/IEC 23008-12 contributes is a set of <em>leaf</em> property boxes (<code>ispe</code>, <code>pixi</code>, <code>irot</code>, <code>imir</code>, <code>clap</code>, <code>auxC</code>, <code>colr</code>&hellip;), four derived-item payload formats (<code>grid</code>, <code>iovl</code>, <code>iden</code>, <code>tili</code>), and brand and constraint sets. AVIF, in turn, adds one configuration box (<code>av1C</code>) and two brands.</p>
+<p><strong>But HDL cannot express that reuse today.</strong> There is no <code>import</code>, no module concept, and one <code>format</code> compiles to one self-contained <code>.ttl</code> — the HDL design parks a profile library in &sect;15 as &ldquo;authored <code>.hx</code> files, not language features&rdquo;. More fundamentally, the RDF lowering of type dispatch, <code>bddo:hasConditionalDataType</code>, is an ordered <code>rdf:List</code> of rules, and an <code>rdf:List</code> is a <em>closed</em> structure: an importing graph cannot append an arm to a list defined in an imported graph without rewriting the whole list, at which point it is a copy, not a reuse.</p>
+<p>Every extensible-tag format hits this, and the evidence is already sitting in the profile library. <code>nitf-tre-blocka.ttl</code> and <code>nitf-tre-rpc00b.ttl</code> define TRE payload structs and <code>owl:imports</code> the NITF profile — but nothing wires them in. <code>nitf:TRE_CEDATA</code> is still plain <code>bddo:bytes ; bddo:sizeFromField nitf:TRE_CEL</code>, because there is no way to extend the dispatch from an importing graph. HEIF is the same problem one order of magnitude larger: roughly sixty box types, an open registry, and four downstream formats that each want to add their own arms.</p>
+<p>So the design has two halves: a <strong>module layering</strong> that says what belongs where, and <strong>four specification changes</strong> that make the layering expressible. Without the second half, &ldquo;reuse&rdquo; degrades to the compiler inlining a copy of the ISO structs into each derived format's namespace. That works, and it is the recommended fallback for a first milestone, but it leaves <code>heic:FullBox</code> and <code>avif:FullBox</code> as distinct resources that no query can join — which forfeits the reason to build this on RDF in the first place.</p>
+</article>
+
+<div class="callout">
+<p><strong>This document implements nothing.</strong> No <code>.hx</code>, <code>.ttl</code>, Kotlin or test is written or changed by it. The HDL fragments below are sketches of the intended authoring surface; field widths and orders are drawn from ISO/IEC 14496-12, ISO/IEC 23008-12 and the libheif sources, and <em>must</em> be verified against the standards text before any profile is authored. In profile-library terms everything here would ship <code>NOT parse-verified</code> until a behavioural test parses a real file.</p>
+</div>
+</section>
+
+<section id="scope">
+<h2>2. Scope: what libheif implements, and therefore what the profile must cover</h2>
+<p class="lede">libheif is the right reference point because it defines a concrete, testable target: if the descriptor can express what libheif's <code>box.h</code> parses, the profile is useful. Its source tree also partitions almost exactly along the layers this design proposes, which is itself evidence that the layering is the natural one.</p>
+
+<div class="table-wrap">
+<table>
+<caption class="meta" style="text-align:left;padding:8px 0">Coverage target, derived from the libheif tree (<code>libheif/box.h</code>, <code>libheif/codecs/</code>, <code>libheif/image-items/</code>, <code>libheif/sequences/</code>)</caption>
+<thead><tr><th>libheif area</th><th>Boxes / payloads</th><th>Standard</th><th>Proposed module</th><th>First milestone?</th></tr></thead>
+<tbody>
+<tr><td>Box framing</td><td><code>Box</code>, <code>FullBox</code>, <code>free</code>/<code>skip</code>, <code>mdat</code>, <code>uuid</code> extended types, unknown-box fallback</td><td>14496-12</td><td><code>isobmff</code></td><td>Yes</td></tr>
+<tr><td>File identity</td><td><code>ftyp</code> (major brand, minor version, compatible brands)</td><td>14496-12</td><td><code>isobmff</code></td><td>Yes</td></tr>
+<tr><td>Item machinery</td><td><code>meta</code>, <code>hdlr</code>, <code>pitm</code>, <code>iloc</code>, <code>iinf</code>, <code>infe</code>, <code>iref</code>, <code>idat</code>, <code>dinf</code>, <code>dref</code>, <code>url&nbsp;</code></td><td>14496-12</td><td><code>isobmff</code></td><td>Yes</td></tr>
+<tr><td>Property machinery</td><td><code>iprp</code>, <code>ipco</code>, <code>ipma</code> (bit-packed associations, essential flag)</td><td>14496-12</td><td><code>isobmff</code></td><td>Yes</td></tr>
+<tr><td>Entity groups</td><td><code>grpl</code>, <code>EntityToGroup</code>, <code>altr</code>, <code>ster</code>, <code>pymd</code></td><td>14496-12 / 23008-12</td><td><code>isobmff</code> + <code>heif</code></td><td>Framing only</td></tr>
+<tr><td>Image properties</td><td><code>ispe</code>, <code>pixi</code>, <code>irot</code>, <code>imir</code>, <code>iscl</code>, <code>clap</code>, <code>pasp</code>, <code>auxC</code>, <code>rref</code>, <code>lsel</code>, <code>udes</code>, <code>elng</code></td><td>23008-12</td><td><code>heif</code></td><td>Yes</td></tr>
+<tr><td>Colour and HDR</td><td><code>colr</code> (nclx / rICC / prof), <code>clli</code>, <code>mdcv</code>, <code>amve</code>, <code>ndwt</code>, <code>cclv</code></td><td>23008-12 / 23091-3</td><td><code>heif</code></td><td><code>colr</code> only</td></tr>
+<tr><td>Camera and timing</td><td><code>cmin</code>, <code>cmex</code>, <code>taic</code>, <code>itai</code>, GIMI content id (<code>uuid</code> box)</td><td>23008-12 Amd / GIMI</td><td><code>heif-ext</code></td><td>No</td></tr>
+<tr><td>Codec configuration</td><td><code>hvcC</code>, <code>av1C</code>, <code>vvcC</code>, <code>avcC</code>, <code>j2kH</code>, <code>jpgC</code>, <code>uncC</code>/<code>cmpd</code></td><td>14496-15, AV1-ISOBMFF, 15444-16, 23001-17</td><td>one per codec</td><td><code>hvcC</code>, <code>av1C</code></td></tr>
+<tr><td>Derived items</td><td><code>grid</code>, <code>iovl</code>, <code>iden</code>, <code>tili</code>, <code>mski</code></td><td>23008-12</td><td><code>heif</code></td><td><code>grid</code>, <code>iovl</code></td></tr>
+<tr><td>Metadata items</td><td><code>Exif</code> item (TIFF header offset + TIFF block), <code>mime</code> item (XMP)</td><td>23008-12</td><td><code>heif</code></td><td>Framing only</td></tr>
+<tr><td>Sequences</td><td><code>moov</code>, <code>trak</code>, <code>mvhd</code>, <code>tkhd</code>, <code>stbl</code> sample tables</td><td>14496-12</td><td><code>isobmff-tracks</code></td><td>No</td></tr>
+<tr><td>Low-overhead profile</td><td><code>mini</code> box (compact HEIF header)</td><td>23008-12 Amd</td><td><code>heif-mini</code></td><td>No</td></tr>
+<tr><td>Bitstream decoding</td><td>HEVC / AV1 / VVC / JPEG entropy-coded data</td><td>codec specs</td><td colspan="2"><strong>Out of scope</strong> — named codec primitives, &sect;6.4</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Two exclusions are deliberate, and both follow the boundary already settled in the <a href="2026-09-06-descriptor-driven-raster-design.md">descriptor-driven raster design</a>: the descriptor owns structure, layout and the <em>names</em> of codecs; the engine owns generic mechanisms and codec lookup. A HEIF descriptor therefore reaches the HEVC access unit and stops. Second, libheif's <em>compositing</em> behaviour — applying <code>irot</code>/<code>imir</code>/<code>clap</code>, assembling a <code>grid</code> from its tiles — is a consumer concern. The descriptor states the transform parameters and the grid geometry as facts; it does not perform them.</p>
+</section>
+
+<section id="stack">
+<h2>3. The module stack</h2>
+<p class="lede">Six modules, each an <code>owl:Ontology</code> with its own namespace and its own <code>.hx</code> source, related by <code>owl:imports</code>. A derived format's module contains only what that format actually adds.</p>
+
+<div class="stack">
+  <div class="layer base"><b>iso-bmff</b> <span>ISO/IEC 14496-12 &mdash; <code>Box</code>, <code>FullBox</code>, <code>ftyp</code>, <code>mdat</code>, <code>free</code>, <code>meta</code>, <code>hdlr</code>, <code>pitm</code>, <code>iloc</code>, <code>iinf</code>, <code>infe</code>, <code>iref</code>, <code>iprp</code>, <code>ipco</code>, <code>ipma</code>, <code>idat</code>, <code>dinf</code>, <code>dref</code>, <code>grpl</code>. Owns the open box dispatch table. ~25 structs. No image semantics whatsoever.</span></div>
+  <div class="layer base"><b>iso-bmff-tracks</b> <span>ISO/IEC 14496-12 continued &mdash; <code>moov</code>, <code>trak</code>, <code>mvhd</code>, <code>tkhd</code>, <code>mdia</code>, <code>minf</code>, <code>stbl</code> and the sample tables. Separate module because still-image profiles never need it, and because it is where MP4 and CMAF get their weight. Imports <code>iso-bmff</code>.</span></div>
+  <div class="layer derived"><b>heif</b> <span>ISO/IEC 23008-12 &mdash; image item properties, derived item payloads (<code>grid</code>, <code>iovl</code>, <code>iden</code>), Exif/XMP item framing, and the <code>mif1</code>/<code>msf1</code> brand set. Extends the base dispatch table with ~15 arms. Imports <code>iso-bmff</code>.</span></div>
+  <div class="layer derived"><b>miaf</b> <span>ISO/IEC 23000-22 &mdash; no new boxes at all. A pure constraint module: brand-conditioned requirement and conformance rules over the graph the <code>heif</code> module produces. Imports <code>heif</code>.</span></div>
+  <div class="layer derived"><b>codec-hevc</b> / <b>codec-av1</b> / <b>codec-vvc</b> / <b>codec-uncompressed</b> <span>One module per configuration record: <code>hvcC</code> (14496-15), <code>av1C</code>, <code>vvcC</code>, <code>uncC</code>+<code>cmpd</code>. Each adds one dispatch arm and binds a concept from the media-encoding register. Imports <code>iso-bmff</code> only — a codec config box is not image-specific, which is why <code>hvcC</code> is shared by HEIC and by HEVC tracks in MP4.</span></div>
+  <div class="layer derived"><b>heic</b> / <b>avif</b> / <b>heif-sequence</b> / <b>jxl-bmff</b> / <b>jp2-bmff</b> <span>The leaf profiles. Each is a handful of triples: a brand set, the codec module(s) it imports, a primary-item constraint, and its file extension and media type. <code>avif.hx</code> is expected to be under 60 lines.</span></div>
+</div>
+
+<h3>3.1 What each derived format actually adds</h3>
+<p>This table is the quantified form of the answer in &sect;1. It is the reason the layering is worth the four specification changes.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Format</th><th>Brands</th><th>New box types</th><th>New structs</th><th>Reused from <code>iso-bmff</code> / <code>heif</code></th></tr></thead>
+<tbody>
+<tr><td>HEIC (HEVC still image)</td><td><code>heic</code>, <code>heix</code>, <code>mif1</code></td><td><code>hvcC</code></td><td>1 (+ NAL array sub-struct)</td><td>everything else</td></tr>
+<tr><td>AVIF</td><td><code>avif</code>, <code>avis</code>, <code>mif1</code>, <code>miaf</code></td><td><code>av1C</code></td><td>1</td><td>everything else</td></tr>
+<tr><td>HEIF image sequence</td><td><code>msf1</code>, <code>hevc</code></td><td>none (track boxes)</td><td>0 in <code>heif</code>; uses <code>iso-bmff-tracks</code></td><td>all item machinery</td></tr>
+<tr><td>MP4 / CMAF</td><td><code>isom</code>, <code>mp42</code>, <code>cmfc</code></td><td>sample entries</td><td>track and sample tables</td><td>all box framing, <code>ftyp</code>, <code>free</code>, <code>mdat</code></td></tr>
+<tr><td>JPEG XL in BMFF</td><td><code>jxl&nbsp;</code></td><td><code>jxlc</code>, <code>jxlp</code>, <code>jxll</code>, <code>jbrd</code></td><td>4</td><td>all box framing</td></tr>
+<tr><td>JPEG 2000 in BMFF (JPH)</td><td><code>jph&nbsp;</code>, <code>j2ki</code></td><td><code>j2kH</code>, <code>j2kL</code></td><td>2</td><td>all box framing + item machinery</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>3.2 Namespaces and file layout</h3>
+<pre><code>https://hexplain.io/ns/profile/iso-bmff#          iso:Box, iso:FullBox, iso:MetaBox, iso:ItemLocationBox ...
+https://hexplain.io/ns/profile/heif#              heif:ImageSpatialExtentsProperty, heif:GridPayload ...
+https://hexplain.io/ns/profile/codec/hevc#        hevc:HevcConfigurationBox ...
+https://hexplain.io/ns/profile/avif#              avif:AvifFile ...
+
+hexplain-profiles/profiles/
+    iso-bmff/     iso-bmff.hx     iso-bmff.ttl     example.ttl  example-invalid.ttl
+    heif/         heif.hx         heif.ttl
+    codec-hevc/   codec-hevc.hx   codec-hevc.ttl
+    codec-av1/    codec-av1.hx    codec-av1.ttl
+    heic/         heic.hx         heic.ttl
+    avif/         avif.hx         avif.ttl</code></pre>
+<p>This is a change to the profile-library convention, which today is one directory per <em>format</em> with a self-contained description. It becomes one directory per <em>module</em>, some of which are not formats anyone opens. <code>test_profile_library</code> validates each directory's Turtle as a unit today; with imports it must validate a module together with its transitive imports, which is a small change to the gate and worth stating explicitly because it is the point where the library stops being a flat list.</p>
+</section>
+
+<section id="works">
+<h2>4. What HDL and the engine already express</h2>
+<p class="lede">More than expected. Four of the five things that make ISOBMFF awkward for a declarative description are already supported, and one of them was designed with ISOBMFF explicitly in mind. Establishing this matters, because it narrows the proposal in &sect;5 to the four things that genuinely do not work.</p>
+
+<article>
+<h3>4.1 The box header, including <code>largesize</code>, <code>uuid</code> and size&nbsp;0</h3>
+<p>A box is a length-delimited container whose length is stated three different ways. HEL has a ternary conditional, and a struct's <code>@size</code> expression is re-evaluated after each field until it becomes computable — so the whole rule is one clause:</p>
+<pre><code>module iso.bmff
+  @namespace "https://hexplain.io/ns/profile/iso-bmff#"
+  @endian big
+
+struct Box @size `instance.size == 1 ? instance.largesize
+                  : (instance.size == 0 ? stream.remaining + 4 : instance.size)` {
+  size      : u32
+  type      : ascii[4]
+  largesize : u64        if size == 1
+  usertype  : bytes[16]  if type == "uuid"
+  payload   : bytes[..]  switch type { ... }        // see 4.2 and gap G2
+}</code></pre>
+<p>The bounded region this establishes is exactly what the <a href="../../../specification/processing/">Processing Model</a> &sect;3.1 describes, and that clause names ISOBMFF as its motivating case: &ldquo;a descendant's <code>bddo:sizeToEndOfStream</code> resolves to the region end (not |S|). This is what lets length-delimited containers (ISOBMFF/MP4 boxes, EBML, chunk payloads) bound their children.&rdquo; The engine implements it: <code>Metaparser.parseStruct</code> caps the buffer limit, and <code>stream.remaining</code> and <code>eof()</code> then describe the region rather than the file.</p>
+<p><span class="badge open">Rough edge</span> The <code>size == 0</code> arm (&ldquo;box extends to the end of the enclosing container&rdquo;) is written as <code>stream.remaining + 4</code>, where the <code>+ 4</code> accounts for the fact that only the four size bytes have been consumed when the expression first resolves. That is correct but fragile and reads badly. A one-keyword addition — <code>@size to-region-end</code>, lowering to a <code>bddo:sizeToEndOfStream</code> equivalent at struct scope — would remove the arithmetic. Small, optional, and not on the critical path.</p>
+</article>
+
+<article>
+<h3>4.2 Recursion and container nesting</h3>
+<p>A container box holds a sequence of boxes, of any type, until its own region ends. That is a self-referential struct, and it terminates because each nesting level is bounded:</p>
+<pre><code>struct ContainerBoxPayload {
+  children : Box repeat until eof()      // eof() = end of the enclosing bounded region
+}</code></pre>
+<p>Nothing new is needed: <code>repeat until eof()</code> is native HDL, <code>self</code> is bound to the current element for the until-predicate, and the engine's <code>ParseLimits.maxDepth</code> (default 64) plus <code>maxVisitedNodes</code> bound the recursion — the same defence libheif implements in <code>security_limits.cc</code>. A malformed file that declares a zero-length box inside a container is the classic infinite-loop bug here; the engine's node budget catches it, but a <code>@valid size &gt;= 8</code> clause on <code>Box</code> states the invariant where a reader can see it, and turns the failure into a validation error rather than a resource-limit error.</p>
+</article>
+
+<article>
+<h3>4.3 Version- and flag-dependent field widths</h3>
+<p>A <code>FullBox</code> carries a version and 24 flag bits, and in ISOBMFF nearly every version bump widens a field from 16 to 32 bits. Both mechanisms exist: conditional presence, and conditional data type.</p>
+<pre><code>struct FullBoxHeader {
+  version : u8
+  flags   : bits[24]
+}
+
+struct ItemInfoBox {                                  // 'iinf'
+  hdr         : FullBoxHeader
+  entryCount16 : u16   if hdr.version == 0
+  entryCount32 : u32   if hdr.version != 0
+  count        : derive hdr.version == 0 ? entryCount16 : entryCount32
+  entries      : Box repeat count                     // each an 'infe'
+}</code></pre>
+<p>The zero-byte <code>derive</code> field is the idiom that keeps the rest of the struct from repeating the ternary: it reads no bytes, computes once, and later clauses reference <code>count</code> directly.</p>
+</article>
+
+<article>
+<h3>4.4 <code>iloc</code>: integer widths chosen by nibbles at run time</h3>
+<p>The item location box is the hardest structure in ISOBMFF and the usual reason hand-written parsers exist. Three 4-bit fields choose the byte width — 0, 4 or 8 — of three later fields, independently, and width 0 means the field is absent rather than zero-length. Both halves are expressible:</p>
+<pre><code>struct ItemLocationBox {                              // 'iloc'
+  hdr            : FullBoxHeader
+  offsetSize     : bits[4]
+  lengthSize     : bits[4]
+  baseOffsetSize : bits[4]
+  indexSize      : bits[4]                            // reserved when version == 0
+  itemCount16    : u16  if hdr.version &lt; 2
+  itemCount32    : u32  if hdr.version == 2
+  count          : derive hdr.version &lt; 2 ? itemCount16 : itemCount32
+  items          : IlocItem repeat count
+}
+
+struct IlocItem {
+  itemId16           : u16  if parent.hdr.version &lt; 2
+  itemId32           : u32  if parent.hdr.version == 2
+  reserved           : bits[12]  if parent.hdr.version &gt;= 1
+  constructionMethod : bits[4]   if parent.hdr.version &gt;= 1
+  dataReferenceIndex : u16
+  baseOffset         : bytes[parent.baseOffsetSize]  if parent.baseOffsetSize != 0
+  extentCount        : u16
+  extents            : IlocExtent repeat extentCount
+}</code></pre>
+<p><span class="badge open">Judgement call</span> <code>bytes[n]</code> yields <code>xsd:hexBinary</code>, not an integer, so a base offset read this way cannot drive an <code>@at</code> clause. The alternative is <code>switch</code> on the nibble to select <code>u32</code> or <code>u64</code>, which yields a number but writes three arms per field. The sketch above is shorter; the profile will need the <code>switch</code> form. Either way this is expressible today — but see G3: what to <em>do</em> with the resulting offsets is where it stops working.</p>
+</article>
+
+<article>
+<h3>4.5 <code>ipma</code>: bit-packed association arrays</h3>
+<p>Property associations pack an &ldquo;essential&rdquo; flag and a property index into either 8 or 16 bits depending on one flag bit of the enclosing FullBox. Two variant structs plus a <code>switch</code> cover it, and the bit cursor semantics are already normative (Processing Model &sect;3.3):</p>
+<pre><code>struct IpmaAssociation {
+  variant : bytes[..] switch {
+    when parent.parent.hdr.flags &amp; 1 == 0 =&gt; IpmaAssoc8
+    when parent.parent.hdr.flags &amp; 1 == 1 =&gt; IpmaAssoc16
+  }
+}
+struct IpmaAssoc8  { essential : bits[1]  propertyIndex : bits[7]  }
+struct IpmaAssoc16 { essential : bits[1]  propertyIndex : bits[15] }</code></pre>
+<p><span class="badge">Verified</span> against the engine's behaviour, not just the specification text: conditional data types, bit fields and bounded regions all have Metaparser tests today.</p>
+</article>
+
+<div class="callout good">
+<p><strong>Conclusion for &sect;4.</strong> The physical description of a HEIF file is expressible with today's BDDO, HEL and HDL, with one cosmetic wart (&sect;4.1). What is <em>not</em> expressible is: sharing that description across formats, extending the box dispatch from an importing module, reaching item payloads through <code>iloc</code>, and turning the item/property/reference indirection into meaningful triples. Those are the four gaps.</p>
+</div>
+</section>
+
+<section id="gaps">
+<h2>5. Four gaps, and what to do about each</h2>
+
+<div class="callout good">
+<p><strong>Implemented 2026-09:</strong> G1 (modules/import), G2 (dispatch tables), G3 (as G3c) &mdash; see <code>docs/superpowers/plans/2026-09-06-heif-isobmff-profile.md</code>. G4 is open. Two implementation findings not anticipated below: the compiler now emits <code>bddo:dataType</code> (the narrowest of <code>uint8</code>/<code>16</code>/<code>32</code>/<code>64</code>) alongside <code>bddo:bitLength</code> for every <code>bits[N]</code> field, and the HDL lexer drops a bare <code>?</code> outside a bracketed expression, so a ternary must be written <code>derive [ cond ? a : b ]</code> or as backtick raw HEL.</p>
+</div>
+
+<article>
+<h3>G1 &mdash; HDL has no modules <span class="badge gap">blocking</span></h3>
+<h4>Problem</h4>
+<p>One <code>format</code> declaration compiles to one <code>.ttl</code>. There is no way for <code>heif.hx</code> to say &ldquo;<code>Box</code> is defined over there&rdquo;, so today the only way to write the <code>heif</code> module is to paste the ISO structs into it — and again into <code>avif.hx</code>, and again into <code>mp4.hx</code>.</p>
+<h4>Proposal</h4>
+<pre><code>module iso.bmff                                    // like `format`, but not a file format
+  @namespace "https://hexplain.io/ns/profile/iso-bmff#"
+  @ontology  "https://hexplain.io/ns/profile/iso-bmff"
+
+format heif
+  @namespace "https://hexplain.io/ns/profile/heif#"
+import "../iso-bmff/iso-bmff.hx" as iso            // resolved by path or by ontology IRI
+
+struct ImageSpatialExtents means araster:RasterGrid {
+  hdr    : iso.FullBoxHeader                       // qualified reference to an imported struct
+  width  : u32 means araster:width
+  height : u32 means araster:height
+}</code></pre>
+<ul class="tight">
+<li><code>module</code> declares a namespace and an ontology IRI but no root struct and no file identity — it is not a format and must not be offered as one by a recognizer.</li>
+<li><code>import &hellip; as &lt;alias&gt;</code> brings the imported names into scope under a dotted qualifier. Unqualified names never leak, so two modules may both define <code>Header</code>.</li>
+<li>The emitted Turtle carries <code>owl:imports &lt;imported ontology IRI&gt;</code>, so the RDF layer sees the same structure the source does.</li>
+</ul>
+<h4>Lowering: three options</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Option</th><th>What the compiler emits</th><th>Cost</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td><b>A. Inline (monomorphize)</b></td><td>A copy of every imported struct, renamed into the importing format's namespace</td><td>No ontology change, no engine change. Duplicated triples per format; <code>heic:Box</code> and <code>avif:Box</code> are unrelated resources; a fix to the base module must be recompiled into every leaf</td><td><span class="badge open">not needed</span> B shipped directly; the inline fallback was never built</td></tr>
+<tr><td><b>B. Reference (owl:imports)</b></td><td>Nothing for imported structs; the importing graph references <code>iso:Box</code> by IRI and declares <code>owl:imports</code></td><td>Requires the loader to resolve imports into one graph (<code>ProfileLoader</code> already loads a graph, so this is small) <em>and</em> requires G2, because a referenced struct that cannot be extended is useless for dispatch</td><td><span class="badge new">implemented</span> <b>Target.</b> The only option in which reuse is a fact in the data</td></tr>
+<tr><td><b>C. Hybrid</b></td><td>B for every struct; a per-format copy of only the one field carrying the dispatch</td><td>Avoids G2 at the cost of one duplicated field per extension point, and of a subtle rule about which copy wins</td><td>Rejected — it re-introduces the closed-list problem in a less visible place</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Recommendation: A for milestone 1, B as the target</strong>, with the <code>.hx</code> source identical under both. That is the point of putting the module boundary in the language rather than in a build script: the lowering strategy becomes a compiler flag, and the authored description does not change when it flips.</p>
+</article>
+
+<article>
+<h3>G2 &mdash; ordered dispatch lists cannot be extended by an importing graph <span class="badge gap">blocking for B</span></h3>
+<h4>Problem</h4>
+<p><code>bddo:hasConditionalDataType</code> takes an <code>rdf:List</code> of <code>bddo:DataTypeRule</code>s, evaluated in order, first match wins. Ordered lists are the right model for <em>predicate</em> dispatch, where arms may overlap and precedence carries meaning. They are the wrong model for <em>keyed</em> dispatch, where arms are disjoint by construction, and they are structurally closed: appending to a list defined in another graph means rewriting its cells.</p>
+<p>This is not hypothetical. It is why <code>nitf:TRE_CEDATA</code> is unparsed bytes while two TRE payload structs sit in adjacent files, imported and unreachable. HEIF needs roughly sixty arms on one field, contributed by five modules, from an open registry that gains new box types with every amendment.</p>
+<h4>Proposal: a keyed, open dispatch table in BDDO</h4>
+<pre><code># in iso-bmff.ttl -- the extension point, declared once
+iso:BoxPayloadDispatch a bddo:DispatchTable ;
+    bddo:dispatchOn iso:Box.type ;                    # the key field
+    bddo:dispatchDefault iso:UnknownBoxPayload .      # unmatched key: opaque bytes, not an error
+
+iso:Box.payload a bddo:Field ;
+    bddo:dataType bddo:bytes ;
+    bddo:hasDispatchTable iso:BoxPayloadDispatch .
+
+# in heif.ttl -- contributed from an importing graph, no list rewrite
+[] a bddo:DispatchArm ; bddo:armTable iso:BoxPayloadDispatch ;
+   bddo:armKey "ispe" ; bddo:armDataType heif:ImageSpatialExtents .
+[] a bddo:DispatchArm ; bddo:armTable iso:BoxPayloadDispatch ;
+   bddo:armKey "ipco" ; bddo:armDataType iso:ContainerBoxPayload .</code></pre>
+<p>Authored as:</p>
+<pre><code>// iso-bmff.hx
+dispatch BoxPayload on Box.type default UnknownBoxPayload
+
+// heif.hx
+extend dispatch iso.BoxPayload {
+  "ispe" =&gt; ImageSpatialExtents
+  "ipco" =&gt; iso.ContainerBoxPayload
+  "irot" =&gt; ImageRotation
+}</code></pre>
+<h4>Why keyed rather than ordered</h4>
+<ul class="tight">
+<li><strong>Openness.</strong> Arms are independent triples. Any importing graph may add one; nothing is rewritten; merge order is irrelevant.</li>
+<li><strong>Determinism.</strong> Keys are unique by SHACL constraint, so &ldquo;first match&rdquo; has no meaning and cannot be got wrong. A duplicate key across two modules is a validation error naming both — which is exactly the diagnostic you want when two profiles claim the same box type.</li>
+<li><strong>Speed.</strong> Ordered dispatch evaluates HEL predicates until one matches: with sixty arms, that is up to sixty evaluations <em>per box</em> in a file with thousands of boxes. A keyed table is one map lookup. This alone would be a reason to add it.</li>
+<li><strong>A default arm.</strong> Unknown box types are normal and legal in ISOBMFF, and libheif models them explicitly (<code>Box_other</code>). An ordered list has no notion of &ldquo;none matched, take the fallback&rdquo; short of a catch-all arm that every extender must be careful to stay behind — precisely the ordering hazard keyed dispatch removes.</li>
+</ul>
+<p><code>bddo:hasConditionalDataType</code> stays, unchanged, for genuine predicate dispatch (TIFF's inline-vs-pointer rule, NITF's presence conditions). The two coexist; a field carrying both is a validation error.</p>
+<h4>Impact</h4>
+<p>BDDO: six new terms and one SHACL shape. <code>RdfToIrCompiler</code>: collect arms by table across the loaded graph into a map — this is the natural home for the union, and it is where <code>owl:imports</code> has already been resolved. <code>Metaparser</code>: a map lookup beside the existing rule-list walk. The Processing Model gains one clause in &sect;3.2 alongside the existing type-selection rule. Nothing about it is HEIF-specific: the first beneficiary is NITF's TRE registry, and PNG chunks, RIFF, EBML, TIFF tags and glTF extensions all want it.</p>
+</article>
+
+<article>
+<h3>G3 &mdash; item payloads are addressed from outside the box tree <span class="badge gap">blocking</span></h3>
+<h4>Problem</h4>
+<p>In HEIF the box tree is a directory, not a document. Actual image data lives in <code>mdat</code> (or <code>idat</code>) and is reachable only through <code>iloc</code>: per item, a base offset plus a list of extents, each an (offset, length) pair, interpreted by a <code>construction_method</code> — 0 means a file offset, 1 means an offset into <code>idat</code>, 2 means an offset into another item. Three things break:</p>
+<ol>
+<li><strong>Region containment.</strong> An offset-addressed field is read relative to <code>bddo:offsetBase</code>, and a read that leaves the innermost bounded region raises a bounds error (Processing Model &sect;9). The <code>iloc</code> field lives inside the <code>meta</code> region; <code>mdat</code> is outside it. The seek is exactly what the bounds rule is designed to prevent.</li>
+<li><strong>No offset base of &ldquo;that box&rdquo;.</strong> <code>bddo:offsetBase</code> offers <code>streamStart</code>, <code>streamEnd</code>, <code>parentStart</code> and <code>currentPosition</code>. Construction method 1 needs &ldquo;the first byte of the <code>idat</code> payload&rdquo;, which is none of them.</li>
+<li><strong>No iteration variable.</strong> There is no way to say &ldquo;for each extent, read <em>its</em> offset and length&rdquo;. HEL binds <code>self</code> only in a <code>repeat until</code> predicate; a repeated field cannot address itself per element.</li>
+</ol>
+<h4>Proposal</h4>
+<p>Point 3 is already solved by a mechanism built for exactly this shape, and the connection is worth naming: DLV's chunk table takes <em>a vector of offsets and a vector of lengths read from fields</em> and materialises the pieces — <code>chunkOffsetsFromField</code>, <code>chunkLengthsFromField</code>, <code>chunkOffsetBase</code>. TIFF's <code>TileOffsets</code>/<code>TileByteCounts</code>, NITF block offsets and <code>iloc</code> extents are one mechanism with different field bindings, and the <code>LayoutExecutor</code> being built for the descriptor-driven raster work is the component that executes it.</p>
+<p>The mismatch is semantic, not mechanical: DLV chunks are pieces of <em>one</em> array, whereas <code>iloc</code> extents are the pieces of <em>many independent items</em>. Two ways to resolve it, and the choice should be made in review:</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Option</th><th>Shape</th><th>Trade-off</th></tr></thead>
+<tbody>
+<tr><td><b>G3a. Generalise DLV's chunk table</b></td><td>Let a chunk table stand alone, not only inside a <code>DataLayout</code>: an <em>extent table</em> that yields an ordered list of byte regions, keyed by an id field</td><td>Reuses <code>LayoutExecutor</code> whole. Requires DLV to admit a chunk table with no dimensions, which stretches &ldquo;layout&rdquo; past its definition</td></tr>
+<tr><td><b>G3b. A neutral extent-table term in BDDO</b> <span class="badge new">recommended</span></td><td><code>bddo:ExtentTable</code> with <code>extentOffsetsFromField</code>, <code>extentLengthsFromField</code>, <code>extentBase</code>, <code>extentKeyFromField</code>; a field carrying one parses each region against a data type</td><td>Says what it means; DLV keeps its definition; <code>LayoutExecutor</code> gains a second entry point rather than a stretched first one. Also serves ZIP central directories, TIFF <code>SubIFDs</code>, glTF buffer views and NITF DES pointers</td></tr>
+<tr><td><b>G3c. Pointer read at the extent</b> <span class="badge new">implemented</span></td><td>The extent's offset and length are parsed directly in <code>iloc</code> itself; a stream-scoped pointer read (<code>bddo:seekScope</code>) fetches the item's bytes right there, with no separate extent table</td><td>No extent table, no iteration variable, no <code>LayoutExecutor</code> dependency — smaller than either G3a or G3b. Construction methods 1 and 2 stay out of scope</td></tr>
+</tbody>
+</table>
+</div>
+<p>Points 1 and 2 need two small BDDO additions in either case: <code>bddo:offsetBaseField</code> (base an offset at the start of a named field's parsed bytes — construction method 1, and equally TIFF's IFD-relative values), and an explicit opt-out from region containment for offset-addressed reads, e.g. <code>bddo:seekScope bddo:StreamScope</code>. The opt-out must be explicit and narrow: the containment rule is a safety property, and a descriptor that escapes it is asserting that it means to address the whole file. Construction method 2 (offsets into another item) is a genuine forward reference and should be declared out of scope for milestone 1 — libheif itself treats it as rare.</p>
+</article>
+
+<article>
+<h3>G4 &mdash; the semantics live in a join, not in a field <span class="badge gap">design-level</span></h3>
+<h4>Problem</h4>
+<p>This is the deepest of the four, and the one most likely to be underestimated. Hexplain Core maps bytes to triples <em>structurally</em>: a struct maps to a class, a field maps to a property of that struct's instance. HEIF's meaning is not structural. The width of an image is in an <code>ispe</code> box that sits in <code>ipco</code>, in property-index order, associated with an item only through an <code>ipma</code> entry that names an item id defined in an <code>infe</code>. The relation &ldquo;this image is 4032 pixels wide&rdquo; is a three-way join across three boxes that are not nested in each other.</p>
+<p>Map <code>ispe.width</code> to <code>araster:width</code> naively and you get <code>&lt;file/meta/iprp/ipco/3&gt; araster:width 4032</code> — true of a property box, meaningless as a statement about an image. The same applies to <code>iref</code> (<code>thmb</code>, <code>dimg</code>, <code>auxl</code>, <code>cdsc</code> relations between items), to <code>pitm</code>, and to entity groups.</p>
+<h4>Proposal: value joins in Core</h4>
+<pre><code># A resolution declared on the referring field: "the value of this field identifies
+# the instance of &lt;targetStruct&gt; whose &lt;targetKey&gt; field has the same value".
+hexplain:ipmaItemRef a hexplain:ValueJoin ;
+    hexplain:joinFromField  iso:IpmaEntry.itemId ;
+    hexplain:joinToStruct   iso:ItemInfoEntry ;
+    hexplain:joinToKeyField iso:ItemInfoEntry.itemId ;
+    hexplain:joinEmits      heif:describesItem .        # object property on the emitted graph</code></pre>
+<p>Authored as <code>ref itemId -&gt; iso.ItemInfoEntry.itemId as heif:describesItem</code>. A processor resolves joins after the parse completes, over the instance graph it has just built, and emits object-property edges between minted IRIs. Three consequences worth stating plainly:</p>
+<ul class="tight">
+<li>It is a <strong>second pass</strong>. The Processing Model is currently single-pass and forward-reference-free by design (&sect;4: &ldquo;forward references MUST raise an error&rdquo;). Joins do not violate that rule — they run after parsing, not during it — but they add a phase to a normative algorithm, and the specification must say so explicitly rather than let implementations improvise.</li>
+<li>It is <strong>declarative and format-neutral</strong>. ZIP central directory to local header, TIFF <code>SubIFDs</code>, glTF accessor to buffer view, NITF DES attachment: all the same shape. AXV already has <code>CentralDirectory</code> and <code>ArchiveEntry</code> classes with the same latent problem.</li>
+<li>The <strong>alternative is to do nothing</strong> and emit a faithful box graph, leaving the join to a downstream SPARQL query or SHACL rule. That is a legitimate position — the descriptor stays a description of bytes — but it means a HEIF file cannot answer <code>?img araster:width ?w</code> without a per-format query the framework does not carry, and the profile's semantic value collapses to &ldquo;here are some boxes&rdquo;. Reviewers should decide this one on purpose, not by default.</li>
+</ul>
+<p>An intermediate position exists and may be the right milestone-1 answer: emit the box graph faithfully <em>plus</em> hand-written SPARQL CONSTRUCT rules shipped beside the profile, and promote them to a declared <code>ValueJoin</code> once two or three formats have proved the shape.</p>
+</article>
+
+<h3>5.5 Summary of proposed specification changes</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Gap</th><th>Module touched</th><th>New terms</th><th>Engine work</th><th>Needed for milestone</th></tr></thead>
+<tbody>
+<tr><td>G1 modules</td><td>HDL only</td><td>none (language, not vocabulary)</td><td>Compiler: <code>module</code>, <code>import</code>, qualified names; loader for option B</td><td>1 (inline) / 3 (imports)</td></tr>
+<tr><td>G2 keyed dispatch</td><td>BDDO + Processing Model</td><td>6 + 1 shape</td><td><code>RdfToIrCompiler</code> arm collection; <code>Metaparser</code> map lookup</td><td>2</td></tr>
+<tr><td>G3 extent tables</td><td>BDDO (+ DLV if G3a)</td><td>4 + 2 offset terms</td><td><code>LayoutExecutor</code> entry point; region-scope opt-out</td><td>2</td></tr>
+<tr><td>G4 value joins</td><td>Core + Processing Model</td><td>5</td><td>Post-parse resolution pass</td><td>4 (or never, if SPARQL wins)</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="semantics">
+<h2>6. Semantic mapping</h2>
+<p class="lede">What a parsed HEIF file should <em>mean</em>, in existing aspect and domain vocabulary — and where the vocabulary does not reach yet.</p>
+
+<h3>6.1 What maps today</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>HEIF construct</th><th>Maps to</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><code>ispe</code> width/height</td><td><code>araster:width</code>, <code>araster:height</code> on <code>araster:RasterGrid</code></td><td>exists</td></tr>
+<tr><td><code>pixi</code> bits per channel</td><td><code>asamp:bitDepth</code>, <code>asamp:componentCount</code></td><td>exists</td></tr>
+<tr><td><code>hvcC</code> / <code>av1C</code> presence</td><td><code>aenc:codec</code> &rarr; <code>menc:HEVC</code> / <code>menc:AV1</code></td><td>exists in the media-encoding register</td></tr>
+<tr><td>Item payload bytes</td><td><code>hexplain:isEncodedWith menc:HEVC</code></td><td>exists; decoding is a named primitive, not described</td></tr>
+<tr><td><code>colr</code> with <code>nclx</code> &rarr; BT.709 / BT.2020 triples</td><td><code>acolor:colorSpace</code> &rarr; <code>rcol:BT709</code> / <code>rcol:BT2020</code> / <code>rcol:sRGB</code></td><td>partial — see 6.2</td></tr>
+<tr><td>File as a container of items</td><td><code>apkg:Container</code> / <code>apkg:Entry</code> / <code>apkg:hasEntry</code></td><td>exists; a good fit, and unlike <code>hx-bundle</code> it does not assume multiple files</td></tr>
+<tr><td>Image sequence tracks</td><td><code>vdv:VideoTrack</code>, <code>vdv:frameCount</code>, <code>vdv:frameRate</code></td><td>exists (out of milestone 1)</td></tr>
+<tr><td>Exif item &rarr; TIFF block</td><td>delegate to a TIFF profile via <code>@encoded-with</code> + nested struct re-parse</td><td>mechanism exists; needs the TIFF profile as an import</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>6.2 Vocabulary gaps, and where each belongs</h3>
+<p>The neutrality gate (<code>test_vocab_neutrality</code>) forbids naming a format in BDDO, DLV, Core or any aspect. Every gap below is therefore stated as a neutral generalisation plus a profile-side binding — the pattern TIFF's <code>SampleFormat</code> already follows.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>What HEIF carries</th><th>Where it should live</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td><code>colr</code> nclx: colour primaries, transfer characteristics, matrix coefficients, full-range flag (three independent CICP code points)</td><td><b>hx-color</b> gains <code>colorPrimaries</code>, <code>transferCharacteristics</code>, <code>matrixCoefficients</code>, <code>fullRange</code>; the code points become a <b>CICP register</b> (ISO/IEC 23091-2) beside the existing colour register</td><td>hx-color currently has one property, <code>colorSpace</code>. A named colour space is a <em>conclusion</em> from a CICP triple, not a substitute for it; both are needed, and the register is where the published code points belong</td></tr>
+<tr><td><code>colr</code> with <code>rICC</code>/<code>prof</code>: an embedded ICC profile</td><td><b>hx-color</b>: <code>hasIccProfile</code> (an opaque byte block with a media type)</td><td>IDV has <code>ColorProfile</code>; the aspect-level term is what a HEIF item needs</td></tr>
+<tr><td><code>irot</code>, <code>imir</code>: display orientation</td><td><b>hx-raster</b> or a small orientation aspect: a rotation in degrees and a mirror axis</td><td>Neutral: EXIF orientation, TIFF tag 274 and PNG's <code>eXIf</code> all need it. Do <em>not</em> model it as an image transform to be applied — state the parameters</td></tr>
+<tr><td><code>clap</code>: clean aperture (crop as four rationals)</td><td><b>hx-raster</b>: a crop window with rational offsets</td><td>Also QuickTime, MP4, ProRes</td></tr>
+<tr><td><code>auxC</code>: auxiliary image type URN (alpha, depth, HDR gain map)</td><td><b>hx-raster</b> <code>hasMask</code> exists for validity masks and explicitly does not mean alpha. An <b>auxiliary-image-type register</b> keyed by URN is the clean answer</td><td>Alpha is not a mask, and a depth map is neither. The register keeps the aspect from growing a fixed list</td></tr>
+<tr><td><code>clli</code>, <code>mdcv</code>, <code>amve</code>: HDR mastering metadata</td><td><b>hx-color</b>, later</td><td>Deferred past milestone 1</td></tr>
+<tr><td><code>grid</code>, <code>tili</code>: an image assembled from tiles</td><td>DLV already: rows/columns and a chunk table. The <em>relation</em> between the derived item and its tiles needs G4</td><td>Once G4 lands, a <code>grid</code> item is a <code>RasterGrid</code> whose cells come from <code>dimg</code>-referenced items</td></tr>
+<tr><td><code>thmb</code>, <code>dimg</code>, <code>auxl</code>, <code>cdsc</code> item references</td><td><b>hx-raster</b> has <code>hasOverview</code>, which fits <code>thmb</code>. The rest need G4 plus profile-level object properties</td><td>Reference <em>types</em> are an open registry: another keyed dispatch (G2), not an enumeration</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>6.3 Item roles</h3>
+<p>The part-role register (<code>rpr:</code>) already carries <code>Thumbnail</code>, <code>Metadata</code>, <code>Payload</code> and <code>Sidecar</code>, minted for multi-file bundles but equally applicable to items inside one file. A HEIF item's role — primary image, thumbnail, alpha auxiliary, Exif metadata, derived grid — should bind to that register and extend it where needed, rather than mint a HEIF-local vocabulary. This keeps the query &ldquo;show me the thumbnail&rdquo; identical across a shapefile bundle and a HEIC file, which is the kind of payoff the aspect architecture exists for.</p>
+
+<h3>6.4 The codec boundary, restated</h3>
+<p><code>hvcC</code> and <code>av1C</code> are <em>described</em> in full: they are configuration records with a fixed field layout, and their fields (profile, tier, level, chroma format, bit depth) are real metadata worth having in the graph. The coded picture data they configure is <em>not</em> described; it is a byte block annotated <code>hexplain:isEncodedWith menc:HEVC</code>. Whether the engine can then produce pixels depends on whether a codec plugin is registered — exactly the same contract as LZW in TIFF. Describing an HEVC bitstream declaratively would require HEL to become a bytecode VM, which the descriptor-driven raster design already ruled out on the record.</p>
+</section>
+
+<section id="conformance">
+<h2>7. Conformance, brands and limits</h2>
+
+<h3>7.1 Brands are conformance claims, and belong in <code>req</code>/<code>conf</code></h3>
+<p><code>ftyp</code> is not just a magic number: a compatible brand is a machine-readable claim that the file satisfies a named constraint set. That is precisely what the Requirements and Conformance vocabularies model, and it means MIAF needs no new structs at all — <code>miaf.hx</code> is a constraint module.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Brand</th><th>Claims</th><th>Checkable from the graph?</th></tr></thead>
+<tbody>
+<tr><td><code>mif1</code></td><td>HEIF image file: a <code>meta</code> box with <code>hdlr</code> = <code>pict</code>, a <code>pitm</code>, and every item's properties associated</td><td>Yes</td></tr>
+<tr><td><code>heic</code></td><td>Primary item is HEVC-coded; an <code>hvcC</code> is associated and marked essential</td><td>Yes (needs G4 for &ldquo;associated&rdquo;)</td></tr>
+<tr><td><code>avif</code></td><td>Primary item is AV1-coded; <code>av1C</code> associated; MIAF constraints hold</td><td>Yes (needs G4)</td></tr>
+<tr><td><code>msf1</code></td><td>An image sequence: <code>moov</code> with at least one <code>pict</code> track</td><td>Yes, once <code>iso-bmff-tracks</code> exists</td></tr>
+<tr><td><code>MA1B</code> (MIAF)</td><td>Codec, colour and profile restrictions on the primary item</td><td>Partly — some MIAF rules are about the coded bitstream, and are unreachable by design (&sect;6.4)</td></tr>
+</tbody>
+</table>
+</div>
+<p>The useful property here is that brand claims are checkable <em>against the file itself</em>: a file declaring <code>heic</code> whose primary item has no associated <code>hvcC</code> is malformed, and the conformance graph can say so with a citation. That is a concrete demonstration of the framework doing something a hand-written parser does not.</p>
+
+<h3>7.2 Resource limits</h3>
+<p>libheif ships <code>security_limits.cc</code> because HEIF is a hostile-input format: nested boxes, an item graph that can contain cycles (<code>dimg</code> loops), enormous declared extents, and grids that multiply out to gigapixels. The engine's <code>ParseLimits</code> (<code>maxDepth</code> 64, <code>maxVisitedNodes</code>, <code>maxInputBytes</code>) covers the structural half. Two limits should be named explicitly in the profile's test plan because the descriptor makes them reachable: total declared extent bytes versus file size, and item-reference cycle detection once G4 resolves references. Both are engine concerns, not descriptor concerns, but the HEIF profile is what will first exercise them.</p>
+</section>
+
+<section id="plan">
+<h2>8. Delivery plan</h2>
+<p class="lede">Sequenced so that each milestone is independently verifiable and the first one produces a parsed file, rather than deferring all value behind four specification changes.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Milestone</th><th>Content</th><th>Gates it must pass</th><th>Depends on</th></tr></thead>
+<tbody>
+<tr><td><b>M0</b> Decide</td><td>Review this document; settle G3a-vs-G3b and the G4 question (declared joins vs shipped SPARQL)</td><td>—</td><td>—</td></tr>
+<tr><td><b>M1</b> Box walker</td><td><code>iso-bmff.hx</code> as one self-contained format: box framing, <code>ftyp</code>, container recursion, unknown boxes as opaque bytes. No items, no reuse, inline lowering</td><td><code>test_profile_library</code>; a behavioural test parsing a real <code>.heic</code> and enumerating its box tree &rarr; <code>parse-verified</code></td><td>nothing</td></tr>
+<tr><td><b>M2</b> Items</td><td>G2 (keyed dispatch) and G3 (extent tables) in BDDO and the engine; <code>meta</code>, <code>iloc</code>, <code>iinf</code>, <code>iref</code>, <code>iprp</code>; item payload extraction</td><td>BDDO SHACL; Metaparser tests; extracting the primary item's HEVC bytes and byte-comparing against libheif's own extraction</td><td>M1</td></tr>
+<tr><td><b>M3</b> Modules</td><td>G1 in HDL; split <code>iso-bmff</code> / <code>heif</code> / <code>codec-hevc</code> / <code>heic</code>; <code>avif</code> added as the proof that the base is genuinely reusable</td><td>Round-trip of the split against M2's monolith — same triples, different files. <code>test_profile_library</code> extended to validate a module with its imports</td><td>M2</td></tr>
+<tr><td><b>M4</b> Semantics</td><td>G4; <code>ispe</code>/<code>pixi</code>/<code>colr</code>/<code>irot</code> mapped through associations to items; aspect extensions from &sect;6.2</td><td>A SPARQL query answering <code>?image araster:width ?w</code> on a real file, matching libheif's reported dimensions</td><td>M3, aspect changes</td></tr>
+<tr><td><b>M5</b> Breadth</td><td><code>miaf</code> constraints; <code>grid</code>/<code>iovl</code>; <code>vvcC</code>, <code>uncC</code>; sequences via <code>iso-bmff-tracks</code>; MP4 as the second consumer of the base</td><td>Conformance report on a brand-tagged corpus</td><td>M4</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>8.1 Verification, and what &ldquo;verified&rdquo; would mean here</h3>
+<p>The profile library's distinction between <code>NOT parse-verified</code> and <code>parse-verified</code> is the one that matters, and HEIF offers an unusually strong form of the second: libheif is a reference implementation with a public test corpus, so every claim the descriptor makes about a real file can be checked against what libheif reports for the same file — box offsets, item ids, extent boundaries, image dimensions, extracted payload bytes. That is a sharper gate than the GDAL pixel-parity comparisons, because it tests the <em>descriptor</em> rather than a hand-written decoder that happens to agree with it. The comparison should be scripted from M1 onward and should be the definition of done for each milestone, not a final step.</p>
+</section>
+
+<section id="risks">
+<h2>9. Risks and open questions</h2>
+
+<h3>9.1 Risks</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Risk</th><th>Assessment</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>G4 turns out to be a rabbit hole, and the profile stalls at &ldquo;a graph of boxes&rdquo;</td><td>Most likely failure mode. Value joins are a real extension to a normative single-pass algorithm</td><td>M1&ndash;M3 deliver value without G4. Ship SPARQL CONSTRUCT rules beside the profile as the interim answer, and promote them only when a second format wants the same shape</td></tr>
+<tr><td>The keyed dispatch table duplicates <code>hasConditionalDataType</code> and confuses authors</td><td>Real but manageable</td><td>One rule, stated in BDDO and enforced by SHACL: keyed table when arms are distinguished by equality on one field; ordered list otherwise; never both on one field</td></tr>
+<tr><td>Escaping the bounded region for <code>iloc</code> extents weakens a safety property</td><td>Genuine. The containment rule is what makes a malformed file fail loudly</td><td>Opt-in per field, never per profile; combined with a declared-extent budget checked against the actual file size</td></tr>
+<tr><td>Field-level details in this document are wrong</td><td>Likely in places — they come from memory of the standards plus libheif's structure, not from the ISO text</td><td>Nothing authored until checked against 14496-12 and 23008-12; ship <code>NOT parse-verified</code> until a real file parses</td></tr>
+<tr><td>Module split makes the profile library harder to contribute to</td><td>Modest</td><td>The leaf profiles stay tiny and readable; the base module is the only complex one, and it is written once</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>9.2 Open questions for review</h3>
+<ol>
+<li><strong>G3a or G3b</strong> — generalise DLV's chunk table, or add a neutral extent table to BDDO? The recommendation is G3b, but G3a reuses <code>LayoutExecutor</code> with no new concept at all.</li>
+<li><strong>G4 now or later</strong> — declared value joins in Core, or shipped SPARQL alongside the profile until a second format needs it? This decides whether the profile is semantic or merely structural at M4.</li>
+<li><strong>Module naming</strong> — <code>iso-bmff</code> or <code>iso14496-12</code>? The latter is precise and ages well against amendments; the former is what people search for.</li>
+<li><strong>Does <code>module</code> earn its keyword</strong>, or is a <code>format</code> with no root struct enough? A separate keyword is clearer and lets the compiler refuse to treat a module as a format; it is also one more thing in the grammar.</li>
+<li><strong>Where do brands live</strong> — a register of brand codes (they are published four-character codes, which is exactly what a register is for), or profile-local enums? The register is more consistent with the media-encoding precedent.</li>
+<li><strong>Does the <code>heif</code> module import <code>codec-hevc</code></strong>, or does only <code>heic</code>? Keeping codecs out of <code>heif</code> is what lets AVIF import <code>heif</code> without dragging HEVC in — the answer that keeps the layering honest.</li>
+</ol>
+</section>
+
+<section id="appendix">
+<h2>10. Appendix — box inventory</h2>
+<p class="lede">Every box class libheif declares, with the module it belongs to under this design. <code>FB</code> marks a FullBox (version + flags). This is the checklist a first implementation would work through, not a claim that all of it is in milestone 1.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>4CC</th><th>Kind</th><th>Carries</th><th>Module</th></tr></thead>
+<tbody>
+<tr><td><code>ftyp</code></td><td>Box</td><td>Major brand, minor version, compatible brands</td><td>iso-bmff</td></tr>
+<tr><td><code>free</code> / <code>skip</code></td><td>Box</td><td>Padding, ignorable</td><td>iso-bmff</td></tr>
+<tr><td><code>mdat</code></td><td>Box</td><td>Media data — addressed only through <code>iloc</code> or sample tables</td><td>iso-bmff</td></tr>
+<tr><td><code>meta</code></td><td>FB</td><td>Metadata container; parent of all item machinery</td><td>iso-bmff</td></tr>
+<tr><td><code>hdlr</code></td><td>FB</td><td>Handler type (<code>pict</code> for images)</td><td>iso-bmff</td></tr>
+<tr><td><code>pitm</code></td><td>FB</td><td>Primary item id</td><td>iso-bmff</td></tr>
+<tr><td><code>iloc</code></td><td>FB</td><td>Per-item base offset and extent list; nibble-sized widths; construction method</td><td>iso-bmff</td></tr>
+<tr><td><code>iinf</code> / <code>infe</code></td><td>FB</td><td>Item inventory: id, type 4CC, name, and for <code>mime</code>/<code>uri&nbsp;</code> items a content type</td><td>iso-bmff</td></tr>
+<tr><td><code>iref</code></td><td>FB</td><td>Typed item-to-items references (<code>dimg</code>, <code>thmb</code>, <code>cdsc</code>, <code>auxl</code>, <code>prem</code>, <code>base</code>); 16- or 32-bit ids by version</td><td>iso-bmff</td></tr>
+<tr><td><code>iprp</code> / <code>ipco</code></td><td>Box</td><td>Property container; properties addressed by 1-based index</td><td>iso-bmff</td></tr>
+<tr><td><code>ipma</code></td><td>FB</td><td>Item-to-property associations; essential bit + 7/15-bit index</td><td>iso-bmff</td></tr>
+<tr><td><code>idat</code></td><td>Box</td><td>Inline item data (construction method 1)</td><td>iso-bmff</td></tr>
+<tr><td><code>dinf</code> / <code>dref</code> / <code>url&nbsp;</code></td><td>Box / FB</td><td>Data references; external files are a rejection case for a self-contained profile</td><td>iso-bmff</td></tr>
+<tr><td><code>grpl</code> / <code>altr</code> / <code>ster</code> / <code>pymd</code></td><td>Box</td><td>Entity groups: alternatives, stereo pairs, pyramids</td><td>iso-bmff / heif</td></tr>
+<tr><td><code>ispe</code></td><td>FB</td><td>Width, height</td><td>heif</td></tr>
+<tr><td><code>pixi</code></td><td>FB</td><td>Bits per channel</td><td>heif</td></tr>
+<tr><td><code>irot</code> / <code>imir</code> / <code>iscl</code></td><td>Box / FB</td><td>Rotation (2 bits), mirror axis (1 bit), scaling — transformative properties</td><td>heif</td></tr>
+<tr><td><code>clap</code> / <code>pasp</code></td><td>Box</td><td>Clean aperture (8 rationals); pixel aspect ratio</td><td>heif</td></tr>
+<tr><td><code>colr</code></td><td>Box</td><td><code>nclx</code> CICP triple + range flag, or an embedded ICC profile</td><td>heif</td></tr>
+<tr><td><code>auxC</code></td><td>FB</td><td>Auxiliary type URN + subtype (alpha, depth, gain map)</td><td>heif</td></tr>
+<tr><td><code>rref</code> / <code>lsel</code></td><td>FB / Box</td><td>Required reference types; layer selection</td><td>heif</td></tr>
+<tr><td><code>udes</code> / <code>elng</code></td><td>FB</td><td>User description; extended language tag</td><td>heif</td></tr>
+<tr><td><code>clli</code> / <code>mdcv</code> / <code>amve</code> / <code>ndwt</code></td><td>Box / FB</td><td>HDR light level, mastering display, ambient viewing, diffuse white</td><td>heif (deferred)</td></tr>
+<tr><td><code>cmin</code> / <code>cmex</code></td><td>FB</td><td>Camera intrinsics and extrinsics</td><td>heif-ext</td></tr>
+<tr><td><code>taic</code> / <code>itai</code></td><td>FB</td><td>TAI clock info and per-item timestamp</td><td>heif-ext</td></tr>
+<tr><td><code>uuid</code> (GIMI content id)</td><td>Box</td><td>Extended-type box keyed by a 16-byte UUID — a second dispatch dimension</td><td>heif-ext</td></tr>
+<tr><td><code>hvcC</code> / <code>avcC</code> / <code>vvcC</code></td><td>Box</td><td>Decoder configuration records with parameter-set arrays</td><td>codec-hevc / -avc / -vvc</td></tr>
+<tr><td><code>av1C</code></td><td>Box</td><td>AV1 config: profile, level, bit depth, chroma, config OBUs</td><td>codec-av1</td></tr>
+<tr><td><code>j2kH</code> / <code>jpgC</code></td><td>Box</td><td>JPEG 2000 / JPEG configuration</td><td>codec-j2k / -jpeg</td></tr>
+<tr><td><code>uncC</code> / <code>cmpd</code></td><td>FB</td><td>Uncompressed component layout (ISO/IEC 23001-17) — the one codec whose &ldquo;bitstream&rdquo; DLV <em>can</em> describe in full</td><td>codec-uncompressed</td></tr>
+<tr><td><code>grid</code> / <code>iovl</code> / <code>iden</code> / <code>tili</code> / <code>mski</code></td><td>item payload</td><td>Derived-item payloads, not boxes: tile grids, overlays, identity, tiled images, masks</td><td>heif</td></tr>
+<tr><td><code>mini</code></td><td>Box</td><td>Low-overhead compact header replacing the whole <code>meta</code> structure</td><td>heif-mini</td></tr>
+<tr><td><code>moov</code> / <code>trak</code> / <code>stbl</code> &hellip;</td><td>Box / FB</td><td>Track and sample tables for image sequences</td><td>iso-bmff-tracks</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<footer>
+<p>Design document, 2026-09-06. Sources: <a href="https://github.com/strukturag/libheif">strukturag/libheif</a> (<code>libheif/box.h</code>, <code>libheif/codecs/</code>, <code>libheif/image-items/</code>); ISO/IEC 14496-12, ISO/IEC 23008-12, ISO/IEC 23000-22; the Hexplain <a href="../../../specification/bddo/">BDDO</a>, <a href="../../../specification/hdl/">HDL</a>, <a href="../../../specification/hel/">HEL</a>, <a href="../../../specification/dlv/">DLV</a> and <a href="../../../specification/processing/">Processing Model</a> specifications; <code>hexplain-tools</code> (<code>Metaparser</code>, <code>RdfToIrCompiler</code>, <code>HdlCompiler</code>); <code>hexplain-profiles</code> (<code>nitf</code>). Field-level structure in the sketches above is unverified against the ISO text and must be checked before authoring.</p>
+</footer>
+</main></body></html>

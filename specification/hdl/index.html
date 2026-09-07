@@ -100,7 +100,7 @@
             <li><b>Bracketed expressions.</b> the text between a matching <code>[ ]</code> pair is captured whole (§<a href="#expressions">Expressions</a>).</li>
             <li><b>Backtick expressions.</b> a <code>`&#8230;`</code> literal denotes a raw HEL expression (§<a href="#raw-hel">Raw HEL</a>).</li>
         </ul>
-        <p><b>Keywords:</b> <code>format struct enum bundle asset field use means value map switch when repeat until if from cell dim axis role required optional primary carries described-by conforms as raw-turtle</code>.</p>
+        <p><b>Keywords:</b> <code>format struct enum bundle asset field use means value map switch when repeat until if from cell dim axis role required optional primary carries described-by conforms as raw-turtle module import extend dispatch on default</code>.</p>
     </section>
 
     <section id="structure">
@@ -134,7 +134,7 @@ struct Chunk {
                     <tr><td><code>bytes</code></td><td><code>bddo:bytes</code> (requires a sizing or terminator clause)</td></tr>
                     <tr><td><code>str</code></td><td><code>bddo:string</code>, encoding <code>bddo:utf8</code> (default)</td></tr>
                     <tr><td><code>ascii utf8 utf16le utf16be latin1</code></td><td><code>bddo:string</code> + <code>bddo:encoding</code></td></tr>
-                    <tr><td><code>bits[N]</code></td><td>a field with <code>bddo:bitLength N</code></td></tr>
+                    <tr><td><code>bits[N]</code></td><td>a field with <code>bddo:bitLength N</code>, plus <code>bddo:dataType</code> set to whichever of <code>bddo:uint8</code>/<code>uint16</code>/<code>uint32</code>/<code>uint64</code> is the narrowest fit for N bits (the engine reads <code>N</code> bits from the bit cursor; the data type only fixes the value's integer width)</td></tr>
                     <tr><td><code>&lt;StructName&gt;</code></td><td>a nested/typed field (<code>bddo:dataType</code> that Struct)</td></tr>
                 </tbody>
             </table>
@@ -542,11 +542,16 @@ structs:
         <h2>Grammar (text surface)</h2>
         <p>The following grammar [[RFC5234]] sketches the HDL text surface. Expression interiors are HEL (§<a href="#expressions">Expressions</a>).</p>
         <pre class="abnf">
-document     = *( use-decl / format-decl / struct-decl / field-decl
-                / bundle-decl / asset-decl )
+document     = *( use-decl / import-decl / format-decl / module-decl / struct-decl / field-decl
+                / bundle-decl / asset-decl / extend-decl )
 use-decl     = "use" PREFIX ( IRIREF / STRING )
 format-decl  = "format" IDENT *( "@namespace" STRING / "@endian" endian
                               / "@bit-order" bitorder )
+module-decl  = "module" IDENT *( "@namespace" STRING / "@endian" endian
+                              / "@bit-order" bitorder )
+import-decl  = "import" STRING "as" IDENT
+extend-decl  = "extend" "dispatch" table-ref "{" *disparm "}"
+disparm      = ( STRING / INT ) "=&gt;" struct-ref
 struct-decl  = [ "@root" ] "struct" IDENT [ "as" IDENT ] [ "means" CURIE ]
                *struct-annot "{" *( field-decl / raw-block / prop-clause ) "}"
 field-decl   = [ "field" ] IDENT [ "as" IDENT ] ":" type *clause
@@ -554,6 +559,7 @@ type         = prim / "bytes" / strtype / "bits" "[" expr "]" / struct-ref
 clause       = "[" ( expr / ".." ) "]"                      ; byte size
              / "repeat" ( expr / "until" expr )
              / "@at" expr [ "from" offsetbase ]
+             / "@seek" ( "stream" / "region" )
              / "if" expr
              / "@fixed" ( HEXBYTES / INT / STRING )
              / "enum" [ "flags" ] "{" enumpair *( "," enumpair ) "}"
@@ -562,6 +568,7 @@ clause       = "[" ( expr / ".." ) "]"                      ; byte size
              / "@endian" endian / "@align" INT / "@bit-order" bitorder
              / "@encoding" enc
              / "switch" [ expr ] "{" *swarm "}"
+             / "dispatch" IDENT "on" expr [ "default" struct-ref ] "{" *disparm "}"
              / "means" CURIE
              / "value" expr [ "@datatype" CURIE ]
              / "@encoded-with" CURIE
@@ -584,6 +591,28 @@ endian       = "big" / "little"
 bitorder     = "msb" / "lsb"
 offsetbase   = "stream-start" / "stream-end" / "parent-start" / "current"
         </pre>
+        <p><code>struct-ref</code> and <code>table-ref</code> are each a bare name or <code>alias:Name</code>, where <code>alias</code> is an <code>import</code> alias.</p>
+    </section>
+
+    <section id="modules">
+        <h2>Modules, imports and keyed dispatch</h2>
+        <p>A <code>module</code> is a format description that is not a file format: it declares a namespace and structs for other descriptions to <code>import</code>. An <code>import "&lt;path&gt;" as &lt;alias&gt;</code> binds the alias as a prefix to the module's namespace; the imported module is compiled, not copied, and the importing document's ontology carries <code>owl:imports</code> for it. <code>alias:Name</code> then names an imported struct in any type position and an imported dispatch table in <code>extend dispatch</code>. Nothing of the imported module is re-emitted, so a fix to the base is a fix for every importer.</p>
+        <pre class="nohighlight">
+module isobmff @namespace "https://hexplain.io/ns/profile/iso-bmff#" @endian big
+struct Box @size `instance.size == 1 ? instance.largesize : (instance.size == 0 ? stream.remaining + 4 : instance.size)` {
+  size    : u32
+  type    : ascii[4]
+  payload : bytes[..] dispatch BoxPayload on type { "ftyp" =&gt; FileTypeBox  "meta" =&gt; MetaBox }
+}
+
+module heif @namespace "https://hexplain.io/ns/profile/heif#"
+import "../iso-bmff/iso-bmff.hx" as iso
+extend dispatch iso:BoxPayload { "ispe" =&gt; ImageSpatialExtents }
+struct ImageSpatialExtents { hdr : iso:FullBoxHeader  width : u32  height : u32 }</pre>
+        <p>The <code>@size</code> clause above is written as a backtick raw-HEL expression, not a bracketed one, because the lexer drops a bare <code>?</code> when it appears outside a bracketed expression; the same ternary written as a bracket expression must take the form <code>derive [ cond ? a : b ]</code>.</p>
+        <p><b>Keyed dispatch.</b> <code>dispatch &lt;Name&gt; on &lt;expr&gt; [default &lt;Struct&gt;] { &lt;key&gt; =&gt; &lt;Struct&gt; … }</code> lowers to a named <code>bddo:DispatchTable</code> whose arms are independent <code>bddo:DispatchArm</code> resources (<code>bddo:armTable</code>, <code>bddo:armKey</code>, <code>bddo:armDataType</code>). A lone sibling in <code>on</code> becomes <code>bddo:dispatchOnField</code>; any other expression becomes <code>bddo:dispatchOnExpression</code>, resolved like a <code>switch</code> condition. Keys are string or integer literals and typed: the string <code>"7"</code> and the integer <code>7</code> are distinct arms. Keys are unique per table across the declaring document and every <code>extend dispatch</code> on it — including an extension targeting an imported table — but uniqueness is not checked across separate modules; the loader and the <code>bddo:DispatchKeyUniquenessShape</code> SHACL shape both enforce this. <code>switch</code> remains the form for ordered, possibly overlapping guards; a field uses one or the other. <code>extend dispatch</code> at top level contributes arms to a table declared in this document or in an imported module — the mechanism for open type registries.</p>
+        <p><b>Seek scope.</b> <code>@seek stream</code> on an offset-addressed field (<code>bddo:seekScope bddo:streamScope</code>) lets that one read leave the innermost bounded region; the default <code>@seek region</code> keeps the Processing Model's containment rule. <code>@seek</code> on a field with no <code>@at</code> clause is a compile-time error, since seek scope only bounds an offset-addressed read that must already exist. An item-location table inside a <code>meta</code> box that points into <code>mdat</code> is the motivating case.</p>
+        <p>The YAML surface has no <code>imports:</code> key yet; a document that imports must use the text surface.</p>
     </section>
 
     <section id="conformance-section">
