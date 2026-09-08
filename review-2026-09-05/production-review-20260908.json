@@ -1,0 +1,373 @@
+{
+  "date": "2026-09-08",
+  "scope": "Focused production/release code review, including the newly added generated Kotlin runtime. SaaS excluded. Not an exhaustive audit or mathematical proof.",
+  "spec_revision": "cc27865871b452fe5416f46396965013e00f2af2",
+  "engine_revision": "2f9e42ef53120259320d3d78efc797e6d1ccf348",
+  "scores": {
+    "specification": 7.95,
+    "engine": 8.2
+  },
+  "dimensions": [
+    [
+      "Correctness",
+      30,
+      8.5,
+      9.0
+    ],
+    [
+      "Architecture",
+      20,
+      9.0,
+      9.0
+    ],
+    [
+      "Validation evidence",
+      20,
+      8.5,
+      9.0
+    ],
+    [
+      "Release verification",
+      20,
+      7.0,
+      6.5
+    ],
+    [
+      "Operations/governance",
+      10,
+      5.0,
+      6.0
+    ]
+  ],
+  "runtime_rerun": {
+    "tests": 46,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "live": {
+    "checks": 38,
+    "passed": 0
+  },
+  "findings": [
+    {
+      "id": "R01",
+      "priority": "P0",
+      "title": "Generated runtime region arithmetic corrupts cursor state",
+      "evidence": "Direct Java probes reproduce region(-1) leaving position -1 and region(Int.MAX_VALUE) at position 1 wrapping to Int.MIN_VALUE. The API returns normally.",
+      "task": "Validate initial positions and nonnegative extents; use checked addition or subtraction-based bounds before changing region state. Audit need(), bytes() and writer address arithmetic too.",
+      "completion": "Negative, overflow, truncated and nested-region cases reject before mutation; generated-code adversarial tests match the reference contract.",
+      "source": {
+        "repo": "engine",
+        "path": "runtime-kotlin/src/main/kotlin/io/hexplain/rt/ByteReader.kt",
+        "line": 44,
+        "sha256": "3091982835bddd69a04752854aefb4a35f228e56c31e296f6572fc2c7444a73b"
+      },
+      "status": "Fixed in local working tree"
+    },
+    {
+      "id": "R02",
+      "priority": "P0",
+      "title": "Generated runtime alignment silently narrows large values",
+      "evidence": "align(4294967298L) at position 1 advances to 2 because boundary.toInt() wraps. Confirmed by the probe.",
+      "task": "Preserve Long arithmetic; validate alignment and resulting position before narrowing. Specify over-container alignment behavior consistently across runtime and engine.",
+      "completion": "Exact boundary vectors cover 0, negatives, Int.MAX_VALUE, 2^32+2 and overflow; no aliasing to another alignment.",
+      "source": {
+        "repo": "engine",
+        "path": "runtime-kotlin/src/main/kotlin/io/hexplain/rt/ByteReader.kt",
+        "line": 92,
+        "sha256": "3091982835bddd69a04752854aefb4a35f228e56c31e296f6572fc2c7444a73b"
+      },
+      "status": "Fixed in local working tree"
+    },
+    {
+      "id": "R03",
+      "priority": "P0",
+      "title": "Specification CI depends on an absent sibling repository",
+      "evidence": "The specification workflow checks out only this repository. test_gdal_runtime unconditionally reads ../hexplain-tools. Local success cannot establish clean-checkout CI success.",
+      "task": "Pin and checkout the required engine revision into the expected sibling path, or validate immutable vendored evidence without a sibling dependency. Audit historical git-object dependencies too.",
+      "completion": "Run all gates from a fresh Linux checkout without preexisting sibling files; record source revisions and successful CI URL.",
+      "source": {
+        "repo": "spec",
+        "path": ".github/workflows/validate.yml",
+        "line": 7,
+        "sha256": "03f746f822e023518d07b24fbbc461471c52e571f83074b13e1fd3c8a1d0c7d4"
+      },
+      "status": "Locally corrected; remote acceptance pending"
+    },
+    {
+      "id": "R04",
+      "priority": "P1",
+      "title": "Published competency traceability is stale",
+      "evidence": "Fresh targeted run: competency_trace fails exact JSON freshness assertion; gdal_runtime passes locally. Do not remove the guard to make the run green.",
+      "task": "Regenerate traceability after canonical/reference/corpus changes; inspect semantic differences and normalize hashing policy where line endings matter. Wire generation freshness into authoring checks.",
+      "completion": "Freshness test passes on Windows and clean Linux with identical committed artifacts and deliberate review of changed coverage.",
+      "source": {
+        "repo": "spec",
+        "path": "tools/test_competency_trace.py",
+        "line": 4,
+        "sha256": "de371165dadf4b710f80cbedda082274ee0a060b61651a49b870d04350a8552f"
+      },
+      "status": "Fixed in local working tree"
+    },
+    {
+      "id": "R05",
+      "priority": "P0",
+      "title": "Release acceptance excludes the new codec-generation surface",
+      "evidence": "settings includes codegen, runtime-kotlin, codegen-kotlin and codegen-verify. Release workflow explicitly tests/stages only core, adapters and HDL; publishing likewise permits only those three. General CI does call build/test, but that does not deliver the standalone runtime.",
+      "task": "Define which generator/runtime modules are distributable, add their artifacts and consumer tests, and make generated-code verification mandatory before release promotion.",
+      "completion": "A consumer outside the checkout generates and compiles a codec using private-registry artifacts alone; both OS release jobs test all in-scope modules.",
+      "source": {
+        "repo": "engine",
+        "path": ".github/workflows/release-acceptance.yml",
+        "line": 35,
+        "sha256": "974f8bdb9e435601073f8199ee35547df4a533a9282fd0a03496f857349dea61"
+      },
+      "status": "Locally corrected; remote acceptance pending"
+    },
+    {
+      "id": "R06",
+      "priority": "P1",
+      "title": "Generated runtime does not inherit parser-wide budgets",
+      "evidence": "ByteReader has no shared work/depth/deadline budget. until retries every prefix; emitted counted loops allocate and iterate without a shared request budget. Per-block codec and writer byte limits do not cover cumulative work. This is static analysis, not a measured denial-of-service exploit.",
+      "task": "Add an invocation-wide runtime budget spanning regions, recursion, repetitions and cumulative decoding. Use bounded linear terminator search. Audit WriteBuffer doubling for overflow at configured limits above 1 GiB; validate externally killable execution.",
+      "completion": "Adversarial zero-width repeats, long-prefix sentinels, nested decode expansion and recursive layouts fail within documented work/time limits; deployed worker cancellation and recovery pass.",
+      "source": {
+        "repo": "engine",
+        "path": "runtime-kotlin/src/main/kotlin/io/hexplain/rt/ByteReader.kt",
+        "line": 169,
+        "sha256": "3091982835bddd69a04752854aefb4a35f228e56c31e296f6572fc2c7444a73b"
+      },
+      "status": "Shared budgets and local Linux process containment verified; deployed service acceptance outside this evidence"
+    },
+    {
+      "id": "R07",
+      "priority": "P0",
+      "title": "Live machine-readable publication still fails",
+      "evidence": "Fresh 8 September probe results are retained separately. Namespace and immutable manifest requests still receive HTML fallback responses.",
+      "task": "Fix actual hosting routes, negotiated media types and cache behavior; verify every canonical namespace and immutable release.",
+      "completion": "All live contract probes pass after deployment; unknown routes reject; archive bytes and hashes remain immutable.",
+      "source": {
+        "repo": "spec",
+        "path": "tools/check_live_publication.py",
+        "line": 37,
+        "sha256": "13cc7329871edfdc9af12c30386c60d8ec59a545af581ce21697393813c6825a"
+      },
+      "status": "Deferred by user; excluded from scoring"
+    },
+    {
+      "id": "R08",
+      "priority": "P1",
+      "title": "Independent ontology acceptance remains unsigned",
+      "evidence": "Review manifest still says awaiting independent review; reviewer and decision are null. Scope grew after earlier snapshots.",
+      "task": "Refresh candidate hashes and requirement-to-test mapping; obtain an attributable independent review of current modules, cross-module constraints, unknown-value semantics and migrations.",
+      "completion": "Named independent decision against exact hashes; all blocking findings resolved with counterexamples and dual-validator tests.",
+      "source": {
+        "repo": "spec",
+        "path": "specification/ontology-review/review-manifest.json",
+        "line": 3,
+        "sha256": "8280731870e19db443062aa68eabbc99990e529d09c224e4577e12dd031361e6"
+      },
+      "status": "Open"
+    },
+    {
+      "id": "R09",
+      "priority": "P1",
+      "title": "Historical evidence is not current release acceptance",
+      "evidence": "GitHub history inspected during review shows failures and no successful current-head run in the returned history. Local codegen task invocation succeeds but is up-to-date; only runtime tests were explicitly rerun.",
+      "task": "Freeze release candidate; execute full clean CI, extend negative/fuzz and real-format semantic differential cases, publish immutable private artifacts, audit transitive dependencies and retain provenance.",
+      "completion": "Successful current-revision CI and registry install, documented advisory dispositions, signed provenance where supported, and tested rollback. No billing cause is inferred from old annotations.",
+      "source": {
+        "repo": "engine",
+        "path": "tests/release/artifact_manifest.py",
+        "line": 59,
+        "sha256": "d9493ee0a71f8c4ecf935b1cd3c1e8c7223955343f262746adbc8c064572e815"
+      },
+      "status": "Open"
+    }
+  ],
+  "followup": {
+    "date": "2026-09-08",
+    "fixed": [
+      "R01",
+      "R02",
+      "R04"
+    ],
+    "tests": {
+      "runtime-kotlin": {
+        "tests": 52,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "codegen": {
+        "tests": 126,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "codegen-kotlin": {
+        "tests": 119,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "codegen-verify": {
+        "tests": 42,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "log": "correctness-fixes-20260908.log",
+    "traceability": "Freshness gate passes; 756 resources, 110 cases, 46 referenced resources, 21 expected result paths.",
+    "scope": "Runtime bounds/arithmetic and traceability corrections. R03/R05-R09 remain open, including generated-code shared resource budgets and release acceptance.",
+    "source_sha256": {
+      "runtime-kotlin/src/main/kotlin/io/hexplain/rt/ByteReader.kt": "32977943b786cf9e3d67c2cc0629628665676174537e5f5f1c0b3f2d27b42729",
+      "runtime-kotlin/src/main/kotlin/io/hexplain/rt/WriteBuffer.kt": "d72b1bf43bc38a4384e01145cd24ccd08947e688fddb466cf3113e9c2d8739c1",
+      "runtime-kotlin/src/test/kotlin/io/hexplain/rt/BoundaryRegressionTest.kt": "9f67bf407bb6286c7b50dcca9512933ac2cf6fcd35ae85452127fab363e46730"
+    }
+  },
+  "release_scope_followup": {
+    "scope": "Local release-scope correction, not remote acceptance",
+    "distributable_modules": [
+      "core",
+      "hdl",
+      "adapters",
+      "runtime-kotlin",
+      "codegen",
+      "codegen-kotlin"
+    ],
+    "test_only_module": "codegen-verify",
+    "local_checks": {
+      "artifact_tests": 12,
+      "specification_gates": "3/3",
+      "generated_consumer": "passed: emitted source compiles and reads 42; core absent at execution",
+      "six_module_inventory": "create/verify pass; dirty source explicitly recorded"
+    },
+    "remaining": "Clean remote CI, cross-repository read access if private, production registry, signed provenance and deployment acceptance remain unverified."
+  },
+  "scanner_followup": {
+    "tests": {
+      "runtime-kotlin": {
+        "tests": 55,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "codegen-verify": {
+        "tests": 42,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "oracle_cases": 4000,
+    "scope": "Linear terminator matching and cooperative interruption; shared request/decode/depth budgets and deployed hard isolation remain open",
+    "log": "runtime-scan-fixes-20260908.log",
+    "source_sha256": "f3aa2dd96bb776965ead9b0c38d3dee263197809fae5de34f6be7aad61eef7eb"
+  },
+  "read_budget_followup": {
+    "tests": {
+      "core": {
+        "tests": 854,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "hdl": {
+        "tests": 261,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "adapters": {
+        "tests": 37,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "runtime-kotlin": {
+        "tests": 62,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "codegen": {
+        "tests": 126,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "codegen-kotlin": {
+        "tests": 119,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "codegen-verify": {
+        "tests": 45,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "result": "1503 passed; one existing HDL timing benchmark skipped; no failures/errors",
+    "scope": "Shared generated-reader work, nesting and cumulative decoding budgets; local release package verification",
+    "adversarial": "Generated 2147483647 zero-byte records reject at work budget 32; cumulative and intermediate decoding, nested depth, cancellation, expiry and request reset checked",
+    "release": "Six modules staged; core and generated consumers pass; artifact inventory verified with dirty source explicitly recorded",
+    "limits": "Cooperative reader contract, not hard process isolation or generated writer budget certification. Remote CI/private production registry/deployed acceptance not run."
+  },
+  "previous_assessment": {
+    "scores": {
+      "specification": 7.25,
+      "engine": 7.1
+    },
+    "dimensions": [
+      [
+        "Correctness",
+        30,
+        8.5,
+        8.0
+      ],
+      [
+        "Architecture",
+        20,
+        9.0,
+        8.0
+      ],
+      [
+        "Validation evidence",
+        20,
+        8.0,
+        7.5
+      ],
+      [
+        "Release verification",
+        20,
+        4.0,
+        5.0
+      ],
+      [
+        "Operations/governance",
+        10,
+        5.0,
+        6.0
+      ]
+    ],
+    "scope": "Original 8 September review before verified fixes"
+  },
+  "score_rationale": {
+    "specification": "7.95 under the revised scope excluding live publication. This scope adjustment is not credit for a deployment fix. Public CI no longer requires private repository credentials; independent review and remote acceptance remain required.",
+    "engine": "Verified arithmetic corrections, shared generated-read budgets, adversarial checks, seven-module verification and six-artifact consumer acceptance improve correctness, architecture, evidence and local release readiness. No operational credit added for unverified deployment.",
+    "limits": "Working-tree assessment, not a released version. Remote CI, production registry, hard containment and independent ontology approval remain blockers. Original findings/source hashes are retained as historical evidence."
+  },
+  "scope_exclusions": [
+    "Live namespace/origin deployment deferred and excluded from scoring by user instruction. No DNS or origin changes performed."
+  ],
+  "score_before_publication_exclusion": {
+    "specification": 7.55,
+    "engine": 8.2
+  },
+  "local_containment_evidence": "container-acceptance-20260908.json"
+}
