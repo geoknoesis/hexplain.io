@@ -7,7 +7,7 @@ root=Path('specification/coverage/gdal-tests')
 evidence=json.loads((root/'evidence.json').read_text())
 manifest=json.loads((root/'corpus-manifest.json').read_text())
 inventory=json.loads(Path('specification/coverage/gdal-drivers.json').read_text())
-assert hashlib.sha256((root/'corpus-manifest.json').read_bytes()).hexdigest()==evidence['manifest_sha256']
+assert hashlib.sha256((root/'corpus-manifest.json').read_text(encoding='utf-8').encode('utf-8')).hexdigest()==evidence['manifest_sha256']
 assert evidence['corpus_commit']==manifest['commit']==evidence['runtime']['fixture_commit']
 assert len(manifest['files'])==evidence['corpus_files']
 assert sum(f['bytes'] for f in manifest['files'])==evidence['corpus_bytes']
