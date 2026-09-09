@@ -1,7 +1,8 @@
 # GDAL profile wave 1: raw grids and binary vector records
 
 **Date:** 2026-09-09
-**Status:** approved scope (rasters + vectors, 10 profiles; library gates + parity tests; coverage-page links)
+**Status:** implemented. A follow-up wave then closed the four engine gaps this design worked
+around; see "Engine gaps closed after implementation" at the end.
 **Repos touched:** `hexplain-profiles` (the profiles), `hexplain-tools` (parity fixtures and tests), `hexplain.io` (coverage inventory link)
 
 ## Why
@@ -322,3 +323,30 @@ profile directory exists in the sibling `hexplain-profiles` checkout when one is
 - **Fixed-offset arithmetic** in `lan`, `bt`, `lcp` has no runtime check; each header offset
   is cross-referenced to the GDAL driver source line in the profile comment so a reviewer
   can verify without a sample.
+
+## Engine gaps closed after implementation
+
+The profiles above were first written to the subset the reference engine executed, with each
+workaround recorded as a limit. A follow-up wave closed four gaps in `hexplain-tools`, and the
+affected profiles now use the exact declared form. Every profile is additionally held to
+`write(parse(file)) == file`.
+
+| Declared capability | Was | Now |
+|---|---|---|
+| `bddo:asciiInteger` / `asciiDecimal` in a byte struct | Failed with "Unsupported integer bit width: 0"; DTED used `ascii[N]` plus derived `toNumber` siblings | A numeric type with no bit width is text: reads to Long or Double, drives sizes, offsets and counts. DTED uses `anum` and maps directly |
+| `dlv:cellBitWidth` / `cellBitWidthFromField` | Refused by the array accessor; BMP's 1-bit and 4-bit samples were described but unverified | Packed cells are addressed and read at their own width, MSB-first by default, signed cells sign-extending. Both BMP samples are pixel-verified against GDAL |
+| `dlv:dimensionStrideFromField` / `FromExpression` | Refused; BMP described one record per row to keep every layout contiguous | Resolved against the parse context, so BMP is one pixel array with the real pitch `((width * bits + 31) / 32) * 4` |
+| `dlv:hasConditionalCellDataType` / `hasConditionalDimensionOrder` | Rejected at load, so no engine-parsed profile could use `cell switch` or `order switch` | Lowered and resolved at parse time, first matching arm wins; arms must permute the same axes, and no matching arm is an error |
+
+Two design decisions from this wave are superseded as a result: the constraint that engine-parsed
+profiles avoid `cell switch`, and BMP's row-record form. The Idrisi and SAGA bundles keep their
+`cell switch` layouts, which are now executable rather than SHACL-only.
+
+Resolution is now in one place. The parser fixes every size, stride, packed width, cell type and
+dimension order against the parse context before wrapping bytes; the accessor refuses an
+*unresolved* declaration by name rather than refusing the capability. Chunked layouts
+(`chunkOffsetsFromField` and friends) remain declared but unexecuted, which is the next gap.
+
+One writer defect surfaced and was fixed: a derived (`derive`) field referenced as a size was
+mistaken for an automatic back-patched length, so any profile computing its own payload size could
+not be written. A computed size needs no measurement of the payload it sizes.
