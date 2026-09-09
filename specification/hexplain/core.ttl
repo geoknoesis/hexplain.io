@@ -40,6 +40,17 @@
 :isEncodedWith a owl:ObjectProperty ; rdfs:label "is encoded with" ; rdfs:range skos:Concept ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "The algorithm needed to interpret a data block, drawn from whichever codec or compression register the profile binds. A processor decodes the block, then re-parses the decoded bytes against the field's data type when it is a bddo:Struct." .
+# ---------- Instance byte range ----------
+# Asserted on a LIFTED RESOURCE by the Semantic Lifter's Processing Model, not declared by a
+# profile: every instance the lifter mints carries the byte range it was read from whenever
+# ExtractOptions.includeByteRange is enabled (the default), giving query-time functions a
+# cheap path to a node's bytes without re-resolving the profile or re-parsing the asset.
+:byteOffset a owl:DatatypeProperty ; rdfs:label "byte offset" ; rdfs:range xsd:nonNegativeInteger ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "The zero-based byte offset, within its asset, of a lifted resource's physical extent." .
+:byteLength a owl:DatatypeProperty ; rdfs:label "byte length" ; rdfs:range xsd:nonNegativeInteger ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "The length in bytes, from hexplain:byteOffset, of a lifted resource's physical extent." .
 # ---------- Encoding pipelines ----------
 # One codec is the exception, not the rule. A TIFF strip is horizontally differenced and
 # then deflated; an HDF5 dataset runs a filter pipeline (shuffle, then deflate); a Zarr
@@ -330,6 +341,10 @@ hexplain:RegisterBindingShape a sh:NodeShape ;
 <https://hexplain.io/ns/core#_prefixes> <http://www.w3.org/2004/02/skos/core#scopeNote> "Used by named SHACL SPARQL constraints/rules in this module. Not intended for instance-data assertions."@en .
 <https://hexplain.io/ns/core#_prefixes> <http://www.w3.org/2000/01/rdf-schema#label> "prefixes"@en .
 <https://hexplain.io/ns/core#_prefixes> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/core> .
+<https://hexplain.io/ns/core#byteLength> <http://www.w3.org/2004/02/skos/core#definition> "The length in bytes, from hexplain:byteOffset, of a lifted resource's physical extent."@en .
+<https://hexplain.io/ns/core#byteLength> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use when linking a physical format description to semantic RDF output, encoding stages or controlled-value bindings. It does not replace the byte-layout description. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/core#byteOffset> <http://www.w3.org/2004/02/skos/core#definition> "The zero-based byte offset, within its asset, of a lifted resource's physical extent."@en .
+<https://hexplain.io/ns/core#byteOffset> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use when linking a physical format description to semantic RDF output, encoding stages or controlled-value bindings. It does not replace the byte-layout description. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/core#codec> <http://www.w3.org/2004/02/skos/core#definition> "The algorithm this step applies, drawn from whichever codec or compression register the profile binds -- the same registers hexplain:isEncodedWith draws on."@en .
 <https://hexplain.io/ns/core#codec> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use when linking a physical format description to semantic RDF output, encoding stages or controlled-value bindings. It does not replace the byte-layout description. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/core#codecParameter> <http://www.w3.org/2004/02/skos/core#definition> "A named parameter value associated with one stage of an encoding pipeline."@en .
