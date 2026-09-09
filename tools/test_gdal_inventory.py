@@ -17,4 +17,15 @@ for r in rows:
         assert r.get('evidence'),r['key']
         for path in r['evidence']:assert Path(path).is_file(),path
 assert {'raster:gtiff','raster:nitf','raster:hdf5','raster:netcdf','raster:zarr','vector:gpkg','vector:parquet','vector:flatgeobuf'}.issubset(keys)
-print(f'PASS: {len(rows)} uniquely keyed GDAL documentation pages ({dict(counts)}); pinned sources and evidence policy valid')
+profiles_root=Path('../hexplain-profiles/profiles')
+linked=0
+for r in rows:
+    for p in r.get('profiles',[]):
+        assert set(p)=={'name','iri','verification'},(r['key'],p)
+        assert re.fullmatch('[a-z0-9-]+',p['name']),p
+        assert p['iri']==f"https://hexplain.io/ns/profile/{p['name']}",p
+        assert p['verification'] in ['parse-verified','not-parse-verified'],p
+        if profiles_root.is_dir():assert (profiles_root/p['name']).is_dir(),f"{p['name']} is not a library profile"
+        linked+=1
+assert linked>=20,linked
+print(f'PASS: {len(rows)} uniquely keyed GDAL documentation pages ({dict(counts)}); pinned sources, evidence policy and {linked} profile links valid')
