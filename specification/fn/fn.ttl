@@ -1,0 +1,320 @@
+# Hexplain SPARQL function library (hxf) 0.1
+# One IRI per function. Pure functions carry a SHACL-AF body any SHACL-AF engine can run;
+# native functions need the Hexplain engine (io.hexplain.query) behind the query.
+@prefix :        <https://hexplain.io/ns/fn#> .
+@prefix hxf:     <https://hexplain.io/ns/fn#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv:     <https://hexplain.io/ns/dlv#> .
+@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix asref:   <https://hexplain.io/ns/aspect/spatialref#> .
+@prefix asig:    <https://hexplain.io/ns/aspect/signal#> .
+
+<https://hexplain.io/ns/fn> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/fn/0.1> ; owl:versionInfo "0.1" ;
+    rdfs:label "Hexplain SPARQL function library (hxf)" ;
+    rdfs:comment "Custom SPARQL functions that reach the bytes, parsed values, array cells and aspect coordinates of a file described by a Hexplain profile. Functions bind to the description vocabularies, never to a format." ;
+    dcterms:created "2026-09-09"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    vann:preferredNamespacePrefix "hxf" ; vann:preferredNamespaceUri "https://hexplain.io/ns/fn#" ;
+    sh:declare [ sh:prefix "xsd" ; sh:namespace "http://www.w3.org/2001/XMLSchema#"^^xsd:anyURI ] ,
+               [ sh:prefix "araster" ; sh:namespace "https://hexplain.io/ns/aspect/raster#"^^xsd:anyURI ] ,
+               [ sh:prefix "asref" ; sh:namespace "https://hexplain.io/ns/aspect/spatialref#"^^xsd:anyURI ] .
+
+:Function a owl:Class ; rdfs:label "Function" ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+    rdfs:comment "A SPARQL extension function of this library." .
+:Kind a owl:Class ; rdfs:label "Function kind" ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+    rdfs:comment "Whether a function's body is published SPARQL (:Pure) or needs the Hexplain engine (:Native)." .
+:Pure a :Kind ; rdfs:label "pure" ; rdfs:comment "Computes over values already in the graph; published as a SHACL-AF sh:SPARQLFunction body." .
+:Native a :Kind ; rdfs:label "native" ; rdfs:comment "Needs the bytes of the asset; implemented against the Hexplain engine." .
+:kind a owl:ObjectProperty ; rdfs:range :Kind ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+    rdfs:comment "The function's kind: :Pure or :Native." .
+:signature a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+    rdfs:comment "Argument list and result, in the notation name(arg: type, ...) -> type. A trailing ? marks an optional argument." .
+:reads a owl:ObjectProperty ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+    rdfs:comment "A vocabulary term the function reads from the graph." .
+:layer a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+    rdfs:comment "0 bytes, 1 parsed values, 2 arrays, 3 aspect coordinates, 9 diagnostics." .
+
+# Parameters of pure functions, shared across bodies.
+:arg1 a rdfs:Resource ; rdfs:comment "The first positional parameter of a pure function's sh:SPARQLFunction body; sh:parameter binds its meaning per function." .
+:arg2 a rdfs:Resource ; rdfs:comment "The second positional parameter of a pure function's sh:SPARQLFunction body; sh:parameter binds its meaning per function." .
+:arg3 a rdfs:Resource ; rdfs:comment "The third positional parameter of a pure function's sh:SPARQLFunction body; sh:parameter binds its meaning per function." .
+
+# ---- Layer 0: assets and bytes ----
+:bytes a :Function ; :kind :Native ; :layer 0 ; rdfs:label "bytes" ;
+    :signature "bytes(node: IRI) -> xsd:hexBinary | bytes(node: IRI, offset: integer, length: integer) -> xsd:hexBinary" ;
+    :reads hexplain:byteOffset, hexplain:byteLength ;
+    rdfs:comment "The node's bytes as they sit in the file, whole or a slice relative to the node. Unbound when the slice leaves the node or exceeds maxBytesPerCall." .
+:decodedBytes a :Function ; :kind :Native ; :layer 0 ; rdfs:label "decoded bytes" ;
+    :signature "decodedBytes(node: IRI) -> xsd:hexBinary" ;
+    :reads hexplain:isEncodedWith, hexplain:hasEncodingStep ;
+    rdfs:comment "The node's bytes after the codec chain the profile declares has been inverted." .
+:digest a :Function ; :kind :Native ; :layer 0 ; rdfs:label "digest" ;
+    :signature "digest(node: IRI, algorithm: IRI | string) -> xsd:string" ;
+    :reads hexplain:byteOffset, hexplain:byteLength ;
+    rdfs:comment "Lower-case hex digest of the node's raw bytes. The algorithm is a checksum-register concept (rck:SHA256, rck:CRC32, ...) or a name." .
+
+# ---- Layer 1: parsed values ----
+:value a :Function ; :kind :Native ; :layer 1 ; rdfs:label "value" ;
+    :signature "value(node: IRI) -> literal" ;
+    rdfs:comment "The node's parsed scalar, mapped by the profile or not. Unbound for structs, lists and arrays." .
+:hel a :Function ; :kind :Native ; :layer 1 ; rdfs:label "HEL" ;
+    :signature "hel(node: IRI, expression: string) -> literal" ;
+    rdfs:comment "A HEL expression evaluated with the node's struct as instance, its container as parent and the file as root." .
+:decode a :Function ; :kind :Native ; :layer 1 ; rdfs:label "decode" ;
+    :signature "decode(bytes: xsd:hexBinary, type: bddo:DataType) -> literal" ;
+    rdfs:comment "One scalar decoded from bytes by a BDDO primitive datatype." .
+
+# ---- Layer 2: arrays (DLV) ----
+:rank a :Function ; :kind :Native ; :layer 2 ; rdfs:label "rank" ; :signature "rank(array: IRI) -> xsd:integer" ;
+    :reads dlv:hasDimension ; rdfs:comment "Number of dimensions of the array." .
+:extent a :Function ; :kind :Native ; :layer 2 ; rdfs:label "extent" ;
+    :signature "extent(array: IRI, dimension: integer | dlv:Axis) -> xsd:integer" ;
+    :reads dlv:hasAxis, dlv:dimensionSize ; rdfs:comment "Size of one dimension, named by zero-based position or by axis." .
+:cell a :Function ; :kind :Native ; :layer 2 ; rdfs:label "cell" ;
+    :signature "cell(array: IRI, i1: integer, ..., in: integer) -> literal" ;
+    rdfs:comment "The cell at zero-based indices given in the layout's dimension order. Typed by the cell datatype." .
+:stat a :Function ; :kind :Native ; :layer 2 ; rdfs:label "statistic" ;
+    :signature "stat(array: IRI, kind: string) -> literal | stat(array: IRI, kind: string, lo1, hi1, ..., lon, hin: integer) -> literal" ;
+    rdfs:comment "min, max, sum, mean or count over the whole array or a half-open window. Refused above maxCellsPerWindow." .
+:window a :Function ; :kind :Native ; :layer 2 ; rdfs:label "window" ;
+    :signature "(array: IRI, lo1, hi1, ..., lon, hin: integer) hxf:window (i1, ..., in, value)" ;
+    rdfs:comment "Property function enumerating every cell of a half-open window, row-major, binding its indices and value. Refused above maxCellsPerWindow." .
+:layout a :Function ; :kind :Native ; :layer 2 ; rdfs:label "layout" ; :signature "layout(array: IRI) -> xsd:string" ;
+    rdfs:comment "The resolved layout: axes, extents, strides and cell type." .
+
+# ---- Layer 3: raster ----
+:sampleAt a :Function ; :kind :Native ; :layer 3 ; rdfs:label "sample at" ;
+    :signature "sampleAt(grid: IRI, x: integer, y: integer, band?: IRI | integer) -> literal" ;
+    :reads araster:hasArray, araster:hasBand, araster:bandIndex, dlv:axisX, dlv:axisY, dlv:axisBand ;
+    rdfs:comment "Raw sample at column x, row y. The array is the band's araster:hasArray, else the grid's, else the grid struct's single array field. A band is a RasterBand IRI or a one-based index and is applied along dlv:axisBand when the array has one." .
+:calibrate a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "calibrate" ;
+    :signature "calibrate(band: IRI, raw: number) -> xsd:double" ;
+    :reads araster:sampleScale, araster:sampleOffset ;
+    rdfs:comment "raw * araster:sampleScale + araster:sampleOffset; identity when neither is asserted." ;
+    sh:parameter [ sh:path :arg1 ; sh:order 0 ; sh:description "band" ] , [ sh:path :arg2 ; sh:order 1 ; sh:description "raw" ] ;
+    sh:returnType xsd:double ;
+    sh:prefixes <https://hexplain.io/ns/fn> ;
+    sh:select """SELECT ?result WHERE {
+  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/raster#sampleScale> ?scale }
+  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/raster#sampleOffset> ?offset }
+  BIND ( xsd:double($arg2) * COALESCE(xsd:double(?scale), 1.0) + COALESCE(xsd:double(?offset), 0.0) AS ?result )
+}""" .
+:isNoData a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "is no-data" ;
+    :signature "isNoData(band: IRI, value: number) -> xsd:boolean" ;
+    :reads araster:noDataValue, araster:hasBand ;
+    rdfs:comment "True when value equals araster:noDataValue on the band, or on the grid that has the band. False when no no-data value is declared." ;
+    sh:parameter [ sh:path :arg1 ; sh:order 0 ; sh:description "band" ] , [ sh:path :arg2 ; sh:order 1 ; sh:description "value" ] ;
+    sh:returnType xsd:boolean ;
+    sh:prefixes <https://hexplain.io/ns/fn> ;
+    sh:select """SELECT ?result WHERE {
+  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/raster#noDataValue> ?own }
+  OPTIONAL { ?grid <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 . ?grid <https://hexplain.io/ns/aspect/raster#noDataValue> ?inherited }
+  BIND ( COALESCE(?own, ?inherited) AS ?nd )
+  BIND ( IF(BOUND(?nd), xsd:double(?nd) = xsd:double($arg2), false) AS ?result )
+}""" .
+:physicalAt a :Function ; :kind :Native ; :layer 3 ; rdfs:label "physical value at" ;
+    :signature "physicalAt(grid: IRI, x: integer, y: integer, band?: IRI | integer) -> xsd:double" ;
+    :reads araster:sampleScale, araster:sampleOffset, araster:noDataValue ;
+    rdfs:comment "calibrate(sampleAt(...)); unbound when the raw sample is no-data." .
+
+# ---- Layer 3: spatial reference (affine asref:GeoTransform) ----
+# worldX = originX + col*scaleX + row*skewX ; worldY = originY + col*skewY + row*scaleY.
+# Inverse: det = scaleX*scaleY - skewX*skewY ; c = (scaleY*(wx-originX) - skewX*(wy-originY))/det ;
+# r = (-skewY*(wx-originX) + scaleX*(wy-originY))/det ; floor(c) for PixelCorner, floor(c+0.5) for PixelCenter.
+:worldX a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "world X" ;
+    :signature "worldX(transform: IRI, col: number, row: number) -> xsd:double" ;
+    :reads asref:originX, asref:scaleX, asref:skewX ;
+    rdfs:comment "World X of grid position (col, row) under an affine geotransform; a missing skew reads as 0." ;
+    sh:parameter [ sh:path :arg1 ; sh:order 0 ] , [ sh:path :arg2 ; sh:order 1 ] , [ sh:path :arg3 ; sh:order 2 ] ;
+    sh:returnType xsd:double ;
+    sh:prefixes <https://hexplain.io/ns/fn> ;
+    sh:select """SELECT ?result WHERE {
+  $arg1 <https://hexplain.io/ns/aspect/spatialref#originX> ?ox ; <https://hexplain.io/ns/aspect/spatialref#scaleX> ?sx .
+  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewX> ?kx }
+  BIND ( xsd:double(?ox) + xsd:double($arg2) * xsd:double(?sx) + xsd:double($arg3) * COALESCE(xsd:double(?kx), 0.0) AS ?result )
+}""" .
+:worldY a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "world Y" ;
+    :signature "worldY(transform: IRI, col: number, row: number) -> xsd:double" ;
+    :reads asref:originY, asref:scaleY, asref:skewY ;
+    rdfs:comment "World Y of grid position (col, row) under an affine geotransform; a missing skew reads as 0." ;
+    sh:parameter [ sh:path :arg1 ; sh:order 0 ] , [ sh:path :arg2 ; sh:order 1 ] , [ sh:path :arg3 ; sh:order 2 ] ;
+    sh:returnType xsd:double ;
+    sh:prefixes <https://hexplain.io/ns/fn> ;
+    sh:select """SELECT ?result WHERE {
+  $arg1 <https://hexplain.io/ns/aspect/spatialref#originY> ?oy ; <https://hexplain.io/ns/aspect/spatialref#scaleY> ?sy .
+  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewY> ?ky }
+  BIND ( xsd:double(?oy) + xsd:double($arg2) * COALESCE(xsd:double(?ky), 0.0) + xsd:double($arg3) * xsd:double(?sy) AS ?result )
+}""" .
+:column a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "column" ;
+    :signature "column(transform: IRI, wx: number, wy: number) -> xsd:integer" ;
+    :reads asref:originX, asref:originY, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY, asref:pixelRegistration ;
+    rdfs:comment "Column of the cell containing world point (wx, wy): floor for asref:PixelCorner (default), nearest centre for asref:PixelCenter." ;
+    sh:parameter [ sh:path :arg1 ; sh:order 0 ] , [ sh:path :arg2 ; sh:order 1 ] , [ sh:path :arg3 ; sh:order 2 ] ;
+    sh:returnType xsd:integer ;
+    sh:prefixes <https://hexplain.io/ns/fn> ;
+    sh:select """SELECT ?result WHERE {
+  $arg1 <https://hexplain.io/ns/aspect/spatialref#originX> ?ox ; <https://hexplain.io/ns/aspect/spatialref#originY> ?oy ;
+        <https://hexplain.io/ns/aspect/spatialref#scaleX> ?sx ; <https://hexplain.io/ns/aspect/spatialref#scaleY> ?sy .
+  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewX> ?kx }
+  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewY> ?ky }
+  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#pixelRegistration> ?reg }
+  BIND ( COALESCE(xsd:double(?kx), 0.0) AS ?kxv ) BIND ( COALESCE(xsd:double(?ky), 0.0) AS ?kyv )
+  BIND ( xsd:double(?sx) * xsd:double(?sy) - ?kxv * ?kyv AS ?det )
+  FILTER ( ?det != 0.0 )
+  BIND ( ( xsd:double(?sy) * (xsd:double($arg2) - xsd:double(?ox)) - ?kxv * (xsd:double($arg3) - xsd:double(?oy)) ) / ?det AS ?c )
+  BIND ( xsd:integer(FLOOR(IF(BOUND(?reg) && ?reg = <https://hexplain.io/ns/aspect/spatialref#PixelCenter>, ?c + 0.5, ?c))) AS ?result )
+}""" .
+:row a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "row" ;
+    :signature "row(transform: IRI, wx: number, wy: number) -> xsd:integer" ;
+    :reads asref:originX, asref:originY, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY, asref:pixelRegistration ;
+    rdfs:comment "Row of the cell containing world point (wx, wy): floor for asref:PixelCorner (default), nearest centre for asref:PixelCenter." ;
+    sh:parameter [ sh:path :arg1 ; sh:order 0 ] , [ sh:path :arg2 ; sh:order 1 ] , [ sh:path :arg3 ; sh:order 2 ] ;
+    sh:returnType xsd:integer ;
+    sh:prefixes <https://hexplain.io/ns/fn> ;
+    sh:select """SELECT ?result WHERE {
+  $arg1 <https://hexplain.io/ns/aspect/spatialref#originX> ?ox ; <https://hexplain.io/ns/aspect/spatialref#originY> ?oy ;
+        <https://hexplain.io/ns/aspect/spatialref#scaleX> ?sx ; <https://hexplain.io/ns/aspect/spatialref#scaleY> ?sy .
+  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewX> ?kx }
+  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewY> ?ky }
+  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#pixelRegistration> ?reg }
+  BIND ( COALESCE(xsd:double(?kx), 0.0) AS ?kxv ) BIND ( COALESCE(xsd:double(?ky), 0.0) AS ?kyv )
+  BIND ( xsd:double(?sx) * xsd:double(?sy) - ?kxv * ?kyv AS ?det )
+  FILTER ( ?det != 0.0 )
+  BIND ( ( - ?kyv * (xsd:double($arg2) - xsd:double(?ox)) + xsd:double(?sx) * (xsd:double($arg3) - xsd:double(?oy)) ) / ?det AS ?r )
+  BIND ( xsd:integer(FLOOR(IF(BOUND(?reg) && ?reg = <https://hexplain.io/ns/aspect/spatialref#PixelCenter>, ?r + 0.5, ?r))) AS ?result )
+}""" .
+:sampleAtWorld a :Function ; :kind :Native ; :layer 3 ; rdfs:label "sample at world point" ;
+    :signature "sampleAtWorld(dataset: IRI, wx: number, wy: number, band?: IRI | integer) -> literal" ;
+    :reads asref:hasGeoTransform ;
+    rdfs:comment "sampleAt at (column(t, wx, wy), row(t, wx, wy)) where t is the dataset's asref:hasGeoTransform." .
+
+# ---- Layer 3: geometry and signal ----
+:wkt a :Function ; :kind :Native ; :layer 3 ; rdfs:label "WKT" ;
+    :signature "wkt(node: IRI) -> geo:wktLiteral" ;
+    :reads asref:hasCRS, asref:epsgCode ;
+    rdfs:comment "A GeoSPARQL WKT literal from a WKB or GeoPackage payload. The CRS is the GeoPackage SRS id, else asref:hasCRS/asref:epsgCode on the node or the nearest ancestor." .
+:sampleAtTime a :Function ; :kind :Native ; :layer 3 ; rdfs:label "sample at time" ;
+    :signature "sampleAtTime(signal: IRI, seconds: number, channel?: integer) -> literal" ;
+    :reads asig:sampleRate, araster:hasArray, dlv:axisTime, dlv:axisBand ;
+    rdfs:comment "The cell at round(seconds * asig:sampleRate) along dlv:axisTime; the one-based channel is applied along dlv:axisBand." .
+
+# ---- Diagnostics ----
+:explain a :Function ; :kind :Native ; :layer 9 ; rdfs:label "explain" ; :signature "explain(node: IRI) -> xsd:string" ;
+    rdfs:comment "How the runtime resolves the node (asset, profile, path, kind, byte range, layout) and why the last call on it failed. Never unbound." .
+
+# BEGIN GENERATED TERM DOCUMENTATION
+# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
+<https://hexplain.io/ns/fn> <http://www.w3.org/2004/02/skos/core#definition> "Custom SPARQL functions that reach the bytes, parsed values, array cells and aspect coordinates of a file described by a Hexplain profile. Functions bind to the description vocabularies, never to a format."@en .
+<https://hexplain.io/ns/fn> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it."@en .
+<https://hexplain.io/ns/fn#Function> <http://www.w3.org/2004/02/skos/core#definition> "A SPARQL extension function of this library."@en .
+<https://hexplain.io/ns/fn#Function> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/fn#Kind> <http://www.w3.org/2004/02/skos/core#definition> "Whether a function's body is published SPARQL (:Pure) or needs the Hexplain engine (:Native)."@en .
+<https://hexplain.io/ns/fn#Kind> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/fn#Native> <http://www.w3.org/2004/02/skos/core#definition> "Needs the bytes of the asset; implemented against the Hexplain engine."@en .
+<https://hexplain.io/ns/fn#Native> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#Native> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#Pure> <http://www.w3.org/2004/02/skos/core#definition> "Computes over values already in the graph; published as a SHACL-AF sh:SPARQLFunction body."@en .
+<https://hexplain.io/ns/fn#Pure> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#Pure> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#arg1> <http://www.w3.org/2004/02/skos/core#definition> "The first positional parameter of a pure function's sh:SPARQLFunction body; sh:parameter binds its meaning per function."@en .
+<https://hexplain.io/ns/fn#arg1> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#arg1> <http://www.w3.org/2000/01/rdf-schema#label> "arg1"@en .
+<https://hexplain.io/ns/fn#arg1> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#arg2> <http://www.w3.org/2004/02/skos/core#definition> "The second positional parameter of a pure function's sh:SPARQLFunction body; sh:parameter binds its meaning per function."@en .
+<https://hexplain.io/ns/fn#arg2> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#arg2> <http://www.w3.org/2000/01/rdf-schema#label> "arg2"@en .
+<https://hexplain.io/ns/fn#arg2> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#arg3> <http://www.w3.org/2004/02/skos/core#definition> "The third positional parameter of a pure function's sh:SPARQLFunction body; sh:parameter binds its meaning per function."@en .
+<https://hexplain.io/ns/fn#arg3> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#arg3> <http://www.w3.org/2000/01/rdf-schema#label> "arg3"@en .
+<https://hexplain.io/ns/fn#arg3> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#bytes> <http://www.w3.org/2004/02/skos/core#definition> "The node's bytes as they sit in the file, whole or a slice relative to the node. Unbound when the slice leaves the node or exceeds maxBytesPerCall."@en .
+<https://hexplain.io/ns/fn#bytes> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#bytes> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#calibrate> <http://www.w3.org/2004/02/skos/core#definition> "raw * araster:sampleScale + araster:sampleOffset; identity when neither is asserted."@en .
+<https://hexplain.io/ns/fn#calibrate> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#calibrate> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#cell> <http://www.w3.org/2004/02/skos/core#definition> "The cell at zero-based indices given in the layout's dimension order. Typed by the cell datatype."@en .
+<https://hexplain.io/ns/fn#cell> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#cell> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#column> <http://www.w3.org/2004/02/skos/core#definition> "Column of the cell containing world point (wx, wy): floor for asref:PixelCorner (default), nearest centre for asref:PixelCenter."@en .
+<https://hexplain.io/ns/fn#column> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#column> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#decode> <http://www.w3.org/2004/02/skos/core#definition> "One scalar decoded from bytes by a BDDO primitive datatype."@en .
+<https://hexplain.io/ns/fn#decode> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#decode> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#decodedBytes> <http://www.w3.org/2004/02/skos/core#definition> "The node's bytes after the codec chain the profile declares has been inverted."@en .
+<https://hexplain.io/ns/fn#decodedBytes> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#decodedBytes> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#digest> <http://www.w3.org/2004/02/skos/core#definition> "Lower-case hex digest of the node's raw bytes. The algorithm is a checksum-register concept (rck:SHA256, rck:CRC32, ...) or a name."@en .
+<https://hexplain.io/ns/fn#digest> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#digest> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#explain> <http://www.w3.org/2004/02/skos/core#definition> "How the runtime resolves the node (asset, profile, path, kind, byte range, layout) and why the last call on it failed. Never unbound."@en .
+<https://hexplain.io/ns/fn#explain> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#explain> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#extent> <http://www.w3.org/2004/02/skos/core#definition> "Size of one dimension, named by zero-based position or by axis."@en .
+<https://hexplain.io/ns/fn#extent> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#extent> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#hel> <http://www.w3.org/2004/02/skos/core#definition> "A HEL expression evaluated with the node's struct as instance, its container as parent and the file as root."@en .
+<https://hexplain.io/ns/fn#hel> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#hel> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#isNoData> <http://www.w3.org/2004/02/skos/core#definition> "True when value equals araster:noDataValue on the band, or on the grid that has the band. False when no no-data value is declared."@en .
+<https://hexplain.io/ns/fn#isNoData> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#isNoData> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#kind> <http://www.w3.org/2004/02/skos/core#definition> "The function's kind: :Pure or :Native."@en .
+<https://hexplain.io/ns/fn#kind> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/fn#kind> <http://www.w3.org/2000/01/rdf-schema#label> "kind"@en .
+<https://hexplain.io/ns/fn#layer> <http://www.w3.org/2004/02/skos/core#definition> "0 bytes, 1 parsed values, 2 arrays, 3 aspect coordinates, 9 diagnostics."@en .
+<https://hexplain.io/ns/fn#layer> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/fn#layer> <http://www.w3.org/2000/01/rdf-schema#label> "layer"@en .
+<https://hexplain.io/ns/fn#layout> <http://www.w3.org/2004/02/skos/core#definition> "The resolved layout: axes, extents, strides and cell type."@en .
+<https://hexplain.io/ns/fn#layout> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#layout> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#physicalAt> <http://www.w3.org/2004/02/skos/core#definition> "calibrate(sampleAt(...)); unbound when the raw sample is no-data."@en .
+<https://hexplain.io/ns/fn#physicalAt> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#physicalAt> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#rank> <http://www.w3.org/2004/02/skos/core#definition> "Number of dimensions of the array."@en .
+<https://hexplain.io/ns/fn#rank> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#rank> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#reads> <http://www.w3.org/2004/02/skos/core#definition> "A vocabulary term the function reads from the graph."@en .
+<https://hexplain.io/ns/fn#reads> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/fn#reads> <http://www.w3.org/2000/01/rdf-schema#label> "reads"@en .
+<https://hexplain.io/ns/fn#row> <http://www.w3.org/2004/02/skos/core#definition> "Row of the cell containing world point (wx, wy): floor for asref:PixelCorner (default), nearest centre for asref:PixelCenter."@en .
+<https://hexplain.io/ns/fn#row> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#row> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#sampleAt> <http://www.w3.org/2004/02/skos/core#definition> "Raw sample at column x, row y. The array is the band's araster:hasArray, else the grid's, else the grid struct's single array field. A band is a RasterBand IRI or a one-based index and is applied along dlv:axisBand when the array has one."@en .
+<https://hexplain.io/ns/fn#sampleAt> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#sampleAt> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#sampleAtTime> <http://www.w3.org/2004/02/skos/core#definition> "The cell at round(seconds * asig:sampleRate) along dlv:axisTime; the one-based channel is applied along dlv:axisBand."@en .
+<https://hexplain.io/ns/fn#sampleAtTime> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#sampleAtTime> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#sampleAtWorld> <http://www.w3.org/2004/02/skos/core#definition> "sampleAt at (column(t, wx, wy), row(t, wx, wy)) where t is the dataset's asref:hasGeoTransform."@en .
+<https://hexplain.io/ns/fn#sampleAtWorld> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#sampleAtWorld> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#signature> <http://www.w3.org/2004/02/skos/core#definition> "Argument list and result, in the notation name(arg: type, ...) -> type. A trailing ? marks an optional argument."@en .
+<https://hexplain.io/ns/fn#signature> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/fn#signature> <http://www.w3.org/2000/01/rdf-schema#label> "signature"@en .
+<https://hexplain.io/ns/fn#stat> <http://www.w3.org/2004/02/skos/core#definition> "min, max, sum, mean or count over the whole array or a half-open window. Refused above maxCellsPerWindow."@en .
+<https://hexplain.io/ns/fn#stat> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#stat> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#value> <http://www.w3.org/2004/02/skos/core#definition> "The node's parsed scalar, mapped by the profile or not. Unbound for structs, lists and arrays."@en .
+<https://hexplain.io/ns/fn#value> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#value> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#window> <http://www.w3.org/2004/02/skos/core#definition> "Property function enumerating every cell of a half-open window, row-major, binding its indices and value. Refused above maxCellsPerWindow."@en .
+<https://hexplain.io/ns/fn#window> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#window> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#wkt> <http://www.w3.org/2004/02/skos/core#definition> "A GeoSPARQL WKT literal from a WKB or GeoPackage payload. The CRS is the GeoPackage SRS id, else asref:hasCRS/asref:epsgCode on the node or the nearest ancestor."@en .
+<https://hexplain.io/ns/fn#wkt> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#wkt> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#worldX> <http://www.w3.org/2004/02/skos/core#definition> "World X of grid position (col, row) under an affine geotransform; a missing skew reads as 0."@en .
+<https://hexplain.io/ns/fn#worldX> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#worldX> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
+<https://hexplain.io/ns/fn#worldY> <http://www.w3.org/2004/02/skos/core#definition> "World Y of grid position (col, row) under an affine geotransform; a missing skew reads as 0."@en .
+<https://hexplain.io/ns/fn#worldY> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/fn#worldY> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/fn> .
