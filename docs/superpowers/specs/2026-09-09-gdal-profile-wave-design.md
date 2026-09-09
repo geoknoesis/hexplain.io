@@ -339,8 +339,14 @@ affected profiles now use the exact declared form. Every profile is additionally
 | `dlv:hasConditionalCellDataType` / `hasConditionalDimensionOrder` | Rejected at load, so no engine-parsed profile could use `cell switch` or `order switch` | Lowered and resolved at parse time, first matching arm wins; arms must permute the same axes, and no matching arm is an error |
 
 Two design decisions from this wave are superseded as a result: the constraint that engine-parsed
-profiles avoid `cell switch`, and BMP's row-record form. The Idrisi and SAGA bundles keep their
-`cell switch` layouts, which are now executable rather than SHACL-only.
+profiles avoid `cell switch`, and BMP's row-record form.
+
+The Idrisi and SAGA bundles keep their `cell switch` layouts and stay NOT parse-verified, for a
+different reason than before. The construct now lowers and resolves, but their arms are conditioned
+on a field in the *sibling header part* (`asset.GridHeader.dataFormat`), and a standalone part parse
+has no asset context to reach it. The engine now reports that by name instead of letting a later arm
+win by default, so what those two profiles need is bundle-aware parsing, not a layout capability.
+The same holds for SAGA's struct-level `@endian switch`.
 
 Resolution is now in one place. The parser fixes every size, stride, packed width, cell type and
 dimension order against the parse context before wrapping bytes; the accessor refuses an
