@@ -43,7 +43,7 @@ directory=ROOT/'specification/ontology-design';directory.mkdir(exist_ok=True);(d
 inventory=json.loads((ROOT/'specification/coverage/gdal-drivers.json').read_text(encoding='utf-8'))
 counts=Counter(r['kind'] for r in inventory['drivers'])
 families=[
-('Raw and tiled grids','GeoTIFF / COG, ENVI, EHdr, BMP, DTED','BDDO sizes/endianness, DLV strides/chunks/bit packing; raster bands and affine model','Full profiles, padding/endian variants, sparse chunks and decoded sample comparison.'),
+('Raw and tiled grids','GeoTIFF / COG, ENVI, EHdr, BMP, DTED','BDDO sizes/endianness; DLV strides, sub-byte packing and conditional cell types and dimension orders are executed, chunking is declared only; raster bands and affine model','Padded rows and decoded samples compared for BMP at 1, 4, 8 and 24 bits, and elevations for DTED; full profiles, sparse and tiled chunk tables, and further endian variants remain.'),
 ('Hierarchical scientific arrays','HDF4/5, netCDF, Zarr, BAG, KEA','Logical groups, shared dimensions, scalars, zero extents and calibration; existing physical layouts','Runtime schemas, compound/string arrays, chunk-store lookup, fill values and codec pipelines need corpus evidence.'),
 ('Segmented and satellite imagery','NITF, SAR/CEOS, PDS, SAFE, DIMAP','Existing dispatch/bundles/tree documents plus affine/GCP/RPC semantic model','Public polynomial basis, profile mappings, decoder availability and geolocation oracle.'),
 ('Encoded imagery and weather grids','JPEG, JPEG 2000, PNG, GRIB, AVIF','Framing, codec identity/pipelines and logical samples','An opaque payload is container coverage only. Entropy decoding, predictors and template variants require codec-specific tests.'),
