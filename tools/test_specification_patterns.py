@@ -31,3 +31,6 @@ rejects(lambda: render('{{datatype:' + name + '}}', constraints, broken))
 broken = deepcopy(datatypes); del broken['presets'][name]['width']
 rejects(lambda: render('{{datatype:' + name + '}}', constraints, broken))
 print(f'PASS: {count} templates, {len(constraints)} shared constraints, {len(used_types)} presets; deterministic and invalid inputs rejected')
+
+from _build_authoring_inventory import build
+build(check=True)

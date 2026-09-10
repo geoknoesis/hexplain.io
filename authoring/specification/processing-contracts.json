@@ -3,19 +3,147 @@
     "name": "Value sources",
     "rule": "Literal values, field references and expressions are alternative ways to obtain values. Retain their distinct public properties and evaluation contexts. A field reference can identify a writer-inferable dependency; an arbitrary expression does not establish an inverse.",
     "exceptions": "Do not replace sizeFromField with an equivalent-looking expression. Fixed sizes remain constraints. Preserve units, scope, exact integer conversion, absence and inheritance for each consuming property.",
-    "source": "../processing/index.html"
+    "source": "../processing/index.html",
+    "procedure": [
+      "Select the declared source form using the owning property family. Do not convert a field reference into HEL text.",
+      "Resolve the source in the context and phase listed below. A dependency not yet available is not a numeric zero.",
+      "Apply the consuming operation's exact numeric conversion, units, sign and bounds. Reject fractional or overflowing addresses/counts before narrowing.",
+      "Apply region limits and checked address arithmetic. Writer inference is a separate dependency-solving operation, not expression evaluation."
+    ],
+    "columns": [
+      "Family / forms",
+      "Units and timing",
+      "Boundary / writer distinction"
+    ],
+    "rows": [
+      [
+        "Field size: size, sizeFromField, sizeFromExpression",
+        "Bytes; evaluated for the field or counted element. Fixed size constrains output.",
+        "Counted size is per element. EOF/sentinel regions and encoded extents have separate framing contracts. A local length field may be inferred; an arbitrary expression is not inverted."
+      ],
+      [
+        "Struct size: size, sizeFromField, sizeFromExpression",
+        "Bytes from struct start; fixed bound known on entry, dynamic bound applied when available.",
+        "Outer bounds remain active. Dynamic unresolved size is not permission to escape the enclosing region."
+      ],
+      [
+        "Count: repeatCount, repeatCountFromField, repeatCountFromExpression",
+        "Nonnegative integral element count; zero is meaningful.",
+        "Count is not byte extent. Validate before allocation and charge shared work budgets."
+      ],
+      [
+        "Address: atOffset, atOffsetFromField, atOffsetFromExpression",
+        "Integral byte displacement relative to the declared origin; then alignment.",
+        "Checked origin arithmetic; reject invalid physical addresses. Restore the enclosing cursor after addressed reads/writes as specified."
+      ],
+      [
+        "Dimensions: dimensionSize / dimensionSizeFromField",
+        "Positive integral logical cell counts when the layout is materialized.",
+        "Physical addressing dimensions are not semantic scientific axes."
+      ],
+      [
+        "Stride: dimensionStride / dimensionStrideFromField / dimensionStrideFromExpression",
+        "Positive integral byte stride; evaluated with layout context.",
+        "Stride is not cell precision or packed bit width. Missing explicit stride uses the declared layout's calculation, not zero."
+      ]
+    ]
   },
   {
     "name": "Ordered selection",
     "rule": "Ordered conditional rules select the first applicable rule. This common description does not supply a universal fallback or evaluation phase.",
     "exceptions": "Type selection retains dispatchDefault/dataType fallback and its missing-type error. Mapping, cell type, dimension order and byte order retain their own activation, defaults and errors. Keyed dispatch collects uniquely keyed arms across the graph; it is not an ordered predicate list.",
-    "source": "../processing/index.html"
+    "source": "../processing/index.html",
+    "procedure": [
+      "Visit rules in RDF-list order in the family's evaluation context.",
+      "Select the first condition that evaluates to Boolean true; later matches do not override it.",
+      "Apply the family-specific fallback and error behavior below. Never assume a universal missing-value or exception policy."
+    ],
+    "columns": [
+      "Rule family",
+      "Context and timing",
+      "No-match / error behavior"
+    ],
+    "rows": [
+      [
+        "Field datatype",
+        "Before field decoding; instance and parent alias the containing struct in the engine.",
+        "Fallback to the fixed dataType. Evaluation errors propagate through parser error handling."
+      ],
+      [
+        "Struct byte order",
+        "Starts with struct order; retry after discriminator fields become available.",
+        "First successful match locks order for subsequent fields; unevaluable HEL conditions are nonmatching while reading the discriminator. Explicit field datatype order remains an override."
+      ],
+      [
+        "Layout cell datatype",
+        "At layout materialization; independent of dimension ordering.",
+        "No matching arm is an error. Fixed and conditional declarations are mutually exclusive."
+      ],
+      [
+        "Layout dimension order",
+        "At layout materialization; independent of cell selection.",
+        "No matching arm is an error. Keep independent selections rather than duplicating a cross-product of layouts."
+      ],
+      [
+        "Semantic property mapping",
+        "After parsing; instance is the owning struct and parent is its real parent.",
+        "Selected rule supplies property and value expression together; direct mapsToProperty is the fallback. Evaluation exceptions are not automatically false."
+      ],
+      [
+        "Semantic class mapping",
+        "After parsing; current struct, real parent and root are available.",
+        "Fallback to mapsToClass. The current engine treats a HEL evaluation exception in a class condition as nonmatching."
+      ],
+      [
+        "Keyed dispatch (separate mechanism)",
+        "Select by key across uniquely keyed contributed arms.",
+        "Not a first-match predicate list. Retain key equality, duplicate rejection, dispatch default and fixed datatype fallback."
+      ]
+    ]
   },
   {
     "name": "Encoding shorthand",
     "rule": "isEncodedWith denotes a single unparameterized codec. hasEncodingStep is an ordered pipeline in encoder order; decoding traverses that order in reverse.",
     "exceptions": "Preserve mutual exclusion, parameters, codec framing, decoded address space, region bounds and capability rejection. A pipeline description does not imply that every parser or writer supports it.",
-    "source": "../hexplain/index.html"
+    "source": "../hexplain/index.html",
+    "procedure": [
+      "Normalize one isEncodedWith codec to a one-element codec sequence.",
+      "Normalize hasEncodingStep by reading each codec in list order. In the current engine, steps with codecParameter reject explicitly because the IR has no parameter channel.",
+      "Encode in declared order; decode in reverse. Each codec retains its framing, failure and byte-budget contract.",
+      "Reject simultaneous forms, malformed/cyclic lists, missing or multiple codecs and empty pipelines. Unknown codec execution fails; no identity fallback is allowed."
+    ],
+    "columns": [
+      "Form",
+      "Normalized meaning",
+      "Boundary"
+    ],
+    "rows": [
+      [
+        "isEncodedWith codec",
+        "One codec, no supplied parameters",
+        "Supported shorthand remains available."
+      ],
+      [
+        "hasEncodingStep ([codec A])",
+        "Same one-step sequence",
+        "Same parser/writer values and wire bytes for the tested zlib case."
+      ],
+      [
+        "hasEncodingStep ([codec A] [codec B])",
+        "Encode A then B; decode B then A",
+        "Independent JDK zlib-then-gzip vector tests order and nested trailer restoration."
+      ],
+      [
+        "Step with codecParameter",
+        "Requires parameter-aware execution",
+        "Rejected until runtime support exists; parameters are never silently ignored."
+      ],
+      [
+        "IR RDF export: ir:encodedWith",
+        "One RDF list of codec IRIs, preserving encoder order and repeated codecs",
+        "Prerelease representation change: consumers must traverse rdf:first/rdf:rest rather than treating predicate values as an unordered codec set."
+      ]
+    ]
   },
   {
     "name": "Constraint reuse",
