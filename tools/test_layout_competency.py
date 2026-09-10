@@ -51,6 +51,28 @@ case('literal compound member',asset+'ex:asset a:hasPart "file".',False,'https:/
 case('untyped compound member',asset+'ex:asset a:hasPart ex:p.',False,'https://hexplain.io/ns/aspect/bundle#hasPart')
 case('unrelated hasPart remains out of scope','ex:x a:hasPart "verbatim".',True)
 
+
+# Cross-property, cardinality and explicit-target controls (not physical decoding).
+for name, tail, ok, path in [
+ ('packing order without width','ex:l dlv:cellPackingOrder b:MSBFirst.',False,''),
+ ('unknown packing order','ex:l dlv:cellBitWidth 3; dlv:cellPackingOrder ex:Unknown.',False,'cellPackingOrder'),
+ ('literal packing order','ex:l dlv:cellBitWidth 3; dlv:cellPackingOrder "MSBFirst".',False,'cellPackingOrder'),
+ ('two packing orders','ex:l dlv:cellBitWidth 3; dlv:cellPackingOrder b:MSBFirst,b:LSBFirst.',False,'cellPackingOrder'),
+ ('two packed widths','ex:l dlv:cellBitWidth 3,4.',False,'cellBitWidth'),
+ ('untyped width field','ex:l dlv:cellBitWidthFromField ex:unknown.',False,'cellBitWidthFromField'),
+ ('literal width field','ex:l dlv:cellBitWidthFromField "width".',False,'cellBitWidthFromField'),
+ ('dynamic packing order','ex:l dlv:cellBitWidthFromField ex:f; dlv:cellPackingOrder b:LSBFirst.',True,''),
+ ('three bit cross byte packing','ex:l dlv:cellBitWidth 3; dlv:cellPackingOrder b:MSBFirst.',True,''),
+ ('wide integer width','ex:l dlv:cellBitWidth 18446744073709551616.',True,''),
+ ('two strides','ex:d dlv:dimensionStride 1,2.',False,'dimensionStride'),
+ ('untyped stride field','ex:d dlv:dimensionStrideFromField ex:unknown.',False,'dimensionStrideFromField'),
+ ('literal stride expression','ex:d dlv:dimensionStrideFromExpression 8.',False,'dimensionStrideFromExpression'),
+ ('literal axis','ex:d dlv:hasAxis "x".',False,'hasAxis')]:
+    case(name,layout+tail,ok,'https://hexplain.io/ns/dlv#'+path if path else '')
+case('unmarked unrelated packing metadata','ex:x dlv:cellPackingOrder "raw".',True)
+case('child does not satisfy parent role',profile+asset+'ex:asset a:hasPart ex:p. ex:p a a:Part; a:hasPart ex:leaf. ex:leaf a a:Part; a:partRole ex:role.',False)
+case('parent does not satisfy child role',profile+asset+part+'ex:p a a:Asset; dct:conformsTo ex:profile; a:hasPart ex:leaf. ex:leaf a a:Part.',False)
+
 def run():
     shapes=Graph()
     for f in ['specification/dlv/dlv.ttl','specification/aspect/bundle/bundle.ttl']:shapes.parse(ROOT/f)
