@@ -391,9 +391,24 @@ bddo:FieldShape a sh:NodeShape ;
     sh:property [ sh:path bddo:sizeToEndOfStream ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:terminator ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:separatedBy ; sh:datatype xsd:string ; sh:maxCount 1 ; sh:in ( "whitespace" ) ] ;
+    # bddo:separatedBy IS the field's extent, so it excludes every other way of stating one.
+    # All five, not just the two literal spellings: a separated field declaring
+    # sizeFromField/sizeFromExpression/sizeToEndOfStream would otherwise satisfy both this shape
+    # and bddo:AsciiNumericWidthShape while asserting a width the reader provably ignores
+    # (Metaparser dispatches bddo:separatedBy before it resolves any size), which is a false
+    # statement that validates.
     sh:not [ sh:and (
         [ sh:property [ sh:path bddo:separatedBy ; sh:minCount 1 ] ]
         [ sh:property [ sh:path bddo:size ; sh:minCount 1 ] ] ) ] ;
+    sh:not [ sh:and (
+        [ sh:property [ sh:path bddo:separatedBy ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path bddo:sizeFromField ; sh:minCount 1 ] ] ) ] ;
+    sh:not [ sh:and (
+        [ sh:property [ sh:path bddo:separatedBy ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path bddo:sizeFromExpression ; sh:minCount 1 ] ] ) ] ;
+    sh:not [ sh:and (
+        [ sh:property [ sh:path bddo:separatedBy ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path bddo:sizeToEndOfStream ; sh:minCount 1 ] ] ) ] ;
     sh:not [ sh:and (
         [ sh:property [ sh:path bddo:separatedBy ; sh:minCount 1 ] ]
         [ sh:property [ sh:path bddo:terminator ; sh:minCount 1 ] ] ) ] ;
@@ -586,12 +601,16 @@ bddo:ChecksumShape a sh:NodeShape ;
                                 [ sh:property [ sh:path bddo:coversFromExpression ; sh:minCount 1 ] ]
                                 [ sh:property [ sh:path bddo:coversToExpression ; sh:minCount 1 ] ] ) ] ) ] .
 
-# An ASCII-coded numeric field must have a width or a terminator, or it cannot be read.
+# An ASCII-coded numeric field must have a width, a terminator or a separator, or it cannot be
+# read. bddo:separatedBy is an extent mechanism in its own right -- the element is bounded by the
+# runs of separator bytes either side of it -- and it is the ONLY one such a field may combine
+# with none of the others: see bddo:FieldShape, which forbids pairing it with any size or with a
+# terminator, because two answers to "where does this value end" is one too many.
 # Exempt: a field of a delimited-record container gets its extent from the container's
-# recordDelimiter/fieldDelimiter, not from its own size or terminator.
+# recordDelimiter/fieldDelimiter, not from its own size, terminator or separator.
 bddo:AsciiNumericWidthShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
-    sh:sparql [ sh:message "A bddo:asciiInteger / bddo:asciiDecimal field must declare a width (size / sizeFromField / sizeFromExpression) or a terminator." ;
+    sh:sparql [ sh:message "A bddo:asciiInteger / bddo:asciiDecimal field must declare a width (size / sizeFromField / sizeFromExpression), a terminator, or bddo:separatedBy." ;
         sh:prefixes bddo:_prefixes ;
         sh:select """SELECT $this WHERE {
             $this bddo:dataType ?dt .
@@ -600,6 +619,7 @@ bddo:AsciiNumericWidthShape a sh:NodeShape ;
             FILTER NOT EXISTS { $this bddo:sizeFromField ?f }
             FILTER NOT EXISTS { $this bddo:sizeFromExpression ?e }
             FILTER NOT EXISTS { $this bddo:terminator ?t }
+            FILTER NOT EXISTS { $this bddo:separatedBy ?sep }
             FILTER NOT EXISTS {
                 ?p bddo:hasField/rdf:rest*/rdf:first $this .
                 ?p a ?c .
@@ -775,7 +795,7 @@ bddo:VarintWidthShape a sh:NodeShape ;
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/bddo> <http://www.w3.org/2004/02/skos/core#definition> "Vocabulary for declaratively describing the physical structure of binary data."@en .
 <https://hexplain.io/ns/bddo> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification."@en .
-<https://hexplain.io/ns/bddo#AsciiNumericWidthShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Ascii Numeric Width. A bddo:asciiInteger / bddo:asciiDecimal field must declare a width (size / sizeFromField / sizeFromExpression) or a terminator."@en .
+<https://hexplain.io/ns/bddo#AsciiNumericWidthShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Ascii Numeric Width. A bddo:asciiInteger / bddo:asciiDecimal field must declare a width (size / sizeFromField / sizeFromExpression), a terminator, or bddo:separatedBy."@en .
 <https://hexplain.io/ns/bddo#AsciiNumericWidthShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of bddo:Field Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/bddo#AsciiNumericWidthShape> <http://www.w3.org/2000/01/rdf-schema#label> "Ascii Numeric Width Shape"@en .
 <https://hexplain.io/ns/bddo#AsciiNumericWidthShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
@@ -876,7 +896,7 @@ bddo:VarintWidthShape a sh:NodeShape ;
 <https://hexplain.io/ns/bddo#FieldRepetitionShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of bddo:Field Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/bddo#FieldRepetitionShape> <http://www.w3.org/2000/01/rdf-schema#label> "Field Repetition Shape"@en .
 <https://hexplain.io/ns/bddo#FieldRepetitionShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
-<https://hexplain.io/ns/bddo#FieldShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for bddo:alignment, bddo:atOffset, bddo:atOffsetFromExpression, bddo:atOffsetFromField, bddo:bitLength, bddo:checksum, bddo:dataType, bddo:encoding, bddo:enumeration, bddo:hasConditionalDataType, bddo:hasDispatchTable, bddo:isPresentIf, bddo:offsetBase, bddo:rootKeyFromField, bddo:seekScope, bddo:size, bddo:sizeFromExpression, bddo:sizeFromField, bddo:sizeToEndOfStream, bddo:terminator, bddo:trimNull, bddo:validIf, bddo:valueFromExpression. Every member of a hasConditionalDataType list must be a bddo:DataTypeRule."@en .
+<https://hexplain.io/ns/bddo#FieldShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for bddo:alignment, bddo:atOffset, bddo:atOffsetFromExpression, bddo:atOffsetFromField, bddo:bitLength, bddo:checksum, bddo:dataType, bddo:encoding, bddo:enumeration, bddo:hasConditionalDataType, bddo:hasDispatchTable, bddo:isPresentIf, bddo:offsetBase, bddo:rootKeyFromField, bddo:seekScope, bddo:separatedBy, bddo:size, bddo:sizeFromExpression, bddo:sizeFromField, bddo:sizeToEndOfStream, bddo:terminator, bddo:trimNull, bddo:validIf, bddo:valueFromExpression. Every member of a hasConditionalDataType list must be a bddo:DataTypeRule."@en .
 <https://hexplain.io/ns/bddo#FieldShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of bddo:Field Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/bddo#FieldShape> <http://www.w3.org/2000/01/rdf-schema#label> "Field Shape"@en .
 <https://hexplain.io/ns/bddo#FieldShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
@@ -989,7 +1009,7 @@ bddo:VarintWidthShape a sh:NodeShape ;
 <https://hexplain.io/ns/bddo#ascii> <http://www.w3.org/2004/02/skos/core#definition> "US-ASCII character encoding using seven-bit character values."@en .
 <https://hexplain.io/ns/bddo#ascii> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/bddo#ascii> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
-<https://hexplain.io/ns/bddo#asciiDecimal> <http://www.w3.org/2004/02/skos/core#definition> "A fixed- or floating-point number written as text, occupying the field's declared width or ending at its terminator. Accepts leading sign, decimal point and exponent. Yields a HEL Float."@en .
+<https://hexplain.io/ns/bddo#asciiDecimal> <http://www.w3.org/2004/02/skos/core#definition> "A fixed- or floating-point number written as text, occupying the field's declared width or ending at its terminator. Accepts leading sign, decimal point and an exponent introduced by E, e, D or d -- Fortran writes a double-precision exponent with D, and formats written by Fortran (USGSDEM record A) use it. A value spelled 'nan' (any case, optional leading sign) reads as a not-a-number; an infinite value is not accepted. Yields a HEL Float."@en .
 <https://hexplain.io/ns/bddo#asciiDecimal> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/bddo#asciiDecimal> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
 <https://hexplain.io/ns/bddo#asciiInteger> <http://www.w3.org/2004/02/skos/core#definition> "An integer written as text, occupying the field's declared width (bddo:size) or ending at its terminator. Surrounding space and a leading '+'/'-' are accepted. Radix is bddo:numericBase, default 10. Yields a HEL Integer."@en .
@@ -1261,6 +1281,9 @@ bddo:VarintWidthShape a sh:NodeShape ;
 <https://hexplain.io/ns/bddo#seekScope> <http://www.w3.org/2004/02/skos/core#definition> "Whether an offset-addressed read is confined to its bounded region or resolved against the whole stream."@en .
 <https://hexplain.io/ns/bddo#seekScope> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/bddo#seekScope> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
+<https://hexplain.io/ns/bddo#separatedBy> <http://www.w3.org/2004/02/skos/core#definition> "The element extent of a field -- repeated or scalar -- whose value is a number written as text, separated rather than sized or terminated: each element is preceded and followed by a run of separator bytes, and the run belongs to the element that owns it so the byte sequence can be rebuilt exactly. The only defined value is \"whitespace\" (space, tab, CR, LF). A separator is a RUN and a terminator is a SEQUENCE: between two delimiters of a delimited table an empty value is meaningful, whereas an empty run is not a value at all. Permitted only on a field whose data type is a number written as text. Because the LAST element's trailing run consumes every separator byte up to the field's own extent (or end of stream), a field declaring bddo:separatedBy must either be the last field read from its enclosing region, or be immediately followed by data that does not itself begin with a separator byte (space, tab, CR, LF) -- otherwise the trailing run consumes bytes that belong to the following field."@en .
+<https://hexplain.io/ns/bddo#separatedBy> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/bddo#separatedBy> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
 <https://hexplain.io/ns/bddo#sha1> <http://www.w3.org/2004/02/skos/core#definition> "The SHA-1 message-digest identifier, producing a 160-bit digest; this term does not claim suitability for collision-resistant security uses."@en .
 <https://hexplain.io/ns/bddo#sha1> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/bddo#sha1> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/bddo> .
