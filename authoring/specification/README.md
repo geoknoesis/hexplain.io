@@ -11,3 +11,5 @@ The catalogs and `.ttl.in` templates are build inputs, not a new public ontology
 Prerelease changes may intentionally change public terms and validation behavior. The current authoring expansion must still match published RDF exactly. The archived simplification baseline remains an integrity-checked historical artifact, not a constraint on current development. Historical compatibility replay is optional: `python tools/test_release_contract.py --replay-history`.
 
 Primitive formats preserve datatype semantics and unspecified byte order. Shared scope notes appear once per module, with a link from every affected term; all original annotations remain in RDF. Each term retains its own definition, range and validation metadata.
+
+Run `python tools/_build_authoring_inventory.py` after changing templates. `constraint-inventory.json` distinguishes reusable property clauses/value alternatives from each consuming module's activation targets. Prefixes remain local; identical lexical fragments do not imply semantic equivalence.
