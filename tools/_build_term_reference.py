@@ -3,7 +3,7 @@
 Run with --enrich once after editorial changes; ordinary regeneration reads canonical RDF.
 --check verifies the generated sections without modifying files.
 """
-import argparse,json,re,os
+import argparse,json,re,os,hashlib
 from html import escape as e
 from collections import defaultdict
 from functools import lru_cache
@@ -109,6 +109,11 @@ def related_shapes(g):
 def reference_section(g,terms,doc,registry,used,existing=''):
     render=Renderer(g,registry,doc)
     toc='<nav class="term-toc" aria-label="Term reference">'+''.join(f'<a href="#term-{e(local(t))}">{e(compact(g,t))}</a>' for t in terms)+'</nav>'
+    scopes=defaultdict(int)
+    for t in terms: scopes[str(g.value(t,SKOS.scopeNote))]+=1
+    shared={text:'scope-'+hashlib.sha256(text.encode()).hexdigest()[:16] for text,count in scopes.items() if count>1 and text!='None'}
+    conventions='<section id="shared-scopes"><h3>Shared usage scopes</h3><dl>'+''.join(f'<dt id="{anchor}">Shared scope {i}</dt><dd>{e(text)}</dd>' for i,(text,anchor) in enumerate(sorted(shared.items()),1))+'</dl></section>' if shared else ''
+    labels={text:f'Shared scope {i}' for i,text in enumerate(sorted(shared),1)}
     cards=[]
     for t in terms:
         k=kind(g,t);name=label(g,t);definition_text=g.value(t,SKOS.definition);scope_text=g.value(t,SKOS.scopeNote)
@@ -116,7 +121,7 @@ def reference_section(g,terms,doc,registry,used,existing=''):
         shape=k in ['Node shape','Property shape','SHACL prefix declarations']
         aliases='' if re.search(r'\bid=["\']'+re.escape(local(t))+r'["\']',existing) else f'<span id="{e(local(t))}"></span>'
         def row(title,value):return f'<dt>{e(title)}</dt><dd>{value}</dd>'
-        metadata=row('Label',e(name))+row('Definition',e(str(definition_text)))+row('Usage scope',e(str(scope_text)))
+        metadata=row('Label',e(name))+row('Definition',e(str(definition_text)))+row('Usage scope',f'<a href="#{shared[str(scope_text)]}">{labels[str(scope_text)]}</a>' if str(scope_text) in shared else e(str(scope_text)))
         metadata+=row('Declared RDF type',render.values(g.objects(t,RDF.type)) or 'No rdf:type declared; this node provides the listed infrastructure declarations.')
         if 'property' in k.lower() and not shape:
             metadata+=row('RDFS domain',render.values(g.objects(t,RDFS.domain)) or 'No global domain declared. SHACL usage scopes below do not create a global domain axiom.')
@@ -144,7 +149,7 @@ def reference_section(g,terms,doc,registry,used,existing=''):
         metadata+=row('Canonical source',', '.join(f'<a href="{e(p.name)}">{e(p.name)}</a>' for p in source_files))
         declaration='<details><summary>'+('Constraint and rule specification' if shape else 'Declared axioms and values')+'</summary>'+render.constraints(t)+'</details>'
         cards.append(f'<article id="term-{e(local(t))}" data-term-iri="{e(str(t))}">{aliases}<div class="term-kind">{e(k)}</div><h3>{e(compact(g,t))} — {e(name)}</h3><p class="term-iri">IRI: <a href="{e(str(t))}">{e(str(t))}</a></p><dl>{metadata}</dl>{declaration}</article>')
-    return START+f'<style>{STYLE}</style><section class="term-reference" id="term-reference"><h2>Complete term and shape reference</h2><p>{len(terms)} named resources are documented below. Definitions and usage notes come from the canonical RDF; range and validation facts are rendered from its axioms and shapes. RDFS/OWL inference, SHACL validation, and editorial usage guidance are shown separately. Blank-node property shapes and logical alternatives are expanded under their owning named shapes.</p><p>Constraint language follows <a href="https://www.w3.org/TR/shacl/">W3C SHACL</a>; publication and persistent term identifiers follow the <a href="https://www.w3.org/TR/swbp-vocab-pub/">W3C vocabulary publication guidance</a>. Concept definitions and scope notes use <a href="https://www.w3.org/TR/skos-reference/">SKOS documentation properties</a>.</p>'+toc+''.join(cards)+'</section>'+END
+    return START+f'<style>{STYLE}</style><section class="term-reference" id="term-reference"><h2>Complete term and shape reference</h2><p>{len(terms)} named resources are documented below. Definitions and usage notes come from the canonical RDF; range and validation facts are rendered from its axioms and shapes. RDFS/OWL inference, SHACL validation, and editorial usage guidance are shown separately. Blank-node property shapes and logical alternatives are expanded under their owning named shapes.</p><p>Constraint language follows <a href="https://www.w3.org/TR/shacl/">W3C SHACL</a>; publication and persistent term identifiers follow the <a href="https://www.w3.org/TR/swbp-vocab-pub/">W3C vocabulary publication guidance</a>. Concept definitions and scope notes use <a href="https://www.w3.org/TR/skos-reference/">SKOS documentation properties</a>.</p>'+toc+conventions+''.join(cards)+'</section>'+END
 
 def replace_normative(text,paths):
     source='\n'.join((ROOT/p).read_text(encoding='utf-8').rstrip() for p in paths)+'\n'

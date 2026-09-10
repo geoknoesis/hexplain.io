@@ -45,4 +45,24 @@ def cases():
         ('quoteChar','hex'),('escapeChar','hex'),('commentPrefix','string'),('skipRecords','nonnegative'),('trimWhitespace','boolean')])
     group('checksum','ex:f a b:Checksum; b:checksumAlgorithm b:crc32.',[
         ('coversFromField','field'),('coversToField','field'),('coversExpression','string'),('coversFromExpression','string'),('coversToExpression','string')])
+    # bddo:separatedBy is itself the extent of a text-numeric field: the term admits exactly
+    # one spelling, "whitespace", states it at most once, and -- being an answer to "where does
+    # this element end" -- cannot be combined with any of the five other answers. Expectations
+    # are taken from the term definition and the AsciiNumericWidthShape message, not from the
+    # shape graph.
+    base=PREFIX+'b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. '
+    def separated(name,body,ok,path='',shape=''):
+        rows.append(dict(name='separated '+name,module='specification/bddo/bddo.ttl',expected=ok,
+            path='https://hexplain.io/ns/bddo#'+path if path else '',
+            expectedShape='https://hexplain.io/ns/bddo#'+shape if shape else '',data=base+body))
+    separated('scalar extent','ex:f b:separatedBy "whitespace".',True)
+    separated('repeated extent','ex:f b:separatedBy "whitespace"; b:repeatCount 3.',True)
+    separated('non-string separator','ex:f b:separatedBy 1.',False,'separatedBy')
+    separated('unlisted separator','ex:f b:separatedBy "comma".',False,'separatedBy')
+    separated('two separators','ex:f b:separatedBy "whitespace","comma".',False,'separatedBy')
+    for prop,value in [('size','4'),('sizeFromField','ex:count'),('sizeFromExpression','"4"'),
+                       ('sizeToEndOfStream','true'),('terminator','"20"^^xsd:hexBinary')]:
+        separated('excludes '+prop,f'ex:f b:separatedBy "whitespace"; b:{prop} {value}.',False,shape='FieldShape')
+    separated('ascii numeric width accepts a separator','ex:f b:separatedBy "whitespace"; b:encoding b:ascii.',True)
+    separated('ascii numeric width rejects no extent','',False,shape='AsciiNumericWidthShape')
     return rows
