@@ -17,7 +17,7 @@ Acceptance requires completed module coverage, dispositions for all findings, re
 - **ORT-07 Compound and security scope:** Review nesting, ownership, controlled concepts and profiles. Confirm containment does not confer authorization or security inheritance.
 - **ORT-08 Numbers and physical layout:** Review counts, strides, packing width, integral datatype families, rational quantities, sentinel extents and signedness.
 - **ORT-09 Vocabulary architecture:** For every module, review term labels/definitions/scopes, reuse, domain/range choices, cardinality and open-world ontology vs validation contracts.
-- **ORT-10 Compatibility and publication:** Assess stricter shape revisions, retained immutable artifacts, live dereferencing failure, namespace policy and migration impact.
+- **ORT-10 Compatibility and publication:** Assess stricter shape revisions, retained immutable artifacts, namespace policy (live deployment deferred and excluded), and migration impact.
 
 ## Module-by-module record
 
@@ -42,7 +42,7 @@ Acceptance requires completed module coverage, dispositions for all findings, re
 | specification/aspect/tabular | 6 | Unreviewed |
 | specification/aspect/time | 3 | Unreviewed |
 | specification/axv | 8 | Unreviewed |
-| specification/bddo | 183 | Unreviewed |
+| specification/bddo | 202 | Unreviewed |
 | specification/conf | 7 | Unreviewed |
 | specification/dfv | 26 | Unreviewed |
 | specification/dlv | 43 | Unreviewed |
@@ -60,6 +60,8 @@ Acceptance requires completed module coverage, dispositions for all findings, re
 | specification/vdv | 17 | Unreviewed |
 
 ## Evidence boundaries
+
+The constraint ledger (`specification/validation/constraint-coverage.json`) records actual component evaluations, including nested branches, rather than inferring coverage from term mentions. The shared module corpus is `specification/validation/test/family-contracts.json`; its expectations are authored in the `_...contract_cases.py` helpers and replayed in pySHACL and Apache Jena. One case explicitly adds a target node to reuse a named shape outside its automatic target; this activation is recorded in the fixture, not silently added to the published vocabulary. Empty-value successes count only for cardinality components. A passing and failing evaluation of each component does not prove every parameter is necessary or every combination of vocabulary terms is semantically adequate. Review those questions independently.
 
 The generated GDAL corpus covers seven ISO-WKB families, four ordinate layouts, empty/nonempty geometries and two byte orders. Actual GeoPackage tables cover 60 rows with geometry/null distinction, exact integer attributes and SRS identifiers. It does not prove native Shapefile/FlatGeobuf/GeoParquet decoding, CRS reprojection, topology, curves, arbitrary mixed-dimensional collections or all external format variants.
 
