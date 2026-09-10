@@ -15,7 +15,8 @@ def snapshot(release_id):
     assert re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}\.[1-9][0-9]*', release_id), 'Use YYYY-MM-DD.N'
     out = ROOT / 'releases' / release_id
     assert not out.exists(), 'Immutable snapshot already exists; choose a new revision'
-    paths = specgraph.ontology_paths() + ['specification/validation/test/competency.tsv', 'specification/validation/test/layout-competency.tsv', 'specification/validation/test/security-competency.tsv', 'specification/validation/test/security-profile.ttl', 'specification/validation/test/geometry-competency.tsv']
+    paths = specgraph.ontology_paths() + ['specification/validation/test/competency.tsv', 'specification/validation/test/layout-competency.tsv', 'specification/validation/test/security-competency.tsv', 'specification/validation/test/security-profile.ttl', 'specification/validation/test/geometry-competency.tsv', 'specification/validation/test/network-competency.tsv']
+    paths += ['specification/validation/test/family-contracts.json']
     files = []
     content = io.BytesIO()
     with zipfile.ZipFile(content, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
