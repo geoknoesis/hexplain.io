@@ -10,7 +10,7 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/net> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/net/1.0> ; owl:versionInfo "1.0" ;
+    owl:versionIRI <https://hexplain.io/ns/net/1.1> ; owl:versionInfo "1.1" ;
     owl:imports <https://hexplain.io/ns/aspect/networkflow> ;
     rdfs:label "Hexplain Network Protocol Vocabulary (NPV)" ;
     rdfs:comment "Semantic vocabulary for network-protocol fields." ;
@@ -28,15 +28,15 @@
 # Protocol addressing/flow properties are the networkflow aspect (anet:), imported above.
 
 # ---------- SHACL ----------
-npv:AddressShape a sh:NodeShape ; sh:targetSubjectsOf anet:sourceAddress ;
+npv:AddressShape a sh:NodeShape ; sh:targetSubjectsOf anet:sourceAddress, anet:destinationAddress ;
     sh:property [ sh:path anet:sourceAddress ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path anet:destinationAddress ; sh:datatype xsd:string ; sh:maxCount 1 ] .
-npv:PortShape a sh:NodeShape ; sh:targetSubjectsOf anet:sourcePort ;
-    sh:property [ sh:path anet:sourcePort ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path anet:destinationPort ; sh:minExclusive 0 ; sh:maxCount 1 ] .
-npv:TcpShape a sh:NodeShape ; sh:targetSubjectsOf anet:sequenceNumber ;
-    sh:property [ sh:path anet:sequenceNumber ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path anet:acknowledgmentNumber ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+npv:PortShape a sh:NodeShape ; sh:targetSubjectsOf anet:sourcePort, anet:destinationPort ;
+    sh:property [ sh:path anet:sourcePort ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:short ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minInclusive 0 ; sh:maxInclusive 65535 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path anet:destinationPort ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:short ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minInclusive 0 ; sh:maxInclusive 65535 ; sh:maxCount 1 ] .
+npv:TcpShape a sh:NodeShape ; sh:targetSubjectsOf anet:sequenceNumber, anet:acknowledgmentNumber, anet:tcpFlags ;
+    sh:property [ sh:path anet:sequenceNumber ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:short ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minInclusive 0 ; sh:maxInclusive 4294967295 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path anet:acknowledgmentNumber ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:short ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minInclusive 0 ; sh:maxInclusive 4294967295 ; sh:maxCount 1 ] ;
     sh:property [ sh:path anet:tcpFlags ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] .
 
 # BEGIN GENERATED TERM DOCUMENTATION
@@ -44,7 +44,7 @@ npv:TcpShape a sh:NodeShape ; sh:targetSubjectsOf anet:sequenceNumber ;
 <https://hexplain.io/ns/net> <http://www.w3.org/2004/02/skos/core#definition> "Semantic vocabulary for network-protocol fields."@en .
 <https://hexplain.io/ns/net> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for protocol data units. Protocol-specific wire interpretation remains in the format profile; networkflow supplies shared endpoint and sequence metadata."@en .
 <https://hexplain.io/ns/net#AddressShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for anet:destinationAddress, anet:sourceAddress. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/net#AddressShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using anet:sourceAddress Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/net#AddressShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using anet:destinationAddress, anet:sourceAddress Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/net#AddressShape> <http://www.w3.org/2000/01/rdf-schema#label> "Address Shape"@en .
 <https://hexplain.io/ns/net#AddressShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/net> .
 <https://hexplain.io/ns/net#EthernetFrame> <http://www.w3.org/2004/02/skos/core#definition> "A link-layer frame represented according to an Ethernet format profile."@en .
@@ -56,13 +56,13 @@ npv:TcpShape a sh:NodeShape ; sh:targetSubjectsOf anet:sequenceNumber ;
 <https://hexplain.io/ns/net#Packet> <http://www.w3.org/2004/02/skos/core#definition> "A protocol data unit represented as a semantic network resource; protocol-specific interpretation is supplied by its type and profile."@en .
 <https://hexplain.io/ns/net#Packet> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for protocol data units. Protocol-specific wire interpretation remains in the format profile; networkflow supplies shared endpoint and sequence metadata. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/net#PortShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for anet:destinationPort, anet:sourcePort. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/net#PortShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using anet:sourcePort Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/net#PortShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using anet:destinationPort, anet:sourcePort Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/net#PortShape> <http://www.w3.org/2000/01/rdf-schema#label> "Port Shape"@en .
 <https://hexplain.io/ns/net#PortShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/net> .
 <https://hexplain.io/ns/net#TCPSegment> <http://www.w3.org/2004/02/skos/core#definition> "A transport-layer protocol data unit represented according to a TCP profile."@en .
 <https://hexplain.io/ns/net#TCPSegment> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for protocol data units. Protocol-specific wire interpretation remains in the format profile; networkflow supplies shared endpoint and sequence metadata. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/net#TcpShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for anet:acknowledgmentNumber, anet:sequenceNumber, anet:tcpFlags. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/net#TcpShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using anet:sequenceNumber Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/net#TcpShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using anet:acknowledgmentNumber, anet:sequenceNumber, anet:tcpFlags Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/net#TcpShape> <http://www.w3.org/2000/01/rdf-schema#label> "Tcp Shape"@en .
 <https://hexplain.io/ns/net#TcpShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/net> .
 <https://hexplain.io/ns/net#UDPDatagram> <http://www.w3.org/2004/02/skos/core#definition> "A transport-layer protocol data unit represented according to a UDP profile."@en .
