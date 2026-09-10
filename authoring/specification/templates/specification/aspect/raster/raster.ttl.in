@@ -1,0 +1,110 @@
+# Hexplain Aspect — Raster (hx-raster) 1.0
+# Content-representation aspect: a regular N-D grid of samples. Sibling of hx-geometry
+# (vector); neither imports the other. Imports the sampling and colour base aspects.
+@prefix :        <https://hexplain.io/ns/aspect/raster#> .
+@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix ma:      <http://www.w3.org/ns/ma-ont#> .
+@prefix asamp:   <https://hexplain.io/ns/aspect/sampling#> .
+@prefix acolor:  <https://hexplain.io/ns/aspect/color#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+<https://hexplain.io/ns/aspect/raster> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/raster/1.1> ; owl:versionInfo "1.1 working draft" ; owl:priorVersion <https://hexplain.io/ns/aspect/raster/1.0> ; dcterms:modified "2026-09-05"^^xsd:date ;
+    owl:imports <https://hexplain.io/ns/aspect/sampling> , <https://hexplain.io/ns/aspect/color> ;
+    rdfs:label "Hexplain Aspect — Raster (hx-raster)" ;
+    rdfs:comment "Content-representation aspect for a regular N-dimensional sample grid (width, height). Colour comes from hx-color and per-sample precision from hx-sampling, both imported. Shared by image, video frames, and geospatial rasters." ;
+    dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "araster" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/raster#" .
+
+:width a owl:DatatypeProperty ; rdfs:label "width" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:seeAlso ma:frameWidth ; rdfs:range xsd:positiveInteger ; rdfs:comment "Grid extent along the horizontal axis, in samples (pixels)." .
+:height a owl:DatatypeProperty ; rdfs:label "height" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:seeAlso ma:frameHeight ; rdfs:range xsd:positiveInteger ; rdfs:comment "Grid extent along the vertical axis, in samples (pixels)." .
+:noDataValue a owl:DatatypeProperty ; rdfs:label "no-data value" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Sample value denoting absence of data in the grid." .
+
+# 1.1 working draft: logical samples, independent of physical storage layout.
+:RasterGrid a owl:Class ; rdfs:label "Raster grid" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A two-dimensional grid with one or more co-registered bands. Higher-dimensional arrays use SampleArray; physical byte addressing remains in DLV." .
+:RasterBand a owl:Class ; rdfs:label "Raster band" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "One sample plane of a raster grid, with its own sample interpretation, no-data, calibration and optional mask." .
+:SampleArray a owl:Class ; rdfs:label "Sample array" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A logical array of arbitrary rank, including rank-zero scalars and zero-length dimensions. Logical dimension order is independent of physical byte strides and chunk order." .
+:ArrayDimension a owl:Class ; rdfs:label "Array dimension" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A reusable named axis with an extent. Its position belongs to each array's ordered dimension list, not to the shared dimension." .
+:ArrayGroup a owl:Class ; rdfs:label "Array group" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A logical hierarchy of groups and arrays. It does not imply filesystem directory layout." .
+:hasBand a owl:ObjectProperty ; rdfs:range :RasterBand ; rdfs:label "has band" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:bandCount a owl:DatatypeProperty ; rdfs:range xsd:positiveInteger ; rdfs:label "band count" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Total band count. A partial RDF projection may describe fewer bands, but never more than this count." .
+:bandIndex a owl:DatatypeProperty ; rdfs:range xsd:positiveInteger ; rdfs:label "band index" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "One-based band index within its owning grid." .
+:sampleScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "sample scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Calibration multiplier: physical = raw * sampleScale + sampleOffset. Absence means unspecified, not a stored default. Apply no-data detection to raw samples first." .
+:sampleOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "sample offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Calibration additive term, in the unit of the physical value. Independent of byte offsets and georeferencing origins." .
+:sampleUnit a owl:ObjectProperty ; rdfs:label "sample unit" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Unit IRI for calibrated sample values; profiles may reuse established unit vocabularies." .
+:hasMask a owl:ObjectProperty ; rdfs:range :RasterBand ; rdfs:label "has validity mask" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Validity mask band: zero is invalid; nonzero is valid. This relation does not imply alpha/transparency semantics." .
+:hasOverview a owl:ObjectProperty ; rdfs:label "has overview" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A lower-resolution representation covering the same logical domain. Does not assert a resampling algorithm or an integer reduction factor." .
+:dimensions a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "dimensions" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Complete ordered RDF list of ArrayDimension resources in logical indexing order. rdf:nil denotes a scalar. The list must be finite, well formed and permit repeated dimension resources at distinct positions." .
+:dimensionName a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "dimension name" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:dimensionExtent a owl:DatatypeProperty ; rdfs:range xsd:nonNegativeInteger ; rdfs:label "dimension extent" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Current number of indexable values along this logical axis. Zero is permitted. An unlimited dimension has a finite current extent, not infinity." .
+:dimensionKind a owl:ObjectProperty ; rdfs:range skos:Concept ; rdfs:label "dimension kind" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Axis nature from a profile-bound concept scheme; no fixed list limits scientific or non-spatial axes." .
+:coordinateArray a owl:ObjectProperty ; rdfs:range :SampleArray ; rdfs:label "coordinate array" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Array of coordinate values associated with a dimension. Its shape and alignment are asserted by the profile; coordinates need not be regularly spaced." .
+:hasArray a owl:ObjectProperty ; rdfs:range :SampleArray ; rdfs:label "has array" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:hasGroup a owl:ObjectProperty ; rdfs:range :ArrayGroup ; rdfs:label "has group" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+
+# RDF datatypes retain the wire value's precision; SHACL accepts the integer family.
+:PositiveCountShape a sh:NodeShape ;
+    {{constraint:pattern_237}} ; sh:minExclusive 0 .
+:ExtentShape a sh:NodeShape ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] ) ; sh:minInclusive 0 .
+:RasterSizeShape a sh:NodeShape ; sh:targetSubjectsOf :width, :height, :bandCount ;
+    sh:property [ sh:path :width ; sh:node :PositiveCountShape ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :height ; sh:node :PositiveCountShape ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :bandCount ; sh:node :PositiveCountShape ; sh:maxCount 1 ] .
+:RasterBandShape a sh:NodeShape ; sh:targetClass :RasterBand ; sh:targetObjectsOf :hasBand, :hasMask ; sh:targetSubjectsOf :sampleScale, :sampleOffset ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:property [ sh:path :bandIndex ; sh:node :PositiveCountShape ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :sampleScale ; sh:datatype xsd:double ; sh:maxCount 1 ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] ] ;
+    sh:property [ sh:path :sampleOffset ; sh:datatype xsd:double ; sh:maxCount 1 ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] ] ;
+    sh:property [ sh:path :noDataValue ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :sampleUnit ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+:BandMembershipShape a sh:NodeShape ; sh:targetSubjectsOf :hasBand ;
+    sh:property [ sh:path :hasBand ; sh:node :RasterBandShape ] ;
+    sh:sparql [ sh:message "Band indexes must be unique within one grid and may not exceed its declared count." ; sh:select """
+      PREFIX a: <https://hexplain.io/ns/aspect/raster#>
+      SELECT $this WHERE {
+        { $this a:hasBand ?b, ?c . ?b a:bandIndex ?i . ?c a:bandIndex ?j . FILTER(!sameTerm(?b, ?c) && ?i = ?j) }
+        UNION { $this a:hasBand ?b ; a:bandCount ?n . ?b a:bandIndex ?i . FILTER(?i > ?n) }
+      }
+    """ ] ;
+    sh:sparql [ sh:message "Described bands exceed the declared total." ; sh:select """
+      PREFIX a: <https://hexplain.io/ns/aspect/raster#>
+      SELECT $this WHERE { $this a:bandCount ?n . { SELECT $this (COUNT(DISTINCT ?b) AS ?c) WHERE { $this a:hasBand ?b } GROUP BY $this } FILTER(?c > ?n) }
+    """ ] .
+:ArrayDimensionShape a sh:NodeShape ; sh:targetClass :ArrayDimension ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:property [ sh:path :dimensionExtent ; sh:node :ExtentShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :dimensionName ; sh:datatype xsd:string ; sh:minLength 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :dimensionKind ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :coordinateArray ; sh:nodeKind sh:BlankNodeOrIRI ; sh:maxCount 1 ] .
+:SampleArrayShape a sh:NodeShape ; sh:targetClass :SampleArray ; sh:targetSubjectsOf :dimensions ; sh:targetObjectsOf :hasArray, :coordinateArray ;
+    sh:property [ sh:path :dimensions ; sh:nodeKind sh:BlankNodeOrIRI ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ( :dimensions [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:node :ArrayDimensionShape ] ;
+    sh:sparql [ sh:message "Dimension lists must terminate in rdf:nil, contain exactly one first/rest per cell, and contain no cycles." ; sh:select """
+      PREFIX a: <https://hexplain.io/ns/aspect/raster#>
+      PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+      SELECT DISTINCT $this WHERE {
+        $this a:dimensions ?head .
+        { FILTER NOT EXISTS { ?head rdf:rest* rdf:nil } }
+        UNION { ?head rdf:rest* ?cell . FILTER(?cell != rdf:nil) FILTER NOT EXISTS { ?cell rdf:first ?v ; rdf:rest ?r } }
+        UNION { ?head rdf:rest* ?cell . ?cell rdf:first ?v, ?w . FILTER(!sameTerm(?v, ?w)) }
+        UNION { ?head rdf:rest* ?cell . ?cell rdf:rest ?v, ?w . FILTER(!sameTerm(?v, ?w)) }
+        UNION { ?head rdf:rest* ?cell . ?cell rdf:rest+ ?cell }
+        UNION { ?head rdf:rest* rdf:nil . rdf:nil ?p ?v . FILTER(?p IN (rdf:first,rdf:rest)) }
+      }
+    """ ] .
+:GroupHierarchyShape a sh:NodeShape ; sh:targetSubjectsOf :hasGroup ;
+    sh:property [ sh:path :hasGroup ; sh:nodeKind sh:BlankNodeOrIRI ] ;
+    sh:sparql [ sh:message "Group containment must be acyclic." ; sh:select """
+      PREFIX a: <https://hexplain.io/ns/aspect/raster#>
+      SELECT $this WHERE { $this a:hasGroup+ $this }
+    """ ] .
+

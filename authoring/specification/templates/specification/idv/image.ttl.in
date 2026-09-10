@@ -1,0 +1,50 @@
+# Hexplain Image Vocabulary (IDV) 1.0 — vocabulary + SHACL shapes
+@prefix :       <https://hexplain.io/ns/image#> .
+@prefix img:    <https://hexplain.io/ns/image#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix ma:     <http://www.w3.org/ns/ma-ont#> .
+@prefix araster:<https://hexplain.io/ns/aspect/raster#> .
+@prefix asamp:  <https://hexplain.io/ns/aspect/sampling#> .
+@prefix acolor: <https://hexplain.io/ns/aspect/color#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/image> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/image/1.0> ; owl:versionInfo "1.0" ;
+    owl:imports <https://hexplain.io/ns/aspect/raster> , <https://hexplain.io/ns/aspect/sampling> , <https://hexplain.io/ns/aspect/color> ;
+    rdfs:label "Hexplain Image Vocabulary (IDV)" ;
+    rdfs:comment "Semantic vocabulary for raster image properties." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "img" ; vann:preferredNamespaceUri "https://hexplain.io/ns/image#" .
+
+:Image a owl:Class ; rdfs:label "Image" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:seeAlso ma:Image .
+:ImageHeader a owl:Class ; rdfs:label "Image Header" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
+:ColorProfile a owl:Class ; rdfs:label "Color Profile" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
+:PixelData a owl:Class ; rdfs:label "Pixel Data" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
+
+# Image dimensions, per-component precision, and colour space are the raster/sampling/colour
+# aspects: araster:width, araster:height, asamp:bitDepth, acolor:colorSpace.
+# colorType and the compression/filter/interlace codes below are PNG-specific and will move
+# to a PNG profile in a later phase.
+:colorType a owl:DatatypeProperty ; rdfs:label "color type" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer .
+:compressionMethod a owl:DatatypeProperty ; rdfs:label "compression method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:seeAlso ma:compression ; rdfs:range xsd:integer .
+:filterMethod a owl:DatatypeProperty ; rdfs:label "filter method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer .
+:interlaceMethod a owl:DatatypeProperty ; rdfs:label "interlace method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer .
+
+# ---------- SHACL ----------
+img:ImageShape a sh:NodeShape ; sh:targetClass img:ImageHeader ;
+    sh:property {{constraint:pattern_072}} ;
+    sh:property {{constraint:pattern_071}} ;
+    sh:property {{constraint:pattern_073}} ;
+    sh:property {{constraint:pattern_048}} .
+img:CodeShapes a sh:NodeShape ; sh:targetSubjectsOf img:colorType ;
+    sh:property [ sh:path img:colorType ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path img:compressionMethod ; sh:nodeKind sh:Literal ] ;
+    sh:property [ sh:path img:filterMethod ; sh:nodeKind sh:Literal ] ;
+    sh:property [ sh:path img:interlaceMethod ; sh:nodeKind sh:Literal ] .
+
