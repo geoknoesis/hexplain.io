@@ -1,4 +1,4 @@
-"""Verify immutable archive bytes and replay their original corpus against archived/current shapes."""
+"""Verify archive integrity; historical compatibility replay is explicitly opt-in."""
 import argparse
 import base64
 from pyshacl import validate
@@ -9,13 +9,16 @@ import zipfile
 from pathlib import Path
 from rdflib import Graph
 import specgraph
-from test_instance_contract import check_corpus
+
 
 current_files = {p: Path(p).read_text(encoding='utf-8') for p in specgraph.ontology_paths()}
 current = specgraph.ontologies()
 parser=argparse.ArgumentParser()
 parser.add_argument('--release', help='Replay only this existing release identifier')
+parser.add_argument('--replay-history', action='store_true', help='Optional historical compatibility audit; not a prerelease gate')
 args=parser.parse_args()
+if args.replay_history:
+    from test_instance_contract import check_corpus
 releases = sorted(Path('releases').glob('*/manifest.json'))
 if args.release: releases=[p for p in releases if p.parent.name==args.release]
 assert releases, 'No pinned specification snapshot'
@@ -37,6 +40,8 @@ for path in releases:
             files[item['path']] = data.decode('utf-8')
             if item['path'].endswith('.ttl'):
                 family.parse(data=data, format='turtle')
+    if not args.replay_history:
+        continue
     corpus = files['specification/validation/test/competency.tsv']
     archived_count = check_corpus(family, files, corpus)
     assert check_corpus(current, current_files, corpus) == archived_count
@@ -78,4 +83,4 @@ for path in releases:
                 if row['path']:assert URIRef(row['path']) in report.objects(None,sh.resultPath),(row['name'],detail)
                 if row.get('expectedShape'):assert URIRef(row['expectedShape']) in report.objects(None,sh.sourceShape),(row['name'],detail)
         cases+=len(retained)
-print(f'PASS: {len(releases)} immutable snapshot(s); {cases} archived/current compatibility cases replayed twice')
+print(f'PASS: {len(releases)} immutable snapshots verified; historical compatibility replay ' + (f'{cases} cases' if args.replay_history else 'not requested (prerelease)'))

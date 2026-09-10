@@ -2,6 +2,8 @@
 
 **Status:** Partially implemented on `specification-simplification` in the isolated worktree. See [implementation evidence](../../../review-2026-09-05/simplification/index.html) for exact scope and outstanding acceptance. The detailed checklist below remains the original acceptance inventory; unchecked items are not claimed complete.
 
+**Prerelease policy update (2026-09-10):** Backward compatibility is not required. The historical invariants below describe the original preservation-only refactor, not restrictions on subsequent prerelease changes. Current authoring/output equality, constraint evidence and coordinated consumer updates remain mandatory. Historical replay is opt-in.
+
 **Goal:** Reduce the effort needed to understand, author and maintain Hexplain while preserving its public vocabulary, validation contracts, reader/writer behavior and semantic output.
 
 **Approach:** Simplify the authoring source and the explanation of existing semantics first. Keep existing public terms and convenient syntax. Use deterministic generation for repeated declarations. Introduce shared processing descriptions only after documenting their exceptions. Engine refactoring is conditional on an identified implementation need, not a prerequisite for editorial improvement.
