@@ -21,6 +21,9 @@ mutations=[
     ('two systems',SEC.markingSystem,SH.maxCount),
     ('wrong register',SKOS.inScheme,SH.hasValue),
     ('untyped date',SEC.markingDate,SH.datatype),
+    ('missing level',SEC.sensitivityLevel,SH.minCount),
+    ('two levels',SEC.sensitivityLevel,SH.maxCount),
+    ('multiple raw source labels',SEC.sensitivityLevelText,SH.maxCount),
 ]
 for name,path,predicate in mutations:
     expected,result_path,data=rows[name]
@@ -46,5 +49,5 @@ for name,(expected,path,data) in rows.items():
         assert not validate(data,shacl_graph=original,inference='none')[0],name
         assert validate(data,shacl_graph=untargeted,inference='none')[0],name
         negatives+=1
-assert negatives==7
-print('PASS: 4 isolated security constraint mutations; target-removal sensitivity for 7 negative cases; positive controls retained')
+assert negatives==12
+print('PASS: 7 isolated security constraint mutations; target-removal sensitivity for 12 negative cases; positive controls retained')

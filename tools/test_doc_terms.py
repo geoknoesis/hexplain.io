@@ -88,6 +88,13 @@ def defined_terms():
 
 
 def main():
+    # A CURIE inside a longer absolute IRI is not a prose vocabulary reference.
+    # In particular, urn:hexplain:security-example:Marked is not hexplain:security.
+    def names(text,prefix):
+        return set(re.findall(rf"(?<![\w:/#.-]){prefix}:([A-Za-z][A-Za-z0-9_]*)",text))
+    assert names('urn:hexplain:security-example:Marked','hexplain') == set()
+    assert names('https://example.org/dlv:Unrelated','dlv') == set()
+    assert names('<code>dlv:MissingTerm</code> (dlv:Dimension)','dlv') == {'MissingTerm','Dimension'}
     defined = defined_terms()
     if len(defined) < 300:
         print(f"FAIL: only {len(defined)} terms collected -- wrong working directory?")
@@ -101,7 +108,7 @@ def main():
             continue
         prose = PRE.sub(" ", pathlib.Path(doc).read_text(encoding="utf-8"))
         for prefix, ns in PREFIXES.items():
-            for local in sorted(set(re.findall(rf"\b{prefix}:([A-Za-z][A-Za-z0-9_]*)", prose))):
+            for local in sorted(names(prose,prefix)):
                 curie = f"{prefix}:{local}"
                 if curie in ALLOWED:
                     continue
