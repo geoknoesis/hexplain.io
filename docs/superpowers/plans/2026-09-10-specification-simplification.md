@@ -37,5 +37,7 @@ See [current implementation report](../../../review-2026-09-05/simplification-im
 - Field references remain distinct from arbitrary expressions; no general inversion is claimed.
 - Physical dimensions, semantic axes, packing width and significant bit depth remain distinct.
 - Conditional families retain their own context, fallback and exception semantics.
-- Interpreter zlib/raw-DEFLATE level parameters are now supported (-1 or 0..9). Other parameters and parameterized generated runtimes still reject explicitly.
+- Interpreter zlib/raw-DEFLATE level parameters are now supported (-1 or 0..9). Generated Kotlin readers and writers now preserve the same settings on supported byte fields. Other parameters, encoded nested structs and repeated encoded fields retain explicit capability rejection.
 - No production deployment, fresh GDAL oracle generation or independent ontology acceptance is claimed. Browser/print manual acceptance and the complete cross-repository release workflow remain separate from the automated checks run here.
+
+Generated-runtime follow-through: [compiled codec option evidence](../../../review-2026-09-05/generated-codec-options.html).
