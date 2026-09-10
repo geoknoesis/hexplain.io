@@ -36,6 +36,14 @@ def build():
     paths.update(p.relative_to(ROOT).as_posix() for p in (ROOT/'specification/validation/test').glob('*') if p.is_file())
     paths.update(p.relative_to(ROOT).as_posix() for p in (ROOT/'tools').glob('*.py'))
     paths.update(m['page'] for m in modules)
+    paths.update(p.relative_to(ROOT).as_posix() for p in (ROOT/'authoring/specification').rglob('*') if p.is_file())
+    paths.update(['specification/shared-patterns/index.html',
+                  'specification/processing/index.html',
+                  'specification/hel/index.html',
+                  'specification/coverage/writer-tests/index.html',
+                  'review-2026-09-05/simplification/baseline.json',
+                  'review-2026-09-05/simplification/baseline.zip',
+                  'review-2026-09-05/simplification/equivalence-matrix.json'])
     paths.update(['requirements.txt', 'specification/reference/manifest.json',
                   'specification/validation/competency-trace.json',
                   'specification/validation/constraint-coverage.json',
@@ -44,7 +52,7 @@ def build():
                   'specification/ontology-review/candidate-migration.md',
                   'specification/coverage/gdal-tests/vector-semantic-candidate.json'])
     for path in sorted(paths):
-        payload[path] = text_bytes(path)
+        payload[path] = (ROOT/path).read_bytes() if path.endswith('.zip') else text_bytes(path)
     payload['specification/ontology-review/constraint-inventory.json'] = (json.dumps(audit, indent=2)+'\n').encode()
     content = io.BytesIO()
     with zipfile.ZipFile(content, 'w', compression=zipfile.ZIP_STORED) as archive:

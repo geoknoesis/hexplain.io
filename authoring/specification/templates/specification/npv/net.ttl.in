@@ -1,0 +1,41 @@
+# Hexplain Network Protocol Vocabulary (NPV) 1.0 — vocabulary + SHACL shapes
+@prefix :       <https://hexplain.io/ns/net#> .
+@prefix npv:    <https://hexplain.io/ns/net#> .
+@prefix anet:   <https://hexplain.io/ns/aspect/networkflow#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/net> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/net/1.1> ; owl:versionInfo "1.1" ;
+    owl:imports <https://hexplain.io/ns/aspect/networkflow> ;
+    rdfs:label "Hexplain Network Protocol Vocabulary (NPV)" ;
+    rdfs:comment "Semantic vocabulary for network-protocol fields." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "npv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/net#" .
+
+:Packet a owl:Class ; rdfs:label "Packet" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> .
+:EthernetFrame a owl:Class ; rdfs:label "Ethernet Frame" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> .
+:IPv4Packet a owl:Class ; rdfs:label "IPv4 Packet" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> .
+:IPv6Packet a owl:Class ; rdfs:label "IPv6 Packet" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> .
+:TCPSegment a owl:Class ; rdfs:label "TCP Segment" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> .
+:UDPDatagram a owl:Class ; rdfs:label "UDP Datagram" ; rdfs:isDefinedBy <https://hexplain.io/ns/net> .
+
+# Protocol addressing/flow properties are the networkflow aspect (anet:), imported above.
+
+# ---------- SHACL ----------
+npv:AddressShape a sh:NodeShape ; sh:targetSubjectsOf anet:sourceAddress, anet:destinationAddress ;
+    sh:property [ sh:path anet:sourceAddress ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path anet:destinationAddress ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+npv:PortShape a sh:NodeShape ; sh:targetSubjectsOf anet:sourcePort, anet:destinationPort ;
+    sh:property [ sh:path anet:sourcePort ; {{constraint:pattern_234}} ; sh:minInclusive 0 ; sh:maxInclusive 65535 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path anet:destinationPort ; {{constraint:pattern_234}} ; sh:minInclusive 0 ; sh:maxInclusive 65535 ; sh:maxCount 1 ] .
+npv:TcpShape a sh:NodeShape ; sh:targetSubjectsOf anet:sequenceNumber, anet:acknowledgmentNumber, anet:tcpFlags ;
+    sh:property [ sh:path anet:sequenceNumber ; {{constraint:pattern_234}} ; sh:minInclusive 0 ; sh:maxInclusive 4294967295 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path anet:acknowledgmentNumber ; {{constraint:pattern_234}} ; sh:minInclusive 0 ; sh:maxInclusive 4294967295 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path anet:tcpFlags ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] .
+

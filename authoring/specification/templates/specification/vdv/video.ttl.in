@@ -1,0 +1,76 @@
+# Hexplain Video Vocabulary (VDV) 1.0 — vocabulary + SHACL shapes
+@prefix :       <https://hexplain.io/ns/video#> .
+@prefix vdv:    <https://hexplain.io/ns/video#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix ma:     <http://www.w3.org/ns/ma-ont#> .
+@prefix qudt:   <http://qudt.org/schema/qudt/> .
+@prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .
+@prefix unit:   <http://qudt.org/vocab/unit/> .
+@prefix atime:  <https://hexplain.io/ns/aspect/time#> .
+@prefix aenc:   <https://hexplain.io/ns/aspect/encoding#> .
+@prefix acolor: <https://hexplain.io/ns/aspect/color#> .
+@prefix araster:<https://hexplain.io/ns/aspect/raster#> .
+@prefix dlv:    <https://hexplain.io/ns/dlv#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/video> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/video/1.0> ; owl:versionInfo "1.0" ;
+    owl:imports <https://hexplain.io/ns/aspect/time> , <https://hexplain.io/ns/aspect/encoding> , <https://hexplain.io/ns/aspect/color> , <https://hexplain.io/ns/aspect/raster> ;
+    rdfs:label "Hexplain Video Vocabulary (VDV)" ;
+    rdfs:comment "Semantic vocabulary for video stream and container properties." ;
+    dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "vdv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/video#" .
+
+:VideoContainer a owl:Class ; rdfs:label "Video Container" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:seeAlso ma:MediaResource .
+:VideoStream a owl:Class ; rdfs:label "Video Stream" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:seeAlso ma:VideoTrack .
+:VideoTrack a owl:Class ; rdfs:label "Video Track" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> .
+
+:frameRate a owl:DatatypeProperty ; rdfs:label "frame rate" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:seeAlso ma:frameRate ; rdfs:range xsd:decimal ; qudt:hasQuantityKind quantitykind:Frequency ; qudt:hasUnit unit:HZ .
+# Frame dimensions come from the raster aspect: araster:width / araster:height.
+# duration (atime), bitrate + codec (aenc), colorSpace (acolor) are imported from the aspect layer.
+:aspectRatio a owl:DatatypeProperty ; rdfs:label "aspect ratio" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:string ; rdfs:comment "Display aspect ratio as a W:H string, e.g. \"16:9\"." .
+:scanType a owl:ObjectProperty ; rdfs:label "scan type" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> .
+:frameCount a owl:DatatypeProperty ; rdfs:label "frame count" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:unsignedLong .
+:audioChannels a owl:DatatypeProperty ; rdfs:label "audio channels" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:positiveInteger .
+
+:Progressive a owl:NamedIndividual ; rdfs:label "Progressive scan" .
+:Interlaced a owl:NamedIndividual ; rdfs:label "Interlaced scan" .
+:axisFrame a dlv:Axis ; rdfs:label "Frame Axis" ; rdfs:seeAlso dlv:axisTime .
+
+# ---------- SHACL ----------
+vdv:StreamShape a sh:NodeShape ; sh:targetClass vdv:VideoStream, vdv:VideoTrack ;
+    sh:targetSubjectsOf vdv:frameRate, vdv:frameCount, vdv:aspectRatio, vdv:scanType, vdv:audioChannels, vdv:frameRateNumerator, vdv:frameRateDenominator ;
+    sh:property {{constraint:pattern_072}} ;
+    sh:property {{constraint:pattern_071}} ;
+    sh:property [ sh:path vdv:frameRate ; {{constraint:pattern_233}} ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path atime:duration ; {{constraint:pattern_233}} ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
+    sh:property {{constraint:pattern_053}} ;
+    sh:property [ sh:path vdv:frameCount ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:unsignedLong ] ) ; sh:minInclusive 0 ; sh:maxInclusive 18446744073709551615 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path vdv:audioChannels ; {{constraint:pattern_236}} ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path vdv:scanType ; sh:maxCount 1 ; sh:in ( vdv:Progressive vdv:Interlaced ) ] ;
+    sh:property {{constraint:pattern_054}} ;
+    sh:property {{constraint:pattern_048}} ;
+    sh:property [ sh:path vdv:aspectRatio ; sh:datatype xsd:string ; sh:pattern "^[0-9]+(\\.[0-9]+)?:[0-9]+(\\.[0-9]+)?$" ; sh:maxCount 1 ] .
+
+# Exact nominal rate. For variable-rate streams this does not imply duration = count/rate.
+:frameRateNumerator a owl:DatatypeProperty ; rdfs:label "frame rate numerator" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:positiveInteger ; rdfs:comment "Numerator of the exact nominal frame rate in frames per second; used with frameRateDenominator. A decimal frameRate is a display approximation." .
+:frameRateDenominator a owl:DatatypeProperty ; rdfs:label "frame rate denominator" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:positiveInteger ; rdfs:comment "Positive denominator of the exact nominal frame rate, for example 1001 with numerator 30000. Both components must be supplied together." .
+:RateShape a sh:NodeShape ; sh:targetSubjectsOf :frameRateNumerator, :frameRateDenominator ;
+    sh:property [ sh:path :frameRateNumerator ; {{constraint:pattern_236}} ; sh:minExclusive 0 ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :frameRateDenominator ; {{constraint:pattern_236}} ; sh:minExclusive 0 ; sh:minCount 1 ; sh:maxCount 1 ] .
+:PositiveAspectRatioShape a sh:NodeShape ; sh:targetSubjectsOf :aspectRatio ;
+    sh:sparql [ sh:message "Both aspect-ratio components must be positive." ; sh:select """
+        PREFIX v: <https://hexplain.io/ns/video#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+        SELECT $this WHERE {
+            $this v:aspectRatio ?ratio .
+            FILTER(xsd:decimal(STRBEFORE(STR(?ratio), ":")) <= 0 || xsd:decimal(STRAFTER(STR(?ratio), ":")) <= 0)
+        }
+    """ ] .
+
