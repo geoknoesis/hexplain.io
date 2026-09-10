@@ -10,7 +10,7 @@ Status: the seven selected simplifications are implemented in the isolated `prer
 | Activation separation | Module targets remain local; shared lexical fragments introduce no global targets or helper imports | Current expanded RDF equality and inventory freshness |
 | Value sources | One resolution procedure, six family rows for units, evaluation phase, exact conversion and writer inference | Shared processing guide; existing core boundary and writer suites |
 | Ordered selection | One first-match explanation with seven family-specific rows, including dispatch as a separate mechanism | Full core suite including conditional and dispatch tests |
-| Encoding normalization | Shorthand and unparameterized step lists share one ordered IR representation; malformed lists, conflicting forms and unsupported parameters reject | `EncodingNormalizationTest`, encoded writer and code-generation tests |
+| Encoding normalization | Shorthand and step lists share ordered codec identifiers and stage options; zlib/raw-DEFLATE level settings are supported, other parameters reject | `EncodingNormalizationTest`, encoded writer and code-generation tests |
 | Primitive presets | 26 presets generated from explicit base/width/signedness/order/datatype entries | Generation gate and full core suite |
 | Human reference | 795 complete entries; 679 links to shared exact visible scope notes; detailed comparison tables | Term-reference, HTML synchronization and documentation gates |
 
@@ -20,6 +20,8 @@ Status: the seven selected simplifications are implemented in the isolated `prer
 - The compiler now honors unparameterized `hasEncodingStep` instead of silently ignoring it.
 - Malformed encoding declarations and unsupported `codecParameter` fail at compilation.
 - Exported `ir:encodedWith` is one RDF list. Consumers must preserve list order and repeated codec stages instead of reading an unordered property set.
+
+Latest parameterized execution evidence: [codec options](../../../review-2026-09-05/codec-options.html).
 
 ## Validation
 
@@ -35,5 +37,5 @@ See [current implementation report](../../../review-2026-09-05/simplification-im
 - Field references remain distinct from arbitrary expressions; no general inversion is claimed.
 - Physical dimensions, semantic axes, packing width and significant bit depth remain distinct.
 - Conditional families retain their own context, fallback and exception semantics.
-- Runtime codec parameters require further implementation; rejecting them preserves the specification's ability to describe them without claiming execution support.
+- Interpreter zlib/raw-DEFLATE level parameters are now supported (-1 or 0..9). Other parameters and parameterized generated runtimes still reject explicitly.
 - No production deployment, fresh GDAL oracle generation or independent ontology acceptance is claimed. Browser/print manual acceptance and the complete cross-repository release workflow remain separate from the automated checks run here.

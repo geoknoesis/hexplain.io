@@ -108,7 +108,7 @@
     "source": "../hexplain/index.html",
     "procedure": [
       "Normalize one isEncodedWith codec to a one-element codec sequence.",
-      "Normalize hasEncodingStep by reading each codec in list order. In the current engine, steps with codecParameter reject explicitly because the IR has no parameter channel.",
+      "Normalize hasEncodingStep by reading each codec in list order. The interpreter carries per-stage integer options. Zlib and raw DEFLATE support level=-1 or 0..9; other settings reject explicitly.",
       "Encode in declared order; decode in reverse. Each codec retains its framing, failure and byte-budget contract.",
       "Reject simultaneous forms, malformed/cyclic lists, missing or multiple codecs and empty pipelines. Unknown codec execution fails; no identity fallback is allowed."
     ],
@@ -134,14 +134,24 @@
         "Independent JDK zlib-then-gzip vector tests order and nested trailer restoration."
       ],
       [
-        "Step with codecParameter",
-        "Requires parameter-aware execution",
-        "Rejected until runtime support exists; parameters are never silently ignored."
-      ],
-      [
         "IR RDF export: ir:encodedWith",
         "One RDF list of codec IRIs, preserving encoder order and repeated codecs",
         "Prerelease representation change: consumers must traverse rdf:first/rdf:rest rather than treating predicate values as an unordered codec set."
+      ],
+      [
+        "Zlib / raw DEFLATE with level",
+        "Integer compression level -1 (default) or 0..9. Values are validated before execution.",
+        "Controls encoding only; decoding does not need the level and does not certify the original encoder setting. Existing decoded-byte limits remain active."
+      ],
+      [
+        "Other codec options",
+        "Not yet supported by the interpreter",
+        "Unknown names, unsupported codecs, duplicate names and noninteger or out-of-range values reject. Generated runtimes reject parameterized pipelines until they can preserve the settings."
+      ],
+      [
+        "IR encodingOptions",
+        "Optional list of per-stage integer maps, aligned with encodedWith",
+        "IR RDF exports parallel ordered option lists. An empty map marks a stage without options; absence means all stages have no options."
       ]
     ]
   },
