@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-09
 **Status:** designed
-**Repos touched:** `hexplain-tools` (two engine changes, parity tests), `hexplain-profiles` (five profiles), `hexplain.io` (coverage inventory)
+**Repos touched:** `hexplain-tools` (two engine changes, parity tests), `hexplain-profiles` (four profiles), `hexplain.io` (coverage inventory)
 **Predecessor:** `2026-09-09-gdal-profile-wave-design.md` (wave 1)
 
 ## Why
@@ -19,7 +19,7 @@ so an ASCII grid cannot be a `dlv:DataLayout` today. AAIGrid alone has 19 GDAL-d
 in the cached corpus, and the profile library says nothing about any of them.
 
 This wave closes that gap with the smallest change that is honest about how these formats are
-actually read, and spends it on five profiles that exercise it on real files.
+actually read, and spends it on four profiles that exercise it on real files.
 
 ## What this wave is deliberately not
 
@@ -89,7 +89,7 @@ nothing but a term. `bddo:numericBase` remains rejected on a decimal, unchanged.
 
 E2 is smaller than E1 and independent of it. It ships first, as its own commit.
 
-## The five profiles
+## The four profiles
 
 Every one has at least one GDAL-decoded sample in `tests/gdal/results/oracle.jsonl`.
 
@@ -99,7 +99,6 @@ Every one has at least one GDAL-decoded sample in `tests/gdal/results/oracle.jso
 | `usgsdem` | `raster:usgsdem` | 1024-byte ASCII record A, then one record per profile | 8 | E1, E2 |
 | `gsag` | `raster:gsag` | `DSAA` magic, four header lines, then a token grid | 1 | E1 |
 | `grassasciigrid` | `raster:grassasciigrid` | six `key: value` header lines, then a token grid | 1 | E1 |
-| `isg` | `raster:isg` | free-text preamble, `begin_of_head`/`end_of_head` block, then a token grid | 1 of 5 | E1 |
 
 ### `aaigrid`
 
@@ -145,19 +144,10 @@ no declarative separator description would.
 The simplest consumer of E1, included because it costs one file and proves the mechanism is not
 shaped around AAIGrid's particular header.
 
-### `isg`
-
-A variable-length free-text preamble read to the `begin_of_head` marker (an existing terminator
-read), then a header block whose lines use `:` for text values and `=` for numbers, ending at
-`end_of_head`. The body is separated tokens.
-
-**Stated limit:** ISG 2.0 permits a sparse body and a binary body; the profile describes the
-1.0 dense text body its decoded sample uses, and names the other two. Four of the five samples
-are `oracle-rejected`, so verification rests on `test.isg`.
 
 ## Verification
 
-Five parity tests in `hexplain-tools/hdl/src/test/kotlin/io/hexplain/hdl/parity/`, following the
+Four parity tests in `hexplain-tools/hdl/src/test/kotlin/io/hexplain/hdl/parity/`, following the
 `BmpParityTest` pattern: compile the `.hx` in-process, lower it with `RdfToIrCompiler`, parse the
 corpus sample with `Metaparser`, pack the parsed cells band-sequentially in the data type GDAL
 reports, and compare SHA-256 against `oracle.jsonl`. Width, height and band count are asserted
@@ -165,7 +155,7 @@ against the oracle's own figures first, so a digest mismatch cannot be explained
 reshape.
 
 Every profile is additionally held to `write(parse(f)) == f` via `ProfileFixtures.writeBack`.
-For the five separated-text profiles that round-trip *is* the test of E1 — it is the only thing
+For the three separated-text profiles that round-trip *is* the test of E1 — it is the only thing
 that proves the retained tokens and separator runs are faithful rather than merely plausible.
 
 E1 and E2 each also get unit tests in `core` beside the existing text-number ones, so the engine
@@ -176,8 +166,8 @@ Every test opens with `assumeTrue(Files.exists(...))` on the corpus, so a checko
 
 ## Coverage inventory
 
-Five `profiles` entries added to `specification/coverage/gdal-drivers.json`, taking linked driver
-rows from 17 to 22. No schema change and no renderer change: the `profiles` list, the Profiles
+Four `profiles` entries added to `specification/coverage/gdal-drivers.json`, taking linked driver
+rows from 17 to 21. No schema change and no renderer change: the `profiles` list, the Profiles
 column and the `test_gdal_inventory.py` schema check all landed in wave 1.
 
 **Recorded gap, not closed here:** the wave-1 design stated that `raster:gtiff` and `raster:png`
@@ -192,7 +182,7 @@ so the omission is explained rather than silently carried forward.
    19 samples in all three dialects. Nothing else proceeds until the round-trip holds.
 3. `usgsdem`, which is the only profile needing both changes and the only one whose body is not
    a plain token grid.
-4. `gsag`, `grassasciigrid`, `isg` — independent of each other once E1 is settled.
+4. `gsag` and `grassasciigrid` — independent of each other once E1 is settled.
 5. Coverage inventory and the regenerated page.
 6. Full gate runs in all three repos; profile headers finalised with their test names.
 
@@ -207,11 +197,9 @@ so the omission is explained rather than silently carried forward.
   the regression guard, and are run before E1 is committed.
 - **`usgsdem` verified only on truncated files.** Unavoidable — the corpus holds no complete
   DEM. Stated in the profile header rather than left implicit.
-- **`isg` resting on one decoded sample.** Accepted; the other four are `oracle-rejected` for
-  georeferencing reasons unrelated to the byte layout, so they are still parsed and round-tripped
-  even though their pixels are not compared.
+
 - **Scope creep from E2.** It is required by `usgsdem` and by nothing else in the wave. If it
-  proves larger than one commit, `usgsdem` moves to wave 2b and the wave ships four profiles.
+  proves larger than one commit, `usgsdem` moves to wave 2b and the wave ships three profiles.
 
 ## Out of scope, and why
 
@@ -221,6 +209,11 @@ so the omission is explained rather than silently carried forward.
   2b's `rmf` covers packing at 1 and 4 bits on 15 decoded samples instead.
 - **`gif`** — 2 decoded samples, but the body is LZW, so GDAL's digest is decoded output this
   engine will never reproduce. It would have been the wave's only header-only profile.
+- **`isg`** — dropped during spec review. Only `test.isg` of its five samples is decoded, and
+  its header mixes two key/value separators (`model name : EXAMPLE` but `lat min    =
+  40.0000`) where `bddo:fieldDelimiter` is a single byte sequence. Describing it needs
+  either a vocabulary change this wave is not making or a line-by-line workaround that
+  would describe the format less faithfully than not describing it.
 - **`gxf`** — dropped during spec review, on the samples rather than on principle. Of its two
   decoded samples only `small.gxf` (4×3) is a plain token grid; `small2.gxf` sets `#GTYPE 3`,
   GXF's compressed grid encoding. Worse, `small.gxf` writes `#POIN` where `small2.gxf` writes
@@ -231,4 +224,5 @@ so the omission is explained rather than silently carried forward.
   share no code with this wave, so they can proceed in parallel under their own design.
 - **A 2-D addressable ASCII grid.** Argued above: the bytes do not support it, and claiming it
   would misdescribe the format.
+
 
