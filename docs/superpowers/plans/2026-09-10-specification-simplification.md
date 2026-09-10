@@ -41,3 +41,7 @@ See [current implementation report](../../../review-2026-09-05/simplification-im
 - No production deployment, fresh GDAL oracle generation or independent ontology acceptance is claimed. Browser/print manual acceptance and the complete cross-repository release workflow remain separate from the automated checks run here.
 
 Generated-runtime follow-through: [compiled codec option evidence](../../../review-2026-09-05/generated-codec-options.html).
+
+## Generated-code adversarial follow-through
+
+Implemented a deterministic 180-combination payload corpus, every strict compressed prefix for six short-payload pipelines, trailing-byte rejection and exact cumulative budget boundaries. The 50-test generated-code verification suite passes. See [adversarial evidence](../../../review-2026-09-05/generated-codec-adversarial.html). This partially addresses the carried-forward negative/fuzz work; coverage-guided campaigns and additional format families remain open.
