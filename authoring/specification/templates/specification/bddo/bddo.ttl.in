@@ -391,9 +391,24 @@ bddo:FieldShape a sh:NodeShape ;
     sh:property [ sh:path bddo:sizeToEndOfStream ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:terminator ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:separatedBy ; sh:datatype xsd:string ; sh:maxCount 1 ; sh:in ( "whitespace" ) ] ;
+    # bddo:separatedBy IS the field's extent, so it excludes every other way of stating one.
+    # All five, not just the two literal spellings: a separated field declaring
+    # sizeFromField/sizeFromExpression/sizeToEndOfStream would otherwise satisfy both this shape
+    # and bddo:AsciiNumericWidthShape while asserting a width the reader provably ignores
+    # (Metaparser dispatches bddo:separatedBy before it resolves any size), which is a false
+    # statement that validates.
     sh:not [ sh:and (
         [ sh:property {{constraint:pattern_156}} ]
         [ sh:property [ sh:path bddo:size ; sh:minCount 1 ] ] ) ] ;
+    sh:not [ sh:and (
+        [ sh:property {{constraint:pattern_156}} ]
+        [ sh:property [ sh:path bddo:sizeFromField ; sh:minCount 1 ] ] ) ] ;
+    sh:not [ sh:and (
+        [ sh:property {{constraint:pattern_156}} ]
+        [ sh:property [ sh:path bddo:sizeFromExpression ; sh:minCount 1 ] ] ) ] ;
+    sh:not [ sh:and (
+        [ sh:property {{constraint:pattern_156}} ]
+        [ sh:property [ sh:path bddo:sizeToEndOfStream ; sh:minCount 1 ] ] ) ] ;
     sh:not [ sh:and (
         [ sh:property {{constraint:pattern_156}} ]
         [ sh:property [ sh:path bddo:terminator ; sh:minCount 1 ] ] ) ] ;
@@ -586,12 +601,16 @@ bddo:ChecksumShape a sh:NodeShape ;
                                 [ sh:property {{constraint:pattern_110}} ]
                                 [ sh:property {{constraint:pattern_114}} ] ) ] ) ] .
 
-# An ASCII-coded numeric field must have a width or a terminator, or it cannot be read.
+# An ASCII-coded numeric field must have a width, a terminator or a separator, or it cannot be
+# read. bddo:separatedBy is an extent mechanism in its own right -- the element is bounded by the
+# runs of separator bytes either side of it -- and it is the ONLY one such a field may combine
+# with none of the others: see bddo:FieldShape, which forbids pairing it with any size or with a
+# terminator, because two answers to "where does this value end" is one too many.
 # Exempt: a field of a delimited-record container gets its extent from the container's
-# recordDelimiter/fieldDelimiter, not from its own size or terminator.
+# recordDelimiter/fieldDelimiter, not from its own size, terminator or separator.
 bddo:AsciiNumericWidthShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
-    sh:sparql [ sh:message "A bddo:asciiInteger / bddo:asciiDecimal field must declare a width (size / sizeFromField / sizeFromExpression) or a terminator." ;
+    sh:sparql [ sh:message "A bddo:asciiInteger / bddo:asciiDecimal field must declare a width (size / sizeFromField / sizeFromExpression), a terminator, or bddo:separatedBy." ;
         sh:prefixes bddo:_prefixes ;
         sh:select """SELECT $this WHERE {
             $this bddo:dataType ?dt .
@@ -600,6 +619,7 @@ bddo:AsciiNumericWidthShape a sh:NodeShape ;
             FILTER NOT EXISTS { $this bddo:sizeFromField ?f }
             FILTER NOT EXISTS { $this bddo:sizeFromExpression ?e }
             FILTER NOT EXISTS { $this bddo:terminator ?t }
+            FILTER NOT EXISTS { $this bddo:separatedBy ?sep }
             FILTER NOT EXISTS {
                 ?p bddo:hasField/rdf:rest*/rdf:first $this .
                 ?p a ?c .

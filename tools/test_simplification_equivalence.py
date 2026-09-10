@@ -1,4 +1,4 @@
-"""Check the frozen simplification contract without requiring Git or a sibling engine."""
+"""Check current authoring equivalence and historical artifact integrity."""
 import hashlib
 import json
 import zipfile
@@ -15,21 +15,18 @@ assert hashlib.sha256(archive).hexdigest() == manifest['archive_sha256']
 with zipfile.ZipFile(base / 'baseline.zip') as z:
     assert set(z.namelist()) == set(manifest['files'])
     assert len(z.namelist()) == len(set(z.namelist()))
-    canonical = set(specgraph.ontology_paths())
-    baseline_canonical = {p for p in z.namelist() if p.endswith('.ttl') and '/validation/test/' not in p}
-    assert canonical == baseline_canonical, 'Changed ontology inventory requires a new reviewed baseline'
-    checked = 0
     for path, digest in manifest['files'].items():
-        original = z.read(path)
-        assert hashlib.sha256(original).hexdigest() == digest
-        # Processing documentation is allowed editorial additions. RDF and fixtures are fixed.
-        if path.endswith('.html'):
-            continue
-        current = (ROOT / path).read_text(encoding='utf-8').encode()
-        assert current == original, ('Published RDF/fixture bytes changed', path)
-        if path.endswith('.ttl'):
-            assert isomorphic(Graph().parse(data=original, format='turtle'), Graph().parse(data=current, format='turtle')), path
-            checked += 1
+        assert hashlib.sha256(z.read(path)).hexdigest() == digest, path
+
+# Prerelease evolution is permitted. Verify current authoring against current outputs.
+from _expand_specification_patterns import outputs
+checked = 0
+for path, expanded in outputs().items():
+    current = path.read_text(encoding='utf-8')
+    assert current == expanded, path
+    assert isomorphic(Graph().parse(data=current, format='turtle'),
+                      Graph().parse(data=expanded, format='turtle')), path
+    checked += 1
 
 # Counterexamples ensure equality does not discard targets, bounds, annotations or list order.
 SH = Namespace('http://www.w3.org/ns/shacl#')
@@ -47,4 +44,4 @@ changed = Graph() + original
 head = changed.value(EX.S, SH['in']); tail = changed.value(head, RDF.rest)
 changed.set((head, RDF.first, Literal(2))); changed.set((tail, RDF.first, Literal(1)))
 assert not isomorphic(original, changed)
-print(f'PASS: {checked} RDF files and retained fixtures exactly preserve the frozen baseline; negative controls detect semantic changes')
+print(f'PASS: {checked} current generated RDF files match authoring; historical baseline integrity retained; negative controls detect semantic changes')

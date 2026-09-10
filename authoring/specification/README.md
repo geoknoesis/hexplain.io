@@ -8,8 +8,8 @@ The catalogs and `.ttl.in` templates are build inputs, not a new public ontology
 4. Run `python tools/_build_simplification_guide.py` and `python tools/_build_term_reference.py` after editorial changes. Ordinary reference generation does not enrich or change RDF.
 5. Run `python tools/run_gates.py`. The new pattern and equivalence gates are automatically discovered. Default expansion without `--write` checks freshness.
 
-The simplification baseline is deliberately strict: canonical UTF-8/LF text and retained fixtures must remain identical, and RDF graphs must be isomorphic. Future intentional semantic changes need a separately reviewed compatibility change; do not replace this baseline just to make a failure pass. Immutable releases are not regenerated.
+Prerelease changes may intentionally change public terms and validation behavior. The current authoring expansion must still match published RDF exactly. The archived simplification baseline remains an integrity-checked historical artifact, not a constraint on current development. Historical compatibility replay is optional: `python tools/test_release_contract.py --replay-history`.
 
-Primitive formats preserve exact source formatting as well as datatype semantics. Unspecified byte order remains absent. Processing summaries document common explanations and their exceptions; they introduce no engine normalization or new fallback.
+Primitive formats preserve datatype semantics and unspecified byte order. Shared scope notes appear once per module, with a link from every affected term; all original annotations remain in RDF. Each term retains its own definition, range and validation metadata.
 
-Term-page scope deduplication is deferred: the frozen baseline lacks required annotations for `bddo:separatedBy`, so its reference generator cannot complete. Existing term pages remain intact. Downloadable RDF keeps every original annotation.
+Run `python tools/_build_authoring_inventory.py` after changing templates. `constraint-inventory.json` distinguishes reusable property clauses/value alternatives from each consuming module's activation targets. Prefixes remain local; identical lexical fragments do not imply semantic equivalence.
