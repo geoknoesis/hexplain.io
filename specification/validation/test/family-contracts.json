@@ -3692,6 +3692,102 @@
     "data": "@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .\nex:f a b:Checksum; b:checksumAlgorithm b:crc32. ex:f b:coversToExpression \"value\",\"other\"."
   },
   {
+    "name": "separated scalar extent",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "expectedShape": "",
+    "data": "@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .\nb:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. ex:f b:separatedBy \"whitespace\"."
+  },
+  {
+    "name": "separated repeated extent",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "expectedShape": "",
+    "data": "@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .\nb:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. ex:f b:separatedBy \"whitespace\"; b:repeatCount 3."
+  },
+  {
+    "name": "separated non-string separator",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/bddo#separatedBy",
+    "expectedShape": "",
+    "data": "@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .\nb:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. ex:f b:separatedBy 1."
+  },
+  {
+    "name": "separated unlisted separator",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/bddo#separatedBy",
+    "expectedShape": "",
+    "data": "@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .\nb:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. ex:f b:separatedBy \"comma\"."
+  },
+  {
+    "name": "separated two separators",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/bddo#separatedBy",
+    "expectedShape": "",
+    "data": "@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .\nb:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. ex:f b:separatedBy \"whitespace\",\"comma\"."
+  },
+  {
+    "name": "separated excludes size",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "expectedShape": "https://hexplain.io/ns/bddo#FieldShape",
+    "data": "@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .\nb:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. ex:f b:separatedBy \"whitespace\"; b:size 4."
+  },
+  {
+    "name": "separated excludes sizeFromField",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "expectedShape": "https://hexplain.io/ns/bddo#FieldShape",
+    "data": "@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .\nb:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. ex:f b:separatedBy \"whitespace\"; b:sizeFromField ex:count."
+  },
+  {
+    "name": "separated excludes sizeFromExpression",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "expectedShape": "https://hexplain.io/ns/bddo#FieldShape",
+    "data": "@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .\nb:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. ex:f b:separatedBy \"whitespace\"; b:sizeFromExpression \"4\"."
+  },
+  {
+    "name": "separated excludes sizeToEndOfStream",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "expectedShape": "https://hexplain.io/ns/bddo#FieldShape",
+    "data": "@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .\nb:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. ex:f b:separatedBy \"whitespace\"; b:sizeToEndOfStream true."
+  },
+  {
+    "name": "separated excludes terminator",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "expectedShape": "https://hexplain.io/ns/bddo#FieldShape",
+    "data": "@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .\nb:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. ex:f b:separatedBy \"whitespace\"; b:terminator \"20\"^^xsd:hexBinary."
+  },
+  {
+    "name": "separated ascii numeric width accepts a separator",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "expectedShape": "",
+    "data": "@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .\nb:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. ex:f b:separatedBy \"whitespace\"; b:encoding b:ascii."
+  },
+  {
+    "name": "separated ascii numeric width rejects no extent",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "expectedShape": "https://hexplain.io/ns/bddo#AsciiNumericWidthShape",
+    "data": "@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .\nb:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. "
+  },
+  {
     "name": "spatial GeoTransform valid",
     "module": "specification/aspect/spatialref/spatialref.ttl",
     "expected": true,
