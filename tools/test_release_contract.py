@@ -59,4 +59,23 @@ for path in releases:
                 assert bool(ok)==(expected=='true'),(path,name,archived,detail)
                 if result_path:assert URIRef(result_path) in report.objects(None,Namespace('http://www.w3.org/ns/shacl#').resultPath),(name,detail)
         cases += sum(bool(row) and not row.startswith('#') for row in files[corpus_path].splitlines())
+    family_path='specification/validation/test/family-contracts.json'
+    if family_path in files:
+        retained=json.loads(files[family_path])
+        for archived in [True,False]:
+            selected={}
+            for row in retained:
+                module=row['module']
+                if module not in selected:
+                    selected[module]=Graph().parse(data=files[module] if archived else Path(module).read_text(encoding='utf-8'),format='turtle')
+                case_shapes=selected[module]
+                if row.get('targetShape'):
+                    case_shapes=Graph()+case_shapes
+                    case_shapes.add((URIRef(row['targetShape']),Namespace('http://www.w3.org/ns/shacl#').targetNode,URIRef(row['targetNode'])))
+                ok,report,detail=validate(Graph().parse(data=row['data'],format='turtle'),shacl_graph=case_shapes,inference='none')
+                assert bool(ok)==row['expected'],(path,row['name'],archived,detail)
+                sh=Namespace('http://www.w3.org/ns/shacl#')
+                if row['path']:assert URIRef(row['path']) in report.objects(None,sh.resultPath),(row['name'],detail)
+                if row.get('expectedShape'):assert URIRef(row['expectedShape']) in report.objects(None,sh.sourceShape),(row['name'],detail)
+        cases+=len(retained)
 print(f'PASS: {len(releases)} immutable snapshot(s); {cases} archived/current compatibility cases replayed twice')
