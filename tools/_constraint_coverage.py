@@ -26,7 +26,10 @@ def two_sided(row):
     return bool(row['failed'] and (row['passed'] or (cardinality and row['empty_value_passes'])))
 
 def canonical(path):
-    source=Graph().parse(ROOT/path,format='turtle')
+    # Read as text and give every file the same repo-relative base: a CRLF working
+    # copy otherwise alters multi-line literal content, and a filesystem base URI
+    # would vary by checkout location. Both make measured evidence machine-bound.
+    source=Graph().parse(data=(ROOT/path).read_text(encoding='utf-8'),format='turtle',publicID='file:///'+path)
     prefix=hashlib.sha256(path.encode()).hexdigest()[:16]
     def term(t):return BNode(prefix+'_'+str(t)) if isinstance(t,BNode) else t
     g=Graph()
