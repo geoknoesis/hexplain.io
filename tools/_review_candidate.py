@@ -37,14 +37,14 @@ def build():
     paths.update(p.relative_to(ROOT).as_posix() for p in (ROOT/'tools').glob('*.py'))
     paths.update(m['page'] for m in modules)
     paths.update(p.relative_to(ROOT).as_posix() for p in (ROOT/'authoring/specification').rglob('*') if p.is_file())
-    paths.update(['specification/shared-patterns/index.html',
+    paths.update(['specification/print.css', 'specification/shared-patterns/index.html',
                   'specification/processing/index.html',
                   'specification/hel/index.html',
                   'specification/coverage/writer-tests/index.html',
                   'review-2026-09-05/simplification/baseline.json',
                   'review-2026-09-05/simplification/baseline.zip',
                   'review-2026-09-05/simplification/equivalence-matrix.json'])
-    paths.update(['requirements.txt', 'specification/reference/manifest.json',
+    paths.update(['requirements.txt', 'requirements-browser.txt', 'specification/family.json', 'specification/coverage/profile-catalog.json', 'specification/reference/manifest.json',
                   'specification/validation/competency-trace.json',
                   'specification/validation/constraint-coverage.json',
                   'specification/ontology-review/review-instructions.md',
@@ -58,6 +58,7 @@ def build():
     with zipfile.ZipFile(content, 'w', compression=zipfile.ZIP_STORED) as archive:
         for path, data in sorted(payload.items()):
             info = zipfile.ZipInfo(path, (1980, 1, 1, 0, 0, 0))
+            info.create_system = 3
             info.external_attr = 0o644 << 16
             archive.writestr(info, data)
     binary = content.getvalue()

@@ -20,4 +20,10 @@ jobs:
           cache: pip
           cache-dependency-path: hexplain.io/requirements.txt
       - run: pip install -r requirements.txt
-      - run: python tools/run_gates.py
+      - run: python tools/run_gates.py --strict
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: specification-gates
+          path: hexplain.io/.gate-results/
+          include-hidden-files: true

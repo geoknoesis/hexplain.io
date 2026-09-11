@@ -95,8 +95,10 @@
   footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); padding-top: 18px; margin-top: 40px; }
   .disclaimer { font-size: 0.82rem; color: var(--muted); font-style: italic; }
 </style>
+<link rel="stylesheet" href="print.css" media="print">
 </head>
 <body>
+<p role="note">Historical review: observations describe the reviewed revision. Module links now point to current documentation; obsolete source-line anchors have been removed.</p>
 <div class="wrap">
 
 <header class="doc">
@@ -201,7 +203,7 @@
 
 <div class="finding" id="f2">
   <h3><span class="num">2.</span> <code>bddo:dataType</code> is declared twice with conflicting domain/range <span class="badge b-blocker">Blocker</span></h3>
-  <p>In <a href="bddo/index.html#L212-L223">bddo/index.html:212–223</a>:</p>
+  <p>In <a href="bddo/index.html">bddo/index.html:212–223</a>:</p>
   <pre><code>:dataType a owl:ObjectProperty ; rdfs:domain :Field ;        rdfs:range [ owl:unionOf ( :DataType :Struct ) ] .
 :dataType a owl:ObjectProperty ; rdfs:domain :DataTypeRule ; rdfs:range :Struct .</code></pre>
   <p><code>rdfs:domain</code>/<code>rdfs:range</code> are <b>conjunctive</b>, not alternative. This entails that anything carrying <code>bddo:dataType</code> is simultaneously a <code>Field</code> <em>and</em> a <code>DataTypeRule</code>, and its object is both a <code>Struct</code> and a member of the union — a genuine logical defect.</p>
@@ -210,19 +212,19 @@
 
 <div class="finding" id="f3">
   <h3><span class="num">3.</span> <code>bddo:sizeFromExpression</code> is used everywhere but never defined <span class="badge b-blocker">Blocker</span></h3>
-  <p>HEL's intro (<a href="hel/index.html#L49">hel:49</a>), the DLV example (<a href="dlv/index.html#L225">dlv:225</a>), and the Core example (<a href="hexplain/index.html#L230">hexplain:230</a>) all rely on <code>bddo:sizeFromExpression</code>, but BDDO's normative ontology only defines <code>bddo:size</code> and <code>bddo:sizeFromField</code>. The most important dynamic-sizing primitive is missing from the ontology it belongs to.</p>
+  <p>HEL's intro (<a href="hel/index.html">hel:49</a>), the DLV example (<a href="dlv/index.html">dlv:225</a>), and the Core example (<a href="hexplain/index.html">hexplain:230</a>) all rely on <code>bddo:sizeFromExpression</code>, but BDDO's normative ontology only defines <code>bddo:size</code> and <code>bddo:sizeFromField</code>. The most important dynamic-sizing primitive is missing from the ontology it belongs to.</p>
   <p class="fix">Add <code>bddo:sizeFromExpression</code> as a datatype property (range <code>xsd:string</code>, HEL-valued) to BDDO, and add SHACL so a field has at most one sizing mechanism.</p>
 </div>
 
 <div class="finding" id="f4">
   <h3><span class="num">4.</span> <code>hexplain:hasDataLayout</code> is claimed to be Core but isn't in Core <span class="badge b-blocker">Blocker</span></h3>
-  <p>The <a href="index.html#L72">index:72</a> and <a href="dlv/index.html#L77">dlv:77</a> both say <code>hexplain:hasDataLayout</code> comes "from the Hexplain Core ontology," but the Core OWL (<a href="hexplain/index.html#L118-L145">hexplain:118–145</a>) never defines it.</p>
+  <p>The <a href="index.html">index:72</a> and <a href="dlv/index.html">dlv:77</a> both say <code>hexplain:hasDataLayout</code> comes "from the Hexplain Core ontology," but the Core OWL (<a href="hexplain/index.html">hexplain:118–145</a>) never defines it.</p>
   <p class="fix">Define it in Core: <code>hexplain:hasDataLayout a owl:ObjectProperty ; rdfs:domain bddo:Field ; rdfs:range dlv:DataLayout .</code></p>
 </div>
 
 <div class="finding" id="f5">
   <h3><span class="num">5.</span> The DLV <code>sh:xone</code> Dimension shape can never pass <span class="badge b-blocker">Blocker</span></h3>
-  <p>In <a href="dlv/index.html#L162-L165">dlv:162–165</a>:</p>
+  <p>In <a href="dlv/index.html">dlv:162–165</a>:</p>
   <pre><code>sh:xone (
     [ sh:path dlv:dimensionSize ]
     [ sh:path dlv:dimensionSizeFromField ]
@@ -244,7 +246,7 @@
 
 <div class="finding" id="f6">
   <h3><span class="num">6.</span> No offset / pointer / seek — excludes TIFF, GeoTIFF, ZIP, ELF, PDF xref <span class="badge b-major">Major</span></h3>
-  <p><code>bddo:hasField</code> is a strictly ordered, contiguous list; there is no absolute/relative offset or pointer-follow. Yet GeoTIFF is advertised (<a href="index.html#L109">index:109</a>) and forensic carving of PDF/ZIP is a headline use case. TIFF IFDs <em>are</em> offset tables; ZIP is parsed backward from its End-Of-Central-Directory record. None of this is describable today. This is the single biggest gap for "any data structure."</p>
+  <p><code>bddo:hasField</code> is a strictly ordered, contiguous list; there is no absolute/relative offset or pointer-follow. Yet GeoTIFF is advertised (<a href="index.html">index:109</a>) and forensic carving of PDF/ZIP is a headline use case. TIFF IFDs <em>are</em> offset tables; ZIP is parsed backward from its End-Of-Central-Directory record. None of this is describable today. This is the single biggest gap for "any data structure."</p>
   <p class="fix">Add an addressing model: an offset base concept plus properties such as <code>bddo:atAbsoluteOffset</code> / <code>bddo:atRelativeOffset</code> (constant, from-field, or HEL-valued), and a "parse-at" instruction that decouples a struct's position from sequence order.</p>
 </div>
 
@@ -256,7 +258,7 @@
 
 <div class="finding" id="f8">
   <h3><span class="num">8.</span> No count-based repetition <span class="badge b-major">Major</span></h3>
-  <p>The only array construct is <code>bddo:repeatUntil</code>. The most common binary-format pattern — <em>"read count N, then N records"</em> — has no <code>repeatCount</code> / <code>repeatCountFromField</code>, and HEL has no index/counter to emulate it. The LAS example reads <code>NumberOfPointRecords</code> (<a href="gv/index.html#L275">gv:275</a>) but nothing expresses "now parse that many point records."</p>
+  <p>The only array construct is <code>bddo:repeatUntil</code>. The most common binary-format pattern — <em>"read count N, then N records"</em> — has no <code>repeatCount</code> / <code>repeatCountFromField</code>, and HEL has no index/counter to emulate it. The LAS example reads <code>NumberOfPointRecords</code> (<a href="gv/index.html">gv:275</a>) but nothing expresses "now parse that many point records."</p>
   <p class="fix">Add <code>bddo:repeatCount</code> and <code>bddo:repeatCountFromField</code> to <code>bddo:Field</code>.</p>
 </div>
 
@@ -268,19 +270,19 @@
 
 <div class="finding" id="f10">
   <h3><span class="num">10.</span> <code>bddo:encoding</code> for strings is described but not defined <span class="badge b-major">Major</span></h3>
-  <p>Core types say <code>string</code> "may have an encoding property" (<a href="bddo/index.html#L130">bddo:130</a>), but no such property exists in the ontology and no allowed-encodings vocabulary is provided.</p>
+  <p>Core types say <code>string</code> "may have an encoding property" (<a href="bddo/index.html">bddo:130</a>), but no such property exists in the ontology and no allowed-encodings vocabulary is provided.</p>
   <p class="fix">Define <code>bddo:encoding</code> and an enumeration of encodings (UTF-8, ASCII, UTF-16LE/BE, Latin-1, …).</p>
 </div>
 
 <div class="finding" id="f11">
   <h3><span class="num">11.</span> Checksums / CRC are promised but not modeled <span class="badge b-major">Major</span></h3>
-  <p>The abstract and the digital-forensics use case (<a href="index.html#L147">index:147</a>) claim integrity validation via checksums, but the only validation primitive is <code>bddo:hasFixedValue</code> (magic numbers). There is no way to declare "this field is a CRC-32 over byte range X." The PNG <code>ChunkCRC</code> in the example is an inert field.</p>
+  <p>The abstract and the digital-forensics use case (<a href="index.html">index:147</a>) claim integrity validation via checksums, but the only validation primitive is <code>bddo:hasFixedValue</code> (magic numbers). There is no way to declare "this field is a CRC-32 over byte range X." The PNG <code>ChunkCRC</code> in the example is an inert field.</p>
   <p class="fix">Add a checksum construct (algorithm identifier + covered byte range + stored-value field), or remove the advertised capability.</p>
 </div>
 
 <div class="finding" id="f12">
   <h3><span class="num">12.</span> Conditional dispatch is Struct-only <span class="badge b-major">Major</span></h3>
-  <p><code>bddo:DataTypeRuleShape</code> forces the dispatched <code>dataType</code> to be a <code>bddo:Struct</code> (<a href="bddo/index.html#L300-L305">bddo:300–305</a>), so you cannot switch a field between two <em>primitives</em> (e.g. uint16 vs uint32 by version byte).</p>
+  <p><code>bddo:DataTypeRuleShape</code> forces the dispatched <code>dataType</code> to be a <code>bddo:Struct</code> (<a href="bddo/index.html">bddo:300–305</a>), so you cannot switch a field between two <em>primitives</em> (e.g. uint16 vs uint32 by version byte).</p>
   <p class="fix">Loosen the rule range to <code>DataType ∪ Struct</code>.</p>
 </div>
 
@@ -293,12 +295,12 @@
 <div class="finding" id="f14">
   <h3><span class="num">14.</span> HEL is under-specified for a conformant implementation <span class="badge b-major">Major</span></h3>
   <ul>
-    <li><b>Grammar vs. examples conflict.</b> <code>Accessor = "instance" *(…)</code> requires every accessor to start with <code>instance</code>, but <a href="hexplain/index.html#L230">hexplain:230</a> uses <code>parent.ChunkLength</code> (no <code>instance</code>) and <code>instance.Keyword.size</code> (a <code>.size</code> meta-accessor the data model never defines).</li>
-    <li><b>"instance = root" vs <code>instance.parent</code>.</b> The data-model text (<a href="hel/index.html#L65">hel:65</a>) calls <code>instance</code> the <em>root</em>; but <code>instance.parent.X</code> only makes sense if <code>instance</code> is the <em>current</em> node. This ambiguity blocks implementation.</li>
+    <li><b>Grammar vs. examples conflict.</b> <code>Accessor = "instance" *(…)</code> requires every accessor to start with <code>instance</code>, but <a href="hexplain/index.html">hexplain:230</a> uses <code>parent.ChunkLength</code> (no <code>instance</code>) and <code>instance.Keyword.size</code> (a <code>.size</code> meta-accessor the data model never defines).</li>
+    <li><b>"instance = root" vs <code>instance.parent</code>.</b> The data-model text (<a href="hel/index.html">hel:65</a>) calls <code>instance</code> the <em>root</em>; but <code>instance.parent.X</code> only makes sense if <code>instance</code> is the <em>current</em> node. This ambiguity blocks implementation.</li>
     <li><b>No value-coercion rules.</b> How does a 4-byte field (<code>ChunkType</code>) compare to the ASCII literal <code>'IHDR'</code>? Undefined — yet this underlies every dispatch condition.</li>
     <li><b>No current-element reference</b> for <code>repeatUntil</code> (what value is tested each iteration?).</li>
     <li><b>No bitwise operators, modulo, or functions</b> (length, substring). "IP header length = <code>(byte &amp; 0x0F) * 4</code>" is inexpressible.</li>
-    <li><b>Dangling reference:</b> the Type System section (<a href="hel/index.html#L168">hel:168</a>) defers to "the previous version of this specification," which isn't included.</li>
+    <li><b>Dangling reference:</b> the Type System section (<a href="hel/index.html">hel:168</a>) defers to "the previous version of this specification," which isn't included.</li>
   </ul>
   <p class="fix">Reconcile grammar with examples; define <code>instance</code>/<code>parent</code>/current-element precisely; specify a type-coercion table (bytes↔string↔int↔bool); add bitwise/modulo operators and a small function library; inline the comparison rules.</p>
 </div>
@@ -315,7 +317,7 @@
 
 <div class="finding" id="f16">
   <h3><span class="num">16.</span> The formal ontologies are far weaker than their own prose <span class="badge b-major">Major</span></h3>
-  <p>In IDV/ADV/NPV/DFV/GV, nearly every property is a bare <code>owl:DatatypeProperty ; rdfs:label "…"</code> with <b>no <code>rdfs:range</code>, no <code>rdfs:domain</code>, no <code>rdfs:comment</code></b> — e.g. <a href="idv/index.html#L150">idv:150</a> <code>:pixelWidth a owl:DatatypeProperty ; rdfs:label "Pixel Width" .</code> The ranges (<code>xsd:positiveInteger</code>, …) live only in the HTML tables, so no reasoner or SHACL engine can enforce them.</p>
+  <p>In IDV/ADV/NPV/DFV/GV, nearly every property is a bare <code>owl:DatatypeProperty ; rdfs:label "…"</code> with <b>no <code>rdfs:range</code>, no <code>rdfs:domain</code>, no <code>rdfs:comment</code></b> — e.g. <a href="idv/index.html">idv:150</a> <code>:pixelWidth a owl:DatatypeProperty ; rdfs:label "Pixel Width" .</code> The ranges (<code>xsd:positiveInteger</code>, …) live only in the HTML tables, so no reasoner or SHACL engine can enforce them.</p>
   <p class="fix">Push range/domain/definition into the OWL, and add <code>rdfs:isDefinedBy</code> to every term. Better still, generate the tables <em>from</em> the ontology (single source of truth).</p>
 </div>
 
@@ -327,31 +329,31 @@
 
 <div class="finding" id="f18">
   <h3><span class="num">18.</span> Core mapping properties are annotation properties with (inert) domain/range <span class="badge b-major">Major</span></h3>
-  <p><a href="hexplain/index.html#L118-L130">hexplain:119–130</a> declare <code>mapsToClass</code>/<code>mapsToProperty</code>/<code>isEncodedWith</code> as <code>owl:AnnotationProperty</code> <em>and</em> give them <code>rdfs:domain</code>/<code>rdfs:range</code> — which OWL-DL ignores on annotation properties. Meanwhile the parallel <em>conditional</em> mapping (<code>hasConditionalMapping</code>, <code>semanticProperty</code>) is an <code>owl:ObjectProperty</code>. Same concept, two metamodeling treatments.</p>
+  <p><a href="hexplain/index.html">hexplain:119–130</a> declare <code>mapsToClass</code>/<code>mapsToProperty</code>/<code>isEncodedWith</code> as <code>owl:AnnotationProperty</code> <em>and</em> give them <code>rdfs:domain</code>/<code>rdfs:range</code> — which OWL-DL ignores on annotation properties. Meanwhile the parallel <em>conditional</em> mapping (<code>hasConditionalMapping</code>, <code>semanticProperty</code>) is an <code>owl:ObjectProperty</code>. Same concept, two metamodeling treatments.</p>
   <p class="fix">If the intent is to avoid punning (a <code>Struct</code> individual referencing an <code>owl:Class</code>), document that rationale and adopt OWL 2 punning consistently, rather than mixing annotation and object properties for one concept.</p>
 </div>
 
 <div class="finding" id="f19">
   <h3><span class="num">19.</span> Prose says SHOULD, SHACL says MUST <span class="badge b-minor">Minor</span></h3>
-  <p><code>mapsToClass</code>'s subject "SHOULD be a <code>bddo:Struct</code>" (<a href="hexplain/index.html#L59">hexplain:59</a>) but <code>MapsToClassShape</code> enforces <code>sh:class bddo:Struct</code> (a hard MUST).</p>
+  <p><code>mapsToClass</code>'s subject "SHOULD be a <code>bddo:Struct</code>" (<a href="hexplain/index.html">hexplain:59</a>) but <code>MapsToClassShape</code> enforces <code>sh:class bddo:Struct</code> (a hard MUST).</p>
   <p class="fix">Align the normative language — pick SHOULD (relax the shape to a warning) or MUST (update the prose).</p>
 </div>
 
 <div class="finding" id="f20">
   <h3><span class="num">20.</span> Base-type modeling is inconsistent and double-typed <span class="badge b-minor">Minor</span></h3>
-  <p>Prose says <code>baseType</code> MUST be one of integer/float/string (<a href="bddo/index.html#L175">bddo:175</a>), but the ontology also defines a fourth, <code>:bytes</code>, and <code>:string</code>/<code>:bytes</code> are each declared <b>both</b> as an <code>owl:NamedIndividual</code> base type <em>and</em> as a <code>:DataType</code> instance (<a href="bddo/index.html#L236-L259">bddo:236–259</a>).</p>
+  <p>Prose says <code>baseType</code> MUST be one of integer/float/string (<a href="bddo/index.html">bddo:175</a>), but the ontology also defines a fourth, <code>:bytes</code>, and <code>:string</code>/<code>:bytes</code> are each declared <b>both</b> as an <code>owl:NamedIndividual</code> base type <em>and</em> as a <code>:DataType</code> instance (<a href="bddo/index.html">bddo:236–259</a>).</p>
   <p class="fix">Separate the base-type enum values (e.g. <code>:baseTypeString</code>) from the datatype instances (<code>:string</code>), and reconcile the prose with the four actual base types.</p>
 </div>
 
 <div class="finding" id="f21">
   <h3><span class="num">21.</span> Redundant / duplicated axes <span class="badge b-minor">Minor</span></h3>
-  <p>DLV defines <code>dlv:axisX/Y/Band</code>; IDV re-defines <code>img:axisX/axisY/axisBand</code> (<a href="idv/index.html#L159-L161">idv:159–161</a>) instead of reusing or subclassing the DLV ones.</p>
+  <p>DLV defines <code>dlv:axisX/Y/Band</code>; IDV re-defines <code>img:axisX/axisY/axisBand</code> (<a href="idv/index.html">idv:159–161</a>) instead of reusing or subclassing the DLV ones.</p>
   <p class="fix">Decide the relationship explicitly (reuse, <code>rdfs:subClassOf</code>, or <code>skos:exactMatch</code>) rather than silently duplicating.</p>
 </div>
 
 <div class="finding" id="f22">
   <h3><span class="num">22.</span> Endianness modeled two ways with two names <span class="badge b-minor">Minor</span></h3>
-  <p><code>bddo:Struct</code> uses <code>bddo:endianness</code>; <code>bddo:DataType</code> uses <code>bddo:hasEndianness</code>. Because every integer primitive is endianness-bound (<code>uint32be</code>/<code>uint32le</code>) with no neutral <code>uint32</code>, the struct-level property has nothing to govern — in the LAS example it is set but unused (<a href="gv/index.html#L282">gv:282</a>).</p>
+  <p><code>bddo:Struct</code> uses <code>bddo:endianness</code>; <code>bddo:DataType</code> uses <code>bddo:hasEndianness</code>. Because every integer primitive is endianness-bound (<code>uint32be</code>/<code>uint32le</code>) with no neutral <code>uint32</code>, the struct-level property has nothing to govern — in the LAS example it is set but unused (<a href="gv/index.html">gv:282</a>).</p>
   <p class="fix">Either add endianness-neutral primitives that inherit the struct's byte order, or drop struct-level endianness. Unify the property name.</p>
 </div>
 
@@ -385,17 +387,17 @@
 <ul>
   <li><b>Copy-pasted ReSpec <code>github</code>.</b> Every spec sets <code>github: "https://github.com/w3c/respec"</code> — ReSpec's own repo, not Hexplain's. Point it at the real repo or remove it.</li>
   <li><b>Prefix/acronym drift.</b> IDV is called both "Image Description Vocabulary" and "Image Vocabulary," uses prefix <code>img:</code> and namespace <code>/ns/image#</code> — the acronym "IDV" matches none of them. Establish one prefix registry (name ↔ prefix ↔ namespace) and apply it uniformly.</li>
-  <li><b><code>UDPDDatagram</code> typo</b> in NPV (<a href="npv/index.html#L149">npv:149</a>) — double "D".</li>
+  <li><b><code>UDPDDatagram</code> typo</b> in NPV (<a href="npv/index.html">npv:149</a>) — double "D".</li>
   <li><b>SHACL doesn't validate list membership.</b> <code>StructShape</code> only checks <code>hasField</code> points to one node; it never checks the members are <code>bddo:Field</code>s (needs an <code>rdf:rest*/rdf:first</code> path). Same for the conditional lists and <code>hasDimension</code>.</li>
   <li><b><code>FieldShape</code> <code>sh:nodeKind sh:IRI</code> forbids inline (blank-node) structs</b> as a field's type, which you may want for anonymous nested structures.</li>
-  <li><b>Architecture diagram is a placeholder</b> (<code>placehold.co</code> image, <a href="index.html#L49">index:49</a>).</li>
+  <li><b>Architecture diagram is a placeholder</b> (<code>placehold.co</code> image, <a href="index.html">index:49</a>).</li>
 </ul>
 
 <h2 id="keep">What's genuinely good — worth preserving <span class="badge b-good">Keep</span></h2>
 <ul>
   <li>The three-layer separation (physical / layout / semantic) with a thin "glue" Core module is a sound architecture.</li>
   <li>Choosing RDF + OWL + SHACL + JSON-LD, and using <code>rdf:List</code> for field ordering.</li>
-  <li>Expressing interleaving (BSQ/BIP/BIL) purely as list ordering (<a href="dlv/index.html#L81">dlv:81</a>) rather than a fixed enum — elegant and extensible.</li>
+  <li>Expressing interleaving (BSQ/BIP/BIL) purely as list ordering (<a href="dlv/index.html">dlv:81</a>) rather than a fixed enum — elegant and extensible.</li>
   <li>The conditional-dispatch mechanism for TLV/chunked formats.</li>
   <li>The map-everything-to-a-shared-domain-vocabulary interoperability strategy.</li>
 </ul>

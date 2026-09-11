@@ -18,12 +18,14 @@ for r in rows:
         for path in r['evidence']:assert Path(path).is_file(),path
 assert {'raster:gtiff','raster:nitf','raster:hdf5','raster:netcdf','raster:zarr','vector:gpkg','vector:parquet','vector:flatgeobuf'}.issubset(keys)
 profiles_root=Path('../hexplain-profiles/profiles')
+catalog=json.loads(Path("specification/coverage/profile-catalog.json").read_text(encoding="utf-8"))
+entries={p["name"]:p for p in catalog["profiles"]}
 linked=0
 for r in rows:
     for p in r.get('profiles',[]):
-        assert set(p)=={'name','iri','verification'},(r['key'],p)
+        assert set(p)=={'name','iri','verification','scope'},(r['key'],p)
         assert re.fullmatch('[a-z0-9-]+',p['name']),p
-        assert p['iri']==f"https://hexplain.io/ns/profile/{p['name']}",p
+        assert all(p[k]==entries[p["name"]][k] for k in ("iri","verification","scope")),p
         assert p['verification'] in ['parse-verified','not-parse-verified'],p
         if profiles_root.is_dir():assert (profiles_root/p['name']).is_dir(),f"{p['name']} is not a library profile"
         linked+=1
