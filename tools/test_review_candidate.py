@@ -19,6 +19,7 @@ else:
 assert json.loads((OUT/'constraint-inventory.json').read_text(encoding='utf-8')) == audit
 assert (OUT/'ontology-review-candidate.zip').read_bytes() == binary, 'Archive differs from current source'
 with zipfile.ZipFile(io.BytesIO(binary)) as z:
+    assert all(item.create_system == 3 for item in z.infolist()), 'Archive creator metadata must be platform-independent'
     assert len(z.namelist()) == len(set(z.namelist())) == len(manifest['files'])
     for item in manifest['files']:
         data = z.read(item['path'])
