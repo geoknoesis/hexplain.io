@@ -31,17 +31,22 @@ def print_link(page):
     return f'<link rel="stylesheet" href="{href}" media="print">'
 
 
+def with_print_link(page,source):
+    # Generated pages apply this themselves so their output already carries the link;
+    # otherwise the page-equality gates and this sync pass contradict each other.
+    link=print_link(page)
+    if link in source: return source
+    if re.search(r'</head>',source,re.I):
+        return re.sub(r'</head>',lambda m:link+'\n'+m.group(),source,count=1,flags=re.I)
+    if re.search(r'</title>',source,re.I):
+        return re.sub(r'</title>',lambda m:m.group()+'\n'+link,source,count=1,flags=re.I)
+    raise ValueError(f'No HTML head/title in {page}')
+
+
 def sync_print_styles():
     for page in pages():
-        source=page.read_text(encoding='utf-8');link=print_link(page)
-        if link in source: continue
-        if re.search(r'</head>',source,re.I):
-            source=re.sub(r'</head>',lambda m:link+'\n'+m.group(),source,count=1,flags=re.I)
-        elif re.search(r'</title>',source,re.I):
-            source=re.sub(r'</title>',lambda m:m.group()+'\n'+link,source,count=1,flags=re.I)
-        else: raise ValueError(f'No HTML head/title in {page}')
-        page.write_text(source,encoding='utf-8')
-
+        source=page.read_text(encoding='utf-8');updated=with_print_link(page,source)
+        if updated!=source: page.write_text(updated,encoding='utf-8')
 
 def sitemap():
     return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + ''.join(
