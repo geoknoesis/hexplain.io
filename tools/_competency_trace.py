@@ -1,5 +1,6 @@
 """Generate auditable corpus references, not a claim of semantic completeness."""
 from pathlib import Path
+from _site_inventory import with_print_link
 import base64, hashlib, json
 from html import escape
 from rdflib import Graph, URIRef
@@ -30,7 +31,8 @@ def build():
     for r in rows:
         refs=r['positive']+r['negative']
         page+='<tr><td>'+escape(r['iri'])+'</td><td>'+str(len(r['positive']))+' / '+str(len(r['negative']))+('<details><summary>Cases</summary>'+ '<br>'.join(escape(x) for x in refs)+'</details>' if refs else '')+'</td><td>'+str(len(r['result_path']))+'</td></tr>'
-    return json.dumps(result,indent=2)+'\n',page+'</tbody></table></html>'
+    page=with_print_link(OUT/'competency-trace.html',page+'</tbody></table></html>')
+    return json.dumps(result,indent=2)+'\n',page
 
 if __name__=='__main__':
     data,page=build()

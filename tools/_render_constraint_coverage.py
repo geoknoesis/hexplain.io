@@ -1,5 +1,6 @@
 """Render the measured ledger without upgrading diagnostic evidence to acceptance."""
 from pathlib import Path
+from _site_inventory import with_print_link
 import json
 from html import escape
 ROOT=Path(__file__).resolve().parents[1]
@@ -18,6 +19,6 @@ def render():
             page+=f'<details><summary>{label}: {len(r[field])}</summary>'+ '<br>'.join(escape(v) for v in r[field])+'</details>'
         page+='</td></tr>'
     page+='''</tbody></table><script>const q=document.getElementById('query'),g=document.getElementById('gaps'),rows=[...document.querySelectorAll('tbody tr')];function filter(){let n=0;for(const r of rows){r.hidden=(g.checked&&r.dataset.covered==='true')||!r.textContent.toLowerCase().includes(q.value.toLowerCase());if(!r.hidden)n++;}document.getElementById('count').textContent=n+' obligations shown';}q.addEventListener('input',filter);g.addEventListener('change',filter);filter();</script></main></html>'''
-    return page
+    return with_print_link(OUT/'constraint-coverage.html',page)
 
 if __name__=='__main__':(OUT/'constraint-coverage.html').write_text(render(),encoding='utf-8')

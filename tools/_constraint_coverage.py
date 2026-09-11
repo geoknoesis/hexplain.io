@@ -33,6 +33,20 @@ def canonical(path):
     for triple in to_canonical_graph(source):g.add(tuple(term(t) for t in triple))
     return g
 
+def stable_value(g, value, depth=0):
+    """Identify a parameter value by content.
+
+    Canonical blank-node labels are rdflib run identities, not content: recording
+    them binds the ledger to one interpreter build, so evidence measured on one
+    machine cannot validate on another. Nested values are folded into a digest of
+    the reachable subgraph instead.
+    """
+    if not isinstance(value, BNode): return str(value)
+    if depth >= 32: return 'bnode:depth-limit'
+    parts = sorted((str(pred), stable_value(g, obj, depth + 1)) for pred, obj in g.predicate_objects(value))
+    return 'bnode:' + hashlib.sha256(json.dumps(parts).encode()).hexdigest()
+
+
 def inventory():
     graphs={p:canonical(p) for p in specgraph.ontology_paths()}
     p='specification/validation/test/security-profile.ttl';graphs[p]=canonical(p)
@@ -56,7 +70,8 @@ def inventory():
                             path=str(g.value(node,SH.path) or ''),owners=sorted(owners),
                             passed=[],failed=[],empty_value_passes=[])
                     values=rows[key]['parameters'].setdefault(str(param),[])
-                    if str(value) not in values:values.append(str(value));values.sort()
+                    text=stable_value(g,value)
+                    if text not in values:values.append(text);values.sort()
     return graphs,rows
 
 @contextmanager

@@ -2,6 +2,7 @@
 import json
 from html import escape
 from pathlib import Path
+from _site_inventory import with_print_link
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,6 +29,7 @@ def build(check=False):
             sections+'<p><a href="../../authoring/specification/constraint-inventory.json">Reusable constraints, consumers and local activation targets</a></p><h2>Primitive preset matrix</h2><p>Each row retains its named public preset. Missing byte order remains unspecified; no platform default is inserted. Width is storage width, not a semantic significant-bit count.</p>'
             '<div role="region" aria-label="Primitive presets" tabindex="0"><table><thead><tr><th>Preset</th><th>Base category</th><th>Bits</th><th>Signed</th><th>Byte order</th><th>RDF datatype</th></tr></thead><tbody>'+rows+'</tbody></table></div></body></html>\n')
     target = ROOT / 'specification/shared-patterns/index.html'
+    html = with_print_link(target, html)
     if check:
         assert target.read_text(encoding='utf-8') == html, 'Stale shared-pattern guide'
     else:
