@@ -123,3 +123,18 @@ Added cumulative UTF-8 literal-byte accounting and binary-to-hex preallocation c
 with direct canonical nibble encoding. All 2079 core tests passed. Engine readiness is now
 9.1/10 under the unchanged rubric; specification remains 9.0. [Rescore](2026-09-12-readiness-rescore.html).
 No fresh throughput claim, release commit or deployment is implied.
+
+## Commit and lifecycle cleanup follow-up
+
+The readiness implementation was committed and pushed as engine 14ce529 and specification
+reports 5cef87d. Earlier uncommitted statements describe those checkpoints. Unrelated drafts
+remain separate.
+
+Engine follow-up d95bf28 closes temporary profile models owned by the stream/string APIs and
+closes emitted graphs when validation throws. Caller-owned profiles and successful graphs
+retain their ownership. The targeted semantic and instance-validation command passed after
+an incremental compiler memory failure was resolved with a single-worker, non-incremental,
+in-process compilation using a 768 MiB heap.
+
+Remote engine CI run 34716273861 did not start its job: GitHub reported failed account payments
+or an insufficient spending limit. No hosted test success or billing change is claimed.
