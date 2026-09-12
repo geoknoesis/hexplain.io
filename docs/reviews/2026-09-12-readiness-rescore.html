@@ -1,0 +1,174 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hexplain readiness rescore</title><style>body{font:17px/1.6 system-ui;max-width:1100px;margin:40px auto;padding:0 24px;color:#172337;background:#f7f9fc}h1,h2{line-height:1.2}h2{margin-top:2em}table{border-collapse:collapse;display:block;overflow:auto}td,th{padding:10px;border:1px solid #b8c4d4;text-align:left}a{color:#164d9d}@media print{body{background:white;font-size:10pt;margin:0}tr{break-inside:avoid}}</style><main><h1>Hexplain readiness: implementation rescore</h1>
+<p>12 September 2026. This is a delta review of the current working copies against the
+<a href="2026-09-12-specification-engine-readiness.md">detailed review</a>, using the same rubric.
+Live namespace hosting remains excluded. Prerelease backward compatibility is not required.</p>
+<h2>Scores</h2>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th style="text-align: right;">Weight</th>
+<th style="text-align: right;">Specification</th>
+<th style="text-align: right;">Engine</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Correctness and semantic precision</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">28.5</td>
+<td style="text-align: right;">29</td>
+</tr>
+<tr>
+<td>Architecture, usability and supported versatility</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">18.5</td>
+</tr>
+<tr>
+<td>Validation and independent evidence</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">18.5</td>
+<td style="text-align: right;">19.5</td>
+</tr>
+<tr>
+<td>Performance and resource behavior</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr>
+<td>Reproducible release and maintainability</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr>
+<td>Total</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;"><strong>90 / 100 (9.0)</strong></td>
+<td style="text-align: right;"><strong>91 / 100 (9.1)</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Engine rises from the initial 8.6 to 9.1 (previous checkpoint: 9.0) because concrete conformance defects were addressed and resource/
+performance evidence expanded. Specification remains 9.0: engine benchmarks do not establish
+independent ontology acceptance or new semantic coverage. These are reviewer judgments,
+not test-pass percentages. Scores apply to the dirty working candidate, not an already
+released artifact. Neither component is yet demonstrated above 9.5.</p>
+<h2>Implemented improvements supporting this score</h2>
+<ul>
+<li>Present dispatched child maps now require known, allowed recorded struct provenance;
+  invalid metadata cannot silently eliminate constraint evaluation.</li>
+<li>Conformance traversal and constructor reachability use explicit stacks. Active-path cycles
+  reject; shared children remain separate occurrences. Work, depth, findings, interruption
+  and cooperative deadlines are bounded. Reports expose actual evaluation counts.</li>
+<li>Nine local Linux container probes passed: normal generator, shell deadline, full normal
+  pipeline, invalid semantics, truncation, non-cooperative callback, heap exhaustion, output
+  flooding and a healthy request afterward. No acceptance containers remained.</li>
+<li>Benchmarks expanded from four opt-in parser fixtures to an additional 27 synthetic stage
+  workloads, including interpreter/generated nested compression. Three-fork runs retain
+  16,200 timed samples, allocation/GC data and exact artifact hashes. Generated measurements
+  include reflection. This establishes measurements, not a throughput improvement.</li>
+<li>The performance supervisor now samples single-JVM RSS at 50 ms intervals. Three tests
+  verify memory observation, failure rejection and timeout termination. RSS is a sampled
+  lower bound on peak, not an exact maximum or a stage-specific retained-heap measure.</li>
+<li>Linux CI invokes the non-executable Gradle wrapper through Bash. Release CI stages the
+  expanded containment executable. A manual diagnostic performance workflow is available.</li>
+</ul>
+<h2>Verification boundaries</h2>
+<p>The prior complete engine verification recorded 3,024 passed and eight explicitly skipped
+tests. Generated-code verification passed again after the benchmark additions, and the
+expanded staging build compiled generated codecs against runtime-kotlin alone. This rescore
+does not claim a new complete repository test run or hosted workflow acceptance.</p>
+<p><a href="2026-09-12-readiness-implementation.md">Implementation record</a>,
+<a href="2026-09-12-pipeline-containment.json">containment evidence</a>,
+<a href="2026-09-12-nested-generated-performance.md">nested/generated baseline</a>.</p>
+<h2>What still prevents 9.5+</h2>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Deliverable</th>
+<th>Acceptance criterion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Release candidate consistency</td>
+<td>Commit the intended source and evidence together; reconcile exact cross-repository pins; pass clean Windows/Linux builds and every shipped consumer. Existing draft tests/tooling are not equivalent to published artifacts.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Semantic acceptance</td>
+<td>Independently review the frozen ontology candidate and resolve decisions; deepen high-risk term interactions and constraint-parameter mutations. Component evaluation coverage is not semantic completeness.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Whole-stage resource guarantees</td>
+<td>Bound lifting/SHACL work and emitted graph size; exercise hostile inputs in each real stage and deployed worker recovery/load. The local register attack does not certify every codec or expression.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Representative performance and optimization</td>
+<td>Add large real profiles/geometry/high-compression data, direct generated calls and concurrent runs. Profile compilation/SHACL before adding bounded caches or reducing graph copies. Demonstrate correctness and resource behavior before/after any change.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Executable support contract</td>
+<td>Generate backend/feature coverage from actual tests, reconcile historic fixture counts, and distinguish describable IR from executable accessors/writers. Safe rejection remains valid for excluded features.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Distribution approval</td>
+<td>Resolve missing license grants, dependency advisory review, shipped module scope and artifact provenance. Owner/reviewer decisions remain outstanding.</td>
+</tr>
+</tbody>
+</table>
+<p>No license was chosen on the owner's behalf, no independent review was invented, and no
+deployment is claimed. The work remains uncommitted. Further score increases should follow
+new acceptance evidence, not simply more tests or larger file counts.</p>
+<h2>Fresh memory measurement</h2>
+<p>All three monitored forks completed all 27 workloads (16,200 timed samples total).</p>
+<table>
+<thead>
+<tr>
+<th>JVM fork</th>
+<th style="text-align: right;">Sampled peak RSS (MiB)</th>
+<th style="text-align: right;">RSS samples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td style="text-align: right;">340.7</td>
+<td style="text-align: right;">491</td>
+</tr>
+<tr>
+<td>2</td>
+<td style="text-align: right;">341.0</td>
+<td style="text-align: right;">418</td>
+</tr>
+<tr>
+<td>3</td>
+<td style="text-align: right;">339.2</td>
+<td style="text-align: right;">392</td>
+</tr>
+</tbody>
+</table>
+<p>RSS includes the JVM, native allocations, warmup and all stages with a fixed 512 MiB heap setting.
+It is not the heap-size setting, retained heap, an exact peak, or a production service budget.
+<a href="2026-09-12-rss-performance.json">Memory and timing results</a> ? <a href="2026-09-12-rss-performance.zip">Raw evidence</a>.</p>
+<h2>Latest resource-bound improvement</h2>
+<p>Semantic lifting now limits cumulative UTF-8 literal lexical bytes (64 MiB default), in
+addition to work, depth and triple counts. Binary-to-hex output is size-checked before
+allocation and uses direct nibble encoding. Tests cover UTF-8 multibyte/supplementary and
+malformed-surrogate counting, exact budget boundaries, and canonical hex output.
+The full core suite passed: <strong>2079 tests, zero failures/errors/skips</strong>.
+<a href="2026-09-12-literal-budget-validation.json">Latest validation counts</a>.</p>
+<p>The +0.1 engine adjustment credits strengthened correctness/resource-bound regression evidence;
+performance points have not increased. Earlier benchmark and containment artifacts remain
+historical evidence for their recorded JAR hashes; they were not rerun against these literal
+changes. No throughput improvement is claimed. The new byte budget excludes IRIs, object
+overhead and intermediate expression allocations; hard whole-request limits remain necessary.</p></main></html>

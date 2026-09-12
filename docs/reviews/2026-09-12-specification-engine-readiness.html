@@ -1,0 +1,180 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hexplain production readiness review</title><style>body{font:17px/1.65 system-ui,sans-serif;color:#172337;background:#f7f9fc;max-width:1100px;margin:40px auto;padding:0 24px}h1,h2,h3{line-height:1.25}h2{margin-top:2.2em;border-bottom:1px solid #c6d0df;padding-bottom:.4em}a{color:#164d9d}table{border-collapse:collapse;width:100%;display:block;overflow:auto}td,th{border:1px solid #c6d0df;padding:9px;text-align:left}code{overflow-wrap:anywhere}@media print{body{background:white;color:black;font-size:10pt;margin:0}h2,h3{break-after:avoid}tr{break-inside:avoid}}</style><main><h1>Hexplain specification and engine: production readiness review</h1>
+<p>Date: 12 September 2026. Scope: hexplain.io <code>21ca190</code> and hexplain-tools <code>ef06cf9</code>, including the explicitly uncommitted working-copy changes visible during review. No implementation changes made. Live hosting is excluded from scoring, as requested. Backward compatibility is not a prerelease acceptance requirement.</p>
+<h2>Decision and scores</h2>
+<p>The specification is a strong release candidate with outstanding semantic acceptance and reproducibility work. The engine is suitable for evaluation within its documented subset; unrestricted untrusted production use is not yet justified by the reviewed evidence. Neither currently earns 9.5 under this review's production-readiness rubric.</p>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th style="text-align: right;">Weight</th>
+<th style="text-align: right;">Specification</th>
+<th style="text-align: right;">Engine</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Correctness and semantic precision</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">28.5</td>
+<td style="text-align: right;">27</td>
+</tr>
+<tr>
+<td>Architecture, usability and supported versatility</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">18</td>
+</tr>
+<tr>
+<td>Validation and independent evidence</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">18.5</td>
+<td style="text-align: right;">18.5</td>
+</tr>
+<tr>
+<td>Performance and resource behavior</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">10.5</td>
+</tr>
+<tr>
+<td>Reproducible release and maintainability</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr>
+<td>Total</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;"><strong>90 / 100 (9.0)</strong></td>
+<td style="text-align: right;"><strong>86 / 100 (8.6)</strong></td>
+</tr>
+</tbody>
+</table>
+<p>These are review judgments, not statistically measured quality or test-pass percentages. This rubric explicitly includes performance and release evidence and should not be compared numerically with older rubrics without reweighting. Specification performance means validation/build scaling and consumer cost. Engine performance includes execution latency, allocation and scaling. A missing measurement is an evidence gap, not proof of slow execution. Scores are provisional because the tested working copy is not identical to the pushed commits.</p>
+<p>A proposed 9.55 acceptance target is 29.5/30 correctness, 19/20 design, 19.5/20 validation, 14/15 performance and 13.5/15 release. Meeting the tasks requires reassessment; completing a checklist does not automatically establish those scores.</p>
+<h2>Evidence and review limits</h2>
+<p>Source inspection covered conformance traversal, runtime budgets, generated-code boundaries, release inventory and containment scripts, workflows, constraint measurement, ontology review status and capability documentation. This was a targeted code review, not an exhaustive audit of every function or a new full benchmark/fuzz campaign.</p>
+<p>The preceding integration run recorded 3,019 engine tests passed, eight skipped and zero failures/errors. Some unchanged modules used Gradle up-to-date results. Specification acceptance comprised 42 passing gates across an initial run and targeted freshness rechecks; this was not one clean full release run. The coverage regeneration recorded 1,291 cases and positive/negative evaluation evidence for all 1,165 inventoried constraint components. Those numbers do not prove every interaction is correct. The full constraint ledger is not claimed to have identical component-level instrumentation in two engines.</p>
+<p>This review freshly ran <code>python tests/release/verify_spec_evidence.py --spec-root D:/work/hexplain.io</code>: 14 source hashes matched. It also ran <code>python tests/release/test_artifact_manifest.py</code>: 12 tests passed. These checks do not certify the older specification revision pinned by release CI, artifact publication or hosted CI. Existing reports describe a hosted billing failure; this review did not query its current status.</p>
+<p>Source: <a href="2026-09-12-branch-worktree-inventory.md">integration evidence</a>. Existing drafts and generated candidate files remain dirty and were not committed by this review.</p>
+<h2>Findings, ordered by production impact</h2>
+<h3>E01 — High: recorded dispatch provenance can fall back silently</h3>
+<p>At <code>core/src/main/kotlin/io/hexplain/core/conformance/ConformanceEngine.kt:112</code>, evaluation loops over the instances found for each constraint scope. At <code>:277</code>, <code>structNameOf</code> accepts a known recorded type, but a missing or unknown recorded type falls back to the statically declared type. A dispatching field declared as bytes can therefore contribute no selected-struct instance. An unconstrained empty instance list produces no findings. This is a source-confirmed control-flow risk for caller-supplied or modified trees; it is not a demonstrated failure of normal parser-produced metadata. The current comments promise stronger checking than this fallback implements.</p>
+<p><strong>Task:</strong> require valid provenance on dispatched child maps; check that the recorded type belongs to the field's allowed arms/default. Reject missing/unknown/impossible types explicitly. Distinguish an absent optional instance from an unresolvable present instance. Prefer a typed parsed-tree/provenance object over a boolean assertion by callers.</p>
+<p><strong>Acceptance:</strong> add regression vectors for missing metadata, unknown type, known-but-unrelated type, each valid dispatch arm, fallback and repeated nested maps. A malformed present child must not return a conformant report. Retain legitimate zero-instance optional constraints, but report evaluated-instance counts.</p>
+<h3>E02 — High: conformance has no independent work or output bound</h3>
+<p><code>ConformanceEngine.kt:112–139</code> indexes the tree, evaluates assertions and accumulates findings; <code>:232</code> recursively collects instances. This API accepts maps directly and does not accept a stage budget. Parser limits do not protect a caller-supplied deeply nested or cyclic map, a huge finding set or an expensive HEL expression. This is a visible API/resource-bound gap, not a newly executed denial-of-service demonstration.</p>
+<p><strong>Task:</strong> introduce conformance limits for visited instances, nesting, evaluations, findings and elapsed time; use iterative traversal with active-path identity detection. Preserve legitimate repeated references. Propagate cancellation/resource exhaustion as fatal stage failure rather than ordinary rule discrepancy. Bound semantic lifting and SHACL execution separately as well.</p>
+<p><strong>Acceptance:</strong> cyclic/deep trees, broad repetitions, many findings, cancellation and deliberately expensive assertions terminate with explicit limits; no partial success. Verify per-invocation reset and normal nested dispatch behavior.</p>
+<h3>E03 — High: containment evidence covers only a narrow execution path</h3>
+<p><code>tests/release/containment_acceptance.py</code> runs one normal generator invocation and kills a shell busy loop in a constrained container. It correctly labels its limits. <code>ParseLimits.kt</code> and <code>runtime-kotlin/.../ReadBudget.kt</code> are cooperative budgets. Neither those budgets nor this drill demonstrate every compile/parse/write/lift/conformance/custom-codec stage under hard limits.</p>
+<p><strong>Task:</strong> run the real complete request pipeline inside a supported worker boundary with CPU, memory, process, network, filesystem, output and wall-clock controls. Keep the embedded library usable, but document its trusted-use contract separately.</p>
+<p><strong>Acceptance:</strong> hostile inputs in each stage, runaway custom codec, memory exhaustion and output flood are terminated; workers and temporary files are reclaimed; a following healthy request succeeds. Retain Linux evidence for the supported deployment model. Hosted namespace rollout remains outside this score.</p>
+<h3>R01 — High: locally verified draft and releasable candidate differ</h3>
+<p>Both repositories have uncommitted changes; engine tests include untracked profile tests, and specification tooling, dependency/workflow edits and generated evidence are dirty. Passing these files does not prove the pushed main revisions reproduce the same result. <code>tests/release/artifact_manifest.py</code> correctly rejects a dirty candidate. Engine release CI pins specification <code>7320e629...</code>, which is different from the reviewed main; this is not itself proof that the pin is invalid.</p>
+<p><strong>Task:</strong> classify and commit the intended release sources and their evidence together, update compatibility pins deliberately, then build from fresh checkouts and empty dependency caches. Verify the exact pinned graph/source contract, not simply the newest branch name. Separate unrelated paper/design drafts from release inputs.</p>
+<p><strong>Acceptance:</strong> clean Windows/Linux candidate runs, strict mandatory gates with declared skips only, artifact inventories, vocabulary hashes, independent consumers and generated-code consumers all identify the same immutable candidate. Resolve hosted execution/access restrictions if still present. Keep failed attempts visible.</p>
+<h3>S01 — Medium: independent semantic acceptance remains absent</h3>
+<p><code>specification/ontology-review/review-manifest.json</code> explicitly has null reviewer/decision and unreviewed modules. Automated coverage is substantial, but does not supply independent ontology acceptance.</p>
+<p><strong>Task:</strong> obtain an attributable review of the frozen candidate by an ontology reviewer and relevant binary/geospatial domain reviewers. Review every module, with deeper attention to numeric value spaces, identity versus equality, units, scope, bit ordering, compound ownership and geospatial interpretation.</p>
+<p><strong>Acceptance:</strong> module decisions, reviewed hashes, concrete objections, resolutions and independent rechecks. Do not manufacture a reviewer or equate this assistant review with external acceptance.</p>
+<h3>S02 — Medium: component coverage is not interaction or mutation adequacy</h3>
+<p><code>tools/_constraint_coverage.py</code> records actual component evaluations; <code>two_sided</code> intentionally permits empty-value success for cardinality. The review instructions correctly disclaim proof of all parameter combinations. Preserve that distinction.</p>
+<p><strong>Task:</strong> add an interaction register for bit order × endian × stride × extent, dispatch × repetition × regions, compound membership × identifiers × security scope, and CRS axis order × units × masks/nodata. Mutate constraint parameters and targeting rules, not only instance data. Replay portable semantic expectations in both pySHACL and Jena with explicit inference policy and normalized report paths.</p>
+<p><strong>Acceptance:</strong> every declared high-risk interaction has a real-format positive example and minimal negative counterexample; each applicable non-equivalent constraint mutation is detected or independently justified. Report mutation adequacy separately from existing component evaluation coverage. Preserve the zero-unevaluated-component gate.</p>
+<h3>E04 — Medium: scope is explicit, but specification and execution are not fully symmetric</h3>
+<p><code>docs/capability-matrix.md</code> lists unsupported packed/chunked access, writer combinations and vector families. <code>ConformanceEngine.kt:58</code> rejects field-scoped constraints even though vocabulary/shapes allow them. These explicit rejections are strengths, not silent corruption. A 9.5 bounded release need not implement every describable feature, but it must not imply universal execution.</p>
+<p><strong>Task:</strong> generate the public capability matrix from executable feature checks spanning RDF/HDL, IR, interpreter reader/writer, generated reader/writer, accessors, semantic lifting and conformance. Implement field-scoped conformance if included in the release contract; otherwise expose it as an explicit unsupported capability before execution. For expanded writers, define framing and solvable length dependencies before implementation.</p>
+<p><strong>Acceptance:</strong> each supported cell has independent bytes/values and failure-boundary tests; each unsupported cell fails with a stable feature diagnostic. Add nesting/composition cases rather than isolated feature-only tests. Define supported tiers in the release manifest.</p>
+<h3>E05 — Medium: performance evidence is not broad enough to justify optimization claims</h3>
+<p><code>hdl/.../bench/MetaparserBench.kt</code> is an opt-in four-fixture parser timing test with warmup and generous ceilings; it was skipped in the integration run. It does not measure allocations, compilation, writers, lifting or SHACL. <code>ConformanceEngine.collectInstances</code> builds per-struct lists and uses <code>filterIsInstance</code>, introducing materialization worth measuring, not automatically a demonstrated bottleneck.</p>
+<p><strong>Task:</strong> establish reproducible benchmarks for compile, parse, write, generated execution, lifting and validation. Cover small latency-sensitive input, large contiguous arrays, deeply nested records, compressed blocks and large geometry collections. Record throughput, p50/p95/p99, allocations, peak RSS, GC and cold/warm behavior on fixed hardware/runtime settings.</p>
+<p><strong>Acceptance:</strong> published repeatable baselines and workload-specific budgets, with regression tolerances derived from run variance. Profile before changing code. Candidate optimizations include bounded compiled-profile caching keyed by all source/options hashes, streaming conformance traversal, reducing intermediate collections and immutable byte slices with explicit ownership. Preserve exact arithmetic, bounds checks and cancellation; compare before/after results and memory.</p>
+<h3>R02 — Medium: integrity inventory is not complete supply-chain acceptance</h3>
+<p>The artifact tool explicitly states it is not an SBOM or provenance attestation. <code>LICENSING.md</code> leaves files without existing grants awaiting an owner decision. Release workflows use version tags for third-party actions.</p>
+<p><strong>Task:</strong> resolve licenses and third-party notices with the owner; generate JVM/dependency and artifact inventories, perform an advisory review, pin workflow actions to reviewed immutable revisions, and attest the built candidate. Include all modules claimed in the release: current library inventory has six modules, so decide explicitly whether query/query-fuseki are shipped products or excluded components.</p>
+<p><strong>Acceptance:</strong> each distributed file has a recorded license basis, dependencies and notices; no untriaged release-blocking advisories; consumer tests exercise every shipped product. Maintain an update process for pinned dependencies/actions rather than freezing indefinitely.</p>
+<h3>S03 — Medium: capability documentation can drift from executable evidence</h3>
+<p>The engine capability matrix still cites 112 WKB cases while integration records a 136-case corpus. These counts may describe different scopes; the documentation does not make the relationship sufficiently clear. File totals such as 611 raster matches cannot establish a driver coverage percentage.</p>
+<p><strong>Task:</strong> derive counts and links from a single versioned evidence catalog, separating historical, current, native, adapter and external-library cases. Give each profile a feature/variant support contract and machine-readable exclusions.</p>
+<p><strong>Acceptance:</strong> documentation checks reject stale counts and missing evidence. Every claimed support statement identifies profile hash, runtime/backend, fixture scope and independent oracle. Preserve historical reports as dated snapshots.</p>
+<h2>GDAL versatility roadmap</h2>
+<p>Use GDAL's separate <a href="https://gdal.org/en/stable/drivers/raster/index.html">raster</a> and <a href="https://gdal.org/en/stable/drivers/vector/index.html">vector</a> driver catalogs as inventory sources. Their entries include different storage and service models; complete GDAL coverage is not equivalent to implementing a finite list of binary codecs.</p>
+<ol>
+<li>Freeze the denominator: selected GDAL revision/build, available drivers, optional dependencies and intended operations. Classify each as native binary, text, container/database, remote service or delegation. Track supported, partial, rejected and untested separately.</li>
+<li>Prioritize reusable capability families: indexed/chunked storage; vector geometry plus attributes; multidimensional arrays; compression/filter pipelines; masks/georeferencing. A native profile and a library adapter must remain distinct claims.</li>
+<li>Expand comparisons beyond pixels: integer interpretation, NaN policy, axes, units, affine transforms, CRS identity, nodata versus masks, scale/offset, geometry dimensions, empty values, attribute nulls, encoding and feature identifiers.</li>
+<li>Pin upstream fixture licenses and hashes, deduplicate inputs and retain generated edge cases. Independently inspect every rejection; preserve the signed-24-bit datatype difference as an exact non-pass, not a broad exclusion.</li>
+<li>Add seeded property-based and mutation fuzzing across interpreter/generated readers and writers, with independent oracle comparisons and persisted minimized failures. Publish campaign duration, seeds, explored scope and exclusions. A round trip alone can preserve a shared mistake.</li>
+</ol>
+<p>Acceptance for each promoted format variant: positive decode vectors, malformed/truncated boundary vectors, exact independent value/semantic comparisons, resource-limit tests and writer interoperability where write support is claimed. No requirement to complete all GDAL drivers before a well-scoped 9.5 release.</p>
+<h2>Specification design and author experience tasks</h2>
+<ul>
+<li>Preserve the current modular model and simplify duplicated author-facing concepts only where equivalence is established. Prerelease breaking changes are allowed; migration shims are not required by this review.</li>
+<li>Make normative definitions, non-normative examples and implementation subset notes visually and structurally distinct. Every relevant term should identify label, definition, usage scope, domain/range where meaningful, units, constraints and a real use case; do not invent range axioms merely to fill documentation fields.</li>
+<li>Provide small complete profiles that progress from scalar fields to dependent lengths, bounded nesting, dispatch and semantic mapping, with their compiled form and negative diagnostics. Keep one canonical source and mechanically verify alternate representations.</li>
+<li>Document how consumers choose shapes, supply vocabulary context and detect zero applicable targets. SHACL validates data against a selected shapes graph; a true result is not automatically application-level certification. See <a href="https://www.w3.org/TR/shacl/#validation">W3C SHACL validation and reports</a>.</li>
+<li>Benchmark the full family and selected-module validation at increasing graph sizes; check repeated-call memory and offline import behavior. Compile/cache safely only after measuring benefit and verifying cache invalidation.</li>
+</ul>
+<h2>Execution order and release exit criteria</h2>
+<table>
+<thead>
+<tr>
+<th>Order</th>
+<th>Owner role</th>
+<th>Deliverable</th>
+<th>Completion gate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Engine maintainer</td>
+<td>E01 provenance and E02 conformance limits</td>
+<td>Counterexamples reject; valid pipelines retain results</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Release maintainer</td>
+<td>R01 frozen candidate and consistent pins</td>
+<td>Clean strict cross-platform acceptance, all shipped consumers</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Engine/platform maintainer</td>
+<td>E03 complete worker containment</td>
+<td>Real-stage hostile requests bounded; recovery verified</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Ontology maintainer + independent reviewers</td>
+<td>S01/S02 semantic decisions and interactions</td>
+<td>Attributable review, mutation/interaction corpus, no unresolved high findings</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Engine/performance maintainer</td>
+<td>E05 measured baselines and optimizations</td>
+<td>Declared latency/memory budgets met with reproducible evidence</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Engine/spec maintainers</td>
+<td>E04/S03 executable capability contract</td>
+<td>Every supported claim linked to evidence; unsupported behavior explicit</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Repository owner/release maintainer</td>
+<td>R02 distribution approval and supply chain</td>
+<td>License basis, advisory disposition, integrity/provenance, release manifest</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Format maintainers</td>
+<td>Selected GDAL family expansion</td>
+<td>Per-variant differential and resource acceptance</td>
+</tr>
+</tbody>
+</table>
+<p>A 9.5+ release should have no unresolved high correctness/resource findings in its declared scope, a reproducible committed candidate, independent semantic acceptance, explicit capability limits, measured performance and releasable artifacts. Broad GDAL coverage is a parallel roadmap with a published denominator. Live hosting is deliberately not a scoring gate here. This review does not deploy, alter licenses, commit drafts or change implementation.</p></main></html>
