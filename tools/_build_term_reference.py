@@ -8,7 +8,25 @@ from html import escape as e
 from collections import defaultdict
 from functools import lru_cache
 from rdflib import Graph,RDF,RDFS,OWL,URIRef,BNode,Literal
-from _reference import *
+from _reference import (
+    ANNOTATIONS,
+    ANNOTATION_MARKER,
+    ROOT,
+    SH,
+    SKOS,
+    closure,
+    compact,
+    definition,
+    kind,
+    label,
+    load,
+    local,
+    modules,
+    owned,
+    owner,
+    scope,
+    shape_targets,
+)
 
 START='<!-- BEGIN GENERATED TERM REFERENCE -->'
 END='<!-- END GENERATED TERM REFERENCE -->'
@@ -45,7 +63,7 @@ def file_subjects(path):
 
 def enrich():
     edits=[]
-    for directory,paths in modules().items():
+    for _directory,paths in modules().items():
         g=load(paths,base=True)
         for path in paths:
             base=(ROOT/path).read_text(encoding='utf-8').split(ANNOTATION_MARKER)[0].rstrip()+'\n'

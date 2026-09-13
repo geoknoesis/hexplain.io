@@ -97,3 +97,49 @@ performance points have not increased. Earlier benchmark and containment artifac
 historical evidence for their recorded JAR hashes; they were not rerun against these literal
 changes. No throughput improvement is claimed. The new byte budget excludes IRIs, object
 overhead and intermediate expression allocations; hard whole-request limits remain necessary.
+
+## Semantic lifecycle rescore ? 12 September 2026
+
+Specification: **9.0/10**. Engine: **9.1/10**. Existing weights and dimension scores
+remain unchanged. The lifecycle fixes strengthen this assessment but do not establish a
+new performance, release or independent semantic acceptance milestone.
+
+Bundle processing now closes temporary part/CONSTRUCT graphs and failed working graphs.
+A new counterexample exposed caller-profile mutation (14 triples became 3,782); bundle
+parts now compile from owned copies. The corrected regression and semantic/profile ownership
+suites pass: 40 tests, zero failures/errors/skips. The preceding RDF/semantic run passed
+1,335 tests before this bundle change; it is not a full latest-candidate release run.
+
+Remaining priorities are clean cross-platform release acceptance with consistent artifact
+pins, representative performance and retained-memory measurements, whole-stage SHACL/HEL
+containment, and independent ontology/semantic interaction review. Bundle aggregation and
+its CONSTRUCT query still need aggregate request budgets; per-part lifting limits do not
+bound the complete bundle. Direct generic compilation still enriches its supplied profile;
+the new copy isolation applies specifically to bundle processing. No performance gain is
+claimed from adding copies. Live hosting remains excluded from scoring. Changes are uncommitted.
+
+## Bundle executable-query boundary and rescore
+
+The bundle lifting query now comes exclusively from the bundled vocabulary, isolated from
+caller sh:rule/sh:construct triples. Missing bundled definitions fail explicitly; the duplicated
+fallback query is removed. Seven bundle tests pass, including a caller-authored CONSTRUCT
+that must not execute. This regression establishes the corrected boundary; no claim is made
+that the previous graph's nondeterministic property selection always selected injected data.
+
+Scores remain specification **9.0/10**, engine **9.1/10**, using unchanged weights. Recent
+ownership, admission and materialization fixes strengthen the candidate, but hard query limits,
+aggregate decoding budgets, representative performance, clean release acceptance and independent
+ontology review remain incomplete. Live hosting remains excluded. Latest verification is the
+seven-test bundle suite and diff checks, not a complete release run. Changes are uncommitted.
+
+## Technical-only acceptance implementation
+
+Independent human ontology review is no longer a scoring requirement. The unchanged rubric
+uses reproducible semantic/differential tests and independent implementations instead; live
+hosting remains excluded. See 2026-09-12-technical-acceptance-plan.md for completion criteria.
+
+Gate reports now distinguish running, failed and completed suites, list/hash selected gate
+scripts, record environment/timestamps and replace results atomically. Fresh strict filtered
+acceptance passed 3 gates with zero skips/failures: runner behavior, seven bundle lifting
+cases and 1,165 two-sided component obligations. This is not a full release run or proof of
+complete term-interaction coverage. Scores remain specification 9.0 and engine 9.1.

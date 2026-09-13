@@ -39,7 +39,6 @@ import sys
 
 import rdflib
 
-import specgraph
 
 SKOS = rdflib.Namespace("http://www.w3.org/2004/02/skos/core#")
 REGISTER_NS = "https://hexplain.io/ns/register/"
@@ -127,7 +126,7 @@ def main():
                 )
 
         # 2 -- normative vocabularies must not reference a register
-        for s, p, o in g:
+        for s, _p, o in g:
             for node, role in ((s, "subject"), (o, "object")):
                 if isinstance(node, rdflib.URIRef) and str(node).startswith(REGISTER_NS):
                     problems.append(

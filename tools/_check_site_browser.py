@@ -18,7 +18,7 @@ try:
         browser=play.chromium.launch()
         for width in [375,768,1440]:
             page=browser.new_page(viewport={'width':width,'height':1000},reduced_motion='reduce')
-            errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
+            errors=[];page.on('pageerror',lambda error,sink=errors:sink.append(str(error)))
             page.goto(f'http://127.0.0.1:{server.server_port}/',wait_until='networkidle')
             assert not errors,errors
             assert page.locator('main').count()==1
@@ -49,7 +49,7 @@ try:
         def luminance(hexcolor):
             values=[int(hexcolor[i:i+2],16)/255 for i in (1,3,5)]
             linear=[v/12.92 if v<=0.04045 else ((v+0.055)/1.055)**2.4 for v in values]
-            return sum(v*w for v,w in zip(linear,[0.2126,0.7152,0.0722]))
+            return sum(v*w for v,w in zip(linear,[0.2126,0.7152,0.0722],strict=True))
         for foreground in ['--text','--muted','--muted-2']:
             for background in ['--bg','--bg-2','--surface']:
                 ratio=(luminance(colors[foreground])+0.05)/(luminance(colors[background])+0.05)

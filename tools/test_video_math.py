@@ -1,5 +1,4 @@
 """Public family validator rejects malformed quantities and preserves exact frame rates."""
-import rdflib
 from pyshacl import validate
 import specgraph
 prefix='@prefix v: <https://hexplain.io/ns/video#> . @prefix t: <https://hexplain.io/ns/aspect/time#> . '

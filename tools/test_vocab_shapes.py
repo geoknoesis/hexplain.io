@@ -4,9 +4,12 @@ Convention: specification/<mod>/test/<feature>-valid.ttl must conform;
 specification/<mod>/test/<feature>-invalid.ttl must NOT. Each -invalid file
 carries an rdfs:comment naming the shape it is expected to trip.
 """
+import functools
 import glob
+import os
 import pathlib
 import sys
+from concurrent.futures import ProcessPoolExecutor
 
 from pyshacl import validate
 
@@ -51,21 +54,53 @@ fixtures = sorted(
 if not fixtures:
     sys.exit("FAIL: no fixtures found (wrong working directory?)")
 
-failures = []
-for path in fixtures:
+@functools.lru_cache(maxsize=None)
+def shapes_for(ont):
+    """One shapes graph per distinct ontology set, reused by every fixture of that module."""
+    return load(list(ont))
+
+
+def check(path):
+    """Validate one fixture, returning a failure description or None."""
     should_conform = path.endswith("-valid.ttl")
     ont = ontologies_for(path)
     data = load(ont + [path])
-    shapes = load(ont)
     conforms, _, report = validate(
-        data, shacl_graph=shapes, inference="none", advanced=True, meta_shacl=False
+        data, shacl_graph=shapes_for(tuple(ont)), inference="none", advanced=True, meta_shacl=False
     )
     if conforms and not should_conform:
-        failures.append(f"{path}: expected SHACL violation, but it conformed")
-    elif not conforms and should_conform:
-        failures.append(f"{path}: expected to conform, but did not:\n{report}")
+        return f"{path}: expected SHACL violation, but it conformed"
+    if not conforms and should_conform:
+        return f"{path}: expected to conform, but did not:\n{report}"
+    return None
 
-if failures:
-    print("FAIL:\n" + "\n".join(failures))
-    sys.exit(1)
-print(f"PASS: {len(fixtures)} vocabulary fixtures behave as expected")
+
+def workers():
+    """Bounded by default: an earlier concurrent run exhausted host memory."""
+    requested = os.environ.get("HEXPLAIN_GATE_WORKERS")
+    if requested:
+        count = int(requested)
+        if count < 1:
+            raise ValueError("HEXPLAIN_GATE_WORKERS must be at least 1")
+        return count
+    return max(1, min(os.cpu_count() or 1, 8))
+
+
+def main():
+    parallel = workers()
+    print(f"Validating {len(fixtures)} vocabulary fixtures across {parallel} worker(s)", flush=True)
+    # Fixtures sharing an ontology set are adjacent, so each worker reuses its cached shapes.
+    if parallel == 1:
+        results = [check(path) for path in fixtures]
+    else:
+        with ProcessPoolExecutor(max_workers=parallel) as pool:
+            results = list(pool.map(check, fixtures, chunksize=2))
+    failures = [failure for failure in results if failure]
+    if failures:
+        print("FAIL:\n" + "\n".join(failures))
+        sys.exit(1)
+    print(f"PASS: {len(fixtures)} vocabulary fixtures behave as expected")
+
+
+if __name__ == "__main__":
+    main()

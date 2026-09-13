@@ -1,0 +1,21 @@
+# Shared lint contract. The identical file governs the profile library, so one
+# convention applies to both repositories.
+#
+# The selected rules catch defects rather than enforce formatting: undefined and
+# unused names, syntax errors, and the bugbear checks for mutable defaults,
+# unbound loop variables and silent zip truncation.
+line-length = 200
+
+[lint]
+select = ["F", "E9", "B"]
+
+# Every flagged closure here is defined and called inside one loop iteration, a
+# per-iteration helper rather than a deferred callback. The rule's true positives
+# require the closure to outlive the iteration; the one handler that did was given
+# an explicit binding instead. Re-enable this if closures start being stored.
+ignore = ["B023"]
+
+[lint.per-file-ignores]
+# Generated-document builders assemble long HTML strings whose line breaks would
+# change published bytes.
+"tools/_build_ontology_docs.py" = ["E501"]

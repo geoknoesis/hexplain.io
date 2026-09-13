@@ -1,9 +1,21 @@
 """Documentation completeness, determinism and annotation-only change contract."""
-import json,re
+import json
 from html.parser import HTMLParser
 from rdflib.compare import isomorphic
-from _reference import *
-from _build_term_reference import build,START,END,GUIDE
+from _reference import (
+    ANNOTATIONS,
+    ANNOTATION_MARKER,
+    Graph,
+    RDFS,
+    ROOT,
+    SKOS,
+    kind,
+    label,
+    load,
+    modules,
+    owned,
+)
+from _build_term_reference import build,GUIDE
 
 class Page(HTMLParser):
     def __init__(self):super().__init__();self.ids=[];self.terms=[];self.links=[]

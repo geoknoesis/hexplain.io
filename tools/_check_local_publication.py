@@ -1,6 +1,5 @@
 """Exercise the actual Nginx configuration in a disposable local container."""
 import json
-from pathlib import Path
 import subprocess
 import time
 import urllib.request
@@ -16,7 +15,7 @@ checks = []
 try:
     binding = subprocess.check_output(["docker","port",container,"8080/tcp"],text=True).strip()
     base = "http://"+binding
-    for attempt in range(30):
+    for _attempt in range(30):
         try:
             with urllib.request.urlopen(base+"/",timeout=2) as response: response.read(1)
             break

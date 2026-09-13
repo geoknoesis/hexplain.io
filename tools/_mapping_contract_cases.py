@@ -44,7 +44,7 @@ def cases():
                 add('rule '+prop,base+f'ex:r h:{prop} {good}.',True)
                 add('rule bad '+prop,base+f'ex:r h:{prop} {bad}.',False,prop)
                 add('rule duplicate '+prop,base+f'ex:r h:{prop} {good},'+('"value * 3"' if prop=='valueExpression' else 'xsd:string')+'.',False,prop)
-    for prop,owner,kind,rule in [
+    for prop,owner,_kind,rule in [
         ('hasConditionalMapping','ex:f','MappingRule','ex:r a h:MappingRule; h:condition "true"; h:semanticProperty ex:p.'),
         ('hasConditionalClassMapping','ex:struct','ClassMappingRule','ex:r a h:ClassMappingRule; h:condition "true"; h:semanticClass ex:Class.')]:
         add(prop+' valid',rule+f'{owner} h:{prop} (ex:r).',True)

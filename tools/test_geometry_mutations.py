@@ -1,6 +1,6 @@
 """Check that geometry counterexamples actually detect removed property constraints."""
 from pathlib import Path
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Graph, Namespace
 from pyshacl import validate
 root=Path(__file__).resolve().parents[1]
 sh=Namespace('http://www.w3.org/ns/shacl#')

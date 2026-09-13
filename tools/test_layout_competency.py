@@ -2,7 +2,7 @@
 from pathlib import Path
 from rdflib import Graph, Namespace, URIRef
 from pyshacl import validate
-import base64, json
+import base64
 ROOT=Path(__file__).resolve().parents[1]
 PREFIX="""@prefix ex:<urn:hexplain:competency:> .
 @prefix dlv:<https://hexplain.io/ns/dlv#> .

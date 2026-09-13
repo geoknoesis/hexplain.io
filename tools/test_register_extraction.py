@@ -171,4 +171,4 @@ for aspect, reg in PAIRS:
 
 if problems:
     print("FAIL:\n  " + "\n  ".join(problems)); sys.exit(1)
-print(f"PASS: all 6 registers extracted; concepts conserved; notations removed")
+print("PASS: all 6 registers extracted; concepts conserved; notations removed")

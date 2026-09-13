@@ -5,7 +5,6 @@ are still checked against the independently retained corpus expectations.
 """
 from pathlib import Path
 import base64, hashlib, json, runpy
-from collections import defaultdict
 from contextlib import contextmanager
 from rdflib import Graph, Namespace, BNode, URIRef, RDF
 from rdflib.compare import to_canonical_graph
@@ -190,7 +189,7 @@ def extend_family():
     assert set(graphs)==set(evidence['sources'])
     previous={r['id']:r for r in evidence['constraints']}
     assert set(previous)=={r['id'] for r in inventory_rows.values()}
-    for key,row in inventory_rows.items():
+    for _key,row in inventory_rows.items():
         old=previous[row['id']]
         for field in ['source','shape','component','parameters','path','owners']:assert row[field]==old[field]
         for field in ['passed','failed','empty_value_passes']:row[field]=list(old[field])

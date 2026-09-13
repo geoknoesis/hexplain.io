@@ -44,7 +44,7 @@ untargeted=Graph()+original
 assert (EX.MarkingShape,SH.targetClass,EX.Marked) in untargeted
 untargeted.remove((EX.MarkingShape,SH.targetClass,EX.Marked))
 negatives=0
-for name,(expected,path,data) in rows.items():
+for name,(expected,_path,data) in rows.items():
     if expected=='false':
         assert not validate(data,shacl_graph=original,inference='none')[0],name
         assert validate(data,shacl_graph=untargeted,inference='none')[0],name

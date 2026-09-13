@@ -2,11 +2,9 @@
 import hashlib
 import json
 import zipfile
-from pathlib import Path
-from rdflib import Graph, Namespace, RDF, Literal, URIRef
+from rdflib import Graph, Namespace, RDF, Literal
 from rdflib.compare import isomorphic
 from _expand_specification_patterns import ROOT
-import specgraph
 
 base = ROOT / 'review-2026-09-05/simplification'
 manifest = json.loads((base / 'baseline.json').read_text(encoding='utf-8'))

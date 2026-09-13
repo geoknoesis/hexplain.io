@@ -1,6 +1,5 @@
 """Trace private fragments to consumers without creating runtime helper shapes."""
 import json
-from pathlib import Path
 from rdflib import Graph,Namespace
 from _expand_specification_patterns import ROOT,AUTHORING,TOKEN,load_catalogs
 SH=Namespace('http://www.w3.org/ns/shacl#')

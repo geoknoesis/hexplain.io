@@ -2,7 +2,7 @@
 
 These test semantic metadata, not ZIP/TAR parsing or safe filesystem extraction.
 """
-from rdflib import Graph, Namespace, RDF, URIRef
+from rdflib import Graph, Namespace
 from pyshacl import validate
 import specgraph
 

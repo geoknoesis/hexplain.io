@@ -2,7 +2,7 @@
 import re
 from pathlib import Path
 from collections import defaultdict
-from rdflib import Graph,RDF,RDFS,OWL,URIRef,BNode,Literal,Namespace
+from rdflib import Graph,RDF,RDFS,OWL,URIRef,BNode,Namespace
 import specgraph
 from _term_editorial import DEFINITIONS
 
@@ -58,7 +58,7 @@ def closure(g,node):
         s=stack.pop()
         if s in seen:continue
         seen.add(s)
-        for p,o in g.predicate_objects(s):
+        for _p,o in g.predicate_objects(s):
             if isinstance(o,BNode):stack.append(o)
     return seen
 

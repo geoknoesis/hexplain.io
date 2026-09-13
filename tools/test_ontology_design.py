@@ -1,5 +1,4 @@
 """Guard ontology/controlled-vocabulary separation and new module hygiene."""
-from pathlib import Path
 from rdflib import RDF,RDFS,OWL,Namespace,URIRef
 from pyshacl import validate
 import specgraph
@@ -7,7 +6,7 @@ import specgraph
 g=specgraph.ontologies(); SKOS=Namespace('http://www.w3.org/2004/02/skos/core#')
 types={OWL.Class,OWL.ObjectProperty,OWL.DatatypeProperty,OWL.AnnotationProperty}
 for pred in [SKOS.closeMatch,SKOS.exactMatch,SKOS.broadMatch,SKOS.narrowMatch,SKOS.relatedMatch]:
-    for subject,target in g.subject_objects(pred):
+    for subject,_target in g.subject_objects(pred):
         assert not types.intersection(g.objects(subject,RDF.type)),f'SKOS concept mapping used for ontology entity {subject}'
 for module in ['raster','spatialref','geometry']:
     ns=f'https://hexplain.io/ns/aspect/{module}'
