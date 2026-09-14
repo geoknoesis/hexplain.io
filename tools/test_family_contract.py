@@ -45,8 +45,12 @@ def check(task):
         if row.get('targetShape'):
             selected = Graph()+shapes
             selected.add((URIRef(row['targetShape']), SH.targetNode, URIRef(row['targetNode'])))
+        # allow_warnings distinguishes advisory results from violations: pySHACL otherwise reports
+        # conforms=false for a warning-only report, which would make sh:severity unobservable and
+        # every advisory constraint indistinguishable from an error.
         ok, report, detail = validate(Graph().parse(data=row['data'], format='turtle'),
-                                      shacl_graph=selected, inference='none')
+                                      shacl_graph=selected, inference='none',
+                                      allow_warnings=bool(row.get('allowWarnings')))
         if bool(ok) != row['expected']:
             failures.append((index, row['name'], f'expected conforms={row["expected"]}', detail))
             continue
@@ -55,6 +59,9 @@ def check(task):
             continue
         if row.get('expectedShape') and URIRef(row['expectedShape']) not in report.objects(None, SH.sourceShape):
             failures.append((index, row['name'], f'missing source shape {row["expectedShape"]}', detail))
+            continue
+        if row.get('severity') and URIRef(row['severity']) not in report.objects(None, SH.resultSeverity):
+            failures.append((index, row['name'], f'missing severity {row["severity"]}', detail))
     return failures
 
 

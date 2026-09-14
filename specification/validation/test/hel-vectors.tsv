@@ -1,0 +1,67 @@
+# Hexplain Expression Language conformance vectors.
+#
+# Each row is an expression, the context it is evaluated against, and what it must produce:
+# a value, or an error whose diagnostic contains the given text. A second implementation of
+# HEL can run these; this one runs them on both its compiled and its interpreted path, so
+# the two cannot agree with each other while disagreeing with the specification.
+#
+# NOT COVERED HERE, because this format carries only a data context: eof() and stream.* need
+# a stream position, datetime() needs a reference instant, inRegister() needs a register
+# provider, partExtension() needs an asset, and sizeof() of a sibling field needs the byte
+# spans of a real parse. Those are exercised by the engine suites; the gap is stated here
+# rather than left to be inferred from absence.
+#
+# name	expression	expectation	value	base64 JSON context
+integer addition	a + b	value	9	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+integer subtraction	a - b	value	5	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+integer multiplication	a * b	value	14	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+integer division truncates toward zero	a / b	value	3	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+negative integer division truncates toward zero	neg / b	value	-1	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+float division does not truncate	f / b	value	1.25	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+modulo	a % b	value	1	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+unary minus	-a	value	-7	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+division by zero is an error	a / 0	error	"zero"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+modulo by zero is an error	a % 0	error	"zero"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+less than	b < a	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+greater or equal	a >= a	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+less or equal	b <= b	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+equality across integer and float	b == 2.0	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+inequality	a != b	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+conjunction evaluates both operands	false and (a / 0 == 1)	error	"zero"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+disjunction evaluates both operands	true or (a / 0 == 1)	error	"zero"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+conjunction is false when the left is false	false and (b > 0)	value	false	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+disjunction is true when the left is true	true or (b < 0)	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+a guard needs the ternary, which does short-circuit	count(empty) > 0 ? 1 : 0	value	0	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XX0=
+negation	not (a < b)	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+conditional takes one branch only	a > b ? 1 : (a / 0)	value	1	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+bitwise and	a & b	value	2	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+shift left	b << 2	value	8	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+shift right	a >> 1	value	3	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+bitwise or	a | b	value	7	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+bitwise xor	a ^ b	value	5	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+bitwise not	~a	value	-8	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+bitwise not of zero	~0	value	-1	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+string equality	s == 'IHDR'	value	true	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+startsWith	startsWith(s, 'IH')	value	true	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+substr is zero-based with a length	substr(s, 0, 2)	value	"IH"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+trim removes surrounding whitespace	trim(pad)	value	"trim me"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+len of a string counts characters	len(s)	value	4	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+toNumber parses a numeric string	toNumber(num)	value	42	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+matches anchors the whole value	matches(s, 'IH')	value	false	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+matches succeeds on a full match	matches(s, 'IHDR')	value	true	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+substring slices by position and length	substring(s, 1, 2)	value	"HD"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+substring past the end is an error, not a clamp	substring(s, 3, 5)	error	"out of range"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+substring with a negative start is an error	substring(s, -1, 2)	error	"substring"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+concat joins its operands in order	concat(s, '-', num)	value	"IHDR-42"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+count of an array	count(rows)	value	3	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XX0=
+count of an empty array	count(empty)	value	0	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XX0=
+all over an empty array is true	all(empty, v > 0)	value	true	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XX0=
+any over an empty array is false	any(empty, v > 0)	value	false	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XX0=
+all holds for every element	all(rows, v > 0)	value	true	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XX0=
+all fails on one element	all(rows, v > 1)	value	false	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XX0=
+any finds one element	any(rows, v == 3)	value	true	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XX0=
+quantifier requires an array	all(a, true)	error	"array"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+quantifier predicate must be boolean	all(rows, v)	error	"boolean"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XX0=
+wrong arity names the function	matches(s)	error	"matches"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+arithmetic on a string is an error	s + 1	error	"number"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+unknown name without a declared schema is absent	nosuchfield	value	null	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=

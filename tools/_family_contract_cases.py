@@ -86,6 +86,41 @@ def cases():
         for name,value,expected in variants:
             data=base+Graph().parse(data=PREFIX+f'ex:f {prop} {value}.',format='turtle')
             result.append(dict(name=module+':'+prop+':'+name,module='specification/'+module,expected=expected,path=str(predicate) if not expected else '',data=data.serialize(format='turtle')))
+    # Severity, both ways. Recording a resolved level without the verbatim text it came from is
+    # valid and readable, so the case conforms once advisory results are allowed; the same case
+    # without that allowance is the proof that the advisory result is actually produced. The
+    # aspect treats a marking as a legal artefact whose written form matters independently of
+    # what it resolves to, which is why this is worth saying at all.
+    resolved_only = PREFIX + 'ex:f asec:sensitivityLevel ex:c.'
+    result.append(dict(name='security level without verbatim text is advisory only',
+                       module='specification/aspect/security/security.ttl', expected=True, path='',
+                       allowWarnings=True, data=resolved_only))
+    result.append(dict(name='security level without verbatim text is reported',
+                       module='specification/aspect/security/security.ttl', expected=False,
+                       path='https://hexplain.io/ns/aspect/security#sensitivityLevelText',
+                       severity='http://www.w3.org/ns/shacl#Warning', allowWarnings=False,
+                       data=resolved_only))
+    result.append(dict(name='security level with verbatim text is complete',
+                       module='specification/aspect/security/security.ttl', expected=True, path='',
+                       allowWarnings=False,
+                       data=PREFIX + 'ex:f asec:sensitivityLevel ex:c ; asec:sensitivityLevelText "SECRET".'))
+
+    # The native-function contract, both ways. A caller reading an unbound result needs to know
+    # whether that outcome is described or a defect, so a native function must say which.
+    fnp = '@prefix hxf:<https://hexplain.io/ns/fn#> . @prefix ex:<urn:family-contract:> . '
+    result.append(dict(name='fn native function states when it is unbound',
+                       module='specification/fn/fn.ttl', expected=True, path='',
+                       data=fnp + 'ex:f a hxf:Function ; hxf:kind hxf:Native ; hxf:unboundWhen "out of range".'))
+    result.append(dict(name='fn native function may declare itself total',
+                       module='specification/fn/fn.ttl', expected=True, path='',
+                       data=fnp + 'ex:f a hxf:Function ; hxf:kind hxf:Native ; hxf:total true.'))
+    result.append(dict(name='fn native function without a contract is rejected',
+                       module='specification/fn/fn.ttl', expected=False, path='',
+                       data=fnp + 'ex:f a hxf:Function ; hxf:kind hxf:Native.'))
+    result.append(dict(name='fn pure function needs no unbound contract',
+                       module='specification/fn/fn.ttl', expected=True, path='',
+                       data=fnp + 'ex:f a hxf:Function ; hxf:kind hxf:Pure.'))
+
     # A level change with no effective date: the minimum-count obligation's failing witness, which
     # no valid/invalid/duplicate variant of a present property can provide.
     result.append(dict(name='security level change without a date',
@@ -110,4 +145,11 @@ def cases():
     from _semantic_boundary_cases import cases as semantic
     from _remaining_contract_cases import cases as remaining
     from _closure_contract_cases import cases as closure
-    return result+mappings()+integers()+physical()+spatial()+requirements()+raster()+core()+layout_properties()+structural()+tree()+semantic()+remaining()+closure()
+    everything = result+mappings()+integers()+physical()+spatial()+requirements()+raster()+core()+layout_properties()+structural()+tree()+semantic()+remaining()+closure()
+    # A case is about one obligation. An advisory result from some other shape -- a level with no
+    # rank, say -- must not decide it, or every advisory constraint added later would silently
+    # rewrite the expected outcome of cases that have nothing to do with it. Cases that are
+    # themselves about an advisory result say so by setting allowWarnings explicitly.
+    for row in everything:
+        row.setdefault('allowWarnings', True)
+    return everything

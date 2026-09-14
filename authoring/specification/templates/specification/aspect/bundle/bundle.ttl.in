@@ -202,12 +202,11 @@ abnd:PartSpecShape a sh:NodeShape ;
     sh:not [ sh:and (
         [ sh:property [ sh:path abnd:extension ; sh:minCount 1 ] ]
         [ sh:property [ sh:path abnd:pathPattern ; sh:minCount 1 ] ] ) ] ;
-    sh:sparql [ sh:message "abnd:maxParts must not be less than abnd:minParts." ;
-        sh:prefixes abnd:_prefixes ;
-        sh:select """SELECT $this WHERE {
-            $this abnd:minParts ?lo ; abnd:maxParts ?hi .
-            FILTER(?hi < ?lo)
-        }""" ] ;
+    # Native rather than sh:sparql: sh:lessThanOrEquals says exactly this, and unlike a SPARQL
+    # constraint it reports the offending path and value, so a finding points at abnd:minParts
+    # instead of only at the spec that carries it.
+    sh:property [ sh:path abnd:minParts ; sh:lessThanOrEquals abnd:maxParts ;
+        sh:message "abnd:maxParts must not be less than abnd:minParts." ] ;
     sh:sparql [ sh:message "A required part spec must not declare abnd:minParts 0 -- the two contradict." ;
         sh:prefixes abnd:_prefixes ;
         sh:select """SELECT $this WHERE {

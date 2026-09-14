@@ -22,6 +22,11 @@
     vann:preferredNamespaceUri "https://hexplain.io/ns/register/us-nato-security#" .
 
 # ---------- Classification Level Register ----------
+# The levels are ORDERED, and the order is published below as a skos:OrderedCollection. Ordering
+# is the one thing every marking system's levels have that a flat set of concepts cannot express:
+# without it, "is this at least SECRET?" is unanswerable from the RDF however many labels each
+# concept carries. It is expressed in SKOS alone, naming no property of any aspect, because a
+# register that named the property it serves could not be reused by a second one.
 usnato:ClassificationLevelScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
     skos:prefLabel "Classification Level Register"@en ; owl:versionInfo "1.0" .
 usnato:Unclassified a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Unclassified"@en .
@@ -29,6 +34,15 @@ usnato:Restricted   a skos:Concept ; skos:inScheme usnato:ClassificationLevelSch
 usnato:Confidential a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Confidential"@en .
 usnato:Secret       a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Secret"@en .
 usnato:TopSecret    a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Top Secret"@en .
+
+# Least to most sensitive, per the ordering EO 12958 and DOD 5200.1-R set out. NATO RESTRICTED sits
+# between UNCLASSIFIED and CONFIDENTIAL and has no US equivalent. The list orders THIS scheme and no
+# other: position here says nothing about another jurisdiction's levels.
+usnato:ClassificationLevelOrder a skos:OrderedCollection ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
+    skos:prefLabel "Classification levels, least to most sensitive"@en ;
+    skos:definition "The classification levels of this register in order, least to most sensitive, as a SKOS ordered collection. Position in the list is the ordering; no numeric rank is minted, and no property of any aspect is named, so this register stays publishable and versionable on its own."@en ;
+    skos:scopeNote "Orders this scheme only. A position here is not comparable with a position in another jurisdiction's register."@en ;
+    skos:memberList ( usnato:Unclassified usnato:Restricted usnato:Confidential usnato:Secret usnato:TopSecret ) .
 
 # ---------- Marking Register (compartments / dissemination / handling) ----------
 # Digraphs per NITF MIL-STD-2500C Table A-4 (exemplary; consult current security directives).
@@ -138,6 +152,7 @@ usnato:X259 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConc
 <https://hexplain.io/ns/register/us-nato-security#AuthorityTypeScheme> <http://www.w3.org/2004/02/skos/core#definition> "The controlled concept scheme grouping classification authority type values. Membership identifies the applicable value set; raw format codes are defined by profiles rather than by this scheme."@en .
 <https://hexplain.io/ns/register/us-nato-security#AuthorityTypeScheme> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
 <https://hexplain.io/ns/register/us-nato-security#AuthorityTypeScheme> <http://www.w3.org/2000/01/rdf-schema#label> "Classification Authority Type Register"@en .
+<https://hexplain.io/ns/register/us-nato-security#ClassificationLevelOrder> <http://www.w3.org/2000/01/rdf-schema#label> "Classification levels, least to most sensitive"@en .
 <https://hexplain.io/ns/register/us-nato-security#ClassificationLevelScheme> <http://www.w3.org/2004/02/skos/core#definition> "The controlled concept scheme grouping classification level values. Membership identifies the applicable value set; raw format codes are defined by profiles rather than by this scheme."@en .
 <https://hexplain.io/ns/register/us-nato-security#ClassificationLevelScheme> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
 <https://hexplain.io/ns/register/us-nato-security#ClassificationLevelScheme> <http://www.w3.org/2000/01/rdf-schema#label> "Classification Level Register"@en .

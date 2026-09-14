@@ -7,6 +7,7 @@
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix vann:    <http://purl.org/vocab/vann/> .
 @prefix hexplain: <https://hexplain.io/ns/core#> .
@@ -24,6 +25,25 @@
     sh:declare [ sh:prefix "xsd" ; sh:namespace "http://www.w3.org/2001/XMLSchema#"^^xsd:anyURI ] ,
                [ sh:prefix "araster" ; sh:namespace "https://hexplain.io/ns/aspect/raster#"^^xsd:anyURI ] ,
                [ sh:prefix "asref" ; sh:namespace "https://hexplain.io/ns/aspect/spatialref#"^^xsd:anyURI ] .
+
+# ---------- Failure contract ----------
+# What a function does when it cannot answer. Stated once, because it is the same for all of
+# them and because a caller that does not know it will read an unbound result as "no such thing"
+# rather than "something went wrong".
+
+:failureContract a owl:DatatypeProperty ; rdfs:label "failure contract" ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+    rdfs:range xsd:string ;
+    rdfs:comment "How this library reports an argument it cannot resolve or bytes it cannot read." .
+
+:total a owl:DatatypeProperty ; rdfs:label "total" ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "True when this function always answers, so an unbound result from it would be a defect rather than a described outcome. Only hxf:explain claims this: it reports what went wrong, and a diagnostic that can itself go missing is of no use at the moment you need it." .
+
+:unboundWhen a owl:DatatypeProperty ; rdfs:label "unbound when" ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+    rdfs:range xsd:string ;
+    rdfs:comment "A condition under which this function yields no value rather than a wrong one. Repeatable. Absence does not mean the function is total: the library-wide failure contract still applies." .
+
+<https://hexplain.io/ns/fn> :failureContract "A function that cannot answer yields an UNBOUND result rather than an error, and records the reason against its first IRI argument, where hxf:explain retrieves it. A SPARQL expression that projects an unbound value simply has no binding for that variable, so a query over a mixed corpus returns rows for the assets it could read instead of failing wholesale. Two things are deliberately NOT unbound: a cancelled or timed-out query, which must reach the caller, and a malformed call -- wrong argument count -- which is a query error raised when the query is built. An unbound result therefore means \"this function could not answer here\", never \"this query is wrong\"; distinguishing the two is what hxf:explain is for."@en .
 
 :Function a owl:Class ; rdfs:label "Function" ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
     rdfs:comment "A SPARQL extension function of this library." .
@@ -49,50 +69,63 @@
 :bytes a :Function ; :kind :Native ; :layer 0 ; rdfs:label "bytes" ;
     :signature "bytes(node: IRI) -> xsd:hexBinary | bytes(node: IRI, offset: integer, length: integer) -> xsd:hexBinary" ;
     :reads hexplain:byteOffset, hexplain:byteLength ;
-    rdfs:comment "The node's bytes as they sit in the file, whole or a slice relative to the node. Unbound when the slice leaves the node or exceeds maxBytesPerCall." .
+    rdfs:comment "The node's bytes as they sit in the file, whole or a slice relative to the node. Unbound when the slice leaves the node or exceeds maxBytesPerCall." ;
+    :unboundWhen "The node has no recorded byte range, or the requested window lies outside the asset."@en .
 :decodedBytes a :Function ; :kind :Native ; :layer 0 ; rdfs:label "decoded bytes" ;
     :signature "decodedBytes(node: IRI) -> xsd:hexBinary" ;
     :reads hexplain:isEncodedWith, hexplain:hasEncodingStep ;
-    rdfs:comment "The node's bytes after the codec chain the profile declares has been inverted." .
+    rdfs:comment "The node's bytes after the codec chain the profile declares has been inverted." ;
+    :unboundWhen "The node carries no encoding, or decoding fails."@en .
 :digest a :Function ; :kind :Native ; :layer 0 ; rdfs:label "digest" ;
     :signature "digest(node: IRI, algorithm: IRI | string) -> xsd:string" ;
     :reads hexplain:byteOffset, hexplain:byteLength ;
-    rdfs:comment "Lower-case hex digest of the node's raw bytes. The algorithm is a checksum-register concept (rck:SHA256, rck:CRC32, ...) or a name." .
+    rdfs:comment "Lower-case hex digest of the node's raw bytes. The algorithm is a checksum-register concept (rck:SHA256, rck:CRC32, ...) or a name." ;
+    :unboundWhen "The algorithm is not one the runtime implements."@en .
 
 # ---- Layer 1: parsed values ----
 :value a :Function ; :kind :Native ; :layer 1 ; rdfs:label "value" ;
     :signature "value(node: IRI) -> literal" ;
-    rdfs:comment "The node's parsed scalar, mapped by the profile or not. Unbound for structs, lists and arrays." .
+    rdfs:comment "The node's parsed scalar, mapped by the profile or not. Unbound for structs, lists and arrays." ;
+    :unboundWhen "The node has no parsed value in the bound asset."@en .
 :hel a :Function ; :kind :Native ; :layer 1 ; rdfs:label "HEL" ;
     :signature "hel(node: IRI, expression: string) -> literal" ;
-    rdfs:comment "A HEL expression evaluated with the node's struct as instance, its container as parent and the file as root." .
+    rdfs:comment "A HEL expression evaluated with the node's struct as instance, its container as parent and the file as root." ;
+    :unboundWhen "The expression does not parse, or evaluates against a context the node does not provide."@en .
 :decode a :Function ; :kind :Native ; :layer 1 ; rdfs:label "decode" ;
     :signature "decode(bytes: xsd:hexBinary, type: bddo:DataType) -> literal" ;
-    rdfs:comment "One scalar decoded from bytes by a BDDO primitive datatype." .
+    rdfs:comment "One scalar decoded from bytes by a BDDO primitive datatype." ;
+    :unboundWhen "The bytes are not a well-formed value of the named datatype."@en .
 
 # ---- Layer 2: arrays (DLV) ----
 :rank a :Function ; :kind :Native ; :layer 2 ; rdfs:label "rank" ; :signature "rank(array: IRI) -> xsd:integer" ;
-    :reads dlv:hasDimension ; rdfs:comment "Number of dimensions of the array." .
+    :reads dlv:hasDimension ; rdfs:comment "Number of dimensions of the array." ;
+    :unboundWhen "No array can be resolved for the node."@en .
 :extent a :Function ; :kind :Native ; :layer 2 ; rdfs:label "extent" ;
     :signature "extent(array: IRI, dimension: integer | dlv:Axis) -> xsd:integer" ;
-    :reads dlv:hasAxis, dlv:dimensionSize ; rdfs:comment "Size of one dimension, named by zero-based position or by axis." .
+    :reads dlv:hasAxis, dlv:dimensionSize ; rdfs:comment "Size of one dimension, named by zero-based position or by axis." ;
+    :unboundWhen "The named dimension does not exist on the array."@en .
 :cell a :Function ; :kind :Native ; :layer 2 ; rdfs:label "cell" ;
     :signature "cell(array: IRI, i1: integer, ..., in: integer) -> literal" ;
-    rdfs:comment "The cell at zero-based indices given in the layout's dimension order. Typed by the cell datatype." .
+    rdfs:comment "The cell at zero-based indices given in the layout's dimension order. Typed by the cell datatype." ;
+    :unboundWhen "The index tuple is outside the array extent, or its arity does not match the array rank."@en .
 :stat a :Function ; :kind :Native ; :layer 2 ; rdfs:label "statistic" ;
     :signature "stat(array: IRI, kind: string) -> literal | stat(array: IRI, kind: string, lo1, hi1, ..., lon, hin: integer) -> literal" ;
-    rdfs:comment "min, max, sum, mean or count over the whole array or a half-open window. Refused above maxCellsPerWindow." .
+    rdfs:comment "min, max, sum, mean or count over the whole array or a half-open window. Refused above maxCellsPerWindow." ;
+    :unboundWhen "The named statistic is not one this library computes, or the window is outside the array."@en .
 :window a :Function ; :kind :Native ; :layer 2 ; rdfs:label "window" ;
     :signature "(array: IRI, lo1, hi1, ..., lon, hin: integer) hxf:window (i1, ..., in, value)" ;
-    rdfs:comment "Property function enumerating every cell of a half-open window, row-major, binding its indices and value. Refused above maxCellsPerWindow." .
+    rdfs:comment "Property function enumerating every cell of a half-open window, row-major, binding its indices and value. Refused above maxCellsPerWindow." ;
+    :unboundWhen "The window bounds lie outside the array or their arity does not match its rank; the property function then yields no rows at all rather than partial ones."@en .
 :layout a :Function ; :kind :Native ; :layer 2 ; rdfs:label "layout" ; :signature "layout(array: IRI) -> xsd:string" ;
-    rdfs:comment "The resolved layout: axes, extents, strides and cell type." .
+    rdfs:comment "The resolved layout: axes, extents, strides and cell type." ;
+    :unboundWhen "No array can be resolved for the node."@en .
 
 # ---- Layer 3: raster ----
 :sampleAt a :Function ; :kind :Native ; :layer 3 ; rdfs:label "sample at" ;
     :signature "sampleAt(grid: IRI, x: integer, y: integer, band?: IRI | integer) -> literal" ;
     :reads araster:hasArray, araster:hasBand, araster:bandIndex, dlv:axisX, dlv:axisY, dlv:axisBand ;
-    rdfs:comment "Raw sample at column x, row y. The array is the band's araster:hasArray, else the grid's, else the grid struct's single array field. A band is a RasterBand IRI or a one-based index and is applied along dlv:axisBand when the array has one." .
+    rdfs:comment "Raw sample at column x, row y. The array is the band's araster:hasArray, else the grid's, else the grid struct's single array field. A band is a RasterBand IRI or a one-based index and is applied along dlv:axisBand when the array has one." ;
+    :unboundWhen "The requested cell lies outside the array extent, or no array can be resolved for the grid or band."@en .
 :calibrate a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "calibrate" ;
     :signature "calibrate(band: IRI, raw: number) -> xsd:double" ;
     :reads araster:sampleScale, araster:sampleOffset ;
@@ -121,7 +154,8 @@
 :physicalAt a :Function ; :kind :Native ; :layer 3 ; rdfs:label "physical value at" ;
     :signature "physicalAt(grid: IRI, x: integer, y: integer, band?: IRI | integer) -> xsd:double" ;
     :reads araster:sampleScale, araster:sampleOffset, araster:noDataValue ;
-    rdfs:comment "calibrate(sampleAt(...)); unbound when the raw sample is no-data." .
+    rdfs:comment "calibrate(sampleAt(...)); unbound when the raw sample is no-data." ;
+    :unboundWhen "The raw sample equals the band's (or the grid's) araster:noDataValue: a no-data cell has no physical value, and returning the raw code as though it were one would be a wrong answer rather than a missing one."@en .
 
 # ---- Layer 3: spatial reference (affine asref:GeoTransform) ----
 # worldX = originX + col*scaleX + row*skewX ; worldY = originY + col*skewY + row*scaleY.
@@ -192,19 +226,34 @@
 :sampleAtWorld a :Function ; :kind :Native ; :layer 3 ; rdfs:label "sample at world point" ;
     :signature "sampleAtWorld(dataset: IRI, wx: number, wy: number, band?: IRI | integer) -> literal" ;
     :reads asref:hasGeoTransform ;
-    rdfs:comment "sampleAt at (column(t, wx, wy), row(t, wx, wy)) where t is the dataset's asref:hasGeoTransform." .
+    rdfs:comment "sampleAt at (column(t, wx, wy), row(t, wx, wy)) where t is the dataset's asref:hasGeoTransform." ;
+    :unboundWhen "The world coordinate falls outside the raster, or no georeferencing transform is available."@en .
 
 # ---- Layer 3: geometry and signal ----
 :wkt a :Function ; :kind :Native ; :layer 3 ; rdfs:label "WKT" ;
     :signature "wkt(node: IRI) -> geo:wktLiteral" ;
     :reads asref:hasCRS, asref:epsgCode ;
-    rdfs:comment "A GeoSPARQL WKT literal from a WKB or GeoPackage payload. The CRS is the GeoPackage SRS id, else asref:hasCRS/asref:epsgCode on the node or the nearest ancestor." .
+    rdfs:comment "A GeoSPARQL WKT literal from a WKB or GeoPackage payload. The CRS is the GeoPackage SRS id, else asref:hasCRS/asref:epsgCode on the node or the nearest ancestor." ;
+    :unboundWhen "The node carries no geometry this library can express as WKT."@en .
 :sampleAtTime a :Function ; :kind :Native ; :layer 3 ; rdfs:label "sample at time" ;
     :signature "sampleAtTime(signal: IRI, seconds: number, channel?: integer) -> literal" ;
     :reads asig:sampleRate, araster:hasArray, dlv:axisTime, dlv:axisBand ;
-    rdfs:comment "The cell at round(seconds * asig:sampleRate) along dlv:axisTime; the one-based channel is applied along dlv:axisBand." .
+    rdfs:comment "The cell at round(seconds * asig:sampleRate) along dlv:axisTime; the one-based channel is applied along dlv:axisBand." ;
+    :unboundWhen "The requested instant lies outside the signal, or the channel does not exist."@en .
 
 # ---- Diagnostics ----
 :explain a :Function ; :kind :Native ; :layer 9 ; rdfs:label "explain" ; :signature "explain(node: IRI) -> xsd:string" ;
-    rdfs:comment "How the runtime resolves the node (asset, profile, path, kind, byte range, layout) and why the last call on it failed. Never unbound." .
+    rdfs:comment "How the runtime resolves the node (asset, profile, path, kind, byte range, layout) and why the last call on it failed. Never unbound." ;
+    :total true .
+
+# ---------- Shapes ----------
+
+:NativeFunctionShape a sh:NodeShape ; rdfs:label "Native function contract" ;
+    skos:definition "A native function reaches the bytes of an asset, so it can fail to answer in ways a pure function cannot, and a caller reading an unbound result needs to know which outcomes are described and which are defects. Every native function must therefore either state a condition under which it yields no value or declare itself total. This does not narrow the library-wide failure contract, which still applies to all of them."@en ;
+    sh:targetClass :Function ;
+    sh:or (
+        [ sh:property [ sh:path :kind ; sh:hasValue :Pure ] ]
+        [ sh:property [ sh:path :unboundWhen ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path :total ; sh:hasValue true ] ] ) ;
+    sh:message "A native function must declare an hxf:unboundWhen condition or hxf:total true." .
 

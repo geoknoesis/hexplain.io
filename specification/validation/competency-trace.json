@@ -2,17 +2,19 @@
   "hash_policy": "SHA-256 of UTF-8 corpus text with universal-newline normalization to LF; immutable archives retain their original byte hashes.",
   "scope": "Syntactic references and expected result paths in retained shared corpora. Mentions do not prove shape activation, assertion independence, complete constraints or semantic correctness. Unmentioned terms may have evidence in other suites.",
   "summary": {
-    "resources": 797,
-    "cases": 173,
-    "mentioned": 52,
-    "with_asserted_result_path": 31
+    "resources": 803,
+    "cases": 208,
+    "mentioned": 108,
+    "with_asserted_result_path": 43
   },
   "sources": {
     "specification/validation/test/competency.tsv": "576c5760d0897d7af2476dbb11ff2a1125d51c840f01282c5f725af74ef9dd89",
+    "specification/validation/test/core-mapping-competency.tsv": "99e2b396b07126fcb5747af10eeed225e2bc2e91d4e274b03aa9aefa6133ea3c",
     "specification/validation/test/geometry-competency.tsv": "b56ec26f35c9ffbe479746c506cda5a607aab04aaa9d285a3a54c43fc88da773",
     "specification/validation/test/layout-competency.tsv": "b8d8d0839b6c31475b1da6d49cfc8c55c1215d019643bf58684a2341ecf0a7f7",
     "specification/validation/test/network-competency.tsv": "1864fbae4ea5c7e0ee27f7bba7e5e7fbe188f54b45cc11fccae3b7ec6d2fa881",
-    "specification/validation/test/security-competency.tsv": "ba19db9d99f7c79616059b9c953818a2e712a57d290ffab82b38a04d8503c46d"
+    "specification/validation/test/security-competency.tsv": "ba19db9d99f7c79616059b9c953818a2e712a57d290ffab82b38a04d8503c46d",
+    "specification/validation/test/spatialref-competency.tsv": "b8d0b6f13968fcadb45b90f25e16a0f7a0f08ce8d8897ba8fece26497f5083d1"
   },
   "resources": [
     {
@@ -1255,6 +1257,13 @@
       "result_path": []
     },
     {
+      "iri": "https://hexplain.io/ns/aspect/security#VerbatimLevelShape",
+      "module": "specification/aspect/security",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
       "iri": "https://hexplain.io/ns/aspect/security#expiresOn",
       "module": "specification/aspect/security",
       "positive": [],
@@ -1523,30 +1532,43 @@
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#PixelCenter",
       "module": "specification/aspect/spatialref",
-      "positive": [],
+      "positive": [
+        "spatialref-competency.tsv:pixel registration declared at the centre"
+      ],
       "negative": [],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#PixelCorner",
       "module": "specification/aspect/spatialref",
-      "positive": [],
+      "positive": [
+        "spatialref-competency.tsv:pixel registration declared at the corner"
+      ],
       "negative": [],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#coordinateEpoch",
       "module": "specification/aspect/spatialref",
-      "positive": [],
+      "positive": [
+        "spatialref-competency.tsv:CRS with WKT, identifier and coordinate epoch"
+      ],
       "negative": [],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#crsIdentifier",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "spatialref-competency.tsv:CRS with WKT, identifier and coordinate epoch",
+        "spatialref-competency.tsv:ground control points carrying their own CRS"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:CRS whose identifier is a bare string"
+      ],
+      "result_path": [
+        "spatialref-competency.tsv:CRS whose identifier is a bare string"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#epsgCode",
@@ -1565,148 +1587,255 @@
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#gcpIdentifier",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:ground control point with both halves of the correspondence"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:ground control point missing its world coordinates"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#gcpPixelX",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:ground control point with both halves of the correspondence",
+        "spatialref-competency.tsv:ground control point without an elevation",
+        "spatialref-competency.tsv:ground control points carrying their own CRS"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:ground control point missing its world coordinates"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#gcpPixelY",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:ground control point with both halves of the correspondence",
+        "spatialref-competency.tsv:ground control point without an elevation",
+        "spatialref-competency.tsv:ground control points carrying their own CRS"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:ground control point missing its world coordinates"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#gcpX",
       "module": "specification/aspect/spatialref",
-      "positive": [],
+      "positive": [
+        "spatialref-competency.tsv:ground control point with both halves of the correspondence",
+        "spatialref-competency.tsv:ground control point without an elevation",
+        "spatialref-competency.tsv:ground control points carrying their own CRS"
+      ],
       "negative": [],
-      "result_path": []
+      "result_path": [
+        "spatialref-competency.tsv:ground control point missing its world coordinates"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#gcpY",
       "module": "specification/aspect/spatialref",
-      "positive": [],
+      "positive": [
+        "spatialref-competency.tsv:ground control point with both halves of the correspondence",
+        "spatialref-competency.tsv:ground control point without an elevation",
+        "spatialref-competency.tsv:ground control points carrying their own CRS"
+      ],
       "negative": [],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#gcpZ",
       "module": "specification/aspect/spatialref",
-      "positive": [],
+      "positive": [
+        "spatialref-competency.tsv:ground control point with both halves of the correspondence"
+      ],
       "negative": [],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#groundControlPointCRS",
       "module": "specification/aspect/spatialref",
-      "positive": [],
+      "positive": [
+        "spatialref-competency.tsv:ground control points carrying their own CRS"
+      ],
       "negative": [],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#hasCRS",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:CRS with WKT, identifier and coordinate epoch"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:CRS with an empty WKT string",
+        "spatialref-competency.tsv:CRS whose identifier is a bare string"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#hasGeoTransform",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:rotated affine transform with non-zero skew",
+        "spatialref-competency.tsv:pixel registration declared at the corner",
+        "spatialref-competency.tsv:pixel registration declared at the centre"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:affine transform omitting skew",
+        "spatialref-competency.tsv:transform with a non-finite scale",
+        "spatialref-competency.tsv:transform with a NaN origin"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#hasGroundControlPoint",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:ground control point with both halves of the correspondence",
+        "spatialref-competency.tsv:ground control point without an elevation",
+        "spatialref-competency.tsv:ground control points carrying their own CRS"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:ground control point missing its world coordinates"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#hasRationalTransform",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#heightOffset",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#heightScale",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#latitudeOffset",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#latitudeScale",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#lineDenominator",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#lineNumerator",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#lineOffset",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#lineScale",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
+      "result_path": [
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#longitudeOffset",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#longitudeScale",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
@@ -1726,93 +1855,186 @@
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#originX",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:rotated affine transform with non-zero skew",
+        "spatialref-competency.tsv:pixel registration declared at the corner",
+        "spatialref-competency.tsv:pixel registration declared at the centre"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:affine transform omitting skew",
+        "spatialref-competency.tsv:transform with a non-finite scale",
+        "spatialref-competency.tsv:transform with a NaN origin"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#originY",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:rotated affine transform with non-zero skew",
+        "spatialref-competency.tsv:pixel registration declared at the corner",
+        "spatialref-competency.tsv:pixel registration declared at the centre"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:affine transform omitting skew",
+        "spatialref-competency.tsv:transform with a non-finite scale",
+        "spatialref-competency.tsv:transform with a NaN origin"
+      ],
+      "result_path": [
+        "spatialref-competency.tsv:transform with a NaN origin"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#pixelRegistration",
       "module": "specification/aspect/spatialref",
-      "positive": [],
+      "positive": [
+        "spatialref-competency.tsv:pixel registration declared at the corner",
+        "spatialref-competency.tsv:pixel registration declared at the centre"
+      ],
       "negative": [],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#polynomialBasis",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#sampleDenominator",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#sampleNumerator",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#sampleOffset",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#sampleScale",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#scaleX",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:rotated affine transform with non-zero skew",
+        "spatialref-competency.tsv:pixel registration declared at the corner",
+        "spatialref-competency.tsv:pixel registration declared at the centre"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:affine transform omitting skew",
+        "spatialref-competency.tsv:transform with a non-finite scale",
+        "spatialref-competency.tsv:transform with a NaN origin"
+      ],
+      "result_path": [
+        "spatialref-competency.tsv:transform with a non-finite scale"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#scaleY",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:rotated affine transform with non-zero skew",
+        "spatialref-competency.tsv:pixel registration declared at the corner",
+        "spatialref-competency.tsv:pixel registration declared at the centre"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:affine transform omitting skew",
+        "spatialref-competency.tsv:transform with a non-finite scale",
+        "spatialref-competency.tsv:transform with a NaN origin"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#skewX",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:rotated affine transform with non-zero skew",
+        "spatialref-competency.tsv:pixel registration declared at the corner",
+        "spatialref-competency.tsv:pixel registration declared at the centre"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:transform with a non-finite scale",
+        "spatialref-competency.tsv:transform with a NaN origin"
+      ],
+      "result_path": [
+        "spatialref-competency.tsv:affine transform omitting skew"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#skewY",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:rotated affine transform with non-zero skew",
+        "spatialref-competency.tsv:pixel registration declared at the corner",
+        "spatialref-competency.tsv:pixel registration declared at the centre"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:affine transform omitting skew",
+        "spatialref-competency.tsv:transform with a non-finite scale",
+        "spatialref-competency.tsv:transform with a NaN origin"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#wktString",
       "module": "specification/aspect/spatialref",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "spatialref-competency.tsv:CRS with WKT, identifier and coordinate epoch"
+      ],
+      "negative": [
+        "spatialref-competency.tsv:CRS with an empty WKT string"
+      ],
+      "result_path": [
+        "spatialref-competency.tsv:CRS with an empty WKT string"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/aspect/tabular",
@@ -2276,6 +2498,13 @@
       "iri": "https://hexplain.io/ns/bddo#Field",
       "module": "specification/bddo",
       "positive": [
+        "core-mapping-competency.tsv:field mapped to a datatype property",
+        "core-mapping-competency.tsv:single-codec shorthand encoding",
+        "core-mapping-competency.tsv:two-step encoding pipeline",
+        "core-mapping-competency.tsv:encoding step with a named codec parameter",
+        "core-mapping-competency.tsv:field computing its value from an expression",
+        "core-mapping-competency.tsv:mapping rule carrying its own value expression",
+        "core-mapping-competency.tsv:field carrying a data layout",
         "layout-competency.tsv:cellBitWidth integer",
         "layout-competency.tsv:cellBitWidth typed integer",
         "layout-competency.tsv:dimensionSize integer",
@@ -2303,6 +2532,11 @@
         "layout-competency.tsv:unmarked unrelated packing metadata"
       ],
       "negative": [
+        "core-mapping-competency.tsv:field mapped to a class instead of a struct",
+        "core-mapping-competency.tsv:field mapped to a class as though it were a property",
+        "core-mapping-competency.tsv:block declaring both a shorthand codec and a pipeline",
+        "core-mapping-competency.tsv:pipeline member that is not an encoding step",
+        "core-mapping-competency.tsv:conditional mapping member that is not a mapping rule",
         "layout-competency.tsv:cellBitWidth zero",
         "layout-competency.tsv:cellBitWidth negative",
         "layout-competency.tsv:cellBitWidth fraction",
@@ -2511,8 +2745,12 @@
     {
       "iri": "https://hexplain.io/ns/bddo#Struct",
       "module": "specification/bddo",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "core-mapping-competency.tsv:struct mapped to a class"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:data layout attached to a struct rather than a field"
+      ],
       "result_path": []
     },
     {
@@ -3695,8 +3933,13 @@
     {
       "iri": "https://hexplain.io/ns/core#CodecParameter",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "core-mapping-competency.tsv:encoding step with a named codec parameter"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:codec parameter missing its value",
+        "core-mapping-competency.tsv:encoding step naming no codec"
+      ],
       "result_path": []
     },
     {
@@ -3716,8 +3959,14 @@
     {
       "iri": "https://hexplain.io/ns/core#EncodingStep",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "core-mapping-competency.tsv:two-step encoding pipeline",
+        "core-mapping-competency.tsv:encoding step with a named codec parameter"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:block declaring both a shorthand codec and a pipeline",
+        "core-mapping-competency.tsv:encoding step naming no codec"
+      ],
       "result_path": []
     },
     {
@@ -3772,8 +4021,13 @@
     {
       "iri": "https://hexplain.io/ns/core#MappingRule",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "core-mapping-competency.tsv:mapping rule carrying its own value expression"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:mapping rule without a condition",
+        "core-mapping-competency.tsv:mapping rule naming a class as its semantic property"
+      ],
       "result_path": []
     },
     {
@@ -3856,23 +4110,40 @@
     {
       "iri": "https://hexplain.io/ns/core#codec",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "core-mapping-competency.tsv:two-step encoding pipeline",
+        "core-mapping-competency.tsv:encoding step with a named codec parameter"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:block declaring both a shorthand codec and a pipeline"
+      ],
+      "result_path": [
+        "core-mapping-competency.tsv:encoding step naming no codec"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/core#codecParameter",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "core-mapping-competency.tsv:encoding step with a named codec parameter"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:encoding step naming no codec"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/core#condition",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "core-mapping-competency.tsv:mapping rule carrying its own value expression"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:mapping rule naming a class as its semantic property"
+      ],
+      "result_path": [
+        "core-mapping-competency.tsv:mapping rule without a condition"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/core#forProperty",
@@ -3891,29 +4162,47 @@
     {
       "iri": "https://hexplain.io/ns/core#hasConditionalMapping",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "core-mapping-competency.tsv:mapping rule carrying its own value expression"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:conditional mapping member that is not a mapping rule"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/core#hasDataLayout",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "core-mapping-competency.tsv:field carrying a data layout"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:data layout attached to a struct rather than a field"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/core#hasEncodingStep",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "core-mapping-competency.tsv:two-step encoding pipeline",
+        "core-mapping-competency.tsv:encoding step with a named codec parameter"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:block declaring both a shorthand codec and a pipeline",
+        "core-mapping-competency.tsv:pipeline member that is not an encoding step"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/core#isEncodedWith",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "core-mapping-competency.tsv:single-codec shorthand encoding"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:block declaring both a shorthand codec and a pipeline"
+      ],
       "result_path": []
     },
     {
@@ -3933,8 +4222,12 @@
     {
       "iri": "https://hexplain.io/ns/core#mapsToClass",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "core-mapping-competency.tsv:struct mapped to a class"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:field mapped to a class instead of a struct"
+      ],
       "result_path": []
     },
     {
@@ -3947,23 +4240,40 @@
     {
       "iri": "https://hexplain.io/ns/core#mapsToProperty",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "core-mapping-competency.tsv:field mapped to a datatype property"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:field mapped to a class as though it were a property"
+      ],
+      "result_path": [
+        "core-mapping-competency.tsv:field mapped to a class as though it were a property"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/core#parameterName",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "core-mapping-competency.tsv:encoding step with a named codec parameter"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:codec parameter missing its value",
+        "core-mapping-competency.tsv:encoding step naming no codec"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/core#parameterValue",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "core-mapping-competency.tsv:encoding step with a named codec parameter"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:encoding step naming no codec"
+      ],
+      "result_path": [
+        "core-mapping-competency.tsv:codec parameter missing its value"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/core#register",
@@ -3982,9 +4292,16 @@
     {
       "iri": "https://hexplain.io/ns/core#semanticProperty",
       "module": "specification/hexplain",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "core-mapping-competency.tsv:mapping rule carrying its own value expression"
+      ],
+      "negative": [
+        "core-mapping-competency.tsv:mapping rule without a condition",
+        "core-mapping-competency.tsv:mapping rule naming a class as its semantic property"
+      ],
+      "result_path": [
+        "core-mapping-competency.tsv:mapping rule naming a class as its semantic property"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/core#unit",
@@ -4003,14 +4320,19 @@
     {
       "iri": "https://hexplain.io/ns/core#valueDatatype",
       "module": "specification/hexplain",
-      "positive": [],
+      "positive": [
+        "core-mapping-competency.tsv:field computing its value from an expression"
+      ],
       "negative": [],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/core#valueExpression",
       "module": "specification/hexplain",
-      "positive": [],
+      "positive": [
+        "core-mapping-competency.tsv:field computing its value from an expression",
+        "core-mapping-competency.tsv:mapping rule carrying its own value expression"
+      ],
       "negative": [],
       "result_path": []
     },
@@ -4131,6 +4453,7 @@
       "iri": "https://hexplain.io/ns/dlv#DataLayout",
       "module": "specification/dlv",
       "positive": [
+        "core-mapping-competency.tsv:field carrying a data layout",
         "layout-competency.tsv:cellBitWidth integer",
         "layout-competency.tsv:cellBitWidth typed integer",
         "layout-competency.tsv:dimensionSize integer",
@@ -4147,6 +4470,7 @@
         "layout-competency.tsv:wide integer width"
       ],
       "negative": [
+        "core-mapping-competency.tsv:data layout attached to a struct rather than a field",
         "layout-competency.tsv:cellBitWidth zero",
         "layout-competency.tsv:cellBitWidth negative",
         "layout-competency.tsv:cellBitWidth fraction",
@@ -4961,6 +5285,13 @@
       "result_path": []
     },
     {
+      "iri": "https://hexplain.io/ns/fn#NativeFunctionShape",
+      "module": "specification/fn",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
       "iri": "https://hexplain.io/ns/fn#Pure",
       "module": "specification/fn",
       "positive": [],
@@ -5046,6 +5377,13 @@
     },
     {
       "iri": "https://hexplain.io/ns/fn#extent",
+      "module": "specification/fn",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/fn#failureContract",
       "module": "specification/fn",
       "positive": [],
       "negative": [],
@@ -5144,6 +5482,20 @@
     },
     {
       "iri": "https://hexplain.io/ns/fn#stat",
+      "module": "specification/fn",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/fn#total",
+      "module": "specification/fn",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/fn#unboundWhen",
       "module": "specification/fn",
       "positive": [],
       "negative": [],
@@ -5900,6 +6252,13 @@
     },
     {
       "iri": "https://hexplain.io/ns/register/us-nato-security#AuthorityTypeScheme",
+      "module": "specification/register/us-nato-security",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/register/us-nato-security#ClassificationLevelOrder",
       "module": "specification/register/us-nato-security",
       "positive": [],
       "negative": [],

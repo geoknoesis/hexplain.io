@@ -98,13 +98,18 @@ def measure():
     for p,g in graphs.items():
         if '/validation/test/' not in p:family+=g
     current=[''];cases=0
-    def check(name,data,shapes,expected,path='',expected_shape=''):
+    def check(name,data,shapes,expected,path='',expected_shape='',allow_warnings=False,severity=''):
         nonlocal cases
         current[0]=name
-        ok,report,detail=validate(data,shacl_graph=shapes,inference='none',advanced=True)
+        # allow_warnings mirrors test_family_contract: a case measures one obligation, so an
+        # advisory result from an unrelated shape must not decide it. Cases that are themselves
+        # about an advisory result pass allow_warnings=False and assert the severity.
+        ok,report,detail=validate(data,shacl_graph=shapes,inference='none',advanced=True,
+                                  allow_warnings=allow_warnings)
         assert bool(ok)==expected,(name,detail)
         if path:assert URIRef(path) in report.objects(None,SH.resultPath),(name,detail)
         if expected_shape:assert URIRef(expected_shape) in report.objects(None,SH.sourceShape),(name,detail)
+        if severity:assert URIRef(severity) in report.objects(None,SH.resultSeverity),(name,detail)
         cases+=1
         if cases%100==0:print(f'Traced {cases} validation calls',flush=True)
     with trace(rows,current):
@@ -113,11 +118,13 @@ def measure():
             if row.get('targetShape'):
                 selected=Graph()+selected
                 selected.add((URIRef(row['targetShape']),SH.targetNode,URIRef(row['targetNode'])))
-            check('family-contracts:'+row['name'],Graph().parse(data=row['data'],format='turtle'),selected,row['expected'],row['path'],row.get('expectedShape',''))
+            check('family-contracts:'+row['name'],Graph().parse(data=row['data'],format='turtle'),selected,row['expected'],row['path'],row.get('expectedShape',''),bool(row.get('allowWarnings')),row.get('severity',''))
         selections={
             'layout-competency.tsv':['specification/dlv/dlv.ttl','specification/aspect/bundle/bundle.ttl'],
             'security-competency.tsv':['specification/validation/test/security-profile.ttl'],
             'geometry-competency.tsv':['specification/aspect/geometry/geometry.ttl'],
+            'spatialref-competency.tsv':['specification/aspect/spatialref/spatialref.ttl'],
+            'core-mapping-competency.tsv':['specification/hexplain/core.ttl'],
             'network-competency.tsv':['specification/npv/net.ttl'],
         }
         for filename,paths in selections.items():

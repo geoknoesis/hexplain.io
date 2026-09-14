@@ -20,6 +20,11 @@
 # nothing resembling declassification, an originating authority, or a control number.
 tlp:Scheme a skos:ConceptScheme ; rdfs:label "TLP colours" .
 tlp:Amber a skos:Concept ; skos:inScheme tlp:Scheme ; skos:prefLabel "TLP:AMBER"@en .
+    # question can be asked of this system as of any other -- which is the point of the aspect.
+# Both systems publish their level order the same way, in SKOS alone: the aspect is not involved,
+# and the two orders say nothing about each other.
+tlp:Clear a skos:Concept ; skos:inScheme tlp:Scheme ; skos:prefLabel "TLP:CLEAR"@en .
+tlp:LevelOrder a skos:OrderedCollection ; skos:memberList ( tlp:Clear tlp:Amber ) .
 tlp:SharingScheme a skos:ConceptScheme ; rdfs:label "TLP sharing restrictions" .
 tlp:LimitedDisclosure a skos:Concept ; skos:inScheme tlp:SharingScheme ;
     skos:prefLabel "Limited disclosure, recipients' organisation only"@en .
@@ -37,6 +42,8 @@ ex:IncidentReport
 # Levels and caveats, a review date rather than a declassification date, and no compartments.
 uk:Scheme a skos:ConceptScheme ; rdfs:label "Protective markings" .
 uk:Official a skos:Concept ; skos:inScheme uk:Scheme ; skos:prefLabel "OFFICIAL"@en .
+uk:Secret a skos:Concept ; skos:inScheme uk:Scheme ; skos:prefLabel "SECRET"@en .
+uk:LevelOrder a skos:OrderedCollection ; skos:memberList ( uk:Official uk:Secret ) .
 uk:CaveatScheme a skos:ConceptScheme ; rdfs:label "Handling caveats" .
 uk:Sensitive a skos:Concept ; skos:inScheme uk:CaveatScheme ; skos:prefLabel "SENSITIVE"@en .
 
@@ -57,4 +64,8 @@ ex:PolicyPaper
 ex:SharedAssessment
     asec:markingSystem        "TLP-2.0" , "UK-GSC" ;
     asec:sensitivityLevel     tlp:Amber , uk:Official ;
+    # Both verbatim forms, one per system: the resolved concepts and the bytes each file actually
+    # carried are kept side by side, which is what lets a later register revision be detected
+    # rather than silently rewrite what this resource said.
+    asec:sensitivityLevelText "TLP:AMBER" , "OFFICIAL" ;
     asec:marking              tlp:LimitedDisclosure , uk:Sensitive .

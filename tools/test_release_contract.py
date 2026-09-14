@@ -50,7 +50,9 @@ for path in releases:
         ('layout-competency.tsv',['specification/dlv/dlv.ttl','specification/aspect/bundle/bundle.ttl']),
         ('security-competency.tsv',['specification/validation/test/security-profile.ttl']),
         ('geometry-competency.tsv',['specification/aspect/geometry/geometry.ttl']),
-        ('network-competency.tsv',['specification/npv/net.ttl'])]:
+        ('network-competency.tsv',['specification/npv/net.ttl']),
+        ('spatialref-competency.tsv',['specification/aspect/spatialref/spatialref.ttl']),
+        ('core-mapping-competency.tsv',['specification/hexplain/core.ttl'])]:
         corpus_path='specification/validation/test/'+corpus_name
         if corpus_path not in files: continue  # Older immutable releases predate these suites.
         for archived in [True,False]:

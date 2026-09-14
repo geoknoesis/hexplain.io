@@ -1,6 +1,6 @@
 {
   "scope": "Named node-shape inventory. Direct path references are discovery aids, not proof of activation or constraint coverage. Nested paths, SPARQL and ontology axioms require manual review.",
-  "resources": 797,
+  "resources": 803,
   "shapes": [
     {
       "shape": "https://hexplain.io/ns/audio#StreamShape",
@@ -439,6 +439,21 @@
       "review_status": "needs constraint-level review"
     },
     {
+      "shape": "https://hexplain.io/ns/aspect/security#VerbatimLevelShape",
+      "source": "specification/aspect/security/security.ttl",
+      "targets": [
+        "https://hexplain.io/ns/aspect/security#sensitivityLevel"
+      ],
+      "direct_property_paths": [
+        "https://hexplain.io/ns/aspect/security#sensitivityLevelText"
+      ],
+      "candidate_cases": [
+        "security-competency.tsv:multiple raw source labels",
+        "security-competency.tsv:retained source text"
+      ],
+      "review_status": "needs constraint-level review"
+    },
+    {
       "shape": "https://hexplain.io/ns/aspect/signal#SampleRateShape",
       "source": "specification/aspect/signal/signal.ttl",
       "targets": [
@@ -472,7 +487,12 @@
         "https://hexplain.io/ns/aspect/spatialref#crsIdentifier",
         "https://hexplain.io/ns/aspect/spatialref#wktString"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "spatialref-competency.tsv:CRS whose identifier is a bare string",
+        "spatialref-competency.tsv:CRS with WKT, identifier and coordinate epoch",
+        "spatialref-competency.tsv:CRS with an empty WKT string",
+        "spatialref-competency.tsv:ground control points carrying their own CRS"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -507,7 +527,11 @@
         "https://hexplain.io/ns/aspect/spatialref#sampleOffset",
         "https://hexplain.io/ns/aspect/spatialref#sampleScale"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "spatialref-competency.tsv:rational transform with a nineteen-coefficient vector",
+        "spatialref-competency.tsv:rational transform with a zero normalization scale",
+        "spatialref-competency.tsv:rational transform with four complete coefficient vectors"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -533,7 +557,15 @@
         "https://hexplain.io/ns/aspect/spatialref#skewX",
         "https://hexplain.io/ns/aspect/spatialref#skewY"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "spatialref-competency.tsv:affine transform omitting skew",
+        "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:pixel registration declared at the centre",
+        "spatialref-competency.tsv:pixel registration declared at the corner",
+        "spatialref-competency.tsv:rotated affine transform with non-zero skew",
+        "spatialref-competency.tsv:transform with a NaN origin",
+        "spatialref-competency.tsv:transform with a non-finite scale"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -551,7 +583,12 @@
         "https://hexplain.io/ns/aspect/spatialref#gcpY",
         "https://hexplain.io/ns/aspect/spatialref#gcpZ"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "spatialref-competency.tsv:ground control point missing its world coordinates",
+        "spatialref-competency.tsv:ground control point with both halves of the correspondence",
+        "spatialref-competency.tsv:ground control point without an elevation",
+        "spatialref-competency.tsv:ground control points carrying their own CRS"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1267,6 +1304,16 @@
       "review_status": "needs constraint-level review"
     },
     {
+      "shape": "https://hexplain.io/ns/fn#NativeFunctionShape",
+      "source": "specification/fn/fn.ttl",
+      "targets": [
+        "https://hexplain.io/ns/fn#Function"
+      ],
+      "direct_property_paths": [],
+      "candidate_cases": [],
+      "review_status": "needs constraint-level review"
+    },
+    {
       "shape": "https://hexplain.io/ns/geo#AcquisitionShape",
       "source": "specification/gv/geo.ttl",
       "targets": [
@@ -1290,7 +1337,10 @@
         "https://hexplain.io/ns/aspect/spatialref#epsgCode",
         "https://hexplain.io/ns/aspect/spatialref#wktString"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "spatialref-competency.tsv:CRS with WKT, identifier and coordinate epoch",
+        "spatialref-competency.tsv:CRS with an empty WKT string"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1315,7 +1365,10 @@
       "direct_property_paths": [
         "https://hexplain.io/ns/aspect/spatialref#pixelRegistration"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "spatialref-competency.tsv:pixel registration declared at the centre",
+        "spatialref-competency.tsv:pixel registration declared at the corner"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1357,7 +1410,10 @@
         "https://hexplain.io/ns/core#condition",
         "https://hexplain.io/ns/core#semanticClass"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "core-mapping-competency.tsv:mapping rule carrying its own value expression",
+        "core-mapping-competency.tsv:mapping rule naming a class as its semantic property"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1370,7 +1426,11 @@
         "https://hexplain.io/ns/core#parameterName",
         "https://hexplain.io/ns/core#parameterValue"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "core-mapping-competency.tsv:codec parameter missing its value",
+        "core-mapping-competency.tsv:encoding step naming no codec",
+        "core-mapping-competency.tsv:encoding step with a named codec parameter"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1382,7 +1442,12 @@
       "direct_property_paths": [
         "https://hexplain.io/ns/core#hasEncodingStep"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "core-mapping-competency.tsv:block declaring both a shorthand codec and a pipeline",
+        "core-mapping-competency.tsv:encoding step with a named codec parameter",
+        "core-mapping-competency.tsv:pipeline member that is not an encoding step",
+        "core-mapping-competency.tsv:two-step encoding pipeline"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1395,7 +1460,12 @@
         "https://hexplain.io/ns/core#codec",
         "https://hexplain.io/ns/core#codecParameter"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "core-mapping-competency.tsv:block declaring both a shorthand codec and a pipeline",
+        "core-mapping-competency.tsv:encoding step naming no codec",
+        "core-mapping-competency.tsv:encoding step with a named codec parameter",
+        "core-mapping-competency.tsv:two-step encoding pipeline"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1407,7 +1477,10 @@
       "direct_property_paths": [
         "https://hexplain.io/ns/core#mapsToClass"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "core-mapping-competency.tsv:field mapped to a class instead of a struct",
+        "core-mapping-competency.tsv:struct mapped to a class"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1429,7 +1502,10 @@
       "direct_property_paths": [
         "https://hexplain.io/ns/core#hasDataLayout"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "core-mapping-competency.tsv:data layout attached to a struct rather than a field",
+        "core-mapping-competency.tsv:field carrying a data layout"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1441,7 +1517,10 @@
       "direct_property_paths": [
         "https://hexplain.io/ns/core#isEncodedWith"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "core-mapping-competency.tsv:block declaring both a shorthand codec and a pipeline",
+        "core-mapping-competency.tsv:single-codec shorthand encoding"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1481,7 +1560,12 @@
         "https://hexplain.io/ns/core#valueDatatype",
         "https://hexplain.io/ns/core#valueExpression"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "core-mapping-competency.tsv:field computing its value from an expression",
+        "core-mapping-competency.tsv:mapping rule carrying its own value expression",
+        "core-mapping-competency.tsv:mapping rule naming a class as its semantic property",
+        "core-mapping-competency.tsv:mapping rule without a condition"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1493,7 +1577,10 @@
       "direct_property_paths": [
         "https://hexplain.io/ns/core#mapsToClass"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "core-mapping-competency.tsv:field mapped to a class instead of a struct",
+        "core-mapping-competency.tsv:struct mapped to a class"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1517,7 +1604,10 @@
       "direct_property_paths": [
         "https://hexplain.io/ns/core#mapsToProperty"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "core-mapping-competency.tsv:field mapped to a class as though it were a property",
+        "core-mapping-competency.tsv:field mapped to a datatype property"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1550,7 +1640,10 @@
         "https://hexplain.io/ns/core#valueDatatype",
         "https://hexplain.io/ns/core#valueExpression"
       ],
-      "candidate_cases": [],
+      "candidate_cases": [
+        "core-mapping-competency.tsv:field computing its value from an expression",
+        "core-mapping-competency.tsv:mapping rule carrying its own value expression"
+      ],
       "review_status": "needs constraint-level review"
     },
     {
