@@ -10,6 +10,7 @@ PREFIX='''@prefix ex:<urn:family-contract:> .
 @prefix pack:<https://hexplain.io/ns/aspect/packaging#> . @prefix sr:<https://hexplain.io/ns/aspect/spatialref#> .
 @prefix pc:<https://hexplain.io/ns/aspect/pointcloud#> . @prefix prov:<https://hexplain.io/ns/aspect/provenance#> .
 @prefix geom:<https://hexplain.io/ns/aspect/geometry#> . @prefix col:<https://hexplain.io/ns/aspect/color#> .
+@prefix asec:<https://hexplain.io/ns/aspect/security#> .
 @prefix b:<https://hexplain.io/ns/bddo#> . @prefix skos:<http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix dc:<http://purl.org/dc/terms/> .
 ex:c a skos:Concept . ex:c2 a skos:Concept . ex:box a d:BoundingBox . ex:struct a b:Struct .
@@ -19,6 +20,9 @@ ex:entry a ar:ArchiveEntry .
 KINDS={
  'string':('"text"','"other"','1'),
  'date':('"2026-09-08T00:00:00Z"^^xsd:dateTime','"2026-09-09T00:00:00Z"^^xsd:dateTime','"2026-09-08"'),
+ # A calendar date, not an instant: a marking decision is dated to a day, and an xsd:dateTime is
+ # the wrong datatype for it rather than merely a more precise one.
+ 'calendarDate':('"2026-09-08"^^xsd:date','"2026-09-09"^^xsd:date','"2026-09-08T00:00:00Z"^^xsd:dateTime'),
  'boolean':('true','false','"true"'),
  'hex':('"00"^^xsd:hexBinary','"FF"^^xsd:hexBinary','"00"'),
  'positive':('1','2','0'),
@@ -50,6 +54,22 @@ group('gv/geo.ttl','ex:f a g:VectorDataset.', [('geom:geometryType','concept',Tr
 group('gv/geo.ttl','ex:f pc:pointCount 0.', [('pc:pointCount','nonnegative',True),('pc:pointDataLayout','struct',True)])
 group('gv/geo.ttl','ex:f prov:acquisitionTime "2026-09-08T00:00:00Z"^^xsd:dateTime.', [('prov:acquisitionTime','date',True),('prov:platformName','string',False),('prov:sensorType','string',False)])
 group('npv/net.ttl','', [('net:sourceAddress','string',True),('net:destinationAddress','string',True),('net:tcpFlags','hex',True)])
+# The marking spine is flat -- no class of its own -- so every case below is activated by the
+# presence of the property itself. A conforming sibling stays in the context so an invalid variant
+# fails on exactly the path under test.
+# Every property is repeatable on purpose -- a resource marked under two systems carries two of
+# most of them -- so none of these cases asserts uniqueness.
+group('aspect/security/security.ttl','ex:f asec:markingSystem "US".',[
+    (p,k,False) for p,k in [
+        ('asec:markingSystem','string'),('asec:sensitivityLevel','concept'),
+        ('asec:sensitivityLevelText','string'),('asec:markingText','string'),
+        ('asec:markingIdentifier','string'),('asec:markingAuthority','string'),
+        ('asec:markingDate','calendarDate'),('asec:expiresOn','calendarDate'),
+        ('asec:marking','concept'),('asec:releasableTo','string')]])
+# A declared level change must say when it takes effect, so the context carries the date; the
+# missing-date counterexample is authored below, where the absence is the point.
+group('aspect/security/security.ttl','ex:f asec:levelChangeDate "2026-09-08"^^xsd:date.',[
+    ('asec:levelChangesTo','concept',False),('asec:levelChangeDate','calendarDate',False)])
 group('vdv/video.ttl','ex:f a v:VideoStream.',[(p,k,True) for p,k in [('r:width','positive'),('r:height','positive'),('enc:bitrate','positive'),('enc:codec','concept'),('col:colorSpace','concept'),('t:duration','nonnegative'),('v:audioChannels','positive')]])
 
 def cases():
@@ -66,6 +86,15 @@ def cases():
         for name,value,expected in variants:
             data=base+Graph().parse(data=PREFIX+f'ex:f {prop} {value}.',format='turtle')
             result.append(dict(name=module+':'+prop+':'+name,module='specification/'+module,expected=expected,path=str(predicate) if not expected else '',data=data.serialize(format='turtle')))
+    # A level change with no effective date: the minimum-count obligation's failing witness, which
+    # no valid/invalid/duplicate variant of a present property can provide.
+    result.append(dict(name='security level change without a date',
+                       module='specification/aspect/security/security.ttl', expected=False,
+                       path='https://hexplain.io/ns/aspect/security#levelChangeDate',
+                       data=PREFIX+'ex:f asec:levelChangesTo ex:c.'))
+    result.append(dict(name='security level change with a date',
+                       module='specification/aspect/security/security.ttl', expected=True, path='',
+                       data=PREFIX+'ex:f asec:levelChangesTo ex:c; asec:levelChangeDate "2026-09-08"^^xsd:date.'))
     for name,body in [('fractional duration','t:duration 0.5'),('integer frame rate','v:frameRate 30'),('positiveInteger audio channels','v:audioChannels "2"^^xsd:positiveInteger'),('uint64 frame count','v:frameCount "18446744073709551615"^^xsd:unsignedLong')]:
         result.append(dict(name='video '+name,module='specification/vdv/video.ttl',expected=True,path='',data=PREFIX+'ex:f a v:VideoStream; '+body+'.'))
     from _mapping_contract_cases import cases as mappings

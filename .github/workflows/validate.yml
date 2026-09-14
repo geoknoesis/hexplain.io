@@ -4,8 +4,19 @@ permissions:
   contents: read
 jobs:
   validate:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    name: Gates (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    # The recorded strict-suite timing is 536 s on a 20-core Windows host with eight workers. A
+    # hosted runner has four cores, so the same suite takes materially longer there; this is the
+    # ceiling, and the per-gate durations and sampled memory in the uploaded evidence are what
+    # should be used to tighten it rather than a guess.
+    timeout-minutes: 90
+    strategy:
+      # Gate timings and the worker cap were both measured on Windows, and the published site is
+      # built and served from Linux. Neither cancels the other.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     defaults:
       run:
         working-directory: hexplain.io
@@ -19,9 +30,15 @@ jobs:
           python-version: '3.12'
       - run: pip install --no-cache-dir -r requirements.txt
       - run: python tools/run_gates.py --strict
+      # Durations and sampled peak RSS per gate, including the parallel gates' worker processes.
+      # The eight-worker default exists because a concurrent run exhausted host memory, so the
+      # measurement that would have caught it belongs in the retained evidence.
+      - name: Summarise gate cost
+        if: always()
+        run: python tools/_gate_cost.py .gate-results/summary.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: specification-gates
+          name: specification-gates-${{ matrix.os }}
           path: hexplain.io/.gate-results/
           include-hidden-files: true

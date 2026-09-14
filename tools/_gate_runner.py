@@ -15,6 +15,48 @@ import sys
 import threading
 import time
 
+try:
+    import psutil
+except ImportError:  # Recorded as "not sampled" rather than failing a gate run.
+    psutil = None
+
+
+def _sample_memory(pid, stopped, interval=0.05):
+    """Peak resident bytes of a gate and its descendants, and the peak process count.
+
+    The parallel gates fan out into worker processes, and it was a concurrent run exhausting host
+    memory that forced the worker cap -- so the number that matters is the whole tree's, not the
+    parent's. Sampling is a lower bound on the true peak: a spike between samples is missed, and a
+    process that exits between samples is never seen at all.
+    """
+    peak, processes, samples = 0, 0, 0
+    if psutil is None:
+        return dict(peak_rss_bytes=None, peak_processes=None, rss_samples=0,
+                    memory_note="psutil is not installed; gate memory was not sampled")
+    try:
+        parent = psutil.Process(pid)
+    except psutil.Error:
+        return dict(peak_rss_bytes=None, peak_processes=None, rss_samples=0,
+                    memory_note="gate process exited before sampling began")
+    while not stopped.is_set():
+        total, live = 0, 0
+        try:
+            for process in [parent] + parent.children(recursive=True):
+                try:
+                    total += process.memory_info().rss
+                    live += 1
+                except psutil.Error:
+                    continue
+        except psutil.Error:
+            break
+        if live:
+            samples += 1
+            peak = max(peak, total)
+            processes = max(processes, live)
+        stopped.wait(interval)
+    return dict(peak_rss_bytes=peak, peak_processes=processes, rss_samples=samples,
+                memory_note="sampled sum of the gate and its descendants; a lower bound, not an exact peak")
+
 
 def run_gate(command, cwd, timeout, heartbeat=15, max_output_chars=1_000_000):
     if not math.isfinite(timeout) or timeout <= 0:
@@ -28,6 +70,10 @@ def run_gate(command, cwd, timeout, heartbeat=15, max_output_chars=1_000_000):
                             stderr=subprocess.STDOUT, start_new_session=(os.name != "nt"), text=True, encoding="utf-8", errors="replace")
     output = queue.Queue(maxsize=16)
     stopped = threading.Event()
+    sampled = {}
+    sampling_stopped = threading.Event()
+    sampler = threading.Thread(target=lambda: sampled.update(_sample_memory(proc.pid, sampling_stopped)), daemon=True)
+    sampler.start()
     def enqueue(value):
         while not stopped.is_set():
             try:
@@ -83,13 +129,15 @@ def run_gate(command, cwd, timeout, heartbeat=15, max_output_chars=1_000_000):
             next_heartbeat = time.monotonic() + heartbeat
     stopped.set()
     proc.wait(timeout=10)
+    sampling_stopped.set()
+    sampler.join(timeout=5)
     reader.join(timeout=1)
     if not reader.is_alive():
         proc.stdout.close()
     text = "".join(lines)
     status = "FAIL" if expired or output_exceeded or proc.returncode else "SKIP" if re.search(r"(?m)^\s*SKIP\b", text) else "PASS"
     return dict(status=status, exit_code=proc.returncode, timed_out=expired, output_limit_exceeded=output_exceeded,
-                duration_seconds=round(time.monotonic()-started, 3), output=text)
+                duration_seconds=round(time.monotonic()-started, 3), **sampled, output=text)
 
 
 def source_manifest(root):

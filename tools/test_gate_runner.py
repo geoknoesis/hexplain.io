@@ -51,4 +51,23 @@ raise SystemExit(1)
     assert saved["status"] == "failed"
     assert saved["changed_sources"] == ["specification/input.ttl"]
     assert saved["counts"]["PASS"] == 1  # passing script alone is insufficient
-print("PASS: distinct outcomes, timeout, strict rejection and optional local skips")
+
+    # Memory is the gate resource nobody measured: the worker cap in the parallel gates exists
+    # because a concurrent run exhausted host memory, and the evidence recorded wall clock only.
+    # Child processes are where that memory goes, so the sample has to include them.
+    # Held across several sampling intervals on purpose: the sampler is a sampler, and a peak
+    # shorter than its interval is genuinely invisible to it.
+    child = run_gate([sys.executable, "-c",
+                      "import sys, time; block = bytearray(96*1024*1024); time.sleep(1);"
+                      " sys.stdout.write(str(len(block)))"], root, 60)
+    assert child["status"] == "PASS", child
+    assert child["peak_rss_bytes"] > 64*1024*1024, child["peak_rss_bytes"]
+    assert child["rss_samples"] > 0, child
+    spawner = run_gate([sys.executable, "-c", """
+import subprocess, sys
+subprocess.run([sys.executable, "-c", "import time; block = bytearray(192*1024*1024); time.sleep(1); print(len(block))"], check=True)
+"""], root, 120)
+    assert spawner["status"] == "PASS", spawner
+    assert spawner["peak_rss_bytes"] > 160*1024*1024, spawner["peak_rss_bytes"]
+    assert spawner["peak_processes"] >= 2, spawner
+print("PASS: distinct outcomes, timeout, strict rejection, optional local skips and sampled memory")

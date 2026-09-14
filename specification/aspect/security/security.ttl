@@ -17,6 +17,7 @@
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
@@ -93,10 +94,52 @@
     rdfs:range xsd:date ;
     rdfs:comment "When asec:levelChangesTo takes effect." .
 
+# =========================================================
+# Shapes
+# =========================================================
+# The spine is flat: a marking sits directly on whatever bears it, with no node of its own, so
+# there is no class to target. Every constraint below is activated by the presence of the property
+# itself. That is the only activation these properties can have without inventing a wrapper node
+# the formats do not have, and it is why the aspect declares no rdfs:domain: carrying a marking
+# property says what the value must look like, not what the resource is.
+#
+# NOTHING here bounds how many values a property may take, and that is deliberate. A resource
+# re-marked under a second system keeps both markings -- two systems, two levels, two level texts,
+# two authorities -- and the aspect privileges neither, because it knows neither exists. A
+# cardinality bound would quietly make the multi-system case invalid, which is the exact case 2.0
+# was written for. What CAN be checked is the shape of each value, and one coherence rule.
+
+:MarkingShape a sh:NodeShape ; rdfs:label "Security marking values" ;
+    skos:definition "Shape of each marking value wherever the marking spine occurs: the verbatim parts are strings, the decision dates are calendar dates rather than instants, and the register-bound parts are concepts. Deliberately says nothing about how many values a property may carry -- a resource marked under two systems at once carries two of most of them."@en ;
+    sh:targetSubjectsOf :markingSystem, :sensitivityLevel, :sensitivityLevelText, :marking,
+        :markingText, :markingIdentifier, :markingAuthority, :markingDate, :releasableTo,
+        :expiresOn, :levelChangesTo, :levelChangeDate ;
+    sh:property [ sh:path :markingSystem ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path :sensitivityLevel ; sh:class skos:Concept ] ;
+    sh:property [ sh:path :sensitivityLevelText ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path :marking ; sh:class skos:Concept ] ;
+    sh:property [ sh:path :markingText ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path :markingIdentifier ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path :markingAuthority ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path :markingDate ; sh:datatype xsd:date ] ;
+    sh:property [ sh:path :releasableTo ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path :expiresOn ; sh:datatype xsd:date ] ;
+    sh:property [ sh:path :levelChangesTo ; sh:class skos:Concept ] ;
+    sh:property [ sh:path :levelChangeDate ; sh:datatype xsd:date ] .
+
+:LevelChangeShape a sh:NodeShape ; rdfs:label "Level change completeness" ;
+    skos:definition "A declared level change must say when it takes effect. asec:levelChangeDate is defined as the date asec:levelChangesTo takes effect, so a change with no date states an obligation nobody can discharge: a reader cannot tell whether the resource is still at the old level or already at the new one. The converse is not required -- a date with no change is a review date, which asec:expiresOn already expresses."@en ;
+    sh:targetSubjectsOf :levelChangesTo ;
+    sh:property [ sh:path :levelChangeDate ; sh:minCount 1 ] .
+
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/aspect/security> <http://www.w3.org/2004/02/skos/core#definition> "Aspect for security markings, agnostic to the marking system. Provides the spine every system shares — a sensitivity level, verbatim text, an authority, and review/expiry/downgrade dates — plus one open property, asec:marking, through which a system contributes whatever else it defines: compartments, caveats, handling controls, exemption categories, classification reasons, authority types. Each such value is a skos:Concept whose scheme identifies the kind of marking it is, so a new system is supported by publishing registers rather than by extending this aspect. Naming no register is deliberate: it is what lets one profile bind US/NATO markings and another bind something else entirely."@en .
 <https://hexplain.io/ns/aspect/security> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to record source security-marking semantics. Bind controlled values through a selected register; the aspect does not define a jurisdiction-specific authorization policy."@en .
+<https://hexplain.io/ns/aspect/security#LevelChangeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using asec:levelChangesTo Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/aspect/security#LevelChangeShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/security> .
+<https://hexplain.io/ns/aspect/security#MarkingShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using asec:expiresOn, asec:levelChangeDate, asec:levelChangesTo, asec:marking, asec:markingAuthority, asec:markingDate, asec:markingIdentifier, asec:markingSystem, asec:markingText, asec:releasableTo, asec:sensitivityLevel, asec:sensitivityLevelText Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/aspect/security#MarkingShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/security> .
 <https://hexplain.io/ns/aspect/security#expiresOn> <http://www.w3.org/2004/02/skos/core#definition> "When the marking lapses and the resource ceases to be protected at this level. Named for the event rather than for one system's word for it — declassification, release, review-and-drop."@en .
 <https://hexplain.io/ns/aspect/security#expiresOn> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use to record source security-marking semantics. Bind controlled values through a selected register; the aspect does not define a jurisdiction-specific authorization policy. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/aspect/security#levelChangeDate> <http://www.w3.org/2004/02/skos/core#definition> "When asec:levelChangesTo takes effect."@en .
