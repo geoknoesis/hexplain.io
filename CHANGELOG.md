@@ -128,6 +128,34 @@ validated module by module), pointcloud no longer imports sampling.
   at load time with Unsupported feature. The Physical Parser class lists text numbers, delimited
   records and tables and flat key/value headers. Unsupported feature now also names
   `partExtension()` outside a Bundle Processor.
+- The reference implementation now executes tree documents and grouped key/value headers, so it
+  claims both optional features: XML (with namespace bindings, attribute steps and positions) and
+  JSON tree documents, nested tree documents, and keyed, valued and section-headed groups located
+  by `bddo:keyPath`. It still rejects at load, with Unsupported feature, a byte-level clause on a
+  field located by path, a repeat-until condition on one, a conditional or dispatched type, and a
+  tree field typed by a struct that is not a tree document of the same syntax; and a grouping on
+  a `bddo:DelimitedTable` or plain `bddo:DelimitedRecords`. Its generated codecs (`hxc`) do not
+  read tree documents and refuse them by the capability `TREE_DOCUMENT`.
+- Processing Model, tree documents, made precise where the reference implementation had to
+  decide: strict RFC 8259 JSON as UTF-8 (a byte order mark is ignored); names matched by namespace
+  IRI, an unprefixed attribute step in no namespace, `xml` predeclared; relative XML paths start at
+  the context node; a path that does not parse is a description error; a repeating field is one
+  that declares a repeat count, the number of selected nodes must equal it, and a JSON pointer
+  selecting one array repeats over its elements; JSON `null` leaves a field unbound; a field typed
+  by a tree document of the same syntax reads the selected node as its context; a processor MAY
+  decline to process a DTD, and an entity only a DTD defines is then a validation error. A
+  processor claiming tree documents MAY still reject byte-level clauses on a field found by path.
+- Processing Model, grouped headers: tokens and group names compare under
+  `bddo:keyIsCaseInsensitive` after trimming; a bare close-token record (ODL `END_OBJECT`) and a
+  separator-less `Name Begin` record (ERMapper) are group records; `bddo:key` in a grouped
+  container names a record outside every group.
+- Processing Model, resource limits: tree nesting depth (`maxTreeDepth`, at least 256) for a
+  processor that claims tree documents; tree nodes are visited nodes.
+- Processing Model, IRI minting: the simple key of an HDL-minted text-container field
+  (`<container>.<key>`) is its key, key path or node path, and a `/` in a key is minted as `%2F`.
+- HDL: an unbracketed expression also ends before a quoted-key field (`"key" :` or
+  `"key" as name :`) in a `header` or `document`, which it used to run into; an expression reaches
+  such a field by its alias.
 - Processing Model: the error categories are categories, not names; an informative table maps
   them to the reference implementation's exception types and `HexplainErrorKind` values
   (ResourceLimit is `ParseLimitException`, Description error is `HexplainProfileLoadException`,
