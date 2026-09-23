@@ -57,7 +57,7 @@
             <thead><tr><th>Aspect</th><th>Concern</th><th>Key terms</th><th>Source</th></tr></thead>
             <tbody>
                 <tr><td><code>hx-sampling</code> ✓</td><td>quantised sample values</td><td>bitDepth, componentCount, sampleFormat</td><td>mint</td></tr>
-                <tr><td><code>hx-color</code> ✓</td><td>colour interpretation</td><td>colorSpace ▸reg, colorModel, iccProfile, palette</td><td>mint + register</td></tr>
+                <tr><td><code>hx-color</code> ✓</td><td>colour interpretation</td><td>colorSpace</td><td>mint + register</td></tr>
             </tbody>
         </table>
 
@@ -65,10 +65,10 @@
         <table class="simple">
             <thead><tr><th>Aspect</th><th>Concern</th><th>Key terms</th><th>Imports</th></tr></thead>
             <tbody>
-                <tr><td><code>hx-raster</code> ✓</td><td>regular N-D sample grid</td><td>width, height, depth, gridSpacing</td><td>sampling, color</td></tr>
-                <tr><td><code>hx-geometry</code> ✓</td><td>explicit geometry (vector)</td><td>geometryType, dimensionality, coordSpace, units, precision, windingRule</td><td>— (closeMatch GeoSPARQL)</td></tr>
-                <tr><td><code>hx-pointcloud</code> ✓</td><td>unstructured sampled points</td><td>pointCount, per-point attribute layout</td><td>sampling</td></tr>
-                <tr><td><code>hx-tabular</code> ✓</td><td>rows × typed columns</td><td>columnSchema, fieldDef, rowCount</td><td>— (closeMatch csvw)</td></tr>
+                <tr><td><code>hx-raster</code> ✓</td><td>regular N-D sample grid</td><td>ArrayDimension, ArrayGroup, RasterBand, RasterGrid, SampleArray, bandCount, bandIndex, coordinateArray, dimensionExtent, dimensionKind, dimensionName, dimensions, hasArray, hasBand, hasGroup, hasMask, hasOverview, height, noDataValue, sampleOffset, sampleScale, sampleUnit, width</td><td>—</td></tr>
+                <tr><td><code>hx-geometry</code> ✓</td><td>explicit geometry (vector)</td><td>coordinatePrecision, dimensionality, geometryType, hasM, hasZ</td><td>—</td></tr>
+                <tr><td><code>hx-pointcloud</code> ✓</td><td>unstructured sampled points</td><td>pointCount, pointDataLayout</td><td>bddo</td></tr>
+                <tr><td><code>hx-tabular</code> ✓</td><td>rows × typed columns</td><td>Field, fieldDataType, fieldName, hasField, rowCount</td><td>—</td></tr>
             </tbody>
         </table>
 
@@ -85,9 +85,9 @@
         <table class="simple">
             <thead><tr><th>Aspect</th><th>Concern</th><th>Key terms</th><th>Imports</th></tr></thead>
             <tbody>
-                <tr><td><code>hx-signal</code> ✓</td><td>1-D temporal sampled stream</td><td>sampleRate, channelLayout</td><td>sampling</td></tr>
-                <tr><td><code>hx-encoding</code> ✓</td><td>coding / compression / encryption</td><td>codec ▸reg, compression ▸reg, bitrate, quality, encryption</td><td>mint + registers</td></tr>
-                <tr><td><code>hx-integrity</code> ✓</td><td>byte verification</td><td>checksumAlgorithm, hashValue, signature, ecc</td><td>mint</td></tr>
+                <tr><td><code>hx-signal</code> ✓</td><td>1-D temporal sampled stream</td><td>sampleRate</td><td>sampling</td></tr>
+                <tr><td><code>hx-encoding</code> ✓</td><td>coding / compression / encryption</td><td>bitrate, codec, compression</td><td>—</td></tr>
+                <tr><td><code>hx-integrity</code> ✓</td><td>byte verification</td><td>checksum, checksumAlgorithm</td><td>—</td></tr>
             </tbody>
         </table>
 
@@ -95,19 +95,19 @@
         <table class="simple">
             <thead><tr><th>Aspect</th><th>Concern</th><th>Key terms</th><th>Source</th></tr></thead>
             <tbody>
-                <tr><td><code>hx-time</code> ✓</td><td>temporal extent/structure</td><td>duration, timeBase, frameCount, frameRate, timecode</td><td>mint (closeMatch ma:, OWL-Time)</td></tr>
-                <tr><td><code>hx-spatialref</code> ✓</td><td>georeferencing / CRS</td><td>crs (wkt/epsg), datum, projection, geoTransform, axisOrder, pixelRegistration</td><td>mint (closeMatch GeoSPARQL/ISO 19111)</td></tr>
+                <tr><td><code>hx-time</code> ✓</td><td>temporal extent/structure</td><td>duration</td><td>mint (closeMatch ma:, OWL-Time)</td></tr>
+                <tr><td><code>hx-spatialref</code> ✓</td><td>georeferencing / CRS</td><td>CoordinateReferenceSystem, CubicRationalTransform, GeoTransform, GroundControlPoint, coordinateEpoch, crsIdentifier, epsgCode, footprintWKT, gcpIdentifier, gcpPixelX, gcpPixelY, gcpX, gcpY, gcpZ, groundControlPointCRS, hasCRS, hasGeoTransform, hasGroundControlPoint, hasRationalTransform, heightOffset, heightScale, latitudeOffset, latitudeScale, lineDenominator, lineNumerator, lineOffset, lineScale, longitudeOffset, longitudeScale, originLatitude, originLongitude, originX, originY, pixelRegistration, polynomialBasis, sampleDenominator, sampleNumerator, sampleOffset, sampleScale, scaleX, scaleY, skewX, skewY, wktString</td><td>mint (closeMatch GeoSPARQL/ISO 19111)</td></tr>
             </tbody>
         </table>
 
         <h3>3.6 Descriptive &amp; governance <span class="note">(mostly reuse external; map, don't re-mint)</span></h3>
         <table class="simple">
-            <thead><tr><th>Aspect</th><th>Concern</th><th>Source</th></tr></thead>
+            <thead><tr><th>Aspect</th><th>Concern</th><th>Key terms</th><th>Source</th></tr></thead>
             <tbody>
-                <tr><td><code>hx-descriptive</code></td><td>title, creator, date, subject, language, identifier</td><td>reuse dcterms / ma</td></tr>
-                <tr><td><code>hx-provenance</code> ✓</td><td>sensor, platform, acquisitionTime, activity, lineage</td><td>reuse PROV + SOSA/SSN</td></tr>
-                <tr><td><code>hx-rights</code></td><td>license, usage constraints</td><td>reuse dcterms:license / ODRL</td></tr>
-                <tr><td><code>hx-security</code> ✓</td><td>sensitivityLevel, authority, lifecycle dates, and one open <code>marking</code> for whatever a system adds</td><td>mint, agnostic to the marking system (see below)</td></tr>
+                <tr><td><code>hx-descriptive</code></td><td>title, creator, date, subject, language, identifier</td><td>— (no Hexplain namespace)</td><td>reuse dcterms / ma</td></tr>
+                <tr><td><code>hx-provenance</code> ✓</td><td>sensor, platform, acquisition time</td><td>AcquisitionInfo, Platform, SensorModel, acquisitionTime, platformName, sensorType</td><td>mint; related PROV / SOSA terms linked with rdfs:seeAlso</td></tr>
+                <tr><td><code>hx-rights</code></td><td>license, usage constraints</td><td>— (no Hexplain namespace)</td><td>reuse dcterms:license / ODRL</td></tr>
+                <tr><td><code>hx-security</code> ✓</td><td>sensitivity level, marking authority, lifecycle dates, and one open <code>marking</code> for whatever a system adds</td><td>expiresOn, levelChangeDate, levelChangesTo, marking, markingAuthority, markingDate, markingIdentifier, markingSystem, markingText, releasableTo, sensitivityLevel, sensitivityLevelText</td><td>mint, agnostic to the marking system (see below)</td></tr>
             </tbody>
         </table>
         <p class="note">
@@ -128,10 +128,10 @@
         <table class="simple">
             <thead><tr><th>Aspect</th><th>Concern</th><th>Key terms</th></tr></thead>
             <tbody>
-                <tr><td><code>hx-bundle</code> ✓</td><td>multi-part asset: N carriers → 1 logical Asset</td><td>Asset, Part, hasPart, primaryPart, partRole ▸reg, boundBy {containment∣naming∣manifest∣concatenation}, BundleProfile, PartSpec, carriesAspect</td></tr>
-                <tr><td><code>hx-packaging</code> ✓</td><td>multi-entry container membership</td><td>hasEntry (⊑abnd:hasPart), entryPath — Container ⊑ abnd:Asset (Containment binding)</td></tr>
-                <tr><td><code>hx-fsmeta</code> ✓</td><td>filesystem attributes</td><td>fileName, size, mtime/ctime, permissions, owner</td></tr>
-                <tr><td><code>hx-networkflow</code> ✓</td><td>protocol addressing &amp; flow</td><td>srcAddress, dstAddress, port, protocol, seqNumber, flags</td></tr>
+                <tr><td><code>hx-bundle</code> ✓</td><td>multi-part asset: N carriers → 1 logical Asset</td><td>Asset, BindingKind, BundleProfile, Part, PartSpec, boundBy, carriesAspect, describedBy, extension, hasPart, maxParts, minParts, nestedProfile, partIndex, partOf, partRole, partSpec, pathPattern, primary, primaryPart, required, stem</td></tr>
+                <tr><td><code>hx-packaging</code> ✓</td><td>multi-entry container membership</td><td>Container, Entry, entryPath, hasEntry</td></tr>
+                <tr><td><code>hx-fsmeta</code> ✓</td><td>filesystem attributes</td><td>creationTime, fileName, fileSize, isDirectory, modificationTime</td></tr>
+                <tr><td><code>hx-networkflow</code> ✓</td><td>protocol addressing &amp; flow</td><td>acknowledgmentNumber, destinationAddress, destinationPort, etherType, protocolNumber, sequenceNumber, sourceAddress, sourcePort, tcpFlags</td></tr>
             </tbody>
         </table>
         <p class="note">✓ = established (Phases 1–6). <code>hx-descriptive</code> and <code>hx-rights</code> are satisfied by reusing external vocabularies (Dublin Core, ODRL) rather than minting terms, so they have no Hexplain namespace. <code>hx-style</code> and <code>hx-typography</code> remain unbuilt — no consumer models them yet (fonts/SVG will trigger them). Note: some built aspects (e.g. <code>hx-networkflow</code>, <code>hx-packaging</code>) currently have a single consumer; they were extracted deliberately as part of the committed architecture, ahead of the second consumer the lazy-factoring rule would otherwise wait for.</p>
@@ -197,7 +197,7 @@ DOMAINS = compositions           PROFILES = domain(s) + format-unique terms
         </ul>
         <p>A register concept carries no <code>skos:notation</code>: a notation is one format's spelling of a concept (NITF's digraphs, a codec's short name), and belongs in the profile's mapping rather than in a format-neutral register.</p>
         <h3>7.3 Versioning &amp; compatibility</h3>
-        <p>The family is pre-release. Every module is version 1.0 with no prior-version history: terms are defined (or placed during this refactor) directly, with no deprecation, no backward-compatibility layer, and no <code>owl:priorVersion</code>. A compatibility policy will be defined when the first version is released.</p>
+        <p>The family is pre-release, but it is versioned: local release snapshots are recorded under <code>releases/</code>, and a module whose canonical Turtle changes after a snapshot gets a new <code>owl:versionIRI</code> (<code>https://hexplain.io/ns/&lt;module&gt;/&lt;major&gt;.&lt;minor&gt;</code>, matching <code>owl:versionInfo</code>), an <code>owl:priorVersion</code> naming the snapshot's version and a <code>dcterms:modified</code> date. Namespace IRIs do not change. Removed or renamed terms are not silently dropped: a term that existing descriptions or processors still use is kept with <code>owl:deprecated true</code> and, where one exists, <code>dcterms:isReplacedBy</code> its successor (for example the pre-release <code>bddo:hasEndianness</code> and the media-specific DLV axes). Module versions, page subtitles and Turtle header comments are checked against each other by <code>tools/test_html_sync.py</code>; the change history is in <code>CHANGELOG.md</code>. Stricter shapes are validation-compatibility changes and are listed there too.</p>
     </section>
 
     <section id="roadmap">
@@ -209,7 +209,7 @@ DOMAINS = compositions           PROFILES = domain(s) + format-unique terms
                 <tr><td><b>0. Conventions</b></td><td>This document: catalogue, decision rule, naming, back-compat policy, roadmap.</td><td>✓ done</td></tr>
                 <tr><td><b>1. Media split</b></td><td>Dissolve the interim Media Vocabulary into <code>hx-time</code> + <code>hx-encoding</code> + <code>hx-color</code>; move <code>colorSpace</code> to <code>hx-color</code>; re-point ADV &amp; VDV imports.</td><td>✓ done</td></tr>
                 <tr><td><b>2. Raster + sampling</b></td><td>Create <code>hx-sampling</code>, <code>hx-raster</code>; migrate IDV + VDV dimensions (<code>frameWidth</code>≡<code>pixelWidth</code> → <code>araster:width</code>) and bit depth (image + audio → <code>asamp:bitDepth</code>); IDV gains semantic <code>acolor:colorSpace</code>.</td><td>✓ done</td></tr>
-                <tr><td><b>3. Signal</b></td><td><code>hx-signal</code> for ADV (sampleRate, channelLayout).</td><td>✓ done</td></tr>
+                <tr><td><b>3. Signal</b></td><td><code>hx-signal</code> for ADV (sampleRate; channel count is <code>asamp:componentCount</code>).</td><td>✓ done</td></tr>
                 <tr><td><b>4. Un-bundle GV</b></td><td>Extract <code>hx-spatialref</code>, <code>hx-provenance</code> (reuse PROV/SOSA), <code>hx-security</code> (the marking properties out; since generalised in 2.0). GV → composition.</td><td>✓ done</td></tr>
                 <tr><td><b>5. Vector / geometry</b></td><td><code>hx-geometry</code> (+ <code>hx-tabular</code>, <code>hx-pointcloud</code>); retrofit GV vector + point cloud, DFV glyphs, add an SVG profile.</td><td>✓ done</td></tr>
                 <tr><td><b>6. Governance &amp; container</b></td><td><code>hx-descriptive</code> (map dcterms), <code>hx-rights</code>, <code>hx-integrity</code>, <code>hx-packaging</code>, <code>hx-fsmeta</code>, <code>hx-networkflow</code>; apply to AXV/NPV/DFV.</td><td>✓ done</td></tr>
