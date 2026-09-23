@@ -1,0 +1,18 @@
+# expect: ex:C-BadScope conf:ConstraintShape sh:OrConstraintComponent
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req:  <https://hexplain.io/ns/req#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <https://example.org/nitf-scope#> .
+
+# conf:scope must name a bddo:Struct or bddo:Field; here it names a requirement.
+ex:R-FHDR a req:Requirement ;
+    req:requirementId "MIL-STD-2500C-A1-FHDR" ;
+    req:fromStandard "MIL-STD-2500C, 01 May 2006, Table A-1 (scope fixture)" ;
+    req:statement "FHDR shall contain the value NITF." ;
+    req:discrepancyType req:Syntactic .
+
+ex:C-BadScope a conf:Constraint ;
+    conf:scope ex:R-FHDR ;
+    conf:assertion "FHDR == 'NITF'" ;
+    conf:satisfies ex:R-FHDR ;
+    conf:message "FHDR must be 'NITF'." .

@@ -1,6 +1,8 @@
 @prefix :     <https://hexplain.io/ns/conf#> .
 @prefix conf: <https://hexplain.io/ns/conf#> .
 @prefix req:  <https://hexplain.io/ns/req#> .
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
@@ -12,7 +14,8 @@
         sh:path conf:scope ;
         sh:nodeKind sh:IRI ;
         sh:minCount 1 ; sh:maxCount 1 ;
-        sh:message "A Constraint needs exactly one conf:scope IRI naming the struct or field it applies to." ;
+        sh:or ( [ sh:class bddo:Struct ] [ sh:class bddo:Field ] ) ;
+        sh:message "A Constraint needs exactly one conf:scope IRI naming the bddo:Struct or bddo:Field it applies to." ;
     ] ;
     sh:property [
         sh:path conf:assertion ;
@@ -31,11 +34,90 @@
         sh:path conf:message ;
         sh:datatype xsd:string ;
         sh:minCount 1 ; sh:maxCount 1 ;
-        sh:message "A Constraint needs exactly one conf:message finding template." ;
+        sh:minLength 1 ;
+        sh:message "A Constraint needs exactly one non-empty conf:message finding template." ;
+    ] ;
+    sh:property [
+        sh:path conf:severity ;
+        sh:maxCount 1 ;
+        sh:in ( sh:Violation sh:Warning sh:Info ) ;
+        sh:message "A Constraint states at most one conf:severity: sh:Violation, sh:Warning or sh:Info (absent means sh:Violation)." ;
     ] .
+
+:FindingShape a sh:NodeShape ;
+    sh:targetClass conf:Finding ;
+    rdfs:label "Finding shape" ;
+    rdfs:comment "A conformance finding: its kind, the requirements it is attributed to, the rendered text, and at most one constraint, focus node and byte range. A rule error must name the constraint whose evaluation failed." ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    sh:property [
+        sh:path conf:findingKind ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( conf:Violation conf:RuleError ) ;
+        sh:message "A Finding needs exactly one conf:findingKind: conf:Violation or conf:RuleError." ;
+    ] ;
+    sh:property [
+        sh:path conf:findingRequirement ;
+        sh:class req:Requirement ;
+        sh:minCount 1 ;
+        sh:message "A Finding must be attributed to at least one req:Requirement." ;
+    ] ;
+    sh:property [
+        sh:path conf:findingConstraint ;
+        sh:class conf:Constraint ;
+        sh:maxCount 1 ;
+        sh:message "A Finding names at most one conf:Constraint." ;
+    ] ;
+    sh:property [
+        sh:path conf:focusNode ;
+        sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:maxCount 1 ;
+        sh:message "A Finding has at most one conf:focusNode, a parsed node." ;
+    ] ;
+    sh:property [
+        sh:path conf:findingMessage ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:minLength 1 ;
+        sh:message "A Finding needs exactly one non-empty conf:findingMessage." ;
+    ] ;
+    sh:property [
+        sh:path hexplain:byteOffset ;
+        sh:maxCount 1 ;
+        sh:message "A Finding is located by at most one hexplain:byteOffset." ;
+    ] ;
+    sh:property [
+        sh:path hexplain:byteLength ;
+        sh:maxCount 1 ;
+        sh:message "A Finding is located by at most one hexplain:byteLength." ;
+    ] ;
+    sh:or (
+        [ sh:not [ sh:property [ sh:path conf:findingKind ; sh:hasValue conf:RuleError ] ] ]
+        [ sh:property [ sh:path conf:findingConstraint ; sh:minCount 1 ] ]
+    ) ;
+    sh:message "A conf:RuleError Finding must name the conf:findingConstraint whose evaluation failed." .
+
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+conf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    sh:targetSubjectsOf conf:assertion ,
+        conf:findingMessage ,
+        conf:message ;
+    sh:property [ sh:path conf:assertion ; sh:datatype xsd:string ;
+        sh:message "conf:assertion takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path conf:findingMessage ; sh:datatype xsd:string ;
+        sh:message "conf:findingMessage takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path conf:message ; sh:datatype xsd:string ;
+        sh:message "conf:message takes an xsd:string literal (rdfs:range xsd:string)." ] .
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-<https://hexplain.io/ns/conf#ConstraintShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for conf:assertion, conf:message, conf:satisfies, conf:scope. A Constraint must cite at least one req:Requirement; an unattributed rule cannot be reported. A Constraint needs exactly one conf:message finding template. A Constraint needs exactly one conf:scope IRI naming the struct or field it applies to. A Constraint needs exactly one non-empty conf:assertion HEL expression."@en .
+<https://hexplain.io/ns/conf#ConstraintShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for conf:assertion, conf:message, conf:satisfies, conf:scope, conf:severity. A Constraint must cite at least one req:Requirement; an unattributed rule cannot be reported. A Constraint needs exactly one conf:scope IRI naming the bddo:Struct or bddo:Field it applies to. A Constraint needs exactly one non-empty conf:assertion HEL expression. A Constraint needs exactly one non-empty conf:message finding template. A Constraint states at most one conf:severity: sh:Violation, sh:Warning or sh:Info (absent means sh:Violation)."@en .
 <https://hexplain.io/ns/conf#ConstraintShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of conf:Constraint Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/conf#ConstraintShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/conf> .
+<https://hexplain.io/ns/conf#FindingShape> <http://www.w3.org/2004/02/skos/core#definition> "A conformance finding: its kind, the requirements it is attributed to, the rendered text, and at most one constraint, focus node and byte range. A rule error must name the constraint whose evaluation failed."@en .
+<https://hexplain.io/ns/conf#FindingShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of conf:Finding Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/conf#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for conf:assertion, conf:findingMessage, conf:message. conf:assertion takes an xsd:string literal (rdfs:range xsd:string). conf:findingMessage takes an xsd:string literal (rdfs:range xsd:string). conf:message takes an xsd:string literal (rdfs:range xsd:string)."@en .
+<https://hexplain.io/ns/conf#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using conf:assertion, conf:findingMessage, conf:message Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .

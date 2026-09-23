@@ -117,9 +117,9 @@ condition|A HEL boolean condition selecting a semantic mapping or conditional cl
 semanticProperty|The RDF property selected by a matching semantic mapping rule.
 ''')
 group('gv','''
-axisLatitude|A logical layout axis for latitude coordinates; it does not imply uniform angular spacing or a particular CRS.
-axisLongitude|A logical layout axis for longitude coordinates; wrap convention and CRS remain separate metadata.
-axisElevation|A logical layout axis for elevation or height values; units and vertical reference must be supplied separately.
+axisLatitude|Deprecated duplicate of dlv:axisY, kept so existing descriptions resolve. Geographic meaning of a grid axis comes from its spatial reference, not from a separate axis individual.
+axisLongitude|Deprecated duplicate of dlv:axisX, kept so existing descriptions resolve. Geographic meaning of a grid axis comes from its spatial reference, not from a separate axis individual.
+axisElevation|Deprecated duplicate of dlv:axisZ, kept so existing descriptions resolve. Units and vertical reference are supplied by the spatial reference.
 axisPoint|The index axis of an unstructured point sequence, rather than a regular spatial grid direction.
 RasterDataset|A georeferenced dataset whose values are organized as sample grids or raster bands, described using raster and spatial-reference aspects.
 VectorDataset|A georeferenced dataset whose spatial content is represented by explicit geometries and associated attributes.
@@ -144,8 +144,8 @@ album|The album or collection title as text supplied by the source metadata.
 trackTitle|The title of the audio track as supplied by the source metadata.
 genre|The genre label as supplied by the source; no universal genre classification scheme is implied.
 trackNumber|The source's integer ordinal identifying a track within its collection.
-axisSample|The layout axis indexing successive audio samples.
-axisChannel|The layout axis indexing audio channels independently of sample time.
+axisSample|Deprecated duplicate of dlv:axisTime for successive audio samples, kept so existing descriptions resolve.
+axisChannel|Deprecated duplicate of dlv:axisBand for audio channels, kept so existing descriptions resolve.
 ''')
 group('vdv','''
 VideoContainer|A containing resource for one or more video streams and associated tracks or metadata.
@@ -157,7 +157,7 @@ audioChannels|The declared number of audio channels associated with the video re
 scanType|The scanning convention used to organize image lines into frames or fields.
 Progressive|Scanning convention in which a frame represents a full image rather than alternating interlaced fields.
 Interlaced|Scanning convention in which successive fields carry different line subsets of an image frame.
-axisFrame|The layout axis indexing successive video frames rather than rows or sample components within a frame.
+axisFrame|Deprecated duplicate of dlv:axisTime for successive video frames, kept so existing descriptions resolve.
 ''')
 group('axv','''
 Archive|A container resource packaging independently identifiable member entries.
@@ -329,12 +329,12 @@ BT709|Identifier for color interpretation associated with the BT.709 high-defini
 BT2020|Identifier for color interpretation associated with the BT.2020 ultra-high-definition television convention; this does not by itself choose an HDR transfer function.
 ''')
 ALGORITHMS={
- 'crc16':'An integrity-check identifier for a 16-bit cyclic redundancy check. The profile must identify the polynomial, initial state, reflection and finalization convention; the label alone does not select every CRC-16 variant.',
- 'crc32':'An integrity-check identifier for a 32-bit cyclic redundancy check. A profile/processor contract must resolve the CRC variant rather than infer it from width alone.',
+ 'crc16':'The CRC-16/CCITT-FALSE integrity check: polynomial 0x1021, initial value 0xFFFF, no input or output reflection and final XOR 0x0000 (check value 0x29B1 over the ASCII bytes 123456789). Other CRC-16 variants, such as CRC-16/ARC or CRC-16/XMODEM, are not identified by this term; identifiers for them are future work.',
+ 'crc32':'The CRC-32/ISO-HDLC integrity check used by zlib and PNG: reflected polynomial 0xEDB88320, initial value 0xFFFFFFFF and final XOR 0xFFFFFFFF (check value 0xCBF43926 over the ASCII bytes 123456789). Other 32-bit CRC variants, such as CRC-32C, are not identified by this term.',
  'adler32':'The Adler-32 checksum identifier, producing a 32-bit integrity value for a byte sequence.',
  'md5':'The MD5 message-digest identifier, producing a 128-bit digest; this term identifies a stored integrity algorithm and does not claim cryptographic security.',
  'sha1':'The SHA-1 message-digest identifier, producing a 160-bit digest; this term does not claim suitability for collision-resistant security uses.',
  'sha256':'The SHA-256 message-digest identifier, producing a 256-bit digest of the covered byte sequence.',
 }
 for term,definition in ALGORITHMS.items():DEFINITIONS['bddo:'+term]=definition
-for term,key in [('CRC32','crc32'),('MD5','md5'),('SHA1','sha1'),('SHA256','sha256')]:DEFINITIONS['rck:'+term]=ALGORITHMS[key]
+for term,key in [('CRC16','crc16'),('CRC32','crc32'),('Adler32','adler32'),('MD5','md5'),('SHA1','sha1'),('SHA256','sha256')]:DEFINITIONS['rck:'+term]=ALGORITHMS[key]

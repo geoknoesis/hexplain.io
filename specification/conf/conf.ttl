@@ -1,26 +1,86 @@
-@prefix :     <https://hexplain.io/ns/conf#> .
-@prefix conf: <https://hexplain.io/ns/conf#> .
-@prefix req:  <https://hexplain.io/ns/req#> .
-@prefix owl:  <http://www.w3.org/2002/07/owl#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix :        <https://hexplain.io/ns/conf#> .
+@prefix conf:    <https://hexplain.io/ns/conf#> .
+@prefix req:     <https://hexplain.io/ns/req#> .
+@prefix bddo:    <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/conf> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/conf/1.1> ;
     rdfs:label "Hexplain Conformance Vocabulary" ;
-    owl:versionInfo "1.0" ;
-    owl:imports <https://hexplain.io/ns/req> ;
-    rdfs:comment """Binds executable HEL assertions to the standards requirements they check.
-Format-agnostic. Severity is deliberately absent: it derives from the cited requirement's
-req:discrepancyType, so a rule reused across profiles is classified consistently.""" .
+    owl:versionInfo "1.1" ;
+    owl:priorVersion <https://hexplain.io/ns/conf/1.0> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
+    # core supplies hexplain:byteOffset/byteLength for locating findings and imports bddo,
+    # whose Struct and Field are the admissible conf:scope values.
+    owl:imports <https://hexplain.io/ns/req> , <https://hexplain.io/ns/core> ;
+    dcterms:created "2026-08-01"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    vann:preferredNamespacePrefix "conf" ; vann:preferredNamespaceUri "https://hexplain.io/ns/conf#" ;
+    rdfs:comment """Binds executable HEL assertions to the standards requirements they check, and
+describes the findings and coverage a conformance run reports. Format-agnostic.
+
+Severity: a constraint reports at its conf:severity (sh:Violation, sh:Warning or sh:Info),
+sh:Violation when absent. req:discrepancyType classifies the defect (syntactic, semantic,
+functional); it never sets or modifies severity. A constraint citing several requirements
+reports ONE finding per failed evaluation, citing all of them, at the constraint's severity.
+
+Declared coverage of a profile: the set of requirements cited (conf:satisfies) by at least
+one conf:Constraint in the profile. It is a property of the profile and needs no input.
+
+Run coverage: for one run over one input, each requirement receives exactly one
+conf:EvaluationOutcome, computed from the evaluations of the constraints that cite it --
+conf:NotApplicable, conf:Errored, conf:Evaluated or conf:NotExercised, with that precedence
+(see conf:EvaluationOutcome).""" .
 
 # --- Classes ---
 :Constraint a owl:Class ; rdfs:label "Constraint" ;
     rdfs:comment "An executable check: a HEL assertion evaluated within a scope, citing the requirements it enforces." ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
 
+:Finding a owl:Class ; rdfs:label "Finding" ;
+    rdfs:comment "One reported discrepancy of a conformance run: a failed evaluation of a constraint (conf:Violation) or a constraint whose evaluation could not complete (conf:RuleError), attributed to every requirement the constraint cites and located in the input. A failed evaluation yields exactly one finding however many requirements the constraint cites. A finding raised by parse recovery has no constraint and reports at sh:Violation; otherwise its severity is its constraint's conf:severity." ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
+
+:FindingKind a owl:Class ; rdfs:label "Finding Kind" ;
+    rdfs:comment "Whether a finding reports a defect in the input (conf:Violation) or a failure to evaluate a rule (conf:RuleError). Closed set." ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
+
+:EvaluationOutcome a owl:Class ; rdfs:label "Evaluation Outcome" ;
+    rdfs:comment """The run-coverage outcome of one requirement in one conformance run. Closed set of four.
+Given the constraints citing the requirement, the outcome is the FIRST of these that holds:
+(1) conf:NotApplicable -- the requirement's req:appliesToVersion values are present and none
+matches the input's format version (an input whose version cannot be determined matches every
+version; constraint evaluations are then not considered);
+(2) conf:Errored -- evaluating at least one citing constraint raised a rule error;
+(3) conf:Evaluated -- at least one citing constraint was evaluated, without error, on at least
+one scoped instance;
+(4) conf:NotExercised -- no scoped instance of any citing constraint occurred in the input.
+A requirement cited by no constraint is outside declared coverage and receives no outcome.""" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
+
+# --- Controlled individuals ---
+:Violation a :FindingKind ; rdfs:label "Violation" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The assertion evaluated to false: the input does not conform to the cited requirements. Engine kind VIOLATION." .
+:RuleError a :FindingKind ; rdfs:label "Rule Error" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The assertion could not be evaluated (a HEL error, a missing operand, a resource limit): conformance to the cited requirements is unknown, not refuted. Engine kind RULE_ERROR." .
+
+:Evaluated a :EvaluationOutcome ; rdfs:label "Evaluated" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "At least one constraint citing the requirement was evaluated without error on at least one scoped instance, and none raised a rule error. Engine outcome EVALUATED." .
+:NotExercised a :EvaluationOutcome ; rdfs:label "Not Exercised" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "No scoped instance of any constraint citing the requirement occurred in the input, so nothing was checked. Engine outcome NOT_EXERCISED." .
+:Errored a :EvaluationOutcome ; rdfs:label "Errored" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "Evaluating at least one constraint citing the requirement raised a rule error; it takes precedence over conf:Evaluated so a partial check is never reported as complete. Engine outcome ERRORED." .
+:NotApplicable a :EvaluationOutcome ; rdfs:label "Not Applicable" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The requirement's req:appliesToVersion excludes the input's format version; it takes precedence over every other outcome. Engine outcome NOT_APPLICABLE." .
+
 # --- Properties ---
 :scope a owl:ObjectProperty ; rdfs:label "scope" ;
-    rdfs:comment "The bddo:Struct or bddo:Field the assertion is evaluated against. A struct scope fires once per parsed instance of that struct." ;
+    rdfs:comment "The bddo:Struct or bddo:Field the assertion is evaluated against. A struct scope fires once per parsed instance of that struct. The rdfs:range stays open; ConstraintShape restricts values to a bddo:Struct or bddo:Field." ;
     rdfs:range rdfs:Resource .
 
 :assertion a owl:DatatypeProperty ; rdfs:label "assertion" ;
@@ -35,23 +95,98 @@ req:discrepancyType, so a rule reused across profiles is classified consistently
     rdfs:comment "Finding text template. {field} interpolates the scoped field name, {value} its parsed value." ;
     rdfs:range xsd:string .
 
+:severity a owl:ObjectProperty ; rdfs:label "severity" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The severity at which this constraint reports its findings: sh:Violation, sh:Warning or sh:Info. Optional; absent means sh:Violation. Independent of req:discrepancyType, which classifies the defect but never sets severity. When the constraint cites several requirements, its single finding per failed evaluation carries this severity for all of them." ;
+    rdfs:range sh:Severity .
+
+:findingRequirement a owl:ObjectProperty ; rdfs:label "finding requirement" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "A requirement the finding is attributed to. Repeated for each requirement the constraint cites; at least one." ;
+    rdfs:range req:Requirement .
+
+:findingConstraint a owl:ObjectProperty ; rdfs:label "finding constraint" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The constraint whose evaluation produced the finding. At most one; required for a conf:RuleError, absent for a finding raised by parse recovery." ;
+    rdfs:range :Constraint .
+
+:focusNode a owl:ObjectProperty ; rdfs:label "focus node" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The parsed instance (struct or field node) the failed evaluation was about. At most one. Its location in the input is stated on the finding with hexplain:byteOffset and hexplain:byteLength." ;
+    rdfs:range rdfs:Resource .
+
+:findingKind a owl:ObjectProperty ; rdfs:label "finding kind" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "Whether the finding is a conf:Violation or a conf:RuleError. Exactly one." ;
+    rdfs:range :FindingKind .
+
+:findingMessage a owl:DatatypeProperty ; rdfs:label "finding message" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The rendered finding text: the constraint's conf:message with its placeholders interpolated, or the rule error's description. Exactly one, non-empty." ;
+    rdfs:range xsd:string .
+
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-<https://hexplain.io/ns/conf> <http://www.w3.org/2004/02/skos/core#definition> """Binds executable HEL assertions to the standards requirements they check.
-Format-agnostic. Severity is deliberately absent: it derives from the cited requirement's
-req:discrepancyType, so a rule reused across profiles is classified consistently."""@en .
+<https://hexplain.io/ns/conf> <http://www.w3.org/2004/02/skos/core#definition> """Binds executable HEL assertions to the standards requirements they check, and
+describes the findings and coverage a conformance run reports. Format-agnostic.
+
+Severity: a constraint reports at its conf:severity (sh:Violation, sh:Warning or sh:Info),
+sh:Violation when absent. req:discrepancyType classifies the defect (syntactic, semantic,
+functional); it never sets or modifies severity. A constraint citing several requirements
+reports ONE finding per failed evaluation, citing all of them, at the constraint's severity.
+
+Declared coverage of a profile: the set of requirements cited (conf:satisfies) by at least
+one conf:Constraint in the profile. It is a property of the profile and needs no input.
+
+Run coverage: for one run over one input, each requirement receives exactly one
+conf:EvaluationOutcome, computed from the evaluations of the constraints that cite it --
+conf:NotApplicable, conf:Errored, conf:Evaluated or conf:NotExercised, with that precedence
+(see conf:EvaluationOutcome)."""@en .
 <https://hexplain.io/ns/conf> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself."@en .
 <https://hexplain.io/ns/conf#Constraint> <http://www.w3.org/2004/02/skos/core#definition> "An executable check: a HEL assertion evaluated within a scope, citing the requirements it enforces."@en .
 <https://hexplain.io/ns/conf#Constraint> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/conf#Errored> <http://www.w3.org/2004/02/skos/core#definition> "Evaluating at least one constraint citing the requirement raised a rule error; it takes precedence over conf:Evaluated so a partial check is never reported as complete. Engine outcome ERRORED."@en .
+<https://hexplain.io/ns/conf#Errored> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/conf#Evaluated> <http://www.w3.org/2004/02/skos/core#definition> "At least one constraint citing the requirement was evaluated without error on at least one scoped instance, and none raised a rule error. Engine outcome EVALUATED."@en .
+<https://hexplain.io/ns/conf#Evaluated> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/conf#EvaluationOutcome> <http://www.w3.org/2004/02/skos/core#definition> """The run-coverage outcome of one requirement in one conformance run. Closed set of four.
+Given the constraints citing the requirement, the outcome is the FIRST of these that holds:
+(1) conf:NotApplicable -- the requirement's req:appliesToVersion values are present and none
+matches the input's format version (an input whose version cannot be determined matches every
+version; constraint evaluations are then not considered);
+(2) conf:Errored -- evaluating at least one citing constraint raised a rule error;
+(3) conf:Evaluated -- at least one citing constraint was evaluated, without error, on at least
+one scoped instance;
+(4) conf:NotExercised -- no scoped instance of any citing constraint occurred in the input.
+A requirement cited by no constraint is outside declared coverage and receives no outcome."""@en .
+<https://hexplain.io/ns/conf#EvaluationOutcome> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/conf#Finding> <http://www.w3.org/2004/02/skos/core#definition> "One reported discrepancy of a conformance run: a failed evaluation of a constraint (conf:Violation) or a constraint whose evaluation could not complete (conf:RuleError), attributed to every requirement the constraint cites and located in the input. A failed evaluation yields exactly one finding however many requirements the constraint cites. A finding raised by parse recovery has no constraint and reports at sh:Violation; otherwise its severity is its constraint's conf:severity."@en .
+<https://hexplain.io/ns/conf#Finding> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/conf#FindingKind> <http://www.w3.org/2004/02/skos/core#definition> "Whether a finding reports a defect in the input (conf:Violation) or a failure to evaluate a rule (conf:RuleError). Closed set."@en .
+<https://hexplain.io/ns/conf#FindingKind> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/conf#NotApplicable> <http://www.w3.org/2004/02/skos/core#definition> "The requirement's req:appliesToVersion excludes the input's format version; it takes precedence over every other outcome. Engine outcome NOT_APPLICABLE."@en .
+<https://hexplain.io/ns/conf#NotApplicable> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/conf#NotExercised> <http://www.w3.org/2004/02/skos/core#definition> "No scoped instance of any constraint citing the requirement occurred in the input, so nothing was checked. Engine outcome NOT_EXERCISED."@en .
+<https://hexplain.io/ns/conf#NotExercised> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/conf#RuleError> <http://www.w3.org/2004/02/skos/core#definition> "The assertion could not be evaluated (a HEL error, a missing operand, a resource limit): conformance to the cited requirements is unknown, not refuted. Engine kind RULE_ERROR."@en .
+<https://hexplain.io/ns/conf#RuleError> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
+<https://hexplain.io/ns/conf#Violation> <http://www.w3.org/2004/02/skos/core#definition> "The assertion evaluated to false: the input does not conform to the cited requirements. Engine kind VIOLATION."@en .
+<https://hexplain.io/ns/conf#Violation> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/conf#assertion> <http://www.w3.org/2004/02/skos/core#definition> "A HEL expression evaluating to boolean. True means conformant; false raises a finding."@en .
 <https://hexplain.io/ns/conf#assertion> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/conf#assertion> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/conf> .
+<https://hexplain.io/ns/conf#findingConstraint> <http://www.w3.org/2004/02/skos/core#definition> "The constraint whose evaluation produced the finding. At most one; required for a conf:RuleError, absent for a finding raised by parse recovery."@en .
+<https://hexplain.io/ns/conf#findingConstraint> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/conf#findingKind> <http://www.w3.org/2004/02/skos/core#definition> "Whether the finding is a conf:Violation or a conf:RuleError. Exactly one."@en .
+<https://hexplain.io/ns/conf#findingKind> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/conf#findingMessage> <http://www.w3.org/2004/02/skos/core#definition> "The rendered finding text: the constraint's conf:message with its placeholders interpolated, or the rule error's description. Exactly one, non-empty."@en .
+<https://hexplain.io/ns/conf#findingMessage> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/conf#findingRequirement> <http://www.w3.org/2004/02/skos/core#definition> "A requirement the finding is attributed to. Repeated for each requirement the constraint cites; at least one."@en .
+<https://hexplain.io/ns/conf#findingRequirement> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/conf#focusNode> <http://www.w3.org/2004/02/skos/core#definition> "The parsed instance (struct or field node) the failed evaluation was about. At most one. Its location in the input is stated on the finding with hexplain:byteOffset and hexplain:byteLength."@en .
+<https://hexplain.io/ns/conf#focusNode> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/conf#message> <http://www.w3.org/2004/02/skos/core#definition> "Finding text template. {field} interpolates the scoped field name, {value} its parsed value."@en .
 <https://hexplain.io/ns/conf#message> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/conf#message> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/conf> .
 <https://hexplain.io/ns/conf#satisfies> <http://www.w3.org/2004/02/skos/core#definition> "A requirement this constraint enforces. Required: an unattributed rule cannot be reported or counted toward coverage."@en .
 <https://hexplain.io/ns/conf#satisfies> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/conf#satisfies> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/conf> .
-<https://hexplain.io/ns/conf#scope> <http://www.w3.org/2004/02/skos/core#definition> "The bddo:Struct or bddo:Field the assertion is evaluated against. A struct scope fires once per parsed instance of that struct."@en .
+<https://hexplain.io/ns/conf#scope> <http://www.w3.org/2004/02/skos/core#definition> "The bddo:Struct or bddo:Field the assertion is evaluated against. A struct scope fires once per parsed instance of that struct. The rdfs:range stays open; ConstraintShape restricts values to a bddo:Struct or bddo:Field."@en .
 <https://hexplain.io/ns/conf#scope> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/conf#scope> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/conf> .
+<https://hexplain.io/ns/conf#severity> <http://www.w3.org/2004/02/skos/core#definition> "The severity at which this constraint reports its findings: sh:Violation, sh:Warning or sh:Info. Optional; absent means sh:Violation. Independent of req:discrepancyType, which classifies the defect but never sets severity. When the constraint cites several requirements, its single finding per failed evaluation carries this severity for all of them."@en .
+<https://hexplain.io/ns/conf#severity> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .

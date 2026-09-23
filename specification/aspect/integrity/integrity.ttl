@@ -1,4 +1,4 @@
-# Hexplain Aspect — Integrity (hx-integrity) 1.0
+# Hexplain Aspect — Integrity (hx-integrity) 1.1
 # Governance aspect: verification of content bytes (checksums, hashes, signatures).
 # Cross-cutting across archives, network payloads, and any format carrying a checksum.
 @prefix :       <https://hexplain.io/ns/aspect/integrity#> .
@@ -9,9 +9,12 @@
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
 
 <https://hexplain.io/ns/aspect/integrity> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/integrity/1.0> ; owl:versionInfo "1.0" ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/integrity/1.1> ; owl:versionInfo "1.1" ;
+    owl:priorVersion <https://hexplain.io/ns/aspect/integrity/1.0> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Integrity (hx-integrity)" ;
     rdfs:comment "Aspect for byte-integrity verification: checksum value and algorithm (signatures/ECC to follow). Cross-cutting across archives, network, and other formats." ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -21,10 +24,22 @@
 :checksum a owl:DatatypeProperty ; rdfs:label "checksum" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ; rdfs:range xsd:hexBinary ; rdfs:comment "Checksum/hash value over the content bytes." .
 :checksumAlgorithm a owl:ObjectProperty ; rdfs:label "checksum algorithm" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ; rdfs:range skos:Concept ; rdfs:comment "Algorithm used, from a checksum-algorithm register bound by the profile." .
 
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+aintg:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ;
+    sh:targetSubjectsOf aintg:checksum ;
+    sh:property [ sh:path aintg:checksum ; sh:datatype xsd:hexBinary ;
+        sh:message "aintg:checksum takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] .
+
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/aspect/integrity> <http://www.w3.org/2004/02/skos/core#definition> "Aspect for byte-integrity verification: checksum value and algorithm (signatures/ECC to follow). Cross-cutting across archives, network, and other formats."@en .
 <https://hexplain.io/ns/aspect/integrity> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for recorded integrity information about bytes or resources; the presence of a digest is distinct from successful verification."@en .
+<https://hexplain.io/ns/aspect/integrity#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for aintg:checksum. aintg:checksum takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)."@en .
+<https://hexplain.io/ns/aspect/integrity#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using aintg:checksum Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/integrity#checksum> <http://www.w3.org/2004/02/skos/core#definition> "Checksum/hash value over the content bytes."@en .
 <https://hexplain.io/ns/aspect/integrity#checksum> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for recorded integrity information about bytes or resources; the presence of a digest is distinct from successful verification. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/aspect/integrity#checksumAlgorithm> <http://www.w3.org/2004/02/skos/core#definition> "Algorithm used, from a checksum-algorithm register bound by the profile."@en .

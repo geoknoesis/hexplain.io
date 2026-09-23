@@ -1,4 +1,4 @@
-# Hexplain Aspect — Encoding (hx-encoding) 1.0
+# Hexplain Aspect — Encoding (hx-encoding) 1.1
 # Orthogonal aspect: how content is coded/compressed/encrypted for storage or transport.
 # Imports nothing; imported by any domain whose content is encoded (audio, video, image, archive).
 @prefix :       <https://hexplain.io/ns/aspect/encoding#> .
@@ -13,9 +13,12 @@
 @prefix unit:   <http://qudt.org/vocab/unit/> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
 
 <https://hexplain.io/ns/aspect/encoding> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/encoding/1.0> ; owl:versionInfo "1.0" ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/encoding/1.1> ; owl:versionInfo "1.1" ;
+    owl:priorVersion <https://hexplain.io/ns/aspect/encoding/1.0> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Encoding (hx-encoding)" ;
     rdfs:comment "Orthogonal aspect for how content is coded, compressed, or encrypted (codec, bitrate; compression and encryption to follow). Controlled values (codec, compression) come from an external register bound by the profile, not from a scheme hosted in this aspect. Imported by any domain whose content is encoded." ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -27,10 +30,27 @@
 :bitrate a owl:DatatypeProperty ; rdfs:label "bitrate" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ; rdfs:seeAlso ma:averageBitRate ; rdfs:range xsd:positiveInteger ; qudt:hasQuantityKind quantitykind:DataRate ; qudt:hasUnit unit:BIT-PER-SEC ; rdfs:comment "Average bitrate of the encoded stream, in bits per second." .
 :compression a owl:ObjectProperty ; rdfs:label "compression" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ; rdfs:range skos:Concept ; rdfs:comment "Lossless compression method, from the compression register bound by the profile." .
 
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+aenc:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
+aenc:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ;
+    sh:targetSubjectsOf aenc:bitrate ;
+    sh:property [ sh:path aenc:bitrate ; sh:node aenc:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "aenc:bitrate takes a positive integer (rdfs:range xsd:positiveInteger)." ] .
+
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/aspect/encoding> <http://www.w3.org/2004/02/skos/core#definition> "Orthogonal aspect for how content is coded, compressed, or encrypted (codec, bitrate; compression and encryption to follow). Controlled values (codec, compression) come from an external register bound by the profile, not from a scheme hosted in this aspect. Imported by any domain whose content is encoded."@en .
 <https://hexplain.io/ns/aspect/encoding> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for the encoding characteristics of data content; a codec identifier alone does not supply all container framing and parameters."@en .
+<https://hexplain.io/ns/aspect/encoding#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Integer value. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/aspect/encoding#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/aspect/encoding#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for aenc:bitrate. aenc:bitrate takes a positive integer (rdfs:range xsd:positiveInteger)."@en .
+<https://hexplain.io/ns/aspect/encoding#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using aenc:bitrate Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/encoding#bitrate> <http://www.w3.org/2004/02/skos/core#definition> "Average bitrate of the encoded stream, in bits per second."@en .
 <https://hexplain.io/ns/aspect/encoding#bitrate> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for the encoding characteristics of data content; a codec identifier alone does not supply all container framing and parameters. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/aspect/encoding#codec> <http://www.w3.org/2004/02/skos/core#definition> "Codec, drawn from the codec register bound by the profile."@en .

@@ -10,7 +10,10 @@ for pred in [SKOS.closeMatch,SKOS.exactMatch,SKOS.broadMatch,SKOS.narrowMatch,SK
         assert not types.intersection(g.objects(subject,RDF.type)),f'SKOS concept mapping used for ontology entity {subject}'
 for module in ['raster','spatialref','geometry']:
     ns=f'https://hexplain.io/ns/aspect/{module}'
-    assert (URIRef(ns),OWL.versionIRI,URIRef(ns+('/1.2' if module == 'geometry' else '/1.1'))) in g
+    # Versioned working drafts: the version IRI carries the versionInfo number and names its predecessor.
+    version=str(g.value(URIRef(ns),OWL.versionInfo)).split()[0]
+    assert (URIRef(ns),OWL.versionIRI,URIRef(ns+'/'+version)) in g,f'{ns}: versionIRI does not match versionInfo {version}'
+    assert g.value(URIRef(ns),OWL.priorVersion) is not None,f'{ns}: working draft without owl:priorVersion'
     for subject in set(g.subjects()):
         if not str(subject).startswith(ns+'#') or not types.intersection(g.objects(subject,RDF.type)):continue
         assert g.value(subject,RDFS.label),f'Missing label: {subject}'

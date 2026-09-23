@@ -35,10 +35,58 @@
     sh:property [
         sh:path req:appliesToVersion ;
         sh:datatype xsd:string ;
+        sh:minLength 1 ;
+        sh:message "req:appliesToVersion values are non-empty strings; omit the property to mean every version." ;
     ] .
+
+# Prefixes for the SPARQL-based constraints below (same pattern as bddo:_prefixes).
+req:_prefixes sh:declare
+    [ sh:prefix "req" ; sh:namespace "https://hexplain.io/ns/req#"^^xsd:anyURI ] .
+
+:RequirementIdentityShape a sh:NodeShape ;
+    sh:targetClass req:Requirement ;
+    rdfs:label "Requirement identity shape" ;
+    rdfs:comment "A requirement is identified by its (req:fromStandard, req:requirementId) pair: two distinct requirement resources carrying the same pair are a violation, reported on each of them." ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req> ;
+    sh:sparql [
+        sh:message "Another req:Requirement ({?other}) has the same req:fromStandard and req:requirementId; the pair must be unique." ;
+        sh:prefixes req:_prefixes ;
+        sh:select """SELECT $this ?other WHERE {
+            $this req:fromStandard ?std ; req:requirementId ?id .
+            ?other a req:Requirement ; req:fromStandard ?std ; req:requirementId ?id .
+            FILTER(!sameTerm(?other, $this))
+        }""" ;
+    ] .
+
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+req:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req> ;
+    sh:targetSubjectsOf req:appliesToVersion ,
+        req:fromStandard ,
+        req:requirementId ,
+        req:statement ;
+    sh:property [ sh:path req:appliesToVersion ; sh:datatype xsd:string ;
+        sh:message "req:appliesToVersion takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path req:fromStandard ; sh:datatype xsd:string ;
+        sh:message "req:fromStandard takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path req:requirementId ; sh:datatype xsd:string ;
+        sh:message "req:requirementId takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path req:statement ; sh:datatype xsd:string ;
+        sh:message "req:statement takes an xsd:string literal (rdfs:range xsd:string)." ] .
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-<https://hexplain.io/ns/req#RequirementShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for req:appliesToVersion, req:discrepancyType, req:fromStandard, req:requirementId, req:statement. A Requirement needs exactly one non-empty req:requirementId. A Requirement needs exactly one req:discrepancyType from the controlled set. A Requirement needs exactly one req:fromStandard. A Requirement needs exactly one req:statement quoting the source text."@en .
+<https://hexplain.io/ns/req#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for req:appliesToVersion, req:fromStandard, req:requirementId, req:statement. req:appliesToVersion takes an xsd:string literal (rdfs:range xsd:string). req:fromStandard takes an xsd:string literal (rdfs:range xsd:string). req:requirementId takes an xsd:string literal (rdfs:range xsd:string). req:statement takes an xsd:string literal (rdfs:range xsd:string)."@en .
+<https://hexplain.io/ns/req#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using req:appliesToVersion, req:fromStandard, req:requirementId, req:statement Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/req#RequirementIdentityShape> <http://www.w3.org/2004/02/skos/core#definition> "A requirement is identified by its (req:fromStandard, req:requirementId) pair: two distinct requirement resources carrying the same pair are a violation, reported on each of them."@en .
+<https://hexplain.io/ns/req#RequirementIdentityShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of req:Requirement Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/req#RequirementShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for req:appliesToVersion, req:discrepancyType, req:fromStandard, req:requirementId, req:statement. A Requirement needs exactly one non-empty req:requirementId. A Requirement needs exactly one req:discrepancyType from the controlled set. A Requirement needs exactly one req:fromStandard. A Requirement needs exactly one req:statement quoting the source text. req:appliesToVersion values are non-empty strings; omit the property to mean every version."@en .
 <https://hexplain.io/ns/req#RequirementShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of req:Requirement Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/req#RequirementShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/req> .
+<https://hexplain.io/ns/req#_prefixes> <http://www.w3.org/2004/02/skos/core#definition> "Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data."@en .
+<https://hexplain.io/ns/req#_prefixes> <http://www.w3.org/2004/02/skos/core#scopeNote> "Used by named SHACL SPARQL constraints/rules in this module. Not intended for instance-data assertions."@en .
+<https://hexplain.io/ns/req#_prefixes> <http://www.w3.org/2000/01/rdf-schema#label> "prefixes"@en .
+<https://hexplain.io/ns/req#_prefixes> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/req> .

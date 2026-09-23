@@ -1,4 +1,4 @@
-# Binary Data Description Ontology (BDDO) 1.0 — vocabulary + SHACL shapes
+# Binary Data Description Ontology (BDDO) 1.1 — vocabulary + SHACL shapes
 # Canonical machine-readable artifact. Namespace: https://hexplain.io/ns/bddo#
 # Modeling: properties declare rdfs:range (value type). Domain and cardinality
 # are expressed in SHACL only (no rdfs:domain), to avoid over-committing subjects.
@@ -13,8 +13,10 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/bddo> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/bddo/1.0> ;
-    owl:versionInfo "1.0" ;
+    owl:versionIRI <https://hexplain.io/ns/bddo/1.1> ;
+    owl:versionInfo "1.1" ;
+    owl:priorVersion <https://hexplain.io/ns/bddo/1.0> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
     rdfs:label "Binary Data Description Ontology (BDDO)" ;
     rdfs:comment "Vocabulary for declaratively describing the physical structure of binary data." ;
     dcterms:created "2025-08-16"^^xsd:date ;
@@ -42,6 +44,10 @@
     rdfs:comment "One key-to-type association of a DispatchTable: the type a field takes when the table's key equals armKey. Keys are unique within a table across every graph that contributes to it." .
 :SeekScope a owl:Class ; rdfs:label "Seek Scope" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "How far an offset-addressed read may reach: the innermost bounded region (the default, regionScope) or the whole stream (streamScope)." .
+# A struct, a field and a data type are different kinds of thing: a field's value may be typed
+# BY a struct, but no resource is both.
+[] a owl:AllDisjointClasses ; owl:members ( :Struct :Field :DataType ) .
+
 # ---------- Delimited text records ----------
 # Line- and character-delimited text: key = value headers, CSV, whitespace-separated grids.
 # Records may nest, via bddo:hasGrouping, but only in the three token-delimited styles that
@@ -251,6 +257,27 @@
     owl:deprecated true ;
     rdfs:comment "Deprecated: a single expression yielding the whole [start,end) range. Superseded by the coversFromExpression/coversToExpression pair, which states each bound separately and so can mix field and expression ends. Retained for descriptions written against earlier BDDO." .
 
+# ---------- Deprecated pre-release terms ----------
+# Profiles written before BDDO 1.0 still use these IRIs and conforming processors still read
+# them, so they are declared rather than silently unknown. Each keeps its original meaning;
+# new descriptions MUST use the replacement. They are never emitted by current tooling.
+:hasEndianness a owl:ObjectProperty ; rdfs:label "has endianness (deprecated)" ; rdfs:range :Endianness ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    owl:deprecated true ; dcterms:isReplacedBy :endianness ;
+    rdfs:comment "Deprecated pre-release spelling of bddo:endianness, with the same meaning. A processor reading a description that states both uses bddo:endianness." .
+:usesStruct a owl:ObjectProperty ; rdfs:label "uses struct (deprecated)" ; rdfs:range :Struct ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    owl:deprecated true ;
+    rdfs:comment "Deprecated pre-release template reference: the subject Struct's effective field list is the named Struct's fields followed by its own. There is no single replacement term; new descriptions state the fields directly, or compose with a Field whose bddo:dataType is the other Struct (which nests rather than splices)." .
+:integer a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Integer (deprecated)" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    owl:deprecated true ; dcterms:isReplacedBy :baseInteger ;
+    rdfs:comment "Deprecated pre-release name of bddo:baseInteger, with the same meaning." .
+:float a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Float (deprecated)" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    owl:deprecated true ; dcterms:isReplacedBy :baseFloat ;
+    rdfs:comment "Deprecated pre-release name of bddo:baseFloat, with the same meaning." .
+
 # ---------- Enumerated individuals (typed with their controlled-vocabulary class) ----------
 :BigEndian a owl:NamedIndividual, :Endianness ; rdfs:label "Big Endian" .
 :LittleEndian a owl:NamedIndividual, :Endianness ; rdfs:label "Little Endian" .
@@ -273,8 +300,10 @@
 :utf16le a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 LE" .
 :utf16be a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 BE" .
 :latin1 a owl:NamedIndividual, :Encoding ; rdfs:label "ISO-8859-1" .
-:crc16 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16" .
-:crc32 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32" .
+:crc16 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16" ;
+    rdfs:comment "CRC-16/CCITT-FALSE: polynomial 0x1021, initial value 0xFFFF, no input or output reflection, final XOR 0x0000; check value 0x29B1 over the ASCII bytes \"123456789\". No other CRC-16 variant is identified by this term." .
+:crc32 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32" ;
+    rdfs:comment "CRC-32/ISO-HDLC (the zlib/PNG CRC): reflected polynomial 0xEDB88320, initial value 0xFFFFFFFF, final XOR 0xFFFFFFFF; check value 0xCBF43926 over the ASCII bytes \"123456789\"." .
 :adler32 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "Adler-32" .
 :md5 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "MD5" .
 :sha1 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "SHA-1" .
@@ -395,7 +424,7 @@ bddo:FieldShape a sh:NodeShape ;
     # All five, not just the two literal spellings: a separated field declaring
     # sizeFromField/sizeFromExpression/sizeToEndOfStream would otherwise satisfy both this shape
     # and bddo:AsciiNumericWidthShape while asserting a width the reader provably ignores
-    # (Metaparser dispatches bddo:separatedBy before it resolves any size), which is a false
+    # (a conforming processor resolves bddo:separatedBy before any size declaration), which is a false
     # statement that validates.
     sh:not [ sh:and (
         [ sh:property {{constraint:pattern_156}} ]
@@ -790,4 +819,146 @@ bddo:VarintWidthShape a sh:NodeShape ;
             FILTER(?p IN (bddo:size, bddo:sizeFromField, bddo:sizeFromExpression,
                           bddo:sizeToEndOfStream, bddo:terminator, bddo:bitLength))
         }""" ] .
+
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+bddo:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
+bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    sh:targetSubjectsOf bddo:alignment ,
+        bddo:atOffset ,
+        bddo:atOffsetFromExpression ,
+        bddo:bitLength ,
+        bddo:bitWidth ,
+        bddo:commentPrefix ,
+        bddo:condition ,
+        bddo:coversExpression ,
+        bddo:coversFromExpression ,
+        bddo:coversToExpression ,
+        bddo:dispatchOnExpression ,
+        bddo:enumIsFlags ,
+        bddo:escapeChar ,
+        bddo:fieldDelimiter ,
+        bddo:groupCloseToken ,
+        bddo:groupOpenToken ,
+        bddo:isPresentIf ,
+        bddo:isSigned ,
+        bddo:key ,
+        bddo:keyIsCaseInsensitive ,
+        bddo:keyPath ,
+        bddo:keyValueSeparator ,
+        bddo:namespaceIRI ,
+        bddo:namespacePrefix ,
+        bddo:nodePath ,
+        bddo:numericBase ,
+        bddo:pathSeparator ,
+        bddo:quoteChar ,
+        bddo:recordDelimiter ,
+        bddo:repeatCount ,
+        bddo:repeatCountFromExpression ,
+        bddo:repeatUntil ,
+        bddo:separatedBy ,
+        bddo:size ,
+        bddo:sizeFromExpression ,
+        bddo:sizeToEndOfStream ,
+        bddo:skipRecords ,
+        bddo:syncOnMarker ,
+        bddo:terminator ,
+        bddo:trimNull ,
+        bddo:trimWhitespace ,
+        bddo:validIf ,
+        bddo:valueFromExpression ,
+        bddo:whitespaceSeparated ;
+    sh:property [ sh:path bddo:alignment ; sh:node bddo:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "bddo:alignment takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path bddo:atOffset ; sh:node bddo:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "bddo:atOffset takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path bddo:atOffsetFromExpression ; sh:datatype xsd:string ;
+        sh:message "bddo:atOffsetFromExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:bitLength ; sh:node bddo:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "bddo:bitLength takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path bddo:bitWidth ; sh:node bddo:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "bddo:bitWidth takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path bddo:commentPrefix ; sh:datatype xsd:string ;
+        sh:message "bddo:commentPrefix takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:condition ; sh:datatype xsd:string ;
+        sh:message "bddo:condition takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:coversExpression ; sh:datatype xsd:string ;
+        sh:message "bddo:coversExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:coversFromExpression ; sh:datatype xsd:string ;
+        sh:message "bddo:coversFromExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:coversToExpression ; sh:datatype xsd:string ;
+        sh:message "bddo:coversToExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:dispatchOnExpression ; sh:datatype xsd:string ;
+        sh:message "bddo:dispatchOnExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:enumIsFlags ; sh:datatype xsd:boolean ;
+        sh:message "bddo:enumIsFlags takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
+    sh:property [ sh:path bddo:escapeChar ; sh:datatype xsd:hexBinary ;
+        sh:message "bddo:escapeChar takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
+    sh:property [ sh:path bddo:fieldDelimiter ; sh:datatype xsd:hexBinary ;
+        sh:message "bddo:fieldDelimiter takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
+    sh:property [ sh:path bddo:groupCloseToken ; sh:datatype xsd:string ;
+        sh:message "bddo:groupCloseToken takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:groupOpenToken ; sh:datatype xsd:string ;
+        sh:message "bddo:groupOpenToken takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:isPresentIf ; sh:datatype xsd:string ;
+        sh:message "bddo:isPresentIf takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:isSigned ; sh:datatype xsd:boolean ;
+        sh:message "bddo:isSigned takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
+    sh:property [ sh:path bddo:key ; sh:datatype xsd:string ;
+        sh:message "bddo:key takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:keyIsCaseInsensitive ; sh:datatype xsd:boolean ;
+        sh:message "bddo:keyIsCaseInsensitive takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
+    sh:property [ sh:path bddo:keyPath ; sh:datatype xsd:string ;
+        sh:message "bddo:keyPath takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:keyValueSeparator ; sh:datatype xsd:hexBinary ;
+        sh:message "bddo:keyValueSeparator takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
+    sh:property [ sh:path bddo:namespaceIRI ; sh:datatype xsd:anyURI ;
+        sh:message "bddo:namespaceIRI takes an xsd:anyURI literal (rdfs:range xsd:anyURI)." ] ;
+    sh:property [ sh:path bddo:namespacePrefix ; sh:datatype xsd:string ;
+        sh:message "bddo:namespacePrefix takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:nodePath ; sh:datatype xsd:string ;
+        sh:message "bddo:nodePath takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:numericBase ; sh:node bddo:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "bddo:numericBase takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path bddo:pathSeparator ; sh:datatype xsd:string ;
+        sh:message "bddo:pathSeparator takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:quoteChar ; sh:datatype xsd:hexBinary ;
+        sh:message "bddo:quoteChar takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
+    sh:property [ sh:path bddo:recordDelimiter ; sh:datatype xsd:hexBinary ;
+        sh:message "bddo:recordDelimiter takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
+    sh:property [ sh:path bddo:repeatCount ; sh:node bddo:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "bddo:repeatCount takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path bddo:repeatCountFromExpression ; sh:datatype xsd:string ;
+        sh:message "bddo:repeatCountFromExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:repeatUntil ; sh:datatype xsd:string ;
+        sh:message "bddo:repeatUntil takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:separatedBy ; sh:datatype xsd:string ;
+        sh:message "bddo:separatedBy takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:size ; sh:node bddo:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "bddo:size takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path bddo:sizeFromExpression ; sh:datatype xsd:string ;
+        sh:message "bddo:sizeFromExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:sizeToEndOfStream ; sh:datatype xsd:boolean ;
+        sh:message "bddo:sizeToEndOfStream takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
+    sh:property [ sh:path bddo:skipRecords ; sh:node bddo:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "bddo:skipRecords takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path bddo:syncOnMarker ; sh:datatype xsd:hexBinary ;
+        sh:message "bddo:syncOnMarker takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
+    sh:property [ sh:path bddo:terminator ; sh:datatype xsd:hexBinary ;
+        sh:message "bddo:terminator takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
+    sh:property [ sh:path bddo:trimNull ; sh:datatype xsd:boolean ;
+        sh:message "bddo:trimNull takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
+    sh:property [ sh:path bddo:trimWhitespace ; sh:datatype xsd:boolean ;
+        sh:message "bddo:trimWhitespace takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
+    sh:property [ sh:path bddo:validIf ; sh:datatype xsd:string ;
+        sh:message "bddo:validIf takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:valueFromExpression ; sh:datatype xsd:string ;
+        sh:message "bddo:valueFromExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:whitespaceSeparated ; sh:datatype xsd:boolean ;
+        sh:message "bddo:whitespaceSeparated takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] .
 

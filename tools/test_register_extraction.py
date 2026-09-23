@@ -82,7 +82,7 @@ EXPECTED_COUNTS = {
     # the docstring asks for, not a rubber stamp.
     "media-encoding": (2, 24),  # +1 explicit RFC 1950 Zlib framing concept
     "color": (1, 4),
-    "checksum": (1, 4),
+    "checksum": (1, 6),  # +CRC16 and Adler32, which bddo already identified physically
     "part-role": (1, 12),
     "geometry-type": (1, 7),  # Six migrated concepts plus the documented GeometryCollection addition.
 }

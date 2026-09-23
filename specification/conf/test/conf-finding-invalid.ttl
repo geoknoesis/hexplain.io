@@ -1,0 +1,39 @@
+# expect: ex:F-NoConstraint conf:FindingShape sh:OrConstraintComponent
+# expect: ex:F-Unattributed conf:FindingShape sh:MinCountConstraintComponent
+# expect: ex:F-BadKind conf:FindingShape sh:InConstraintComponent
+# expect: ex:F-TwoOffsets conf:FindingShape sh:MaxCountConstraintComponent
+@prefix conf:     <https://hexplain.io/ns/conf#> .
+@prefix req:      <https://hexplain.io/ns/req#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix ex:       <https://example.org/nitf-finding-bad#> .
+
+ex:R-FHDR a req:Requirement ;
+    req:requirementId "MIL-STD-2500C-A1-FHDR" ;
+    req:fromStandard "MIL-STD-2500C, 01 May 2006, Table A-1 (finding-invalid fixture)" ;
+    req:statement "FHDR shall contain the value NITF." ;
+    req:discrepancyType req:Syntactic .
+
+# A rule error that does not say which constraint failed to evaluate.
+ex:F-NoConstraint a conf:Finding ;
+    conf:findingKind conf:RuleError ;
+    conf:findingRequirement ex:R-FHDR ;
+    conf:findingMessage "Evaluation failed." .
+
+# A finding attributed to no requirement cannot be reported.
+ex:F-Unattributed a conf:Finding ;
+    conf:findingKind conf:Violation ;
+    conf:findingMessage "Something is wrong." .
+
+# sh:Violation is a severity, not a finding kind.
+ex:F-BadKind a conf:Finding ;
+    conf:findingKind sh:Violation ;
+    conf:findingRequirement ex:R-FHDR ;
+    conf:findingMessage "FHDR must be 'NITF'." .
+
+# A finding has one location.
+ex:F-TwoOffsets a conf:Finding ;
+    conf:findingKind conf:Violation ;
+    conf:findingRequirement ex:R-FHDR ;
+    conf:findingMessage "FHDR must be 'NITF'." ;
+    hexplain:byteOffset 0 , 4 .

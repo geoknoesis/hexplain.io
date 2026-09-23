@@ -1,4 +1,4 @@
-# Hexplain Aspect — Spatial Reference (hx-spatialref) 1.0
+# Hexplain Aspect — Spatial Reference (hx-spatialref) 1.2
 # Reference-frame aspect: georeferencing / coordinate reference. Neither raster nor vector —
 # shared by geo-raster and geo-vector alike. Imports nothing.
 @prefix :        <https://hexplain.io/ns/aspect/spatialref#> .
@@ -13,7 +13,9 @@
 @prefix vann:    <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/aspect/spatialref> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/spatialref/1.1> ; owl:versionInfo "1.1 working draft" ; owl:priorVersion <https://hexplain.io/ns/aspect/spatialref/1.0> ; dcterms:modified "2026-09-05"^^xsd:date ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/spatialref/1.2> ; owl:versionInfo "1.2 working draft" ;
+    owl:priorVersion <https://hexplain.io/ns/aspect/spatialref/1.1> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Spatial Reference (hx-spatialref)" ;
     rdfs:comment "Aspect for georeferencing: coordinate reference systems, geotransforms, registration. Shared by geospatial raster and vector data." ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -158,6 +160,100 @@ asref:GroundControlPointShape a sh:NodeShape ;
       }
     """ ] .
 
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+asref:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
+asref:FloatValueShape a sh:NodeShape ; rdfs:label "Float value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    sh:or ( [ sh:datatype xsd:double ] [ sh:datatype xsd:float ] ) .
+asref:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    sh:targetSubjectsOf asref:coordinateEpoch ,
+        asref:epsgCode ,
+        asref:footprintWKT ,
+        asref:gcpIdentifier ,
+        asref:gcpPixelX ,
+        asref:gcpPixelY ,
+        asref:gcpX ,
+        asref:gcpY ,
+        asref:gcpZ ,
+        asref:heightOffset ,
+        asref:heightScale ,
+        asref:latitudeOffset ,
+        asref:latitudeScale ,
+        asref:lineOffset ,
+        asref:lineScale ,
+        asref:longitudeOffset ,
+        asref:longitudeScale ,
+        asref:originLatitude ,
+        asref:originLongitude ,
+        asref:originX ,
+        asref:originY ,
+        asref:sampleOffset ,
+        asref:sampleScale ,
+        asref:scaleX ,
+        asref:scaleY ,
+        asref:skewX ,
+        asref:skewY ;
+    sh:property [ sh:path asref:coordinateEpoch ; sh:datatype xsd:decimal ;
+        sh:message "asref:coordinateEpoch takes an xsd:decimal literal (rdfs:range xsd:decimal)." ] ;
+    sh:property [ sh:path asref:epsgCode ; sh:node asref:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "asref:epsgCode takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path asref:footprintWKT ; sh:datatype xsd:string ;
+        sh:message "asref:footprintWKT takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path asref:gcpIdentifier ; sh:datatype xsd:string ;
+        sh:message "asref:gcpIdentifier takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path asref:gcpPixelX ; sh:node asref:FloatValueShape ;
+        sh:message "asref:gcpPixelX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:gcpPixelY ; sh:node asref:FloatValueShape ;
+        sh:message "asref:gcpPixelY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:gcpX ; sh:node asref:FloatValueShape ;
+        sh:message "asref:gcpX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:gcpY ; sh:node asref:FloatValueShape ;
+        sh:message "asref:gcpY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:gcpZ ; sh:node asref:FloatValueShape ;
+        sh:message "asref:gcpZ takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:heightOffset ; sh:node asref:FloatValueShape ;
+        sh:message "asref:heightOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:heightScale ; sh:node asref:FloatValueShape ;
+        sh:message "asref:heightScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:latitudeOffset ; sh:node asref:FloatValueShape ;
+        sh:message "asref:latitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:latitudeScale ; sh:node asref:FloatValueShape ;
+        sh:message "asref:latitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:lineOffset ; sh:node asref:FloatValueShape ;
+        sh:message "asref:lineOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:lineScale ; sh:node asref:FloatValueShape ;
+        sh:message "asref:lineScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:longitudeOffset ; sh:node asref:FloatValueShape ;
+        sh:message "asref:longitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:longitudeScale ; sh:node asref:FloatValueShape ;
+        sh:message "asref:longitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:originLatitude ; sh:node asref:FloatValueShape ;
+        sh:message "asref:originLatitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:originLongitude ; sh:node asref:FloatValueShape ;
+        sh:message "asref:originLongitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:originX ; sh:node asref:FloatValueShape ;
+        sh:message "asref:originX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:originY ; sh:node asref:FloatValueShape ;
+        sh:message "asref:originY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:sampleOffset ; sh:node asref:FloatValueShape ;
+        sh:message "asref:sampleOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:sampleScale ; sh:node asref:FloatValueShape ;
+        sh:message "asref:sampleScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:scaleX ; sh:node asref:FloatValueShape ;
+        sh:message "asref:scaleX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:scaleY ; sh:node asref:FloatValueShape ;
+        sh:message "asref:scaleY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:skewX ; sh:node asref:FloatValueShape ;
+        sh:message "asref:skewX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+    sh:property [ sh:path asref:skewY ; sh:node asref:FloatValueShape ;
+        sh:message "asref:skewY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] .
+
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/aspect/spatialref> <http://www.w3.org/2004/02/skos/core#definition> "Aspect for georeferencing: coordinate reference systems, geotransforms, registration. Shared by geospatial raster and vector data."@en .
@@ -182,6 +278,8 @@ asref:GroundControlPointShape a sh:NodeShape ;
 <https://hexplain.io/ns/aspect/spatialref#FiniteDoubleShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/spatialref#FiniteDoubleShape> <http://www.w3.org/2000/01/rdf-schema#label> "Finite Double Shape"@en .
 <https://hexplain.io/ns/aspect/spatialref#FiniteDoubleShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/spatialref> .
+<https://hexplain.io/ns/aspect/spatialref#FloatValueShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Float value. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/aspect/spatialref#FloatValueShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/spatialref#GeoTransform> <http://www.w3.org/2004/02/skos/core#definition> "The affine mapping from pixel/line to ground coordinates, carrying the six coefficients asref:originX, scaleX, skewX, originY, skewY, scaleY -- GDAL's GT[0..5] in that order. A north-up raster leaves both skews zero; only the skews make a rotated grid expressible."@en .
 <https://hexplain.io/ns/aspect/spatialref#GeoTransform> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/aspect/spatialref#GeoTransformShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for asref:originX, asref:originY, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY. Its constraints below specify the permitted values and combinations."@en .
@@ -194,12 +292,16 @@ asref:GroundControlPointShape a sh:NodeShape ;
 <https://hexplain.io/ns/aspect/spatialref#GroundControlPointShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of asref:GroundControlPoint; objects of asref:hasGroundControlPoint Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/spatialref#GroundControlPointShape> <http://www.w3.org/2000/01/rdf-schema#label> "Ground Control Point Shape"@en .
 <https://hexplain.io/ns/aspect/spatialref#GroundControlPointShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/spatialref> .
+<https://hexplain.io/ns/aspect/spatialref#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Integer value. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/aspect/spatialref#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/spatialref#PixelCenter> <http://www.w3.org/2004/02/skos/core#definition> "Pixel registration referring to a sample center. This metadata does not change the normalized affine convention by itself."@en .
 <https://hexplain.io/ns/aspect/spatialref#PixelCenter> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/aspect/spatialref#PixelCenter> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/spatialref> .
 <https://hexplain.io/ns/aspect/spatialref#PixelCorner> <http://www.w3.org/2004/02/skos/core#definition> "Pixel registration referring to a pixel corner; the normalized affine convention places the first pixel's upper-left corner at column/row zero."@en .
 <https://hexplain.io/ns/aspect/spatialref#PixelCorner> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/aspect/spatialref#PixelCorner> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/spatialref> .
+<https://hexplain.io/ns/aspect/spatialref#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for asref:coordinateEpoch, asref:epsgCode, asref:footprintWKT, asref:gcpIdentifier, asref:gcpPixelX, asref:gcpPixelY, asref:gcpX, asref:gcpY, asref:gcpZ, asref:heightOffset, asref:heightScale, asref:latitudeOffset, asref:latitudeScale, asref:lineOffset, asref:lineScale, asref:longitudeOffset, asref:longitudeScale, asref:originLatitude, asref:originLongitude, asref:originX, asref:originY, asref:sampleOffset, asref:sampleScale, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY. asref:coordinateEpoch takes an xsd:decimal literal (rdfs:range xsd:decimal). asref:epsgCode takes a positive integer (rdfs:range xsd:positiveInteger). asref:footprintWKT takes an xsd:string literal (rdfs:range xsd:string). asref:gcpIdentifier takes an xsd:string literal (rdfs:range xsd:string). asref:gcpPixelX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:gcpPixelY takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:gcpX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:gcpY takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:gcpZ takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:heightOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:heightScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:latitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:latitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:lineOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:lineScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:longitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:longitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:originLatitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:originLongitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:originX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:originY takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:sampleOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:sampleScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:scaleX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:scaleY takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:skewX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:skewY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)."@en .
+<https://hexplain.io/ns/aspect/spatialref#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using asref:coordinateEpoch, asref:epsgCode, asref:footprintWKT, asref:gcpIdentifier, asref:gcpPixelX, asref:gcpPixelY, asref:gcpX, asref:gcpY, asref:gcpZ, asref:heightOffset, asref:heightScale, asref:latitudeOffset, asref:latitudeScale, asref:lineOffset, asref:lineScale, asref:longitudeOffset, asref:longitudeScale, asref:originLatitude, asref:originLongitude, asref:originX, asref:originY, asref:sampleOffset, asref:sampleScale, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/spatialref#coordinateEpoch> <http://www.w3.org/2004/02/skos/core#definition> "Coordinate epoch in decimal years for coordinates in a dynamic reference frame; distinct from acquisition time and CRS reference epoch."@en .
 <https://hexplain.io/ns/aspect/spatialref#coordinateEpoch> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/aspect/spatialref#crsIdentifier> <http://www.w3.org/2004/02/skos/core#definition> "Authoritative CRS IRI; supports authorities and compound or vertical systems without assuming a single numeric code scheme."@en .

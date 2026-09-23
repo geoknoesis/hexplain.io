@@ -1,4 +1,4 @@
-# Hexplain Image Vocabulary (IDV) 1.0 — vocabulary + SHACL shapes
+# Hexplain Image Vocabulary (IDV) 1.1 — vocabulary + SHACL shapes
 @prefix :       <https://hexplain.io/ns/image#> .
 @prefix img:    <https://hexplain.io/ns/image#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
@@ -14,7 +14,9 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/image> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/image/1.0> ; owl:versionInfo "1.0" ;
+    owl:versionIRI <https://hexplain.io/ns/image/1.1> ; owl:versionInfo "1.1" ;
+    owl:priorVersion <https://hexplain.io/ns/image/1.0> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/aspect/raster> , <https://hexplain.io/ns/aspect/sampling> , <https://hexplain.io/ns/aspect/color> ;
     rdfs:label "Hexplain Image Vocabulary (IDV)" ;
     rdfs:comment "Semantic vocabulary for raster image properties." ;
@@ -42,9 +44,32 @@ img:ImageShape a sh:NodeShape ; sh:targetClass img:ImageHeader ;
     sh:property {{constraint:pattern_071}} ;
     sh:property {{constraint:pattern_073}} ;
     sh:property {{constraint:pattern_048}} .
-img:CodeShapes a sh:NodeShape ; sh:targetSubjectsOf img:colorType ;
+img:CodeShapes a sh:NodeShape ; sh:targetClass img:ImageHeader ;
+    sh:targetSubjectsOf img:colorType, img:compressionMethod, img:filterMethod, img:interlaceMethod ;
     sh:property [ sh:path img:colorType ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
     sh:property [ sh:path img:compressionMethod ; sh:nodeKind sh:Literal ] ;
     sh:property [ sh:path img:filterMethod ; sh:nodeKind sh:Literal ] ;
     sh:property [ sh:path img:interlaceMethod ; sh:nodeKind sh:Literal ] .
+
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+img:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/image> ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
+img:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/image> ;
+    sh:targetSubjectsOf img:colorType ,
+        img:compressionMethod ,
+        img:filterMethod ,
+        img:interlaceMethod ;
+    sh:property [ sh:path img:colorType ; sh:node img:IntegerValueShape ;
+        sh:message "img:colorType takes an integer (rdfs:range xsd:integer)." ] ;
+    sh:property [ sh:path img:compressionMethod ; sh:node img:IntegerValueShape ;
+        sh:message "img:compressionMethod takes an integer (rdfs:range xsd:integer)." ] ;
+    sh:property [ sh:path img:filterMethod ; sh:node img:IntegerValueShape ;
+        sh:message "img:filterMethod takes an integer (rdfs:range xsd:integer)." ] ;
+    sh:property [ sh:path img:interlaceMethod ; sh:node img:IntegerValueShape ;
+        sh:message "img:interlaceMethod takes an integer (rdfs:range xsd:integer)." ] .
 

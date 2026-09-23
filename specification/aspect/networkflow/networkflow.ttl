@@ -1,4 +1,4 @@
-# Hexplain Aspect — Network Flow (hx-networkflow) 1.0
+# Hexplain Aspect — Network Flow (hx-networkflow) 1.2
 # System aspect: protocol addressing and flow control. Currently consumed by NPV; factored
 # out as its own aspect so future protocol vocabularies reuse one set of terms.
 @prefix :       <https://hexplain.io/ns/aspect/networkflow#> .
@@ -8,9 +8,12 @@
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
 
 <https://hexplain.io/ns/aspect/networkflow> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/networkflow/1.1> ; owl:versionInfo "1.1" ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/networkflow/1.2> ; owl:versionInfo "1.2" ;
+    owl:priorVersion <https://hexplain.io/ns/aspect/networkflow/1.1> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Network Flow (hx-networkflow)" ;
     rdfs:comment "Aspect for protocol addressing and flow: endpoints, ports, protocol numbers, and TCP flow control." ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -27,10 +30,30 @@
 :acknowledgmentNumber a owl:DatatypeProperty ; rdfs:label "acknowledgment number" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/networkflow> ; rdfs:range xsd:unsignedInt .
 :tcpFlags a owl:DatatypeProperty ; rdfs:label "TCP flags" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/networkflow> ; rdfs:range xsd:hexBinary .
 
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+anet:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/networkflow> ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
+anet:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/networkflow> ;
+    sh:targetSubjectsOf anet:etherType ,
+        anet:protocolNumber ;
+    sh:property [ sh:path anet:etherType ; sh:datatype xsd:hexBinary ;
+        sh:message "anet:etherType takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
+    sh:property [ sh:path anet:protocolNumber ; sh:node anet:IntegerValueShape ;
+        sh:message "anet:protocolNumber takes an integer (rdfs:range xsd:integer)." ] .
+
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/aspect/networkflow> <http://www.w3.org/2004/02/skos/core#definition> "Aspect for protocol addressing and flow: endpoints, ports, protocol numbers, and TCP flow control."@en .
 <https://hexplain.io/ns/aspect/networkflow> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for protocol addressing and transport/flow metadata. A source number or bit pattern has meaning only in its declared protocol context."@en .
+<https://hexplain.io/ns/aspect/networkflow#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Integer value. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/aspect/networkflow#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/aspect/networkflow#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for anet:etherType, anet:protocolNumber. anet:etherType takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). anet:protocolNumber takes an integer (rdfs:range xsd:integer)."@en .
+<https://hexplain.io/ns/aspect/networkflow#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using anet:etherType, anet:protocolNumber Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/networkflow#acknowledgmentNumber> <http://www.w3.org/2004/02/skos/core#definition> "The source protocol's acknowledgment position or identifier, interpreted in the applicable sequence space."@en .
 <https://hexplain.io/ns/aspect/networkflow#acknowledgmentNumber> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for protocol addressing and transport/flow metadata. A source number or bit pattern has meaning only in its declared protocol context. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/aspect/networkflow#destinationAddress> <http://www.w3.org/2004/02/skos/core#definition> "The recipient address as text in the notation selected by the protocol profile."@en .

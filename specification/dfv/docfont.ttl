@@ -1,4 +1,4 @@
-# Hexplain Document & Font Vocabulary (DFV) 1.0 — vocabulary + SHACL shapes
+# Hexplain Document & Font Vocabulary (DFV) 1.1 — vocabulary + SHACL shapes
 @prefix :       <https://hexplain.io/ns/docfont#> .
 @prefix dfv:    <https://hexplain.io/ns/docfont#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
@@ -10,7 +10,9 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/docfont> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/docfont/1.0> ; owl:versionInfo "1.0" ;
+    owl:versionIRI <https://hexplain.io/ns/docfont/1.1> ; owl:versionInfo "1.1" ;
+    owl:priorVersion <https://hexplain.io/ns/docfont/1.0> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
     rdfs:label "Hexplain Document & Font Vocabulary (DFV)" ;
     rdfs:comment "Semantic vocabulary for document and font file properties." ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -51,10 +53,42 @@ dfv:DocumentShape a sh:NodeShape ; sh:targetClass dfv:Document ; sh:targetSubjec
     sh:property [ sh:path dfv:pageCount ; sh:minExclusive 0 ; sh:maxCount 1 ] .
 dfv:PageShape a sh:NodeShape ; sh:targetSubjectsOf dfv:hasBoundingBox ;
     sh:property [ sh:path dfv:hasBoundingBox ; sh:class dfv:BoundingBox ] .
-dfv:FontShape a sh:NodeShape ; sh:targetSubjectsOf dfv:fontFamily ;
+dfv:FontShape a sh:NodeShape ; sh:targetClass dfv:Font ;
+    sh:targetSubjectsOf dfv:fontFamily, dfv:fontStyle, dfv:glyphCount ;
     sh:property [ sh:path dfv:fontFamily ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path dfv:fontStyle ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path dfv:glyphCount ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+dfv:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
+dfv:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ;
+    sh:targetSubjectsOf dfv:boxType ,
+        dfv:characterEncoding ,
+        dfv:creatorTool ,
+        dfv:glyphCount ,
+        dfv:pageCount ,
+        dfv:producerTool ,
+        dfv:unicodeCodePoint ;
+    sh:property [ sh:path dfv:boxType ; sh:datatype xsd:string ;
+        sh:message "dfv:boxType takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path dfv:characterEncoding ; sh:datatype xsd:string ;
+        sh:message "dfv:characterEncoding takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path dfv:creatorTool ; sh:datatype xsd:string ;
+        sh:message "dfv:creatorTool takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path dfv:glyphCount ; sh:node dfv:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "dfv:glyphCount takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path dfv:pageCount ; sh:node dfv:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "dfv:pageCount takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path dfv:producerTool ; sh:datatype xsd:string ;
+        sh:message "dfv:producerTool takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path dfv:unicodeCodePoint ; sh:datatype xsd:hexBinary ;
+        sh:message "dfv:unicodeCodePoint takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] .
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
@@ -75,13 +109,15 @@ dfv:FontShape a sh:NodeShape ; sh:targetSubjectsOf dfv:fontFamily ;
 <https://hexplain.io/ns/docfont#FontDescriptor> <http://www.w3.org/2004/02/skos/core#definition> "A metadata component describing a font's identity, characteristics or metrics."@en .
 <https://hexplain.io/ns/docfont#FontDescriptor> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for documents, pages, fonts and glyph components. Object identity, coordinate units and code interpretation depend on the document/font profile. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/docfont#FontShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for dfv:fontFamily, dfv:fontStyle, dfv:glyphCount. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/docfont#FontShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using dfv:fontFamily Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/docfont#FontShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of dfv:Font; subjects using dfv:fontFamily, dfv:fontStyle, dfv:glyphCount Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/docfont#FontShape> <http://www.w3.org/2000/01/rdf-schema#label> "Font Shape"@en .
 <https://hexplain.io/ns/docfont#FontShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/docfont> .
 <https://hexplain.io/ns/docfont#FontTable> <http://www.w3.org/2004/02/skos/core#definition> "A typed table within a structured font representation."@en .
 <https://hexplain.io/ns/docfont#FontTable> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for documents, pages, fonts and glyph components. Object identity, coordinate units and code interpretation depend on the document/font profile. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/docfont#Glyph> <http://www.w3.org/2004/02/skos/core#definition> "One graphical shape used in rendering text; glyph identity need not equal a Unicode character value."@en .
 <https://hexplain.io/ns/docfont#Glyph> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for documents, pages, fonts and glyph components. Object identity, coordinate units and code interpretation depend on the document/font profile. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/docfont#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Integer value. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/docfont#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/docfont#Object> <http://www.w3.org/2004/02/skos/core#definition> "An addressable internal document object whose concrete type and storage are determined by the document format."@en .
 <https://hexplain.io/ns/docfont#Object> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for documents, pages, fonts and glyph components. Object identity, coordinate units and code interpretation depend on the document/font profile. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/docfont#Page> <http://www.w3.org/2004/02/skos/core#definition> "One page in a paginated document."@en .
@@ -90,6 +126,8 @@ dfv:FontShape a sh:NodeShape ; sh:targetSubjectsOf dfv:fontFamily ;
 <https://hexplain.io/ns/docfont#PageShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using dfv:hasBoundingBox Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/docfont#PageShape> <http://www.w3.org/2000/01/rdf-schema#label> "Page Shape"@en .
 <https://hexplain.io/ns/docfont#PageShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/docfont> .
+<https://hexplain.io/ns/docfont#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for dfv:boxType, dfv:characterEncoding, dfv:creatorTool, dfv:glyphCount, dfv:pageCount, dfv:producerTool, dfv:unicodeCodePoint. dfv:boxType takes an xsd:string literal (rdfs:range xsd:string). dfv:characterEncoding takes an xsd:string literal (rdfs:range xsd:string). dfv:creatorTool takes an xsd:string literal (rdfs:range xsd:string). dfv:glyphCount takes a positive integer (rdfs:range xsd:positiveInteger). dfv:pageCount takes a positive integer (rdfs:range xsd:positiveInteger). dfv:producerTool takes an xsd:string literal (rdfs:range xsd:string). dfv:unicodeCodePoint takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)."@en .
+<https://hexplain.io/ns/docfont#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using dfv:boxType, dfv:characterEncoding, dfv:creatorTool, dfv:glyphCount, dfv:pageCount, dfv:producerTool, dfv:unicodeCodePoint Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/docfont#Stream> <http://www.w3.org/2004/02/skos/core#definition> "A document object containing a sequence of content bytes, possibly encoded."@en .
 <https://hexplain.io/ns/docfont#Stream> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for documents, pages, fonts and glyph components. Object identity, coordinate units and code interpretation depend on the document/font profile. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/docfont#Trailer> <http://www.w3.org/2004/02/skos/core#definition> "A closing document structure carrying references or metadata needed to resolve the document's logical root."@en .

@@ -1,6 +1,7 @@
-# Hexplain Geospatial Vocabulary (GV) 1.0 — vocabulary + SHACL shapes
+# Hexplain Geospatial Vocabulary (GV) 1.1 — vocabulary + SHACL shapes
 # GV is now a composition: dataset kinds + imported aspects. Spatial reference, provenance,
-# security, raster, geometry, and point-cloud concerns live in the orthogonal aspect layer.
+# geometry and point-cloud concerns live in the orthogonal aspect layer; raster and security
+# aspects are combined by profiles where the data carries them.
 @prefix :       <https://hexplain.io/ns/geo#> .
 @prefix gv:     <https://hexplain.io/ns/geo#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
@@ -21,12 +22,14 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/geo> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/geo/1.0> ; owl:versionInfo "1.0" ;
+    owl:versionIRI <https://hexplain.io/ns/geo/1.1> ; owl:versionInfo "1.1" ;
+    owl:priorVersion <https://hexplain.io/ns/geo/1.0> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/aspect/spatialref> , <https://hexplain.io/ns/aspect/provenance> ,
-                <https://hexplain.io/ns/aspect/security> , <https://hexplain.io/ns/aspect/raster> ,
-                <https://hexplain.io/ns/aspect/geometry> , <https://hexplain.io/ns/aspect/pointcloud> ;
+                <https://hexplain.io/ns/aspect/geometry> , <https://hexplain.io/ns/aspect/pointcloud> ,
+                <https://hexplain.io/ns/bddo> , <https://hexplain.io/ns/dlv> ;
     rdfs:label "Hexplain Geospatial Vocabulary (GV)" ;
-    rdfs:comment "Semantic vocabulary for geospatial and geointelligence data. A composition of dataset kinds plus the spatial-reference, geometry, raster, point-cloud, provenance, and security aspects." ;
+    rdfs:comment "Semantic vocabulary for geospatial and geointelligence data. A composition of dataset kinds plus the spatial-reference, geometry, point-cloud and provenance aspects it constrains; a profile combines it with the raster and security aspects where the data carries them." ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "gv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/geo#" .
@@ -44,46 +47,53 @@
 # noDataValue in araster:; pointCount/pointDataLayout in apc:; sensitivityLevel in asec:.
 
 # ---------- Layout axes (DLV specializations) ----------
-:axisLatitude a dlv:Axis ; rdfs:label "Latitude Axis" ; rdfs:seeAlso dlv:axisY .
-:axisLongitude a dlv:Axis ; rdfs:label "Longitude Axis" ; rdfs:seeAlso dlv:axisX .
-:axisElevation a dlv:Axis ; rdfs:label "Elevation Axis" ; rdfs:seeAlso dlv:axisZ .
-:axisPoint a dlv:Axis ; rdfs:label "Point Axis" .
+:axisLatitude a dlv:Axis ; rdfs:label "Latitude Axis (deprecated)" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ;
+    owl:deprecated true ; dcterms:isReplacedBy dlv:axisY ;
+    rdfs:comment "Deprecated duplicate of dlv:axisY. A layout axis is positional; that the grid's X or Y runs along longitude or latitude is stated by its spatial reference, not by a second axis individual. Layouts use dlv:axisY; this IRI is retained so existing descriptions still resolve and denotes the same axis." .
+:axisLongitude a dlv:Axis ; rdfs:label "Longitude Axis (deprecated)" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ;
+    owl:deprecated true ; dcterms:isReplacedBy dlv:axisX ;
+    rdfs:comment "Deprecated duplicate of dlv:axisX. A layout axis is positional; that the grid's X or Y runs along longitude or latitude is stated by its spatial reference, not by a second axis individual. Layouts use dlv:axisX; this IRI is retained so existing descriptions still resolve and denotes the same axis." .
+:axisElevation a dlv:Axis ; rdfs:label "Elevation Axis (deprecated)" ; rdfs:isDefinedBy <https://hexplain.io/ns/geo> ;
+    owl:deprecated true ; dcterms:isReplacedBy dlv:axisZ ;
+    rdfs:comment "Deprecated duplicate of dlv:axisZ. A layout axis is positional; that Z carries elevation is stated by the vertical reference, not by a second axis individual. Layouts use dlv:axisZ; this IRI is retained so existing descriptions still resolve and denotes the same axis." .
+:axisPoint a dlv:Axis ; rdfs:label "Point Axis" ;
+    rdfs:comment "The axis indexing the points of an unstructured point collection. DLV defines no equivalent: its axes are grid dimensions, and a point index has no spatial order." .
 
 # ---------- SHACL ----------
-gv:CrsShape a sh:NodeShape ; sh:targetSubjectsOf asref:wktString ;
+gv:CrsShape a sh:NodeShape ; sh:targetSubjectsOf asref:wktString, asref:epsgCode ;
     sh:property [ sh:path asref:wktString ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path asref:epsgCode ; sh:minExclusive 0 ; sh:maxCount 1 ] .
-gv:OriginShape a sh:NodeShape ; sh:targetSubjectsOf asref:originLatitude ;
+gv:OriginShape a sh:NodeShape ; sh:targetSubjectsOf asref:originLatitude, asref:originLongitude ;
     sh:property [ sh:path asref:originLatitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
     sh:property [ sh:path asref:originLongitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] .
 gv:PixelRegistrationShape a sh:NodeShape ; sh:targetSubjectsOf asref:pixelRegistration ;
     sh:property [ sh:path asref:pixelRegistration ; sh:maxCount 1 ; sh:in ( asref:PixelCorner asref:PixelCenter ) ] .
 gv:VectorShape a sh:NodeShape ; sh:targetClass gv:VectorDataset ;
     sh:property [ sh:path ageom:geometryType ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
-gv:PointCloudShape a sh:NodeShape ; sh:targetSubjectsOf apc:pointCount ;
+gv:PointCloudShape a sh:NodeShape ; sh:targetClass gv:PointCloud ; sh:targetSubjectsOf apc:pointCount, apc:pointDataLayout ;
     sh:property [ sh:path apc:pointCount ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path apc:pointDataLayout ; sh:class bddo:Struct ; sh:maxCount 1 ] .
-gv:AcquisitionShape a sh:NodeShape ; sh:targetSubjectsOf aprov:acquisitionTime ;
+gv:AcquisitionShape a sh:NodeShape ; sh:targetSubjectsOf aprov:acquisitionTime, aprov:platformName, aprov:sensorType ;
     sh:property [ sh:path aprov:acquisitionTime ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
     sh:property [ sh:path aprov:platformName ; sh:datatype xsd:string ] ;
     sh:property [ sh:path aprov:sensorType ; sh:datatype xsd:string ] .
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-<https://hexplain.io/ns/geo> <http://www.w3.org/2004/02/skos/core#definition> "Semantic vocabulary for geospatial and geointelligence data. A composition of dataset kinds plus the spatial-reference, geometry, raster, point-cloud, provenance, and security aspects."@en .
+<https://hexplain.io/ns/geo> <http://www.w3.org/2004/02/skos/core#definition> "Semantic vocabulary for geospatial and geointelligence data. A composition of dataset kinds plus the spatial-reference, geometry, point-cloud and provenance aspects it constrains; a profile combines it with the raster and security aspects where the data carries them."@en .
 <https://hexplain.io/ns/geo> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for georeferenced datasets. Combine the dataset kind with the appropriate raster, geometry, point-cloud, spatial-reference and provenance aspects."@en .
 <https://hexplain.io/ns/geo#AcquisitionShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for aprov:acquisitionTime, aprov:platformName, aprov:sensorType. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/geo#AcquisitionShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using aprov:acquisitionTime Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/geo#AcquisitionShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using aprov:acquisitionTime, aprov:platformName, aprov:sensorType Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/geo#AcquisitionShape> <http://www.w3.org/2000/01/rdf-schema#label> "Acquisition Shape"@en .
 <https://hexplain.io/ns/geo#AcquisitionShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/geo> .
 <https://hexplain.io/ns/geo#CrsShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for asref:epsgCode, asref:wktString. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/geo#CrsShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using asref:wktString Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/geo#CrsShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using asref:epsgCode, asref:wktString Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/geo#CrsShape> <http://www.w3.org/2000/01/rdf-schema#label> "Crs Shape"@en .
 <https://hexplain.io/ns/geo#CrsShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/geo> .
 <https://hexplain.io/ns/geo#GeospatialDataset> <http://www.w3.org/2004/02/skos/core#definition> "Georeferenced dataset. Carries the spatial-reference aspect (asref:) and, by kind, raster/geometry/point-cloud aspects, plus optional provenance and security."@en .
 <https://hexplain.io/ns/geo#GeospatialDataset> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for georeferenced datasets. Combine the dataset kind with the appropriate raster, geometry, point-cloud, spatial-reference and provenance aspects. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/geo#OriginShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for asref:originLatitude, asref:originLongitude. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/geo#OriginShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using asref:originLatitude Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/geo#OriginShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using asref:originLatitude, asref:originLongitude Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/geo#OriginShape> <http://www.w3.org/2000/01/rdf-schema#label> "Origin Shape"@en .
 <https://hexplain.io/ns/geo#OriginShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/geo> .
 <https://hexplain.io/ns/geo#PixelRegistrationShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for asref:pixelRegistration. Its constraints below specify the permitted values and combinations."@en .
@@ -93,7 +103,7 @@ gv:AcquisitionShape a sh:NodeShape ; sh:targetSubjectsOf aprov:acquisitionTime ;
 <https://hexplain.io/ns/geo#PointCloud> <http://www.w3.org/2004/02/skos/core#definition> "A georeferenced collection of sampled points with per-point positions and optional attributes, without assuming a regular grid."@en .
 <https://hexplain.io/ns/geo#PointCloud> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for georeferenced datasets. Combine the dataset kind with the appropriate raster, geometry, point-cloud, spatial-reference and provenance aspects. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/geo#PointCloudShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for apc:pointCount, apc:pointDataLayout. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/geo#PointCloudShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using apc:pointCount Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/geo#PointCloudShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of gv:PointCloud; subjects using apc:pointCount, apc:pointDataLayout Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/geo#PointCloudShape> <http://www.w3.org/2000/01/rdf-schema#label> "Point Cloud Shape"@en .
 <https://hexplain.io/ns/geo#PointCloudShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/geo> .
 <https://hexplain.io/ns/geo#RasterDataset> <http://www.w3.org/2004/02/skos/core#definition> "A georeferenced dataset whose values are organized as sample grids or raster bands, described using raster and spatial-reference aspects."@en .
@@ -104,15 +114,12 @@ gv:AcquisitionShape a sh:NodeShape ; sh:targetSubjectsOf aprov:acquisitionTime ;
 <https://hexplain.io/ns/geo#VectorShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of gv:VectorDataset Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/geo#VectorShape> <http://www.w3.org/2000/01/rdf-schema#label> "Vector Shape"@en .
 <https://hexplain.io/ns/geo#VectorShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/geo> .
-<https://hexplain.io/ns/geo#axisElevation> <http://www.w3.org/2004/02/skos/core#definition> "A logical layout axis for elevation or height values; units and vertical reference must be supplied separately."@en .
+<https://hexplain.io/ns/geo#axisElevation> <http://www.w3.org/2004/02/skos/core#definition> "Deprecated duplicate of dlv:axisZ, kept so existing descriptions resolve. Units and vertical reference are supplied by the spatial reference."@en .
 <https://hexplain.io/ns/geo#axisElevation> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for georeferenced datasets. Combine the dataset kind with the appropriate raster, geometry, point-cloud, spatial-reference and provenance aspects. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
-<https://hexplain.io/ns/geo#axisElevation> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/geo> .
-<https://hexplain.io/ns/geo#axisLatitude> <http://www.w3.org/2004/02/skos/core#definition> "A logical layout axis for latitude coordinates; it does not imply uniform angular spacing or a particular CRS."@en .
+<https://hexplain.io/ns/geo#axisLatitude> <http://www.w3.org/2004/02/skos/core#definition> "Deprecated duplicate of dlv:axisY, kept so existing descriptions resolve. Geographic meaning of a grid axis comes from its spatial reference, not from a separate axis individual."@en .
 <https://hexplain.io/ns/geo#axisLatitude> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for georeferenced datasets. Combine the dataset kind with the appropriate raster, geometry, point-cloud, spatial-reference and provenance aspects. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
-<https://hexplain.io/ns/geo#axisLatitude> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/geo> .
-<https://hexplain.io/ns/geo#axisLongitude> <http://www.w3.org/2004/02/skos/core#definition> "A logical layout axis for longitude coordinates; wrap convention and CRS remain separate metadata."@en .
+<https://hexplain.io/ns/geo#axisLongitude> <http://www.w3.org/2004/02/skos/core#definition> "Deprecated duplicate of dlv:axisX, kept so existing descriptions resolve. Geographic meaning of a grid axis comes from its spatial reference, not from a separate axis individual."@en .
 <https://hexplain.io/ns/geo#axisLongitude> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for georeferenced datasets. Combine the dataset kind with the appropriate raster, geometry, point-cloud, spatial-reference and provenance aspects. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
-<https://hexplain.io/ns/geo#axisLongitude> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/geo> .
 <https://hexplain.io/ns/geo#axisPoint> <http://www.w3.org/2004/02/skos/core#definition> "The index axis of an unstructured point sequence, rather than a regular spatial grid direction."@en .
 <https://hexplain.io/ns/geo#axisPoint> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for georeferenced datasets. Combine the dataset kind with the appropriate raster, geometry, point-cloud, spatial-reference and provenance aspects. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/geo#axisPoint> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/geo> .

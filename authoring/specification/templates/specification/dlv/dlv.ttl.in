@@ -1,4 +1,4 @@
-# Hexplain Data Layout Vocabulary (DLV) 1.0 — vocabulary + SHACL shapes
+# Hexplain Data Layout Vocabulary (DLV) 1.2 — vocabulary + SHACL shapes
 # Properties declare rdfs:range; domain and cardinality are in SHACL (no rdfs:domain).
 @prefix :       <https://hexplain.io/ns/dlv#> .
 @prefix dlv:    <https://hexplain.io/ns/dlv#> .
@@ -12,7 +12,9 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/dlv> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/dlv/1.1> ; owl:versionInfo "1.1" ;
+    owl:versionIRI <https://hexplain.io/ns/dlv/1.2> ; owl:versionInfo "1.2" ;
+    owl:priorVersion <https://hexplain.io/ns/dlv/1.1> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/bddo> ;
     rdfs:label "Hexplain Data Layout Vocabulary (DLV)" ;
     rdfs:comment "Vocabulary for describing multi-dimensional array layout within a flat byte stream." ;
@@ -212,4 +214,29 @@ dlv:ChunkedLayoutShape a sh:NodeShape ;
             { ?d dlv:chunkSize ?c } UNION { ?d dlv:chunkSizeFromField ?c }
             FILTER NOT EXISTS { $this dlv:chunkOffsetsFromField ?o }
         }""" ] .
+
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+dlv:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
+    {{constraint:pattern_237}} .
+dlv:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
+    sh:targetSubjectsOf dlv:cellBitWidth ,
+        dlv:chunkSize ,
+        dlv:dimensionSize ,
+        dlv:dimensionStride ,
+        dlv:dimensionStrideFromExpression ;
+    sh:property [ sh:path dlv:cellBitWidth ; sh:node dlv:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "dlv:cellBitWidth takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path dlv:chunkSize ; sh:node dlv:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "dlv:chunkSize takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path dlv:dimensionSize ; sh:node dlv:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "dlv:dimensionSize takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path dlv:dimensionStride ; sh:node dlv:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "dlv:dimensionStride takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path dlv:dimensionStrideFromExpression ; sh:datatype xsd:string ;
+        sh:message "dlv:dimensionStrideFromExpression takes an xsd:string literal (rdfs:range xsd:string)." ] .
 

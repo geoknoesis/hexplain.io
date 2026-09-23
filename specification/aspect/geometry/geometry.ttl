@@ -1,4 +1,4 @@
-# Hexplain Aspect — Geometry (hx-geometry) 1.0
+# Hexplain Aspect — Geometry (hx-geometry) 1.3
 # Content-representation aspect: explicit geometry (vector). Sibling of hx-raster; neither
 # imports the other. Shared by vector graphics, geospatial vector, and font glyph outlines.
 @prefix :        <https://hexplain.io/ns/aspect/geometry#> .
@@ -12,7 +12,9 @@
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
 
 <https://hexplain.io/ns/aspect/geometry> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/geometry/1.2> ; owl:versionInfo "1.2 working draft" ; owl:priorVersion <https://hexplain.io/ns/aspect/geometry/1.1> ; dcterms:modified "2026-09-05"^^xsd:date ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/geometry/1.3> ; owl:versionInfo "1.3 working draft" ;
+    owl:priorVersion <https://hexplain.io/ns/aspect/geometry/1.2> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Geometry (hx-geometry)" ;
     rdfs:comment "Aspect for explicit (vector) geometry: geometry type, dimensionality, coordinate precision. Sibling of hx-raster. Shared by vector graphics, geospatial vector, and font glyphs." ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -31,14 +33,31 @@
     sh:property [ sh:path :hasZ ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
     sh:property [ sh:path :hasM ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .
 
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+ageom:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
+ageom:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ;
+    sh:targetSubjectsOf ageom:coordinatePrecision ;
+    sh:property [ sh:path ageom:coordinatePrecision ; sh:node ageom:IntegerValueShape ;
+        sh:message "ageom:coordinatePrecision takes an integer (rdfs:range xsd:integer)." ] .
+
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/aspect/geometry> <http://www.w3.org/2004/02/skos/core#definition> "Aspect for explicit (vector) geometry: geometry type, dimensionality, coordinate precision. Sibling of hx-raster. Shared by vector graphics, geospatial vector, and font glyphs."@en .
 <https://hexplain.io/ns/aspect/geometry> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for explicit geometry semantics across vector graphics, geospatial features and glyph outlines. Spatial coordinates and measure ordinates must remain distinct."@en .
+<https://hexplain.io/ns/aspect/geometry#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Integer value. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/aspect/geometry#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/geometry#OrdinateShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for ageom:dimensionality, ageom:geometryType, ageom:hasM, ageom:hasZ. Its constraints below specify the permitted values and combinations."@en .
 <https://hexplain.io/ns/aspect/geometry#OrdinateShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using ageom:dimensionality, ageom:geometryType, ageom:hasM, ageom:hasZ Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/geometry#OrdinateShape> <http://www.w3.org/2000/01/rdf-schema#label> "Ordinate Shape"@en .
 <https://hexplain.io/ns/aspect/geometry#OrdinateShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/geometry> .
+<https://hexplain.io/ns/aspect/geometry#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for ageom:coordinatePrecision. ageom:coordinatePrecision takes an integer (rdfs:range xsd:integer)."@en .
+<https://hexplain.io/ns/aspect/geometry#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using ageom:coordinatePrecision Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/geometry#coordinatePrecision> <http://www.w3.org/2004/02/skos/core#definition> "Number of decimal places retained per coordinate."@en .
 <https://hexplain.io/ns/aspect/geometry#coordinatePrecision> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for explicit geometry semantics across vector graphics, geospatial features and glyph outlines. Spatial coordinates and measure ordinates must remain distinct. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/aspect/geometry#dimensionality> <http://www.w3.org/2004/02/skos/core#definition> "Coordinate dimensionality (2 for XY, 3 for XYZ)."@en .

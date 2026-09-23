@@ -91,3 +91,57 @@ if failures:
     print("FAIL:\n" + "\n\n".join(failures))
     sys.exit(1)
 print(f"PASS: {len(modules)} modules' index.html match their .ttl")
+
+
+# ---- Versions and the namespace registry --------------------------------------------------
+# The embedded vocabulary matching its .ttl says nothing about the prose around it: dlv and
+# npv pages announced "Version 1.0" over a 1.1 vocabulary, eleven Turtle header comments named
+# a version the ontology no longer had, and the family's namespace registry listed 27 of 36
+# namespaces. Each of those is a restatement of a fact the canonical RDF owns, so each is
+# compared with it here.
+import json  # noqa: E402
+
+MARKER = "\n# BEGIN GENERATED TERM DOCUMENTATION\n"
+VANN = rdflib.Namespace("http://purl.org/vocab/vann/")
+version_failures = []
+family = json.loads(pathlib.Path("specification/family.json").read_text(encoding="utf-8"))["files"]
+registry = pathlib.Path("specification/index.html").read_text(encoding="utf-8")
+registry = _section(registry, "namespaces")
+for rel in family:
+    ttl = pathlib.Path("specification") / rel
+    text = ttl.read_text(encoding="utf-8").replace("\r\n", "\n")
+    g = rdflib.Graph().parse(data=text.split(MARKER)[0], format="turtle")
+    ontology = next(iter(g.subjects(rdflib.RDF.type, rdflib.OWL.Ontology)), None)
+    if ontology is None:
+        continue
+    info = g.value(ontology, rdflib.OWL.versionInfo)
+    number = re.match(r"\d+(\.\d+)*", str(info)).group(0) if info else None
+    viri = g.value(ontology, rdflib.OWL.versionIRI)
+    if number and viri is not None and not str(viri).endswith("/" + number):
+        version_failures.append(f"{rel}: owl:versionIRI {viri} disagrees with owl:versionInfo {info}")
+    first = text.split("\n", 1)[0]
+    stated = re.search(r"\b(\d+\.\d+)\b", first) if first.startswith("#") else None
+    if number and stated and stated.group(1) != number:
+        version_failures.append(f"{rel}: header comment says {stated.group(1)}, owl:versionInfo is {info}")
+    page = ttl.parent / "index.html"
+    if number and page.exists():
+        subtitle = re.search(r'subtitle:\s*"Version ([0-9.]+)"', page.read_text(encoding="utf-8"))
+        if subtitle and subtitle.group(1) != number:
+            version_failures.append(f"{page.as_posix()}: subtitle says Version {subtitle.group(1)}, "
+                                    f"{rel} is {info}")
+    prefix, uri = g.value(ontology, VANN.preferredNamespacePrefix), g.value(ontology, VANN.preferredNamespaceUri)
+    if prefix is None or uri is None:
+        version_failures.append(f"{rel}: no vann:preferredNamespacePrefix/Uri to register")
+    elif f"<code>{prefix}</code></td><td><code>{uri}</code>" not in registry:
+        version_failures.append(f"specification/index.html#namespaces: {prefix} -> {uri} ({rel}) is not registered")
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from _build_architecture_catalogue import PAGE as _CATALOGUE, render as _catalogue  # noqa: E402
+
+if _catalogue(_CATALOGUE.read_text(encoding="utf-8")) != _CATALOGUE.read_text(encoding="utf-8"):
+    version_failures.append("specification/architecture/index.html: aspect catalogue is stale; "
+                            "run python tools/_build_architecture_catalogue.py")
+if version_failures:
+    print("FAIL:\n  " + "\n  ".join(version_failures))
+    sys.exit(1)
+print(f"PASS: versions, header comments, namespace registry and aspect catalogue agree with {len(family)} modules")

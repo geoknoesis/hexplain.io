@@ -1,0 +1,12 @@
+@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:      <https://example.org/raster-nodata#> .
+
+# A grid-level NaN no-data value inherited by band 1; band 2 states its own integer value.
+ex:grid a araster:RasterGrid ;
+    araster:width 4 ; araster:height 4 ; araster:bandCount 3 ;
+    araster:noDataValue "NaN"^^xsd:double ;
+    araster:hasBand ex:band1 , ex:band2 , ex:band3 .
+ex:band1 a araster:RasterBand ; araster:bandIndex 1 .
+ex:band2 a araster:RasterBand ; araster:bandIndex 2 ; araster:noDataValue 255 .
+ex:band3 a araster:RasterBand ; araster:bandIndex 3 ; araster:noDataValue "-9999.0"^^xsd:float .

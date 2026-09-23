@@ -1,6 +1,10 @@
 @prefix conf: <https://hexplain.io/ns/conf#> .
 @prefix req:  <https://hexplain.io/ns/req#> .
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ex:   <https://example.org/nitf#> .
+
+ex:FileHeader a bddo:Struct .
 
 ex:R-FHDR a req:Requirement ;
     req:requirementId "MIL-STD-2500C-A1-FHDR" ;
@@ -13,4 +17,5 @@ ex:C-FHDR a conf:Constraint ;
     conf:scope ex:FileHeader ;
     conf:assertion "FHDR == 'NITF'" ;
     conf:satisfies ex:R-FHDR ;
+    conf:severity sh:Violation ;
     conf:message "FHDR must be 'NITF' but was '{value}'." .

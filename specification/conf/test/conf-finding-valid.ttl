@@ -1,0 +1,48 @@
+@prefix conf:     <https://hexplain.io/ns/conf#> .
+@prefix req:      <https://hexplain.io/ns/req#> .
+@prefix bddo:     <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix ex:       <https://example.org/nitf-finding#> .
+
+ex:FileHeader a bddo:Struct .
+
+ex:R-FHDR a req:Requirement ;
+    req:requirementId "MIL-STD-2500C-A1-FHDR" ;
+    req:fromStandard "MIL-STD-2500C, 01 May 2006, Table A-1 (finding fixture)" ;
+    req:statement "FHDR shall contain the value NITF." ;
+    req:discrepancyType req:Syntactic .
+ex:R-FVER a req:Requirement ;
+    req:requirementId "MIL-STD-2500C-A1-FVER" ;
+    req:fromStandard "MIL-STD-2500C, 01 May 2006, Table A-1 (finding fixture)" ;
+    req:statement "FVER shall contain the value 02.10." ;
+    req:discrepancyType req:Syntactic .
+
+ex:C-FHDR a conf:Constraint ;
+    conf:scope ex:FileHeader ;
+    conf:assertion "FHDR == 'NITF' && FVER == '02.10'" ;
+    conf:satisfies ex:R-FHDR , ex:R-FVER ;
+    conf:message "File header identity is wrong: '{value}'." .
+
+# One failed evaluation of a constraint citing two requirements: one finding citing both.
+ex:F1 a conf:Finding ;
+    conf:findingKind conf:Violation ;
+    conf:findingConstraint ex:C-FHDR ;
+    conf:findingRequirement ex:R-FHDR , ex:R-FVER ;
+    conf:focusNode ex:header-instance-0 ;
+    conf:findingMessage "File header identity is wrong: 'NSIF'." ;
+    hexplain:byteOffset 0 ;
+    hexplain:byteLength 9 .
+
+# A rule error names the constraint that could not be evaluated.
+ex:F2 a conf:Finding ;
+    conf:findingKind conf:RuleError ;
+    conf:findingConstraint ex:C-FHDR ;
+    conf:findingRequirement ex:R-FHDR , ex:R-FVER ;
+    conf:findingMessage "FVER is not present in the parsed header." .
+
+# A parse-recovery violation has no constraint.
+ex:F3 a conf:Finding ;
+    conf:findingKind conf:Violation ;
+    conf:findingRequirement ex:R-FHDR ;
+    conf:findingMessage "Header truncated at byte 4." ;
+    hexplain:byteOffset 4 .

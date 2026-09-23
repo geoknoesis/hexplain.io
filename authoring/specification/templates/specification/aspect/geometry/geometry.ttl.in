@@ -1,4 +1,4 @@
-# Hexplain Aspect — Geometry (hx-geometry) 1.0
+# Hexplain Aspect — Geometry (hx-geometry) 1.3
 # Content-representation aspect: explicit geometry (vector). Sibling of hx-raster; neither
 # imports the other. Shared by vector graphics, geospatial vector, and font glyph outlines.
 @prefix :        <https://hexplain.io/ns/aspect/geometry#> .
@@ -12,7 +12,9 @@
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
 
 <https://hexplain.io/ns/aspect/geometry> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/geometry/1.2> ; owl:versionInfo "1.2 working draft" ; owl:priorVersion <https://hexplain.io/ns/aspect/geometry/1.1> ; dcterms:modified "2026-09-05"^^xsd:date ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/geometry/1.3> ; owl:versionInfo "1.3 working draft" ;
+    owl:priorVersion <https://hexplain.io/ns/aspect/geometry/1.2> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Geometry (hx-geometry)" ;
     rdfs:comment "Aspect for explicit (vector) geometry: geometry type, dimensionality, coordinate precision. Sibling of hx-raster. Shared by vector graphics, geospatial vector, and font glyphs." ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -30,4 +32,17 @@
     sh:property [ sh:path :geometryType ; sh:nodeKind sh:IRI ; sh:class skos:Concept ] ;
     sh:property [ sh:path :hasZ ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
     sh:property [ sh:path :hasM ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .
+
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+ageom:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ;
+    {{constraint:pattern_237}} .
+ageom:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ;
+    sh:targetSubjectsOf ageom:coordinatePrecision ;
+    sh:property [ sh:path ageom:coordinatePrecision ; sh:node ageom:IntegerValueShape ;
+        sh:message "ageom:coordinatePrecision takes an integer (rdfs:range xsd:integer)." ] .
 

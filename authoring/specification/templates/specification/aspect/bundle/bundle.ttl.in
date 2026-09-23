@@ -1,6 +1,7 @@
-# Hexplain Aspect — Bundle (hx-bundle) 1.0
+# Hexplain Aspect — Bundle (hx-bundle) 1.3
 # Base container-tier aspect: one logical Asset realized by N physical Parts, bound by
-# containment / naming-convention / manifest-reference / concatenation. Imports nothing.
+# containment / naming-convention / manifest-reference / concatenation. Imports BDDO
+# (a part is described by a bddo:Struct).
 # Unified semantics: each Part carries an aspect facet; a SHACL rule lifts those facets
 # onto the Asset (see LiftByCarriedAspectRule, added with the profile layer).
 @prefix :        <https://hexplain.io/ns/aspect/bundle#> .
@@ -15,7 +16,10 @@
 @prefix vann:    <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/aspect/bundle> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.2> ; owl:versionInfo "1.2" ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.3> ; owl:versionInfo "1.3" ;
+    owl:priorVersion <https://hexplain.io/ns/aspect/bundle/1.2> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
+    owl:imports <https://hexplain.io/ns/bddo> ;
     rdfs:label "Hexplain Aspect — Bundle (hx-bundle)" ;
     rdfs:comment "Base aspect for multi-part assets: one logical Asset realized by N physical Parts, bound by containment, naming-convention, manifest-reference, or concatenation. Part aspect facets lift onto the Asset for a unified semantic view." ;
     dcterms:created "2026-07-26"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -212,4 +216,38 @@ abnd:PartSpecShape a sh:NodeShape ;
         sh:select """SELECT $this WHERE {
             $this abnd:required true ; abnd:minParts 0 .
         }""" ] .
+
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+abnd:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    {{constraint:pattern_237}} .
+abnd:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    sh:targetSubjectsOf abnd:extension ,
+        abnd:maxParts ,
+        abnd:minParts ,
+        abnd:partIndex ,
+        abnd:pathPattern ,
+        abnd:primary ,
+        abnd:required ,
+        abnd:stem ;
+    sh:property [ sh:path abnd:extension ; sh:datatype xsd:string ;
+        sh:message "abnd:extension takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path abnd:maxParts ; sh:node abnd:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "abnd:maxParts takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path abnd:minParts ; sh:node abnd:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "abnd:minParts takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path abnd:partIndex ; sh:node abnd:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "abnd:partIndex takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path abnd:pathPattern ; sh:datatype xsd:string ;
+        sh:message "abnd:pathPattern takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path abnd:primary ; sh:datatype xsd:boolean ;
+        sh:message "abnd:primary takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
+    sh:property [ sh:path abnd:required ; sh:datatype xsd:boolean ;
+        sh:message "abnd:required takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
+    sh:property [ sh:path abnd:stem ; sh:datatype xsd:string ;
+        sh:message "abnd:stem takes an xsd:string literal (rdfs:range xsd:string)." ] .
 

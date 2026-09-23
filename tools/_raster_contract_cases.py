@@ -9,7 +9,8 @@ def cases():
             add(prop+' '+label,'ex:f r:'+prop+' '+value+'.',ok,'' if ok else prop)
     for prop,base,good,second,bad in [
         ('bandIndex','ex:f a r:RasterBand.','1','2','0'),
-        ('noDataValue','ex:f a r:RasterBand.','"missing"','"other"','ex:value'),
+        # A no-data value is a sample value, so it is numeric; a string is no longer accepted.
+        ('noDataValue','ex:f a r:RasterBand.','-9999','0','"missing"'),
         ('sampleUnit','ex:f a r:RasterBand.','ex:metre','ex:foot','"metre"'),
         ('dimensionName','ex:f a r:ArrayDimension; r:dimensionExtent 1.','"x"','"y"','1'),
         ('dimensionKind','ex:f a r:ArrayDimension; r:dimensionExtent 1.','ex:x','ex:y','"x"'),
@@ -19,6 +20,12 @@ def cases():
     add('dimension missing extent','ex:f a r:ArrayDimension.',False,'dimensionExtent')
     add('dimension duplicate extent','ex:f a r:ArrayDimension; r:dimensionExtent 1,2.',False,'dimensionExtent')
     add('dimension empty name','ex:f a r:ArrayDimension; r:dimensionExtent 1; r:dimensionName "".',False,'dimensionName')
+    # Every numeric datatype a no-data sentinel may carry, including a NaN sentinel.
+    for datatype,value in [('double','NaN'),('float','-9999'),('decimal','-9999.5'),('integer','-9999'),
+                           ('nonNegativeInteger','0'),('positiveInteger','1'),('nonPositiveInteger','0'),
+                           ('negativeInteger','-1'),('long','-1'),('int','-1'),('short','-1'),('byte','-1'),
+                           ('unsignedLong','0'),('unsignedInt','0'),('unsignedShort','0'),('unsignedByte','0')]:
+        add('noDataValue '+datatype,'ex:f a r:RasterBand; r:noDataValue "'+value+'"^^xsd:'+datatype+'.',True)
     for prop in ['width','height','bandCount']:
         add(prop+' duplicate','ex:f r:'+prop+' 1,2.',False,prop)
     return rows

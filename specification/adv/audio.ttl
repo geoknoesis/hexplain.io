@@ -1,4 +1,4 @@
-# Hexplain Audio Vocabulary (ADV) 1.0 — vocabulary + SHACL shapes
+# Hexplain Audio Vocabulary (ADV) 1.1 — vocabulary + SHACL shapes
 @prefix :       <https://hexplain.io/ns/audio#> .
 @prefix adv:    <https://hexplain.io/ns/audio#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
@@ -16,8 +16,10 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/audio> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/audio/1.0> ; owl:versionInfo "1.0" ;
-    owl:imports <https://hexplain.io/ns/aspect/time> , <https://hexplain.io/ns/aspect/encoding> , <https://hexplain.io/ns/aspect/sampling> , <https://hexplain.io/ns/aspect/signal> ;
+    owl:versionIRI <https://hexplain.io/ns/audio/1.1> ; owl:versionInfo "1.1" ;
+    owl:priorVersion <https://hexplain.io/ns/audio/1.0> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
+    owl:imports <https://hexplain.io/ns/aspect/time> , <https://hexplain.io/ns/aspect/encoding> , <https://hexplain.io/ns/aspect/sampling> , <https://hexplain.io/ns/aspect/signal> , <https://hexplain.io/ns/dlv> ;
     rdfs:label "Hexplain Audio Vocabulary (ADV)" ;
     rdfs:comment "Semantic vocabulary for audio stream and tag properties." ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -37,22 +39,43 @@
 :trackNumber a owl:DatatypeProperty ; rdfs:label "track number" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:range xsd:positiveInteger .
 :genre a owl:DatatypeProperty ; rdfs:label "genre" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:range xsd:string .
 
-:axisSample a dlv:Axis ; rdfs:label "Sample Axis" ; rdfs:seeAlso dlv:axisTime .
-:axisChannel a dlv:Axis ; rdfs:label "Channel Axis" ; rdfs:seeAlso dlv:axisBand .
+:axisSample a dlv:Axis ; rdfs:label "Sample Axis (deprecated)" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ;
+    owl:deprecated true ; dcterms:isReplacedBy dlv:axisTime ;
+    rdfs:comment "Deprecated duplicate of dlv:axisTime. Successive audio samples are the time axis of the layout. Layouts use dlv:axisTime; this IRI is retained so existing descriptions still resolve and denotes the same axis." .
+:axisChannel a dlv:Axis ; rdfs:label "Channel Axis (deprecated)" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ;
+    owl:deprecated true ; dcterms:isReplacedBy dlv:axisBand ;
+    rdfs:comment "Deprecated duplicate of dlv:axisBand. dlv:axisBand is the band/channel axis for every media type. Layouts use dlv:axisBand; this IRI is retained so existing descriptions still resolve and denotes the same axis." .
 
 # ---------- SHACL ----------
-adv:StreamShape a sh:NodeShape ; sh:targetSubjectsOf asig:sampleRate ;
+adv:StreamShape a sh:NodeShape ; sh:targetClass adv:AudioStream ; sh:targetSubjectsOf asig:sampleRate ;
     sh:property [ sh:path asig:sampleRate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path asamp:componentCount ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path asamp:bitDepth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path atime:duration ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
     sh:property [ sh:path aenc:bitrate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path aenc:codec ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
-adv:TagShape a sh:NodeShape ; sh:targetSubjectsOf adv:artist ;
+adv:TagShape a sh:NodeShape ; sh:targetClass adv:MetadataTag ;
+    sh:targetSubjectsOf adv:artist, adv:album, adv:trackTitle, adv:trackNumber ;
     sh:property [ sh:path adv:artist ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path adv:album ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path adv:trackTitle ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path adv:trackNumber ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+adv:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/audio> ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
+adv:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/audio> ;
+    sh:targetSubjectsOf adv:genre ,
+        adv:trackNumber ;
+    sh:property [ sh:path adv:genre ; sh:datatype xsd:string ;
+        sh:message "adv:genre takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path adv:trackNumber ; sh:node adv:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "adv:trackNumber takes a positive integer (rdfs:range xsd:positiveInteger)." ] .
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
@@ -62,26 +85,28 @@ adv:TagShape a sh:NodeShape ; sh:targetSubjectsOf adv:artist ;
 <https://hexplain.io/ns/audio#AudioContainer> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for audio resources, their streams and source metadata. Sampling, encoding and timing aspects carry shared properties. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/audio#AudioStream> <http://www.w3.org/2004/02/skos/core#definition> "An ordered audio sample stream whose sampling, channel and encoding properties are described separately."@en .
 <https://hexplain.io/ns/audio#AudioStream> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for audio resources, their streams and source metadata. Sampling, encoding and timing aspects carry shared properties. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/audio#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Integer value. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/audio#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/audio#MetadataTag> <http://www.w3.org/2004/02/skos/core#definition> "A metadata-bearing component carrying descriptive information about an audio work or recording."@en .
 <https://hexplain.io/ns/audio#MetadataTag> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for audio resources, their streams and source metadata. Sampling, encoding and timing aspects carry shared properties. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/audio#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for adv:genre, adv:trackNumber. adv:genre takes an xsd:string literal (rdfs:range xsd:string). adv:trackNumber takes a positive integer (rdfs:range xsd:positiveInteger)."@en .
+<https://hexplain.io/ns/audio#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using adv:genre, adv:trackNumber Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/audio#StreamShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for aenc:bitrate, aenc:codec, asamp:bitDepth, asamp:componentCount, asig:sampleRate, atime:duration. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/audio#StreamShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using asig:sampleRate Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/audio#StreamShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of adv:AudioStream; subjects using asig:sampleRate Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/audio#StreamShape> <http://www.w3.org/2000/01/rdf-schema#label> "Stream Shape"@en .
 <https://hexplain.io/ns/audio#StreamShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/audio> .
 <https://hexplain.io/ns/audio#TagShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for adv:album, adv:artist, adv:trackNumber, adv:trackTitle. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/audio#TagShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using adv:artist Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/audio#TagShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of adv:MetadataTag; subjects using adv:album, adv:artist, adv:trackNumber, adv:trackTitle Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/audio#TagShape> <http://www.w3.org/2000/01/rdf-schema#label> "Tag Shape"@en .
 <https://hexplain.io/ns/audio#TagShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/audio> .
 <https://hexplain.io/ns/audio#album> <http://www.w3.org/2004/02/skos/core#definition> "The album or collection title as text supplied by the source metadata."@en .
 <https://hexplain.io/ns/audio#album> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for audio resources, their streams and source metadata. Sampling, encoding and timing aspects carry shared properties. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/audio#artist> <http://www.w3.org/2004/02/skos/core#definition> "The artist credit as text supplied by the source metadata; it is not an identified person resource."@en .
 <https://hexplain.io/ns/audio#artist> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for audio resources, their streams and source metadata. Sampling, encoding and timing aspects carry shared properties. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/audio#axisChannel> <http://www.w3.org/2004/02/skos/core#definition> "The layout axis indexing audio channels independently of sample time."@en .
+<https://hexplain.io/ns/audio#axisChannel> <http://www.w3.org/2004/02/skos/core#definition> "Deprecated duplicate of dlv:axisBand for audio channels, kept so existing descriptions resolve."@en .
 <https://hexplain.io/ns/audio#axisChannel> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for audio resources, their streams and source metadata. Sampling, encoding and timing aspects carry shared properties. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
-<https://hexplain.io/ns/audio#axisChannel> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/audio> .
-<https://hexplain.io/ns/audio#axisSample> <http://www.w3.org/2004/02/skos/core#definition> "The layout axis indexing successive audio samples."@en .
+<https://hexplain.io/ns/audio#axisSample> <http://www.w3.org/2004/02/skos/core#definition> "Deprecated duplicate of dlv:axisTime for successive audio samples, kept so existing descriptions resolve."@en .
 <https://hexplain.io/ns/audio#axisSample> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for audio resources, their streams and source metadata. Sampling, encoding and timing aspects carry shared properties. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
-<https://hexplain.io/ns/audio#axisSample> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/audio> .
 <https://hexplain.io/ns/audio#genre> <http://www.w3.org/2004/02/skos/core#definition> "The genre label as supplied by the source; no universal genre classification scheme is implied."@en .
 <https://hexplain.io/ns/audio#genre> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for audio resources, their streams and source metadata. Sampling, encoding and timing aspects carry shared properties. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/audio#trackNumber> <http://www.w3.org/2004/02/skos/core#definition> "The source's integer ordinal identifying a track within its collection."@en .

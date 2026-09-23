@@ -1,6 +1,7 @@
-# Hexplain Aspect — Bundle (hx-bundle) 1.0
+# Hexplain Aspect — Bundle (hx-bundle) 1.3
 # Base container-tier aspect: one logical Asset realized by N physical Parts, bound by
-# containment / naming-convention / manifest-reference / concatenation. Imports nothing.
+# containment / naming-convention / manifest-reference / concatenation. Imports BDDO
+# (a part is described by a bddo:Struct).
 # Unified semantics: each Part carries an aspect facet; a SHACL rule lifts those facets
 # onto the Asset (see LiftByCarriedAspectRule, added with the profile layer).
 @prefix :        <https://hexplain.io/ns/aspect/bundle#> .
@@ -15,7 +16,10 @@
 @prefix vann:    <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/aspect/bundle> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.2> ; owl:versionInfo "1.2" ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.3> ; owl:versionInfo "1.3" ;
+    owl:priorVersion <https://hexplain.io/ns/aspect/bundle/1.2> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
+    owl:imports <https://hexplain.io/ns/bddo> ;
     rdfs:label "Hexplain Aspect — Bundle (hx-bundle)" ;
     rdfs:comment "Base aspect for multi-part assets: one logical Asset realized by N physical Parts, bound by containment, naming-convention, manifest-reference, or concatenation. Part aspect facets lift onto the Asset for a unified semantic view." ;
     dcterms:created "2026-07-26"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -213,6 +217,40 @@ abnd:PartSpecShape a sh:NodeShape ;
             $this abnd:required true ; abnd:minParts 0 .
         }""" ] .
 
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+abnd:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
+abnd:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    sh:targetSubjectsOf abnd:extension ,
+        abnd:maxParts ,
+        abnd:minParts ,
+        abnd:partIndex ,
+        abnd:pathPattern ,
+        abnd:primary ,
+        abnd:required ,
+        abnd:stem ;
+    sh:property [ sh:path abnd:extension ; sh:datatype xsd:string ;
+        sh:message "abnd:extension takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path abnd:maxParts ; sh:node abnd:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "abnd:maxParts takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path abnd:minParts ; sh:node abnd:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "abnd:minParts takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path abnd:partIndex ; sh:node abnd:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "abnd:partIndex takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path abnd:pathPattern ; sh:datatype xsd:string ;
+        sh:message "abnd:pathPattern takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path abnd:primary ; sh:datatype xsd:boolean ;
+        sh:message "abnd:primary takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
+    sh:property [ sh:path abnd:required ; sh:datatype xsd:boolean ;
+        sh:message "abnd:required takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
+    sh:property [ sh:path abnd:stem ; sh:datatype xsd:string ;
+        sh:message "abnd:stem takes an xsd:string literal (rdfs:range xsd:string)." ] .
+
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/aspect/bundle> <http://www.w3.org/2004/02/skos/core#definition> "Base aspect for multi-part assets: one logical Asset realized by N physical Parts, bound by containment, naming-convention, manifest-reference, or concatenation. Part aspect facets lift onto the Asset for a unified semantic view."@en .
@@ -233,6 +271,8 @@ abnd:PartSpecShape a sh:NodeShape ;
 <https://hexplain.io/ns/aspect/bundle#Containment> <http://www.w3.org/2004/02/skos/core#definition> "Parts are physically nested inside one byte stream (ZIP, TAR)."@en .
 <https://hexplain.io/ns/aspect/bundle#Containment> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for compound assets, their members and reusable membership profiles. Discovery/binding, semantic membership and physical byte location are separate concerns. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/aspect/bundle#Containment> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/bundle> .
+<https://hexplain.io/ns/aspect/bundle#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Integer value. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/aspect/bundle#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/bundle#LiftByCarriedAspectRule> <http://www.w3.org/2004/02/skos/core#definition> "A SHACL rule-bearing shape that derives additional triples for its selected focus nodes. Its rule is an inference operation, not a validation constraint; see the executable rule and activation scope below."@en .
 <https://hexplain.io/ns/aspect/bundle#LiftByCarriedAspectRule> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of abnd:Asset Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/bundle#LiftByCarriedAspectRule> <http://www.w3.org/2000/01/rdf-schema#label> "Lift By Carried Aspect Rule"@en .
@@ -255,6 +295,8 @@ abnd:PartSpecShape a sh:NodeShape ;
 <https://hexplain.io/ns/aspect/bundle#PartSpecShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of abnd:PartSpec Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/bundle#PartSpecShape> <http://www.w3.org/2000/01/rdf-schema#label> "Part Spec Shape"@en .
 <https://hexplain.io/ns/aspect/bundle#PartSpecShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/bundle> .
+<https://hexplain.io/ns/aspect/bundle#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for abnd:extension, abnd:maxParts, abnd:minParts, abnd:partIndex, abnd:pathPattern, abnd:primary, abnd:required, abnd:stem. abnd:extension takes an xsd:string literal (rdfs:range xsd:string). abnd:maxParts takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). abnd:minParts takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). abnd:partIndex takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). abnd:pathPattern takes an xsd:string literal (rdfs:range xsd:string). abnd:primary takes an xsd:boolean literal (rdfs:range xsd:boolean). abnd:required takes an xsd:boolean literal (rdfs:range xsd:boolean). abnd:stem takes an xsd:string literal (rdfs:range xsd:string)."@en .
+<https://hexplain.io/ns/aspect/bundle#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using abnd:extension, abnd:maxParts, abnd:minParts, abnd:partIndex, abnd:pathPattern, abnd:primary, abnd:required, abnd:stem Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/bundle#RequiredPartsShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Required Parts. A required part role declared by the conformed profile is missing."@en .
 <https://hexplain.io/ns/aspect/bundle#RequiredPartsShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of abnd:Asset Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/bundle#RequiredPartsShape> <http://www.w3.org/2000/01/rdf-schema#label> "Required Parts Shape"@en .

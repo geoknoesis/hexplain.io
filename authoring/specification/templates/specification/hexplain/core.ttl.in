@@ -1,4 +1,4 @@
-# Hexplain Core Ontology 1.0 — vocabulary + SHACL shapes
+# Hexplain Core Ontology 1.1 — vocabulary + SHACL shapes
 # Properties declare rdfs:range; domain and cardinality are in SHACL (no rdfs:domain).
 @prefix :         <https://hexplain.io/ns/core#> .
 @prefix hexplain: <https://hexplain.io/ns/core#> .
@@ -14,7 +14,9 @@
 @prefix vann:     <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/core> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/core/1.0> ; owl:versionInfo "1.0" ;
+    owl:versionIRI <https://hexplain.io/ns/core/1.1> ; owl:versionInfo "1.1" ;
+    owl:priorVersion <https://hexplain.io/ns/core/1.0> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/bddo> , <https://hexplain.io/ns/dlv> ;
     rdfs:label "Hexplain Core Ontology" ;
     rdfs:comment "Properties linking the physical, layout, and semantic layers of the Hexplain framework." ;
@@ -27,7 +29,7 @@
 :ClassMappingRule a owl:Class ; rdfs:label "Class Mapping Rule" ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "A rule selecting the owl:Class a bddo:Struct represents based on a discriminator condition; used in a hexplain:hasConditionalClassMapping list to model tagged unions / variant records." .
 
-# Mapping properties (OWL 2 punning; domain in SHACL). rdfs:range declared.
+# Mapping properties (values are class/property IRIs: RDFS + SHACL, OWL 2 Full; domain in SHACL). rdfs:range declared.
 :mapsToClass a owl:ObjectProperty ; rdfs:label "maps to class" ; rdfs:range owl:Class ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "Relates a bddo:Struct to the owl:Class it physically represents." .
@@ -175,7 +177,7 @@ hexplain:CodecParameterShape a sh:NodeShape ;
     sh:property [ sh:path hexplain:parameterName ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
     sh:property [ sh:path hexplain:parameterValue ; sh:minCount 1 ; sh:maxCount 1 ] .
 hexplain:ValueExpressionShape a sh:NodeShape ;
-    sh:targetSubjectsOf hexplain:valueExpression ;
+    sh:targetSubjectsOf hexplain:valueExpression, hexplain:valueDatatype ;
     # A Field computes one value; a MappingRule computes the value for the arm it belongs to.
     # The second was rejected until now, which made conditional mapping able to choose the
     # PROPERTY per condition but never the VALUE -- so a field meaning different things under
@@ -254,4 +256,26 @@ hexplain:RegisterBindingShape a sh:NodeShape ;
             $this ?p ?value .
             FILTER NOT EXISTS { ?value skos:inScheme ?scheme }
         }""" ] .
+
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+hexplain:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
+hexplain:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    sh:targetSubjectsOf hexplain:byteLength ,
+        hexplain:byteOffset ,
+        hexplain:condition ,
+        hexplain:parameterName ;
+    sh:property [ sh:path hexplain:byteLength ; sh:node hexplain:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "hexplain:byteLength takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path hexplain:byteOffset ; sh:node hexplain:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "hexplain:byteOffset takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path hexplain:condition ; sh:datatype xsd:string ;
+        sh:message "hexplain:condition takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path hexplain:parameterName ; sh:datatype xsd:string ;
+        sh:message "hexplain:parameterName takes an xsd:string literal (rdfs:range xsd:string)." ] .
 

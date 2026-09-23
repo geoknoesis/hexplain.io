@@ -1,6 +1,6 @@
-# Hexplain Aspect — Raster (hx-raster) 1.0
+# Hexplain Aspect — Raster (hx-raster) 1.2
 # Content-representation aspect: a regular N-D grid of samples. Sibling of hx-geometry
-# (vector); neither imports the other. Imports the sampling and colour base aspects.
+# (vector); neither imports the other. Imports no other aspect.
 @prefix :        <https://hexplain.io/ns/aspect/raster#> .
 @prefix araster: <https://hexplain.io/ns/aspect/raster#> .
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
@@ -9,24 +9,24 @@
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix ma:      <http://www.w3.org/ns/ma-ont#> .
 @prefix asamp:   <https://hexplain.io/ns/aspect/sampling#> .
-@prefix acolor:  <https://hexplain.io/ns/aspect/color#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix vann:    <http://purl.org/vocab/vann/> .
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
 <https://hexplain.io/ns/aspect/raster> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/raster/1.1> ; owl:versionInfo "1.1 working draft" ; owl:priorVersion <https://hexplain.io/ns/aspect/raster/1.0> ; dcterms:modified "2026-09-05"^^xsd:date ;
-    owl:imports <https://hexplain.io/ns/aspect/sampling> , <https://hexplain.io/ns/aspect/color> ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/raster/1.2> ; owl:versionInfo "1.2 working draft" ;
+    owl:priorVersion <https://hexplain.io/ns/aspect/raster/1.1> ;
+    dcterms:modified "2026-09-23"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Raster (hx-raster)" ;
-    rdfs:comment "Content-representation aspect for a regular N-dimensional sample grid (width, height). Colour comes from hx-color and per-sample precision from hx-sampling, both imported. Shared by image, video frames, and geospatial rasters." ;
+    rdfs:comment "Content-representation aspect for a regular N-dimensional sample grid (width, height). Colour (hx-color) and per-sample precision (hx-sampling) compose with it at the vocabulary that describes the medium; neither is imported. Shared by image, video frames, and geospatial rasters." ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "araster" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/raster#" .
 
 :width a owl:DatatypeProperty ; rdfs:label "width" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:seeAlso ma:frameWidth ; rdfs:range xsd:positiveInteger ; rdfs:comment "Grid extent along the horizontal axis, in samples (pixels)." .
 :height a owl:DatatypeProperty ; rdfs:label "height" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:seeAlso ma:frameHeight ; rdfs:range xsd:positiveInteger ; rdfs:comment "Grid extent along the vertical axis, in samples (pixels)." .
-:noDataValue a owl:DatatypeProperty ; rdfs:label "no-data value" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Sample value denoting absence of data in the grid." .
+:noDataValue a owl:DatatypeProperty ; rdfs:label "no-data value" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Sample value denoting absence of data, on a band or on the grid (inherited by bands that state none). A numeric literal: xsd:double or xsd:float (including NaN, which matches NaN samples), xsd:decimal, or an integer-family datatype. At most one per band or grid. No rdfs:range is asserted because the admissible datatypes are a union; RasterBandShape enforces it." .
 
 # 1.1 working draft: logical samples, independent of physical storage layout.
 :RasterGrid a owl:Class ; rdfs:label "Raster grid" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A two-dimensional grid with one or more co-registered bands. Higher-dimensional arrays use SampleArray; physical byte addressing remains in DLV." .
@@ -51,20 +51,27 @@
 :hasGroup a owl:ObjectProperty ; rdfs:range :ArrayGroup ; rdfs:label "has group" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
 
 # RDF datatypes retain the wire value's precision; SHACL accepts the integer family.
+# Kept local rather than referencing asamp:PositiveIntegerShape: shapes are validated module by
+# module (the family contracts and the engine load one module's shapes), and a sh:node into another
+# module's graph would silently accept every value when that module is not loaded.
 :PositiveCountShape a sh:NodeShape ;
-    {{constraint:pattern_237}} ; sh:minExclusive 0 .
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 .
 :ExtentShape a sh:NodeShape ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] ) ; sh:minInclusive 0 .
 :RasterSizeShape a sh:NodeShape ; sh:targetSubjectsOf :width, :height, :bandCount ;
     sh:property [ sh:path :width ; sh:node :PositiveCountShape ; sh:maxCount 1 ] ;
     sh:property [ sh:path :height ; sh:node :PositiveCountShape ; sh:maxCount 1 ] ;
     sh:property [ sh:path :bandCount ; sh:node :PositiveCountShape ; sh:maxCount 1 ] .
-:RasterBandShape a sh:NodeShape ; sh:targetClass :RasterBand ; sh:targetObjectsOf :hasBand, :hasMask ; sh:targetSubjectsOf :sampleScale, :sampleOffset ;
+:RasterBandShape a sh:NodeShape ; sh:targetClass :RasterBand ; sh:targetObjectsOf :hasBand, :hasMask ; sh:targetSubjectsOf :sampleScale, :sampleOffset, :bandIndex, :noDataValue, :sampleUnit ;
     sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:property [ sh:path [ sh:inversePath :hasBand ] ; sh:maxCount 1 ;
+        sh:message "A band belongs to at most one grid (araster:hasBand): no-data inheritance and band indexing need a single owning grid." ] ;
     sh:property [ sh:path :bandIndex ; sh:node :PositiveCountShape ; sh:maxCount 1 ] ;
     sh:property [ sh:path :sampleScale ; sh:datatype xsd:double ; sh:maxCount 1 ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] ] ;
     sh:property [ sh:path :sampleOffset ; sh:datatype xsd:double ; sh:maxCount 1 ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] ] ;
-    sh:property [ sh:path :noDataValue ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path :noDataValue ; sh:maxCount 1 ;
+        sh:or ( [ sh:datatype xsd:double ] [ sh:datatype xsd:float ] [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonPositiveInteger ] [ sh:datatype xsd:negativeInteger ] [ sh:datatype xsd:long ] [ sh:datatype xsd:int ] [ sh:datatype xsd:short ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:unsignedByte ] ) ;
+        sh:message "araster:noDataValue is at most one numeric literal (xsd:double/float, including NaN; xsd:decimal; or an integer-family datatype)." ] ;
     sh:property [ sh:path :sampleUnit ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
 :BandMembershipShape a sh:NodeShape ; sh:targetSubjectsOf :hasBand ;
     sh:property [ sh:path :hasBand ; sh:node :RasterBandShape ] ;
@@ -107,4 +114,17 @@
       PREFIX a: <https://hexplain.io/ns/aspect/raster#>
       SELECT $this WHERE { $this a:hasGroup+ $this }
     """ ] .
+
+# ---------- Range datatype shapes ----------
+# Each XSD rdfs:range above, enforced wherever the property is used: activation is by
+# subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
+# Integer ranges accept any XSD integer-family datatype within the range's bounds.
+araster:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    sh:targetSubjectsOf araster:dimensionExtent ,
+        araster:dimensionName ;
+    sh:property [ sh:path araster:dimensionExtent ; sh:node :ExtentShape ;
+        sh:message "araster:dimensionExtent takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path araster:dimensionName ; sh:datatype xsd:string ;
+        sh:message "araster:dimensionName takes an xsd:string literal (rdfs:range xsd:string)." ] .
 

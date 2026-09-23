@@ -1,0 +1,38 @@
+# expect: ex:C-Empty conf:ConstraintShape sh:MinLengthConstraintComponent
+# expect: ex:C-Twice conf:ConstraintShape sh:MaxCountConstraintComponent
+# expect: ex:C-Severity conf:ConstraintShape sh:InConstraintComponent
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req:  <https://hexplain.io/ns/req#> .
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <https://example.org/nitf-assertion#> .
+
+ex:FileHeader a bddo:Struct .
+
+ex:R-FHDR a req:Requirement ;
+    req:requirementId "MIL-STD-2500C-A1-FHDR" ;
+    req:fromStandard "MIL-STD-2500C, 01 May 2006, Table A-1 (assertion fixture)" ;
+    req:statement "FHDR shall contain the value NITF." ;
+    req:discrepancyType req:Syntactic .
+
+# An empty assertion checks nothing.
+ex:C-Empty a conf:Constraint ;
+    conf:scope ex:FileHeader ;
+    conf:assertion "" ;
+    conf:satisfies ex:R-FHDR ;
+    conf:message "FHDR must be 'NITF'." .
+
+# Two assertions: which one is the rule?
+ex:C-Twice a conf:Constraint ;
+    conf:scope ex:FileHeader ;
+    conf:assertion "FHDR == 'NITF'" , "FHDR != ''" ;
+    conf:satisfies ex:R-FHDR ;
+    conf:message "FHDR must be 'NITF'." .
+
+# sh:Error is not a SHACL severity.
+ex:C-Severity a conf:Constraint ;
+    conf:scope ex:FileHeader ;
+    conf:assertion "FHDR == 'NITF'" ;
+    conf:satisfies ex:R-FHDR ;
+    conf:severity sh:Error ;
+    conf:message "FHDR must be 'NITF'." .

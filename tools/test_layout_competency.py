@@ -28,7 +28,9 @@ case('MSB packed',layout+'ex:l dlv:cellBitWidth 1; dlv:cellPackingOrder b:MSBFir
 case('LSB packed',layout+'ex:l dlv:cellBitWidth 4; dlv:cellPackingOrder b:LSBFirst.',True)
 case('dynamic packed width',layout+'ex:l dlv:cellBitWidthFromField ex:f.',True)
 case('conflicting packed widths',layout+'ex:l dlv:cellBitWidth 4; dlv:cellBitWidthFromField ex:f.',False)
-case('unrelated metadata','ex:x dlv:cellBitWidth "verbatim".',True)
+# An XSD rdfs:range holds wherever the property is used, so a non-integer width is rejected even
+# outside a layout (it used to validate because no layout shape was activated).
+case('unrelated metadata','ex:x dlv:cellBitWidth "verbatim".',False,'https://hexplain.io/ns/dlv#cellBitWidth')
 for prop in ['minParts','maxParts']:
     for label,value,ok in [('zero','0',True),('integer','2',True),('fraction','0.5',False),('negative','-1',False),('string','"2"',False)]:
         case(prop+' '+label,f'ex:s a a:PartSpec; a:{prop} {value}.',ok,'' if ok else 'https://hexplain.io/ns/aspect/bundle#'+prop)

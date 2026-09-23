@@ -1,0 +1,20 @@
+# expect: ex:band1 araster:RasterBandShape sh:OrConstraintComponent
+# expect: ex:band2 araster:RasterBandShape sh:MaxCountConstraintComponent
+# expect: ex:band3 araster:RasterBandShape sh:MaxCountConstraintComponent
+@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:      <https://example.org/raster-nodata-bad#> .
+
+ex:gridA a araster:RasterGrid ;
+    araster:hasBand ex:band1 , ex:band2 , ex:band3 .
+
+# A no-data value must be numeric, not a string.
+ex:band1 a araster:RasterBand ; araster:bandIndex 1 ; araster:noDataValue "none" .
+
+# Two no-data values: which one marks absence is undefined.
+ex:band2 a araster:RasterBand ; araster:bandIndex 2 ; araster:noDataValue 0 , 255 .
+
+# A band owned by two grids cannot inherit a single no-data value.
+ex:gridB a araster:RasterGrid ; araster:hasBand ex:band3 .
+ex:band3 a araster:RasterBand ; araster:bandIndex 3 .

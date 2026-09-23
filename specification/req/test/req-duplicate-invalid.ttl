@@ -1,0 +1,18 @@
+# expect: ex:FHDR-a req:RequirementIdentityShape sh:SPARQLConstraintComponent
+# expect: ex:FHDR-b req:RequirementIdentityShape sh:SPARQLConstraintComponent
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix ex:  <https://example.org/nitf-req-dup#> .
+
+# Two resources for one requirement: the (fromStandard, requirementId) pair must be unique.
+ex:FHDR-a a req:Requirement ;
+    req:requirementId "MIL-STD-2500C-A1-FHDR" ;
+    req:fromStandard "MIL-STD-2500C, 01 May 2006 (duplicate fixture)" ;
+    req:statement "FHDR shall contain the value NITF." ;
+    req:discrepancyType req:Syntactic .
+
+ex:FHDR-b a req:Requirement ;
+    req:requirementId "MIL-STD-2500C-A1-FHDR" ;
+    req:fromStandard "MIL-STD-2500C, 01 May 2006 (duplicate fixture)" ;
+    req:statement "FHDR shall contain the value NITF (restated)." ;
+    req:discrepancyType req:Semantic .
