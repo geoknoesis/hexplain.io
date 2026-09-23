@@ -108,12 +108,33 @@ validated module by module), pointcloud no longer imports sampling.
   set and named extension groups; exact `toNumber` grammar; literal typing and escapes;
   numeric edge cases; HEL 1.0 version note. New conformance vectors.
 - HDL: complete normative EBNF matching the compiler; undeclared prefixes are errors;
-  reserved `hdl 1.0` version declaration; examples repaired.
+  optional `hdl 1.0` version declaration (first declaration only; any other version is an
+  unsupported-language-version error); examples repaired.
 - Processing Model: conformance classes (Physical Parser, Semantic Emitter, Bundle
   Processor, HDL Compiler) with an Unsupported-feature error; minimum codec set; resource
   limits and a ResourceLimit error; region-relative `stream.*`/`eof()`; struct size timing;
   terminator and byte-order rules; text, delimited, key/value and tree parsing rules; IRI
   minting `B#root` and `B#root/<path>`.
+
+### Alignment with the reference implementation
+
+- Processing Model: `bddo:alignment` is measured from the start of the current stream (the
+  input, or a decoded sub-stream, whose offsets start at 0), not from the innermost bounded
+  region; bounded regions do not move the origin. This is what the reference implementation
+  does and what the Stream-metadata offsets already assumed.
+- Processing Model: tree documents (`bddo:TreeDocument`, `bddo:nodePath`) and grouped key/value
+  headers (`bddo:hasGrouping`, `bddo:keyPath`) are optional: no conformance class requires them,
+  a processor that claims them implements them as specified, and one that does not rejects them
+  at load time with Unsupported feature. The Physical Parser class lists text numbers, delimited
+  records and tables and flat key/value headers. Unsupported feature now also names
+  `partExtension()` outside a Bundle Processor.
+- Processing Model: the error categories are categories, not names; an informative table maps
+  them to the reference implementation's exception types and `HexplainErrorKind` values
+  (ResourceLimit is `ParseLimitException`, Description error is `HexplainProfileLoadException`,
+  Unsupported feature is `HexplainUnsupportedFeatureException` / `UNSUPPORTED`).
+- HDL: the reference compiler accepts `hdl 1.0`.
+- `conf/test/conf-finding-valid.ttl` wrote its assertion with `&&`, which is not HEL; it now uses
+  `and`.
 - Core page states the family is RDFS + SHACL (OWL 2 Full), not OWL 2 DL.
 - Namespace registry lists all 36 namespaces; the architecture catalogue is generated from
   the Turtle.
