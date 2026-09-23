@@ -4,6 +4,8 @@
 # struct, the field, the table, the two well-formed arms -- is valid, so this fixture isolates
 # bddo:DispatchArmShape from the table-level and field-level dispatch shapes.
 # Expected to trip bddo:DispatchArmShape only.
+# expect: ex:BooleanKeyArm bddo:DispatchArmShape sh:OrConstraintComponent
+# expect: ex:OrphanArm bddo:DispatchArmShape sh:MinCountConstraintComponent
 @prefix bddo: <https://hexplain.io/ns/bddo#> .
 @prefix ex:   <https://hexplain.io/test/dispatch-arm-invalid#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -22,10 +24,10 @@ ex:Header a bddo:Struct ; bddo:hasField ( ex:Header.v ) .
 ex:Header.v a bddo:Field ; bddo:dataType bddo:uint32 .
 
 # Well-formed, for contrast: the fixture is not simply broken everywhere.
-[] a bddo:DispatchArm ; bddo:armTable ex:BodyDispatch ; bddo:armKey "hdr " ; bddo:armDataType ex:Header .
+ex:HeaderArm a bddo:DispatchArm ; bddo:armTable ex:BodyDispatch ; bddo:armKey "hdr " ; bddo:armDataType ex:Header .
 
 # Violation 1: no bddo:armTable (sh:minCount 1).
-[] a bddo:DispatchArm ; bddo:armKey "orphan" ; bddo:armDataType bddo:uint8 .
+ex:OrphanArm a bddo:DispatchArm ; bddo:armKey "orphan" ; bddo:armDataType bddo:uint8 .
 
 # Violation 2: a boolean bddo:armKey (sh:or of xsd:string / xsd:integer).
-[] a bddo:DispatchArm ; bddo:armTable ex:BodyDispatch ; bddo:armKey true ; bddo:armDataType bddo:uint16 .
+ex:BooleanKeyArm a bddo:DispatchArm ; bddo:armTable ex:BodyDispatch ; bddo:armKey true ; bddo:armDataType bddo:uint16 .

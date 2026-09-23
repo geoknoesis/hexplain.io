@@ -1,4 +1,4 @@
-"""Verify the required-parts conformance constraint.
+"""Verify the bundle aspect's required-parts constraint (abnd required PartSpecs).
 Extracts the authored sh:select from bundle.ttl and runs it over each instance:
 the valid roads.* yields zero violation rows; the .shp-less instance yields >=1.
 rdflib only.

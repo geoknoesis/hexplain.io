@@ -1,6 +1,9 @@
 # Three contradictions: shorthand and pipeline together, a step naming no codec, and a
 # parameter with a name but no value.
 # Expected to trip IsEncodedWithShape, EncodingStepShape and CodecParameterShape.
+# expect: ex:BothForms hexplain:IsEncodedWithShape sh:NotConstraintComponent
+# expect: ex:NoCodec.level hexplain:CodecParameterShape sh:MinCountConstraintComponent
+# expect: ex:NoCodec.step hexplain:EncodingStepShape sh:MinCountConstraintComponent
 @prefix bddo: <https://hexplain.io/ns/bddo#> .
 @prefix hexplain: <https://hexplain.io/ns/core#> .
 @prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
@@ -16,7 +19,6 @@ ex:BothForms a bddo:Field ;
 ex:NoCodec a bddo:Field ;
     rdfs:comment "Expected to trip EncodingStepShape (a step with no codec) and CodecParameterShape (a parameter with no value)." ;
     bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
-    hexplain:hasEncodingStep (
-        [ a hexplain:EncodingStep ;
-          hexplain:codecParameter [ a hexplain:CodecParameter ; hexplain:parameterName "level" ] ]
-    ) .
+    hexplain:hasEncodingStep ( ex:NoCodec.step ) .
+ex:NoCodec.step a hexplain:EncodingStep ; hexplain:codecParameter ex:NoCodec.level .
+ex:NoCodec.level a hexplain:CodecParameter ; hexplain:parameterName "level" .
