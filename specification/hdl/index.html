@@ -729,7 +729,7 @@ PUNCT         ::= "{" | "}" | "(" | ")" | ":" | "," | "=&gt;" | ".."
             <h3>Documents and declarations</h3>
             <pre class="ebnf">
 Document       ::= VersionDecl? TopDecl*
-VersionDecl    ::= "hdl" FLOAT                    /* reserved -- see Language version */
+VersionDecl    ::= "hdl" FLOAT                    /* only 1.0 -- see Language version */
 TopDecl        ::= FormatDecl | ModuleDecl | ImportDecl | UseDecl | RegisterDecl
                  | StructDecl | HeaderDecl | TableDecl | TreeDocDecl
                  | "field" FieldDecl              /* a standalone bddo:Field */
@@ -951,7 +951,7 @@ CoverToken     ::= /* any token; "(" and ")" must balance */
             <table class="simple">
                 <thead><tr><th>Class</th><th>Words</th></tr></thead>
                 <tbody>
-                    <tr><td>Declarations (top level)</td><td><code>format module import use register struct header table document field enum bundle asset extend</code>; reserved: <code>hdl</code></td></tr>
+                    <tr><td>Declarations (top level)</td><td><code>format module import use register struct header table document field enum bundle asset extend</code>; first only: <code>hdl</code></td></tr>
                     <tr><td>Clauses and bodies</td><td><code>as means means-when value map when switch dispatch on default repeat until if from derive flags layout cell cell-bits packing order dim axis size stride chunk chunks offsets lengths base covers raw-turtle part pattern role required optional primary min max carries described-by nested conforms</code></td></tr>
                     <tr><td>Values</td><td><code>true false big little msb lsb stream region stream-start stream-end parent-start current keyed valued section row-major column-major morton hilbert X Y Z Band Time containment naming-convention manifest-reference concatenation</code>, the type names of <code>PrimType</code>/<code>StrType</code>, <code>bytes bits anum adec</code>, and the checksum algorithms</td></tr>
                     <tr><td>Annotations</td><td>every <code>"@&#8230;"</code> word in the productions above; an annotation not valid in its position is an error</td></tr>
@@ -964,7 +964,7 @@ CoverToken     ::= /* any token; "(" and ")" must balance */
         <section id="versioning">
             <h3>Language version</h3>
             <p>A document MAY begin with a version declaration, <code>hdl 1.0</code>, before any other declaration. A document without one is HDL&nbsp;1.0, the language this document defines.</p>
-            <p>The declaration is <b>reserved for a future compiler version</b>: the reference compiler does not yet recognise it. A compiler that does not recognise the declaration, or that recognises it but does not implement the version named, MUST report an <code>ERROR</code> diagnostic (unsupported language version) and MUST NOT compile the document under the rules of a different version. Authors targeting current compilers therefore omit it.</p>
+            <p>A compiler that does not recognise the declaration, or that recognises it but does not implement the version named, MUST report an <code>ERROR</code> diagnostic (unsupported language version) and MUST NOT compile the document under the rules of a different version. A version declaration anywhere but first is an <code>ERROR</code>. The reference compiler accepts <code>hdl 1.0</code> and reports every other version as unsupported.</p>
         </section>
     </section>
 
