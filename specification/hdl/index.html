@@ -438,6 +438,21 @@ struct Image {
             conditional layout, which would multiply into a case per (interleave, width) pair.
         </p>
         <pre class="nohighlight">
+use araster: &lt;https://hexplain.io/ns/aspect/raster#&gt;
+
+bundle EsriGrid @bound-by naming-convention {
+  part ".bil" ".bip" ".bsq" ".flt" role Payload required primary described-by Grid
+  part ".hdr" role Metadata required carries araster: described-by Header
+}
+
+header Header means araster:RasterGrid @record-separator 0x0A @separator 0x20 @trim @ci {
+  nrows  : anum means araster:height
+  ncols  : anum means araster:width
+  nbands : anum
+  nbits  : anum
+  "layout" as interleave : str
+}
+
 struct Grid {
   // Zero-byte derived siblings bring the header part's values into this struct's scope,
   // because a dimension size must be a literal or a sibling name.
@@ -448,8 +463,8 @@ struct Grid {
   interleave : derive asset.Header.interleave
   pixels : bytes[..] layout {
     cell switch {                                  // dlv:hasConditionalCellDataType
-      when partExtension(asset.Raster) == ".flt" =&gt; f32
-      when nbits == 8                            =&gt; u8
+      when partExtension(asset.Grid) == ".flt" =&gt; f32
+      when nbits == 8                          =&gt; u8
     }
     dim axis Y    size nrows
     dim axis Band size nbands
@@ -463,14 +478,19 @@ struct Grid {
         </pre>
         <p class="note">
             This example reads values from <em>another part</em> of a multi-file asset
-            (<code>asset.Header.&#8230;</code>, <code>partExtension(asset.Raster)</code>), so it can
-            only be processed by a processor in the <b>Bundle Processor</b> conformance class
+            (<code>asset.Header.&#8230;</code>) and the grid part's own extension
+            (<code>partExtension(asset.Grid)</code>; a part is named by the struct its part spec is
+            <code>described-by</code>), so it can only be processed by a processor in the
+            <b>Bundle Processor</b> conformance class
             (<a href="../processing/index.html#conformance-classes">Processing Model &#167;Conformance classes</a>);
             a Physical Parser handed the raster part alone MUST fail the <code>asset</code> references
             with an error rather than read them as Null. The <code>when</code> guards refer to the
             derived siblings by bare name, which is <code>instance.&lt;name&gt;</code>. A
             single-file variant replaces each <code>derive asset.Header.x</code> with a field read
-            from the same file.
+            from the same file. The payload part lists its four extensions as alternatives: the grid
+            is whichever one of them is present, and <code>partExtension</code> reports which. A
+            Bundle Processor parses the header part first, whatever order the files arrive in,
+            because the grid reads it.
         </p>
         <p>
             Rules are <b>first match wins</b>, so a more specific arm must precede a more general one
@@ -564,6 +584,13 @@ struct ShpMain @endian big {
             </pre>
             <p>A <code>bundle</code> mints an <code>abnd:BundleProfile</code>; each <code>part</code> mints a <code>abnd:PartSpec</code>. <code>@bound-by</code> keywords <code>containment | naming-convention | manifest-reference | concatenation</code> map to the four <code>abnd:BindingKind</code> individuals; a bundle without <code>@bound-by</code> is <code>naming-convention</code>. In a part, <code>role</code> is a keyword introducing the part's role, not a prefix: <code>role Name</code> resolves a bare name to the concept of that name in the part-role register (<code>rpr:</code><var>Name</var>), and <code>role ns:Custom</code> takes any CURIE whose prefix is bound. The predeclared prefix <code>role:</code> is bound to the part-role register (<a href="#prefixes">§Prefixes</a>), so <code>role GeometryCarrier</code> and <code>role role:GeometryCarrier</code> are equivalent; <code>rpr:</code>, the register's conventional prefix, is not predeclared, and a document that writes <code>role rpr:GeometryCarrier</code> (or <code>register &#8230; from rpr:PartRoleScheme</code>) declares it with <code>use rpr: &lt;https://hexplain.io/ns/register/part-role#&gt;</code>. A bare name that is not a concept of the part-role register is an error; <code>required</code>/<code>optional</code> &#8594; <code>abnd:required</code>; <code>primary</code> &#8594; <code>abnd:primary</code>; <code>described-by S</code> &#8594; <code>abnd:describedBy</code> the named struct.</p>
         <p>
+            A part may list several locators (<code>part ".bil" ".flt" role Payload</code>, or
+            several patterns after <code>pattern</code>): they are ALTERNATIVES for one member, each
+            emitted as a value of the same <code>abnd:extension</code> (or <code>abnd:pathPattern</code>)
+            on one <code>abnd:PartSpec</code> &#8212; the part is whichever one is present, not several
+            files. A profile that expects several files declares several parts.
+        </p>
+        <p>
             <code>part "&lt;ext&gt;"</code> is the flat-sibling shorthand: it assumes every member
             is a sibling sharing one stem, which covers a two-file sidecar and nothing else. A
             directory-structured product — a SAFE package, a GRASS mapset, a Zarr store, an Esri
@@ -656,7 +683,7 @@ structs:
         <table class="simple">
             <thead><tr><th>Where</th><th>Keys</th><th>Text equivalent</th></tr></thead>
             <tbody>
-                <tr><td>top level</td><td><code>format namespace endian bit-order use structs fields bundles assets register enums</code></td><td><code>format</code> header, <code>use</code>, declarations; <code>use: { menc: "https://&#8230;#" }</code>; <code>register: { abnd:partRole: rpr:PartRoleScheme }</code></td></tr>
+                <tr><td>top level</td><td><code>hdl format namespace endian bit-order use structs fields bundles assets register enums</code></td><td><code>hdl: 1.0</code> is the version declaration <code>hdl 1.0</code> (a YAML float or the string <code>"1.0"</code>; any other value is an unsupported language version, as in text); <code>format</code> header, <code>use</code>, declarations; <code>use: { menc: "https://&#8230;#" }</code>; <code>register: { abnd:partRole: rpr:PartRoleScheme }</code></td></tr>
                 <tr><td><code>enums: { Name: &#8230; }</code></td><td><code>as label flags values</code></td><td>top-level <code>enum</code>; <code>values: { 0: Grayscale, 2: { symbol: RGB, label: "Truecolour" }, 3: {} }</code> (an empty mapping is a bare valid value)</td></tr>
                 <tr><td>struct</td><td><code>kind as root means endian bit-order sync size label comment prop raw-turtle means-when fields</code></td><td><code>kind: struct|header|table|document</code> (default <code>struct</code>); <code>endian</code> is a scalar or a list of <code>{ when, order }</code> (<code>@endian switch</code>); <code>sync</code> is a quoted hex string; <code>means-when</code> is a list of <code>{ when, class }</code>; <code>prop</code> is a map <code>{ curie: value }</code></td></tr>
                 <tr><td>container (<code>kind</code> not <code>struct</code>)</td><td><code>record-separator separator quote escape comment skip trim ci whitespace group path-separator syntax ns</code></td><td><code>group: { style: keyed|valued|section, open, close }</code>; <code>syntax: xml|json</code> and <code>ns: { "prefix": "iri" }</code> for <code>kind: document</code>; <code>comment</code> here is the comment <em>prefix</em>, as <code>@comment</code> is on a container</td></tr>
@@ -666,7 +693,7 @@ structs:
                 <tr><td>field: enum, checksum, switch</td><td><code>enum checksum switch</code></td><td><code>enum: Name</code> or <code>{ flags, values }</code>; <code>checksum: { algorithm, from, to }</code> or <code>{ algorithm, covers: [a, b] }</code>; <code>switch: { on, cases: { literal: Struct }, when: [ { cond, type } ] }</code></td></tr>
                 <tr><td>field: semantics</td><td><code>means value object unit lang lang-from encoded-with pipeline map</code></td><td><code>value: { expr, datatype }</code>; <code>pipeline: [ { codec, params: { name: int } } ]</code>; <code>map: [ { when, property, value, datatype } ]</code></td></tr>
                 <tr><td>field: <code>layout</code></td><td><code>cell dims order chunks cell-bits packing</code></td><td><code>cell</code> is a type name or a list of <code>{ when, type }</code> (<code>cell switch</code>); <code>dims: [ { axis, size, stride, chunk } ]</code>; <code>order: [ { when, axes: [..] } ]</code>; <code>chunks: { offsets, lengths, base, order }</code>; <code>cell-bits</code> is an integer or a field name</td></tr>
-                <tr><td><code>bundles: { Name: &#8230; }</code></td><td><code>as bound-by parts</code></td><td>each part: <code>extension</code> or <code>pattern</code>, <code>role required primary carries described-by min max nested</code></td></tr>
+                <tr><td><code>bundles: { Name: &#8230; }</code></td><td><code>as bound-by parts</code></td><td>each part: <code>extension</code> or <code>pattern</code> (a string, or a list of alternatives: <code>extension: [".bil", ".flt"]</code>), <code>role required primary carries described-by min max nested</code></td></tr>
                 <tr><td><code>assets: { name: &#8230; }</code></td><td><code>conforms bound-by stem primary parts</code></td><td>each part: <code>name role</code></td></tr>
             </tbody>
         </table>
@@ -892,7 +919,7 @@ ChunkOrder     ::= "row-major" | "column-major" | "morton" | "hilbert"
             <h3>Bundles and assets</h3>
             <pre class="ebnf">
 BundleDecl     ::= "bundle" NAME Alias? ( "@bound-by" Binding )? "{" PartSpec* "}"
-PartSpec       ::= "part" "pattern"? STRING "role" RoleRef PartOption*
+PartSpec       ::= "part" "pattern"? STRING+ "role" RoleRef PartOption*   /* several STRINGs: alternatives */
 PartOption     ::= "required" | "optional" | "primary"
                  | "min" INT | "max" INT
                  | "carries" PrefixLabel
@@ -963,7 +990,7 @@ CoverToken     ::= /* any token; "(" and ")" must balance */
 
         <section id="versioning">
             <h3>Language version</h3>
-            <p>A document MAY begin with a version declaration, <code>hdl 1.0</code>, before any other declaration. A document without one is HDL&nbsp;1.0, the language this document defines.</p>
+            <p>A document MAY begin with a version declaration, <code>hdl 1.0</code>, before any other declaration. A document without one is HDL&nbsp;1.0, the language this document defines. On the YAML surface the declaration is the top-level key <code>hdl: 1.0</code>; a mapping has no order, so it has no position rule there, and every other value of the key is an unsupported language version.</p>
             <p>A compiler that does not recognise the declaration, or that recognises it but does not implement the version named, MUST report an <code>ERROR</code> diagnostic (unsupported language version) and MUST NOT compile the document under the rules of a different version. A version declaration anywhere but first is an <code>ERROR</code>. The reference compiler accepts <code>hdl 1.0</code> and reports every other version as unsupported.</p>
         </section>
     </section>

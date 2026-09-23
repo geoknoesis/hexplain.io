@@ -139,6 +139,46 @@ validated module by module), pointcloud no longer imports sampling.
 - Namespace registry lists all 36 namespaces; the architecture catalogue is generated from
   the Turtle.
 
+### Bundle Processor
+
+The Bundle Processor class was underspecified; the Processing Model's Multi-part Assets section
+now states what a conforming processor does, and the reference implementation claims the class.
+
+- **Assembly.** An `abnd:extension` is the shorthand for the pattern `*<ext>` (a file at the
+  asset root) compared ignoring ASCII case; several extension or pattern values are alternatives.
+  A file matching no part spec or several is a validation error, as is a part count outside
+  `abnd:minParts` (default 1 if required, else 0) .. `abnd:maxParts` (default 1 for an extension
+  spec, unbounded for a pattern). `partExtension()` is the extension alternative a part matched,
+  or its file name from the last `.` for a pattern part.
+- **Order.** A part's description is the struct it is described by and every struct reachable
+  from it; `partExtension(asset.X)` imposes no order; a part reading its own content through
+  `asset` is a cycle; two part specs described by structs sharing a local name, and cyclic
+  references, are description errors raised before any part is parsed. Reading a key a part's
+  root struct does not declare, or naming a part several files matched, is a HEL error.
+- **Cross-part references are written with `asset`.** The bundle aspect's comment said a
+  `…FromField` property could name another part's field; nothing resolved it that way, and the
+  Processing Model now says a `…FromField` resolves within the part being parsed (bring a value
+  into scope with a derived field, as the HDL example does). Comment-only change to
+  `aspect/bundle/bundle.ttl`.
+- **Lifting.** The asset is linked to the primary part by `abnd:primaryPart` when exactly one
+  file matched the primary spec; the graph carries the bundle profile, not the descriptions of
+  the parts' bytes; no inverse edge is added.
+- `abnd:nestedProfile` is optional in this version: a Bundle Processor that does not assemble
+  nested profiles rejects it with Unsupported feature.
+- Error table: the new validation and description errors are listed; the informative mapping
+  adds `BundleAssemblyException`, `BundleCycleException` and `HelLimitException`.
+- HEL: `asset` and `partExtension` state the errors above, and that `partExtension` does not
+  evaluate its accessor; a HEL conformance item requires 512 levels of nesting and makes
+  exceeding a nesting or length limit the ResourceLimit error, never a syntax or runtime error.
+- HDL: the conditional-layout example named the grid part `asset.Raster`, but a part is named by
+  the struct it is described by (`Grid`); it now reads `partExtension(asset.Grid)` and is
+  completed with its header part and bundle, so it compiles and runs end to end. A `part` may list
+  several locators, which are alternatives (`part ".bil" ".flt" role Payload`; YAML
+  `extension: [".bil", ".flt"]`) -- HDL had no way to write the alternatives the bundle aspect
+  defines. The YAML surface gains `hdl: 1.0`, the spelling of the `hdl 1.0` declaration.
+- The reference implementation claims Physical Parser, Semantic Emitter, Bundle Processor
+  (without `abnd:nestedProfile`) and HDL Compiler (informative note under Conformance Classes).
+
 ### Tooling
 
 New gates: `test_range_datatypes`, `test_shape_activation`, `test_known_terms`,

@@ -73,13 +73,12 @@
 # sample type and byte order all live in the header file and the payload file carries
 # nothing but bytes.
 #
-# Two mechanisms carry such a reference, and both were already expressible before this was
-# written down -- what was missing was the resolution rule:
-#
-#   * A `...FromField` object property (bddo:sizeFromField, bddo:atOffsetFromField,
-#     dlv:dimensionSizeFromField, ...). Its range is bddo:Field with no same-struct
-#     restriction, so it may name a field of any part's struct.
-#   * A HEL expression using the `asset` root, e.g. "asset.Header.byteOrder == 0".
+# Such a reference is written with HEL's `asset` root, e.g. "asset.Header.byteOrder == 0".
+# A `...FromField` object property (bddo:sizeFromField, dlv:dimensionSizeFromField, ...)
+# is NOT a cross-part reference: the Processing Model resolves it within the part being
+# parsed, as in a single file. To size by another part's field, bring the value into the
+# part's own scope with a derived field (bddo:valueFromExpression "asset.Header.nrows") and
+# name that field -- the pattern the HDL conditional-layout example uses.
 #
 # Identity versus content. The two are available at different times, and conflating them makes
 # a legal description look circular. A part's CONTENT -- what asset.X.field reads -- exists only
@@ -91,8 +90,8 @@
 # decide how that same part is read -- an ESRI .hdr-labelled grid is uint32 at NBITS 32 but
 # float32 when the file is .flt, and only the filename distinguishes them.
 #
-# Resolution. Both are resolved against the enclosing abnd:Asset, by locating the part whose
-# abnd:PartSpec is abnd:describedBy the struct that owns the named field. A description
+# Resolution. `asset.X` is resolved against the enclosing abnd:Asset, by locating the part whose
+# abnd:PartSpec is abnd:describedBy the struct whose local name is X. A description
 # carrying a cross-part reference is therefore only meaningful when parsed as part of an
 # asset; parsing such a part standalone MUST raise an error rather than yield Null, since a
 # silently absent extent would produce a plausible but wrong grid.
