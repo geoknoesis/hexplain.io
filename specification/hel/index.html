@@ -14,8 +14,8 @@
             }],
             github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "hel",
-            publishDate: "2025-08-16",
-            subtitle: "Version 1.0",
+            publishDate: "2026-09-23",
+            subtitle: "HEL 1.0 — prerelease working draft",
         };
     </script>
 <link rel="stylesheet" href="../print.css" media="print">
@@ -23,22 +23,27 @@
 <body>
     <section id="abstract">
         <p>
-            The Hexplain Expression Language (HEL) is a small, declarative language for the conditions and calculations inside Hexplain format descriptions. It powers dynamic sizing, conditional presence, repetition counts, offsets, and conditional data-type and semantic dispatch. HEL operates on a hierarchical <b>logical data model</b> derived from the binary data being parsed, using name resolution inspired by JSON-LD.
+            The Hexplain Expression Language (HEL) is a small, declarative language for the conditions and calculations inside Hexplain format descriptions. It powers dynamic sizing, conditional presence, repetition counts, offsets, derived values, conformance assertions, and conditional data-type and semantic dispatch. HEL operates on a hierarchical <b>logical data model</b> built from the binary data being parsed; a name in an expression is the local name of a field of the struct the expression is evaluated in.
         </p>
     </section>
 
     <section id="sotd">
         <p>
-            This document is an unofficial draft produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body.
+            This document is a <b>prerelease working draft</b> of HEL 1.0, produced for the purpose of defining the Hexplain standard. It has no official standing and is not endorsed by any standards body. The language, its function groups and its conformance vectors may still change incompatibly before HEL 1.0 is released. The executable statement of this draft is the vector set <a href="../validation/test/hel-vectors.tsv"><code>validation/test/hel-vectors.tsv</code></a>; where a vector and the prose disagree, that is a defect in this document to be reported.
         </p>
     </section>
 
     <section class="introductory">
         <h2>Introduction</h2>
         <p>
-            A key requirement of the Hexplain framework is handling dynamic structures where the presence, size, count, offset, or type of a field depends on previously parsed data. HEL provides a concise, unambiguous syntax for these expressions. Design goals: <b>simplicity</b>, <b>clarity</b>, and <b>grounding</b> in stable standards (JSON-LD name resolution, XPath operator semantics).
+            A key requirement of the Hexplain framework is handling dynamic structures where the presence, size, count, offset, or type of a field depends on previously parsed data. HEL provides a concise, unambiguous syntax for these expressions. Design goals: <b>simplicity</b>, <b>clarity</b>, <b>determinism</b> (the same expression over the same data gives the same result or the same error in every conforming implementation), and <b>grounding</b> in stable standards (XPath-style operator semantics, IEEE 754 binary64 floating point).
         </p>
-        <p>HEL literals appear as the value of the properties <code>bddo:isPresentIf</code>, <code>bddo:repeatUntil</code>, <code>bddo:sizeFromExpression</code>, <code>bddo:repeatCountFromExpression</code>, <code>bddo:atOffsetFromExpression</code>, <code>bddo:coversExpression</code>, <code>bddo:condition</code>, and <code>hexplain:condition</code>.</p>
+        <p>A HEL expression is the lexical form of an <code>xsd:string</code> literal. The complete list of properties whose values are HEL expressions, and what each expression's names are bound to, is the <a href="#name-binding">name-binding table</a>.</p>
+        <section id="versioning">
+            <h3>Language Version and Extension Groups</h3>
+            <p>This document defines <b>HEL 1.0</b>. An expression carries no version marker: the HEL version a description is written against is the one defined by the edition of the Hexplain specification it conforms to. A later 1.x version MAY add functions and extension groups, but MUST NOT change the value or the error an expression that is valid under HEL 1.0 produces.</p>
+            <p>The function library is divided into a <a href="#core-functions">core set</a>, which every conforming evaluator MUST implement, and named <a href="#extension-groups">extension groups</a>, which an evaluator MAY implement. An extension group is implemented <b>all or nothing</b>: an evaluator either implements every function of the group as specified here, or none of them. An extension group is identified by its <b>group name</b> (<code>text</code>, <code>temporal</code>, <code>geometry</code>, <code>register</code>, <code>quantifiers</code>) and, wherever an IRI is needed (a processor's statement of the groups it supports, a report of an unsupported feature), by the IRI of its section in this document, <code>https://hexplain.io/specification/hel/#ext-</code><i>name</i> (for example <code>https://hexplain.io/specification/hel/#ext-text</code>). Every function name belongs to exactly one group, so the groups a description needs are determined statically by the function names its expressions call.</p>
+        </section>
         <section>
             <h3>Conformance</h3>
             <p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [[RFC2119]].</p>
@@ -48,27 +53,68 @@
     <section id="data-model">
         <h2>The Logical Data Model</h2>
         <p>
-            A HEL expression is evaluated against a temporary, in-memory <b>parsing context</b> — a hierarchical tree that the processor builds as it parses. Each parsed Struct instance is a <b>node</b> whose named children are its fields; each scalar field yields a <b>value node</b>; a repeated field yields an ordered <b>array node</b>.
+            A HEL expression is evaluated against a temporary, in-memory <b>parsing context</b> &mdash; a hierarchical tree that the processor builds as it parses (see the <a href="../processing/index.html#context">Processing Model</a>). Each parsed Struct instance is a <b>struct node</b> whose named children are its fields; each scalar field yields a <b>value node</b>; a repeated field yields an ordered <b>array node</b>.
         </p>
-        <section>
+        <section id="reserved-roots">
             <h3>Reserved Roots</h3>
-            <p>An expression is attached to a specific description element (a Field, a DataTypeRule, a MappingRule, or a Checksum). Evaluation resolves the following reserved roots relative to that element:</p>
+            <p>An expression is evaluated in a <b>current struct node</b>, determined by the property that carries the expression (see <a href="#name-binding">Name Binding</a>). The reserved roots are resolved relative to it:</p>
             <table class="simple">
                 <thead><tr><th>Root</th><th>Denotes</th></tr></thead>
                 <tbody>
-                    <tr><td><code>instance</code></td><td><b>The current node</b> — the parsed node the expression is attached to (its Field, or the Struct/Field a rule governs).</td></tr>
-                    <tr><td><code>parent</code></td><td>Shorthand for <code>instance.parent</code>: the containing Struct node. Sibling fields are reached via <code>parent.SiblingName</code> (equivalently <code>instance.parent.SiblingName</code>).</td></tr>
-                    <tr><td><code>root</code></td><td>The top-level parsed instance (the outermost Struct of the description). Scoped to <b>one part</b>: in a multi-part asset each part has its own <code>root</code>, so <code>root</code> never crosses a part boundary — use <code>asset</code> for that.</td></tr>
-                    <tr><td><code>asset</code></td><td>The enclosing <code>abnd:Asset</code>. Its named children are the asset's parts, each named by the local name of the <code>bddo:Struct</code> the part's <code>abnd:PartSpec</code> points at with <code>abnd:describedBy</code> — so <code>asset.Header.samples</code> reads the <code>samples</code> field of the part described by the struct <code>Header</code>. Undefined, and a runtime error, when the description is not being parsed as part of an asset.</td></tr>
-                    <tr><td><code>self</code></td><td>Within a <code>bddo:repeatUntil</code> expression, the array element most recently parsed (the one under test). Undefined elsewhere.</td></tr>
-                    <tr><td><code>stream</code></td><td>Stream metadata: <code>stream.length</code>, <code>stream.position</code>, <code>stream.remaining</code> (all byte counts, integers).</td></tr>
+                    <tr><td><code>instance</code></td><td><b>The current struct node.</b> For an expression attached to a Field (or to a rule governing a Field), the struct instance that <b>contains</b> that field; for an expression attached to a Struct, that struct instance itself. <code>instance.x</code> reads field <code>x</code> of it, and a bare name <code>x</code> is shorthand for <code>instance.x</code>.</td></tr>
+                    <tr><td><code>parent</code></td><td>The parent struct node of <code>instance</code>: the struct instance that holds <code>instance</code> as a field value or as an element of an array field. <code>parent</code> and <code>instance.parent</code> are the same node. A leading run of <code>parent</code> steps climbs one level per step (<code>parent.parent</code> is the grandparent). The parent of the root struct node is Null.</td></tr>
+                    <tr><td><code>root</code></td><td>The top-level parsed instance (the outermost Struct of the description). Scoped to <b>one part</b>: in a multi-part asset each part has its own <code>root</code>, so <code>root</code> never crosses a part boundary &mdash; use <code>asset</code> for that.</td></tr>
+                    <tr><td><code>asset</code></td><td>The enclosing <code>abnd:Asset</code>. Its named children are the asset's parts, each named by the local name of the <code>bddo:Struct</code> the part's <code>abnd:PartSpec</code> points at with <code>abnd:describedBy</code> &mdash; so <code>asset.Header.samples</code> reads the <code>samples</code> field of the part described by the struct <code>Header</code>. Undefined, and a runtime error, when the description is not being parsed as part of an asset.</td></tr>
+                    <tr><td><code>self</code></td><td>The value under test, where the property defines one: the element just parsed, in <code>bddo:repeatUntil</code>; the field's parsed value, in <code>bddo:validIf</code>; the current element, inside the predicate of a quantifier (<code>all</code>/<code>any</code>); the scoped struct instance, in <code>conf:assertion</code>. Undefined elsewhere; a reference to it there is an undefined-name error.</td></tr>
+                    <tr><td><code>stream</code></td><td>Stream metadata, all byte counts (Integers), as defined by the <a href="../processing/index.html">Processing Model</a>: <code>stream.length</code> is the length of the <b>whole</b> stream; <code>stream.position</code> is the cursor's offset; <code>stream.remaining</code> is the number of bytes from the cursor to the end of the <b>innermost bounded region</b> or decoded sub-stream being read (so it is not, in general, <code>stream.length - stream.position</code>). <code>eof()</code> is relative to the same innermost region: it is <code>true</code> exactly when <code>stream.remaining == 0</code>. Any other key after <code>stream</code> is an undefined-name error.</td></tr>
                 </tbody>
             </table>
         </section>
-        <section>
-            <h3>Context-Based Key Resolution</h3>
-            <p>Identifiers after a dot are simple keys (e.g. <code>ChunkType</code>). They resolve to full IRIs via the <code>@prefix</code> context of the Hexplain description, exactly as in [[JSON-LD]]. A key MUST correspond to a field defined in the referenced Struct, or to the keyword <code>parent</code>.</p>
-            <p>An array node (a repeated field) MAY be subscripted with <code>[ Expression ]</code>. The index expression MUST evaluate to a non-negative Integer strictly less than the array's length (elements are 0-based); otherwise a <b>range error</b> is raised. Subscripts and key steps compose freely (e.g. <code>root.Directory[i].Entries[0].Tag</code>).</p>
+        <section id="name-binding">
+            <h3>Name Binding</h3>
+            <p>The table below is normative and complete: these are the HEL-bearing properties, and for each, what the roots <code>instance</code>, <code>parent</code>, <code>root</code> and <code>self</code> are bound to and what type the result MUST have. <code>root</code> is always the root struct node of the part being parsed, and <code>stream</code> always denotes the stream being read, so they are omitted from the rows. The rule behind the table is uniform: <code>instance</code> is the nearest struct instance that holds the thing the property is attached to &mdash; a Field's containing struct, or a Struct itself &mdash; and only the fields of that struct that have already been parsed have values (see <a href="#undefined-names">Undefined Names and Forward References</a>).</p>
+            <table class="simple">
+                <thead><tr><th>Property (attached to)</th><th><code>instance</code></th><th><code>parent</code></th><th><code>self</code></th><th>Result</th></tr></thead>
+                <tbody>
+                    <tr><td><code>bddo:isPresentIf</code> (Field)</td><td>containing struct</td><td>parent of <code>instance</code></td><td>undefined</td><td>Boolean</td></tr>
+                    <tr><td><code>bddo:sizeFromExpression</code> (Field)</td><td>containing struct</td><td>parent of <code>instance</code></td><td>undefined</td><td>Integer &ge; 0</td></tr>
+                    <tr><td><code>bddo:sizeFromExpression</code> (Struct)</td><td>the struct instance itself</td><td>parent of <code>instance</code></td><td>undefined</td><td>Integer &ge; 0</td></tr>
+                    <tr><td><code>bddo:repeatCountFromExpression</code> (Field)</td><td>containing struct</td><td>parent of <code>instance</code></td><td>undefined</td><td>Integer &ge; 0</td></tr>
+                    <tr><td><code>bddo:atOffsetFromExpression</code> (Field)</td><td>containing struct</td><td>parent of <code>instance</code></td><td>undefined</td><td>Integer &ge; 0</td></tr>
+                    <tr><td><code>bddo:repeatUntil</code> (Field)</td><td>containing struct</td><td>parent of <code>instance</code></td><td>the element just parsed</td><td>Boolean</td></tr>
+                    <tr><td><code>bddo:repeatUntil</code> (Struct read as a sequence)</td><td>the element just parsed (a struct instance)</td><td>the struct holding the sequence</td><td>the element just parsed</td><td>Boolean</td></tr>
+                    <tr><td><code>bddo:validIf</code> (Field)</td><td>containing struct, including this field</td><td>parent of <code>instance</code></td><td>this field's parsed value</td><td>Boolean</td></tr>
+                    <tr><td><code>bddo:valueFromExpression</code> (Field)</td><td>containing struct</td><td>parent of <code>instance</code></td><td>undefined</td><td>any</td></tr>
+                    <tr><td><code>bddo:dispatchOnExpression</code> (DispatchTable of a Field)</td><td>containing struct</td><td>containing struct (see below)</td><td>undefined</td><td>String or Integer</td></tr>
+                    <tr><td><code>bddo:condition</code> (<code>bddo:DataTypeRule</code> in a Field's <code>bddo:hasConditionalDataType</code>)</td><td>containing struct</td><td>containing struct (see below)</td><td>undefined</td><td>Boolean</td></tr>
+                    <tr><td><code>bddo:condition</code> (<code>bddo:EndiannessRule</code> in <code>bddo:hasConditionalEndianness</code>)</td><td>the Struct carrying the rule list, or a Field's containing struct</td><td>parent of <code>instance</code></td><td>undefined</td><td>Boolean</td></tr>
+                    <tr><td><code>bddo:condition</code> (<code>dlv:CellDataTypeRule</code>, <code>dlv:DimensionOrderRule</code>)</td><td>struct containing the field that carries the layout</td><td>parent of <code>instance</code></td><td>undefined</td><td>Boolean</td></tr>
+                    <tr><td><code>dlv:dimensionStrideFromExpression</code> (Dimension)</td><td>struct containing the field that carries the layout</td><td>parent of <code>instance</code></td><td>undefined</td><td>Integer &ge; 0</td></tr>
+                    <tr><td><code>bddo:coversFromExpression</code>, <code>bddo:coversToExpression</code>, and the deprecated <code>bddo:coversExpression</code> (Checksum of a Field)</td><td>containing struct</td><td>parent of <code>instance</code></td><td>undefined</td><td>Integer &ge; 0 (byte offset)</td></tr>
+                    <tr><td><code>hexplain:condition</code> (<code>hexplain:MappingRule</code> in a Field's <code>hexplain:hasConditionalMapping</code>)</td><td>containing struct</td><td>parent of <code>instance</code></td><td>undefined</td><td>Boolean</td></tr>
+                    <tr><td><code>hexplain:condition</code> (<code>hexplain:ClassMappingRule</code> in a Struct's <code>hexplain:hasConditionalClassMapping</code>)</td><td>the struct instance itself</td><td>parent of <code>instance</code></td><td>undefined</td><td>Boolean</td></tr>
+                    <tr><td><code>hexplain:valueExpression</code> (Field or <code>hexplain:MappingRule</code>)</td><td>containing struct</td><td>parent of <code>instance</code></td><td>undefined</td><td>per <code>hexplain:valueDatatype</code></td></tr>
+                    <tr><td><code>conf:assertion</code> (<code>conf:Constraint</code>, evaluated once per instance of its <code>conf:scope</code> Struct)</td><td>the scoped struct instance</td><td>parent of <code>instance</code></td><td>the scoped struct instance</td><td>Boolean</td></tr>
+                </tbody>
+            </table>
+            <p><b>Dispatch conditions.</b> A <code>bddo:dispatchOnExpression</code> and the <code>bddo:condition</code> of a <code>bddo:DataTypeRule</code> choose the type of a field that has not been read yet, so they are evaluated against the containing struct. In these two contexts, and only in them, <code>parent</code> (and so <code>instance.parent</code>) is an alias for <code>instance</code>: <code>ChunkType</code>, <code>instance.ChunkType</code> and <code>parent.ChunkType</code> all read the containing struct's <code>ChunkType</code>. The alias keeps descriptions written against the earlier field-relative reading of <code>instance</code> valid; new descriptions SHOULD use the bare name. A dispatch condition cannot reach the containing struct's parent other than through <code>root</code>.</p>
+            <p>A processor that evaluates HEL outside parsing &mdash; for example the SPARQL function <a href="../fn/index.html"><code>hxf:hel</code></a> &mdash; binds <code>instance</code> to the node's struct, <code>parent</code> to its container and <code>root</code> to the root of the file, as the table does for a field-level expression.</p>
+        </section>
+        <section id="key-resolution">
+            <h3>Names and Key Resolution</h3>
+            <p>An identifier in an accessor &mdash; a bare name, or a key after a dot &mdash; is the <b>local name of a field</b> of the struct node it is applied to. In an RDF description a field is a <code>bddo:Field</code> resource, and its HEL name is the local name of that resource's IRI (the part after the final <code>#</code> or <code>/</code>), which is also the name the <a href="../hdl/index.html">HDL</a> gives it. Identifiers are <b>not</b> IRIs and are never expanded through <code>@prefix</code> declarations or a JSON-LD context: <code>ChunkType</code> means "the field named <code>ChunkType</code> in this struct", whatever namespace its IRI is in. Within one struct, field local names MUST be unique.</p>
+            <p>A bare name <code>x</code> is exactly <code>instance.x</code>. A key MUST name a field declared by the <code>bddo:Struct</code> of the node it is applied to, or be the keyword <code>parent</code>. A name that is also a reserved word (<code>instance parent root self stream asset and or not true false</code>) cannot be written as a bare name or a key, so a field that expressions need to reference MUST NOT have such a local name.</p>
+            <p>An array node (a repeated field) MAY be subscripted with <code>[ Expression ]</code>. The index expression MUST evaluate to a non-negative Integer strictly less than the array's length (elements are 0-based); otherwise a <b>range error</b> is raised. Subscripts and key steps compose freely (e.g. <code>root.Directory[i].Entries[0].Tag</code>). Applying a key to a value that is not a struct node, or a subscript to a value that is not an array node, is an error.</p>
+        </section>
+        <section id="undefined-names">
+            <h3>Undefined Names and Forward References</h3>
+            <p>Three cases are distinguished, and a conforming evaluator MUST keep them apart:</p>
+            <ul>
+                <li><b>Undefined name.</b> A key that names no field declared by the addressed struct (a typo, or a field of some other struct), or <code>self</code> where the property defines no value under test, MUST raise an <b>undefined-name error</b>. It MUST NOT evaluate to Null: a misspelt name that read as Null would silently turn a presence condition false or a comparison false.</li>
+                <li><b>Forward reference.</b> A key that names a declared field which has not yet been reached at the moment of evaluation (it comes later in field order, or belongs to a struct instance still being parsed further on) MUST raise a <b>forward-reference error</b>.</li>
+                <li><b>Absent optional field.</b> A declared field that has been reached but is not present in this instance (its <code>bddo:isPresentIf</code> was false) reads as <b>Null</b>. This is the only way a field reference yields Null.</li>
+            </ul>
+            <p>Both errors are type/HEL errors in the sense of the <a href="../processing/index.html#errors">Processing Model</a>.</p>
         </section>
     </section>
 
@@ -76,77 +122,100 @@
         <h2>Syntax and Grammar</h2>
         <section>
             <h3>Formal Grammar (ABNF)</h3>
-            <p>The following grammar [[RFC5234]] defines HEL. Operators are listed lowest-precedence first.</p>
+            <p>The following grammar [[RFC5234]] defines HEL. Operators are listed lowest-precedence first. <code>WS</code> MAY appear between any two tokens, and is required only where two adjacent tokens would otherwise read as one (for example between <code>not</code> and a name); the productions show it where it is commonly written.</p>
             <pre class="abnf">
 Expression   = Conditional
 Conditional  = OrExpr [ WS "?" WS Expression WS ":" WS Conditional ]
 OrExpr       = AndExpr *( WS "or" WS AndExpr )
 AndExpr      = NotExpr *( WS "and" WS NotExpr )
-NotExpr      = [ "not" WS ] Comparison
+NotExpr      = "not" WS NotExpr / Comparison
 Comparison   = BitOrExpr [ WS CompOp WS BitOrExpr ]
 BitOrExpr    = BitXorExpr *( WS "|" WS BitXorExpr )
 BitXorExpr   = BitAndExpr *( WS "^" WS BitAndExpr )
-BitAndExpr   = ShiftExpr  *( WS "&" WS ShiftExpr )
+BitAndExpr   = ShiftExpr  *( WS "&amp;" WS ShiftExpr )
 ShiftExpr    = AddExpr    *( WS ( "&lt;&lt;" / "&gt;&gt;" ) WS AddExpr )
 AddExpr      = MulExpr    *( WS ( "+" / "-" ) WS MulExpr )
 MulExpr      = Unary      *( WS ( "*" / "/" / "%" ) WS Unary )
-Unary        = [ "-" / "~" ] Primary
+Unary        = ( "-" / "~" ) WS Unary / Primary
 Primary      = FunctionCall / Accessor / Literal / ( "(" WS Expression WS ")" )
 
-FunctionCall = FunctionName "(" WS [ Expression *( WS "," WS Expression ) ] WS ")"
-FunctionName = "sizeof" / "len" / "count" / "eof" / "trim" / "substringBefore" / "substringAfter"
-             / "substring" / "concat" / "toNumber" / "partExtension"
+FunctionCall = FunctionName WS "(" WS [ Expression *( WS "," WS Expression ) ] WS ")"
+FunctionName = IDENTIFIER                            ; a core function or a function of an extension group
 
-Accessor     = Root *( Step )
-Step         = "." ( "parent" / IDENTIFIER ) / "[" WS Expression WS "]"
+Accessor     = ( Root / Name ) *( Step )             ; a bare Name is shorthand for "instance." Name
+Step         = "." ( "parent" / Name ) / "[" WS Expression WS "]"
 Root         = "instance" / "parent" / "root" / "self" / "stream" / "asset"
+Name         = IDENTIFIER                            ; not a ReservedWord
+ReservedWord = Root / "and" / "or" / "not" / "true" / "false"
 
 CompOp       = "==" / "!=" / "&lt;=" / "&gt;=" / "&lt;" / "&gt;"
 Literal      = StringLiteral / HexLiteral / FloatLiteral / IntegerLiteral / BooleanLiteral
-StringLiteral= %x27 *( SChar / Escape ) %x27       ; single-quoted
-Escape       = "\" ( %x27 / "\" )                  ; \' or \\
-SChar        = %x20-26 / %x28-5B / %x5D-7E          ; any char except ' and \
-HexLiteral   = "0x" 1*HEXDIG
+StringLiteral= %x27 *( SChar / Escape ) %x27        ; single-quoted
+Escape       = "\" ( %x27 / "\" )                   ; \' or \\ -- the only escapes
+SChar        = %x09-0A / %x0D / %x20-26 / %x28-5B / %x5D-D7FF / %xE000-10FFFF
+                                                     ; any character except ' and \
+HexLiteral   = "0" ( "x" / "X" ) 1*HEXDIG
 FloatLiteral = 1*DIGIT "." 1*DIGIT [ Exponent ] / 1*DIGIT Exponent
 Exponent     = ( "e" / "E" ) [ "+" / "-" ] 1*DIGIT
 IntegerLiteral = 1*DIGIT
 BooleanLiteral = "true" / "false"
-IDENTIFIER   = ALPHA *( ALPHA / DIGIT / "_" )
-WS           = *( %x20 / %x09 )
+IDENTIFIER   = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
+WS           = *( %x20 / %x09 / %x0D / %x0A )
             </pre>
-            <p>Two notes on the alternations above. <code>FloatLiteral</code> precedes <code>IntegerLiteral</code> in <code>Literal</code> so that a lexeme such as <code>0.05</code> is read as one Float rather than the Integer <code>0</code> followed by a stray <code>.05</code>; a literal is a Float exactly when it carries a fractional part or an exponent. The ternary <code>Conditional</code> is right-associative and lower in precedence than every binary operator, so <code>a ? b : c ? d : e</code> parses as <code>a ? b : (c ? d : e)</code>; its condition is an <code>OrExpr</code>, so a nested ternary in the condition position must be parenthesised.</p>
+            <p>Notes on the grammar:</p>
+            <ul>
+                <li><b>Alternation order.</b> <code>FloatLiteral</code> precedes <code>IntegerLiteral</code> in <code>Literal</code> so that a lexeme such as <code>0.05</code> is read as one Float rather than the Integer <code>0</code> followed by a stray <code>.05</code>; a literal is a Float exactly when it carries a fractional part or an exponent. A <code>.</code> after digits begins a fraction only when a digit follows it, so <code>Items[0].Tag</code> is a subscript followed by a key step. An <code>IDENTIFIER</code> immediately followed (after optional <code>WS</code>) by <code>(</code> is a <code>FunctionCall</code>; otherwise it is an <code>Accessor</code>.</li>
+                <li><b>Ternary.</b> The <code>Conditional</code> is right-associative and lower in precedence than every binary operator, so <code>a ? b : c ? d : e</code> parses as <code>a ? b : (c ? d : e)</code>; its condition is an <code>OrExpr</code>, so a nested ternary in the condition position must be parenthesised.</li>
+                <li><b>Comparisons do not chain.</b> <code>Comparison</code> takes at most one operator: <code>a &lt; b &lt; c</code> is a syntax error.</li>
+                <li><b>No signed literals.</b> Numeric literals are unsigned; <code>-5</code> is unary minus applied to <code>5</code>.</li>
+                <li><b>String escapes.</b> Only <code>\'</code> and <code>\\</code> are escapes. Any other backslash sequence &mdash; including <code>\n</code>, <code>\t</code>, <code>\xHH</code> and <code>\uHHHH</code> &mdash; is a syntax error. Any other character, including a tab, line break or non-ASCII character, is written literally.</li>
+                <li><b>Integer literal range.</b> An <code>IntegerLiteral</code> or <code>HexLiteral</code> denotes a non-negative Integer and MUST NOT exceed 2<sup>63</sup>&minus;1 (<code>9223372036854775807</code>, <code>0x7FFFFFFFFFFFFFFF</code>); a larger literal is a syntax error, not a wrap-around. A hex literal therefore cannot spell a bit pattern with the top bit set: <code>0xFFFFFFFFFFFFFFFF</code> is an error, and the pattern <code>0x8000000000000000</code> is written <code>~0x7FFFFFFFFFFFFFFF</code>. The minimum Integer is written <code>-9223372036854775807 - 1</code>.</li>
+                <li><b>Float literal value.</b> A <code>FloatLiteral</code> denotes the IEEE 754 binary64 value nearest to its decimal value (round half to even).</li>
+            </ul>
         </section>
         <section>
-            <h3>Accessors &amp; Functions</h3>
+            <h3>Accessors</h3>
             <pre class="example">
+FieldName                         ; a field of the current struct (same as instance.FieldName)
 instance.FieldName
-instance.parent.Version
-parent.ChunkType                  ; equivalent to instance.parent.ChunkType
+parent.Version                    ; a field of the parent struct (same as instance.parent.Version)
 root.Header.Magic
-stream.remaining
-sizeof(instance.parent.Keyword)   ; byte length of a parsed field
-len(instance.parent.Entries)      ; number of elements in an array
-instance.parent.Entries[0].Offset ; a field of the first (0-based) array element
-root.Directory[instance.Index].Tag; array index from a parsed field value
-eof()                             ; true when the cursor is at end of stream
+stream.remaining                  ; bytes left in the innermost bounded region
+sizeof(Keyword)                   ; byte length of a parsed sibling field
+len(Entries)                      ; number of elements in an array
+Entries[0].Offset                 ; a field of the first (0-based) array element
+root.Directory[Index].Tag         ; array index from a parsed field value
+eof()                             ; true when stream.remaining == 0
 partExtension(asset.Raster)       ; which of a PartSpec's alternative extensions the part matched
             </pre>
+        </section>
+        <section id="core-functions">
+            <h3>Core Functions</h3>
+            <p>A conforming evaluator MUST implement every core function. Each takes exactly the number of arguments shown (<code>concat</code> takes any number); a call with a different number of arguments is an error that names the function. An argument of the wrong type is an error. Where a String is required, a Bytes value is accepted and decoded as for a <a href="#coercion">Bytes-vs-String comparison</a>. Character positions and lengths count Unicode code points.</p>
             <table class="simple">
-                <caption>Functions</caption>
+                <caption>Core functions</caption>
                 <thead><tr><th>Function</th><th>Result</th></tr></thead>
                 <tbody>
-                    <tr><td><code>sizeof(accessor)</code></td><td>Byte length of the parsed field or struct referenced.</td></tr>
-                    <tr><td><code>len(accessor)</code>, <code>count(accessor)</code></td><td>Number of elements of an array node, or characters of a string.</td></tr>
-                    <tr><td><code>eof()</code></td><td>Boolean: <code>true</code> if the parse cursor is at end of stream.</td></tr>
-                    <tr><td><code>trim(string)</code></td><td>The string with leading and trailing whitespace removed.</td></tr>
-                    <tr><td><code>substringBefore(string, sep)</code></td><td>The part of <code>string</code> before the first occurrence of <code>sep</code>; the empty string if <code>sep</code> does not occur.</td></tr>
-                    <tr><td><code>substringAfter(string, sep)</code></td><td>The part of <code>string</code> after the first occurrence of <code>sep</code>; the empty string if <code>sep</code> does not occur.</td></tr>
-                    <tr><td><code>substring(string, start, length)</code></td><td><code>length</code> characters of <code>string</code> beginning at <code>start</code>, which is <b>0-based</b>, as array subscripts are. A <b>range error</b> if <code>start</code> is negative, <code>length</code> is negative, or <code>start + length</code> exceeds the string's length — a fixed-width subfield that runs off the end means the field was misread, and silently returning a short string would carry that error onward as plausible data.</td></tr>
-                    <tr><td><code>concat(string, string, …)</code></td><td>The arguments joined in order. Every argument MUST already be a String: there is no implicit conversion, so a number must be rendered deliberately rather than picking up whatever spelling the engine happens to use for it.</td></tr>
-                    <tr><td><code>toNumber(string)</code></td><td>The numeric value of <code>string</code>, as Integer when the string's lexical form contains no <code>.</code> and no exponent, and Float otherwise (so <code>"10"</code> is an Integer and <code>"10.0"</code> is a Float). A runtime error if the string is not numeric. Needed only for numbers carried in a <code>bddo:string</code> field; a field typed <code>bddo:asciiInteger</code> or <code>bddo:asciiDecimal</code> already yields a number.</td></tr>
-                    <tr><td><code>partExtension(accessor)</code></td><td>The filename extension of the asset part the accessor names, including the leading <code>.</code> and lower-cased (so <code>.FLT</code> and <code>.flt</code> compare alike); the empty string if the part's name has no extension. The accessor MUST be an <code>asset</code> accessor naming a part (e.g. <code>partExtension(asset.Raster)</code>); it is a runtime error otherwise, and — like <code>asset</code> itself — when the description is not being parsed as part of an asset.</td></tr>
+                    <tr><td><code>sizeof(accessor)</code></td><td>Integer: byte length of the parsed field or struct referenced. For a String value whose byte span was not recorded, the length of its UTF-8 encoding.</td></tr>
+                    <tr><td><code>len(x)</code>, <code>count(x)</code></td><td>Integer: number of elements of an array node, bytes of a Bytes value, or characters of a String. Any other argument is an error.</td></tr>
+                    <tr><td><code>eof()</code></td><td>Boolean: <code>true</code> exactly when <code>stream.remaining == 0</code>, i.e. the cursor is at the end of the innermost bounded region or decoded sub-stream (see <a href="../processing/index.html">Processing Model</a>).</td></tr>
+                    <tr><td><code>trim(string)</code></td><td>String: <code>string</code> with leading and trailing characters that have the Unicode <code>White_Space</code> property removed.</td></tr>
+                    <tr><td><code>substringBefore(string, sep)</code></td><td>String: the part of <code>string</code> before the first occurrence of <code>sep</code>; the empty string if <code>sep</code> does not occur.</td></tr>
+                    <tr><td><code>substringAfter(string, sep)</code></td><td>String: the part of <code>string</code> after the first occurrence of <code>sep</code>; the empty string if <code>sep</code> does not occur.</td></tr>
+                    <tr><td><code>substring(string, start, length)</code></td><td>String: <code>length</code> characters of <code>string</code> beginning at <code>start</code>, which is <b>0-based</b>, as array subscripts are. A <b>range error</b> if <code>start</code> is negative, <code>length</code> is negative, or <code>start + length</code> exceeds the string's length &mdash; a fixed-width subfield that runs off the end means the field was misread, and silently returning a short string would carry that error onward as plausible data. (Contrast the clamping <a href="#ext-text"><code>substr</code></a>.)</td></tr>
+                    <tr><td><code>concat(string, …)</code></td><td>String: the arguments joined in order (<code>concat()</code> is the empty string). Every argument MUST already be a String (or Bytes): there is no implicit conversion, so a number must be rendered deliberately rather than picking up whatever spelling the engine happens to use for it.</td></tr>
+                    <tr><td><code>toNumber(string)</code></td><td>Integer or Float: the numeric value of <code>string</code>, whose lexical form MUST match <code>NumericText</code> below exactly. An Integer or Float argument is returned unchanged. See <a href="#tonumber">toNumber</a>.</td></tr>
+                    <tr><td><code>partExtension(accessor)</code></td><td>String: the filename extension of the asset part the accessor names, including the leading <code>.</code> and lower-cased (so <code>.FLT</code> and <code>.flt</code> compare alike); the empty string if the part's name has no extension. The accessor MUST be an <code>asset</code> accessor naming a part (e.g. <code>partExtension(asset.Raster)</code>); it is a runtime error otherwise, and &mdash; like <code>asset</code> itself &mdash; when the description is not being parsed as part of an asset.</td></tr>
                 </tbody>
             </table>
+            <section id="tonumber">
+                <h4><code>toNumber</code></h4>
+                <p>The String argument MUST match this grammar in its entirety:</p>
+                <pre class="abnf">
+NumericText  = [ "+" / "-" ] 1*DIGIT [ "." 1*DIGIT ] [ ( "e" / "E" ) [ "+" / "-" ] 1*DIGIT ]
+                </pre>
+                <p>The result is an <b>Integer</b> when the text has neither a <code>.</code> nor an exponent (so <code>'10'</code> is an Integer and <code>'10.0'</code> a Float), and a <b>Float</b> otherwise, rounded to the nearest binary64 value. Everything else is a runtime error, specifically: leading or trailing whitespace (it is not trimmed &mdash; write <code>toNumber(trim(x))</code>); an empty string; <code>NaN</code>, <code>Infinity</code> and other named values; a bare <code>.5</code> or <code>5.</code>; hexadecimal forms; type suffixes such as <code>f</code>, <code>d</code> or <code>L</code>; grouping separators; an Integer outside the signed 64-bit range (it is an error, not a fallback to Float); and a Float whose magnitude overflows binary64. <code>toNumber</code> is needed only for numbers carried in a <code>bddo:string</code> field; a field typed <code>bddo:asciiInteger</code> or <code>bddo:asciiDecimal</code> already yields a number.</p>
+            </section>
             <p>
                 <code>substring</code> and <code>concat</code> are what make a
                 <code>hexplain:valueExpression</code> able to reshape a field rather than only rescale it.
@@ -166,12 +235,68 @@ partExtension(asset.Raster)       ; which of a PartSpec's alternative extensions
                 every sample of a float grid is decoded as a meaningless integer.
             </p>
             <p>
-                A part's IDENTITY — its name, and so its extension — is fixed when the asset is assembled, before any
+                A part's IDENTITY &mdash; its name, and so its extension &mdash; is fixed when the asset is assembled, before any
                 part is parsed. So unlike a part's CONTENT, which <code>asset.X.field</code> can only read once part
                 <code>X</code> has been parsed, <code>partExtension</code> is available to every part's conditions
                 from the start, including a part asking about ITSELF. That self-reference is the common case: the
                 rule selecting a grid's cell type lives on that same grid's layout.
             </p>
+        </section>
+        <section id="extension-groups">
+            <h3>Extension Groups</h3>
+            <p>An evaluator MAY implement any of the following groups, each all or nothing (see <a href="#versioning">Language Version and Extension Groups</a>). A processor that does not implement a group MUST reject a description whose expressions call a function of that group <b>when the description is loaded</b>, with an <b>unsupported-feature error</b> naming the function and the group's IRI; it MUST NOT defer the failure to the first evaluation, where it would depend on the data. A call to a function that is in neither the core set nor any group is likewise a load-time error. The argument rules of the core set (fixed arity, Bytes accepted as String) apply here too.</p>
+            <section id="ext-text">
+                <h4>Group <code>text</code></h4>
+                <table class="simple">
+                    <thead><tr><th>Function</th><th>Result</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>matches(string, pattern)</code></td><td>Boolean: whether the <b>whole</b> of <code>string</code> matches the regular expression <code>pattern</code> (the match is anchored at both ends: <code>matches('IHDR', 'IH')</code> is <code>false</code>). <code>pattern</code> MUST be a String. Profiles SHOULD confine patterns to the constructs common to the major regular-expression dialects &mdash; literal characters, <code>.</code>, bracket classes with ranges and negation, <code>* + ? {m,n}</code>, <code>|</code>, grouping with <code>( )</code>, and the escapes <code>\d \s \w</code> &mdash; whose meaning is the same everywhere; the meaning of other constructs is implementation-defined. An invalid pattern is an error. An evaluator MAY abort a match whose cost exceeds an implementation limit (catastrophic backtracking), with an error.</td></tr>
+                        <tr><td><code>substr(string, start, length)</code></td><td>String: up to <code>length</code> characters of <code>string</code> from the 0-based <code>start</code>, <b>clamped</b> to the end of the string; the empty string if <code>start</code> is at or past the end. A negative <code>start</code> or <code>length</code> is an error. (The core <code>substring</code> is the strict form; <code>substr</code> suits conformance rules that probe a prefix of a field of unknown length.)</td></tr>
+                        <tr><td><code>startsWith(string, prefix)</code></td><td>Boolean: whether <code>string</code> begins with <code>prefix</code>.</td></tr>
+                    </tbody>
+                </table>
+            </section>
+            <section id="ext-temporal">
+                <h4>Group <code>temporal</code></h4>
+                <table class="simple">
+                    <thead><tr><th>Function</th><th>Result</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>datetime(string, pattern)</code></td><td>Integer or Null: the instant <code>string</code> denotes, as seconds since 1970-01-01T00:00:00 UTC, reading <code>string</code> (after removing leading and trailing whitespace) with the date-time <code>pattern</code> and interpreting it as UTC. The pattern letters are <code>yyyy</code> (year), <code>MM</code> (month), <code>dd</code> (day), <code>HH</code> (hour 00&ndash;23), <code>mm</code> (minute) and <code>ss</code> (second); other characters match themselves, and text inside single quotes is literal. The text MUST supply a full date and time. <b>Null</b> when <code>string</code> does not match the pattern or is not a valid date-time: a malformed date is a finding for a syntax rule, so <code>datetime(...) &lt; evaluationInstant()</code> is then simply false, not an evaluation failure. A malformed <code>pattern</code> is an error.</td></tr>
+                        <tr><td><code>evaluationInstant()</code></td><td>Integer: the reference instant of the run, in seconds since 1970-01-01T00:00:00 UTC. It is a parameter supplied to the run, never read from the wall clock, so that re-running the same evidence gives identical results. An error if the run supplies none.</td></tr>
+                    </tbody>
+                </table>
+            </section>
+            <section id="ext-geometry">
+                <h4>Group <code>geometry</code></h4>
+                <p>Both functions take two arrays of numbers of equal length, the x and y coordinates of a ring's vertices in order; the ring is implicitly closed from the last vertex back to the first. Coordinates are planar. Arrays of different length, or containing a non-number, are an error.</p>
+                <table class="simple">
+                    <thead><tr><th>Function</th><th>Result</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>ringOrientation(xs, ys)</code></td><td>Integer: <code>1</code> if the ring is counter-clockwise (positive signed area, y axis up), <code>-1</code> if clockwise, <code>0</code> if degenerate (fewer than 3 vertices, or zero signed area).</td></tr>
+                        <tr><td><code>isSelfIntersecting(xs, ys)</code></td><td>Boolean: <code>true</code> when two non-adjacent edges of the ring properly cross (each edge's endpoints lie strictly on opposite sides of the other). Collinear overlaps and touching at a vertex are not crossings; a ring of fewer than 4 vertices is never self-intersecting.</td></tr>
+                    </tbody>
+                </table>
+            </section>
+            <section id="ext-register">
+                <h4>Group <code>register</code></h4>
+                <table class="simple">
+                    <thead><tr><th>Function</th><th>Result</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>inRegister(value, schemeIri)</code></td><td>Boolean: whether the String <code>value</code> is the <code>skos:notation</code> of a concept in the SKOS concept scheme identified by the String <code>schemeIri</code>. Registers are external, versioned artefacts supplied to the run; an error if the run supplies no register source.</td></tr>
+                    </tbody>
+                </table>
+            </section>
+            <section id="ext-quantifiers">
+                <h4>Group <code>quantifiers</code></h4>
+                <table class="simple">
+                    <thead><tr><th>Function</th><th>Result</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>all(array, predicate)</code></td><td>Boolean: <code>true</code> when <code>predicate</code> holds for every element of <code>array</code>; <code>true</code> for an empty array.</td></tr>
+                        <tr><td><code>any(array, predicate)</code></td><td>Boolean: <code>true</code> when <code>predicate</code> holds for at least one element; <code>false</code> for an empty array.</td></tr>
+                    </tbody>
+                </table>
+                <p>The first argument MUST be an array node. The second is not evaluated before the call: it is evaluated once per element, in order, with <code>self</code> bound to the element and, when the element is a struct node, <code>instance</code> bound to it (so bare names read the element's fields) and <code>parent</code> bound to the enclosing <code>instance</code>; when the element is not a struct node, <code>instance</code> and <code>parent</code> are unchanged. Each evaluation MUST yield a Boolean, else it is an error. Evaluation stops at the first element that decides the result (a <code>false</code> for <code>all</code>, a <code>true</code> for <code>any</code>), so later elements are not evaluated. An evaluator MAY bound the total number of predicate evaluations in one expression, raising an error when the bound is exceeded.</p>
+            </section>
         </section>
         <section>
             <h3>Operators</h3>
@@ -185,7 +310,20 @@ partExtension(asset.Raster)       ; which of a PartSpec's alternative extensions
                     <tr><td>Conditional</td><td><code>?</code> <code>:</code> (ternary: <code>cond ? then : else</code>)</td></tr>
                 </tbody>
             </table>
-            <p>HEL arithmetic uses signed 64-bit Integers and IEEE 754 binary64 Floats. Parsed unsigned integers above the signed range retain their exact values for comparisons, but use in integer arithmetic, indexes or bitwise operations MUST raise an out-of-range error. Integer-only arithmetic is exact within the signed 64-bit range; overflow MUST raise a runtime error. Integer <code>/</code> truncates toward zero (thus <code>5 / 2 = 2</code>), and <code>%</code> is the remainder with the dividend's sign. Mixing Integer and Float promotes arithmetic to Float (thus <code>5 / 2.0 = 2.5</code>). This integer division is deliberately different from XPath numeric division. Division and modulo by zero MUST raise an error. Integer comparisons MUST be exact; mixed comparisons compare the exact represented numeric values without first rounding the Integer to Float. NaN is unequal to every value and all ordered comparisons involving NaN are false. Bitwise operators use signed 64-bit two's-complement values. Shift counts MUST be integers in [0, 63]; right shift is arithmetic and left-shift overflow MUST raise an error. Indexes MUST be nonnegative Integers within the addressed collection; fractional or out-of-range indexes MUST raise an error.</p>
+        </section>
+        <section id="numeric-semantics">
+            <h3>Numeric Semantics</h3>
+            <p>HEL arithmetic uses signed 64-bit two's-complement Integers and IEEE 754 binary64 Floats. The following are normative:</p>
+            <ul>
+                <li><b>Integer overflow is an error.</b> Integer-only <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> and unary <code>-</code> are exact within [&minus;2<sup>63</sup>, 2<sup>63</sup>&minus;1]; a result outside that range MUST raise an error, never wrap. This includes <code>(-9223372036854775807 - 1) / -1</code> and <code>-(-9223372036854775807 - 1)</code>.</li>
+                <li><b>Integer division.</b> Integer <code>/</code> truncates toward zero (thus <code>5 / 2 = 2</code>, <code>-3 / 2 = -1</code>), and <code>%</code> is the remainder with the dividend's sign. This is deliberately different from XPath numeric division. Mixing Integer and Float promotes the operation to Float (thus <code>5 / 2.0 = 2.5</code>).</li>
+                <li><b>Division and modulo by zero</b> MUST raise an error, for Float operands as well as Integer ones: <code>1.0 / 0.0</code> is an error, not Infinity.</li>
+                <li><b>Float arithmetic</b> otherwise follows IEEE 754 binary64 with round-to-nearest: a result too large in magnitude is &plusmn;Infinity, and an invalid operation such as <code>Infinity - Infinity</code> is NaN.</li>
+                <li><b>Bitwise operators</b> require Integer operands and act on their 64-bit two's-complement representation; <code>~x</code> is <code>-x - 1</code>.</li>
+                <li><b>Shifts.</b> The shift count MUST be an Integer in [0, 63]; a count outside that range MUST raise an error (it is not reduced modulo 64). <code>&gt;&gt;</code> is an arithmetic (sign-propagating) right shift. <code>x &lt;&lt; n</code> MUST raise an error when <code>x &times; 2<sup>n</sup></code> is outside the signed 64-bit range, so <code>1 &lt;&lt; 63</code> is an error.</li>
+                <li><b>Unsigned 64-bit values.</b> A parsed unsigned integer above 2<sup>63</sup>&minus;1 (from a <code>uint64</code> field) keeps its exact value for comparisons and for Float arithmetic, but its use in Integer arithmetic, bitwise operations, shifts or indexes MUST raise an out-of-range error. No literal can denote such a value (see <a href="#syntax">literal range</a>).</li>
+                <li><b>Indexes</b> MUST be non-negative Integers within the addressed collection; a Float, negative or out-of-range index MUST raise an error.</li>
+            </ul>
         </section>
     </section>
 
@@ -193,35 +331,40 @@ partExtension(asset.Raster)       ; which of a PartSpec's alternative extensions
         <h2>Evaluation Semantics</h2>
         <section>
             <h3>Operator Precedence</h3>
-            <p>From highest to lowest: grouping <code>()</code> and function calls; unary <code>-</code>/<code>~</code>; <code>* / %</code>; <code>+ -</code>; shifts <code>&lt;&lt; &gt;&gt;</code>; bitwise <code>&amp;</code>; bitwise <code>^</code>; bitwise <code>|</code>; comparisons; <code>not</code>; <code>and</code>; <code>or</code>; and lowest of all, the ternary <code>? :</code>. Within one level, evaluation is left to right, except the ternary, which is right-associative. The logical <code>and</code> and <code>or</code> operators evaluate BOTH operands: they do not short-circuit, so an expression whose right operand raises &mdash; a division by zero, an out-of-range subscript &mdash; raises even when the left operand already decides the result. A guard MUST therefore be written with the ternary rather than with <code>and</code>: <code>count(Items) &gt; 0 ? Items[0] == 1 : false</code>, not <code>count(Items) &gt; 0 and Items[0] == 1</code>. The ternary evaluates its condition (which must yield a Boolean) and then only the selected branch; both branches SHOULD have compatible types, and the result takes the type of the selected branch.</p>
+            <p>From highest to lowest: grouping <code>()</code> and function calls; unary <code>-</code>/<code>~</code>; <code>* / %</code>; <code>+ -</code>; shifts <code>&lt;&lt; &gt;&gt;</code>; bitwise <code>&amp;</code>; bitwise <code>^</code>; bitwise <code>|</code>; comparisons; <code>not</code>; <code>and</code>; <code>or</code>; and lowest of all, the ternary <code>? :</code>. Within one level, evaluation is left to right, except the ternary, which is right-associative. Note that, unlike C, the bitwise operators bind tighter than comparisons, so <code>Flags &amp; 0x01 == 0x01</code> tests the masked bit. The logical <code>and</code> and <code>or</code> operators evaluate BOTH operands: they do not short-circuit, so an expression whose right operand raises &mdash; a division by zero, an out-of-range subscript &mdash; raises even when the left operand already decides the result. A guard MUST therefore be written with the ternary rather than with <code>and</code>: <code>count(Items) &gt; 0 ? Items[0] == 1 : false</code>, not <code>count(Items) &gt; 0 and Items[0] == 1</code>. The ternary evaluates its condition (which must yield a Boolean) and then only the selected branch; both branches SHOULD have compatible types, and the result takes the type of the selected branch. The operands of <code>and</code>, <code>or</code> and <code>not</code> MUST be Booleans.</p>
         </section>
         <section>
             <h3>Value Types</h3>
-            <p>Every HEL value is one of: <b>Integer</b>, <b>Float</b>, <b>Boolean</b>, <b>String</b>, <b>Bytes</b>, or <b>Null</b> (an absent/optional field). A field's parsed value takes the HEL type implied by its <code>bddo:DataType</code>'s <code>bddo:baseType</code>: <code>bddo:baseInteger</code> → Integer, <code>bddo:baseFloat</code> → Float, <code>bddo:baseString</code> → String, <code>bddo:baseBytes</code> → Bytes. This is determined by <code>baseType</code> alone, so the ASCII-coded numeric types <code>bddo:asciiInteger</code> and <code>bddo:asciiDecimal</code> yield Integer and Float respectively and may be used wherever a number is required.</p>
+            <p>Every HEL value is one of: <b>Integer</b>, <b>Float</b>, <b>Boolean</b>, <b>String</b>, <b>Bytes</b>, or <b>Null</b> (an absent optional field), or a struct node or array node reached by an accessor. A field's parsed value takes the HEL type implied by its <code>bddo:DataType</code>'s <code>bddo:baseType</code>: <code>bddo:baseInteger</code> → Integer, <code>bddo:baseFloat</code> → Float, <code>bddo:baseString</code> → String, <code>bddo:baseBytes</code> → Bytes. This is determined by <code>baseType</code> alone, so the ASCII-coded numeric types <code>bddo:asciiInteger</code> and <code>bddo:asciiDecimal</code> yield Integer and Float respectively and may be used wherever a number is required.</p>
         </section>
-        <section>
+        <section id="coercion">
             <h3>Type Coercion &amp; Comparison Rules</h3>
             <p>These rules are normative and resolve the comparisons used throughout Hexplain (e.g. comparing a 4-byte <code>ChunkType</code> to <code>'IHDR'</code>):</p>
             <ul>
-                <li><b>Arithmetic / bitwise</b> operands MUST be numeric. Mixing Integer and Float promotes to Float. Bitwise operators require Integer operands. A non-numeric operand is an error.</li>
-                <li><b>Bytes vs. String.</b> When one operand is Bytes and the other is a String literal, the Bytes value is decoded to a String using the field's <code>bddo:encoding</code> (default <code>bddo:utf8</code>) before comparison. Equality holds iff the decoded strings are code-point-identical.</li>
+                <li><b>Arithmetic / bitwise</b> operands MUST be numeric. Mixing Integer and Float promotes to Float. Bitwise operators require Integer operands. A non-numeric operand, including Null, is an error.</li>
+                <li><b>Integer vs. Float</b> compares by numeric value. Integer comparisons MUST be exact; mixed comparisons compare the exact represented numeric values without first rounding the Integer to Float.</li>
+                <li><b>NaN.</b> <code>==</code> with a NaN operand is <code>false</code> (so <code>NaN == NaN</code> is false), <code>!=</code> with a NaN operand is <code>true</code>, and every ordered comparison (<code>&lt; &lt;= &gt; &gt;=</code>) involving NaN is <code>false</code>. Infinities order as usual.</li>
                 <li><b>String vs. String</b> compares by Unicode code point; <code>&lt; &gt; &lt;= &gt;=</code> use code-point order.</li>
-                <li><b>Integer vs. Float</b> compares by numeric value.</li>
-                <li><b>Null.</b> An access to an absent optional field yields Null. <code>Null == Null</code> is <code>true</code>; any other comparison with Null is <code>false</code>; arithmetic with Null is an error.</li>
-                <li>Comparing values of otherwise incompatible types (e.g. Boolean vs. Integer) is an error.</li>
+                <li><b>Bytes vs. String.</b> For <code>==</code> and <code>!=</code>, when one operand is Bytes and the other a String, the Bytes value is decoded to a String using the field's <code>bddo:encoding</code> (default <code>bddo:utf8</code>; malformed sequences decode to U+FFFD) and equality holds iff the decoded strings are code-point-identical. Ordering a Bytes value against a String is an error.</li>
+                <li><b>Bytes vs. Bytes</b> is equal iff the byte sequences are identical; ordering two Bytes values is an error.</li>
+                <li><b>Boolean vs. Boolean</b> may be compared with <code>==</code> and <code>!=</code>; ordering Booleans is an error.</li>
+                <li><b>Null.</b> An access to an absent optional field yields Null. <code>Null == Null</code> is <code>true</code> and <code>Null == x</code> is <code>false</code> for any other <code>x</code>. Every other comparison with a Null operand is <code>false</code> &mdash; including <code>!=</code>: <code>Null != 1</code> and <code>Null != Null</code> are both <code>false</code>, so for an optional field <code>x != 1</code> is not the same as <code>not (x == 1)</code>. Arithmetic, bitwise and logical operators, the ternary condition, and function arguments do not accept Null: each is an error.</li>
+                <li>Comparing values of otherwise incompatible types (e.g. Boolean vs. Integer, String vs. Integer, or a struct or array node) is an error.</li>
             </ul>
         </section>
     </section>
 
     <section id="conformance">
         <h2>Conformance</h2>
-        <p>A conforming HEL implementation MUST:</p>
+        <p>A conforming HEL 1.0 evaluator MUST:</p>
         <ol>
-            <li>Parse all valid expressions per the ABNF grammar.</li>
-            <li>Implement the parsing context and all reserved roots (<code>instance</code>, <code>parent</code>, <code>root</code>, <code>self</code>, <code>stream</code>, <code>asset</code>). A processor that does not parse multi-part assets MAY leave <code>asset</code> unimplemented, but MUST then raise a runtime error on an expression that uses it rather than resolving it to Null.</li>
-            <li>Implement all operators and functions with the specified precedence, and the value-type and coercion rules.</li>
-            <li>Yield a Boolean in a boolean context (e.g. <code>bddo:isPresentIf</code>, <code>bddo:repeatUntil</code>, conditions), an Integer in a numeric context (e.g. <code>bddo:sizeFromExpression</code>, <code>bddo:repeatCountFromExpression</code>, <code>bddo:atOffsetFromExpression</code>), and a String in a string context (e.g. a <code>hexplain:valueExpression</code> whose <code>hexplain:valueDatatype</code> is <code>xsd:string</code>).</li>
-            <li>Report a runtime error (rather than silently continue) on type errors, division/modulo by zero, and references to undefined names.</li>
+            <li>Parse all valid expressions per the ABNF grammar, and reject as a syntax error every string it does not generate, including out-of-range literals and unknown escapes.</li>
+            <li>Implement the parsing context, the reserved roots (<code>instance</code>, <code>parent</code>, <code>root</code>, <code>self</code>, <code>stream</code>, <code>asset</code>) and the <a href="#name-binding">name-binding table</a>. A processor that does not parse multi-part assets MAY leave <code>asset</code> and <code>partExtension</code> unimplemented, but MUST then raise a runtime error on an expression that uses them rather than resolving them to Null.</li>
+            <li>Implement all operators and every <a href="#core-functions">core function</a> with the specified precedence, the <a href="#numeric-semantics">numeric semantics</a>, and the value-type and coercion rules; and implement each <a href="#extension-groups">extension group</a> it claims in full.</li>
+            <li>Reject, at load time, a description that calls a function of an extension group it does not implement, with an unsupported-feature error.</li>
+            <li>Yield a Boolean in a boolean context, an Integer in a numeric context and a String in a string context, as the <a href="#name-binding">name-binding table</a> gives for each property (e.g. a <code>hexplain:valueExpression</code> whose <code>hexplain:valueDatatype</code> is <code>xsd:string</code> yields a String); any other result is an error.</li>
+            <li>Report a runtime error (rather than silently continue) on type errors, integer overflow, shift counts out of range, out-of-range unsigned values, division/modulo by zero, out-of-range subscripts, undefined names and forward references.</li>
+            <li>Produce, for every row of <a href="../validation/test/hel-vectors.tsv"><code>hel-vectors.tsv</code></a> whose functions it implements, the value the row gives, or an error whose diagnostic contains the row's text.</li>
         </ol>
     </section>
 
@@ -229,23 +372,29 @@ partExtension(asset.Raster)       ; which of a PartSpec's alternative extensions
         <h2>Examples</h2>
         <dl>
             <dt>Sibling reference (conditional mapping)</dt>
-            <dd><pre>hexplain:condition "instance.parent.Keyword == 'Title'"</pre></dd>
+            <dd><pre>hexplain:condition "Keyword == 'Title'"</pre></dd>
             <dt>Dynamic sizing with <code>sizeof</code></dt>
-            <dd><pre>bddo:sizeFromExpression "instance.parent.ChunkLength - (sizeof(instance.parent.Keyword) + 1)"</pre></dd>
+            <dd><pre>bddo:sizeFromExpression "ChunkLength - (sizeof(Keyword) + 1)"</pre></dd>
             <dt>Bit-mask (IPv4 header length in bytes)</dt>
-            <dd><pre>bddo:sizeFromExpression "(instance.parent.VersionIHL &amp; 0x0F) * 4"</pre></dd>
-            <dt>Repeat until end of stream</dt>
+            <dd><pre>bddo:sizeFromExpression "(VersionIHL &amp; 0x0F) * 4"</pre></dd>
+            <dt>Repeat until end of the enclosing region</dt>
             <dd><pre>bddo:repeatUntil "eof()"</pre></dd>
-            <dt>Count-driven presence</dt>
-            <dd><pre>bddo:isPresentIf "instance.parent.Flags &amp; 0x01 == 0x01"</pre></dd>
+            <dt>Flag-driven presence</dt>
+            <dd><pre>bddo:isPresentIf "Flags &amp; 0x01 == 0x01"</pre></dd>
+            <dt>A field reaching its container</dt>
+            <dd><pre>bddo:repeatCountFromExpression "parent.Header.EntryCount"</pre></dd>
+            <dt>Post-parse check on the value itself</dt>
+            <dd><pre>bddo:validIf "self &lt;= 4096"</pre></dd>
             <dt>Trimming a delimited header value</dt>
-            <dd><pre>hexplain:valueExpression "trim(instance.parent.description)"</pre></dd>
+            <dd><pre>hexplain:valueExpression "trim(description)"</pre></dd>
             <dt>Splitting a compound header value</dt>
-            <dd><pre>hexplain:valueExpression "toNumber(substringBefore(instance.parent.mapInfo, ','))"</pre></dd>
+            <dd><pre>hexplain:valueExpression "toNumber(trim(substringBefore(mapInfo, ',')))"</pre></dd>
             <dt>Fixed-point scaling with a Float literal</dt>
             <dd><pre>hexplain:valueExpression "instance.RawTemperature * 0.05 + -21.3"</pre></dd>
             <dt>Conditional value (ternary)</dt>
-            <dd><pre>hexplain:valueExpression "instance.SignBit == 1 ? -instance.Magnitude : instance.Magnitude"</pre></dd>
+            <dd><pre>hexplain:valueExpression "SignBit == 1 ? -Magnitude : Magnitude"</pre></dd>
+            <dt>Conformance assertion over a repeated group (<code>quantifiers</code> group)</dt>
+            <dd><pre>conf:assertion "all(Segments, Length &gt; 0)"</pre></dd>
         </dl>
     </section>
 </body>

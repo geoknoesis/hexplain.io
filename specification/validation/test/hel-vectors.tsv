@@ -1,15 +1,35 @@
-# Hexplain Expression Language conformance vectors.
+# Hexplain Expression Language (HEL 1.0) conformance vectors.
 #
 # Each row is an expression, the context it is evaluated against, and what it must produce:
-# a value, or an error whose diagnostic contains the given text. A second implementation of
-# HEL can run these; this one runs them on both its compiled and its interpreted path, so
-# the two cannot agree with each other while disagreeing with the specification.
+# a value, or an error whose diagnostic contains the given text (compared case-insensitively).
+# A second implementation of HEL can run these; this one runs them on both its compiled and
+# its interpreted path, so the two cannot agree with each other while disagreeing with the
+# specification.
+#
+# Columns (tab-separated): name, expression, expectation (value|error), expected (a JSON
+# literal; for an error, a JSON string the diagnostic must contain), and the context as
+# standard base64 of JSON. The context is the CURRENT STRUCT (instance): its keys are the
+# fields the struct declares, so a bare name resolves against it. A key present with the
+# value null is a declared optional field that is absent (it reads as Null); a name that is
+# not a key is UNDECLARED and must raise an undefined-name error. A runner therefore passes
+# the context's key set as the struct's declared schema. JSON whole numbers are Integers and
+# numbers with a fraction are Floats, so an integral Float cannot be written as an expected
+# value; the rows avoid needing one.
+#
+# NaN has no JSON spelling, so NaN rows build it in the expression: 1e308 * 10.0 overflows to
+# Infinity, and Infinity - Infinity is NaN.
 #
 # NOT COVERED HERE, because this format carries only a data context: eof() and stream.* need
-# a stream position, datetime() needs a reference instant, inRegister() needs a register
-# provider, partExtension() needs an asset, and sizeof() of a sibling field needs the byte
-# spans of a real parse. Those are exercised by the engine suites; the gap is stated here
-# rather than left to be inferred from absence.
+# a stream position, datetime()/evaluationInstant() need a reference instant, inRegister()
+# needs a register provider, partExtension() and asset.* need an asset, and sizeof() of a
+# sibling field needs the byte spans of a real parse. Forward references need a declaration
+# ORDER and a parse position, which a flat context does not have. Bytes values (and so the
+# Bytes-vs-String comparison rules) and uint64 values above 2^63-1 have no JSON spelling that
+# survives the runner's conversion (a JSON number becomes a signed 64-bit Integer), so they
+# are not covered either; the literal-range rows cover the part of the uint64 rule that a
+# literal can reach. Load-time rejection of an unsupported extension group is a property of
+# a processor, not of one expression. Those are exercised by the engine suites; the gap is
+# stated here rather than left to be inferred from absence.
 #
 # name	expression	expectation	value	base64 JSON context
 integer addition	a + b	value	9	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
@@ -64,4 +84,57 @@ quantifier requires an array	all(a, true)	error	"array"	eyJhIjogNywgImIiOiAyLCAi
 quantifier predicate must be boolean	all(rows, v)	error	"boolean"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XX0=
 wrong arity names the function	matches(s)	error	"matches"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
 arithmetic on a string is an error	s + 1	error	"number"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
-unknown name without a declared schema is absent	nosuchfield	value	null	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+undefined name is an error, not Null	nosuchfield	error	"undefined"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+a bare name is shorthand for instance dot name	instance.a == a	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+undefined name inside a comparison is still an error	nosuchfield == 1	error	"undefined"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+addition overflow is an error	9223372036854775807 + 1	error	"overflow"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+multiplication overflow is an error	big * big * big	error	"overflow"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+negating the minimum integer overflows	-(-9223372036854775807 - 1)	error	"overflow"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+minimum integer divided by minus one overflows	(-9223372036854775807 - 1) / -1	error	"overflow"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+minimum integer is reachable by subtraction	-9223372036854775807 - 1 < 0	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+largest hex literal	0x7FFFFFFFFFFFFFFF == 9223372036854775807	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+hex literal above the signed range is an error	0xFFFFFFFFFFFFFFFF	error	"FFFFFFFFFFFFFFFF"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+decimal literal above the signed range is an error	9223372036854775808	error	"9223372036854775808"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+top-bit pattern is written as a complement	~0x7FFFFFFFFFFFFFFF == -9223372036854775807 - 1	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+integer and float compare exactly	9007199254740993 > 9007199254740992.0	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+left shift into the sign bit is an overflow	1 << 63	error	"overflow"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+shift count of 64 is out of range	b << 64	error	"shift"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+negative shift count is out of range	a >> -1	error	"shift"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+right shift is arithmetic	neg >> 1	value	-2	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+bitwise operators need integers	f & 1	error	"integer"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+float division by zero is an error	f / 0.0	error	"zero"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+float overflow is infinity	1e308 * 10.0 > 1e308	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+NaN is not equal to itself	(1e308 * 10.0 - 1e308 * 10.0) == (1e308 * 10.0 - 1e308 * 10.0)	value	false	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+NaN is unequal to itself	(1e308 * 10.0 - 1e308 * 10.0) != (1e308 * 10.0 - 1e308 * 10.0)	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+NaN is not less than a number	(1e308 * 10.0 - 1e308 * 10.0) < 1	value	false	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+NaN is not ordered against itself	(1e308 * 10.0 - 1e308 * 10.0) >= (1e308 * 10.0 - 1e308 * 10.0)	value	false	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+ordering booleans is an error	true < false	error	"order"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+comparing a number with a string is an error	a == 'x'	error	"compare"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+ternary is right-associative	false ? 1 : true ? 2 : 3	value	2	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+absent optional equals absent optional	opt == opt	value	true	eyJuIjogMSwgIm9wdCI6IG51bGx9
+absent optional does not equal a value	opt == 1	value	false	eyJuIjogMSwgIm9wdCI6IG51bGx9
+inequality with Null is false	opt != 1	value	false	eyJuIjogMSwgIm9wdCI6IG51bGx9
+Null is not unequal to Null	opt != opt	value	false	eyJuIjogMSwgIm9wdCI6IG51bGx9
+ordering against Null is false	opt < 1	value	false	eyJuIjogMSwgIm9wdCI6IG51bGx9
+arithmetic with Null is an error	opt + 1	error	"number"	eyJuIjogMSwgIm9wdCI6IG51bGx9
+not of Null is an error	not opt	error	"boolean"	eyJuIjogMSwgIm9wdCI6IG51bGx9
+escaped quote in a string literal	'it\'s' == concat('it', '\'', 's')	value	true	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+escaped backslash is one character	len('\\')	value	1	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+backslash-n is not an escape	'a\nb'	error	"escape"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+substr clamps at the end	substr(s, 2, 10)	value	"DR"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+substr past the end is empty	substr(s, 9, 1)	value	""	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+substringBefore cuts at the first separator	substringBefore(csv, ',')	value	"12.5"	eyJjc3YiOiAiMTIuNSx3ZXN0IiwgInBsYWluIjogIm5vc2VwIn0=
+substringAfter cuts at the first separator	substringAfter(csv, ',')	value	"west"	eyJjc3YiOiAiMTIuNSx3ZXN0IiwgInBsYWluIjogIm5vc2VwIn0=
+substringBefore without the separator is empty	substringBefore(plain, ',')	value	""	eyJjc3YiOiAiMTIuNSx3ZXN0IiwgInBsYWluIjogIm5vc2VwIn0=
+substringAfter without the separator is empty	substringAfter(plain, ',')	value	""	eyJjc3YiOiAiMTIuNSx3ZXN0IiwgInBsYWluIjogIm5vc2VwIn0=
+toNumber of a split value	toNumber(substringBefore(csv, ','))	value	12.5	eyJjc3YiOiAiMTIuNSx3ZXN0IiwgInBsYWluIjogIm5vc2VwIn0=
+toNumber reads a fraction as a Float	toNumber(frac)	value	1.5	eyJkb3QiOiAiLjUiLCAiZW1wdHkiOiAiIiwgImV4cCI6ICIxLjVlLTEiLCAiZnJhYyI6ICIxLjUiLCAiaHVnZSI6ICI5OTk5OTk5OTk5OTk5OTk5OTk5OSIsICJsZWFkIjogIiA0MiIsICJuYW4iOiAiTmFOIiwgIm5lZ3MiOiAiLTciLCAicGx1cyI6ICIrOCIsICJzdWZmaXgiOiAiMS41ZiJ9
+toNumber reads an exponent as a Float	toNumber(exp)	value	0.15	eyJkb3QiOiAiLjUiLCAiZW1wdHkiOiAiIiwgImV4cCI6ICIxLjVlLTEiLCAiZnJhYyI6ICIxLjUiLCAiaHVnZSI6ICI5OTk5OTk5OTk5OTk5OTk5OTk5OSIsICJsZWFkIjogIiA0MiIsICJuYW4iOiAiTmFOIiwgIm5lZ3MiOiAiLTciLCAicGx1cyI6ICIrOCIsICJzdWZmaXgiOiAiMS41ZiJ9
+toNumber accepts a leading minus	toNumber(negs)	value	-7	eyJkb3QiOiAiLjUiLCAiZW1wdHkiOiAiIiwgImV4cCI6ICIxLjVlLTEiLCAiZnJhYyI6ICIxLjUiLCAiaHVnZSI6ICI5OTk5OTk5OTk5OTk5OTk5OTk5OSIsICJsZWFkIjogIiA0MiIsICJuYW4iOiAiTmFOIiwgIm5lZ3MiOiAiLTciLCAicGx1cyI6ICIrOCIsICJzdWZmaXgiOiAiMS41ZiJ9
+toNumber accepts a leading plus	toNumber(plus)	value	8	eyJkb3QiOiAiLjUiLCAiZW1wdHkiOiAiIiwgImV4cCI6ICIxLjVlLTEiLCAiZnJhYyI6ICIxLjUiLCAiaHVnZSI6ICI5OTk5OTk5OTk5OTk5OTk5OTk5OSIsICJsZWFkIjogIiA0MiIsICJuYW4iOiAiTmFOIiwgIm5lZ3MiOiAiLTciLCAicGx1cyI6ICIrOCIsICJzdWZmaXgiOiAiMS41ZiJ9
+toNumber does not trim whitespace	toNumber(lead)	error	"toNumber"	eyJkb3QiOiAiLjUiLCAiZW1wdHkiOiAiIiwgImV4cCI6ICIxLjVlLTEiLCAiZnJhYyI6ICIxLjUiLCAiaHVnZSI6ICI5OTk5OTk5OTk5OTk5OTk5OTk5OSIsICJsZWFkIjogIiA0MiIsICJuYW4iOiAiTmFOIiwgIm5lZ3MiOiAiLTciLCAicGx1cyI6ICIrOCIsICJzdWZmaXgiOiAiMS41ZiJ9
+toNumber rejects NaN	toNumber(nan)	error	"toNumber"	eyJkb3QiOiAiLjUiLCAiZW1wdHkiOiAiIiwgImV4cCI6ICIxLjVlLTEiLCAiZnJhYyI6ICIxLjUiLCAiaHVnZSI6ICI5OTk5OTk5OTk5OTk5OTk5OTk5OSIsICJsZWFkIjogIiA0MiIsICJuYW4iOiAiTmFOIiwgIm5lZ3MiOiAiLTciLCAicGx1cyI6ICIrOCIsICJzdWZmaXgiOiAiMS41ZiJ9
+toNumber rejects an integer out of range	toNumber(huge)	error	"toNumber"	eyJkb3QiOiAiLjUiLCAiZW1wdHkiOiAiIiwgImV4cCI6ICIxLjVlLTEiLCAiZnJhYyI6ICIxLjUiLCAiaHVnZSI6ICI5OTk5OTk5OTk5OTk5OTk5OTk5OSIsICJsZWFkIjogIiA0MiIsICJuYW4iOiAiTmFOIiwgIm5lZ3MiOiAiLTciLCAicGx1cyI6ICIrOCIsICJzdWZmaXgiOiAiMS41ZiJ9
+toNumber rejects a bare fraction	toNumber(dot)	error	"toNumber"	eyJkb3QiOiAiLjUiLCAiZW1wdHkiOiAiIiwgImV4cCI6ICIxLjVlLTEiLCAiZnJhYyI6ICIxLjUiLCAiaHVnZSI6ICI5OTk5OTk5OTk5OTk5OTk5OTk5OSIsICJsZWFkIjogIiA0MiIsICJuYW4iOiAiTmFOIiwgIm5lZ3MiOiAiLTciLCAicGx1cyI6ICIrOCIsICJzdWZmaXgiOiAiMS41ZiJ9
+toNumber rejects a type suffix	toNumber(suffix)	error	"toNumber"	eyJkb3QiOiAiLjUiLCAiZW1wdHkiOiAiIiwgImV4cCI6ICIxLjVlLTEiLCAiZnJhYyI6ICIxLjUiLCAiaHVnZSI6ICI5OTk5OTk5OTk5OTk5OTk5OTk5OSIsICJsZWFkIjogIiA0MiIsICJuYW4iOiAiTmFOIiwgIm5lZ3MiOiAiLTciLCAicGx1cyI6ICIrOCIsICJzdWZmaXgiOiAiMS41ZiJ9
+toNumber rejects the empty string	toNumber(empty)	error	"toNumber"	eyJkb3QiOiAiLjUiLCAiZW1wdHkiOiAiIiwgImV4cCI6ICIxLjVlLTEiLCAiZnJhYyI6ICIxLjUiLCAiaHVnZSI6ICI5OTk5OTk5OTk5OTk5OTk5OTk5OSIsICJsZWFkIjogIiA0MiIsICJuYW4iOiAiTmFOIiwgIm5lZ3MiOiAiLTciLCAicGx1cyI6ICIrOCIsICJzdWZmaXgiOiAiMS41ZiJ9
