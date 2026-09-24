@@ -126,6 +126,7 @@ def measure():
             'spatialref-competency.tsv':['specification/aspect/spatialref/spatialref.ttl'],
             'core-mapping-competency.tsv':['specification/hexplain/core.ttl'],
             'network-competency.tsv':['specification/npv/net.ttl'],
+            'conformance-competency.tsv':['specification/conf/conf.ttl','specification/conf/shapes.ttl','specification/req/req.ttl','specification/req/shapes.ttl','specification/fn/fn.ttl'],
         }
         for filename,paths in selections.items():
             shapes=Graph()
@@ -237,11 +238,11 @@ def extend_family():
     corpus_text=json.dumps(retained+additions,indent=2)+'\n'
     evidence['corpus_hashes'][corpus_path.relative_to(ROOT).as_posix()]=hashlib.sha256(corpus_text.encode()).hexdigest()
     evidence.setdefault('append_only_measurements',[]).append(dict(added_cases=len(additions),previous_cases=evidence['summary']['cases']-len(additions)))
-    corpus_path.write_text(corpus_text,encoding='utf-8')
+    corpus_path.write_text(corpus_text,encoding='utf-8',newline='\n')
     return evidence
 
 if __name__=='__main__':
     import sys
     result=extend_family() if '--extend-family' in sys.argv else measure()
-    (OUT/'constraint-coverage.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
+    (OUT/'constraint-coverage.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8',newline='\n')
     print(json.dumps(result['summary']))

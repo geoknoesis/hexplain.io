@@ -21,4 +21,4 @@ def render():
     page+='''</tbody></table><script>const q=document.getElementById('query'),g=document.getElementById('gaps'),rows=[...document.querySelectorAll('tbody tr')];function filter(){let n=0;for(const r of rows){r.hidden=(g.checked&&r.dataset.covered==='true')||!r.textContent.toLowerCase().includes(q.value.toLowerCase());if(!r.hidden)n++;}document.getElementById('count').textContent=n+' obligations shown';}q.addEventListener('input',filter);g.addEventListener('change',filter);filter();</script></main></html>'''
     return with_print_link(OUT/'constraint-coverage.html',page)
 
-if __name__=='__main__':(OUT/'constraint-coverage.html').write_text(render(),encoding='utf-8')
+if __name__=='__main__':(OUT/'constraint-coverage.html').write_text(render(),encoding='utf-8',newline='\n')

@@ -2,19 +2,20 @@
   "hash_policy": "SHA-256 of UTF-8 corpus text with universal-newline normalization to LF; immutable archives retain their original byte hashes.",
   "scope": "Syntactic references and expected result paths in retained shared corpora. Mentions do not prove shape activation, assertion independence, complete constraints or semantic correctness. Unmentioned terms may have evidence in other suites.",
   "summary": {
-    "resources": 866,
-    "cases": 208,
-    "mentioned": 108,
-    "with_asserted_result_path": 43
+    "resources": 902,
+    "cases": 224,
+    "mentioned": 147,
+    "with_asserted_result_path": 49
   },
   "sources": {
     "specification/validation/test/competency.tsv": "576c5760d0897d7af2476dbb11ff2a1125d51c840f01282c5f725af74ef9dd89",
+    "specification/validation/test/conformance-competency.tsv": "f26705589b924abd440dab7afa3c96098c749fb9552fab6a3eb6f1aee245eb8f",
     "specification/validation/test/core-mapping-competency.tsv": "99e2b396b07126fcb5747af10eeed225e2bc2e91d4e274b03aa9aefa6133ea3c",
     "specification/validation/test/geometry-competency.tsv": "b56ec26f35c9ffbe479746c506cda5a607aab04aaa9d285a3a54c43fc88da773",
-    "specification/validation/test/layout-competency.tsv": "f0693340b80e0f7e9e5fec0e8ff8a3cf2a847cf18f87ec6035db01267e82cba8",
+    "specification/validation/test/layout-competency.tsv": "6cde7036b04fe28a11f57638c425ffba99107bfc0f8ecf003a1d6208ecb7a145",
     "specification/validation/test/network-competency.tsv": "1864fbae4ea5c7e0ee27f7bba7e5e7fbe188f54b45cc11fccae3b7ec6d2fa881",
     "specification/validation/test/security-competency.tsv": "ba19db9d99f7c79616059b9c953818a2e712a57d290ffab82b38a04d8503c46d",
-    "specification/validation/test/spatialref-competency.tsv": "b8d0b6f13968fcadb45b90f25e16a0f7a0f08ce8d8897ba8fece26497f5083d1"
+    "specification/validation/test/spatialref-competency.tsv": "746f6cdc152cbe60b494701bf59d8697e2ca18e813626b8783f4ec0458724668"
   },
   "resources": [
     {
@@ -144,6 +145,13 @@
         "layout-competency.tsv:child does not satisfy parent role",
         "layout-competency.tsv:parent does not satisfy child role"
       ],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/aspect/bundle#BundleProfileShape",
+      "module": "specification/aspect/bundle",
+      "positive": [],
+      "negative": [],
       "result_path": []
     },
     {
@@ -293,8 +301,18 @@
     {
       "iri": "https://hexplain.io/ns/aspect/bundle#extension",
       "module": "specification/aspect/bundle",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "layout-competency.tsv:required compound part",
+        "layout-competency.tsv:nested compound satisfied",
+        "layout-competency.tsv:primary alone satisfies required role"
+      ],
+      "negative": [
+        "layout-competency.tsv:missing required compound part",
+        "layout-competency.tsv:nested compound scoped independently",
+        "layout-competency.tsv:primary wrong role still rejects",
+        "layout-competency.tsv:child does not satisfy parent role",
+        "layout-competency.tsv:parent does not satisfy child role"
+      ],
       "result_path": []
     },
     {
@@ -317,6 +335,13 @@
         "layout-competency.tsv:literal compound member",
         "layout-competency.tsv:untyped compound member"
       ]
+    },
+    {
+      "iri": "https://hexplain.io/ns/aspect/bundle#liftsProperty",
+      "module": "specification/aspect/bundle",
+      "positive": [],
+      "negative": [],
+      "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/bundle#maxParts",
@@ -416,8 +441,22 @@
     {
       "iri": "https://hexplain.io/ns/aspect/bundle#pathPattern",
       "module": "specification/aspect/bundle",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "layout-competency.tsv:minParts zero",
+        "layout-competency.tsv:minParts integer",
+        "layout-competency.tsv:maxParts zero",
+        "layout-competency.tsv:maxParts integer"
+      ],
+      "negative": [
+        "layout-competency.tsv:minParts fraction",
+        "layout-competency.tsv:minParts negative",
+        "layout-competency.tsv:minParts string",
+        "layout-competency.tsv:maxParts fraction",
+        "layout-competency.tsv:maxParts negative",
+        "layout-competency.tsv:maxParts string",
+        "layout-competency.tsv:inverted count range",
+        "layout-competency.tsv:required zero contradiction"
+      ],
       "result_path": []
     },
     {
@@ -1813,12 +1852,12 @@
       "module": "specification/aspect/spatialref",
       "positive": [
         "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:affine transform omitting a skew (zero)",
         "spatialref-competency.tsv:rotated affine transform with non-zero skew",
         "spatialref-competency.tsv:pixel registration declared at the corner",
         "spatialref-competency.tsv:pixel registration declared at the centre"
       ],
       "negative": [
-        "spatialref-competency.tsv:affine transform omitting skew",
         "spatialref-competency.tsv:transform with a non-finite scale",
         "spatialref-competency.tsv:transform with a NaN origin"
       ],
@@ -1990,12 +2029,12 @@
       "module": "specification/aspect/spatialref",
       "positive": [
         "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:affine transform omitting a skew (zero)",
         "spatialref-competency.tsv:rotated affine transform with non-zero skew",
         "spatialref-competency.tsv:pixel registration declared at the corner",
         "spatialref-competency.tsv:pixel registration declared at the centre"
       ],
       "negative": [
-        "spatialref-competency.tsv:affine transform omitting skew",
         "spatialref-competency.tsv:transform with a non-finite scale",
         "spatialref-competency.tsv:transform with a NaN origin"
       ],
@@ -2006,12 +2045,12 @@
       "module": "specification/aspect/spatialref",
       "positive": [
         "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:affine transform omitting a skew (zero)",
         "spatialref-competency.tsv:rotated affine transform with non-zero skew",
         "spatialref-competency.tsv:pixel registration declared at the corner",
         "spatialref-competency.tsv:pixel registration declared at the centre"
       ],
       "negative": [
-        "spatialref-competency.tsv:affine transform omitting skew",
         "spatialref-competency.tsv:transform with a non-finite scale",
         "spatialref-competency.tsv:transform with a NaN origin"
       ],
@@ -2094,12 +2133,12 @@
       "module": "specification/aspect/spatialref",
       "positive": [
         "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:affine transform omitting a skew (zero)",
         "spatialref-competency.tsv:rotated affine transform with non-zero skew",
         "spatialref-competency.tsv:pixel registration declared at the corner",
         "spatialref-competency.tsv:pixel registration declared at the centre"
       ],
       "negative": [
-        "spatialref-competency.tsv:affine transform omitting skew",
         "spatialref-competency.tsv:transform with a non-finite scale",
         "spatialref-competency.tsv:transform with a NaN origin"
       ],
@@ -2112,12 +2151,12 @@
       "module": "specification/aspect/spatialref",
       "positive": [
         "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:affine transform omitting a skew (zero)",
         "spatialref-competency.tsv:rotated affine transform with non-zero skew",
         "spatialref-competency.tsv:pixel registration declared at the corner",
         "spatialref-competency.tsv:pixel registration declared at the centre"
       ],
       "negative": [
-        "spatialref-competency.tsv:affine transform omitting skew",
         "spatialref-competency.tsv:transform with a non-finite scale",
         "spatialref-competency.tsv:transform with a NaN origin"
       ],
@@ -2136,21 +2175,19 @@
         "spatialref-competency.tsv:transform with a non-finite scale",
         "spatialref-competency.tsv:transform with a NaN origin"
       ],
-      "result_path": [
-        "spatialref-competency.tsv:affine transform omitting skew"
-      ]
+      "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/aspect/spatialref#skewY",
       "module": "specification/aspect/spatialref",
       "positive": [
         "spatialref-competency.tsv:north-up affine transform",
+        "spatialref-competency.tsv:affine transform omitting a skew (zero)",
         "spatialref-competency.tsv:rotated affine transform with non-zero skew",
         "spatialref-competency.tsv:pixel registration declared at the corner",
         "spatialref-competency.tsv:pixel registration declared at the centre"
       ],
       "negative": [
-        "spatialref-competency.tsv:affine transform omitting skew",
         "spatialref-competency.tsv:transform with a non-finite scale",
         "spatialref-competency.tsv:transform with a NaN origin"
       ],
@@ -2565,6 +2602,13 @@
       "result_path": []
     },
     {
+      "iri": "https://hexplain.io/ns/bddo#DisjointKindsShape",
+      "module": "specification/bddo",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
       "iri": "https://hexplain.io/ns/bddo#DispatchArm",
       "module": "specification/bddo",
       "positive": [],
@@ -2659,6 +2703,10 @@
       "iri": "https://hexplain.io/ns/bddo#Field",
       "module": "specification/bddo",
       "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:same identifier in two standards",
         "core-mapping-competency.tsv:field mapped to a datatype property",
         "core-mapping-competency.tsv:single-codec shorthand encoding",
         "core-mapping-competency.tsv:two-step encoding pipeline",
@@ -2692,6 +2740,15 @@
         "layout-competency.tsv:unmarked unrelated packing metadata"
       ],
       "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:parse attribution naming an unknown category",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint",
+        "conformance-competency.tsv:same identifier in one standard written with other case",
+        "conformance-competency.tsv:empty version",
         "core-mapping-competency.tsv:field mapped to a class instead of a struct",
         "core-mapping-competency.tsv:field mapped to a class as though it were a property",
         "core-mapping-competency.tsv:block declaring both a shorthand codec and a pipeline",
@@ -2921,9 +2978,22 @@
       "iri": "https://hexplain.io/ns/bddo#Struct",
       "module": "specification/bddo",
       "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:same identifier in two standards",
         "core-mapping-competency.tsv:struct mapped to a class"
       ],
       "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:parse attribution naming an unknown category",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint",
+        "conformance-competency.tsv:same identifier in one standard written with other case",
+        "conformance-competency.tsv:empty version",
         "core-mapping-competency.tsv:data layout attached to a struct rather than a field"
       ],
       "result_path": []
@@ -2951,6 +3021,13 @@
     },
     {
       "iri": "https://hexplain.io/ns/bddo#TreeDocumentShape",
+      "module": "specification/bddo",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/bddo#TreePrefixBindingShape",
       "module": "specification/bddo",
       "positive": [],
       "negative": [],
@@ -4073,8 +4150,18 @@
     {
       "iri": "https://hexplain.io/ns/conf#Constraint",
       "module": "specification/conf",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
       "result_path": []
     },
     {
@@ -4094,8 +4181,14 @@
     {
       "iri": "https://hexplain.io/ns/conf#Evaluated",
       "module": "specification/conf",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
       "result_path": []
     },
     {
@@ -4107,6 +4200,19 @@
     },
     {
       "iri": "https://hexplain.io/ns/conf#Finding",
+      "module": "specification/conf",
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf#FindingAttributionShape",
       "module": "specification/conf",
       "positive": [],
       "negative": [],
@@ -4141,6 +4247,63 @@
       "result_path": []
     },
     {
+      "iri": "https://hexplain.io/ns/conf#NotReached",
+      "module": "specification/conf",
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf#OutcomeShape",
+      "module": "specification/conf",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf#Parse",
+      "module": "specification/conf",
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf#ParseAttribution",
+      "module": "specification/conf",
+      "positive": [
+        "conformance-competency.tsv:parse attribution of a checksum error"
+      ],
+      "negative": [
+        "conformance-competency.tsv:parse attribution naming an unknown category"
+      ],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf#ParseAttributionShape",
+      "module": "specification/conf",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf#ParseAttributionTargetShape",
+      "module": "specification/conf",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
       "iri": "https://hexplain.io/ns/conf#RangeDatatypeShape",
       "module": "specification/conf",
       "positive": [],
@@ -4151,11 +4314,46 @@
       "iri": "https://hexplain.io/ns/conf#RuleError",
       "module": "specification/conf",
       "positive": [],
+      "negative": [
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf#Run",
+      "module": "specification/conf",
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf#RunShape",
+      "module": "specification/conf",
+      "positive": [],
       "negative": [],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/conf#Violation",
+      "module": "specification/conf",
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind"
+      ],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf#_prefixes",
       "module": "specification/conf",
       "positive": [],
       "negative": [],
@@ -4164,68 +4362,220 @@
     {
       "iri": "https://hexplain.io/ns/conf#assertion",
       "module": "specification/conf",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
       "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf#errorCategory",
+      "module": "specification/conf",
+      "positive": [
+        "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:parse attribution naming an unknown category",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
+      "result_path": [
+        "conformance-competency.tsv:parse attribution naming an unknown category"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/conf#findingConstraint",
       "module": "specification/conf",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/conf#findingKind",
       "module": "specification/conf",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/conf#findingMessage",
       "module": "specification/conf",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/conf#findingRequirement",
       "module": "specification/conf",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/conf#focusNode",
       "module": "specification/conf",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/conf#message",
       "module": "specification/conf",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
       "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf#outcome",
+      "module": "specification/conf",
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf#outcomeRequirement",
+      "module": "specification/conf",
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf#outcomeValue",
+      "module": "specification/conf",
+      "positive": [
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
+      "result_path": [
+        "conformance-competency.tsv:outcome value that is a finding kind"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/conf#satisfies",
       "module": "specification/conf",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:parse attribution naming an unknown category",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
+      "result_path": [
+        "conformance-competency.tsv:constraint citing a non-requirement"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/conf#scope",
       "module": "specification/conf",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
+      "result_path": [
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/conf#severity",
+      "module": "specification/conf",
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint"
+      ],
+      "result_path": [
+        "conformance-competency.tsv:constraint with two severities"
+      ]
+    },
+    {
+      "iri": "https://hexplain.io/ns/conf/shapes",
       "module": "specification/conf",
       "positive": [],
       "negative": [],
@@ -4409,6 +4759,20 @@
       "result_path": []
     },
     {
+      "iri": "https://hexplain.io/ns/core#RegisterStatus",
+      "module": "specification/hexplain",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/core#RegisterStatusShape",
+      "module": "specification/hexplain",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
       "iri": "https://hexplain.io/ns/core#UnitShape",
       "module": "specification/hexplain",
       "positive": [],
@@ -4480,6 +4844,13 @@
       "result_path": [
         "core-mapping-competency.tsv:mapping rule without a condition"
       ]
+    },
+    {
+      "iri": "https://hexplain.io/ns/core#correspondsTo",
+      "module": "specification/hexplain",
+      "positive": [],
+      "negative": [],
+      "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/core#forProperty",
@@ -4638,6 +5009,34 @@
       "result_path": [
         "core-mapping-competency.tsv:mapping rule naming a class as its semantic property"
       ]
+    },
+    {
+      "iri": "https://hexplain.io/ns/core#status",
+      "module": "specification/hexplain",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/core#statusDeprecated",
+      "module": "specification/hexplain",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/core#statusSuperseded",
+      "module": "specification/hexplain",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/core#statusValid",
+      "module": "specification/hexplain",
+      "positive": [],
+      "negative": [],
+      "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/core#unit",
@@ -5631,8 +6030,12 @@
     {
       "iri": "https://hexplain.io/ns/fn#Function",
       "module": "specification/fn",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:native function declaring when it is unbound"
+      ],
+      "negative": [
+        "conformance-competency.tsv:native function declaring nothing"
+      ],
       "result_path": []
     },
     {
@@ -5652,8 +6055,12 @@
     {
       "iri": "https://hexplain.io/ns/fn#Native",
       "module": "specification/fn",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:native function declaring when it is unbound"
+      ],
+      "negative": [
+        "conformance-competency.tsv:native function declaring nothing"
+      ],
       "result_path": []
     },
     {
@@ -5785,8 +6192,12 @@
     {
       "iri": "https://hexplain.io/ns/fn#kind",
       "module": "specification/fn",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:native function declaring when it is unbound"
+      ],
+      "negative": [
+        "conformance-competency.tsv:native function declaring nothing"
+      ],
       "result_path": []
     },
     {
@@ -5814,8 +6225,12 @@
       "iri": "https://hexplain.io/ns/fn#maxCellsPerWindow",
       "module": "specification/fn",
       "positive": [],
-      "negative": [],
-      "result_path": []
+      "negative": [
+        "conformance-competency.tsv:window limit of zero"
+      ],
+      "result_path": [
+        "conformance-competency.tsv:window limit of zero"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/fn#physicalAt",
@@ -5890,7 +6305,9 @@
     {
       "iri": "https://hexplain.io/ns/fn#unboundWhen",
       "module": "specification/fn",
-      "positive": [],
+      "positive": [
+        "conformance-competency.tsv:native function declaring when it is unbound"
+      ],
       "negative": [],
       "result_path": []
     },
@@ -6735,7 +7152,21 @@
       "result_path": []
     },
     {
+      "iri": "https://hexplain.io/ns/register/us-nato-security#CosmicTopSecret",
+      "module": "specification/register/us-nato-security",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
       "iri": "https://hexplain.io/ns/register/us-nato-security#Crypto",
+      "module": "specification/register/us-nato-security",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/register/us-nato-security#Cui",
       "module": "specification/register/us-nato-security",
       "positive": [],
       "negative": [],
@@ -6869,6 +7300,48 @@
     },
     {
       "iri": "https://hexplain.io/ns/register/us-nato-security#Nato",
+      "module": "specification/register/us-nato-security",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/register/us-nato-security#NatoClassificationLevelOrder",
+      "module": "specification/register/us-nato-security",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/register/us-nato-security#NatoClassificationLevelScheme",
+      "module": "specification/register/us-nato-security",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/register/us-nato-security#NatoConfidential",
+      "module": "specification/register/us-nato-security",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/register/us-nato-security#NatoRestricted",
+      "module": "specification/register/us-nato-security",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/register/us-nato-security#NatoSecret",
+      "module": "specification/register/us-nato-security",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/register/us-nato-security#NatoUnclassified",
       "module": "specification/register/us-nato-security",
       "positive": [],
       "negative": [],
@@ -7085,6 +7558,13 @@
       "result_path": []
     },
     {
+      "iri": "https://hexplain.io/ns/register/us-nato-security#UsClassificationLevelOrder",
+      "module": "specification/register/us-nato-security",
+      "positive": [],
+      "negative": [],
+      "result_path": []
+    },
+    {
       "iri": "https://hexplain.io/ns/register/us-nato-security#UsOnly",
       "module": "specification/register/us-nato-security",
       "positive": [],
@@ -7241,7 +7721,9 @@
     {
       "iri": "https://hexplain.io/ns/req#Functional",
       "module": "specification/req",
-      "positive": [],
+      "positive": [
+        "conformance-competency.tsv:same identifier in two standards"
+      ],
       "negative": [],
       "result_path": []
     },
@@ -7255,8 +7737,23 @@
     {
       "iri": "https://hexplain.io/ns/req#Requirement",
       "module": "specification/req",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:same identifier in two standards"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:parse attribution naming an unknown category",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint",
+        "conformance-competency.tsv:same identifier in one standard written with other case",
+        "conformance-competency.tsv:empty version"
+      ],
       "result_path": []
     },
     {
@@ -7276,15 +7773,45 @@
     {
       "iri": "https://hexplain.io/ns/req#Semantic",
       "module": "specification/req",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:same identifier in two standards"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:parse attribution naming an unknown category",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint",
+        "conformance-competency.tsv:same identifier in one standard written with other case",
+        "conformance-competency.tsv:empty version"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/req#Syntactic",
       "module": "specification/req",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:same identifier in two standards"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:parse attribution naming an unknown category",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint",
+        "conformance-competency.tsv:same identifier in one standard written with other case",
+        "conformance-competency.tsv:empty version"
+      ],
       "result_path": []
     },
     {
@@ -7297,33 +7824,117 @@
     {
       "iri": "https://hexplain.io/ns/req#appliesToVersion",
       "module": "specification/req",
-      "positive": [],
-      "negative": [],
-      "result_path": []
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:same identifier in two standards"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:parse attribution naming an unknown category",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint",
+        "conformance-competency.tsv:same identifier in one standard written with other case",
+        "conformance-competency.tsv:empty version"
+      ],
+      "result_path": [
+        "conformance-competency.tsv:empty version"
+      ]
     },
     {
       "iri": "https://hexplain.io/ns/req#discrepancyType",
       "module": "specification/req",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:same identifier in two standards"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:parse attribution naming an unknown category",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint",
+        "conformance-competency.tsv:same identifier in one standard written with other case",
+        "conformance-competency.tsv:empty version"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/req#fromStandard",
       "module": "specification/req",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:same identifier in two standards"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:parse attribution naming an unknown category",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint",
+        "conformance-competency.tsv:same identifier in one standard written with other case",
+        "conformance-competency.tsv:empty version"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/req#requirementId",
       "module": "specification/req",
-      "positive": [],
-      "negative": [],
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:same identifier in two standards"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:parse attribution naming an unknown category",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint",
+        "conformance-competency.tsv:same identifier in one standard written with other case",
+        "conformance-competency.tsv:empty version"
+      ],
       "result_path": []
     },
     {
       "iri": "https://hexplain.io/ns/req#statement",
+      "module": "specification/req",
+      "positive": [
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:same identifier in two standards"
+      ],
+      "negative": [
+        "conformance-competency.tsv:constraint citing a non-requirement",
+        "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
+        "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:parse attribution naming an unknown category",
+        "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:rule error without its constraint",
+        "conformance-competency.tsv:same identifier in one standard written with other case",
+        "conformance-competency.tsv:empty version"
+      ],
+      "result_path": []
+    },
+    {
+      "iri": "https://hexplain.io/ns/req/shapes",
       "module": "specification/req",
       "positive": [],
       "negative": [],

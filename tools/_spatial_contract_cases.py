@@ -7,7 +7,7 @@ def cases():
     rows=[]
     def add(name,body,ok,path=''):
         rows.append(dict(name='spatial '+name,module='specification/aspect/spatialref/spatialref.ttl',expected=ok,path=('https://hexplain.io/ns/aspect/spatialref#'+path) if path else '',data=PREFIX+body))
-    models=[('GeoTransform','originX originY scaleX scaleY skewX skewY',''),
+    models=[('GeoTransform','originX originY scaleX scaleY','skewX skewY'),
             ('GroundControlPoint','gcpPixelX gcpPixelY gcpX gcpY','gcpZ')]
     offsets='lineOffset sampleOffset latitudeOffset longitudeOffset heightOffset'
     scales='lineScale sampleScale latitudeScale longitudeScale heightScale'

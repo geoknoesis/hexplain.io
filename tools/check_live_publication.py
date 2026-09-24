@@ -46,6 +46,6 @@ with ThreadPoolExecutor(max_workers=4) as pool:
     results=list(pool.map(check,cases))
 out=root/args.output
 out.parent.mkdir(parents=True,exist_ok=True)
-out.write_text(json.dumps(dict(checked_at=datetime.now(timezone.utc).isoformat(),checks=results),indent=2)+'\n',encoding='utf-8')
+out.write_text(json.dumps(dict(checked_at=datetime.now(timezone.utc).isoformat(),checks=results),indent=2)+'\n',encoding='utf-8',newline='\n')
 print(json.dumps(results,indent=2))
 raise SystemExit(0 if all(r['passed'] for r in results) else 1)

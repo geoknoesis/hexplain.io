@@ -74,7 +74,11 @@ PRE_MIGRATION_SHA = "7e92f4bc020ba5d6a7ee24edae7c3cd4ded90eb1"
 # from the migration's own design table. Any future edit to a register that changes these
 # counts must update this table deliberately, not by accident.
 EXPECTED_COUNTS = {
-    "us-nato-security": (6, 70),
+    # +1 scheme and +6 concepts in register 1.2: the NATO levels were split out of the US level
+    # scheme (NATO Unclassified, Restricted, Confidential, Secret, COSMIC Top Secret) and CUI
+    # was added as FOUO's replacement. Nothing was removed: usnato:Restricted and usnato:Fouo
+    # stay defined, deprecated (tools/test_register_lifecycle.py).
+    "us-nato-security": (7, 76),
     # 15 at extraction, +8 for encoding pipelines (P1-5): the compressors a pipeline step
     # actually names (Zstd, Snappy, LZ4, RunLength, Blosc) and the reversible transforms
     # that only ever appear as a step (Delta, Shuffle, BitShuffle). Growth here is expected
@@ -104,6 +108,13 @@ DELIBERATELY_CHANGED = {
     (rdflib.URIRef(_UNS + "MarkingScheme"), SKOS.note,
      rdflib.Literal("Digraph notations from NITF MIL-STD-2500C Table A-4; align to the "
                     "current CAPCO Register when applying.")),
+    # 2026-09-24: SKOS mapping properties relate concepts to concepts. H.264's exactMatch to an
+    # ISO catalogue web page became rdfs:seeAlso, and Point's closeMatch named geosparql:Point,
+    # which GeoSPARQL does not define; it now names the Simple Features class sf:Point.
+    (rdflib.URIRef("https://hexplain.io/ns/register/media-encoding#H264"), SKOS.exactMatch,
+     rdflib.URIRef("https://www.iso.org/standard/75400.html")),
+    (rdflib.URIRef("https://hexplain.io/ns/register/geometry-type#Point"), SKOS.closeMatch,
+     rdflib.URIRef("http://www.opengis.net/ont/geosparql#Point")),
 }
 
 def original(aspect):
@@ -134,8 +145,7 @@ for aspect, reg in PAIRS:
 
     old_wanted = {rewrite(t) for t in old
                   if t[0] in moving and t[1] not in (SKOS.notation, RDFS.isDefinedBy)}
-    if aspect == "security":
-        old_wanted -= DELIBERATELY_CHANGED
+    old_wanted -= DELIBERATELY_CHANGED
     got = set(new) | set(rgraph)
     missing = old_wanted - got
     if missing:

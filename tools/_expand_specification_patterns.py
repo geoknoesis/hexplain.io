@@ -76,7 +76,7 @@ def run(write=False):
         raise AssertionError('Stale generated specification: ' + ', '.join(str(p.relative_to(ROOT)) for p in changed))
     if write:
         for path in changed:
-            path.write_text(rendered[path], encoding='utf-8')
+            path.write_text(rendered[path], encoding='utf-8',newline='\n')
     return len(rendered), len(changed)
 
 

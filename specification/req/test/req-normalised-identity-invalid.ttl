@@ -1,0 +1,34 @@
+# expect-only
+# expect: ex:Pad req:RequirementIdentityShape sh:SPARQLConstraintComponent
+# expect: ex:Case req:RequirementIdentityShape sh:SPARQLConstraintComponent
+# expect: ex:EmptyStandard req:RequirementShape sh:MinLengthConstraintComponent
+# expect: ex:EmptyStatement req:RequirementShape sh:MinLengthConstraintComponent
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix ex:  <https://example.org/req-normalised#> .
+
+# The same standard spelt with other case and surrounding spaces, and the same identifier with
+# a trailing space: after normalisation the pair is the same, so these are one requirement
+# written twice.
+ex:Pad a req:Requirement ;
+    req:requirementId "NF-001 " ;
+    req:fromStandard " Normalisation Standard, Edition 3" ;
+    req:statement "The header shall be present." ;
+    req:discrepancyType req:Syntactic .
+ex:Case a req:Requirement ;
+    req:requirementId "NF-001" ;
+    req:fromStandard "normalisation standard, edition 3" ;
+    req:statement "The header shall be present (restated)." ;
+    req:discrepancyType req:Syntactic .
+
+# Empty strings name no standard and quote no text.
+ex:EmptyStandard a req:Requirement ;
+    req:requirementId "NF-002" ;
+    req:fromStandard "" ;
+    req:statement "The trailer shall be present." ;
+    req:discrepancyType req:Syntactic .
+ex:EmptyStatement a req:Requirement ;
+    req:requirementId "NF-003" ;
+    req:fromStandard "Normalisation Standard, Edition 3" ;
+    req:statement "" ;
+    req:discrepancyType req:Syntactic .

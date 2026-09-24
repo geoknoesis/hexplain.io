@@ -1,4 +1,4 @@
-# Hexplain Register — Media Encoding 1.0
+# Hexplain Register — Media Encoding 1.1
 # Controlled values for the hx-encoding aspect: codec and compression identifiers as
 # published by the relevant standards bodies (ISO/IEC MPEG, ITU-T, IETF). Split out of the
 # aspect so another jurisdiction or profile can publish a sibling register without forking
@@ -14,7 +14,9 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/register/media-encoding> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/register/media-encoding/1.0> ; owl:versionInfo "1.0" ;
+    owl:versionIRI <https://hexplain.io/ns/register/media-encoding/1.1> ; owl:versionInfo "1.1" ;
+    owl:priorVersion <https://hexplain.io/ns/register/media-encoding/1.0> ;
+    dcterms:modified "2026-09-24"^^xsd:date ;
     rdfs:label "Hexplain Register — Media Encoding" ;
     dcterms:created "2026-08-08"^^xsd:date ;
     dcterms:creator <https://geoknoesis.com> ;
@@ -33,7 +35,7 @@ menc:AudioCodecs a skos:Collection ; skos:prefLabel "Audio codecs"@en ;
     skos:member menc:AAC , menc:MP3 , menc:FLAC , menc:Opus , menc:PCM .
 
 menc:H264 a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
-    skos:prefLabel "H.264"@en ; skos:altLabel "AVC"@en , "MPEG-4 Part 10"@en ; skos:exactMatch <https://www.iso.org/standard/75400.html> .
+    skos:prefLabel "H.264"@en ; skos:altLabel "AVC"@en , "MPEG-4 Part 10"@en ; rdfs:seeAlso <https://www.iso.org/standard/75400.html> .
 menc:HEVC a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
     skos:prefLabel "H.265"@en ; skos:altLabel "HEVC"@en , "MPEG-H Part 2"@en .
 menc:ProRes a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
@@ -74,7 +76,7 @@ menc:Blosc a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConce
 # as a step of a pipeline. They live in this register because that is what a pipeline step
 # draws from -- the alternative, a parallel filter register, would split one list in two.
 menc:Delta a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Delta / predictor"@en ;
-    skos:note "Stores each value as its difference from the previous one. TIFF calls this a horizontal predictor and numbers its variants; the variant travels as a parameter." .
+    skos:note "Stores each value as its difference from the previous one. TIFF calls this a horizontal predictor and numbers its variants; the variant travels as a parameter. Its parameters are named by the Processing Model (Codecs, Delta parameters): elementSize (required: 1, 2, 4 or 8), littleEndian (0 or 1), samplesPerPixel (default 1), rowBytes (0 or a multiple of elementSize x samplesPerPixel) and predictor (2, horizontal, by default; 1, none)." .
 menc:Shuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Byte shuffle"@en ;
     skos:note "Groups the Nth byte of every value together, so the high bytes of similar numbers become runs. HDF5 and Blosc both use it." .
 menc:BitShuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Bit shuffle"@en .

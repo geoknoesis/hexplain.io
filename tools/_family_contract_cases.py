@@ -40,7 +40,7 @@ def group(module,context,items):
     for prop,kind,unique in items:CONTRACTS.append((module,context,prop,kind,unique))
 group('adv/audio.ttl','ex:f sig:sampleRate 1.',[(p,k,True) for p,k in [('sig:sampleRate','positive'),('s:componentCount','positive'),('s:bitDepth','positive'),('t:duration','literal'),('enc:bitrate','positive'),('enc:codec','concept')]])
 group('adv/audio.ttl','ex:f a:artist "artist".',[(p,k,True) for p,k in [('a:artist','string'),('a:album','string'),('a:trackTitle','string'),('a:trackNumber','positive')]])
-group('dfv/docfont.ttl','ex:f a d:Document.',[(p,k,True) for p,k in [('dc:creator','string'),('dc:title','string'),('dc:created','date'),('dc:modified','date'),('d:pageCount','positive')]])
+group('dfv/docfont.ttl','ex:f a d:Document.',[('dc:creator','string',False)]+[(p,k,True) for p,k in [('dc:title','string'),('dc:created','date'),('dc:modified','date'),('d:pageCount','positive')]])
 group('dfv/docfont.ttl','', [('d:hasBoundingBox','box',False)])
 group('dfv/docfont.ttl','ex:f d:fontFamily "font".',[(p,k,True) for p,k in [('d:fontFamily','string'),('d:fontStyle','string'),('d:glyphCount','positive')]])
 group('idv/image.ttl','ex:f a i:ImageHeader.',[(p,k,True) for p,k in [('r:width','positive'),('r:height','positive'),('s:bitDepth','positive'),('col:colorSpace','concept')]])

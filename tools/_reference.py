@@ -134,8 +134,19 @@ SCOPE={
  'time':'Use for temporal metadata of content. Numeric durations and frame/sample counts are not interchangeable without a timing model.',
 }
 
+# Modules whose terms each carry their own skos:scopeNote in the canonical RDF. For them the
+# module sentence above describes the MODULE only: prefixing it to a class, an individual or a
+# property said, for example, that conf:Finding and conf:NotExercised were "for constraints
+# evaluated against a declared structural scope", which is wrong for both. A term of such a
+# module without its own note gets only the kind sentence.
+TERM_SCOPED={'conf','req'}
+
 def scope(g,t):
-    k=kind(g,t);ns=str(owner(t));module=ns.rsplit('/',1)[-1]
+    k=kind(g,t);ns=str(owner(t));module=ns.removesuffix('/shapes').rsplit('/',1)[-1]
+    if module in TERM_SCOPED and k not in ['Ontology','Node shape','Property shape','SHACL prefix declarations']:
+        own=g.value(t,SKOS.scopeNote)
+        if own is not None:return str(own)
+        return {'Class':'Assert this class on a resource representing the defined entity.','Named individual':'Use this IRI as a controlled value where a shape accepts its declared type.'}.get(k,'Use it as a predicate; applicable SHACL paths and their focus-node scopes are listed below.')
     if k in ['Node shape','Property shape']:return 'Validation activation: '+shape_targets(g,t)+' Constraints apply only within that activation or through shape references; they are not global OWL domain axioms.'
     if k=='SHACL prefix declarations':return 'Used by named SHACL SPARQL constraints/rules in this module. Not intended for instance-data assertions.'
     if '/register/' in ns:

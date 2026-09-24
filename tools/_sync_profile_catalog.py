@@ -8,12 +8,12 @@ source = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT.parent/"hexplain-profi
 catalog = json.loads(source.read_text(encoding="utf-8"))
 entries = {p["name"]:p for p in catalog["profiles"]}
 target = ROOT/"specification/coverage/profile-catalog.json"
-target.write_text(json.dumps(catalog, indent=2)+"\n", encoding="utf-8")
+target.write_text(json.dumps(catalog, indent=2)+"\n", encoding="utf-8", newline="\n")
 inventory = ROOT/"specification/coverage/gdal-drivers.json"
 data = json.loads(inventory.read_text(encoding="utf-8"))
 for driver in data["drivers"]:
     for link in driver.get("profiles", []):
         profile = entries[link["name"]]
         link.update(iri=profile["iri"], verification=profile["verification"], scope=profile["scope"])
-inventory.write_text(json.dumps(data, indent=2)+"\n", encoding="utf-8")
+inventory.write_text(json.dumps(data, indent=2)+"\n", encoding="utf-8", newline="\n")
 print(f"Synchronized {len(entries)} canonical profile identities and scopes")

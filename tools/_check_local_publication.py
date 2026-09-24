@@ -40,7 +40,7 @@ try:
     except urllib.error.HTTPError as error: assert error.code==404
     out=ROOT/".gate-results/local-publication.json"
     out.parent.mkdir(exist_ok=True)
-    out.write_text(json.dumps(dict(image=image,passed=True,checks=checks,unknown_namespace_status=404),indent=2)+"\n",encoding="utf-8")
+    out.write_text(json.dumps(dict(image=image,passed=True,checks=checks,unknown_namespace_status=404),indent=2)+"\n",encoding="utf-8", newline="\n")
     print(f"PASS: actual Nginx image/config, {len(checks)} ontology/version/release checks, archive bytes and unknown-IRI 404")
 finally:
     subprocess.run(["docker","stop",container],check=True,capture_output=True)

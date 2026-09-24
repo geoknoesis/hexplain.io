@@ -191,7 +191,7 @@ def main(root, excluded, argv=None):
                     gates=records)
     def save():
         temporary = destination.with_suffix(destination.suffix + ".tmp")
-        temporary.write_text(json.dumps(evidence, indent=2)+"\n", encoding="utf-8")
+        temporary.write_text(json.dumps(evidence, indent=2)+"\n", encoding="utf-8", newline="\n")
         temporary.replace(destination)
     save()  # Replace stale results before starting any gate.
     for gate in gates:

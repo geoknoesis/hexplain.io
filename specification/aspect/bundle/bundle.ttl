@@ -1,4 +1,4 @@
-# Hexplain Aspect — Bundle (hx-bundle) 1.3
+# Hexplain Aspect — Bundle (hx-bundle) 1.4
 # Base container-tier aspect: one logical Asset realized by N physical Parts, bound by
 # containment / naming-convention / manifest-reference / concatenation. Imports BDDO
 # (a part is described by a bddo:Struct).
@@ -16,9 +16,9 @@
 @prefix vann:    <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/aspect/bundle> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.3> ; owl:versionInfo "1.3" ;
-    owl:priorVersion <https://hexplain.io/ns/aspect/bundle/1.2> ;
-    dcterms:modified "2026-09-23"^^xsd:date ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.4> ; owl:versionInfo "1.4" ;
+    owl:priorVersion <https://hexplain.io/ns/aspect/bundle/1.3> ;
+    dcterms:modified "2026-09-24"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/bddo> ;
     rdfs:label "Hexplain Aspect — Bundle (hx-bundle)" ;
     rdfs:comment "Base aspect for multi-part assets: one logical Asset realized by N physical Parts, bound by containment, naming-convention, manifest-reference, or concatenation. Part aspect facets lift onto the Asset for a unified semantic view." ;
@@ -131,6 +131,9 @@
 
 :primary a owl:DatatypeProperty ; rdfs:label "primary" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
     rdfs:range xsd:boolean ; rdfs:comment "Marks the PartSpec whose instance is the Asset's primaryPart." .
+:liftsProperty a owl:ObjectProperty ; rdfs:label "lifts property" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> ;
+    rdfs:comment "A property of the part's carried aspect that the lifting rule copies from this part onto the asset. When a PartSpec states any, exactly those are lifted. When it states none, the rule falls back to every property whose rdfs:isDefinedBy is the carried aspect ontology -- a documentation annotation, which is why an explicit list is RECOMMENDED: it keeps lifting independent of how the aspect's terms happen to be annotated and of which annotation files are loaded." .
 
 # ---------- Binding-kind enumeration (NamedIndividual + sh:in) ----------
 :Containment a owl:NamedIndividual, :BindingKind ; rdfs:label "Containment" ;
@@ -144,6 +147,8 @@
 
 # ---------- Structural SHACL ----------
 :AssetShape a sh:NodeShape ; sh:targetClass :Asset ;
+    # Not abnd:hasPart: it is also used outside assets (see the competency corpus).
+    sh:targetSubjectsOf :primaryPart , :boundBy ;
     sh:property [ sh:path :hasPart ; sh:class :Part ] ;
     sh:property [ sh:path :boundBy ; sh:maxCount 1 ;
         sh:in ( :Containment :NamingConvention :ManifestReference :Concatenation ) ;
@@ -151,6 +156,7 @@
     sh:property [ sh:path :primaryPart ; sh:maxCount 1 ; sh:class :Part ;
         sh:message "An Asset has at most one primaryPart." ] .
 :PartShape a sh:NodeShape ; sh:targetClass :Part ;
+    sh:targetObjectsOf :primaryPart ;
     sh:property [ sh:path :partRole ; sh:class skos:Concept ;
         sh:message "abnd:partRole must be a skos:Concept." ] .
 
@@ -170,7 +176,12 @@ WHERE {
   ?profile <https://hexplain.io/ns/aspect/bundle#partSpec> ?spec .
   ?spec <https://hexplain.io/ns/aspect/bundle#partRole> ?role ;
         <https://hexplain.io/ns/aspect/bundle#carriesAspect> ?aspect .
-  ?p <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> ?aspect .
+  {
+    ?spec <https://hexplain.io/ns/aspect/bundle#liftsProperty> ?p .
+  } UNION {
+    FILTER NOT EXISTS { ?spec <https://hexplain.io/ns/aspect/bundle#liftsProperty> ?any }
+    ?p <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> ?aspect .
+  }
 }
 """ ] .
 
@@ -198,6 +209,7 @@ abnd:_prefixes sh:declare
 # A part is located one way or the other, and a count range must be satisfiable.
 abnd:PartSpecShape a sh:NodeShape ;
     sh:targetClass abnd:PartSpec ;
+    sh:targetObjectsOf abnd:partSpec ;
     sh:property [ sh:path abnd:pathPattern ; sh:datatype xsd:string ] ;
     sh:property [ sh:path abnd:minParts ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path abnd:maxParts ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
@@ -210,10 +222,49 @@ abnd:PartSpecShape a sh:NodeShape ;
     # instead of only at the spec that carries it.
     sh:property [ sh:path abnd:minParts ; sh:lessThanOrEquals abnd:maxParts ;
         sh:message "abnd:maxParts must not be less than abnd:minParts." ] ;
+    # Located one way: a spec with neither an extension nor a pattern matches no file.
+    sh:or ( [ sh:property [ sh:path abnd:extension ; sh:minCount 1 ] ]
+            [ sh:property [ sh:path abnd:pathPattern ; sh:minCount 1 ] ] ) ;
+    sh:message "A part spec is located by abnd:extension or abnd:pathPattern; with neither it matches no file." ;
+    sh:property [ sh:path abnd:extension ; sh:pattern "^[.][^./]" ;
+        sh:message "An abnd:extension begins with a dot (\".dbf\"); without one it would also match a longer suffix such as roads_dbf." ] ;
+    sh:sparql [ sh:message "An abnd:pathPattern must not contain a '..' segment or begin with '/': a pattern matches paths inside the asset root, never above it." ;
+        sh:prefixes abnd:_prefixes ;
+        sh:select """SELECT $this ?value WHERE {
+            $this abnd:pathPattern ?value .
+            FILTER(REGEX(?value, "(^|/)[.][.](/|$)") || STRSTARTS(?value, "/"))
+        }""" ] ;
     sh:sparql [ sh:message "A required part spec must not declare abnd:minParts 0 -- the two contradict." ;
         sh:prefixes abnd:_prefixes ;
         sh:select """SELECT $this WHERE {
             $this abnd:required true ; abnd:minParts 0 .
+        }""" ] .
+
+# A profile names at most one primary member, and names its described parts unambiguously:
+# HEL's asset.<Name> resolves a part by the local name of the struct its spec is describedBy.
+abnd:BundleProfileShape a sh:NodeShape ;
+    rdfs:label "Bundle profile shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:comment "A bundle profile has at most one primary part spec, and no two of its part specs are described by structs sharing a local name." ;
+    sh:targetClass abnd:BundleProfile ;
+    sh:targetSubjectsOf abnd:partSpec ;
+    sh:property [ sh:path abnd:partSpec ; sh:class abnd:PartSpec ;
+        sh:message "Every abnd:partSpec of a profile is an abnd:PartSpec." ] ;
+    sh:sparql [ sh:message "More than one part spec of this profile is abnd:primary true ({?a}, {?b}); an asset has one primary part." ;
+        sh:prefixes abnd:_prefixes ;
+        sh:select """SELECT $this ?a ?b WHERE {
+            $this abnd:partSpec ?a , ?b .
+            ?a abnd:primary true . ?b abnd:primary true .
+            FILTER(STR(?a) < STR(?b))
+        }""" ] ;
+    sh:sparql [ sh:message "Part specs {?a} and {?b} are described by structs with the same local name '{?name}', so asset.{?name} would not name one part." ;
+        sh:prefixes abnd:_prefixes ;
+        sh:select """SELECT $this ?a ?b ?name WHERE {
+            $this abnd:partSpec ?a , ?b .
+            ?a abnd:describedBy ?sa . ?b abnd:describedBy ?sb .
+            FILTER(!sameTerm(?a, ?b) && STR(?a) < STR(?b))
+            BIND(REPLACE(STR(?sa), "^.*[#/]", "") AS ?name)
+            FILTER(?name = REPLACE(STR(?sb), "^.*[#/]", ""))
         }""" ] .
 
 # ---------- Range datatype shapes ----------
@@ -257,13 +308,15 @@ abnd:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 <https://hexplain.io/ns/aspect/bundle#Asset> <http://www.w3.org/2004/02/skos/core#definition> "A logical resource realized by one or more physical Parts. The single unified semantic subject."@en .
 <https://hexplain.io/ns/aspect/bundle#Asset> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for compound assets, their members and reusable membership profiles. Discovery/binding, semantic membership and physical byte location are separate concerns. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/aspect/bundle#AssetShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for abnd:boundBy, abnd:hasPart, abnd:primaryPart. An Asset has at most one primaryPart. abnd:boundBy must be one of the four BindingKind individuals."@en .
-<https://hexplain.io/ns/aspect/bundle#AssetShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of abnd:Asset Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/aspect/bundle#AssetShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of abnd:Asset; subjects using abnd:boundBy, abnd:primaryPart Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/bundle#AssetShape> <http://www.w3.org/2000/01/rdf-schema#label> "Asset Shape"@en .
 <https://hexplain.io/ns/aspect/bundle#AssetShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/bundle> .
 <https://hexplain.io/ns/aspect/bundle#BindingKind> <http://www.w3.org/2004/02/skos/core#definition> "The mechanism binding an Asset's Parts. Closed enumeration."@en .
 <https://hexplain.io/ns/aspect/bundle#BindingKind> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for compound assets, their members and reusable membership profiles. Discovery/binding, semantic membership and physical byte location are separate concerns. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/aspect/bundle#BundleProfile> <http://www.w3.org/2004/02/skos/core#definition> "A reusable format template: its binding kind plus the set of expected member PartSpecs."@en .
 <https://hexplain.io/ns/aspect/bundle#BundleProfile> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for compound assets, their members and reusable membership profiles. Discovery/binding, semantic membership and physical byte location are separate concerns. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/aspect/bundle#BundleProfileShape> <http://www.w3.org/2004/02/skos/core#definition> "A bundle profile has at most one primary part spec, and no two of its part specs are described by structs sharing a local name."@en .
+<https://hexplain.io/ns/aspect/bundle#BundleProfileShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of abnd:BundleProfile; subjects using abnd:partSpec Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/bundle#Concatenation> <http://www.w3.org/2004/02/skos/core#definition> "Parts are ordered fragments of one logical byte stream (multi-volume archives)."@en .
 <https://hexplain.io/ns/aspect/bundle#Concatenation> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for compound assets, their members and reusable membership profiles. Discovery/binding, semantic membership and physical byte location are separate concerns. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/aspect/bundle#Concatenation> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/bundle> .
@@ -285,13 +338,13 @@ abnd:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 <https://hexplain.io/ns/aspect/bundle#Part> <http://www.w3.org/2004/02/skos/core#definition> "One physical carrier (a byte stream / file) contributing to an Asset. Composes with hx-fsmeta and BDDO at instance level."@en .
 <https://hexplain.io/ns/aspect/bundle#Part> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for compound assets, their members and reusable membership profiles. Discovery/binding, semantic membership and physical byte location are separate concerns. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/aspect/bundle#PartShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for abnd:partRole. abnd:partRole must be a skos:Concept."@en .
-<https://hexplain.io/ns/aspect/bundle#PartShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of abnd:Part Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/aspect/bundle#PartShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of abnd:Part; objects of abnd:primaryPart Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/bundle#PartShape> <http://www.w3.org/2000/01/rdf-schema#label> "Part Shape"@en .
 <https://hexplain.io/ns/aspect/bundle#PartShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/bundle> .
 <https://hexplain.io/ns/aspect/bundle#PartSpec> <http://www.w3.org/2004/02/skos/core#definition> "One expected member of a BundleProfile: role, extension, requiredness, and the aspect it carries."@en .
 <https://hexplain.io/ns/aspect/bundle#PartSpec> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for compound assets, their members and reusable membership profiles. Discovery/binding, semantic membership and physical byte location are separate concerns. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
-<https://hexplain.io/ns/aspect/bundle#PartSpecShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for abnd:extension, abnd:maxParts, abnd:minParts, abnd:nestedProfile, abnd:pathPattern. A required part spec must not declare abnd:minParts 0 -- the two contradict. abnd:maxParts must not be less than abnd:minParts."@en .
-<https://hexplain.io/ns/aspect/bundle#PartSpecShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of abnd:PartSpec Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/aspect/bundle#PartSpecShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for abnd:extension, abnd:maxParts, abnd:minParts, abnd:nestedProfile, abnd:pathPattern. A part spec is located by abnd:extension or abnd:pathPattern; with neither it matches no file. A required part spec must not declare abnd:minParts 0 -- the two contradict. An abnd:extension begins with a dot (\".dbf\"); without one it would also match a longer suffix such as roads_dbf. An abnd:pathPattern must not contain a '..' segment or begin with '/': a pattern matches paths inside the asset root, never above it. abnd:maxParts must not be less than abnd:minParts."@en .
+<https://hexplain.io/ns/aspect/bundle#PartSpecShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of abnd:PartSpec; objects of abnd:partSpec Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/aspect/bundle#PartSpecShape> <http://www.w3.org/2000/01/rdf-schema#label> "Part Spec Shape"@en .
 <https://hexplain.io/ns/aspect/bundle#PartSpecShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/bundle> .
 <https://hexplain.io/ns/aspect/bundle#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for abnd:extension, abnd:maxParts, abnd:minParts, abnd:partIndex, abnd:pathPattern, abnd:primary, abnd:required, abnd:stem. abnd:extension takes an xsd:string literal (rdfs:range xsd:string). abnd:maxParts takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). abnd:minParts takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). abnd:partIndex takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). abnd:pathPattern takes an xsd:string literal (rdfs:range xsd:string). abnd:primary takes an xsd:boolean literal (rdfs:range xsd:boolean). abnd:required takes an xsd:boolean literal (rdfs:range xsd:boolean). abnd:stem takes an xsd:string literal (rdfs:range xsd:string)."@en .
@@ -314,6 +367,8 @@ abnd:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 <https://hexplain.io/ns/aspect/bundle#extension> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for compound assets, their members and reusable membership profiles. Discovery/binding, semantic membership and physical byte location are separate concerns. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/aspect/bundle#hasPart> <http://www.w3.org/2004/02/skos/core#definition> "A member resource belonging to a compound asset; the relation represents logical membership, not a byte offset."@en .
 <https://hexplain.io/ns/aspect/bundle#hasPart> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for compound assets, their members and reusable membership profiles. Discovery/binding, semantic membership and physical byte location are separate concerns. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/aspect/bundle#liftsProperty> <http://www.w3.org/2004/02/skos/core#definition> "A property of the part's carried aspect that the lifting rule copies from this part onto the asset. When a PartSpec states any, exactly those are lifted. When it states none, the rule falls back to every property whose rdfs:isDefinedBy is the carried aspect ontology -- a documentation annotation, which is why an explicit list is RECOMMENDED: it keeps lifting independent of how the aspect's terms happen to be annotated and of which annotation files are loaded."@en .
+<https://hexplain.io/ns/aspect/bundle#liftsProperty> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for compound assets, their members and reusable membership profiles. Discovery/binding, semantic membership and physical byte location are separate concerns. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/aspect/bundle#maxParts> <http://www.w3.org/2004/02/skos/core#definition> "Most files that may match this spec. Absent means unbounded -- the normal case for a pattern like \"measurement/*.tiff\", where the count is a property of the data rather than of the format."@en .
 <https://hexplain.io/ns/aspect/bundle#maxParts> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for compound assets, their members and reusable membership profiles. Discovery/binding, semantic membership and physical byte location are separate concerns. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/aspect/bundle#minParts> <http://www.w3.org/2004/02/skos/core#definition> "Fewest files that must match this spec. Defaults to 1 when abnd:required is true and 0 otherwise, so the boolean remains sufficient for a single-file member; declare a count only when a spec matches MANY files, which a pattern makes possible and an extension never did."@en .

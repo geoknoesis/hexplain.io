@@ -31,7 +31,7 @@ def cases():
     # Findings: what an evaluation reports, and each way a malformed one is caught.
     conf = ('@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . '
             '@prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . '
-            '@prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . '
+            '@prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . ex:req2 a r:Requirement . '
             'ex:field a <https://hexplain.io/ns/bddo#Field> . '
             'ex:con a c:Constraint ; c:scope ex:field ; c:assertion "true" ; c:satisfies ex:req ; c:message "m" . '
             'ex:con2 a c:Constraint ; c:scope ex:field ; c:assertion "true" ; c:satisfies ex:req ; c:message "m" . ')
@@ -50,8 +50,23 @@ def cases():
     for prop, bad in [('findingKind', 'ex:other'), ('findingRequirement', 'ex:untyped'),
                       ('findingConstraint', 'ex:untyped'), ('focusNode', '"node"'), ('findingMessage', '1')]:
         finding_case(prop+' wrong value', {**finding, prop: bad}, False, prop)
-    for prop in ['findingKind', 'findingRequirement', 'findingMessage']:
+    for prop in ['findingKind', 'findingMessage']:
         finding_case(prop+' missing', {**finding, prop: None}, False, prop)
+    # A constraint finding needs a requirement; only a Parse finding may have none, so the
+    # absence is reported by the kind-dependent alternative (sh:or, no result path).
+    finding_case('findingRequirement missing', {**finding, 'findingRequirement': None}, False)
+    parse = {'findingKind': 'c:Parse', 'errorCategory': '"Bounds"', 'findingMessage': '"Truncated"'}
+    finding_case('parse without requirement', parse, True)
+    finding_case('severity stated', {**finding, 'severity': 'sh:Warning'}, True)
+    finding_case('severity unknown', {**finding, 'severity': 'c:Violation'}, False, 'severity')
+    finding_case('severity twice', {**finding, 'severity': 'sh:Warning, sh:Info'}, False, 'severity')
+    finding_case('parse with requirement', {**parse, 'findingRequirement': 'ex:req'}, True)
+    finding_case('parse with constraint', {**parse, 'findingConstraint': 'ex:con'}, False)
+    finding_case('parse without category', {**parse, 'errorCategory': None}, False)
+    finding_case('parse category wrong value', {**parse, 'errorCategory': '"Overflow"'}, False, 'errorCategory')
+    finding_case('violation without constraint', {**finding, 'findingConstraint': None}, False)
+    finding_case('requirement not cited by constraint',
+                 {**finding, 'findingRequirement': 'ex:req, ex:req2'}, False)
     for prop, extra in [('findingKind', 'c:RuleError'), ('findingConstraint', 'ex:con2'),
                         ('focusNode', 'ex:node2'), ('findingMessage', '"other"')]:
         finding_case(prop+' duplicate', {**finding, prop: finding[prop]+', '+extra}, False, prop)
@@ -67,6 +82,28 @@ def cases():
             ('one severity', base.replace('c:message "m"', 'c:message "m" ; c:severity sh:Warning'), True, ''),
             ('two severities', base.replace('c:message "m"', 'c:message "m" ; c:severity sh:Warning, sh:Info'), False, 'severity')]:
         rows.append(dict(name='conf constraint '+name, module='specification/conf/shapes.ttl', data=body,
+                         expected=ok, path='https://hexplain.io/ns/conf#'+path if path else ''))
+    # Parse attributions and run outcomes.
+    for name, body, ok, path in [
+            ('attribution valid', 'ex:pa a c:ParseAttribution ; c:errorCategory "Checksum" ; c:satisfies ex:req . ', True, ''),
+            ('attribution without requirement', 'ex:pa a c:ParseAttribution ; c:errorCategory "Checksum" . ', False, 'satisfies'),
+            ('attribution two requirements', 'ex:pa a c:ParseAttribution ; c:errorCategory "Checksum" ; c:satisfies ex:req, ex:req2 . ', False, 'satisfies'),
+            ('attribution without category', 'ex:pa a c:ParseAttribution ; c:satisfies ex:req . ', False, 'errorCategory'),
+            ('attribution repeated category', 'ex:pa a c:ParseAttribution ; c:errorCategory "Sync" ; c:satisfies ex:req . '
+                'ex:pb a c:ParseAttribution ; c:errorCategory "Sync" ; c:satisfies ex:req2 . ', False, ''),
+            ('run valid', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req ; c:outcomeValue c:NotReached ] . ', True, ''),
+            ('outcome without value', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req ] . ', False, 'outcomeValue'),
+            ('outcome wrong value', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req ; c:outcomeValue c:Parse ] . ', False, 'outcomeValue'),
+            ('outcome without requirement', 'ex:run a c:Run ; c:outcome [ c:outcomeValue c:Evaluated ] . ', False, 'outcomeRequirement'),
+            ('outcome two values', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req ; c:outcomeValue c:Evaluated , c:Errored ] . ', False, 'outcomeValue'),
+            ('outcome two requirements', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req , ex:req2 ; c:outcomeValue c:Evaluated ] . ', False, 'outcomeRequirement'),
+            ('outcome untyped requirement', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:untyped ; c:outcomeValue c:Evaluated ] . ', False, 'outcomeRequirement'),
+            ('run outcome literal', 'ex:run a c:Run ; c:outcome "evaluated" . ', False, 'outcome'),
+            ('attribution untyped requirement', 'ex:pa a c:ParseAttribution ; c:errorCategory "Sync" ; c:satisfies ex:untyped . ', False, 'satisfies'),
+            ('attribution two categories', 'ex:pa a c:ParseAttribution ; c:errorCategory "Sync" , "Bounds" ; c:satisfies ex:req . ', False, 'errorCategory'),
+            ('run two outcomes for one requirement', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req ; c:outcomeValue c:Evaluated ] , '
+                '[ c:outcomeRequirement ex:req ; c:outcomeValue c:Errored ] . ', False, '')]:
+        rows.append(dict(name='conf '+name, module='specification/conf/shapes.ttl', data=conf+body,
                          expected=ok, path='https://hexplain.io/ns/conf#'+path if path else ''))
     rq = ('@prefix r:<https://hexplain.io/ns/req#> . @prefix ex:<urn:requirement-case:> . '
           'ex:f a r:Requirement ; r:requirementId "R01" ; r:fromStandard "format specification" ; '

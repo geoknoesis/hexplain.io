@@ -1,15 +1,18 @@
-# Hexplain Register — Checksum Algorithm 1.1
+# Hexplain Register — Checksum Algorithm 1.2
 # Controlled values for the hx-integrity aspect: checksum/hash algorithm identifiers as
 # published by the relevant standards bodies (IETF, NIST). Split out of the aspect so
 # another jurisdiction or profile can publish a sibling register without forking the aspect
 # or minting into a namespace it does not own.
 # Codes are NOT here: a raw wire code belongs to the format that encodes it, and is carried
 # by that profile's HDL enum.
-# Each concept is skos:exactMatch the BDDO checksum-algorithm individual a physical
+# Each concept is hexplain:correspondsTo the BDDO checksum-algorithm individual a physical
 # description names in bddo:checksumAlgorithm, so the physical and aspect layers identify
-# the same algorithm (tools/test_checksum_register.py keeps the two sets aligned).
+# the same algorithm (tools/test_checksum_register.py keeps the two sets aligned). The link is
+# an annotation, not skos:exactMatch: SKOS mapping properties relate concepts to concepts, and
+# the bddo values are OWL individuals.
 @prefix rck: <https://hexplain.io/ns/register/checksum#> .
 @prefix bddo:   <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
@@ -18,9 +21,11 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/register/checksum> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/register/checksum/1.1> ; owl:versionInfo "1.1" ;
-    owl:priorVersion <https://hexplain.io/ns/register/checksum/1.0> ;
-    dcterms:modified "2026-09-23"^^xsd:date ;
+    owl:versionIRI <https://hexplain.io/ns/register/checksum/1.2> ; owl:versionInfo "1.2" ;
+    owl:priorVersion <https://hexplain.io/ns/register/checksum/1.1> ;
+    dcterms:modified "2026-09-24"^^xsd:date ;
+    # core supplies hexplain:correspondsTo and imports bddo, whose individuals the concepts name.
+    owl:imports <https://hexplain.io/ns/core> ;
     rdfs:label "Hexplain Register — Checksum Algorithm" ;
     dcterms:created "2026-08-08"^^xsd:date ;
     dcterms:creator <https://geoknoesis.com> ;
@@ -32,17 +37,17 @@
 rck:ChecksumAlgorithmScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/checksum> ;
     skos:prefLabel "Checksum Algorithm Register"@en .
 rck:CRC16 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-16/CCITT-FALSE"@en ;
-    skos:exactMatch bddo:crc16 .
+    hexplain:correspondsTo bddo:crc16 .
 rck:CRC32 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-32"@en ;
-    skos:exactMatch bddo:crc32 .
+    hexplain:correspondsTo bddo:crc32 .
 rck:Adler32 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "Adler-32"@en ;
-    skos:exactMatch bddo:adler32 .
+    hexplain:correspondsTo bddo:adler32 .
 rck:MD5 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "MD5"@en ;
-    skos:exactMatch bddo:md5 .
+    hexplain:correspondsTo bddo:md5 .
 rck:SHA1 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "SHA-1"@en ;
-    skos:exactMatch bddo:sha1 .
+    hexplain:correspondsTo bddo:sha1 .
 rck:SHA256 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "SHA-256"@en ;
-    skos:exactMatch bddo:sha256 .
+    hexplain:correspondsTo bddo:sha256 .
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.

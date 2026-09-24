@@ -1,0 +1,46 @@
+# expect-only
+# expect: ex:BadPointer bddo:NodePathShape sh:SPARQLConstraintComponent
+# expect: ex:BadXPath bddo:NodePathShape sh:SPARQLConstraintComponent
+# expect: ex:ZeroPosition bddo:NodePathShape sh:SPARQLConstraintComponent
+# expect: ex:Label bddo:TreePrefixBindingShape sh:SPARQLConstraintComponent
+# expect: ex:RelativeBinding bddo:NamespaceBindingShape sh:PatternConstraintComponent
+# expect: ex:Twice bddo:TreePrefixBindingShape sh:SPARQLConstraintComponent
+# expect: ex:StructAndField bddo:DisjointKindsShape sh:SPARQLConstraintComponent
+# expect: ex:UntypedArm bddo:DispatchArmShape sh:MinCountConstraintComponent
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/tree-path-bad#> .
+
+# A JSON Pointer's "~" escapes only "~0" and "~1", and every token starts with "/".
+ex:Meta a bddo:TreeDocument ;
+    bddo:treeSyntax bddo:json ;
+    bddo:hasField ( ex:BadPointer ) .
+ex:BadPointer a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath "/shape/~2" .
+
+# An XML path: a doubled slash (descendant axis), a zero position, and a prefix never bound.
+ex:Label a bddo:TreeDocument ;
+    bddo:treeSyntax bddo:xml ;
+    bddo:hasNamespaceBinding ex:RelativeBinding ;
+    bddo:hasField ( ex:BadXPath ex:ZeroPosition ex:Unbound ) .
+ex:RelativeBinding a bddo:NamespaceBinding ; bddo:namespacePrefix "pds" ;
+    bddo:namespaceIRI "pds/v1"^^xsd:anyURI .
+ex:BadXPath a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath "//pds:elements" .
+ex:ZeroPosition a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath "/pds:Product/pds:Axis_Array[0]" .
+ex:Unbound a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath "/pds:Product/disp:axis_name" .
+
+# One prefix bound twice: which namespace a path means would depend on graph order.
+ex:Twice a bddo:TreeDocument ;
+    bddo:treeSyntax bddo:xml ;
+    bddo:hasNamespaceBinding
+        [ a bddo:NamespaceBinding ; bddo:namespacePrefix "a" ; bddo:namespaceIRI "urn:example:one"^^xsd:anyURI ] ,
+        [ a bddo:NamespaceBinding ; bddo:namespacePrefix "a" ; bddo:namespaceIRI "urn:example:two"^^xsd:anyURI ] ;
+    bddo:hasField ( ex:Fine ) .
+ex:Fine a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath "/a:root/@a:id" .
+
+# Struct, Field and DataType are disjoint.
+ex:StructAndField a bddo:Struct , bddo:Field ; bddo:dataType bddo:uint8 .
+
+# An untyped arm is still an arm: its properties activate the shape.
+ex:Table a bddo:DispatchTable ; bddo:dispatchOnExpression "tag" .
+ex:UntypedArm bddo:armTable ex:Table ; bddo:armKey "A" .

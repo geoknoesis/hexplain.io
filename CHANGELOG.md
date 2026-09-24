@@ -4,7 +4,126 @@ Changes to the Hexplain specification family. Version numbers are per module
 (`owl:versionInfo` / `owl:versionIRI`); the family has no single version. Local release
 snapshots are recorded under `releases/`.
 
-## Unreleased (since snapshot 2026-09-08.2)
+## Snapshot 2026-09-24.2 (changes since snapshot 2026-09-24.1)
+
+### Module versions
+
+Every module whose canonical Turtle changed after snapshot 2026-09-24.1 has a new version IRI,
+an `owl:priorVersion` naming the version that snapshot froze, and `dcterms:modified 2026-09-24`.
+
+| Module | Was | Now |
+|---|---|---|
+| aspect/bundle | 1.3 | 1.4 |
+| aspect/provenance | 1.1 | 1.2 |
+| aspect/spatialref | 1.2 working draft | 1.3 working draft |
+| bddo | 1.1 | 1.2 |
+| conf | 1.1 | 1.2 |
+| conf/shapes (new ontology document) | — | 1.2 |
+| dfv (docfont) | 1.1 | 1.2 |
+| fn | 0.1 | 0.2 |
+| hexplain (core) | 1.1 | 1.2 |
+| idv (image) | 1.1 | 1.2 |
+| register/checksum | 1.1 | 1.2 |
+| register/geometry-type | 1.1 | 1.2 |
+| register/media-encoding | 1.0 | 1.1 |
+| register/us-nato-security | 1.1 | 1.2 |
+| req | 1.1 | 1.2 |
+| req/shapes (new ontology document) | — | 1.2 |
+
+`conf/shapes.ttl` and `req/shapes.ttl` are now ontology documents of their own
+(`<https://hexplain.io/ns/conf/shapes>`, `<https://hexplain.io/ns/req/shapes>`), importing the
+vocabulary they validate; their terms stay in the `conf:` and `req:` namespaces. `conf.ttl` now
+imports only `req`; `conf/shapes.ttl` imports `core`.
+
+### Validation compatibility (stricter shapes)
+
+- **Class-only activation closed.** Shapes that fired only on `rdf:type` now also fire on the
+  properties their class alone uses: `conf:ConstraintShape` (subjects of `conf:assertion`,
+  `conf:scope`, `conf:message`; objects of `conf:findingConstraint`), `conf:FindingShape`,
+  `req:RequirementShape`, `req:RequirementIdentityShape`, `abnd:PartSpecShape` (objects of
+  `abnd:partSpec`), `abnd:AssetShape`/`abnd:PartShape` (via `abnd:primaryPart`, `abnd:boundBy`),
+  `bddo:DispatchArmShape`, `bddo:ChecksumShape`, `bddo:NamespaceBindingShape`,
+  `bddo:NodePathShape`, `hexplain:EncodingStepShape`, `hexplain:CodecParameterShape`. An untyped
+  node carrying those properties used to validate unchecked.
+- **conf findings.** `conf:findingKind` admits `conf:Parse`. A `conf:Violation` or
+  `conf:RuleError` finding must name its constraint and at least one requirement, and may cite
+  only requirements its constraint cites; a Parse finding names no constraint, states
+  `conf:errorCategory`, and may cite none. A parse-recovery finding written as a constraint-less
+  `conf:Violation` (valid before) now fails: write it as `conf:Parse`.
+- **req identity.** The (fromStandard, requirementId) uniqueness check trims both values and
+  ignores the standard's case; `req:fromStandard` and `req:statement` must be non-empty.
+- **bundle profiles.** A part spec needs an `abnd:extension` or an `abnd:pathPattern`; an
+  extension starts with a dot; a pattern may not contain a `..` segment or start with `/`; a
+  profile has at most one primary spec and no two specs described by structs with one local name.
+- **bddo.** A node may not be two of Struct, Field and DataType (`bddo:DisjointKindsShape`); a
+  tree document's `bddo:nodePath` must follow JSON Pointer or the XML path syntax, every prefix it
+  uses must be bound, once; `bddo:namespaceIRI` must be absolute.
+- **Looser:** `asref:skewX`/`asref:skewY` are optional (absent means zero); `dcterms:creator` on a
+  `dfv:Document` may be an agent IRI or blank node and may repeat.
+
+### Additions
+
+- conf: `conf:Run`, `conf:outcome`, `conf:outcomeRequirement`, `conf:outcomeValue`,
+  `conf:NotReached`, `conf:ParseAttribution`, `conf:errorCategory`, `conf:Parse`;
+  `conf:severity` is also stated on findings.
+- core: `hexplain:RegisterStatus` (`hexplain:statusValid`, `hexplain:statusDeprecated`,
+  `hexplain:statusSuperseded`), `hexplain:status`, `hexplain:RegisterStatusShape`,
+  `hexplain:correspondsTo`.
+- bundle: `abnd:liftsProperty` (explicit facet lifting), `abnd:BundleProfileShape`.
+- bddo: `bddo:DisjointKindsShape`, `bddo:TreePrefixBindingShape`.
+- us-nato-security: `usnato:NatoClassificationLevelScheme` with its five levels,
+  `usnato:UsClassificationLevelOrder`, `usnato:NatoClassificationLevelOrder`, `usnato:Cui`.
+
+### Deprecations (IRIs kept, `owl:deprecated true`)
+
+- us-nato-security: `usnato:Restricted` (→ `usnato:NatoRestricted`), `usnato:Fouo`
+  (→ `usnato:Cui`), `usnato:ClassificationLevelOrder` (→ the US and NATO orders), each with a
+  `hexplain:status`, a history note and `dcterms:isReplacedBy`. The register cites the current
+  authorities (EO 13526, DoD Manual 5200.01, 32 CFR Part 2002; FIPS 10-4 withdrawn).
+- idv: `img:colorType`, `img:compressionMethod`, `img:filterMethod`, `img:interlaceMethod`
+  (PNG wire codes; they belong in a PNG profile).
+- dfv: `dfv:Object`, `dfv:Stream`, `dfv:Trailer`, `dfv:CrossReferenceTable` (PDF structures).
+
+### Corrected mappings and semantics
+
+- The checksum register links its concepts to bddo algorithms with `hexplain:correspondsTo`
+  (was `skos:exactMatch` to OWL individuals) and imports core; H.264's `skos:exactMatch` to an
+  ISO web page is `rdfs:seeAlso`; geometry types `skos:closeMatch` the Simple Features classes
+  (`sf:Point`, ...), not the non-existent `geosparql:Point`.
+- Scheme-level `owl:versionInfo "1.0"` inside the security register is removed.
+- The normalized affine is corner-based; `asref:pixelRegistration` never shifts it, and
+  `hxf:column`/`hxf:row` no longer add half a pixel. The affine functions and `hxf:calibrate` are
+  unbound for a multi-valued or uncastable coefficient; `hxf:isNoData` compares in the band's
+  declared type; `hxf:stat` excludes no-data and NaN cells.
+- provenance: `aprov:Platform rdfs:subClassOf sosa:Platform`; the other PROV/SOSA links stay
+  `rdfs:seeAlso`.
+
+### Specification text
+
+- Processing Model: a fifth conformance class, Conformance Evaluator, and its section; refusal
+  limited to unclaimed classes and a closed list of optional features; the reference
+  implementation's capability statement, `specification/reference-engine-claims.json`; Delta
+  parameters; codec error categories; strict text-container decoding and row-count checks;
+  Description errors for packed non-integer cells, malformed fixed values and repeat-until over
+  a text container; configurable limits with depth counted from the root; the ResourceLimit
+  marker.
+- HEL: one escape set shared with HDL (`\\ \' \" \n \t \r \0 \xHH \uHHHH`); ASCII lexing;
+  `1e999` is a syntax error; strict `datetime`; no `.size`; repeat-until bindings over structs;
+  the `parent` alias in dispatch conditions is deprecated.
+- HDL: the grammar of the finished compiler; `asset` is reserved; forward references are
+  compile-time errors; Delta is part of the minimum codec set.
+- conf and req pages have RFC 2119 conformance sections; module pages take their lead from the
+  ontology's comment.
+
+### Tooling
+
+- New gates: `test_register_lifecycle`, `test_line_endings`, `test_reference_claims`,
+  `test_controlled_values`, `test_strict_profile`, `test_conformance_competency`.
+- `test_shape_activation` also checks class-targeted shapes; `test_html_sync` checks page leads;
+  fixtures may declare `# expect-only`.
+- Generators write LF on every platform.
+
+## Snapshot 2026-09-24.1 (changes since snapshot 2026-09-08.2)
 
 ### Module versions
 
@@ -42,7 +161,8 @@ IRI, an `owl:priorVersion` naming the snapshot's version and `dcterms:modified 2
 
 bddo, core, dlv, aspect/security, aspect/bundle, npv and register/us-nato-security had
 already changed after the snapshot without a version bump; they are bumped here as well.
-`fn` (0.1) is not in the snapshot and keeps its version.
+`fn` (0.1) is not in the snapshot and keeps its version. conf and req had no version IRI in
+snapshot 2026-09-08.2, so 1.1 is their first version and has no `owl:priorVersion`.
 
 ### Validation compatibility (stricter shapes)
 

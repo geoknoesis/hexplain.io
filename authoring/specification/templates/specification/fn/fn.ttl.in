@@ -1,4 +1,4 @@
-# Hexplain SPARQL function library (hxf) 0.1
+# Hexplain SPARQL function library (hxf) 0.2
 # One IRI per function. Pure functions carry a SHACL-AF body any SHACL-AF engine can run;
 # native functions need the Hexplain engine (io.hexplain.query) behind the query.
 @prefix :        <https://hexplain.io/ns/fn#> .
@@ -15,10 +15,13 @@
 @prefix araster: <https://hexplain.io/ns/aspect/raster#> .
 @prefix asref:   <https://hexplain.io/ns/aspect/spatialref#> .
 @prefix asig:    <https://hexplain.io/ns/aspect/signal#> .
+@prefix asamp:   <https://hexplain.io/ns/aspect/sampling#> .
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
 <https://hexplain.io/ns/fn> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/fn/0.1> ; owl:versionInfo "0.1" ;
+    owl:versionIRI <https://hexplain.io/ns/fn/0.2> ; owl:versionInfo "0.2" ;
+    owl:priorVersion <https://hexplain.io/ns/fn/0.1> ;
+    dcterms:modified "2026-09-24"^^xsd:date ;
     # Every vocabulary whose terms the functions read (hxf:reads) or name in their bodies.
     owl:imports <https://hexplain.io/ns/core> , <https://hexplain.io/ns/dlv> ,
         <https://hexplain.io/ns/aspect/raster> , <https://hexplain.io/ns/aspect/spatialref> ,
@@ -125,8 +128,8 @@
     :unboundWhen "The index tuple is outside the array extent, or its arity does not match the array rank."@en .
 :stat a :Function ; :kind :Native ; :layer 2 ; rdfs:label "statistic" ;
     :signature "stat(array: IRI, kind: string) -> literal | stat(array: IRI, kind: string, lo1, hi1, ..., lon, hin: integer) -> literal" ;
-    rdfs:comment "min, max, sum, mean or count over the whole array or a half-open window. Refused above hxf:maxCellsPerWindow." ;
-    :unboundWhen "The named statistic is not one this library computes, or the window is outside the array."@en .
+    rdfs:comment "min, max, sum, mean or count over the whole array or a half-open window. Only VALID cells enter a statistic: a cell whose value is the no-data value in effect for the array's band (as hxf:isNoData decides) and a NaN cell are excluded from every statistic, count included, so count is the number of valid cells. A window may visit at most hxf:maxCellsPerWindow cells, valid or not; a larger one is refused. Over a window with no valid cell, count is 0 and sum is 0." ;
+    :unboundWhen "The named statistic is not one this library computes; the window is outside the array or empty; the window has more cells than hxf:maxCellsPerWindow; or the statistic is min, max or mean and the window has no valid cell."@en .
 :window a :Function ; :kind :Native ; :layer 2 ; rdfs:label "window" ;
     :signature "(array: IRI, lo1, hi1, ..., lon, hin: integer) hxf:window (i1, ..., in, value)" ;
     rdfs:comment "Property function enumerating every cell of a half-open window, row-major, binding its indices and value. Refused above hxf:maxCellsPerWindow. NON-PORTABLE: this is an Apache Jena ARQ property function (a magic predicate in a triple pattern), not a SPARQL 1.1 filter function nor a SHACL-AF function, so it runs only on Jena/ARQ with the Hexplain engine registered; other SPARQL processors read it as an ordinary triple pattern that matches nothing." ;
@@ -144,8 +147,8 @@
 :calibrate a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "calibrate" ;
     :signature "calibrate(band: IRI, raw: number) -> xsd:double" ;
     :reads araster:sampleScale, araster:sampleOffset ;
-    rdfs:comment "raw * araster:sampleScale + araster:sampleOffset; identity when neither is asserted. Deterministic: exactly one answer or none, never one per matching triple." ;
-    :unboundWhen "The band carries more than one distinct araster:sampleScale, or more than one distinct araster:sampleOffset: which one applies is undefined, so no value is returned rather than an arbitrary one."@en ;
+    rdfs:comment "raw * araster:sampleScale + araster:sampleOffset; a scale that is not asserted is 1 and an offset that is not asserted is 0. Deterministic: exactly one answer or none, never one per matching triple." ;
+    :unboundWhen "The band carries more than one distinct araster:sampleScale, or more than one distinct araster:sampleOffset: which one applies is undefined, so no value is returned rather than an arbitrary one. Also unbound when the scale, the offset or raw cannot be cast to xsd:double: an asserted but unreadable coefficient is not the same as an absent one, and treating it as 1 or 0 would return a wrong value."@en ;
     sh:parameter {{constraint:pattern_000}} , [ sh:path :arg2 ; sh:order 1 ; sh:description "raw" ] ;
     sh:returnType xsd:double ;
     sh:prefixes <https://hexplain.io/ns/fn> ;
@@ -154,12 +157,14 @@
   FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/raster#sampleOffset> ?o1 , ?o2 . FILTER ( !sameTerm(?o1, ?o2) ) }
   OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/raster#sampleScale> ?scale }
   OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/raster#sampleOffset> ?offset }
-  BIND ( xsd:double($arg2) * COALESCE(xsd:double(?scale), 1.0) + COALESCE(xsd:double(?offset), 0.0) AS ?result )
+  BIND ( IF(BOUND(?scale), xsd:double(?scale), 1.0) AS ?s )
+  BIND ( IF(BOUND(?offset), xsd:double(?offset), 0.0) AS ?o )
+  BIND ( xsd:double($arg2) * ?s + ?o AS ?result )
 }""" .
 :isNoData a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "is no-data" ;
     :signature "isNoData(band: IRI, value: number) -> xsd:boolean" ;
-    :reads araster:noDataValue, araster:hasBand ;
-    rdfs:comment "True when value equals the no-data value in effect: the band's own araster:noDataValue, else that of the grid that has the band (araster:hasBand). Compared as xsd:double; a NaN no-data value matches a NaN value, although NaN never equals itself numerically. False when no no-data value is in effect. Deterministic: exactly one answer or none." ;
+    :reads araster:noDataValue, araster:hasBand, asamp:sampleFormat, asamp:bitDepth ;
+    rdfs:comment "True when value equals the no-data value in effect: the band's own araster:noDataValue, else that of the grid that has the band (araster:hasBand). The two are compared in the band's declared numeric type, stated by asamp:sampleFormat and asamp:bitDepth on the band or, failing that, on its grid: for asamp:Float with bitDepth 32 both are first rounded to the nearest binary32 value, so a float32 no-data value written in decimal (for example -3.4028234663852886e38) matches the stored float32 sample; for an integer format both must be the same integer; with no declared type they are compared as xsd:double. A NaN no-data value matches a NaN value, although NaN never equals itself numerically. False when no no-data value is in effect. Deterministic: exactly one answer or none. The SPARQL body relies on xsd:float casts rounding to binary32, as Apache Jena's do; a SPARQL processor that holds xsd:float in binary64 compares such values as doubles." ;
     :unboundWhen "The band carries more than one distinct araster:noDataValue, or it has none and the grids having it carry more than one distinct one between them: which applies is undefined, so no value is returned rather than an arbitrary one."@en ;
     sh:parameter {{constraint:pattern_000}} , [ sh:path :arg2 ; sh:order 1 ; sh:description "value" ] ;
     sh:returnType xsd:boolean ;
@@ -171,11 +176,18 @@
     ?g <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/raster#noDataValue> ?a .
     ?h <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/raster#noDataValue> ?b .
     FILTER ( !sameTerm(?a, ?b) ) } )
+  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/sampling#sampleFormat> ?fmtOwn }
+  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/sampling#bitDepth> ?bitsOwn }
+  OPTIONAL { ?grid0 <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 . OPTIONAL { ?grid0 <https://hexplain.io/ns/aspect/sampling#sampleFormat> ?fmtGrid } OPTIONAL { ?grid0 <https://hexplain.io/ns/aspect/sampling#bitDepth> ?bitsGrid } }
+  BIND ( COALESCE(?fmtOwn, ?fmtGrid) AS ?fmt ) BIND ( COALESCE(?bitsOwn, ?bitsGrid) AS ?bits )
+  BIND ( BOUND(?fmt) && ?fmt = <https://hexplain.io/ns/aspect/sampling#Float> && BOUND(?bits) && xsd:integer(?bits) = 32 AS ?f32 )
   BIND ( IF(?hasOwn,
     EXISTS { $arg1 <https://hexplain.io/ns/aspect/raster#noDataValue> ?nd .
-             FILTER ( xsd:double(?nd) = xsd:double($arg2) || ( xsd:double(?nd) != xsd:double(?nd) && xsd:double($arg2) != xsd:double($arg2) ) ) },
+             FILTER ( IF(?f32, xsd:float(?nd) = xsd:float($arg2), xsd:double(?nd) = xsd:double($arg2))
+                      || ( xsd:double(?nd) != xsd:double(?nd) && xsd:double($arg2) != xsd:double($arg2) ) ) },
     EXISTS { ?grid <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/raster#noDataValue> ?nd .
-             FILTER ( xsd:double(?nd) = xsd:double($arg2) || ( xsd:double(?nd) != xsd:double(?nd) && xsd:double($arg2) != xsd:double($arg2) ) ) } )
+             FILTER ( IF(?f32, xsd:float(?nd) = xsd:float($arg2), xsd:double(?nd) = xsd:double($arg2))
+                      || ( xsd:double(?nd) != xsd:double(?nd) && xsd:double($arg2) != xsd:double($arg2) ) ) } )
     AS ?result )
 }""" .
 :physicalAt a :Function ; :kind :Native ; :layer 3 ; rdfs:label "physical value at" ;
@@ -187,68 +199,97 @@
 # ---- Layer 3: spatial reference (affine asref:GeoTransform) ----
 # worldX = originX + col*scaleX + row*skewX ; worldY = originY + col*skewY + row*scaleY.
 # Inverse: det = scaleX*scaleY - skewX*skewY ; c = (scaleY*(wx-originX) - skewX*(wy-originY))/det ;
-# r = (-skewY*(wx-originX) + scaleX*(wy-originY))/det ; floor(c) for PixelCorner, floor(c+0.5) for PixelCenter.
+# r = (-skewY*(wx-originX) + scaleX*(wy-originY))/det ; column = floor(c), row = floor(r).
+# The normalized affine is corner-based (GDAL's GT): grid position (0, 0) is the outer corner of
+# the first cell. asref:pixelRegistration says where a cell's VALUE sits and never shifts these.
+# Every coefficient must have one value: a multi-valued coefficient makes the result unbound.
 :worldX a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "world X" ;
     :signature "worldX(transform: IRI, col: number, row: number) -> xsd:double" ;
     :reads asref:originX, asref:scaleX, asref:skewX ;
-    rdfs:comment "World X of grid position (col, row) under an affine geotransform; a missing skew reads as 0." ;
+    rdfs:comment "World X of grid position (col, row) under an affine geotransform; a missing skew reads as 0, and a skew that is present but cannot be cast to xsd:double makes the result unbound. Grid positions are corner-based: (0, 0) is the outer corner of the first cell and the centre of cell (c, r) is at (c + 0.5, r + 0.5), whatever asref:pixelRegistration says." ;
+    :unboundWhen "A coefficient of the transform has more than one distinct value, or originX or scaleX is absent."@en ;
     sh:parameter {{constraint:pattern_001}} , {{constraint:pattern_004}} , {{constraint:pattern_005}} ;
     sh:returnType xsd:double ;
     sh:prefixes <https://hexplain.io/ns/fn> ;
     sh:select """SELECT ?result WHERE {
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#originX> ?originX1 , ?originX2 . FILTER ( !sameTerm(?originX1, ?originX2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#originY> ?originY1 , ?originY2 . FILTER ( !sameTerm(?originY1, ?originY2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#scaleX> ?scaleX1 , ?scaleX2 . FILTER ( !sameTerm(?scaleX1, ?scaleX2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#scaleY> ?scaleY1 , ?scaleY2 . FILTER ( !sameTerm(?scaleY1, ?scaleY2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewX> ?skewX1 , ?skewX2 . FILTER ( !sameTerm(?skewX1, ?skewX2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewY> ?skewY1 , ?skewY2 . FILTER ( !sameTerm(?skewY1, ?skewY2) ) }
   $arg1 <https://hexplain.io/ns/aspect/spatialref#originX> ?ox ; <https://hexplain.io/ns/aspect/spatialref#scaleX> ?sx .
   OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewX> ?kx }
-  BIND ( xsd:double(?ox) + xsd:double($arg2) * xsd:double(?sx) + xsd:double($arg3) * COALESCE(xsd:double(?kx), 0.0) AS ?result )
+  BIND ( xsd:double(?ox) + xsd:double($arg2) * xsd:double(?sx) + xsd:double($arg3) * IF(BOUND(?kx), xsd:double(?kx), 0.0) AS ?result )
 }""" .
 :worldY a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "world Y" ;
     :signature "worldY(transform: IRI, col: number, row: number) -> xsd:double" ;
     :reads asref:originY, asref:scaleY, asref:skewY ;
-    rdfs:comment "World Y of grid position (col, row) under an affine geotransform; a missing skew reads as 0." ;
+    rdfs:comment "World Y of grid position (col, row) under an affine geotransform; a missing skew reads as 0, and a skew that is present but cannot be cast to xsd:double makes the result unbound. Grid positions are corner-based, as for hxf:worldX." ;
+    :unboundWhen "A coefficient of the transform has more than one distinct value, or originY or scaleY is absent."@en ;
     sh:parameter {{constraint:pattern_001}} , {{constraint:pattern_004}} , {{constraint:pattern_005}} ;
     sh:returnType xsd:double ;
     sh:prefixes <https://hexplain.io/ns/fn> ;
     sh:select """SELECT ?result WHERE {
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#originX> ?originX1 , ?originX2 . FILTER ( !sameTerm(?originX1, ?originX2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#originY> ?originY1 , ?originY2 . FILTER ( !sameTerm(?originY1, ?originY2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#scaleX> ?scaleX1 , ?scaleX2 . FILTER ( !sameTerm(?scaleX1, ?scaleX2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#scaleY> ?scaleY1 , ?scaleY2 . FILTER ( !sameTerm(?scaleY1, ?scaleY2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewX> ?skewX1 , ?skewX2 . FILTER ( !sameTerm(?skewX1, ?skewX2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewY> ?skewY1 , ?skewY2 . FILTER ( !sameTerm(?skewY1, ?skewY2) ) }
   $arg1 <https://hexplain.io/ns/aspect/spatialref#originY> ?oy ; <https://hexplain.io/ns/aspect/spatialref#scaleY> ?sy .
   OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewY> ?ky }
-  BIND ( xsd:double(?oy) + xsd:double($arg2) * COALESCE(xsd:double(?ky), 0.0) + xsd:double($arg3) * xsd:double(?sy) AS ?result )
+  BIND ( xsd:double(?oy) + xsd:double($arg2) * IF(BOUND(?ky), xsd:double(?ky), 0.0) + xsd:double($arg3) * xsd:double(?sy) AS ?result )
 }""" .
 :column a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "column" ;
     :signature "column(transform: IRI, wx: number, wy: number) -> xsd:integer" ;
-    :reads asref:originX, asref:originY, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY, asref:pixelRegistration ;
-    rdfs:comment "Column of the cell containing world point (wx, wy): floor for asref:PixelCorner (default), nearest centre for asref:PixelCenter." ;
+    :reads asref:originX, asref:originY, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY ;
+    rdfs:comment "Column of the cell containing world point (wx, wy): the floor of the inverse-affine grid coordinate. The affine is corner-based, so no half-pixel shift is applied, and asref:pixelRegistration does not change the result: it states where a cell's value is located within the cell, not where the cell is." ;
+    :unboundWhen "A coefficient of the transform has more than one distinct value, a required coefficient is absent, or the transform is singular (determinant 0)."@en ;
     sh:parameter {{constraint:pattern_001}} , {{constraint:pattern_004}} , {{constraint:pattern_005}} ;
     sh:returnType xsd:integer ;
     sh:prefixes <https://hexplain.io/ns/fn> ;
     sh:select """SELECT ?result WHERE {
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#originX> ?originX1 , ?originX2 . FILTER ( !sameTerm(?originX1, ?originX2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#originY> ?originY1 , ?originY2 . FILTER ( !sameTerm(?originY1, ?originY2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#scaleX> ?scaleX1 , ?scaleX2 . FILTER ( !sameTerm(?scaleX1, ?scaleX2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#scaleY> ?scaleY1 , ?scaleY2 . FILTER ( !sameTerm(?scaleY1, ?scaleY2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewX> ?skewX1 , ?skewX2 . FILTER ( !sameTerm(?skewX1, ?skewX2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewY> ?skewY1 , ?skewY2 . FILTER ( !sameTerm(?skewY1, ?skewY2) ) }
   $arg1 <https://hexplain.io/ns/aspect/spatialref#originX> ?ox ; <https://hexplain.io/ns/aspect/spatialref#originY> ?oy ;
         <https://hexplain.io/ns/aspect/spatialref#scaleX> ?sx ; <https://hexplain.io/ns/aspect/spatialref#scaleY> ?sy .
   OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewX> ?kx }
   OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewY> ?ky }
-  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#pixelRegistration> ?reg }
-  BIND ( COALESCE(xsd:double(?kx), 0.0) AS ?kxv ) BIND ( COALESCE(xsd:double(?ky), 0.0) AS ?kyv )
+  BIND ( IF(BOUND(?kx), xsd:double(?kx), 0.0) AS ?kxv ) BIND ( IF(BOUND(?ky), xsd:double(?ky), 0.0) AS ?kyv )
   BIND ( xsd:double(?sx) * xsd:double(?sy) - ?kxv * ?kyv AS ?det )
   FILTER ( ?det != 0.0 )
   BIND ( ( xsd:double(?sy) * (xsd:double($arg2) - xsd:double(?ox)) - ?kxv * (xsd:double($arg3) - xsd:double(?oy)) ) / ?det AS ?c )
-  BIND ( xsd:integer(FLOOR(IF(BOUND(?reg) && ?reg = <https://hexplain.io/ns/aspect/spatialref#PixelCenter>, ?c + 0.5, ?c))) AS ?result )
+  BIND ( xsd:integer(FLOOR(?c)) AS ?result )
 }""" .
 :row a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "row" ;
     :signature "row(transform: IRI, wx: number, wy: number) -> xsd:integer" ;
-    :reads asref:originX, asref:originY, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY, asref:pixelRegistration ;
-    rdfs:comment "Row of the cell containing world point (wx, wy): floor for asref:PixelCorner (default), nearest centre for asref:PixelCenter." ;
+    :reads asref:originX, asref:originY, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY ;
+    rdfs:comment "Row of the cell containing world point (wx, wy): the floor of the inverse-affine grid coordinate. The affine is corner-based, so no half-pixel shift is applied, and asref:pixelRegistration does not change the result: it states where a cell's value is located within the cell, not where the cell is." ;
+    :unboundWhen "A coefficient of the transform has more than one distinct value, a required coefficient is absent, or the transform is singular (determinant 0)."@en ;
     sh:parameter {{constraint:pattern_001}} , {{constraint:pattern_004}} , {{constraint:pattern_005}} ;
     sh:returnType xsd:integer ;
     sh:prefixes <https://hexplain.io/ns/fn> ;
     sh:select """SELECT ?result WHERE {
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#originX> ?originX1 , ?originX2 . FILTER ( !sameTerm(?originX1, ?originX2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#originY> ?originY1 , ?originY2 . FILTER ( !sameTerm(?originY1, ?originY2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#scaleX> ?scaleX1 , ?scaleX2 . FILTER ( !sameTerm(?scaleX1, ?scaleX2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#scaleY> ?scaleY1 , ?scaleY2 . FILTER ( !sameTerm(?scaleY1, ?scaleY2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewX> ?skewX1 , ?skewX2 . FILTER ( !sameTerm(?skewX1, ?skewX2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewY> ?skewY1 , ?skewY2 . FILTER ( !sameTerm(?skewY1, ?skewY2) ) }
   $arg1 <https://hexplain.io/ns/aspect/spatialref#originX> ?ox ; <https://hexplain.io/ns/aspect/spatialref#originY> ?oy ;
         <https://hexplain.io/ns/aspect/spatialref#scaleX> ?sx ; <https://hexplain.io/ns/aspect/spatialref#scaleY> ?sy .
   OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewX> ?kx }
   OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewY> ?ky }
-  OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#pixelRegistration> ?reg }
-  BIND ( COALESCE(xsd:double(?kx), 0.0) AS ?kxv ) BIND ( COALESCE(xsd:double(?ky), 0.0) AS ?kyv )
+  BIND ( IF(BOUND(?kx), xsd:double(?kx), 0.0) AS ?kxv ) BIND ( IF(BOUND(?ky), xsd:double(?ky), 0.0) AS ?kyv )
   BIND ( xsd:double(?sx) * xsd:double(?sy) - ?kxv * ?kyv AS ?det )
   FILTER ( ?det != 0.0 )
   BIND ( ( - ?kyv * (xsd:double($arg2) - xsd:double(?ox)) + xsd:double(?sx) * (xsd:double($arg3) - xsd:double(?oy)) ) / ?det AS ?r )
-  BIND ( xsd:integer(FLOOR(IF(BOUND(?reg) && ?reg = <https://hexplain.io/ns/aspect/spatialref#PixelCenter>, ?r + 0.5, ?r))) AS ?result )
+  BIND ( xsd:integer(FLOOR(?r)) AS ?result )
 }""" .
 :sampleAtWorld a :Function ; :kind :Native ; :layer 3 ; rdfs:label "sample at world point" ;
     :signature "sampleAtWorld(dataset: IRI, wx: number, wy: number, band?: IRI | integer) -> literal" ;

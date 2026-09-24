@@ -128,7 +128,7 @@
         <table class="simple">
             <thead><tr><th>Aspect</th><th>Concern</th><th>Key terms</th></tr></thead>
             <tbody>
-                <tr><td><code>hx-bundle</code> ✓</td><td>multi-part asset: N carriers → 1 logical Asset</td><td>Asset, BindingKind, BundleProfile, Part, PartSpec, boundBy, carriesAspect, describedBy, extension, hasPart, maxParts, minParts, nestedProfile, partIndex, partOf, partRole, partSpec, pathPattern, primary, primaryPart, required, stem</td></tr>
+                <tr><td><code>hx-bundle</code> ✓</td><td>multi-part asset: N carriers → 1 logical Asset</td><td>Asset, BindingKind, BundleProfile, Part, PartSpec, boundBy, carriesAspect, describedBy, extension, hasPart, liftsProperty, maxParts, minParts, nestedProfile, partIndex, partOf, partRole, partSpec, pathPattern, primary, primaryPart, required, stem</td></tr>
                 <tr><td><code>hx-packaging</code> ✓</td><td>multi-entry container membership</td><td>Container, Entry, entryPath, hasEntry</td></tr>
                 <tr><td><code>hx-fsmeta</code> ✓</td><td>filesystem attributes</td><td>creationTime, fileName, fileSize, isDirectory, modificationTime</td></tr>
                 <tr><td><code>hx-networkflow</code> ✓</td><td>protocol addressing &amp; flow</td><td>acknowledgmentNumber, destinationAddress, destinationPort, etherType, protocolNumber, sequenceNumber, sourceAddress, sourcePort, tcpFlags</td></tr>
@@ -139,17 +139,19 @@
 
     <section id="dependency-shape">
         <h2>4. Dependency Shape</h2>
-        <p>The import graph is a DAG; edges point only downward. Sibling aspects never import one another.</p>
+        <p>The import graph is a DAG; edges point only downward, and this diagram shows exactly the <code>owl:imports</code> the canonical Turtle declares (<code>tools/test_imports.py</code> checks that each module imports what it uses). Sibling aspects never import one another; the only aspect-to-aspect edges are a refinement (packaging &rarr; bundle) and a base aspect (signal &rarr; sampling).</p>
         <pre class="nohighlight">
-BDDO / DLV / HEL / Core                 (foundation)
+BDDO / DLV / HEL / Core                                  (foundation)
+   ▲  imported by hx-bundle and hx-pointcloud only
+hx-bundle (container tier)  ◀── hx-packaging (Container = Containment-bound Asset)
+hx-pointcloud
+hx-sampling  ◀── hx-signal                               (base aspect and its one importer)
+hx-raster  hx-color  hx-geometry  hx-tabular  hx-time  hx-encoding  hx-spatialref
+hx-provenance  hx-security  hx-fsmeta  hx-integrity  hx-networkflow
+   … import nothing: independent siblings, composed by domains
    ▲
-hx-sampling   hx-color                  (base aspects)
-   ▲             ▲
-hx-raster  hx-geometry  hx-pointcloud  hx-tabular   hx-signal    (representation / signal)
-   … hx-time, hx-encoding, hx-spatialref, hx-provenance, hx-security, … are independent siblings
-hx-bundle  (container-tier base)  ◀── hx-packaging refines it (Container = Containment-bound Asset)
-   ▲
-DOMAINS = compositions           PROFILES = domain(s) + format-unique terms
+DOMAINS = compositions (IDV imports raster + sampling + color)
+PROFILES = domain(s) + format-unique terms
         </pre>
     </section>
 
@@ -158,7 +160,7 @@ DOMAINS = compositions           PROFILES = domain(s) + format-unique terms
         <table class="simple">
             <thead><tr><th>Domain</th><th>= aspects</th><th>+ unique terms only</th></tr></thead>
             <tbody>
-                <tr><td><b>IDV</b> image</td><td>raster (→sampling, color)</td><td>orientation, dpi</td></tr>
+                <tr><td><b>IDV</b> image</td><td>raster + sampling + color</td><td>orientation, dpi</td></tr>
                 <tr><td><b>VDV</b> video</td><td>raster + time + encoding</td><td>scanType, aspectRatio</td></tr>
                 <tr><td><b>ADV</b> audio</td><td>signal + time + encoding</td><td>— (music metadata → reuse <code>mo:</code>)</td></tr>
                 <tr><td><b>SVG / vector graphics</b></td><td>geometry + style(→color) + time? + encoding?</td><td>—</td></tr>

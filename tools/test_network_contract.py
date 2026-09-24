@@ -22,6 +22,6 @@ for field,maximum in [('sourcePort',65535),('destinationPort',65535),('sequenceN
         rows.append('\t'.join([name,str(expected).lower(),NS+field if not expected else '',base64.b64encode(source.encode()).decode()]))
 rendered='\n'.join(rows)+'\n'
 p=ROOT/'specification/validation/test/network-competency.tsv'
-if '--write' in sys.argv:p.write_text(rendered,encoding='utf-8')
+if '--write' in sys.argv:p.write_text(rendered,encoding='utf-8',newline='\n')
 else:assert p.read_text(encoding='utf-8')==rendered
 print('PASS: 40 transport boundary contracts; each property independently activates validation')

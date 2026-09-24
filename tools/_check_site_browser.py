@@ -72,7 +72,7 @@ try:
         page.screenshot(path=str(OUT/'bddo-print.png'))
         checks.append('BDDO print media: visible title, black text and white paper background')
         browser.close()
-    (OUT/'results.json').write_text(json.dumps(dict(passed=True,checks=checks),indent=2)+'\n',encoding='utf-8')
+    (OUT/'results.json').write_text(json.dumps(dict(passed=True,checks=checks),indent=2)+'\n',encoding='utf-8',newline='\n')
     print('PASS: '+ '; '.join(checks))
 finally:
     server.shutdown();server.server_close()

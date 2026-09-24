@@ -1,3 +1,4 @@
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
 @prefix conf:     <https://hexplain.io/ns/conf#> .
 @prefix req:      <https://hexplain.io/ns/req#> .
 @prefix bddo:     <https://hexplain.io/ns/bddo#> .
@@ -40,9 +41,26 @@ ex:F2 a conf:Finding ;
     conf:findingRequirement ex:R-FHDR , ex:R-FVER ;
     conf:findingMessage "FVER is not present in the parsed header." .
 
-# A parse-recovery violation has no constraint.
+# A parse error is a Parse finding: no constraint, its category, and the requirement the
+# profile attributes that category to.
+ex:PA-Bounds a conf:ParseAttribution ;
+    conf:errorCategory "Bounds" ;
+    conf:satisfies ex:R-FHDR .
 ex:F3 a conf:Finding ;
-    conf:findingKind conf:Violation ;
+    conf:findingKind conf:Parse ;
+    conf:errorCategory "Bounds" ;
     conf:findingRequirement ex:R-FHDR ;
+    conf:severity sh:Violation ;
     conf:findingMessage "Header truncated at byte 4." ;
     hexplain:byteOffset 4 .
+
+# A parse error of a category no attribution names is reported against no requirement.
+ex:F4 a conf:Finding ;
+    conf:findingKind conf:Parse ;
+    conf:errorCategory "Checksum" ;
+    conf:findingMessage "CRC mismatch in chunk IHDR." .
+
+# The run records one outcome per requirement.
+ex:Run1 a conf:Run ;
+    conf:outcome [ conf:outcomeRequirement ex:R-FHDR ; conf:outcomeValue conf:Evaluated ] ,
+                 [ conf:outcomeRequirement ex:R-FVER ; conf:outcomeValue conf:NotReached ] .

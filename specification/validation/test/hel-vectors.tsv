@@ -20,7 +20,7 @@
 # Infinity, and Infinity - Infinity is NaN.
 #
 # NOT COVERED HERE, because this format carries only a data context: eof() and stream.* need
-# a stream position, datetime()/evaluationInstant() need a reference instant, inRegister()
+# a stream position, evaluationInstant() needs a reference instant, inRegister()
 # needs a register provider, partExtension() and asset.* need an asset, and sizeof() of a
 # sibling field needs the byte spans of a real parse. Forward references need a declaration
 # ORDER and a parse position, which a flat context does not have. Bytes values (and so the
@@ -28,8 +28,11 @@
 # survives the runner's conversion (a JSON number becomes a signed 64-bit Integer), so they
 # are not covered either; the literal-range rows cover the part of the uint64 rule that a
 # literal can reach. Load-time rejection of an unsupported extension group is a property of
-# a processor, not of one expression. Those are exercised by the engine suites; the gap is
-# stated here rather than left to be inferred from absence.
+# a processor, not of one expression. An undefined name AFTER the first path step (hdr.typo)
+# needs a nested struct's declared field set, and a JSON object in the context is read as an
+# undeclared map, so it is not covered either. Those are exercised by the engine suites; the
+# gap is stated here rather than left to be inferred from absence, and is scheduled for the
+# conformance-suite format, which will carry declaration order, nested schemas and Bytes.
 #
 # name	expression	expectation	value	base64 JSON context
 integer addition	a + b	value	9	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
@@ -120,7 +123,9 @@ arithmetic with Null is an error	opt + 1	error	"number"	eyJuIjogMSwgIm9wdCI6IG51
 not of Null is an error	not opt	error	"boolean"	eyJuIjogMSwgIm9wdCI6IG51bGx9
 escaped quote in a string literal	'it\'s' == concat('it', '\'', 's')	value	true	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
 escaped backslash is one character	len('\\')	value	1	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
-backslash-n is not an escape	'a\nb'	error	"escape"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+backslash-q is not an escape	'a\qb'	error	"escape"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+backslash-n is a line feed	len('a\nb')	value	3	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
+hex and unicode escapes	'\x41é' == concat('A', 'é')	value	true	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
 substr clamps at the end	substr(s, 2, 10)	value	"DR"	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
 substr past the end is empty	substr(s, 9, 1)	value	""	eyJudW0iOiAiNDIiLCAicGFkIjogIiAgdHJpbSBtZSAgIiwgInMiOiAiSUhEUiJ9
 substringBefore cuts at the first separator	substringBefore(csv, ',')	value	"12.5"	eyJjc3YiOiAiMTIuNSx3ZXN0IiwgInBsYWluIjogIm5vc2VwIn0=
@@ -138,3 +143,26 @@ toNumber rejects an integer out of range	toNumber(huge)	error	"toNumber"	eyJkb3Q
 toNumber rejects a bare fraction	toNumber(dot)	error	"toNumber"	eyJkb3QiOiAiLjUiLCAiZW1wdHkiOiAiIiwgImV4cCI6ICIxLjVlLTEiLCAiZnJhYyI6ICIxLjUiLCAiaHVnZSI6ICI5OTk5OTk5OTk5OTk5OTk5OTk5OSIsICJsZWFkIjogIiA0MiIsICJuYW4iOiAiTmFOIiwgIm5lZ3MiOiAiLTciLCAicGx1cyI6ICIrOCIsICJzdWZmaXgiOiAiMS41ZiJ9
 toNumber rejects a type suffix	toNumber(suffix)	error	"toNumber"	eyJkb3QiOiAiLjUiLCAiZW1wdHkiOiAiIiwgImV4cCI6ICIxLjVlLTEiLCAiZnJhYyI6ICIxLjUiLCAiaHVnZSI6ICI5OTk5OTk5OTk5OTk5OTk5OTk5OSIsICJsZWFkIjogIiA0MiIsICJuYW4iOiAiTmFOIiwgIm5lZ3MiOiAiLTciLCAicGx1cyI6ICIrOCIsICJzdWZmaXgiOiAiMS41ZiJ9
 toNumber rejects the empty string	toNumber(empty)	error	"toNumber"	eyJkb3QiOiAiLjUiLCAiZW1wdHkiOiAiIiwgImV4cCI6ICIxLjVlLTEiLCAiZnJhYyI6ICIxLjUiLCAiaHVnZSI6ICI5OTk5OTk5OTk5OTk5OTk5OTk5OSIsICJsZWFkIjogIiA0MiIsICJuYW4iOiAiTmFOIiwgIm5lZ3MiOiAiLTciLCAicGx1cyI6ICIrOCIsICJzdWZmaXgiOiAiMS41ZiJ9
+conjunction checks the left operand is Boolean	1 and true	error	"boolean"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+conjunction checks the right operand is Boolean even when the left decides	false and 1	error	"boolean"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+disjunction checks the right operand is Boolean even when the left decides	true or 'x'	error	"boolean"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+a key applied to a scalar is an error	a.size	error	"key"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+bitwise and binds tighter than equality	a & 1 == 1	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+bitwise or binds tighter than comparison	b | 1 > 2	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+comparisons do not chain	1 < 2 < 3	error	"chain"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+backslash-backslash is one backslash	len('\\')	value	1	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+backslash-quote is one quote	len('\'')	value	1	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+backslash-double-quote is one double quote	'\"' == concat('"')	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+backslash-t is a tab	len('\t')	value	1	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+backslash-r is a carriage return	len('a\rb')	value	3	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+backslash-0 is NUL	len('\0')	value	1	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+backslash-x takes two hex digits	'\x41\x42' == 'AB'	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+backslash-u takes four hex digits	'\u0041' == 'A'	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+backslash-x with too few hex digits is an error	'\x4'	error	"escape"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+backslash-u with a non-hex digit is an error	'\u00G1'	error	"escape"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+a lone surrogate escape is an error	'\uDC00'	error	"escape"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+identifiers are ASCII	café == 1	error	"character"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+a non-ASCII digit is not a digit	１ == 1	error	"character"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+a float literal beyond binary64 is a syntax error	1e999 > 0	error	"range"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+datetime reads a valid date-time	datetime('1970-01-02 00:00:00', 'yyyy-MM-dd HH:mm:ss')	value	86400	eyJuIjogMSwgIm9wdCI6IG51bGx9
+datetime of an impossible date is Null	datetime('2021-02-30 00:00:00', 'yyyy-MM-dd HH:mm:ss') == opt	value	true	eyJuIjogMSwgIm9wdCI6IG51bGx9

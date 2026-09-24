@@ -36,7 +36,7 @@ with tempfile.TemporaryDirectory() as temp:
     assert 'not sampled' in render(summary), render(summary)
 
     # An incomplete run is not summarised as though it finished.
-    report.write_text(json.dumps(dict(status='running', gates=[])), encoding='utf-8')
+    report.write_text(json.dumps(dict(status='running', gates=[])), encoding='utf-8',newline='\n')
     try:
         summarise(report)
         raise AssertionError('summarised an unfinished run')

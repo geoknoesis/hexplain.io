@@ -44,6 +44,6 @@ for name,data,expected,path in cases:
     if path:assert URIRef('https://hexplain.io/ns/aspect/security#'+path) in report.objects(None,Namespace('http://www.w3.org/ns/shacl#').resultPath),(name,detail)
 corpus=root/'specification/validation/test/security-competency.tsv'
 rendered='\n'.join(rows)+'\n'
-if '--write' in __import__('sys').argv: corpus.write_text(rendered,encoding='utf-8')
+if '--write' in __import__('sys').argv: corpus.write_text(rendered,encoding='utf-8',newline='\n')
 else: assert corpus.read_text(encoding='utf-8')==rendered
 print(f'PASS: {len(cases)} opt-in security profile cases; no implicit authorization or inheritance')

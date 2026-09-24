@@ -1,4 +1,4 @@
-# Hexplain Image Vocabulary (IDV) 1.1 — vocabulary + SHACL shapes
+# Hexplain Image Vocabulary (IDV) 1.2 — vocabulary + SHACL shapes
 @prefix :       <https://hexplain.io/ns/image#> .
 @prefix img:    <https://hexplain.io/ns/image#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
@@ -14,9 +14,9 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/image> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/image/1.1> ; owl:versionInfo "1.1" ;
-    owl:priorVersion <https://hexplain.io/ns/image/1.0> ;
-    dcterms:modified "2026-09-23"^^xsd:date ;
+    owl:versionIRI <https://hexplain.io/ns/image/1.2> ; owl:versionInfo "1.2" ;
+    owl:priorVersion <https://hexplain.io/ns/image/1.1> ;
+    dcterms:modified "2026-09-24"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/aspect/raster> , <https://hexplain.io/ns/aspect/sampling> , <https://hexplain.io/ns/aspect/color> ;
     rdfs:label "Hexplain Image Vocabulary (IDV)" ;
     rdfs:comment "Semantic vocabulary for raster image properties." ;
@@ -31,12 +31,20 @@
 
 # Image dimensions, per-component precision, and colour space are the raster/sampling/colour
 # aspects: araster:width, araster:height, asamp:bitDepth, acolor:colorSpace.
-# colorType and the compression/filter/interlace codes below are PNG-specific and will move
-# to a PNG profile in a later phase.
-:colorType a owl:DatatypeProperty ; rdfs:label "color type" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer .
-:compressionMethod a owl:DatatypeProperty ; rdfs:label "compression method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:seeAlso ma:compression ; rdfs:range xsd:integer .
-:filterMethod a owl:DatatypeProperty ; rdfs:label "filter method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer .
-:interlaceMethod a owl:DatatypeProperty ; rdfs:label "interlace method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer .
+# colorType and the compression/filter/interlace codes below are PNG wire codes. They are
+# deprecated (owl:deprecated true) and belong in a PNG profile; the IRIs stay defined.
+:colorType a owl:DatatypeProperty ; rdfs:label "color type" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
+    owl:deprecated true ;
+    skos:historyNote "Deprecated in IDV 1.2: a PNG wire code, not an image property. The value only means something under the PNG specification, so it belongs in a PNG format profile (as an enumerated field mapped to register concepts or to the raster, sampling and colour aspects), not in a format-neutral vocabulary. The IRI stays defined so existing graphs keep their meaning."@en .
+:compressionMethod a owl:DatatypeProperty ; rdfs:label "compression method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:seeAlso ma:compression ; rdfs:range xsd:integer ;
+    owl:deprecated true ;
+    skos:historyNote "Deprecated in IDV 1.2: a PNG wire code, not an image property. The value only means something under the PNG specification, so it belongs in a PNG format profile (as an enumerated field mapped to register concepts or to the raster, sampling and colour aspects), not in a format-neutral vocabulary. The IRI stays defined so existing graphs keep their meaning."@en .
+:filterMethod a owl:DatatypeProperty ; rdfs:label "filter method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
+    owl:deprecated true ;
+    skos:historyNote "Deprecated in IDV 1.2: a PNG wire code, not an image property. The value only means something under the PNG specification, so it belongs in a PNG format profile (as an enumerated field mapped to register concepts or to the raster, sampling and colour aspects), not in a format-neutral vocabulary. The IRI stays defined so existing graphs keep their meaning."@en .
+:interlaceMethod a owl:DatatypeProperty ; rdfs:label "interlace method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
+    owl:deprecated true ;
+    skos:historyNote "Deprecated in IDV 1.2: a PNG wire code, not an image property. The value only means something under the PNG specification, so it belongs in a PNG format profile (as an enumerated field mapped to register concepts or to the raster, sampling and colour aspects), not in a format-neutral vocabulary. The IRI stays defined so existing graphs keep their meaning."@en .
 
 # ---------- SHACL ----------
 img:ImageShape a sh:NodeShape ; sh:targetClass img:ImageHeader ;

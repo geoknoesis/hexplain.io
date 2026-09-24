@@ -13,7 +13,14 @@ using CURIEs bound by the fixture's own @prefix lines (plus sh:). A line is sati
 result whose sh:focusNode is that node and whose sh:sourceShape is the named node shape or
 a property shape nested under it, and -- when given -- whose sh:sourceConstraintComponent
 matches. Every expect line must be satisfied, and every -invalid fixture needs at least one.
-Further results are allowed: a bad value can legitimately trip more than one shape.
+Further results are allowed: a bad value can legitimately trip more than one shape. A
+fixture that also carries the line
+
+    # expect-only
+
+allows none: every result must satisfy one of its expect lines, so a shape that starts
+reporting something else on that fixture (a new target, a broken message) fails the gate
+instead of hiding behind the expected result.
 """
 import functools
 import re
@@ -120,6 +127,21 @@ def unmet(report, shapes, expected):
     return missing
 
 
+EXPECT_ONLY = re.compile(r"^#\s*expect-only\s*$", re.M)
+
+
+def unexpected(report, shapes, expected):
+    """Results that no expect line accounts for (only checked under # expect-only)."""
+    out = []
+    for r in report.subjects(SH.resultSeverity, None):
+        f, s, c = (report.value(r, SH.focusNode), report.value(r, SH.sourceShape),
+                   report.value(r, SH.sourceConstraintComponent))
+        if not any(f == focus and s in _nested(shapes, shape) and (component is None or c == component)
+                   for focus, shape, component in expected):
+            out.append((f, s, c, report.value(r, SH.resultMessage)))
+    return out
+
+
 def check(path):
     """Validate one fixture, returning a failure description or None."""
     should_conform = path.endswith("-valid.ttl")
@@ -140,6 +162,11 @@ def check(path):
     if missing:
         listed = "\n  ".join(" ".join(str(x) for x in m if x is not None) for m in missing)
         return f"{path}: expected results not reported:\n  {listed}\n{report}"
+    if EXPECT_ONLY.search(pathlib.Path(path).read_text(encoding="utf-8")):
+        extra = unexpected(report_graph, shapes, expected)
+        if extra:
+            listed = "\n  ".join(" ".join(str(x) for x in m if x is not None) for m in extra)
+            return f"{path}: # expect-only, but these results were not expected:\n  {listed}"
     return None
 
 

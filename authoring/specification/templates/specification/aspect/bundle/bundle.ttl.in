@@ -1,4 +1,4 @@
-# Hexplain Aspect — Bundle (hx-bundle) 1.3
+# Hexplain Aspect — Bundle (hx-bundle) 1.4
 # Base container-tier aspect: one logical Asset realized by N physical Parts, bound by
 # containment / naming-convention / manifest-reference / concatenation. Imports BDDO
 # (a part is described by a bddo:Struct).
@@ -16,9 +16,9 @@
 @prefix vann:    <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/aspect/bundle> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.3> ; owl:versionInfo "1.3" ;
-    owl:priorVersion <https://hexplain.io/ns/aspect/bundle/1.2> ;
-    dcterms:modified "2026-09-23"^^xsd:date ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.4> ; owl:versionInfo "1.4" ;
+    owl:priorVersion <https://hexplain.io/ns/aspect/bundle/1.3> ;
+    dcterms:modified "2026-09-24"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/bddo> ;
     rdfs:label "Hexplain Aspect — Bundle (hx-bundle)" ;
     rdfs:comment "Base aspect for multi-part assets: one logical Asset realized by N physical Parts, bound by containment, naming-convention, manifest-reference, or concatenation. Part aspect facets lift onto the Asset for a unified semantic view." ;
@@ -131,6 +131,9 @@
 
 :primary a owl:DatatypeProperty ; rdfs:label "primary" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
     rdfs:range xsd:boolean ; rdfs:comment "Marks the PartSpec whose instance is the Asset's primaryPart." .
+:liftsProperty a owl:ObjectProperty ; rdfs:label "lifts property" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:range <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> ;
+    rdfs:comment "A property of the part's carried aspect that the lifting rule copies from this part onto the asset. When a PartSpec states any, exactly those are lifted. When it states none, the rule falls back to every property whose rdfs:isDefinedBy is the carried aspect ontology -- a documentation annotation, which is why an explicit list is RECOMMENDED: it keeps lifting independent of how the aspect's terms happen to be annotated and of which annotation files are loaded." .
 
 # ---------- Binding-kind enumeration (NamedIndividual + sh:in) ----------
 :Containment a owl:NamedIndividual, :BindingKind ; rdfs:label "Containment" ;
@@ -144,6 +147,8 @@
 
 # ---------- Structural SHACL ----------
 :AssetShape a sh:NodeShape ; sh:targetClass :Asset ;
+    # Not abnd:hasPart: it is also used outside assets (see the competency corpus).
+    sh:targetSubjectsOf :primaryPart , :boundBy ;
     sh:property [ sh:path :hasPart ; sh:class :Part ] ;
     sh:property [ sh:path :boundBy ; sh:maxCount 1 ;
         sh:in ( :Containment :NamingConvention :ManifestReference :Concatenation ) ;
@@ -151,6 +156,7 @@
     sh:property [ sh:path :primaryPart ; sh:maxCount 1 ; sh:class :Part ;
         sh:message "An Asset has at most one primaryPart." ] .
 :PartShape a sh:NodeShape ; sh:targetClass :Part ;
+    sh:targetObjectsOf :primaryPart ;
     sh:property [ sh:path :partRole ; sh:class skos:Concept ;
         sh:message "abnd:partRole must be a skos:Concept." ] .
 
@@ -170,7 +176,12 @@ WHERE {
   ?profile <https://hexplain.io/ns/aspect/bundle#partSpec> ?spec .
   ?spec <https://hexplain.io/ns/aspect/bundle#partRole> ?role ;
         <https://hexplain.io/ns/aspect/bundle#carriesAspect> ?aspect .
-  ?p <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> ?aspect .
+  {
+    ?spec <https://hexplain.io/ns/aspect/bundle#liftsProperty> ?p .
+  } UNION {
+    FILTER NOT EXISTS { ?spec <https://hexplain.io/ns/aspect/bundle#liftsProperty> ?any }
+    ?p <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> ?aspect .
+  }
 }
 """ ] .
 
@@ -198,6 +209,7 @@ abnd:_prefixes sh:declare
 # A part is located one way or the other, and a count range must be satisfiable.
 abnd:PartSpecShape a sh:NodeShape ;
     sh:targetClass abnd:PartSpec ;
+    sh:targetObjectsOf abnd:partSpec ;
     sh:property [ sh:path abnd:pathPattern ; sh:datatype xsd:string ] ;
     sh:property [ sh:path abnd:minParts ; {{constraint:pattern_237}} ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path abnd:maxParts ; {{constraint:pattern_237}} ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
@@ -210,10 +222,49 @@ abnd:PartSpecShape a sh:NodeShape ;
     # instead of only at the spec that carries it.
     sh:property [ sh:path abnd:minParts ; sh:lessThanOrEquals abnd:maxParts ;
         sh:message "abnd:maxParts must not be less than abnd:minParts." ] ;
+    # Located one way: a spec with neither an extension nor a pattern matches no file.
+    sh:or ( [ sh:property [ sh:path abnd:extension ; sh:minCount 1 ] ]
+            [ sh:property [ sh:path abnd:pathPattern ; sh:minCount 1 ] ] ) ;
+    sh:message "A part spec is located by abnd:extension or abnd:pathPattern; with neither it matches no file." ;
+    sh:property [ sh:path abnd:extension ; sh:pattern "^[.][^./]" ;
+        sh:message "An abnd:extension begins with a dot (\".dbf\"); without one it would also match a longer suffix such as roads_dbf." ] ;
+    sh:sparql [ sh:message "An abnd:pathPattern must not contain a '..' segment or begin with '/': a pattern matches paths inside the asset root, never above it." ;
+        sh:prefixes abnd:_prefixes ;
+        sh:select """SELECT $this ?value WHERE {
+            $this abnd:pathPattern ?value .
+            FILTER(REGEX(?value, "(^|/)[.][.](/|$)") || STRSTARTS(?value, "/"))
+        }""" ] ;
     sh:sparql [ sh:message "A required part spec must not declare abnd:minParts 0 -- the two contradict." ;
         sh:prefixes abnd:_prefixes ;
         sh:select """SELECT $this WHERE {
             $this abnd:required true ; abnd:minParts 0 .
+        }""" ] .
+
+# A profile names at most one primary member, and names its described parts unambiguously:
+# HEL's asset.<Name> resolves a part by the local name of the struct its spec is describedBy.
+abnd:BundleProfileShape a sh:NodeShape ;
+    rdfs:label "Bundle profile shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    rdfs:comment "A bundle profile has at most one primary part spec, and no two of its part specs are described by structs sharing a local name." ;
+    sh:targetClass abnd:BundleProfile ;
+    sh:targetSubjectsOf abnd:partSpec ;
+    sh:property [ sh:path abnd:partSpec ; sh:class abnd:PartSpec ;
+        sh:message "Every abnd:partSpec of a profile is an abnd:PartSpec." ] ;
+    sh:sparql [ sh:message "More than one part spec of this profile is abnd:primary true ({?a}, {?b}); an asset has one primary part." ;
+        sh:prefixes abnd:_prefixes ;
+        sh:select """SELECT $this ?a ?b WHERE {
+            $this abnd:partSpec ?a , ?b .
+            ?a abnd:primary true . ?b abnd:primary true .
+            FILTER(STR(?a) < STR(?b))
+        }""" ] ;
+    sh:sparql [ sh:message "Part specs {?a} and {?b} are described by structs with the same local name '{?name}', so asset.{?name} would not name one part." ;
+        sh:prefixes abnd:_prefixes ;
+        sh:select """SELECT $this ?a ?b ?name WHERE {
+            $this abnd:partSpec ?a , ?b .
+            ?a abnd:describedBy ?sa . ?b abnd:describedBy ?sb .
+            FILTER(!sameTerm(?a, ?b) && STR(?a) < STR(?b))
+            BIND(REPLACE(STR(?sa), "^.*[#/]", "") AS ?name)
+            FILTER(?name = REPLACE(STR(?sb), "^.*[#/]", ""))
         }""" ] .
 
 # ---------- Range datatype shapes ----------

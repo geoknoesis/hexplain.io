@@ -5,13 +5,14 @@
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix vann:    <http://purl.org/vocab/vann/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 
 <https://hexplain.io/ns/req> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/req/1.1> ;
+    owl:versionIRI <https://hexplain.io/ns/req/1.2> ;
+    owl:priorVersion <https://hexplain.io/ns/req/1.1> ;
     rdfs:label "Hexplain Requirements Vocabulary" ;
-    owl:versionInfo "1.1" ;
-    owl:priorVersion <https://hexplain.io/ns/req/1.0> ;
-    dcterms:modified "2026-09-23"^^xsd:date ;
+    owl:versionInfo "1.2" ;
+    dcterms:modified "2026-09-24"^^xsd:date ;
     dcterms:created "2026-08-01"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     vann:preferredNamespacePrefix "req" ; vann:preferredNamespaceUri "https://hexplain.io/ns/req#" ;
     rdfs:comment """Identifies requirements stated by an external standards document, so that
@@ -20,42 +21,49 @@ demand, independent of any binary format description.""" .
 
 # --- Classes ---
 :Requirement a owl:Class ; rdfs:label "Requirement" ;
-    rdfs:comment "A single normative requirement drawn from a standards document." ;
+    rdfs:comment "A single normative requirement drawn from a standards document. A requirement is identified by its IRI. Its (req:fromStandard, req:requirementId) pair describes where it comes from; two different standards may use the same requirement identifier, so the identifier alone identifies nothing, and within one graph the pair (compared after removing surrounding whitespace, with req:fromStandard compared ignoring case) names at most one requirement." ;
+    skos:scopeNote "Assert on each requirement a conformance profile cites or declares. Mint one IRI per requirement of the source edition; a later edition's requirement is a different requirement even when its identifier is unchanged."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/req> .
 
 :DiscrepancyType a owl:Class ; rdfs:label "Discrepancy Type" ;
     rdfs:comment "The class of defect that violating a requirement produces." ;
+    skos:scopeNote "The class of the three controlled values of req:discrepancyType; do not mint further types."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/req> .
 
 # --- Controlled individuals ---
 # Definitions track the discrepancy types used by conformance test reporting: a violation
 # impairs interpretability (syntactic), understandability (semantic), or usability (functional).
-:Syntactic a :DiscrepancyType ; rdfs:label "Syntactic" ;
+:Syntactic a :DiscrepancyType ; skos:scopeNote "Use as a req:discrepancyType value. It classifies the defect and never sets the severity of a finding."@en ; rdfs:label "Syntactic" ;
     rdfs:comment "Impacts interpretability of the data: violates format or compression specifications." .
-:Semantic a :DiscrepancyType ; rdfs:label "Semantic" ;
+:Semantic a :DiscrepancyType ; skos:scopeNote "Use as a req:discrepancyType value. It classifies the defect and never sets the severity of a finding."@en ; rdfs:label "Semantic" ;
     rdfs:comment "Impacts understandability of the data: violates data dictionaries or content specifications." .
-:Functional a :DiscrepancyType ; rdfs:label "Functional" ;
+:Functional a :DiscrepancyType ; skos:scopeNote "Use as a req:discrepancyType value. It classifies the defect and never sets the severity of a finding."@en ; rdfs:label "Functional" ;
     rdfs:comment "Impacts usability of the data: violates community or system documentation and data models." .
 
 # --- Properties ---
 :requirementId a owl:DatatypeProperty ; rdfs:label "requirement id" ;
-    rdfs:comment "The identifier the source standard uses, verbatim (e.g. 'JBP-2021.2-002'). Together with req:fromStandard it identifies the requirement: no two distinct requirements share the same (fromStandard, requirementId) pair." ;
+    rdfs:comment "The identifier the source standard uses, verbatim (e.g. 'JBP-2021.2-002'). It is unique only within its standard: two standards may use the same identifier, and the requirement itself is identified by its IRI. Within one graph no two distinct requirements share the same (fromStandard, requirementId) pair after normalisation (see req:Requirement)." ;
+    skos:scopeNote "Use exactly once on a req:Requirement; a non-empty string."@en ;
     rdfs:range xsd:string .
 
 :fromStandard a owl:DatatypeProperty ; rdfs:label "from standard" ;
     rdfs:comment "Source document and edition (e.g. 'MIL-STD-2500C, 01 May 2006')." ;
+    skos:scopeNote "Use exactly once on a req:Requirement; a non-empty string naming the document and its edition. It is compared ignoring case and surrounding whitespace when requirement identity is checked."@en ;
     rdfs:range xsd:string .
 
 :statement a owl:DatatypeProperty ; rdfs:label "statement" ;
     rdfs:comment "The requirement text, quoted verbatim from the source." ;
+    skos:scopeNote "Use exactly once on a req:Requirement; a non-empty string."@en ;
     rdfs:range xsd:string .
 
 :discrepancyType a owl:ObjectProperty ; rdfs:label "discrepancy type" ;
     rdfs:comment "The class of defect a violation produces." ;
+    skos:scopeNote "Use exactly once on a req:Requirement, with one of req:Syntactic, req:Semantic or req:Functional."@en ;
     rdfs:range :DiscrepancyType .
 
 :appliesToVersion a owl:DatatypeProperty ; rdfs:label "applies to version" ;
-    rdfs:comment "A format version the requirement governs (e.g. 'NITF 2.1'). Absence means the requirement applies to every version of the format. Multiple values are a union: the requirement applies to an input whose format version matches any one of them. An input whose version cannot be determined is treated as matching." ;
+    rdfs:comment "A format version the requirement governs (e.g. 'NITF 2.1'). Absence means the requirement applies to every version of the format. Multiple values are a union: the requirement applies to an input whose format version equals any one of them. The input's version is supplied to the conformance run by its caller and compared with each value by exact string equality; when the caller supplies none, every requirement is evaluated and the run reports that version scoping was not applied." ;
+    skos:scopeNote "Use zero or more times on a req:Requirement; each value is a non-empty string spelt exactly as callers will supply the version."@en ;
     rdfs:range xsd:string .
 
 # BEGIN GENERATED TERM DOCUMENTATION
@@ -65,30 +73,20 @@ executable conformance constraints can cite them. Format-agnostic: it describes 
 demand, independent of any binary format description."""@en .
 <https://hexplain.io/ns/req> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for attributable requirements from a named standard or policy, independent of a particular executable validation rule."@en .
 <https://hexplain.io/ns/req#DiscrepancyType> <http://www.w3.org/2004/02/skos/core#definition> "The class of defect that violating a requirement produces."@en .
-<https://hexplain.io/ns/req#DiscrepancyType> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for attributable requirements from a named standard or policy, independent of a particular executable validation rule. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/req#Functional> <http://www.w3.org/2004/02/skos/core#definition> "Impacts usability of the data: violates community or system documentation and data models."@en .
-<https://hexplain.io/ns/req#Functional> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for attributable requirements from a named standard or policy, independent of a particular executable validation rule. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/req#Functional> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/req> .
-<https://hexplain.io/ns/req#Requirement> <http://www.w3.org/2004/02/skos/core#definition> "A single normative requirement drawn from a standards document."@en .
-<https://hexplain.io/ns/req#Requirement> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for attributable requirements from a named standard or policy, independent of a particular executable validation rule. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
+<https://hexplain.io/ns/req#Requirement> <http://www.w3.org/2004/02/skos/core#definition> "A single normative requirement drawn from a standards document. A requirement is identified by its IRI. Its (req:fromStandard, req:requirementId) pair describes where it comes from; two different standards may use the same requirement identifier, so the identifier alone identifies nothing, and within one graph the pair (compared after removing surrounding whitespace, with req:fromStandard compared ignoring case) names at most one requirement."@en .
 <https://hexplain.io/ns/req#Semantic> <http://www.w3.org/2004/02/skos/core#definition> "Impacts understandability of the data: violates data dictionaries or content specifications."@en .
-<https://hexplain.io/ns/req#Semantic> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for attributable requirements from a named standard or policy, independent of a particular executable validation rule. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/req#Semantic> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/req> .
 <https://hexplain.io/ns/req#Syntactic> <http://www.w3.org/2004/02/skos/core#definition> "Impacts interpretability of the data: violates format or compression specifications."@en .
-<https://hexplain.io/ns/req#Syntactic> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for attributable requirements from a named standard or policy, independent of a particular executable validation rule. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
 <https://hexplain.io/ns/req#Syntactic> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/req> .
-<https://hexplain.io/ns/req#appliesToVersion> <http://www.w3.org/2004/02/skos/core#definition> "A format version the requirement governs (e.g. 'NITF 2.1'). Absence means the requirement applies to every version of the format. Multiple values are a union: the requirement applies to an input whose format version matches any one of them. An input whose version cannot be determined is treated as matching."@en .
-<https://hexplain.io/ns/req#appliesToVersion> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for attributable requirements from a named standard or policy, independent of a particular executable validation rule. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/req#appliesToVersion> <http://www.w3.org/2004/02/skos/core#definition> "A format version the requirement governs (e.g. 'NITF 2.1'). Absence means the requirement applies to every version of the format. Multiple values are a union: the requirement applies to an input whose format version equals any one of them. The input's version is supplied to the conformance run by its caller and compared with each value by exact string equality; when the caller supplies none, every requirement is evaluated and the run reports that version scoping was not applied."@en .
 <https://hexplain.io/ns/req#appliesToVersion> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/req> .
 <https://hexplain.io/ns/req#discrepancyType> <http://www.w3.org/2004/02/skos/core#definition> "The class of defect a violation produces."@en .
-<https://hexplain.io/ns/req#discrepancyType> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for attributable requirements from a named standard or policy, independent of a particular executable validation rule. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/req#discrepancyType> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/req> .
 <https://hexplain.io/ns/req#fromStandard> <http://www.w3.org/2004/02/skos/core#definition> "Source document and edition (e.g. 'MIL-STD-2500C, 01 May 2006')."@en .
-<https://hexplain.io/ns/req#fromStandard> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for attributable requirements from a named standard or policy, independent of a particular executable validation rule. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/req#fromStandard> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/req> .
-<https://hexplain.io/ns/req#requirementId> <http://www.w3.org/2004/02/skos/core#definition> "The identifier the source standard uses, verbatim (e.g. 'JBP-2021.2-002'). Together with req:fromStandard it identifies the requirement: no two distinct requirements share the same (fromStandard, requirementId) pair."@en .
-<https://hexplain.io/ns/req#requirementId> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for attributable requirements from a named standard or policy, independent of a particular executable validation rule. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+<https://hexplain.io/ns/req#requirementId> <http://www.w3.org/2004/02/skos/core#definition> "The identifier the source standard uses, verbatim (e.g. 'JBP-2021.2-002'). It is unique only within its standard: two standards may use the same identifier, and the requirement itself is identified by its IRI. Within one graph no two distinct requirements share the same (fromStandard, requirementId) pair after normalisation (see req:Requirement)."@en .
 <https://hexplain.io/ns/req#requirementId> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/req> .
 <https://hexplain.io/ns/req#statement> <http://www.w3.org/2004/02/skos/core#definition> "The requirement text, quoted verbatim from the source."@en .
-<https://hexplain.io/ns/req#statement> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for attributable requirements from a named standard or policy, independent of a particular executable validation rule. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
 <https://hexplain.io/ns/req#statement> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/req> .

@@ -20,6 +20,9 @@ ex:a a skos:Concept . ex:b a skos:Concept . ex:s a b:Struct . ex:s2 a b:Struct .
         context='ex:f a p:'+cls+'. '
         if prop=='pointDataLayout':context+='ex:f <https://hexplain.io/ns/aspect/pointcloud#pointCount> 1. '
         add('geo '+prop,'gv/geo.ttl','geo',context+'ex:f <'+uri+'> '+value+'.',False,uri)
+    # A document's creator is a name or an agent, and a document may have several.
+    for value,ok in [('<urn:agent:ada>',True),('_:agent',True),('"Ada", <urn:agent:ada>',True),('1',False)]:
+        add('document creator '+value,'dfv/docfont.ttl','docfont','ex:f a p:Document; <http://purl.org/dc/terms/creator> '+value+'.',ok,'' if ok else 'http://purl.org/dc/terms/creator')
     for value,ok in [('"dir/file.bin"',True),('1',False),('"a","b"',False)]:
         add('entry path '+value,'aspect/packaging/packaging.ttl','aspect/packaging','ex:f p:entryPath '+value+'.',ok,'' if ok else 'https://hexplain.io/ns/aspect/packaging#entryPath')
     for prop,value,ok,base in [

@@ -44,5 +44,5 @@ if out.is_file():
     previous = {row['key']: row.get('profiles', []) for row in json.loads(out.read_text(encoding='utf-8'))['drivers']}
     for row in drivers:
         if previous.get(row['key']): row['profiles'] = previous[row['key']]
-out.write_text(json.dumps({'gdal_release':revision,'retrieved_utc':datetime.now(timezone.utc).isoformat(),'scope':'Released documentation pages, not unique binary formats or certified support. Multiple drivers may share a page. Family tags are planning inferences; an empty list means unassessed.','sources':sources,'drivers':drivers},indent=2)+'\n',encoding='utf-8')
+out.write_text(json.dumps({'gdal_release':revision,'retrieved_utc':datetime.now(timezone.utc).isoformat(),'scope':'Released documentation pages, not unique binary formats or certified support. Multiple drivers may share a page. Family tags are planning inferences; an empty list means unassessed.','sources':sources,'drivers':drivers},indent=2)+'\n',encoding='utf-8',newline='\n')
 print(f'Saved {len(drivers)} GDAL documentation entries at {revision}')

@@ -24,7 +24,7 @@ with contextlib.redirect_stdout(io.StringIO()), tempfile.TemporaryDirectory() as
         except ValueError:
             pass
     (root/"tools").mkdir()
-    (root/"tools/test_optional.py").write_text("print('SKIP: dependency absent')", encoding="utf-8")
+    (root/"tools/test_optional.py").write_text("print('SKIP: dependency absent')", encoding="utf-8", newline="\n")
     assert main(root, set(), ["--strict"]) == 1
     report = root/".gate-results/summary.json"
     assert json.loads(report.read_text())["status"] == "failed"
@@ -44,8 +44,8 @@ raise SystemExit(1)
     assert json.loads(report.read_text())["status"] == "failed"
     (root/"specification").mkdir()
     fixture = root/"specification/input.ttl"
-    fixture.write_text("original", encoding="utf-8")
-    (root/"tools/test_optional.py").write_text("from pathlib import Path; Path('specification/input.ttl').write_text('changed')", encoding="utf-8")
+    fixture.write_text("original", encoding="utf-8", newline="\n")
+    (root/"tools/test_optional.py").write_text("from pathlib import Path; Path('specification/input.ttl').write_text('changed')", encoding="utf-8", newline="\n")
     assert main(root, set(), ["--strict"]) == 1
     saved = json.loads(report.read_text())
     assert saved["status"] == "failed"
