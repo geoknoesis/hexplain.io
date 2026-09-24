@@ -27,7 +27,7 @@ conf:_prefixes sh:declare
 # also activated by the properties that only its class uses (tools/test_shape_activation.py).
 :ConstraintShape a sh:NodeShape ;
     sh:targetClass conf:Constraint ;
-    sh:targetSubjectsOf conf:assertion , conf:scope , conf:message , conf:severity ;
+    sh:targetSubjectsOf conf:assertion , conf:scope , conf:message ;
     sh:targetObjectsOf conf:findingConstraint ;
     rdfs:label "Constraint shape" ;
     sh:property [
@@ -163,6 +163,12 @@ conf:_prefixes sh:declare
         sh:message "The conf:findingConstraint of a Finding must be a conf:Constraint." ;
     ] ;
     sh:property [
+        sh:path conf:severity ;
+        sh:maxCount 1 ;
+        sh:in ( sh:Violation sh:Warning sh:Info ) ;
+        sh:message "A Finding states at most one conf:severity: sh:Violation, sh:Warning or sh:Info." ;
+    ] ;
+    sh:property [
         sh:path conf:focusNode ;
         sh:nodeKind sh:BlankNodeOrIRI ;
         sh:maxCount 1 ;
@@ -231,7 +237,7 @@ conf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/conf#ConstraintShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for conf:assertion, conf:message, conf:satisfies, conf:scope, conf:severity. A Constraint must cite at least one req:Requirement; an unattributed rule cannot be reported. A Constraint needs exactly one conf:scope IRI naming the bddo:Struct or bddo:Field it applies to. A Constraint needs exactly one non-empty conf:assertion HEL expression. A Constraint needs exactly one non-empty conf:message finding template. A Constraint states at most one conf:severity: sh:Violation, sh:Warning or sh:Info (absent means sh:Violation)."@en .
-<https://hexplain.io/ns/conf#ConstraintShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of conf:Constraint; subjects using conf:assertion, conf:message, conf:scope, conf:severity; objects of conf:findingConstraint Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/conf#ConstraintShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of conf:Constraint; subjects using conf:assertion, conf:message, conf:scope; objects of conf:findingConstraint Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/conf#ConstraintShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/conf> .
 <https://hexplain.io/ns/conf#FindingAttributionShape> <http://www.w3.org/2004/02/skos/core#definition> "A constraint finding is attributed only to requirements its constraint cites: its conf:findingRequirement values are a subset of the constraint's conf:satisfies values."@en .
 <https://hexplain.io/ns/conf#FindingAttributionShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using conf:findingConstraint Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .

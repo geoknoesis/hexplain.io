@@ -21,10 +21,18 @@
 
 :Document a owl:Class ; rdfs:label "Document" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ; rdfs:seeAlso dcterms:BibliographicResource .
 :Page a owl:Class ; rdfs:label "Page" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
-:Object a owl:Class ; rdfs:label "Object" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
-:Stream a owl:Class ; rdfs:label "Stream" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
-:Trailer a owl:Class ; rdfs:label "Trailer" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
-:CrossReferenceTable a owl:Class ; rdfs:label "Cross Reference Table" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
+:Object a owl:Class ; rdfs:label "Object" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ;
+    owl:deprecated true ;
+    skos:historyNote "Deprecated in DFV 1.2: a PDF file structure (PDF indirect object, stream, trailer, cross-reference table), not a document or font concept. It belongs in a PDF format profile; the IRI stays defined so existing graphs keep their meaning."@en .
+:Stream a owl:Class ; rdfs:label "Stream" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ;
+    owl:deprecated true ;
+    skos:historyNote "Deprecated in DFV 1.2: a PDF file structure (PDF indirect object, stream, trailer, cross-reference table), not a document or font concept. It belongs in a PDF format profile; the IRI stays defined so existing graphs keep their meaning."@en .
+:Trailer a owl:Class ; rdfs:label "Trailer" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ;
+    owl:deprecated true ;
+    skos:historyNote "Deprecated in DFV 1.2: a PDF file structure (PDF indirect object, stream, trailer, cross-reference table), not a document or font concept. It belongs in a PDF format profile; the IRI stays defined so existing graphs keep their meaning."@en .
+:CrossReferenceTable a owl:Class ; rdfs:label "Cross Reference Table" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> ;
+    owl:deprecated true ;
+    skos:historyNote "Deprecated in DFV 1.2: a PDF file structure (PDF indirect object, stream, trailer, cross-reference table), not a document or font concept. It belongs in a PDF format profile; the IRI stays defined so existing graphs keep their meaning."@en .
 :BoundingBox a owl:Class ; rdfs:label "Bounding Box" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
 :Font a owl:Class ; rdfs:label "Font" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
 :FontDescriptor a owl:Class ; rdfs:label "Font Descriptor" ; rdfs:isDefinedBy <https://hexplain.io/ns/docfont> .
@@ -46,7 +54,10 @@
 
 # ---------- SHACL ----------
 dfv:DocumentShape a sh:NodeShape ; sh:targetClass dfv:Document ; sh:targetSubjectsOf dfv:pageCount ;
-    sh:property [ sh:path dcterms:creator ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    # A creator is a name (a string) or an agent (an IRI or blank node, as Dublin Core intends
+    # for dcterms:creator); a document may have several.
+    sh:property [ sh:path dcterms:creator ; sh:or ( [ sh:datatype xsd:string ] [ sh:nodeKind sh:BlankNodeOrIRI ] ) ;
+        sh:message "dcterms:creator of a document is a string name or an agent IRI or blank node." ] ;
     sh:property [ sh:path dcterms:title ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
     sh:property [ sh:path dcterms:created ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
     sh:property [ sh:path dcterms:modified ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
@@ -100,7 +111,7 @@ dfv:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 <https://hexplain.io/ns/docfont#CrossReferenceTable> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for documents, pages, fonts and glyph components. Object identity, coordinate units and code interpretation depend on the document/font profile. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/docfont#Document> <http://www.w3.org/2004/02/skos/core#definition> "A document resource composed of content, structural objects and metadata, rather than a particular byte serialization."@en .
 <https://hexplain.io/ns/docfont#Document> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for documents, pages, fonts and glyph components. Object identity, coordinate units and code interpretation depend on the document/font profile. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
-<https://hexplain.io/ns/docfont#DocumentShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for dcterms:created, dcterms:creator, dcterms:modified, dcterms:title, dfv:pageCount. Its constraints below specify the permitted values and combinations."@en .
+<https://hexplain.io/ns/docfont#DocumentShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for dcterms:created, dcterms:creator, dcterms:modified, dcterms:title, dfv:pageCount. dcterms:creator of a document is a string name or an agent IRI or blank node."@en .
 <https://hexplain.io/ns/docfont#DocumentShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of dfv:Document; subjects using dfv:pageCount Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/docfont#DocumentShape> <http://www.w3.org/2000/01/rdf-schema#label> "Document Shape"@en .
 <https://hexplain.io/ns/docfont#DocumentShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/docfont> .

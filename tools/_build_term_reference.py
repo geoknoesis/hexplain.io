@@ -176,6 +176,20 @@ def replace_normative(text,paths):
     if '<section id="normative-owl">' in text:return re.sub(r'<section id="normative-owl">.*?</section>',lambda m:section,text,flags=re.S)
     return text.replace('</body>',section+'</body>')
 
+LEAD=re.compile(r'(<header><a href="[^"]*">Specification family</a><h1>)(.*?)(</h1><p>)(.*?)(</p><p>Unofficial working specification\.)',re.S)
+
+def lead_text(module_graph):
+    """The page lead: the first paragraph of the module ontology's rdfs:comment."""
+    ontology=next(iter(sorted(module_graph.subjects(RDF.type,OWL.Ontology),key=lambda o:len(str(o)))),None)
+    comment=str(module_graph.value(ontology,RDFS.comment) or module_graph.value(ontology,SKOS.definition) or '') if ontology else ''
+    return label(module_graph,ontology) if ontology else '',comment.replace('\r\n','\n').split('\n\n')[0].strip()
+
+def refresh_lead(text,module_graph):
+    """Generated module pages restate the ontology's label and comment; keep them equal."""
+    title,lead=lead_text(module_graph)
+    if not title:return text
+    return LEAD.sub(lambda m:m[1]+e(title)+m[3]+e(lead)+m[5],text,count=1)
+
 def build(check=False):
     file_subjects.cache_clear()
     mods=modules();g=load([p for paths in mods.values() for p in paths]);registry={};termsets={}
@@ -193,6 +207,7 @@ def build(check=False):
             rootlink=os.path.relpath(ROOT/'specification/index.html',doc.parent).replace('\\','/')
             text=f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(title)} — Hexplain specification</title><style>body{{font:16px/1.65 system-ui,sans-serif;margin:2rem auto;padding:0 1.5rem;max-width:1120px;color:#17333d}}pre{{overflow:auto}}a{{color:#006b60}}</style></head><body><header><a href="{rootlink}">Specification family</a><h1>{e(title)}</h1><p>{e(intro)}</p><p>Unofficial working specification. The namespace and version metadata below identify the vocabulary; documentation does not certify an implementation.</p></header></body></html>'
         without=re.sub(re.escape(START)+'.*?'+re.escape(END),'',text,flags=re.S)
+        without=refresh_lead(without,module_graph)
         without=re.sub(r'<nav id="ontology-reference-navigation".*?</nav>','',without,flags=re.S)
         catalog=os.path.relpath(ROOT/'specification/reference/index.html',doc.parent).replace('\\','/')
         navigation=f'<nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a href="#term-reference">Complete reference: {len(terms)} terms and shapes</a> · <a href="{catalog}">All vocabularies and reading guide</a></p></nav>'

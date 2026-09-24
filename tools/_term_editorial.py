@@ -245,9 +245,9 @@ hasRationalTransform|The rational-polynomial geolocation model associated with a
 gcpX|The first ground-coordinate ordinate of a control point in the declared control-point CRS.
 gcpY|The second ground-coordinate ordinate of a control point in the declared control-point CRS.
 gcpIdentifier|The source-local identifier distinguishing a control point within its control-point set.
-pixelRegistration|The declared pixel reference convention. Consumers must honor the normalized transform convention rather than apply an additional shift blindly.
-PixelCorner|Pixel registration referring to a pixel corner; the normalized affine convention places the first pixel's upper-left corner at column/row zero.
-PixelCenter|Pixel registration referring to a sample center. This metadata does not change the normalized affine convention by itself.
+pixelRegistration|Where a cell's value is located within the cell: at its centre (asref:PixelCenter, a point sample) or representing the cell from its upper-left corner (asref:PixelCorner, an area value). It describes the value, not the grid: the normalized affine (asref:GeoTransform) is always corner-based, so this property never shifts the affine or the column and row of a world point.
+PixelCorner|Registration of a cell's value at, or as an area from, the cell's upper-left corner. The normalized affine is corner-based whatever the registration: column/row (0, 0) is the outer corner of the first cell.
+PixelCenter|Registration of a cell's value at the centre of its cell (a point sample, such as an elevation post). It does not move the grid: the normalized affine stays corner-based, and a source whose native transform is centre-based is shifted by half a cell when it is normalized, once, at lifting time.
 ''')
 group('asamp','''
 SignedInteger|Sample interpretation admitting negative and nonnegative integral values; precision is stated separately.

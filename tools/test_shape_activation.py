@@ -29,6 +29,10 @@ NEUTRAL = {SH.path, SH.message, SH.severity, SH.name, SH.description, SH.order, 
 SHARED = {
     ("https://hexplain.io/ns/conf#ConstraintShape", "https://hexplain.io/ns/conf#satisfies"):
         "conf:ParseAttribution also cites requirements with conf:satisfies",
+    ("https://hexplain.io/ns/conf#ConstraintShape", "https://hexplain.io/ns/conf#severity"):
+        "a conf:Finding also states the severity it was reported at",
+    ("https://hexplain.io/ns/conf#FindingShape", "https://hexplain.io/ns/conf#severity"):
+        "a conf:Constraint also states the severity it reports at",
     ("https://hexplain.io/ns/aspect/bundle#AssetShape", "https://hexplain.io/ns/aspect/bundle#hasPart"):
         "abnd:hasPart is also used outside assets (layout competency: unrelated hasPart stays out of scope)",
 }

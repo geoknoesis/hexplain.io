@@ -141,7 +141,31 @@ from _build_architecture_catalogue import PAGE as _CATALOGUE, render as _catalog
 if _catalogue(_CATALOGUE.read_text(encoding="utf-8")) != _CATALOGUE.read_text(encoding="utf-8"):
     version_failures.append("specification/architecture/index.html: aspect catalogue is stale; "
                             "run python tools/_build_architecture_catalogue.py")
+# ---- Page leads ----------------------------------------------------------------------------
+# A generated module page opens with the ontology's label and a lead paragraph. The conf page's
+# lead said "Severity is deliberately absent" long after conf.ttl gained conf:severity: the
+# lead is a restatement of rdfs:comment, so it is compared with it (its first paragraph).
+from _build_term_reference import LEAD as _LEAD, lead_text as _lead_text  # noqa: E402
+from _reference import load as _load_module, modules as _modules_of  # noqa: E402
+from html import escape as _escape  # noqa: E402
+
+leads = 0
+for directory, paths in _modules_of().items():
+    page = directory / "index.html"
+    if not page.exists():
+        continue
+    match = _LEAD.search(page.read_text(encoding="utf-8"))
+    if not match:
+        continue
+    leads += 1
+    title, lead = _lead_text(_load_module(paths))
+    if match[2] != _escape(title) or match[4] != _escape(lead):
+        version_failures.append(f"{page.relative_to(pathlib.Path.cwd().resolve()).as_posix() if page.is_absolute() else page}: "
+                                "title or lead differs from the ontology's rdfs:label / rdfs:comment; "
+                                "run python tools/_build_term_reference.py")
+
 if version_failures:
     print("FAIL:\n  " + "\n  ".join(version_failures))
     sys.exit(1)
-print(f"PASS: versions, header comments, namespace registry and aspect catalogue agree with {len(family)} modules")
+print(f"PASS: versions, header comments, namespace registry and aspect catalogue agree with {len(family)} modules; "
+      f"{leads} generated page leads restate their ontology's comment")
