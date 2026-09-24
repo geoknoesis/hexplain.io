@@ -99,5 +99,5 @@ def build():
 
 
 if __name__ == '__main__':
-    TARGET.write_text(build(), encoding='utf-8')
+    TARGET.write_text(build(), encoding='utf-8',newline='\n')
     print(json.loads(TARGET.read_text(encoding='utf-8'))['totals'])

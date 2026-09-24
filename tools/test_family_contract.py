@@ -96,7 +96,7 @@ def main():
     p = ROOT/'specification/validation/test/family-contracts.json'
     # RDF blank-node identifiers are immaterial; compare graphs when checking retained cases.
     if '--write' in sys.argv:
-        p.write_text(json.dumps(rows, indent=2)+'\n', encoding='utf-8')
+        p.write_text(json.dumps(rows, indent=2)+'\n', encoding='utf-8',newline='\n')
     else:
         from rdflib.compare import isomorphic
         retained = json.loads(p.read_text(encoding='utf-8'))

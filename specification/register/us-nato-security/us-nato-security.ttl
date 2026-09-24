@@ -1,7 +1,15 @@
 # Hexplain Register — US/NATO Security Marking 1.1
-# Controlled values for the hx-security aspect, as set by US/NATO policy (EO 12958,
-# DOD 5200.1-R, FIPS 10-4). Split out of the aspect so another jurisdiction can publish a
-# sibling register without forking the aspect or minting into a namespace it does not own.
+# Controlled values for the hx-security aspect, as set by US and NATO policy. Split out of the
+# aspect so another jurisdiction can publish a sibling register without forking the aspect or
+# minting into a namespace it does not own.
+# Authorities. The register was first built from EO 12958, DOD 5200.1-R and FIPS 10-4 as cited
+# by NITF (MIL-STD-2500C). Those sources are superseded: EO 13526 (29 December 2009) revoked
+# EO 12958; DoD Manual 5200.01 replaced DOD 5200.1-R; FIPS 10-4 was withdrawn, and a profile
+# that needs a country code uses ISO 3166 or GENC (this register carries none); 32 CFR Part 2002
+# replaced FOUO and similar legacy markings with Controlled Unclassified Information (CUI).
+# Entries that only record the legacy selectors a file format writes stay valid for reading
+# such files and say so in a skos:historyNote; entries that current policy replaces are
+# owl:deprecated with a hexplain:status and dcterms:isReplacedBy. No IRI is removed or reused.
 # Codes are NOT here: a raw wire code belongs to the format that encodes it, and is carried
 # by that profile's HDL enum (e.g. "T"=>usnato:TopSecret in nitf.hx).
 @prefix usnato: <https://hexplain.io/ns/register/us-nato-security#> .
@@ -11,11 +19,14 @@
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
 
 <https://hexplain.io/ns/register/us-nato-security> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/register/us-nato-security/1.1> ; owl:versionInfo "1.1" ;
     owl:priorVersion <https://hexplain.io/ns/register/us-nato-security/1.0> ;
     dcterms:modified "2026-09-23"^^xsd:date ;
+    # core supplies the register lifecycle terms (hexplain:status and its values).
+    owl:imports <https://hexplain.io/ns/core> ;
     rdfs:label "Hexplain Register — US/NATO Security Marking" ;
     dcterms:created "2026-08-08"^^xsd:date ;
     dcterms:creator <https://geoknoesis.com> ;
@@ -30,27 +41,54 @@
 # concept carries. It is expressed in SKOS alone, naming no property of any aspect, because a
 # register that named the property it serves could not be reused by a second one.
 usnato:ClassificationLevelScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
-    skos:prefLabel "Classification Level Register"@en ; owl:versionInfo "1.0" .
+    skos:prefLabel "Classification Level Register"@en ;
+    skos:scopeNote "The United States classification levels (EO 13526 Section 1.2: Top Secret, Secret, Confidential) and Unclassified. NATO levels are in usnato:NatoClassificationLevelScheme."@en ;
+    skos:historyNote "Before register 1.2 this scheme also held Restricted, and its ordered collection placed it between Unclassified and Confidential. Restricted is not a US classification level; it is now usnato:NatoRestricted in the NATO scheme, and usnato:Restricted is superseded."@en .
 usnato:Unclassified a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Unclassified"@en .
-usnato:Restricted   a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Restricted"@en .
+usnato:Restricted   a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Restricted"@en ;
+    owl:deprecated true ; hexplain:status hexplain:statusSuperseded ; dcterms:isReplacedBy usnato:NatoRestricted ;
+    skos:historyNote "Superseded in register 1.2. Restricted is not a US classification level (EO 13526 Section 1.2 defines Top Secret, Secret and Confidential); the level this concept denoted in NATO-marked data is usnato:NatoRestricted. The IRI stays resolvable so existing data keeps its meaning."@en .
 usnato:Confidential a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Confidential"@en .
 usnato:Secret       a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Secret"@en .
 usnato:TopSecret    a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Top Secret"@en .
 
-# Least to most sensitive, per the ordering EO 12958 and DOD 5200.1-R set out. NATO RESTRICTED sits
-# between UNCLASSIFIED and CONFIDENTIAL and has no US equivalent. The list orders THIS scheme and no
-# other: position here says nothing about another jurisdiction's levels.
+# Least to most sensitive. Each list orders ONE scheme and no other: a position in the US list
+# says nothing about a position in the NATO list, and the two are not merged into one order.
+usnato:UsClassificationLevelOrder a skos:OrderedCollection ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
+    skos:prefLabel "US classification levels, least to most sensitive"@en ;
+    skos:definition "The levels of usnato:ClassificationLevelScheme in order, least to most sensitive, per EO 13526 Section 1.2, as a SKOS ordered collection. Position in the list is the ordering; no numeric rank is minted, and no property of any aspect is named, so this register stays publishable and versionable on its own."@en ;
+    skos:scopeNote "Orders the US scheme only. A position here is not comparable with a position in the NATO order or in another jurisdiction's register."@en ;
+    skos:memberList ( usnato:Unclassified usnato:Confidential usnato:Secret usnato:TopSecret ) .
+
 usnato:ClassificationLevelOrder a skos:OrderedCollection ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
-    skos:prefLabel "Classification levels, least to most sensitive"@en ;
-    skos:definition "The classification levels of this register in order, least to most sensitive, as a SKOS ordered collection. Position in the list is the ordering; no numeric rank is minted, and no property of any aspect is named, so this register stays publishable and versionable on its own."@en ;
-    skos:scopeNote "Orders this scheme only. A position here is not comparable with a position in another jurisdiction's register."@en ;
+    skos:prefLabel "Classification levels, least to most sensitive (superseded)"@en ;
+    skos:definition "The order published before register 1.2, which interleaved NATO Restricted with the US levels."@en ;
+    owl:deprecated true ; hexplain:status hexplain:statusSuperseded ;
+    dcterms:isReplacedBy usnato:UsClassificationLevelOrder , usnato:NatoClassificationLevelOrder ;
+    skos:historyNote "Superseded in register 1.2: one order over US and NATO levels claimed a US ordering for a level the US does not have. Use usnato:UsClassificationLevelOrder or usnato:NatoClassificationLevelOrder."@en ;
     skos:memberList ( usnato:Unclassified usnato:Restricted usnato:Confidential usnato:Secret usnato:TopSecret ) .
+
+# ---------- NATO Classification Level Register ----------
+usnato:NatoClassificationLevelScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
+    skos:prefLabel "NATO Classification Level Register"@en ;
+    skos:scopeNote "The NATO security classifications and NATO Unclassified. A NATO level is a value of this scheme, not of the US scheme, even where the two share a name."@en .
+usnato:NatoUnclassified a skos:Concept ; skos:inScheme usnato:NatoClassificationLevelScheme ; skos:topConceptOf usnato:NatoClassificationLevelScheme ; skos:prefLabel "NATO Unclassified"@en .
+usnato:NatoRestricted a skos:Concept ; skos:inScheme usnato:NatoClassificationLevelScheme ; skos:topConceptOf usnato:NatoClassificationLevelScheme ; skos:prefLabel "NATO Restricted"@en ;
+    skos:historyNote "Added in register 1.2 to replace usnato:Restricted, which the earlier register listed among the US levels."@en .
+usnato:NatoConfidential a skos:Concept ; skos:inScheme usnato:NatoClassificationLevelScheme ; skos:topConceptOf usnato:NatoClassificationLevelScheme ; skos:prefLabel "NATO Confidential"@en .
+usnato:NatoSecret a skos:Concept ; skos:inScheme usnato:NatoClassificationLevelScheme ; skos:topConceptOf usnato:NatoClassificationLevelScheme ; skos:prefLabel "NATO Secret"@en .
+usnato:CosmicTopSecret a skos:Concept ; skos:inScheme usnato:NatoClassificationLevelScheme ; skos:topConceptOf usnato:NatoClassificationLevelScheme ; skos:prefLabel "COSMIC Top Secret"@en .
+usnato:NatoClassificationLevelOrder a skos:OrderedCollection ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
+    skos:prefLabel "NATO classification levels, least to most sensitive"@en ;
+    skos:definition "The levels of usnato:NatoClassificationLevelScheme in order, least to most sensitive, as a SKOS ordered collection."@en ;
+    skos:scopeNote "Orders the NATO scheme only. A position here is not comparable with a position in the US order."@en ;
+    skos:memberList ( usnato:NatoUnclassified usnato:NatoRestricted usnato:NatoConfidential usnato:NatoSecret usnato:CosmicTopSecret ) .
 
 # ---------- Marking Register (compartments / dissemination / handling) ----------
 # Digraphs per NITF MIL-STD-2500C Table A-4 (exemplary; consult current security directives).
 # Collection membership is INDICATIVE — Table A-4 mixes categories and warns values change.
 usnato:MarkingScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
-    skos:prefLabel "Security Marking Register"@en ; owl:versionInfo "1.0" .
+    skos:prefLabel "Security Marking Register"@en .
 
 usnato:Atomal a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "ATOMAL"@en .
 usnato:Cnwdi a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Critical Nuclear Weapon Design Information"@en ; skos:altLabel "CNWDI"@en .
@@ -59,7 +97,12 @@ usnato:Cosmic a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLab
 usnato:Crypto a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "CRYPTO"@en .
 usnato:Efto a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Encrypted For Transmission Only"@en ; skos:altLabel "EFTO"@en .
 usnato:FormerlyRestrictedData a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Formerly Restricted Data"@en ; skos:altLabel "FORMREST DATA"@en .
-usnato:Fouo a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "For Official Use Only"@en ; skos:altLabel "FOUO"@en .
+usnato:Fouo a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "For Official Use Only"@en ; skos:altLabel "FOUO"@en ;
+    owl:deprecated true ; hexplain:status hexplain:statusSuperseded ; dcterms:isReplacedBy usnato:Cui ;
+    skos:historyNote "Superseded in register 1.2. 32 CFR Part 2002 (effective 14 November 2016) established Controlled Unclassified Information as the executive branch program for unclassified information that needs safeguarding, replacing agency markings such as FOUO; DoD implemented it by DoD Instruction 5200.48 (6 March 2020). The IRI stays resolvable so files marked FOUO keep their meaning."@en .
+usnato:Cui a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Controlled Unclassified Information"@en ; skos:altLabel "CUI"@en ;
+    skos:definition "Unclassified information that a law, regulation or government-wide policy requires or permits to be handled with safeguarding or dissemination controls, marked under the CUI program of 32 CFR Part 2002."@en ;
+    skos:historyNote "Added in register 1.2 as the replacement for usnato:Fouo."@en .
 usnato:Genser a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "General Service"@en ; skos:altLabel "GENSER"@en .
 usnato:LimitedOfficialUse a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Limited Official Use (Unclassified)"@en ; skos:altLabel "LIM OFF USE"@en .
 usnato:LimitedDissemination a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Limited Dissemination"@en ; skos:altLabel "LIMDIS"@en .
@@ -90,11 +133,11 @@ usnato:Compartments a skos:Collection ; skos:prefLabel "Compartments / SCI"@en ;
 usnato:DisseminationControls a skos:Collection ; skos:prefLabel "Dissemination Controls"@en ;
     skos:member usnato:Orcon , usnato:Propin , usnato:UsOnly , usnato:NoContract , usnato:Wnintel , usnato:Efto .
 usnato:HandlingCaveats a skos:Collection ; skos:prefLabel "Handling Caveats"@en ;
-    skos:member usnato:Fouo , usnato:LimitedDissemination , usnato:LimitedOfficialUse , usnato:PersonalData , usnato:NonCompartment , usnato:FormerlyRestrictedData , usnato:Genser , usnato:Nato , usnato:Copyright , usnato:WarningNotice .
+    skos:member usnato:Fouo , usnato:Cui , usnato:LimitedDissemination , usnato:LimitedOfficialUse , usnato:PersonalData , usnato:NonCompartment , usnato:FormerlyRestrictedData , usnato:Genser , usnato:Nato , usnato:Copyright , usnato:WarningNotice .
 
 # ---------- Declassification Type Register ----------
 usnato:DeclassTypeScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
-    skos:prefLabel "Declassification Type Register"@en ; owl:versionInfo "1.0" .
+    skos:prefLabel "Declassification Type Register"@en .
 usnato:DeclassifyOnDate a skos:Concept ; skos:inScheme usnato:DeclassTypeScheme ; skos:topConceptOf usnato:DeclassTypeScheme ; skos:prefLabel "Declassify on a specific date"@en .
 usnato:DeclassifyOnEvent a skos:Concept ; skos:inScheme usnato:DeclassTypeScheme ; skos:topConceptOf usnato:DeclassTypeScheme ; skos:prefLabel "Declassify upon occurrence of an event"@en .
 usnato:DowngradeOnDate a skos:Concept ; skos:inScheme usnato:DeclassTypeScheme ; skos:topConceptOf usnato:DeclassTypeScheme ; skos:prefLabel "Downgrade to a specified level on a specific date"@en .
@@ -104,15 +147,16 @@ usnato:ExemptFromAutomatic a skos:Concept ; skos:inScheme usnato:DeclassTypeSche
 
 # ---------- Classification Authority Type Register ----------
 usnato:AuthorityTypeScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
-    skos:prefLabel "Classification Authority Type Register"@en ; owl:versionInfo "1.0" .
+    skos:prefLabel "Classification Authority Type Register"@en .
 usnato:OriginalAuthority a skos:Concept ; skos:inScheme usnato:AuthorityTypeScheme ; skos:topConceptOf usnato:AuthorityTypeScheme ; skos:prefLabel "Original classification authority"@en .
 usnato:DerivativeSingle a skos:Concept ; skos:inScheme usnato:AuthorityTypeScheme ; skos:topConceptOf usnato:AuthorityTypeScheme ; skos:prefLabel "Derivative from a single source"@en .
 usnato:DerivativeMultiple a skos:Concept ; skos:inScheme usnato:AuthorityTypeScheme ; skos:topConceptOf usnato:AuthorityTypeScheme ; skos:prefLabel "Derivative from multiple sources"@en .
 
-# ---------- Classification Reason Register (EO 12958 Sec 1.5(a)-(g)) ----------
+# ---------- Classification Reason Register (legacy: EO 12958 Sec 1.5(a)-(g)) ----------
 usnato:ClassificationReasonScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
-    skos:prefLabel "Classification Reason Register"@en ; owl:versionInfo "1.0" ;
-    skos:note "Values A-G correspond to the reasons for original classification per Executive Order 12958, Section 1.5(a) to (g)." .
+    skos:prefLabel "Classification Reason Register"@en ;
+    skos:note "Values A-G correspond to the reasons for original classification per Executive Order 12958, Section 1.5(a) to (g)." ;
+    skos:historyNote "Legacy selectors, kept valid for reading the files that write them. EO 13526 (29 December 2009) revoked EO 12958; its Section 1.4 lists the classification categories that apply to information classified under it, and new data should cite that section."@en .
 usnato:ReasonA a skos:Concept ; skos:inScheme usnato:ClassificationReasonScheme ; skos:topConceptOf usnato:ClassificationReasonScheme ; skos:prefLabel "Reason A (EO 12958 1.5(a))"@en .
 usnato:ReasonB a skos:Concept ; skos:inScheme usnato:ClassificationReasonScheme ; skos:topConceptOf usnato:ClassificationReasonScheme ; skos:prefLabel "Reason B (EO 12958 1.5(b))"@en .
 usnato:ReasonC a skos:Concept ; skos:inScheme usnato:ClassificationReasonScheme ; skos:topConceptOf usnato:ClassificationReasonScheme ; skos:prefLabel "Reason C (EO 12958 1.5(c))"@en .
@@ -121,10 +165,11 @@ usnato:ReasonE a skos:Concept ; skos:inScheme usnato:ClassificationReasonScheme 
 usnato:ReasonF a skos:Concept ; skos:inScheme usnato:ClassificationReasonScheme ; skos:topConceptOf usnato:ClassificationReasonScheme ; skos:prefLabel "Reason F (EO 12958 1.5(f))"@en .
 usnato:ReasonG a skos:Concept ; skos:inScheme usnato:ClassificationReasonScheme ; skos:topConceptOf usnato:ClassificationReasonScheme ; skos:prefLabel "Reason G (EO 12958 1.5(g))"@en .
 
-# ---------- Declassification Exemption Register (DOD 5200.1-R) ----------
+# ---------- Declassification Exemption Register (legacy: DOD 5200.1-R) ----------
 usnato:ExemptionScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
-    skos:prefLabel "Declassification Exemption Register"@en ; owl:versionInfo "1.0" ;
-    skos:note "X1-X8 per DOD 5200.1-R paragraphs 4-202b(1)-(8) (10-year rule); X251-X259 per 4-301a(1)-(9) (25-year system)." .
+    skos:prefLabel "Declassification Exemption Register"@en ;
+    skos:note "X1-X8 per DOD 5200.1-R paragraphs 4-202b(1)-(8) (10-year rule); X251-X259 per 4-301a(1)-(9) (25-year system)." ;
+    skos:historyNote "Legacy selectors, kept valid for reading the files that write them. DOD 5200.1-R was replaced by DoD Manual 5200.01, and EO 12958, whose exemptions it implemented, by EO 13526; new data should cite the exemption categories of EO 13526 as DoD Manual 5200.01 applies them."@en .
 usnato:X1 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X1"@en .
 usnato:X2 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X2"@en .
 usnato:X3 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConceptOf usnato:ExemptionScheme ; skos:prefLabel "Exemption X3"@en .
@@ -154,9 +199,9 @@ usnato:X259 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConc
 <https://hexplain.io/ns/register/us-nato-security#AuthorityTypeScheme> <http://www.w3.org/2004/02/skos/core#definition> "The controlled concept scheme grouping classification authority type values. Membership identifies the applicable value set; raw format codes are defined by profiles rather than by this scheme."@en .
 <https://hexplain.io/ns/register/us-nato-security#AuthorityTypeScheme> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
 <https://hexplain.io/ns/register/us-nato-security#AuthorityTypeScheme> <http://www.w3.org/2000/01/rdf-schema#label> "Classification Authority Type Register"@en .
-<https://hexplain.io/ns/register/us-nato-security#ClassificationLevelOrder> <http://www.w3.org/2000/01/rdf-schema#label> "Classification levels, least to most sensitive"@en .
+<https://hexplain.io/ns/register/us-nato-security#ClassificationLevelOrder> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
+<https://hexplain.io/ns/register/us-nato-security#ClassificationLevelOrder> <http://www.w3.org/2000/01/rdf-schema#label> "Classification levels, least to most sensitive (superseded)"@en .
 <https://hexplain.io/ns/register/us-nato-security#ClassificationLevelScheme> <http://www.w3.org/2004/02/skos/core#definition> "The controlled concept scheme grouping classification level values. Membership identifies the applicable value set; raw format codes are defined by profiles rather than by this scheme."@en .
-<https://hexplain.io/ns/register/us-nato-security#ClassificationLevelScheme> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
 <https://hexplain.io/ns/register/us-nato-security#ClassificationLevelScheme> <http://www.w3.org/2000/01/rdf-schema#label> "Classification Level Register"@en .
 <https://hexplain.io/ns/register/us-nato-security#ClassificationReasonScheme> <http://www.w3.org/2004/02/skos/core#definition> "The controlled concept scheme grouping classification reason values. Membership identifies the applicable value set; raw format codes are defined by profiles rather than by this scheme."@en .
 <https://hexplain.io/ns/register/us-nato-security#ClassificationReasonScheme> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
@@ -181,10 +226,17 @@ usnato:X259 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConc
 <https://hexplain.io/ns/register/us-nato-security#Cosmic> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
 <https://hexplain.io/ns/register/us-nato-security#Cosmic> <http://www.w3.org/2000/01/rdf-schema#label> "COSMIC"@en .
 <https://hexplain.io/ns/register/us-nato-security#Cosmic> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/us-nato-security> .
+<https://hexplain.io/ns/register/us-nato-security#CosmicTopSecret> <http://www.w3.org/2004/02/skos/core#definition> "The legacy nato classification level designation “COSMIC Top Secret” as an interoperable concept IRI. It records the designation found in a source; it does not determine current handling authority or grant access."@en .
+<https://hexplain.io/ns/register/us-nato-security#CosmicTopSecret> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
+<https://hexplain.io/ns/register/us-nato-security#CosmicTopSecret> <http://www.w3.org/2000/01/rdf-schema#label> "COSMIC Top Secret"@en .
+<https://hexplain.io/ns/register/us-nato-security#CosmicTopSecret> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/us-nato-security> .
 <https://hexplain.io/ns/register/us-nato-security#Crypto> <http://www.w3.org/2004/02/skos/core#definition> "The legacy security marking designation “CRYPTO” as an interoperable concept IRI. It records the designation found in a source; it does not determine current handling authority or grant access."@en .
 <https://hexplain.io/ns/register/us-nato-security#Crypto> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
 <https://hexplain.io/ns/register/us-nato-security#Crypto> <http://www.w3.org/2000/01/rdf-schema#label> "CRYPTO"@en .
 <https://hexplain.io/ns/register/us-nato-security#Crypto> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/us-nato-security> .
+<https://hexplain.io/ns/register/us-nato-security#Cui> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
+<https://hexplain.io/ns/register/us-nato-security#Cui> <http://www.w3.org/2000/01/rdf-schema#label> "Controlled Unclassified Information"@en .
+<https://hexplain.io/ns/register/us-nato-security#Cui> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/us-nato-security> .
 <https://hexplain.io/ns/register/us-nato-security#DeclassTypeScheme> <http://www.w3.org/2004/02/skos/core#definition> "The controlled concept scheme grouping declassification type values. Membership identifies the applicable value set; raw format codes are defined by profiles rather than by this scheme."@en .
 <https://hexplain.io/ns/register/us-nato-security#DeclassTypeScheme> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
 <https://hexplain.io/ns/register/us-nato-security#DeclassTypeScheme> <http://www.w3.org/2000/01/rdf-schema#label> "Declassification Type Register"@en .
@@ -258,6 +310,25 @@ usnato:X259 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConc
 <https://hexplain.io/ns/register/us-nato-security#Nato> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
 <https://hexplain.io/ns/register/us-nato-security#Nato> <http://www.w3.org/2000/01/rdf-schema#label> "NATO"@en .
 <https://hexplain.io/ns/register/us-nato-security#Nato> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/us-nato-security> .
+<https://hexplain.io/ns/register/us-nato-security#NatoClassificationLevelOrder> <http://www.w3.org/2000/01/rdf-schema#label> "NATO classification levels, least to most sensitive"@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoClassificationLevelScheme> <http://www.w3.org/2004/02/skos/core#definition> "The controlled concept scheme grouping nato classification level values. Membership identifies the applicable value set; raw format codes are defined by profiles rather than by this scheme."@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoClassificationLevelScheme> <http://www.w3.org/2000/01/rdf-schema#label> "NATO Classification Level Register"@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoConfidential> <http://www.w3.org/2004/02/skos/core#definition> "The legacy nato classification level designation “NATO Confidential” as an interoperable concept IRI. It records the designation found in a source; it does not determine current handling authority or grant access."@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoConfidential> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoConfidential> <http://www.w3.org/2000/01/rdf-schema#label> "NATO Confidential"@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoConfidential> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/us-nato-security> .
+<https://hexplain.io/ns/register/us-nato-security#NatoRestricted> <http://www.w3.org/2004/02/skos/core#definition> "The legacy nato classification level designation “NATO Restricted” as an interoperable concept IRI. It records the designation found in a source; it does not determine current handling authority or grant access."@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoRestricted> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoRestricted> <http://www.w3.org/2000/01/rdf-schema#label> "NATO Restricted"@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoRestricted> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/us-nato-security> .
+<https://hexplain.io/ns/register/us-nato-security#NatoSecret> <http://www.w3.org/2004/02/skos/core#definition> "The legacy nato classification level designation “NATO Secret” as an interoperable concept IRI. It records the designation found in a source; it does not determine current handling authority or grant access."@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoSecret> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoSecret> <http://www.w3.org/2000/01/rdf-schema#label> "NATO Secret"@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoSecret> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/us-nato-security> .
+<https://hexplain.io/ns/register/us-nato-security#NatoUnclassified> <http://www.w3.org/2004/02/skos/core#definition> "The legacy nato classification level designation “NATO Unclassified” as an interoperable concept IRI. It records the designation found in a source; it does not determine current handling authority or grant access."@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoUnclassified> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoUnclassified> <http://www.w3.org/2000/01/rdf-schema#label> "NATO Unclassified"@en .
+<https://hexplain.io/ns/register/us-nato-security#NatoUnclassified> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/us-nato-security> .
 <https://hexplain.io/ns/register/us-nato-security#NoContract> <http://www.w3.org/2004/02/skos/core#definition> "The legacy security marking designation “No Contract” as an interoperable concept IRI. It records the designation found in a source; it does not determine current handling authority or grant access."@en .
 <https://hexplain.io/ns/register/us-nato-security#NoContract> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
 <https://hexplain.io/ns/register/us-nato-security#NoContract> <http://www.w3.org/2000/01/rdf-schema#label> "No Contract"@en .
@@ -378,6 +449,7 @@ usnato:X259 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConc
 <https://hexplain.io/ns/register/us-nato-security#Unclassified> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
 <https://hexplain.io/ns/register/us-nato-security#Unclassified> <http://www.w3.org/2000/01/rdf-schema#label> "Unclassified"@en .
 <https://hexplain.io/ns/register/us-nato-security#Unclassified> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/us-nato-security> .
+<https://hexplain.io/ns/register/us-nato-security#UsClassificationLevelOrder> <http://www.w3.org/2000/01/rdf-schema#label> "US classification levels, least to most sensitive"@en .
 <https://hexplain.io/ns/register/us-nato-security#UsOnly> <http://www.w3.org/2004/02/skos/core#definition> "The legacy security marking designation “US Only” as an interoperable concept IRI. It records the designation found in a source; it does not determine current handling authority or grant access."@en .
 <https://hexplain.io/ns/register/us-nato-security#UsOnly> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
 <https://hexplain.io/ns/register/us-nato-security#UsOnly> <http://www.w3.org/2000/01/rdf-schema#label> "US Only"@en .

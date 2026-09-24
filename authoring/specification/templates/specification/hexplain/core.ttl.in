@@ -134,6 +134,29 @@ hexplain:register a owl:ObjectProperty ; rdfs:label "register" ;
     rdfs:range skos:ConceptScheme ;
     rdfs:comment "The skos:ConceptScheme whose members are the permitted values." .
 
+#################### Register lifecycle and cross-layer correspondence ####################
+# A register concept is never deleted or reused: when policy retires or replaces it, the IRI
+# stays resolvable with owl:deprecated true, a hexplain:status saying why, a skos:historyNote
+# and, when a successor exists, dcterms:isReplacedBy (tools/test_register_lifecycle.py).
+hexplain:RegisterStatus a owl:Class ; rdfs:label "Register Status" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "The lifecycle state of a register entry (a concept, collection or scheme). Closed set: hexplain:statusValid, hexplain:statusDeprecated, hexplain:statusSuperseded." .
+hexplain:statusValid a hexplain:RegisterStatus ; rdfs:label "Valid" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "The entry is current. An entry with no hexplain:status is valid unless it is owl:deprecated." .
+hexplain:statusDeprecated a hexplain:RegisterStatus ; rdfs:label "Deprecated" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "The entry is retained for existing data but SHOULD NOT be used in new data; there is no single successor. It carries owl:deprecated true and a skos:historyNote." .
+hexplain:statusSuperseded a hexplain:RegisterStatus ; rdfs:label "Superseded" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "The entry is retained for existing data and replaced by the entry or entries named with dcterms:isReplacedBy, which new data SHOULD use. It carries owl:deprecated true and a skos:historyNote." .
+hexplain:status a owl:ObjectProperty ; rdfs:label "status" ; rdfs:range hexplain:RegisterStatus ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "The lifecycle state of a register entry. Absent means valid for an entry that is not owl:deprecated." .
+hexplain:correspondsTo a owl:AnnotationProperty ; rdfs:label "corresponds to" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "Links a register concept to the ontology individual that names the same thing in another layer (for example a checksum-register concept to the bddo:ChecksumAlgorithm individual a physical description uses). An annotation, not a SKOS mapping and not owl:sameAs: it asserts no equivalence between a concept and an individual and licenses no inference; tools use it to keep the two identifiers aligned." .
+
 # ---------- SHACL ----------
 hexplain:MapsToClassShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToClass ;
@@ -255,6 +278,25 @@ hexplain:RegisterBindingShape a sh:NodeShape ;
             ?binding hexplain:forProperty ?p ; hexplain:register ?scheme .
             $this ?p ?value .
             FILTER NOT EXISTS { ?value skos:inScheme ?scheme }
+        }""" ] .
+
+hexplain:RegisterStatusShape a sh:NodeShape ; rdfs:label "Register status shape" ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "A register entry states at most one lifecycle status from the closed set; a deprecated or superseded entry is owl:deprecated true, and a superseded entry names its successor." ;
+    sh:targetSubjectsOf hexplain:status ;
+    sh:property [ sh:path hexplain:status ; sh:maxCount 1 ;
+        sh:in ( hexplain:statusValid hexplain:statusDeprecated hexplain:statusSuperseded ) ;
+        sh:message "hexplain:status is one of hexplain:statusValid, hexplain:statusDeprecated or hexplain:statusSuperseded, at most once." ] ;
+    sh:or (
+        [ sh:property [ sh:path hexplain:status ; sh:hasValue hexplain:statusValid ] ]
+        [ sh:property [ sh:path owl:deprecated ; sh:hasValue true ] ] ) ;
+    sh:message "A deprecated or superseded register entry must carry owl:deprecated true." ;
+    sh:sparql [
+        sh:message "A superseded register entry must name its successor with dcterms:isReplacedBy." ;
+        sh:prefixes hexplain:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this hexplain:status hexplain:statusSuperseded .
+            FILTER NOT EXISTS { $this <http://purl.org/dc/terms/isReplacedBy> ?next }
         }""" ] .
 
 # ---------- Range datatype shapes ----------

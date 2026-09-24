@@ -20,7 +20,7 @@ def build(check=False):
     output=json.dumps(result,indent=2)+'\n'
     path=AUTHORING/'constraint-inventory.json'
     if check:assert path.read_text(encoding='utf-8')==output,'Stale authoring inventory'
-    else:path.write_text(output,encoding='utf-8')
+    else:path.write_text(output,encoding='utf-8',newline='\n')
     return result
 
 if __name__=='__main__':

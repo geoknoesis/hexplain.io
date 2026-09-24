@@ -36,6 +36,6 @@ def build():
 
 if __name__=='__main__':
     data,page=build()
-    (OUT/'competency-trace.json').write_text(data,encoding='utf-8')
-    (OUT/'competency-trace.html').write_text(page,encoding='utf-8')
+    (OUT/'competency-trace.json').write_text(data,encoding='utf-8',newline='\n')
+    (OUT/'competency-trace.html').write_text(page,encoding='utf-8',newline='\n')
     print(json.loads(data)['summary'])

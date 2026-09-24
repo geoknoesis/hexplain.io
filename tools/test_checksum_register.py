@@ -5,7 +5,7 @@ physical description names in bddo:checksumAlgorithm (crc16 .. sha256), concepts
 checksum register an integrity aspect value comes from, and the aspect property itself. The
 register lacked CRC-16 and Adler-32, so a format verified with either could describe its
 check physically but not report it semantically. This gate keeps the sets aligned: every
-bddo:ChecksumAlgorithm individual is skos:exactMatch of exactly one register concept and
+bddo:ChecksumAlgorithm individual is hexplain:correspondsTo of exactly one register concept and
 vice versa, and bddo:ChecksumShape accepts exactly those individuals.
 """
 import sys
@@ -19,6 +19,7 @@ import specgraph
 BDDO = Namespace("https://hexplain.io/ns/bddo#")
 RCK = Namespace("https://hexplain.io/ns/register/checksum#")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
+HEX = Namespace("https://hexplain.io/ns/core#")
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
 
@@ -27,10 +28,11 @@ def main():
     algorithms = set(g.subjects(RDF.type, BDDO.ChecksumAlgorithm))
     concepts = set(g.subjects(SKOS.inScheme, RCK.ChecksumAlgorithmScheme))
     matches = defaultdict(set)
-    for a, b in g.subject_objects(SKOS.exactMatch):
+    for a, b in g.subject_objects(HEX.correspondsTo):
         matches[a].add(b)
         matches[b].add(a)
-    failures = []
+    failures = [f"{a} skos:exactMatch {b}: a SKOS mapping to an OWL individual; use hexplain:correspondsTo"
+                for a, b in g.subject_objects(SKOS.exactMatch) if b in algorithms or a in algorithms]
     for alg in sorted(algorithms):
         linked = matches[alg] & concepts
         if len(linked) != 1:

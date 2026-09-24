@@ -37,7 +37,7 @@ def snapshot(release_id):
         'entailment': 'none; SHACL subclass traversal over explicitly supplied vocabulary', 'files': files}
     out.mkdir(parents=True)
     (out / 'hexplain-spec.zip').write_bytes(binary)
-    (out / 'manifest.json').write_text(json.dumps(manifest, indent=2)+'\n', encoding='utf-8')
+    (out / 'manifest.json').write_text(json.dumps(manifest, indent=2)+'\n', encoding='utf-8',newline='\n')
     print(f'Created {release_id}: {len(files)} pinned files; local artifact, not a live namespace release')
 
 if __name__ == '__main__':

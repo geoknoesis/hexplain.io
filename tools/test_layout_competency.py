@@ -87,7 +87,7 @@ def run():
         rows.append('\t'.join([name,str(expected).lower(),path,base64.b64encode(source.encode()).decode()]))
     corpus=ROOT/'specification/validation/test/layout-competency.tsv'
     rendered='\n'.join(rows)+'\n'
-    if '--write' in __import__('sys').argv:corpus.write_text(rendered,encoding='utf-8')
+    if '--write' in __import__('sys').argv:corpus.write_text(rendered,encoding='utf-8',newline='\n')
     else:assert corpus.read_text(encoding='utf-8')==rendered
     print(f'PASS: {len(CASES)} layout/compound cases with inference and rule execution disabled')
 if __name__=='__main__':run()

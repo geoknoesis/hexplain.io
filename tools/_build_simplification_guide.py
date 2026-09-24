@@ -34,7 +34,7 @@ def build(check=False):
         assert target.read_text(encoding='utf-8') == html, 'Stale shared-pattern guide'
     else:
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(html, encoding='utf-8')
+        target.write_text(html, encoding='utf-8',newline='\n')
     return len(catalog['presets'])
 
 if __name__ == '__main__':

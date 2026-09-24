@@ -46,7 +46,7 @@ def with_print_link(page,source):
 def sync_print_styles():
     for page in pages():
         source=page.read_text(encoding='utf-8');updated=with_print_link(page,source)
-        if updated!=source: page.write_text(updated,encoding='utf-8')
+        if updated!=source: page.write_text(updated,encoding='utf-8',newline='\n')
 
 def sitemap():
     return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + ''.join(
@@ -76,5 +76,5 @@ def broken_links():
 
 if __name__ == "__main__":
     sync_print_styles()
-    (ROOT/"sitemap.xml").write_text(sitemap(), encoding="utf-8")
+    (ROOT/"sitemap.xml").write_text(sitemap(), encoding="utf-8", newline="\n")
     print(f"Generated sitemap for {len(pages())} public pages")

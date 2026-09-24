@@ -76,7 +76,7 @@ def enrich():
                     if not list(ownfile.objects(t,predicate)):rows.append(f'{t.n3()} {predicate.n3()} {value.n3()} .')
             edits.append((ROOT/path,base+ANNOTATION_MARKER+'# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.\n'+'\n'.join(rows)+'\n'))
     # Resolve every definition before any write, so a missing entry cannot leave half an update.
-    for p,text in edits:p.write_text(text,encoding='utf-8')
+    for p,text in edits:p.write_text(text,encoding='utf-8',newline='\n')
 
 def sortkey(g,node,seen=frozenset()):
     if not isinstance(node,BNode):return str(node)
@@ -208,14 +208,14 @@ def build(check=False):
         if check:
             match=re.search(re.escape(START)+'(.*?)'+re.escape(END),text,re.S)
             if not match or START+match[1]+END!=section:failures.append(str(doc.relative_to(ROOT)))
-        else:doc.write_text(expected,encoding='utf-8')
+        else:doc.write_text(expected,encoding='utf-8',newline='\n')
         manifest.append({'module':directory.as_posix(),'page':doc.relative_to(ROOT).as_posix(),'terms':len(terms),'shapes':sum(kind(g,t) in ['Node shape','Property shape'] for t in terms),'iris':[str(t) for t in terms]})
     if failures:raise AssertionError('Stale term references: '+', '.join(failures))
     if not check:
         out=ROOT/'specification/reference';out.mkdir(exist_ok=True)
-        (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
+        (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8',newline='\n')
         links=''.join(f'<li><a href="{os.path.relpath(ROOT/m["page"],out).replace(chr(92),"/")}">{e(m["module"].removeprefix("specification/"))}</a> — {m["terms"]} terms, {m["shapes"]} named shapes</li>' for m in manifest)
-        (out/'index.html').write_text(f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hexplain complete ontology reference</title><style>body{{font:17px/1.7 system-ui;margin:3rem auto;max-width:1000px;padding:0 24px;color:#17333d}}a{{color:#006b60}}li{{margin:8px 0}}dt{{margin-top:1rem}}dd{{margin:.2rem 0 1rem}}:focus-visible{{outline:3px solid #078779;outline-offset:3px}}</style></head><body><a href="../index.html">Specification family</a><h1>Complete ontology and shape reference</h1><p>{sum(m["terms"] for m in manifest)} named resources across {len(manifest)} modules, including {sum(m["shapes"] for m in manifest)} named shapes. Each entry includes its label, IRI, definition, usage scope, type, declared range or an explicit explanation of its absence, relationships, and validation context. Shape entries expand their value paths, alternatives, cardinalities, messages and executable queries.</p><p><a href="../validation/index.html">Validation and pinned snapshots</a> | <a href="#reading-guide">How to read terms and constraints</a> · <a href="manifest.json">Machine-readable documentation manifest</a></p><ul>{links}</ul>{GUIDE}<p>Definitions and scope notes are canonical RDF annotations. Human-readable pages are generated from that RDF. Imported terms link to their owning module; namespace reuse does not imply ownership.</p></body></html>',encoding='utf-8')
+        (out/'index.html').write_text(f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hexplain complete ontology reference</title><style>body{{font:17px/1.7 system-ui;margin:3rem auto;max-width:1000px;padding:0 24px;color:#17333d}}a{{color:#006b60}}li{{margin:8px 0}}dt{{margin-top:1rem}}dd{{margin:.2rem 0 1rem}}:focus-visible{{outline:3px solid #078779;outline-offset:3px}}</style></head><body><a href="../index.html">Specification family</a><h1>Complete ontology and shape reference</h1><p>{sum(m["terms"] for m in manifest)} named resources across {len(manifest)} modules, including {sum(m["shapes"] for m in manifest)} named shapes. Each entry includes its label, IRI, definition, usage scope, type, declared range or an explicit explanation of its absence, relationships, and validation context. Shape entries expand their value paths, alternatives, cardinalities, messages and executable queries.</p><p><a href="../validation/index.html">Validation and pinned snapshots</a> | <a href="#reading-guide">How to read terms and constraints</a> · <a href="manifest.json">Machine-readable documentation manifest</a></p><ul>{links}</ul>{GUIDE}<p>Definitions and scope notes are canonical RDF annotations. Human-readable pages are generated from that RDF. Imported terms link to their owning module; namespace reuse does not imply ownership.</p></body></html>',encoding='utf-8',newline='\n')
     return manifest
 
 if __name__=='__main__':

@@ -58,7 +58,7 @@ import json
 from pathlib import Path
 with tempfile.TemporaryDirectory() as directory:
     output = Path(directory)/"result.json"
-    output.write_text('{"status":"complete","cases":["stale"]}', encoding="utf-8")
+    output.write_text('{"status":"complete","cases":["stale"]}', encoding="utf-8", newline="\n")
     result = subprocess.run([sys.executable, str(Path(__file__).with_name("_compare_validator_reports.py")),
                              str(Path(directory)/"missing"), "--output", str(output)],
                             capture_output=True, timeout=30)

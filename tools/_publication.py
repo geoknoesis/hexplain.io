@@ -32,5 +32,5 @@ def render():
 
 
 if __name__ == "__main__":
-    (ROOT/"deployment/publication.conf").write_text(render(), encoding="utf-8")
+    (ROOT/"deployment/publication.conf").write_text(render(), encoding="utf-8", newline="\n")
     print(f"Generated {len(routes())} ontology and version routes")
