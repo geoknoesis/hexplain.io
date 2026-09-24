@@ -4,7 +4,7 @@ Changes to the Hexplain specification family. Version numbers are per module
 (`owl:versionInfo` / `owl:versionIRI`); the family has no single version. Local release
 snapshots are recorded under `releases/`.
 
-## Unreleased (since snapshot 2026-09-08.2)
+## Snapshot 2026-09-24.1 (changes since snapshot 2026-09-08.2)
 
 ### Module versions
 
@@ -42,7 +42,8 @@ IRI, an `owl:priorVersion` naming the snapshot's version and `dcterms:modified 2
 
 bddo, core, dlv, aspect/security, aspect/bundle, npv and register/us-nato-security had
 already changed after the snapshot without a version bump; they are bumped here as well.
-`fn` (0.1) is not in the snapshot and keeps its version.
+`fn` (0.1) is not in the snapshot and keeps its version. conf and req had no version IRI in
+snapshot 2026-09-08.2, so 1.1 is their first version and has no `owl:priorVersion`.
 
 ### Validation compatibility (stricter shapes)
 
