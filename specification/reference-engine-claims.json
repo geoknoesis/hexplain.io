@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "about": "Capability statement of the Hexplain reference implementation (hexplain-tools), per conformance class of the Processing Model. It is the machine-readable source of the informative reference-implementation notes in specification/processing/index.html (tools/test_reference_claims.py checks them against it), and the engine's README states the same claims. It is a statement of what the implementation claims, not evidence that it conforms; the engine's own test suites and the conformance corpus are that evidence.",
+  "implementation": {
+    "name": "hexplain-tools",
+    "role": "reference implementation",
+    "language": "Kotlin (JVM)",
+    "readme": "The engine README's conformance section mirrors this file; a change here is made there in the same release."
+  },
+  "conformanceClasses": [
+    "Physical Parser",
+    "Semantic Emitter",
+    "Bundle Processor",
+    "HDL Compiler",
+    "Conformance Evaluator"
+  ],
+  "optionalFeatures": {
+    "tree documents": {
+      "claimed": true,
+      "terms": [
+        "bddo:TreeDocument",
+        "bddo:treeSyntax",
+        "bddo:nodePath",
+        "bddo:hasNamespaceBinding"
+      ],
+      "note": "XML and JSON, parsed and lifted. Inside a tree document, the byte-level clauses a field located by path cannot carry are refused with Unsupported feature, as the Processing Model allows."
+    },
+    "grouped key/value headers": {
+      "claimed": true,
+      "terms": [
+        "bddo:hasGrouping",
+        "bddo:groupingStyle",
+        "bddo:keyPath"
+      ],
+      "note": "On bddo:KeyValueHeader containers, all three grouping styles."
+    },
+    "abnd:nestedProfile": {
+      "claimed": false,
+      "terms": [
+        "abnd:nestedProfile"
+      ],
+      "note": "Refused with Unsupported feature when the bundle profile is loaded."
+    },
+    "chunked-layout cell access": {
+      "claimed": false,
+      "terms": [
+        "dlv:chunkSize",
+        "dlv:chunkSizeFromField",
+        "dlv:chunkOffsetsFromField",
+        "dlv:chunkLengthsFromField",
+        "dlv:chunkOffsetBase"
+      ],
+      "note": "Chunk declarations are accepted and the field's bytes are read; addressing a cell through the chunk table raises Unsupported feature."
+    },
+    "non-row/column chunkOrder": {
+      "claimed": false,
+      "terms": [
+        "dlv:chunkOrder"
+      ],
+      "note": "Only dlv:rowMajor and dlv:columnMajor; any other order is refused at load."
+    },
+    "HEL extension groups": {
+      "claimed": true,
+      "terms": [],
+      "note": "All five groups: text, temporal, geometry, register, quantifiers (see helExtensionGroups)."
+    },
+    "codecs beyond the minimum set": {
+      "claimed": false,
+      "terms": [],
+      "note": "No register codec beyond the minimum set is decoded; the others (menc:Zstd, menc:Blosc, ...) are refused with Unsupported feature. TIFF PackBits and LZW are decoded under engine-specific identifiers only."
+    }
+  },
+  "helExtensionGroups": [
+    "text",
+    "temporal",
+    "geometry",
+    "register",
+    "quantifiers"
+  ],
+  "codecs": {
+    "register": "https://hexplain.io/ns/register/media-encoding#",
+    "decoded": [
+      "Store",
+      "Deflate",
+      "Zlib",
+      "Gzip",
+      "Delta"
+    ],
+    "note": "The minimum codec set of the Processing Model. The engine also decodes TIFF PackBits and LZW under its own identifiers, which are not register concepts."
+  },
+  "limits": {
+    "maxInputBytes": 268435456,
+    "maxDepth": 64,
+    "maxTreeDepth": 256,
+    "maxVisitedNodes": 1000000,
+    "maxMaterializedBytes": 268435456,
+    "maxDecodedBytes": 134217728,
+    "helNestingDepth": 512,
+    "helMaxExpressionLength": 65536,
+    "emittedTriples": 100000,
+    "wallClockSeconds": 30,
+    "note": "Defaults; every one is configurable. helNestingDepth may be raised to 4096."
+  }
+}

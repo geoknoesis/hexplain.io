@@ -14,7 +14,7 @@
             }],
             github: "https://github.com/geoknoesis/hexplain.io",
             shortName: "hdl",
-            publishDate: "2026-09-23",
+            publishDate: "2026-09-24",
             subtitle: "Version 1.0",
         };
     </script>
@@ -108,11 +108,11 @@
         <h2>Lexical Structure (text surface)</h2>
         <p>This section summarises the lexical rules; the normative token definitions are in <a href="#grammar-lexical">§Grammar: Tokens</a>.</p>
         <ul>
-            <li><b>Comments.</b> <code>//</code> to end of line; <code>/* &#8230; */</code> block (not nested).</li>
+            <li><b>Comments.</b> <code>//</code> to end of line; <code>/* &#8230; */</code> block (not nested). A block comment left open at end of input is a lexical <code>ERROR</code>.</li>
             <li><b>Names.</b> A name starts with a letter or <code>_</code> and continues with letters, digits, <code>_</code> and <code>:</code>; a <em>single</em> <code>-</code> or <code>.</code> is also folded into the name when a letter, digit or <code>_</code> follows it. So <code>naming-convention</code>, <code>roads.shp</code>, <code>root.Directory</code> and <code>araster:RasterGrid</code> are each one token, while <code>a..b</code>, <code>a--b</code> and a trailing <code>a-</code> are not; a name containing <code>:</code> is a CURIE and a name ending in <code>:</code> is a prefix label (<code>ageom:</code>).</li>
-            <li><b>Field names.</b> Although the lexer folds <code>-</code> and <code>.</code>, a field's name and its <code>as</code> alias MUST be <b>HEL identifiers</b> &#8212; a letter or <code>_</code> followed by letters, digits and <code>_</code>, and not one of <code>instance parent root self stream and or not true false</code> &#8212; because expressions reach a field by that name. A compiler MUST report an <code>ERROR</code> for a hyphenated, dotted or reserved field name (the reference compiler suggests <code>byte_order</code> for <code>byte-order</code>). A quoted <code>header</code>/<code>document</code> key is a record key, not a name, and is exempt; its alias, if any, is not, and an expression reaches such a field only by its alias.</li>
-            <li><b>Literals.</b> integers (<code>42</code>, <code>-1</code>, <code>0b1010</code>; a binary literal is emitted in HEL as its decimal value), floats (<code>1.5</code>), strings (<code>"&#8230;"</code> or <code>'&#8230;'</code>, <code>\</code> escapes the next character; either form becomes a single-quoted HEL string with the same content), hex byte strings (<code>0x89504E47</code>), booleans (<code>true</code>/<code>false</code>).</li>
-            <li><b>Unknown characters.</b> A character that cannot begin any token (for example <code>;</code>, <code>#</code> or <code>$</code> outside a string, bracketed or backtick expression, IRI, <code>raw-turtle</code> block or comment) is a lexical <code>ERROR</code>; a string left unterminated at end of input is also an <code>ERROR</code>.</li>
+            <li><b>Field names.</b> Although the lexer folds <code>-</code> and <code>.</code>, a field's name and its <code>as</code> alias MUST be <b>HEL identifiers</b> &#8212; an ASCII letter or <code>_</code> followed by ASCII letters, digits and <code>_</code>, and not one of <code>instance parent root self stream asset and or not true false</code> &#8212; because expressions reach a field by that name (<code>asset</code> is HEL's multi-part root, so a field so named could never be read). A compiler MUST report an <code>ERROR</code> for a hyphenated, dotted or reserved field name (the reference compiler suggests <code>byte_order</code> for <code>byte-order</code>). A quoted <code>header</code>/<code>document</code> key is a record key, not a name, and is exempt; its alias, if any, is not, and an expression reaches such a field only by its alias.</li>
+            <li><b>Literals.</b> integers (<code>42</code>, <code>-1</code>, <code>0b1010</code>; a binary literal is emitted in HEL as its decimal value; every integer fits in a signed 64-bit integer), floats (<code>1.5</code>, <code>2.5e-3</code>, <code>1e6</code>), strings (<code>"&#8230;"</code> or <code>'&#8230;'</code>, with the escape set HEL uses &#8212; <code>\\ \' \" \n \t \r \0 \xHH \uHHHH</code> &#8212; any other escape being an <code>ERROR</code>; either quoting becomes a single-quoted HEL string with the same content), hex byte strings (<code>0x89504E47</code>), booleans (<code>true</code>/<code>false</code>). The lexer reads the whole alphanumeric run after <code>0x</code> or <code>0b</code>, so <code>0x12G4</code> and <code>0b102</code> are lexical errors, not a number followed by a name.</li>
+            <li><b>Unknown characters.</b> A character that cannot begin any token (for example <code>;</code>, <code>#</code> or <code>$</code> outside a string, bracketed or backtick expression, IRI, <code>raw-turtle</code> block or comment) is a lexical <code>ERROR</code>; a string, block comment, backtick expression, bracketed expression or <code>raw-turtle</code> block left unterminated at end of input is also an <code>ERROR</code>.</li>
             <li><b>Annotations.</b> begin with <code>@</code> (<code>@endian</code>, <code>@at</code>, <code>@fixed</code>, <code>@bound-by</code>, &#8230;).</li>
             <li><b>Bracketed expressions.</b> the text between a matching <code>[ ]</code> pair is captured whole (§<a href="#expressions">Expressions</a>).</li>
             <li><b>Backtick expressions.</b> a <code>`&#8230;`</code> literal denotes a raw HEL expression (§<a href="#raw-hel">Raw HEL</a>).</li>
@@ -193,7 +193,8 @@ struct PLTE_ChunkData {
                     <tr><td>seek scope</td><td><code>@seek stream</code> &middot; <code>@seek region</code></td><td><code>seekScope</code></td></tr>
                 </tbody>
             </table>
-            <p><code>offsetBase</code> keywords: <code>stream-start stream-end parent-start current</code>. A <code>switch</code> arm may match a literal value against the discriminator (<code>"IHDR" =&gt; S</code>) or supply a full boolean guard (<code>when expr =&gt; S</code>).</p>
+            <p><b>Fixed values.</b> An integer <code>@fixed</code> on a numeric field is emitted typed with the field's XSD type (<code>@fixed 9994</code> on an <code>i32</code> becomes <code>"9994"^^xsd:int</code>) and is compared by value; a hex <code>@fixed</code> stays <code>xsd:hexBinary</code> and, on a numeric field, MUST have exactly the field's width in bytes (<a href="../processing/index.html#algorithm">Processing Model, Fixed value</a>).</p>
+        <p><code>offsetBase</code> keywords: <code>stream-start stream-end parent-start current</code>. A <code>switch</code> arm may match a literal value against the discriminator (<code>"IHDR" =&gt; S</code>) or supply a full boolean guard (<code>when expr =&gt; S</code>).</p>
         </section>
 
         <section id="form-rule">
@@ -277,6 +278,11 @@ document ArrayMeta @json {
         <p>
             As with a nested <code>header</code>, the field syntax does not change — a quoted name
             becomes a <code>bddo:nodePath</code> because the container is a <code>document</code>.
+            A field located by path has no byte extent, so a byte-level clause on it (a size, terminator,
+            <code>@at</code>, bit length, <code>@align</code>, <code>@fixed</code>, checksum, <code>@encoding</code>,
+            layout or <code>repeat until</code>) is an <code>ERROR</code>. A binary numeric type such as
+            <code>u32</code> is accepted with a <code>WARNING</code>: the value is read as a number written as
+            text, so <code>anum</code>/<code>adec</code> say what happens.
             One quoting convention across all three container forms, with the container deciding
             what the quoted string means.
         </p>
@@ -316,16 +322,17 @@ header Label @record-separator 0x0A @separator 0x3D @trim
 
     <section id="expressions">
         <h2>Expressions</h2>
-        <p>Expression clauses (sizes, offsets, counts, presence, conditions, computed values) are written in <a href="../hel/index.html">HEL</a> and follow the <a href="../hel/index.html#name-binding">HEL name-binding rules</a>. For an expression attached to a field, <code>instance</code> is the struct that contains the field, <code>parent</code> is that struct's parent, <code>root</code> is the root struct, and <code>self</code> is the value being tested (in <code>repeat until</code> and <code>@valid</code>). A struct-level expression (<code>@size</code>, <code>means-when</code>, <code>@endian switch</code>) and every dispatch condition (<code>switch</code>, <code>dispatch &#8230; on</code>, <code>cell switch</code>, <code>order switch</code>) evaluate against the containing struct as <code>instance</code> in the same way.</p>
+        <p>Expression clauses (sizes, offsets, counts, presence, conditions, computed values) are written in <a href="../hel/index.html">HEL</a> and follow the <a href="../hel/index.html#name-binding">HEL name-binding rules</a>. For an expression attached to a field, <code>instance</code> is the struct that contains the field, <code>parent</code> is that struct's parent, <code>root</code> is the root struct, and <code>self</code> is the value being tested (in <code>repeat until</code> and <code>@valid</code>). The one exception is <code>repeat until</code> over <b>struct</b> elements: there <code>instance</code> and <code>self</code> are the element just read, so a bare name is a field of that element, and <code>parent</code> is the struct containing the repeated field; over scalar elements the general rule holds and <code>self</code> is the value just read (<a href="../hel/index.html#name-binding">HEL name binding</a>). A struct-level expression (<code>@size</code>, <code>means-when</code>, <code>@endian switch</code>) and every dispatch condition (<code>switch</code>, <code>dispatch &#8230; on</code>, <code>cell switch</code>, <code>order switch</code>) evaluate against the containing struct as <code>instance</code> in the same way.</p>
         <ul>
             <li>A <b>bare name</b> <code>x</code> is shorthand for <code>instance.x</code>: a field of the same struct (a sibling of the field being described). The compiler emits it in the canonical form <code>instance.&lt;name&gt;</code>, after applying any <code>as</code> alias of that sibling.</li>
-            <li>A field of the enclosing struct's parent is written <code>parent.x</code>; a field of the root struct is <code>root.x</code>. <code>instance.parent.x</code> therefore means the same as <code>parent.x</code> &#8212; a field of the <em>parent</em> struct &#8212; and never a sibling.</li>
+            <li>A field of the enclosing struct's parent is written <code>parent.x</code>; a field of the root struct is <code>root.x</code>. What <code>parent.x</code> reads depends on the property: for a field-level expression it is a field of the struct that contains the containing struct (never a sibling); for <code>repeat until</code> over struct elements it is a field of the struct that contains the repeated field; for a struct-level expression it is a field of the struct's parent. The deprecated alias that made <code>parent</code> mean <code>instance</code> in a dispatch condition is never emitted.</li>
+            <li>In the predicate of <code>all</code>/<code>any</code> over struct elements, a bare name resolves to a field of the element (<code>instance.v</code>) or, failing that, of the enclosing struct (<code>parent.n</code>); a name that both declare is an <code>ERROR</code>, since either reading would be a guess.</li>
             <li>The reserved roots <code>instance parent root self stream asset</code> and the HEL function names (<code>sizeof len count eof trim substringBefore substringAfter substring concat toNumber partExtension</code>, when followed by <code>(</code>) pass through unchanged.</li>
             <li>Dotted paths and subscripts pass through: <code>root.Directory[i].Entries[0].Tag</code>.</li>
             <li>Contents of string literals are never rewritten (so <code>type == 'IHDR'</code> keeps <code>'IHDR'</code> intact).</li>
         </ul>
-        <p><b>Undefined and forward references.</b> A bare name that is not a field of the containing struct is an error, as is a reference to a field that is not yet bound at the point where the expression is evaluated (a <em>forward reference</em>): a field-level size, count, offset or presence expression may name only fields declared <em>before</em> the field it describes. An optional field that is legitimately absent (its <code>if</code> condition was false) is bound and reads as Null; that is not an error.</p>
-        <p>A conforming compiler MUST validate every synthesized expression against the HEL grammar and MUST report an <code>ERROR</code> diagnostic when a bare identifier does not resolve to a declared sibling. The canonical HEL string is produced by parsing and re-serializing the resolved expression, so equivalent inputs converge on one normal form.</p>
+        <p><b>Undefined and forward references.</b> A bare name that is not a field of the containing struct is an error, as is a reference to a field that is not yet bound at the point where the expression is evaluated (a <em>forward reference</em>): a field-level size, count, offset or presence expression may name only fields declared <em>before</em> the field it describes, and not the field itself (except in <code>@valid</code>, which runs after the field is read). An optional field that is legitimately absent (its <code>if</code> condition was false) is bound and reads as Null; that is not an error.</p>
+        <p>A conforming compiler MUST validate every synthesized expression against the HEL grammar and MUST report an <code>ERROR</code> diagnostic, at compile time, for: a bare identifier that does not resolve to a declared field; a forward reference, including a field's reference to itself outside <code>@valid</code>; <code>self</code> outside <code>repeat until</code>, <code>@valid</code> and a quantifier predicate; a <code>stream.</code> key other than <code>length</code>, <code>position</code> and <code>remaining</code>; <code>evaluationInstant()</code> in an expression evaluated while parsing (it exists only for conformance assertions); and a <code>root.</code>, <code>parent.</code> or <code>asset.</code> path that does not resolve to a declared field. The canonical HEL string is produced by parsing and re-serializing the resolved expression, so equivalent inputs converge on one normal form.</p>
         <p><b>Ternaries.</b> <code>?</code> is the HEL conditional operator (<code>c ? a : b</code>) and may be written in any expression position, bracketed or not: <code>count : derive v == 0 ? a : b</code>. In an unbracketed expression a <code>:</code> belongs to the expression while a <code>?</code> is open, and otherwise ends it (<a href="#grammar-expressions">§Grammar: Embedded expressions</a>).</p>
         <p><b>Layout references.</b> The names in a layout &#8212; a dimension's <code>size</code> and <code>chunk</code>, <code>cell-bits from</code>, <code>chunks offsets</code>/<code>lengths</code>, a <code>stride</code> expression, and the guards of <code>cell switch</code> and <code>order switch</code> &#8212; are sibling references like any other: each MUST name a field of the containing struct, and an unknown one is an <code>ERROR</code>.</p>
         <section id="raw-hel">
@@ -376,7 +383,7 @@ struct IHDR_ChunkData means araster:RasterGrid {
 use menc: &lt;https://hexplain.io/ns/register/media-encoding#&gt;
 
 struct Segment {
-  strip : bytes[..] @pipeline { menc:Delta(predictor 2), menc:Zlib(level 6) }   // TIFF predictor 2, then deflate
+  strip : bytes[..] @pipeline { menc:Delta(elementSize 1, predictor 2), menc:Zlib(level 6) }   // TIFF predictor 2, then deflate
 }
 struct Tile {
   tile  : bytes[..] @pipeline { menc:Zlib(level 9) }                             // one parameterised step
@@ -385,12 +392,15 @@ struct Tile {
         <p>
             A step's parameters are integer literals (the <a href="../processing/index.html">Processing Model</a>
             rejects any other parameter value), and the codec is a concept of the media-encoding register.
-            The reference engine decodes <code>menc:Zlib</code>, <code>menc:Deflate</code> and
-            <code>menc:Gzip</code>. Other register concepts &#8212; <code>menc:Delta</code> in the first
-            line above, <code>menc:Blosc</code>, <code>menc:Zstd</code>, &#8230; &#8212; compile and
-            describe the encoding faithfully, but are <b>not implemented</b> by the reference engine: a
-            processor that has no codec for a step reports an error for that field rather than
-            returning undecoded bytes.
+            Every processor decodes the <a href="../processing/index.html#minimum-codecs">minimum codec set</a>:
+            <code>menc:Store</code>, <code>menc:Deflate</code>, <code>menc:Zlib</code>, <code>menc:Gzip</code>
+            and <code>menc:Delta</code>, whose parameters are named there
+            (<a href="../processing/index.html#delta-parameters"><code>elementSize</code></a>, required;
+            <code>littleEndian</code>, <code>samplesPerPixel</code>, <code>rowBytes</code>, <code>predictor</code>).
+            The first line above would read <code>menc:Delta(elementSize 1, predictor 2)</code> for 8-bit samples.
+            Other register concepts &#8212; <code>menc:Blosc</code>, <code>menc:Zstd</code>, &#8230; &#8212;
+            compile and describe the encoding faithfully, but are optional: a processor that has no codec
+            for a step refuses the description with Unsupported feature rather than returning undecoded bytes.
         </p>
         <p>
             <b>Order is ENCODE order</b> &#8212; the steps as the writer applied them, so a reader
@@ -701,7 +711,7 @@ structs:
         <ul>
             <li><b>End-of-stream</b> is the string <code>size: ".."</code> (mirroring <code>[..]</code>); any other <code>size</code> scalar is an expression.</li>
             <li><b>Raw HEL</b> is a backtick-wrapped scalar (<code>size: "`instance.ChunkLength - 4`"</code>).</li>
-            <li><b>Hex byte literals</b> are quoted strings (<code>fixed: "0x89504E47"</code>), since an unquoted <code>0x&#8230;</code> would be read as an integer.</li>
+            <li><b>Literals follow the text rules.</b> A scalar is read as the text surface reads the same characters, whatever a YAML resolver would make of it: an unquoted <code>0x10</code> is a hex byte string (as <code>@fixed 0x10</code>), <code>010</code> is the decimal integer 10 (not octal), and <code>0b101</code> is the binary integer 5. <code>fixed:</code> has exactly the semantics of <code>@fixed</code>. Quoting a hex literal (<code>fixed: "0x89504E47"</code>) is still accepted.</li>
             <li><b>Bit fields</b> use <code>type: bits</code> with a sibling <code>bit-length</code> scalar.</li>
             <li><b>HEL string literals</b> inside a YAML expression scalar use single quotes, HEL's own delimiter (<code>until: "self.ChunkType == 'IEND'"</code>, where <code>self</code> is the element just read).</li>
             <li><b>Booleans.</b> A conforming YAML loader MUST restrict implicit boolean resolution to <code>true</code>/<code>false</code>; the YAML&nbsp;1.1 words <code>on/off/yes/no</code> are strings (so a struct field or switch key named <code>on</code> is not silently coerced).</li>
@@ -727,28 +737,34 @@ Letter        ::= /* any Unicode letter */
 Digit         ::= [0-9]
 HexDigit      ::= [0-9A-Fa-f]
 CURIE         ::= NAME                      /* a NAME containing ":" -- prefix ":" local */
-PrefixLabel   ::= NAME                      /* a NAME with no ":" except, optionally, a final one */
+PrefixLabel   ::= [A-Za-z_] ( [A-Za-z0-9_.-]* [A-Za-z0-9_-] )?   /* optionally followed by ":" */
 
 ANNOT         ::= "@" ( Letter | Digit | "_" | "-" )*
-STRING        ::= '"' ( [^"\] | "\" Char )* '"'
-                | "'" ( [^'\] | "\" Char )* "'"   /* "\" makes the next character literal */
+STRING        ::= '"' ( [^"\] | Escape )* '"'
+                | "'" ( [^'\] | Escape )* "'"
+Escape        ::= "\" ( "\" | "'" | '"' | "n" | "t" | "r" | "0"
+                       | "x" HexDigit HexDigit | "u" HexDigit HexDigit HexDigit HexDigit )
+                                            /* the HEL escape set; any other escape is an ERROR */
 INT           ::= "-"? ( Digit+ | "0" [bB] [01]+ )
 HEX           ::= "-"? "0" [xX] HexDigit+
-FLOAT         ::= "-"? Digit+ "." Digit+
+FLOAT         ::= "-"? Digit+ ( "." Digit+ ( [eE] [+-]? Digit+ )? | [eE] [+-]? Digit+ )
 IRIREF        ::= "&lt;" [^&gt;#x20#x9#xD#xA]+ "&gt;"    /* see the "&lt;" rule below */
 BRACKET_EXPR  ::= "[" ( [^[#x5D] | BRACKET_EXPR )* "]"
 BACKTICK_EXPR ::= "`" [^`]* "`"
 RAW_BLOCK     ::= "{" ( [^{}"] | STRING | RAW_BLOCK )* "}"   /* only directly after "raw-turtle" */
 OP            ::= [-+*/%=!&amp;|^~&gt;]+ | "&lt;" | "&lt;=" | "&lt;&lt;" | "?"
+                | "."                       /* only as described below */
 PUNCT         ::= "{" | "}" | "(" | ")" | ":" | "," | "=&gt;" | ".."
             </pre>
             <ul>
                 <li>A NAME is one token even when it contains <code>-</code>, <code>.</code> or <code>:</code>: <code>stream-start</code>, <code>root.Directory</code>, <code>roads.shp</code>, <code>asset.Header.nbits</code> and <code>araster:RasterGrid</code> are single tokens, but <code>a..b</code>, <code>a--b</code> and <code>n-</code> are not (a <code>-</code> or <code>.</code> is joined only singly and only before a name character). A NAME used as a field name or alias MUST additionally be a HEL identifier (<a href="#lexical">&#167;Lexical Structure</a>). A <code>:</code> that does not follow a name character is the field separator <code>":"</code>; consequently an empty-prefix CURIE (<code>:x</code>) has no text-surface spelling outside <code>raw-turtle</code>.</li>
                 <li>A <code>-</code> immediately followed by a digit begins a number (<code>-1</code>); otherwise, outside a NAME, it is an OP.</li>
+                <li>After <code>0x</code>, <code>0X</code>, <code>0b</code> or <code>0B</code> the lexer reads the whole run of letters and digits: a character that is not a hex (respectively binary) digit in it is a lexical <code>ERROR</code>.</li>
+                <li>A <code>.</code> that is not part of a NAME, a FLOAT or <code>..</code> is the OP <code>.</code> (a key step, as in <code>Items[0].Tag</code>) only when a NameStart follows it, after optional spaces or tabs; any other lone <code>.</code> is a lexical <code>ERROR</code>.</li>
                 <li>A <code>&lt;</code> begins an IRIREF only when the next character is not whitespace, <code>&lt;</code> or <code>=</code> and a <code>&gt;</code> occurs before the next whitespace; otherwise it is the OP <code>&lt;</code>, <code>&lt;=</code> or <code>&lt;&lt;</code>.</li>
                 <li>A BRACKET_EXPR whose trimmed content is itself a single backtick expression (<code>[`&#8230;`]</code>) is a BACKTICK_EXPR.</li>
                 <li>A STRING, whichever quote delimits it, denotes its content; where it appears in an expression it becomes a single-quoted HEL string with that content.</li>
-                <li><code>;</code>, <code>#</code>, <code>$</code> and any other character not covered above cannot begin a token. Outside a STRING, BRACKET_EXPR, BACKTICK_EXPR, IRIREF, RAW_BLOCK or comment such a character is a lexical <code>ERROR</code>, as is a STRING with no closing quote.</li>
+                <li><code>;</code>, <code>#</code>, <code>$</code> and any other character not covered above cannot begin a token. Outside a STRING, BRACKET_EXPR, BACKTICK_EXPR, IRIREF, RAW_BLOCK or comment such a character is a lexical <code>ERROR</code>, as is a STRING, block comment, BACKTICK_EXPR, BRACKET_EXPR or RAW_BLOCK that is still open at end of input.</li>
             </ul>
         </section>
 
@@ -895,7 +911,7 @@ PipelineStep   ::= CURIE ( "(" ( NAME Literal ","? )* ")" )?
             <pre class="ebnf">
 LayoutClause   ::= "layout" ( "cell" Type )? "{" LayoutItem* "}"
 LayoutItem     ::= "cell" "switch" "{" ( "when"? Guard "=&gt;" Type ","? )* "}"
-                 | "order" "switch" "{" ( "when"? Guard "=&gt;" Axis+ ","? )* "}"
+                 | "order" "switch" "{" ( OrderArm ( "," OrderArm | WhenOrderArm )* ","? )? "}"
                  | DimDecl
                  | ChunksDecl
                  | "cell-bits" ( INT | "from" NAME )   /* dlv:cellBitWidth / ...FromField */
@@ -903,6 +919,8 @@ LayoutItem     ::= "cell" "switch" "{" ( "when"? Guard "=&gt;" Type ","? )* "}"
 DimDecl        ::= "dim" "axis" Axis "size" ( INT | HEX | NAME )
                    ( "stride" ( INT | Expr ) )?
                    ( "chunk" ( INT | HEX | NAME ) )?
+OrderArm       ::= "when"? Guard "=&gt;" Axis+
+WhenOrderArm   ::= "when" Guard "=&gt;" Axis+
 Axis           ::= "X" | "Y" | "Z" | "Band" | "Time"
 ChunksDecl     ::= "chunks" "offsets" NAME ( "lengths" NAME | "base" OffsetBase | "order" ChunkOrder )*
 ChunkOrder     ::= "row-major" | "column-major" | "morton" | "hilbert"
@@ -910,6 +928,7 @@ ChunkOrder     ::= "row-major" | "column-major" | "morton" | "hilbert"
             <ul>
                 <li>Exactly one of the header <code>cell Type</code> and a body <code>cell switch</code> is present. <code>packing</code> requires <code>cell-bits</code>; <code>cell-bits</code> is a positive integer or <code>from</code> a sibling, not both.</li>
                 <li>A <code>NAME</code> in a <code>size</code>, <code>chunk</code>, <code>cell-bits from</code>, <code>offsets</code> or <code>lengths</code> position is a sibling field. Each <code>order switch</code> arm lists every declared axis exactly once.</li>
+                <li>An <code>order switch</code> arm ends with its axes, which are NAMEs, so the next arm must be introduced unambiguously: by a <code>,</code> (after which <code>when</code> is optional) or by <code>when</code>. Two arms with neither between them (<code>a =&gt; X Y b =&gt; Y X</code>) do not parse: <code>b</code> would be read as a third axis.</li>
                 <li>An unbracketed <code>stride</code> expression ends at the next layout keyword (<code>dim</code>, <code>chunk</code>, <code>chunks</code>, <code>cell</code>, <code>cell-bits</code>, <code>order</code>, <code>packing</code>) in keyword position.</li>
                 <li>Every NAME in a layout (sizes, chunk extents, <code>cell-bits from</code>, <code>offsets</code>, <code>lengths</code>, stride expressions, guards) is a sibling reference and MUST name a field of the containing struct.</li>
             </ul>
@@ -941,6 +960,11 @@ Endian         ::= "big" | "little"
 BitOrder       ::= "msb" | "lsb"
 OffsetBase     ::= "stream-start" | "stream-end" | "parent-start" | "current"
             </pre>
+            <ul>
+                <li>Every INT fits in a signed 64-bit integer. A HEX in a <code>Literal</code> position is a byte string and has an even number of digits.</li>
+                <li>An INT used as a byte &#8212; <code>@terminator</code>, <code>@sync</code> or a <code>Delim</code> &#8212; is in 0..255.</li>
+                <li><code>@align</code>, a <code>dim</code> <code>size</code> and a <code>chunk</code> extent are positive, and accept a HEX as well as an INT; <code>@skip</code>, <code>min</code> and <code>max</code> are &#8805; 0; <code>bits[N]</code> has N in 1..64.</li>
+            </ul>
         </section>
 
         <section id="grammar-expressions">
@@ -952,9 +976,9 @@ TokenRun       ::= RunToken+       /* maximal, subject to the stop rule below */
 RunToken       ::= NAME | INT | HEX | FLOAT | STRING | OP | BRACKET_EXPR | BACKTICK_EXPR
                  | "(" | ")" | "," | ":" | ".."
 Guard          ::= GuardToken+     /* every token up to, not including, the next "=&gt;" */
-GuardToken     ::= /* any token except "=&gt;" */
+GuardToken     ::= /* any token except "=&gt;", "{" and "}" */
 CoverExpr      ::= CoverToken+     /* every token up to a "," or ")" at parenthesis depth 0 */
-CoverToken     ::= /* any token; "(" and ")" must balance */
+CoverToken     ::= /* any token except "{" and "}"; "(" and ")" must balance */
             </pre>
             <ul>
                 <li><b>Bracketed</b> (<code>[ &#8230; ]</code>): the text between the brackets is the expression, delimited only by the matching bracket; it may contain any HEL syntax. It undergoes the same rewriting as an unbracketed expression: bare names become sibling references, a double-quoted string becomes a single-quoted HEL string, and a <code>0b</code> literal is written in decimal.</li>
@@ -968,13 +992,15 @@ CoverToken     ::= /* any token; "(" and ")" must balance */
                         <li>an <a href="#grammar-keywords">expression stopper</a> in <em>keyword position</em>, that is, directly after a complete operand. After an operator, <code>(</code>, <code>,</code>, <code>?</code>, <code>:</code> or <code>and</code>/<code>or</code>/<code>not</code>, the same word is an operand, so <code>repeat n + value</code> reads the sibling <code>value</code>.</li>
                     </ul>
                     The HEL text is the run's tokens joined by single spaces (no space inside parentheses or before a comma), rewritten as for a bracketed expression (so <code>type == "IHDR"</code> becomes <code>instance.type == 'IHDR'</code>).</li>
-                <li><b>Guards</b> (<code>when &#8230; =&gt;</code>) run to the arrow; they may contain a ternary directly. A bracket or backtick token inside a guard contributes its content without its delimiters, so parenthesise any sub-expression whose grouping matters.</li>
+                <li><b>Subscripts and groups in a run.</b> A BRACKET_EXPR directly after a NAME (other than <code>and</code>, <code>or</code>, <code>not</code>), a <code>)</code> or another subscript, with no whitespace between, is a subscript (<code>Items[i].Tag</code>). Any other BRACKET_EXPR in a run is a parenthesised group and is emitted as <code>( &#8230; )</code>.</li>
+                <li><b>Backticks</b> are all or nothing: a BACKTICK_EXPR MUST be the whole <code>Expr</code> or <code>Guard</code>; one inside a longer run is an <code>ERROR</code>.</li>
+                <li><b>Guards</b> (<code>when &#8230; =&gt;</code>) run to the arrow; they may contain a ternary directly. A guard that is a single BRACKET_EXPR or BACKTICK_EXPR token is that expression; otherwise a bracket token is a subscript or group as in a run.</li>
             </ul>
         </section>
 
         <section id="grammar-keywords">
             <h3>Keywords</h3>
-            <p>All HDL keywords are contextual: the lexer produces a <code>NAME</code> and the parser compares its text only where the grammar expects a keyword. None is reserved by HDL itself; a field name is restricted only by the HEL-identifier rule (<a href="#lexical">&#167;Lexical Structure</a>).</p>
+            <p>All HDL keywords are contextual: the lexer produces a <code>NAME</code> and the parser compares its text only where the grammar expects a keyword, and the reference compiler checks each keyword set below against its grammar. None is reserved by HDL itself; a field name is restricted only by the HEL-identifier rule (<a href="#lexical">&#167;Lexical Structure</a>).</p>
             <table class="simple">
                 <thead><tr><th>Class</th><th>Words</th></tr></thead>
                 <tbody>
@@ -983,7 +1009,7 @@ CoverToken     ::= /* any token; "(" and ")" must balance */
                     <tr><td>Values</td><td><code>true false big little msb lsb stream region stream-start stream-end parent-start current keyed valued section row-major column-major morton hilbert X Y Z Band Time containment naming-convention manifest-reference concatenation</code>, the type names of <code>PrimType</code>/<code>StrType</code>, <code>bytes bits anum adec</code>, and the checksum algorithms</td></tr>
                     <tr><td>Annotations</td><td>every <code>"@&#8230;"</code> word in the productions above; an annotation not valid in its position is an error</td></tr>
                     <tr><td><b>Expression stoppers</b></td><td><code>means means-when value map enum layout switch repeat if from until as dim chunk chunks dispatch default on when order cell cell-bits packing</code> &#8212; end an unbracketed expression when they appear in keyword position (after a complete operand); in operand position they are ordinary sibling names</td></tr>
-                    <tr><td>Not valid as field names</td><td><code>instance parent root self stream and or not true false</code> &#8212; HEL reads them as roots, operators or literals, so a compiler MUST reject a field or alias so named. (<code>asset</code> is a HEL root too and is never read as a bare sibling reference.)</td></tr>
+                    <tr><td>Not valid as field names</td><td><code>instance parent root self stream asset and or not true false</code> &#8212; HEL reads them as roots, operators or literals, so a compiler MUST reject a field or alias so named.</td></tr>
                 </tbody>
             </table>
         </section>
@@ -1024,7 +1050,7 @@ struct ImageSpatialExtents { hdr : iso:FullBoxHeader  width : u32  height : u32 
         <p><b>Keyed dispatch.</b> <code>dispatch &lt;Name&gt; on &lt;expr&gt; [default &lt;Struct&gt;] { &lt;key&gt; =&gt; &lt;Struct&gt; … }</code> lowers to a named <code>bddo:DispatchTable</code> whose arms are independent <code>bddo:DispatchArm</code> resources (<code>bddo:armTable</code>, <code>bddo:armKey</code>, <code>bddo:armDataType</code>). A lone sibling in <code>on</code> becomes <code>bddo:dispatchOnField</code>; any other expression becomes <code>bddo:dispatchOnExpression</code>, resolved like a <code>switch</code> condition. Keys are string or integer literals and typed: the string <code>"7"</code> and the integer <code>7</code> are distinct arms. Keys are unique per table across the declaring document and every <code>extend dispatch</code> on it — including an extension targeting an imported table — but the HDL compiler does not check uniqueness across separate modules; the loader and the <code>bddo:DispatchKeyUniquenessShape</code> SHACL shape enforce it against the merged graph. <code>switch</code> remains the form for ordered, possibly overlapping guards; a field uses one or the other. <code>extend dispatch</code> at top level contributes arms to a table declared in this document or in an imported module — the mechanism for open type registries.</p>
         <p><b>Seek scope.</b> <code>@seek stream</code> on an offset-addressed field (<code>bddo:seekScope bddo:streamScope</code>) lets that one read leave the innermost bounded region; the default <code>@seek region</code> keeps the Processing Model's containment rule. <code>@seek</code> on a field with no <code>@at</code> clause is a compile-time error, since seek scope only bounds an offset-addressed read that must already exist. An item-location table inside a <code>meta</code> box that points into <code>mdat</code> is the motivating case.</p>
         <p id="import-resolution"><b>Import resolution.</b> An <code>import</code> path is resolved relative to the directory of the file that contains it, and MUST resolve <em>within an import root</em>. By default the import root is the directory of the root document being compiled, so a document can read only files in its own tree; a caller compiling a profile library whose modules import their siblings (<code>../iso-bmff/iso-bmff.hx</code> above) names the library directory as the root instead. A path that resolves outside the root &#8212; an absolute path, a <code>..</code> escape, or a symbolic link pointing out of the tree, since links are resolved to their real path <em>before</em> the check &#8212; MUST be rejected with an <code>ERROR</code> diagnostic on the <code>import</code> line; the root is inherited by every nested import, so an imported module cannot widen it. An import that names no file, cannot be read, or closes a cycle is likewise an <code>ERROR</code>. A document compiled from a string with no file context has no directory to resolve against, so every import in it is an unresolvable-import <code>ERROR</code>.</p>
-        <p class="note">Processor behaviour of the reference compiler: the library API takes <code>ImportPolicy.WithinDocumentDirectory</code> (the default), <code>ImportPolicy.Within(root)</code> or <code>ImportPolicy.Unrestricted</code>, the last intended only for a trusted caller compiling its own files. The command-line tool (<code>hdl &lt;input.hx&gt; [-o out.ttl] [--import-root &lt;dir&gt;]</code>) compiles the operator's own files and is therefore <em>unrestricted</em> unless <code>--import-root</code> is given; a service compiling documents it did not write should always confine imports to a root.</p>
+        <p class="note">Processor behaviour of the reference compiler: the library API takes <code>ImportPolicy.WithinDocumentDirectory</code> (the default), <code>ImportPolicy.Within(root)</code> or <code>ImportPolicy.Unrestricted</code>, the last intended only for a trusted caller compiling its own files. The command-line tool (<code>hdl &lt;input.hx&gt; [-o out.ttl] [--import-root &lt;dir&gt;] [--unrestricted-imports]</code>) confines imports to the input document's directory by default; <code>--import-root</code> widens the root to the directory named, and <code>--unrestricted-imports</code> removes the confinement for a trusted operator's own files. A service compiling documents it did not write should never pass the latter.</p>
         <p><b>Loading a modular description.</b> The published Turtle of a module, or of a format that imports one, is loaded as the <em>union</em> of the document's own graph and every ontology it transitively <code>owl:imports</code>. A processor handed only the importing graph cannot resolve the imported structs (an <code>alias:Name</code> type position points at an IRI that graph does not describe) or the arms an <code>extend dispatch</code> contributed to an imported table, because those arms are subjects in the importing graph whose <code>bddo:armTable</code> names a table declared elsewhere. The reference engine does not fetch imports itself: <code>ProfileLoader</code> and <code>RdfToIrCompiler</code> read exactly the graph they are given. Assembling the union is the caller's responsibility &#8212; or the HDL compiler's, whose <code>mergedModel()</code> assembles it from the <code>.hx</code> sources it just compiled.</p>
         <p>The YAML surface has no <code>imports:</code> key; a document that imports must use the text surface, and a YAML document that writes one is rejected with a diagnostic (see <a href="#conformance-section">&#167;Conformance</a>).</p>
     </section>
@@ -1039,11 +1065,11 @@ struct ImageSpatialExtents { hdr : iso:FullBoxHeader  width : u32  height : u32 
             <li>Accept both the text and YAML surfaces and parse each into the same abstract model, such that a text document and its YAML mirror compile to isomorphic RDF graphs &#8212; except for the text-only constructs <code>module</code>, <code>import</code>, <code>dispatch</code>/<code>extend dispatch</code> and <code>@seek</code>, which the YAML surface rejects with a diagnostic.</li>
             <li>Accept every text-surface document generated by the <a href="#grammar">grammar</a> (subject to the static rules stated alongside it) and report an <code>ERROR</code> diagnostic for any text-surface input it does not generate.</li>
             <li>Mint IRIs per <a href="#iri-minting">§IRI Minting</a> and bind prefixes per <a href="#prefixes">§Prefixes</a>; a CURIE whose prefix is not bound MUST yield an <code>ERROR</code> diagnostic, never a warning and never a silently emitted IRI.</li>
-            <li>Apply the <a href="#form-rule">field-form-vs-expression-form rule</a> and resolve expression identifiers per <a href="#expressions">§Expressions</a> and the <a href="../hel/index.html#name-binding">HEL name-binding rules</a>, emitting canonical HEL validated against [[?hel]]; a bare reference to an undeclared name MUST yield an <code>ERROR</code> diagnostic, and a forward reference (<a href="#expressions">§Expressions</a>) SHOULD be diagnosed as an <code>ERROR</code> at compile time wherever it is statically determinable.</li>
+            <li>Apply the <a href="#form-rule">field-form-vs-expression-form rule</a> and resolve expression identifiers per <a href="#expressions">§Expressions</a> and the <a href="../hel/index.html#name-binding">HEL name-binding rules</a>, emitting canonical HEL validated against [[?hel]]; a bare reference to an undeclared name MUST yield an <code>ERROR</code> diagnostic, and so MUST every other static error <a href="#expressions">§Expressions</a> lists, a forward reference included: the compiler knows the declaration order of every struct it compiles, so a forward reference is always statically determinable within one document.</li>
             <li>Emit BDDO/Core/DLV/hx-bundle triples whose meaning matches the mappings in this document, such that the output satisfies the SHACL shapes of the targeted vocabularies for any well-formed input.</li>
             <li>Report malformed input as source-located diagnostics and never raise an uncaught exception to its caller; input that cannot be faithfully compiled MUST yield at least one <code>ERROR</code> diagnostic.</li>
             <li>Preserve <code>raw-turtle</code> bodies verbatim in the output graph.</li>
-            <li>Report an <code>ERROR</code> for a field name or alias that is not a HEL identifier (<a href="#lexical">&#167;Lexical Structure</a>), and for every layout name that does not name a sibling (<a href="#expressions">&#167;Expressions</a>).</li>
+            <li>Report an <code>ERROR</code> for a field name or alias that is not an ASCII HEL identifier or is reserved (<code>asset</code> included; <a href="#lexical">&#167;Lexical Structure</a>), and for every layout name that does not name a sibling (<a href="#expressions">&#167;Expressions</a>).</li>
             <li>By default, confine <code>import</code> resolution to an import root (the root document's directory unless the caller names another) and reject, with an <code>ERROR</code>, any import whose real path lies outside it (<a href="#import-resolution">Import resolution</a>). A compiler MAY offer an explicit unrestricted mode for trusted callers.</li>
             <li>Report an <code>ERROR</code> diagnostic for a <a href="#versioning">language version declaration</a> naming a version it does not implement.</li>
         </ol>
