@@ -189,6 +189,7 @@ hexplain:EncodingPipelineShape a sh:NodeShape ;
 
 hexplain:EncodingStepShape a sh:NodeShape ;
     sh:targetClass hexplain:EncodingStep ;
+    sh:targetSubjectsOf hexplain:codec , hexplain:codecParameter ;
     sh:property [ sh:path hexplain:codec ; sh:nodeKind sh:IRI ; sh:class skos:Concept ;
         sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "An encoding step must name exactly one codec." ] ;
@@ -197,6 +198,8 @@ hexplain:EncodingStepShape a sh:NodeShape ;
 # A parameter without both halves says nothing.
 hexplain:CodecParameterShape a sh:NodeShape ;
     sh:targetClass hexplain:CodecParameter ;
+    sh:targetObjectsOf hexplain:codecParameter ;
+    sh:targetSubjectsOf hexplain:parameterName , hexplain:parameterValue ;
     sh:property [ sh:path hexplain:parameterName ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
     sh:property [ sh:path hexplain:parameterValue ; sh:minCount 1 ; sh:maxCount 1 ] .
 hexplain:ValueExpressionShape a sh:NodeShape ;

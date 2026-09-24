@@ -33,8 +33,8 @@ case('conflicting packed widths',layout+'ex:l dlv:cellBitWidth 4; dlv:cellBitWid
 case('unrelated metadata','ex:x dlv:cellBitWidth "verbatim".',False,'https://hexplain.io/ns/dlv#cellBitWidth')
 for prop in ['minParts','maxParts']:
     for label,value,ok in [('zero','0',True),('integer','2',True),('fraction','0.5',False),('negative','-1',False),('string','"2"',False)]:
-        case(prop+' '+label,f'ex:s a a:PartSpec; a:{prop} {value}.',ok,'' if ok else 'https://hexplain.io/ns/aspect/bundle#'+prop)
-profile='ex:profile a a:BundleProfile; a:partSpec ex:spec. ex:spec a a:PartSpec; a:required true; a:partRole ex:role. '
+        case(prop+' '+label,f'ex:s a a:PartSpec; a:pathPattern "*.x"; a:{prop} {value}.',ok,'' if ok else 'https://hexplain.io/ns/aspect/bundle#'+prop)
+profile='ex:profile a a:BundleProfile; a:partSpec ex:spec. ex:spec a a:PartSpec; a:extension ".x"; a:required true; a:partRole ex:role. '
 asset='ex:asset a a:Asset; dct:conformsTo ex:profile. '
 part='ex:asset a:hasPart ex:p. ex:p a a:Part; a:partRole ex:role. '
 case('required compound part',profile+asset+part,True)
@@ -43,8 +43,8 @@ case('nested compound scoped independently',profile+asset+part+'ex:p a a:Asset; 
 case('nested compound satisfied',profile+asset+part+'ex:p a a:Asset; dct:conformsTo ex:profile; a:hasPart ex:leaf. ex:leaf a a:Part; a:partRole ex:role.',True)
 case('primary typed part',asset+part+'ex:asset a:primaryPart ex:p.',True)
 case('literal primary',asset+'ex:asset a:primaryPart "part".',False,'https://hexplain.io/ns/aspect/bundle#primaryPart')
-case('inverted count range','ex:s a a:PartSpec; a:minParts 3; a:maxParts 2.',False)
-case('required zero contradiction','ex:s a a:PartSpec; a:required true; a:minParts 0.',False)
+case('inverted count range','ex:s a a:PartSpec; a:pathPattern "*.x"; a:minParts 3; a:maxParts 2.',False)
+case('required zero contradiction','ex:s a a:PartSpec; a:pathPattern "*.x"; a:required true; a:minParts 0.',False)
 
 
 case('primary alone satisfies required role',profile+asset+'ex:asset a:primaryPart ex:p. ex:p a a:Part; a:partRole ex:role.',True)

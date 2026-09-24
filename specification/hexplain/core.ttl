@@ -189,6 +189,7 @@ hexplain:EncodingPipelineShape a sh:NodeShape ;
 
 hexplain:EncodingStepShape a sh:NodeShape ;
     sh:targetClass hexplain:EncodingStep ;
+    sh:targetSubjectsOf hexplain:codec , hexplain:codecParameter ;
     sh:property [ sh:path hexplain:codec ; sh:nodeKind sh:IRI ; sh:class skos:Concept ;
         sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "An encoding step must name exactly one codec." ] ;
@@ -197,6 +198,8 @@ hexplain:EncodingStepShape a sh:NodeShape ;
 # A parameter without both halves says nothing.
 hexplain:CodecParameterShape a sh:NodeShape ;
     sh:targetClass hexplain:CodecParameter ;
+    sh:targetObjectsOf hexplain:codecParameter ;
+    sh:targetSubjectsOf hexplain:parameterName , hexplain:parameterValue ;
     sh:property [ sh:path hexplain:parameterName ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
     sh:property [ sh:path hexplain:parameterValue ; sh:minCount 1 ; sh:maxCount 1 ] .
 hexplain:ValueExpressionShape a sh:NodeShape ;
@@ -334,7 +337,7 @@ hexplain:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 <https://hexplain.io/ns/core#CodecParameter> <http://www.w3.org/2004/02/skos/core#definition> "A named setting of a codec. Deliberately a name/value pair rather than a fixed vocabulary: codec options are open-ended and vendor-specific, and enumerating them would date immediately."@en .
 <https://hexplain.io/ns/core#CodecParameter> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use when linking a physical format description to semantic RDF output, encoding stages or controlled-value bindings. It does not replace the byte-layout description. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/core#CodecParameterShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for hexplain:parameterName, hexplain:parameterValue. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/core#CodecParameterShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of hexplain:CodecParameter Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/core#CodecParameterShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of hexplain:CodecParameter; subjects using hexplain:parameterName, hexplain:parameterValue; objects of hexplain:codecParameter Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/core#CodecParameterShape> <http://www.w3.org/2000/01/rdf-schema#label> "Codec Parameter Shape"@en .
 <https://hexplain.io/ns/core#CodecParameterShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/core> .
 <https://hexplain.io/ns/core#EncodingPipelineShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for hexplain:hasEncodingStep. Every member of a hasEncodingStep list must be a hexplain:EncodingStep. hexplain:hasEncodingStep must point to a single rdf:List."@en .
@@ -344,7 +347,7 @@ hexplain:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 <https://hexplain.io/ns/core#EncodingStep> <http://www.w3.org/2004/02/skos/core#definition> "One stage of an encoding pipeline: a codec, plus the parameters it was applied with."@en .
 <https://hexplain.io/ns/core#EncodingStep> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use when linking a physical format description to semantic RDF output, encoding stages or controlled-value bindings. It does not replace the byte-layout description. Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links."@en .
 <https://hexplain.io/ns/core#EncodingStepShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for hexplain:codec, hexplain:codecParameter. An encoding step must name exactly one codec."@en .
-<https://hexplain.io/ns/core#EncodingStepShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of hexplain:EncodingStep Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/core#EncodingStepShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of hexplain:EncodingStep; subjects using hexplain:codec, hexplain:codecParameter Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/core#EncodingStepShape> <http://www.w3.org/2000/01/rdf-schema#label> "Encoding Step Shape"@en .
 <https://hexplain.io/ns/core#EncodingStepShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/core> .
 <https://hexplain.io/ns/core#HasConditionalClassMappingShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for hexplain:mapsToClass. Every member of a hasConditionalClassMapping list must be a hexplain:ClassMappingRule. hexplain:mapsToClass and hexplain:hasConditionalClassMapping are mutually exclusive."@en .

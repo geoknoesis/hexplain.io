@@ -39,18 +39,21 @@ def _parse(path):
 def modules():
     """ontology IRI -> (files, graph of those files)."""
     files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
-    by_dir, owner = defaultdict(list), {}
+    # A file with its own owl:Ontology is its own module (a separate shapes document such as
+    # conf/shapes.ttl declares <.../conf/shapes> and imports the vocabulary it validates); a
+    # file without one belongs to the ontology of the module directory it sits in.
+    parsed, owner = [], {}
     for f in files:
         path = ROOT / "specification" / f
         text, g = _parse(path)
-        by_dir[path.parent].append((path, text, g))
-        for ont in g.subjects(RDF.type, OWL.Ontology):
-            owner[path.parent] = ont
-    out = {}
-    for directory, entries in by_dir.items():
-        ont = owner[directory]
-        out[ont] = entries
-    return out
+        own = next(iter(g.subjects(RDF.type, OWL.Ontology)), None)
+        parsed.append((path, text, g, own))
+        if own is not None and path.stem == path.parent.name or own is not None and path.parent not in owner:
+            owner[path.parent] = own
+    out = defaultdict(list)
+    for path, text, g, own in parsed:
+        out[own if own is not None else owner[path.parent]].append((path, text, g))
+    return dict(out)
 
 
 def referenced(entries, namespaces, prefixes):
@@ -116,7 +119,8 @@ def main():
         for ns in sorted(used - reachable):
             failures.append(f"{ont} uses {ont_of[ns]} without importing it (directly or transitively)")
         for imp in sorted(whole.objects(ont, OWL.imports)):
-            if imp in ns_of and ns_of[imp] not in used:
+            # A shapes document shares its vocabulary's namespace; importing it is its use.
+            if imp in ns_of and ns_of[imp] not in used and ns_of[imp] != ns_of[ont]:
                 failures.append(f"{ont} imports {imp} but uses none of its terms")
     if failures:
         print("FAIL: owl:imports disagree with usage:\n  " + "\n  ".join(failures))

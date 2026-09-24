@@ -3,9 +3,24 @@
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann: <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/req/shapes> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/req/shapes/1.2> ;
+    owl:versionInfo "1.2" ;
+    dcterms:modified "2026-09-24"^^xsd:date ;
+    rdfs:label "Hexplain Requirements Shapes" ;
+    rdfs:comment "The SHACL shapes of the req vocabulary, published as their own document so that a consumer can load the vocabulary without its validation rules. Terms stay in the req namespace." ;
+    owl:imports <https://hexplain.io/ns/req> ;
+    dcterms:creator <https://geoknoesis.com> ;
+    vann:preferredNamespacePrefix "req" ; vann:preferredNamespaceUri "https://hexplain.io/ns/req#" .
 
 :RequirementShape a sh:NodeShape ;
     sh:targetClass req:Requirement ;
+    # Activated by its own properties too, so omitting rdf:type does not bypass it.
+    sh:targetSubjectsOf req:requirementId , req:fromStandard , req:statement , req:discrepancyType , req:appliesToVersion ;
     rdfs:label "Requirement shape" ;
     sh:property [
         sh:path req:requirementId ;
@@ -18,13 +33,15 @@
         sh:path req:fromStandard ;
         sh:datatype xsd:string ;
         sh:minCount 1 ; sh:maxCount 1 ;
-        sh:message "A Requirement needs exactly one req:fromStandard." ;
+        sh:minLength 1 ;
+        sh:message "A Requirement needs exactly one non-empty req:fromStandard." ;
     ] ;
     sh:property [
         sh:path req:statement ;
         sh:datatype xsd:string ;
         sh:minCount 1 ; sh:maxCount 1 ;
-        sh:message "A Requirement needs exactly one req:statement quoting the source text." ;
+        sh:minLength 1 ;
+        sh:message "A Requirement needs exactly one non-empty req:statement quoting the source text." ;
     ] ;
     sh:property [
         sh:path req:discrepancyType ;
@@ -45,16 +62,19 @@ req:_prefixes sh:declare
 
 :RequirementIdentityShape a sh:NodeShape ;
     sh:targetClass req:Requirement ;
+    sh:targetSubjectsOf req:requirementId ;
     rdfs:label "Requirement identity shape" ;
-    rdfs:comment "A requirement is identified by its (req:fromStandard, req:requirementId) pair: two distinct requirement resources carrying the same pair are a violation, reported on each of them." ;
+    rdfs:comment "Within one graph, a (req:fromStandard, req:requirementId) pair names at most one requirement. The pair is compared after removing leading and trailing whitespace from both values and ignoring case in req:fromStandard, so 'MIL-STD-2500C ' and 'mil-std-2500c' are the same standard; the identifier's case is significant. Two distinct requirement resources with the same normalised pair are a violation, reported on each of them. The same identifier under different standards is not." ;
     rdfs:isDefinedBy <https://hexplain.io/ns/req> ;
     sh:sparql [
-        sh:message "Another req:Requirement ({?other}) has the same req:fromStandard and req:requirementId; the pair must be unique." ;
+        sh:message "Another req:Requirement ({?other}) has the same req:fromStandard and req:requirementId (after trimming, and ignoring the standard's case); the pair must be unique." ;
         sh:prefixes req:_prefixes ;
         sh:select """SELECT $this ?other WHERE {
             $this req:fromStandard ?std ; req:requirementId ?id .
-            ?other a req:Requirement ; req:fromStandard ?std ; req:requirementId ?id .
+            ?other req:fromStandard ?std2 ; req:requirementId ?id2 .
             FILTER(!sameTerm(?other, $this))
+            FILTER(LCASE(REPLACE(STR(?std), "^[ \\t\\r\\n]+|[ \\t\\r\\n]+$", "")) = LCASE(REPLACE(STR(?std2), "^[ \\t\\r\\n]+|[ \\t\\r\\n]+$", "")))
+            FILTER(REPLACE(STR(?id), "^[ \\t\\r\\n]+|[ \\t\\r\\n]+$", "") = REPLACE(STR(?id2), "^[ \\t\\r\\n]+|[ \\t\\r\\n]+$", ""))
         }""" ;
     ] .
 
@@ -81,12 +101,14 @@ req:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/req#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for req:appliesToVersion, req:fromStandard, req:requirementId, req:statement. req:appliesToVersion takes an xsd:string literal (rdfs:range xsd:string). req:fromStandard takes an xsd:string literal (rdfs:range xsd:string). req:requirementId takes an xsd:string literal (rdfs:range xsd:string). req:statement takes an xsd:string literal (rdfs:range xsd:string)."@en .
 <https://hexplain.io/ns/req#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using req:appliesToVersion, req:fromStandard, req:requirementId, req:statement Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/req#RequirementIdentityShape> <http://www.w3.org/2004/02/skos/core#definition> "A requirement is identified by its (req:fromStandard, req:requirementId) pair: two distinct requirement resources carrying the same pair are a violation, reported on each of them."@en .
-<https://hexplain.io/ns/req#RequirementIdentityShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of req:Requirement Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/req#RequirementShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for req:appliesToVersion, req:discrepancyType, req:fromStandard, req:requirementId, req:statement. A Requirement needs exactly one non-empty req:requirementId. A Requirement needs exactly one req:discrepancyType from the controlled set. A Requirement needs exactly one req:fromStandard. A Requirement needs exactly one req:statement quoting the source text. req:appliesToVersion values are non-empty strings; omit the property to mean every version."@en .
-<https://hexplain.io/ns/req#RequirementShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of req:Requirement Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/req#RequirementIdentityShape> <http://www.w3.org/2004/02/skos/core#definition> "Within one graph, a (req:fromStandard, req:requirementId) pair names at most one requirement. The pair is compared after removing leading and trailing whitespace from both values and ignoring case in req:fromStandard, so 'MIL-STD-2500C ' and 'mil-std-2500c' are the same standard; the identifier's case is significant. Two distinct requirement resources with the same normalised pair are a violation, reported on each of them. The same identifier under different standards is not."@en .
+<https://hexplain.io/ns/req#RequirementIdentityShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of req:Requirement; subjects using req:requirementId Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/req#RequirementShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for req:appliesToVersion, req:discrepancyType, req:fromStandard, req:requirementId, req:statement. A Requirement needs exactly one non-empty req:fromStandard. A Requirement needs exactly one non-empty req:requirementId. A Requirement needs exactly one non-empty req:statement quoting the source text. A Requirement needs exactly one req:discrepancyType from the controlled set. req:appliesToVersion values are non-empty strings; omit the property to mean every version."@en .
+<https://hexplain.io/ns/req#RequirementShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of req:Requirement; subjects using req:appliesToVersion, req:discrepancyType, req:fromStandard, req:requirementId, req:statement Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/req#RequirementShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/req> .
 <https://hexplain.io/ns/req#_prefixes> <http://www.w3.org/2004/02/skos/core#definition> "Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data."@en .
 <https://hexplain.io/ns/req#_prefixes> <http://www.w3.org/2004/02/skos/core#scopeNote> "Used by named SHACL SPARQL constraints/rules in this module. Not intended for instance-data assertions."@en .
 <https://hexplain.io/ns/req#_prefixes> <http://www.w3.org/2000/01/rdf-schema#label> "prefixes"@en .
 <https://hexplain.io/ns/req#_prefixes> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/req> .
+<https://hexplain.io/ns/req/shapes> <http://www.w3.org/2004/02/skos/core#definition> "The SHACL shapes of the req vocabulary, published as their own document so that a consumer can load the vocabulary without its validation rules. Terms stay in the req namespace."@en .
+<https://hexplain.io/ns/req/shapes> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for attributable requirements from a named standard or policy, independent of a particular executable validation rule."@en .

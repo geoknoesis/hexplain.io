@@ -18,8 +18,8 @@ def cases():
     for prop in ['minParts','maxParts']:
         for datatype in names:
             if datatype=='integer':continue
-            add(prop+' '+datatype,'specification/aspect/bundle/bundle.ttl',PREFIX+f'ex:spec a a:PartSpec; a:{prop} "1"^^xsd:{datatype}.')
-        add(prop+' cardinality boundary','specification/aspect/bundle/bundle.ttl',PREFIX+f'ex:spec a a:PartSpec; a:{prop} 1,2.',False,'https://hexplain.io/ns/aspect/bundle#'+prop)
+            add(prop+' '+datatype,'specification/aspect/bundle/bundle.ttl',PREFIX+f'ex:spec a a:PartSpec; a:pathPattern "*.x"; a:{prop} "1"^^xsd:{datatype}.')
+        add(prop+' cardinality boundary','specification/aspect/bundle/bundle.ttl',PREFIX+f'ex:spec a a:PartSpec; a:pathPattern "*.x"; a:{prop} 1,2.',False,'https://hexplain.io/ns/aspect/bundle#'+prop)
     for prop in ['sourcePort','destinationPort','sequenceNumber','acknowledgmentNumber']:
         for datatype in names:
             if datatype in ('integer','unsignedShort'):continue

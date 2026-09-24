@@ -1,0 +1,40 @@
+# expect-only
+# expect: ex:Loose abnd:BundleProfileShape sh:ClassConstraintComponent
+# expect: ex:Unlocated abnd:PartSpecShape sh:OrConstraintComponent
+# expect: ex:NoDot abnd:PartSpecShape sh:PatternConstraintComponent
+# expect: ex:Escapes abnd:PartSpecShape sh:SPARQLConstraintComponent
+# expect: ex:Absolute abnd:PartSpecShape sh:SPARQLConstraintComponent
+# expect: ex:TwoPrimaries abnd:BundleProfileShape sh:SPARQLConstraintComponent
+# expect: ex:SameName abnd:BundleProfileShape sh:SPARQLConstraintComponent
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rpr:  <https://hexplain.io/ns/register/part-role#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <https://hexplain.io/test/profile-rules-invalid#> .
+@prefix a:    <https://hexplain.io/test/profile-rules-invalid/a#> .
+@prefix b:    <https://hexplain.io/test/profile-rules-invalid/b#> .
+
+# Untyped specs: abnd:partSpec activates the part-spec shape on its objects.
+ex:Loose a abnd:BundleProfile ;
+    abnd:partSpec ex:Unlocated , ex:NoDot , ex:Escapes , ex:Absolute .
+# Neither an extension nor a pattern: it matches no file.
+ex:Unlocated abnd:partRole rpr:Payload .
+# "dbf" without its dot would also match "roads_dbf".
+ex:NoDot abnd:extension "dbf" ; abnd:partRole rpr:AttributeTable .
+# A pattern may not climb out of the asset root.
+ex:Escapes abnd:pathPattern "../other/*.xml" ; abnd:partRole rpr:Metadata .
+ex:Absolute abnd:pathPattern "/etc/*.conf" ; abnd:partRole rpr:Metadata .
+
+# Two primaries.
+ex:TwoPrimaries a abnd:BundleProfile ;
+    abnd:partSpec ex:P1 , ex:P2 .
+ex:P1 a abnd:PartSpec ; abnd:extension ".shp" ; abnd:partRole rpr:GeometryCarrier ; abnd:primary true .
+ex:P2 a abnd:PartSpec ; abnd:extension ".dbf" ; abnd:partRole rpr:AttributeTable ; abnd:primary true .
+
+# Two described parts whose structs share the local name Header: asset.Header is ambiguous.
+a:Header a bddo:Struct .
+b:Header a bddo:Struct .
+ex:SameName a abnd:BundleProfile ;
+    abnd:partSpec ex:H1 , ex:H2 .
+ex:H1 a abnd:PartSpec ; abnd:extension ".hdr" ; abnd:partRole rpr:Metadata ; abnd:describedBy a:Header .
+ex:H2 a abnd:PartSpec ; abnd:extension ".aux" ; abnd:partRole rpr:Metadata ; abnd:describedBy b:Header .

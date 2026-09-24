@@ -1,0 +1,78 @@
+# expect-only
+# expect: ex:PA-BadCategory conf:ParseAttributionShape sh:InConstraintComponent
+# expect: ex:PA-Twice1 conf:ParseAttributionTargetShape sh:SPARQLConstraintComponent
+# expect: ex:PA-Twice2 conf:ParseAttributionTargetShape sh:SPARQLConstraintComponent
+# expect: ex:PA-TwoRequirements conf:ParseAttributionTargetShape sh:MaxCountConstraintComponent
+# expect: ex:F-ParseWithConstraint conf:FindingShape sh:OrConstraintComponent
+# expect: ex:F-Miscited conf:FindingAttributionShape sh:SPARQLConstraintComponent
+# expect: ex:F-Untyped conf:FindingShape sh:OrConstraintComponent
+# expect: ex:C-Untyped conf:ConstraintShape sh:MinCountConstraintComponent
+# expect: ex:Run-Twice conf:RunShape sh:SPARQLConstraintComponent
+# expect: ex:O-BadValue conf:OutcomeShape sh:InConstraintComponent
+# expect: ex:R-Untyped req:RequirementShape sh:MinCountConstraintComponent
+@prefix conf:     <https://hexplain.io/ns/conf#> .
+@prefix req:      <https://hexplain.io/ns/req#> .
+@prefix bddo:     <https://hexplain.io/ns/bddo#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix ex:       <https://example.org/conf-run-bad#> .
+
+ex:Header a bddo:Struct .
+ex:R1 a req:Requirement ;
+    req:requirementId "R1" ; req:fromStandard "Example Standard 1.0" ;
+    req:statement "The magic shall be HX." ; req:discrepancyType req:Syntactic .
+ex:R2 a req:Requirement ;
+    req:requirementId "R2" ; req:fromStandard "Example Standard 1.0" ;
+    req:statement "The version shall be 1." ; req:discrepancyType req:Syntactic .
+ex:C1 a conf:Constraint ;
+    conf:scope ex:Header ; conf:assertion "magic == 'HX'" ;
+    conf:satisfies ex:R1 ; conf:message "Bad magic {value}." .
+
+# Not a Processing Model category name.
+ex:PA-BadCategory a conf:ParseAttribution ;
+    conf:errorCategory "Overflow" ;
+    conf:satisfies ex:R1 .
+
+# One category attributed twice: which requirement a Bounds error breaks is ambiguous.
+ex:PA-Twice1 a conf:ParseAttribution ; conf:errorCategory "Bounds" ; conf:satisfies ex:R1 .
+ex:PA-Twice2 a conf:ParseAttribution ; conf:errorCategory "Bounds" ; conf:satisfies ex:R2 .
+
+# An attribution names exactly one requirement.
+ex:PA-TwoRequirements a conf:ParseAttribution ;
+    conf:errorCategory "Checksum" ;
+    conf:satisfies ex:R1 , ex:R2 .
+
+# A Parse finding names no constraint.
+ex:F-ParseWithConstraint a conf:Finding ;
+    conf:findingKind conf:Parse ;
+    conf:errorCategory "Validation" ;
+    conf:findingConstraint ex:C1 ;
+    conf:findingRequirement ex:R1 ;
+    conf:findingMessage "Fixed value mismatch." .
+
+# C1 cites R1 only, so a finding of C1 cannot be attributed to R2.
+ex:F-Miscited a conf:Finding ;
+    conf:findingKind conf:Violation ;
+    conf:findingConstraint ex:C1 ;
+    conf:findingRequirement ex:R1 , ex:R2 ;
+    conf:findingMessage "Bad magic XX." .
+
+# Untyped, and a Violation with neither constraint nor requirement: the finding
+# properties activate the shape without rdf:type.
+ex:F-Untyped conf:findingKind conf:Violation ;
+    conf:findingMessage "Something is wrong." .
+
+# Untyped constraint without a message: conf:assertion activates the constraint shape.
+ex:C-Untyped conf:scope ex:Header ; conf:assertion "true" ; conf:satisfies ex:R1 .
+
+# Two outcomes for one requirement.
+ex:Run-Twice a conf:Run ;
+    conf:outcome [ conf:outcomeRequirement ex:R1 ; conf:outcomeValue conf:Evaluated ] ,
+                 [ conf:outcomeRequirement ex:R1 ; conf:outcomeValue conf:NotExercised ] .
+
+# A finding kind is not an evaluation outcome.
+ex:Run-BadValue a conf:Run ; conf:outcome ex:O-BadValue .
+ex:O-BadValue conf:outcomeRequirement ex:R2 ; conf:outcomeValue conf:Violation .
+
+# Untyped requirement without a statement: req:requirementId activates the requirement shape.
+ex:R-Untyped req:requirementId "R3" ; req:fromStandard "Example Standard 1.0" ;
+    req:discrepancyType req:Semantic .
