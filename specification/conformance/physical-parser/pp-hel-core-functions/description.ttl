@@ -1,0 +1,28 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/pp-hel-core-functions#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:name ex:vals ex:sz ex:ln ex:cn ex:tr ex:sb ex:sa ex:none ex:ss ex:cc ex:ti ex:tf ) .
+ex:name a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:utf8 ; bddo:terminator "00"^^xsd:hexBinary .
+ex:vals a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount 3 .
+ex:sz a bddo:Field ; bddo:valueFromExpression "sizeof(name)" .
+ex:ln a bddo:Field ; bddo:valueFromExpression "len(vals)" .
+ex:cn a bddo:Field ; bddo:valueFromExpression "count(name)" .
+ex:tr a bddo:Field ; bddo:valueFromExpression "trim('  x ')" .
+ex:sb a bddo:Field ; bddo:valueFromExpression "substringBefore('a,b', ',')" .
+ex:sa a bddo:Field ; bddo:valueFromExpression "substringAfter('a,b', ',')" .
+ex:none a bddo:Field ; bddo:valueFromExpression "substringBefore('ab', ',')" .
+ex:ss a bddo:Field ; bddo:valueFromExpression "substring('hello', 1, 3)" .
+ex:cc a bddo:Field ; bddo:valueFromExpression "concat('<', name, '>')" .
+ex:ti a bddo:Field ; bddo:valueFromExpression "toNumber('10')" .
+ex:tf a bddo:Field ; bddo:valueFromExpression "toNumber('-1.5e1')" .

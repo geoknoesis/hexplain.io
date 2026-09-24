@@ -1,0 +1,30 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/pp-hel-bytes-vs-string#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:tag ex:tag2 ex:acc ex:lat ex:bad ex:pad ex:eq ex:ne ex:utf8 ex:latin ex:malformed ex:same ex:n ex:trimmed ex:joined ) .
+ex:tag a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 .
+ex:tag2 a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 .
+ex:acc a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 2 .
+ex:lat a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 1 ; bddo:encoding bddo:latin1 .
+ex:bad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 1 .
+ex:pad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 .
+ex:eq a bddo:Field ; bddo:valueFromExpression "tag == 'IHDR'" .
+ex:ne a bddo:Field ; bddo:valueFromExpression "tag != 'IEND'" .
+ex:utf8 a bddo:Field ; bddo:valueFromExpression "acc == '\\u00e9'" .
+ex:latin a bddo:Field ; bddo:valueFromExpression "lat == '\\u00e9'" .
+ex:malformed a bddo:Field ; bddo:valueFromExpression "bad == '\\uFFFD'" .
+ex:same a bddo:Field ; bddo:valueFromExpression "tag == tag2" .
+ex:n a bddo:Field ; bddo:valueFromExpression "len(acc)" .
+ex:trimmed a bddo:Field ; bddo:valueFromExpression "trim(pad)" .
+ex:joined a bddo:Field ; bddo:valueFromExpression "concat(tag, '!')" .

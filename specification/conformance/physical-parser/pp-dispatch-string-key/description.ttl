@@ -1,0 +1,27 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/pp-dispatch-string-key#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:tag ex:body ) .
+ex:tag a bddo:Field ; bddo:dataType bddo:string ; bddo:size 2 ; bddo:encoding bddo:ascii .
+ex:body a bddo:Field ; bddo:hasDispatchTable ex:Table .
+ex:Table a bddo:DispatchTable ; bddo:dispatchOnField ex:tag .
+ex:armA a bddo:DispatchArm ; bddo:armTable ex:Table ; bddo:armKey "aa" ; bddo:armDataType ex:A .
+ex:armB a bddo:DispatchArm ; bddo:armTable ex:Table ; bddo:armKey "bb" ; bddo:armDataType ex:B .
+
+ex:A a bddo:Struct ; bddo:hasField ( ex:a ) .
+ex:a a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:B a bddo:Struct ; bddo:hasField ( ex:b ) .
+ex:b a bddo:Field ; bddo:dataType bddo:uint16 .
+ex:C a bddo:Struct ; bddo:hasField ( ex:c ) .
+ex:c a bddo:Field ; bddo:dataType bddo:string ; bddo:size 2 ; bddo:encoding bddo:ascii .
