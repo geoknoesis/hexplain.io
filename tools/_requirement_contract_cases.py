@@ -57,6 +57,9 @@ def cases():
     finding_case('findingRequirement missing', {**finding, 'findingRequirement': None}, False)
     parse = {'findingKind': 'c:Parse', 'errorCategory': '"Bounds"', 'findingMessage': '"Truncated"'}
     finding_case('parse without requirement', parse, True)
+    finding_case('severity stated', {**finding, 'severity': 'sh:Warning'}, True)
+    finding_case('severity unknown', {**finding, 'severity': 'c:Violation'}, False, 'severity')
+    finding_case('severity twice', {**finding, 'severity': 'sh:Warning, sh:Info'}, False, 'severity')
     finding_case('parse with requirement', {**parse, 'findingRequirement': 'ex:req'}, True)
     finding_case('parse with constraint', {**parse, 'findingConstraint': 'ex:con'}, False)
     finding_case('parse without category', {**parse, 'errorCategory': None}, False)
@@ -92,6 +95,12 @@ def cases():
             ('outcome without value', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req ] . ', False, 'outcomeValue'),
             ('outcome wrong value', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req ; c:outcomeValue c:Parse ] . ', False, 'outcomeValue'),
             ('outcome without requirement', 'ex:run a c:Run ; c:outcome [ c:outcomeValue c:Evaluated ] . ', False, 'outcomeRequirement'),
+            ('outcome two values', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req ; c:outcomeValue c:Evaluated , c:Errored ] . ', False, 'outcomeValue'),
+            ('outcome two requirements', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req , ex:req2 ; c:outcomeValue c:Evaluated ] . ', False, 'outcomeRequirement'),
+            ('outcome untyped requirement', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:untyped ; c:outcomeValue c:Evaluated ] . ', False, 'outcomeRequirement'),
+            ('run outcome literal', 'ex:run a c:Run ; c:outcome "evaluated" . ', False, 'outcome'),
+            ('attribution untyped requirement', 'ex:pa a c:ParseAttribution ; c:errorCategory "Sync" ; c:satisfies ex:untyped . ', False, 'satisfies'),
+            ('attribution two categories', 'ex:pa a c:ParseAttribution ; c:errorCategory "Sync" , "Bounds" ; c:satisfies ex:req . ', False, 'errorCategory'),
             ('run two outcomes for one requirement', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req ; c:outcomeValue c:Evaluated ] , '
                 '[ c:outcomeRequirement ex:req ; c:outcomeValue c:Errored ] . ', False, '')]:
         rows.append(dict(name='conf '+name, module='specification/conf/shapes.ttl', data=conf+body,

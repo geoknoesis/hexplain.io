@@ -5769,6 +5769,30 @@
     "allowWarnings": true
   },
   {
+    "name": "conf finding severity stated",
+    "module": "specification/conf/shapes.ttl",
+    "data": "@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . @prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . @prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . ex:req2 a r:Requirement . ex:field a <https://hexplain.io/ns/bddo#Field> . ex:con a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:con2 a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:fd a c:Finding . ex:fd c:findingKind c:Violation . ex:fd c:findingRequirement ex:req . ex:fd c:findingConstraint ex:con . ex:fd c:focusNode ex:node . ex:fd c:findingMessage \"Header missing\" . ex:fd c:severity sh:Warning . ",
+    "expected": true,
+    "path": "",
+    "allowWarnings": true
+  },
+  {
+    "name": "conf finding severity unknown",
+    "module": "specification/conf/shapes.ttl",
+    "data": "@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . @prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . @prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . ex:req2 a r:Requirement . ex:field a <https://hexplain.io/ns/bddo#Field> . ex:con a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:con2 a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:fd a c:Finding . ex:fd c:findingKind c:Violation . ex:fd c:findingRequirement ex:req . ex:fd c:findingConstraint ex:con . ex:fd c:focusNode ex:node . ex:fd c:findingMessage \"Header missing\" . ex:fd c:severity c:Violation . ",
+    "expected": false,
+    "path": "https://hexplain.io/ns/conf#severity",
+    "allowWarnings": true
+  },
+  {
+    "name": "conf finding severity twice",
+    "module": "specification/conf/shapes.ttl",
+    "data": "@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . @prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . @prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . ex:req2 a r:Requirement . ex:field a <https://hexplain.io/ns/bddo#Field> . ex:con a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:con2 a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:fd a c:Finding . ex:fd c:findingKind c:Violation . ex:fd c:findingRequirement ex:req . ex:fd c:findingConstraint ex:con . ex:fd c:focusNode ex:node . ex:fd c:findingMessage \"Header missing\" . ex:fd c:severity sh:Warning, sh:Info . ",
+    "expected": false,
+    "path": "https://hexplain.io/ns/conf#severity",
+    "allowWarnings": true
+  },
+  {
     "name": "conf finding parse with requirement",
     "module": "specification/conf/shapes.ttl",
     "data": "@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . @prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . @prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . ex:req2 a r:Requirement . ex:field a <https://hexplain.io/ns/bddo#Field> . ex:con a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:con2 a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:fd a c:Finding . ex:fd c:findingKind c:Parse . ex:fd c:errorCategory \"Bounds\" . ex:fd c:findingMessage \"Truncated\" . ex:fd c:findingRequirement ex:req . ",
@@ -5982,6 +6006,54 @@
     "data": "@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . @prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . @prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . ex:req2 a r:Requirement . ex:field a <https://hexplain.io/ns/bddo#Field> . ex:con a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:con2 a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:run a c:Run ; c:outcome [ c:outcomeValue c:Evaluated ] . ",
     "expected": false,
     "path": "https://hexplain.io/ns/conf#outcomeRequirement",
+    "allowWarnings": true
+  },
+  {
+    "name": "conf outcome two values",
+    "module": "specification/conf/shapes.ttl",
+    "data": "@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . @prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . @prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . ex:req2 a r:Requirement . ex:field a <https://hexplain.io/ns/bddo#Field> . ex:con a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:con2 a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req ; c:outcomeValue c:Evaluated , c:Errored ] . ",
+    "expected": false,
+    "path": "https://hexplain.io/ns/conf#outcomeValue",
+    "allowWarnings": true
+  },
+  {
+    "name": "conf outcome two requirements",
+    "module": "specification/conf/shapes.ttl",
+    "data": "@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . @prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . @prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . ex:req2 a r:Requirement . ex:field a <https://hexplain.io/ns/bddo#Field> . ex:con a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:con2 a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req , ex:req2 ; c:outcomeValue c:Evaluated ] . ",
+    "expected": false,
+    "path": "https://hexplain.io/ns/conf#outcomeRequirement",
+    "allowWarnings": true
+  },
+  {
+    "name": "conf outcome untyped requirement",
+    "module": "specification/conf/shapes.ttl",
+    "data": "@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . @prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . @prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . ex:req2 a r:Requirement . ex:field a <https://hexplain.io/ns/bddo#Field> . ex:con a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:con2 a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:untyped ; c:outcomeValue c:Evaluated ] . ",
+    "expected": false,
+    "path": "https://hexplain.io/ns/conf#outcomeRequirement",
+    "allowWarnings": true
+  },
+  {
+    "name": "conf run outcome literal",
+    "module": "specification/conf/shapes.ttl",
+    "data": "@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . @prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . @prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . ex:req2 a r:Requirement . ex:field a <https://hexplain.io/ns/bddo#Field> . ex:con a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:con2 a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:run a c:Run ; c:outcome \"evaluated\" . ",
+    "expected": false,
+    "path": "https://hexplain.io/ns/conf#outcome",
+    "allowWarnings": true
+  },
+  {
+    "name": "conf attribution untyped requirement",
+    "module": "specification/conf/shapes.ttl",
+    "data": "@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . @prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . @prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . ex:req2 a r:Requirement . ex:field a <https://hexplain.io/ns/bddo#Field> . ex:con a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:con2 a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:pa a c:ParseAttribution ; c:errorCategory \"Sync\" ; c:satisfies ex:untyped . ",
+    "expected": false,
+    "path": "https://hexplain.io/ns/conf#satisfies",
+    "allowWarnings": true
+  },
+  {
+    "name": "conf attribution two categories",
+    "module": "specification/conf/shapes.ttl",
+    "data": "@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . @prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . @prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . ex:req2 a r:Requirement . ex:field a <https://hexplain.io/ns/bddo#Field> . ex:con a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:con2 a c:Constraint ; c:scope ex:field ; c:assertion \"true\" ; c:satisfies ex:req ; c:message \"m\" . ex:pa a c:ParseAttribution ; c:errorCategory \"Sync\" , \"Bounds\" ; c:satisfies ex:req . ",
+    "expected": false,
+    "path": "https://hexplain.io/ns/conf#errorCategory",
     "allowWarnings": true
   },
   {
@@ -6638,6 +6710,62 @@
     "expected": false,
     "path": "https://hexplain.io/ns/core#codecParameter",
     "data": "@prefix c:<https://hexplain.io/ns/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix d:<https://hexplain.io/ns/dlv#> . @prefix ex:<urn:core-contract:> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix owl:<http://www.w3.org/2002/07/owl#> .\n@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nex:codec a skos:Concept . ex:codec2 a skos:Concept . ex:layout a d:DataLayout . ex:layout2 a d:DataLayout .\nex:step a c:EncodingStep; c:codec ex:codec . ex:step2 a c:EncodingStep; c:codec ex:codec2 .\nex:param a c:CodecParameter; c:parameterName \"level\"; c:parameterValue 1 .\nex:f a c:EncodingStep; c:codec ex:codec; c:codecParameter ex:untyped.",
+    "allowWarnings": true
+  },
+  {
+    "name": "core status valid",
+    "module": "specification/hexplain/core.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix c:<https://hexplain.io/ns/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix d:<https://hexplain.io/ns/dlv#> . @prefix ex:<urn:core-contract:> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix owl:<http://www.w3.org/2002/07/owl#> .\n@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nex:codec a skos:Concept . ex:codec2 a skos:Concept . ex:layout a d:DataLayout . ex:layout2 a d:DataLayout .\nex:step a c:EncodingStep; c:codec ex:codec . ex:step2 a c:EncodingStep; c:codec ex:codec2 .\nex:param a c:CodecParameter; c:parameterName \"level\"; c:parameterValue 1 .\nex:f c:status c:statusValid.",
+    "allowWarnings": true
+  },
+  {
+    "name": "core status deprecated",
+    "module": "specification/hexplain/core.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix c:<https://hexplain.io/ns/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix d:<https://hexplain.io/ns/dlv#> . @prefix ex:<urn:core-contract:> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix owl:<http://www.w3.org/2002/07/owl#> .\n@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nex:codec a skos:Concept . ex:codec2 a skos:Concept . ex:layout a d:DataLayout . ex:layout2 a d:DataLayout .\nex:step a c:EncodingStep; c:codec ex:codec . ex:step2 a c:EncodingStep; c:codec ex:codec2 .\nex:param a c:CodecParameter; c:parameterName \"level\"; c:parameterValue 1 .\nex:f c:status c:statusDeprecated; owl:deprecated true.",
+    "allowWarnings": true
+  },
+  {
+    "name": "core status superseded",
+    "module": "specification/hexplain/core.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix c:<https://hexplain.io/ns/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix d:<https://hexplain.io/ns/dlv#> . @prefix ex:<urn:core-contract:> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix owl:<http://www.w3.org/2002/07/owl#> .\n@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nex:codec a skos:Concept . ex:codec2 a skos:Concept . ex:layout a d:DataLayout . ex:layout2 a d:DataLayout .\nex:step a c:EncodingStep; c:codec ex:codec . ex:step2 a c:EncodingStep; c:codec ex:codec2 .\nex:param a c:CodecParameter; c:parameterName \"level\"; c:parameterValue 1 .\nex:f c:status c:statusSuperseded; owl:deprecated true; <http://purl.org/dc/terms/isReplacedBy> ex:g.",
+    "allowWarnings": true
+  },
+  {
+    "name": "core status unknown value",
+    "module": "specification/hexplain/core.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/core#status",
+    "data": "@prefix c:<https://hexplain.io/ns/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix d:<https://hexplain.io/ns/dlv#> . @prefix ex:<urn:core-contract:> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix owl:<http://www.w3.org/2002/07/owl#> .\n@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nex:codec a skos:Concept . ex:codec2 a skos:Concept . ex:layout a d:DataLayout . ex:layout2 a d:DataLayout .\nex:step a c:EncodingStep; c:codec ex:codec . ex:step2 a c:EncodingStep; c:codec ex:codec2 .\nex:param a c:CodecParameter; c:parameterName \"level\"; c:parameterValue 1 .\nex:f c:status ex:retired.",
+    "allowWarnings": true
+  },
+  {
+    "name": "core status twice",
+    "module": "specification/hexplain/core.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/core#status",
+    "data": "@prefix c:<https://hexplain.io/ns/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix d:<https://hexplain.io/ns/dlv#> . @prefix ex:<urn:core-contract:> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix owl:<http://www.w3.org/2002/07/owl#> .\n@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nex:codec a skos:Concept . ex:codec2 a skos:Concept . ex:layout a d:DataLayout . ex:layout2 a d:DataLayout .\nex:step a c:EncodingStep; c:codec ex:codec . ex:step2 a c:EncodingStep; c:codec ex:codec2 .\nex:param a c:CodecParameter; c:parameterName \"level\"; c:parameterValue 1 .\nex:f c:status c:statusValid, c:statusDeprecated; owl:deprecated true.",
+    "allowWarnings": true
+  },
+  {
+    "name": "core deprecated status without owl:deprecated",
+    "module": "specification/hexplain/core.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix c:<https://hexplain.io/ns/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix d:<https://hexplain.io/ns/dlv#> . @prefix ex:<urn:core-contract:> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix owl:<http://www.w3.org/2002/07/owl#> .\n@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nex:codec a skos:Concept . ex:codec2 a skos:Concept . ex:layout a d:DataLayout . ex:layout2 a d:DataLayout .\nex:step a c:EncodingStep; c:codec ex:codec . ex:step2 a c:EncodingStep; c:codec ex:codec2 .\nex:param a c:CodecParameter; c:parameterName \"level\"; c:parameterValue 1 .\nex:f c:status c:statusDeprecated.",
+    "allowWarnings": true
+  },
+  {
+    "name": "core superseded status without successor",
+    "module": "specification/hexplain/core.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix c:<https://hexplain.io/ns/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix d:<https://hexplain.io/ns/dlv#> . @prefix ex:<urn:core-contract:> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix owl:<http://www.w3.org/2002/07/owl#> .\n@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nex:codec a skos:Concept . ex:codec2 a skos:Concept . ex:layout a d:DataLayout . ex:layout2 a d:DataLayout .\nex:step a c:EncodingStep; c:codec ex:codec . ex:step2 a c:EncodingStep; c:codec ex:codec2 .\nex:param a c:CodecParameter; c:parameterName \"level\"; c:parameterValue 1 .\nex:f c:status c:statusSuperseded; owl:deprecated true.",
     "allowWarnings": true
   },
   {
@@ -8430,6 +8558,38 @@
     "expected": false,
     "path": "https://hexplain.io/ns/aspect/pointcloud#pointDataLayout",
     "data": "@prefix ex:<urn:remaining-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix enc:<https://hexplain.io/ns/aspect/encoding#> . @prefix color:<https://hexplain.io/ns/aspect/color#> .\nex:a a skos:Concept . ex:b a skos:Concept . ex:s a b:Struct . ex:s2 a b:Struct .\n@prefix p:<https://hexplain.io/ns/geo#> . ex:f a p:PointCloud. ex:f <https://hexplain.io/ns/aspect/pointcloud#pointCount> 1. ex:f <https://hexplain.io/ns/aspect/pointcloud#pointDataLayout> ex:s,ex:s2.",
+    "allowWarnings": true
+  },
+  {
+    "name": "remaining document creator <urn:agent:ada>",
+    "module": "specification/dfv/docfont.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:remaining-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix enc:<https://hexplain.io/ns/aspect/encoding#> . @prefix color:<https://hexplain.io/ns/aspect/color#> .\nex:a a skos:Concept . ex:b a skos:Concept . ex:s a b:Struct . ex:s2 a b:Struct .\n@prefix p:<https://hexplain.io/ns/docfont#> . ex:f a p:Document; <http://purl.org/dc/terms/creator> <urn:agent:ada>.",
+    "allowWarnings": true
+  },
+  {
+    "name": "remaining document creator _:agent",
+    "module": "specification/dfv/docfont.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:remaining-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix enc:<https://hexplain.io/ns/aspect/encoding#> . @prefix color:<https://hexplain.io/ns/aspect/color#> .\nex:a a skos:Concept . ex:b a skos:Concept . ex:s a b:Struct . ex:s2 a b:Struct .\n@prefix p:<https://hexplain.io/ns/docfont#> . ex:f a p:Document; <http://purl.org/dc/terms/creator> _:agent.",
+    "allowWarnings": true
+  },
+  {
+    "name": "remaining document creator \"Ada\", <urn:agent:ada>",
+    "module": "specification/dfv/docfont.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:remaining-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix enc:<https://hexplain.io/ns/aspect/encoding#> . @prefix color:<https://hexplain.io/ns/aspect/color#> .\nex:a a skos:Concept . ex:b a skos:Concept . ex:s a b:Struct . ex:s2 a b:Struct .\n@prefix p:<https://hexplain.io/ns/docfont#> . ex:f a p:Document; <http://purl.org/dc/terms/creator> \"Ada\", <urn:agent:ada>.",
+    "allowWarnings": true
+  },
+  {
+    "name": "remaining document creator 1",
+    "module": "specification/dfv/docfont.ttl",
+    "expected": false,
+    "path": "http://purl.org/dc/terms/creator",
+    "data": "@prefix ex:<urn:remaining-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix enc:<https://hexplain.io/ns/aspect/encoding#> . @prefix color:<https://hexplain.io/ns/aspect/color#> .\nex:a a skos:Concept . ex:b a skos:Concept . ex:s a b:Struct . ex:s2 a b:Struct .\n@prefix p:<https://hexplain.io/ns/docfont#> . ex:f a p:Document; <http://purl.org/dc/terms/creator> 1.",
     "allowWarnings": true
   },
   {

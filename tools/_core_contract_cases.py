@@ -28,6 +28,15 @@ def cases():
     add('untyped layout owner','ex:f c:hasDataLayout ex:layout.',False)
     add('invalid pipeline member','ex:f c:hasEncodingStep (ex:untyped).',False)
     add('invalid codec parameter','ex:f a c:EncodingStep; c:codec ex:codec; c:codecParameter ex:untyped.',False,'codecParameter')
+    # Register lifecycle: a status from the closed set, at most one; a retired entry is
+    # owl:deprecated, and a superseded one names its successor.
+    add('status valid','ex:f c:status c:statusValid.',True)
+    add('status deprecated','ex:f c:status c:statusDeprecated; owl:deprecated true.',True)
+    add('status superseded','ex:f c:status c:statusSuperseded; owl:deprecated true; <http://purl.org/dc/terms/isReplacedBy> ex:g.',True)
+    add('status unknown value','ex:f c:status ex:retired.',False,'status')
+    add('status twice','ex:f c:status c:statusValid, c:statusDeprecated; owl:deprecated true.',False,'status')
+    add('deprecated status without owl:deprecated','ex:f c:status c:statusDeprecated.',False)
+    add('superseded status without successor','ex:f c:status c:statusSuperseded; owl:deprecated true.',False)
     add('typed codec parameter','ex:f a c:EncodingStep; c:codec ex:codec; c:codecParameter ex:param.',True)
     for cls in ['rdf:Property','owl:DatatypeProperty','owl:ObjectProperty','owl:AnnotationProperty']:
         add('mapping '+cls,'ex:f a b:Field; c:mapsToProperty ex:p. ex:p a '+cls+'.',True)
