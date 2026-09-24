@@ -4,6 +4,52 @@ Changes to the Hexplain specification family. Version numbers are per module
 (`owl:versionInfo` / `owl:versionIRI`); the family has no single version. Local release
 snapshots are recorded under `releases/`.
 
+## Unreleased (changes since snapshot 2026-09-24.2)
+
+### Processor conformance suite
+
+`specification/conformance/` is an executable, portable conformance suite for the five
+conformance classes of the Processing Model: 320 cases (239 Physical Parser, 15 Semantic
+Emitter, 13 Bundle Processor, 36 HDL Compiler, 17 Conformance Evaluator), each a description,
+an input and the parsed tree, graph, error category, compiled graph or conformance report the
+specification requires. The expected outputs are read off the specification text. The cases
+are generated from `tools/conformance/` (binary inputs built in Python, so every byte is
+reviewable); `specification/conformance/index.html` defines the case format and the canonical
+forms outputs are compared in, and reports requirement coverage. The `pp-hel-` cases carry the
+parse-context HEL behaviour the vector format cannot express (undefined names after the first
+path step, forward references, Bytes values, uint64 values above 2^63-1, sizeof, stream
+metadata, the asset root outside an asset); the header of `validation/test/hel-vectors.tsv`
+now points to them.
+
+Every RFC 2119 requirement sentence of the Processing Model, HEL, HDL and the conformance
+sections of conf and req now carries a stable anchor (`req-pm-…`, `req-hel-…`, `req-hdl-…`,
+`req-ce-conf-…`, `req-ce-req-…`), and the items of a list or table introduced by a
+"…MUST:" sentence get their own. `specification/conformance/requirements.json` registers each
+with a hash of its text. New gates: `test_requirement_ids` (every requirement anchored once,
+registry current, an identifier that changes text or disappears is named here) and
+`test_conformance_suite` (suite generated, manifests complete, every cited requirement and
+section exists, exactly one expected artifact per case, coverage page current).
+
+### Processing Model clarifications found while deriving the cases
+
+- `bddo:syncOnMarker`: the cursor advances *past* the marker; the marker is consumed and the
+  struct begins after it (the text said "to the next occurrence", which read either way).
+- Bit fields: every bit keeps its significance; under `bddo:LSBFirst` the first bit taken is
+  the least significant bit of the value (the text said values are assembled
+  most-significant-bit first, which contradicted every LSB-first format it exists for).
+- Checksums: coverage by `bddo:coversFromExpression` / `bddo:coversToExpression` (start
+  inclusive, end exclusive) is now stated beside the field form and the deprecated
+  `bddo:coversExpression`.
+- Error table: a malformed HEL expression, and the `asset` root or `partExtension()` in a part
+  parsed on its own, are Type / HEL errors, even when found as the description is loaded
+  (`req-pm-errors-6`, and the new `req-pm-errors-15`); the Unsupported feature row no longer
+  gives the asset root as its example, which contradicted Multi-part Assets
+  (`req-pm-errors-10`).
+- A negative repeat count is a bounds error, as a negative size is (`req-pm-size-resolution-3`).
+- Semantic triple emission: a repeated field emits one triple per element; a processor MAY
+  annotate each minted resource with `hexplain:byteOffset` / `hexplain:byteLength`, typed
+  `xsd:nonNegativeInteger`, and the graph holds nothing else beyond the mapping.
+
 ## Snapshot 2026-09-24.2 (changes since snapshot 2026-09-24.1)
 
 ### Module versions

@@ -1,0 +1,26 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/pp-hel-sizeof-nodes#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:hdr ex:entries ex:hdrSize ex:entrySize ex:viaRoot ) .
+ex:hdr a bddo:Field ; bddo:dataType ex:Hdr .
+ex:entries a bddo:Field ; bddo:dataType ex:Entry ; bddo:repeatCount 2 .
+ex:hdrSize a bddo:Field ; bddo:valueFromExpression "sizeof(hdr)" .
+ex:entrySize a bddo:Field ; bddo:valueFromExpression "sizeof(entries[1])" .
+ex:viaRoot a bddo:Field ; bddo:valueFromExpression "sizeof(root.hdr.b)" .
+ex:Hdr a bddo:Struct ; bddo:hasField ( ex:a ex:b ) .
+ex:a a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:b a bddo:Field ; bddo:dataType bddo:uint16 .
+ex:Entry a bddo:Struct ; bddo:hasField ( ex:t ex:u ) .
+ex:t a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:u a bddo:Field ; bddo:dataType bddo:uint8 .

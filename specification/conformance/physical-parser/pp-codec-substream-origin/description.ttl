@@ -1,0 +1,22 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/pp-codec-substream-origin#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:pad ex:block ) .
+ex:pad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 3 .
+ex:block a bddo:Field ; bddo:dataType ex:Inner ; bddo:size 4 ; hexplain:isEncodedWith menc:Store .
+ex:Inner a bddo:Struct ; bddo:hasField ( ex:a ex:b ex:pos ex:len ) .
+ex:a a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:b a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:alignment 2 .
+ex:pos a bddo:Field ; bddo:valueFromExpression "stream.position" .
+ex:len a bddo:Field ; bddo:valueFromExpression "stream.length" .

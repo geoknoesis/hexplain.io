@@ -1,0 +1,23 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/pp-layout-packed-float#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:w ex:h ex:kind ex:pixels ) .
+ex:w a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:h a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:kind a bddo:Field ; bddo:dataType bddo:string ; bddo:size 1 ; bddo:encoding bddo:ascii .
+ex:pixels a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ; hexplain:hasDataLayout ex:Layout .
+ex:DimY a dlv:Dimension ; dlv:hasAxis dlv:axisY ; dlv:dimensionSizeFromField ex:h .
+ex:DimX a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSizeFromField ex:w .
+
+ex:Layout a dlv:DataLayout ; dlv:cellDataType bddo:float32 ; dlv:cellBitWidth 4 ; dlv:hasDimension ( ex:DimY ex:DimX ) .

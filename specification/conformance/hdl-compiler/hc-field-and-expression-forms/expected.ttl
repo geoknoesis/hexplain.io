@@ -1,0 +1,24 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/hc-field-and-expression-forms#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.n ex:Root.a ex:Root.b ex:Root.c ex:Root.d ex:Root.e ex:Root.f ex:Root.g ex:Root.h ) .
+ex:Root.n a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:Root.a a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 3 .
+ex:Root.b a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "instance.n * 2" .
+ex:Root.c a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCountFromField ex:Root.n .
+ex:Root.d a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount 2 .
+ex:Root.e a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCountFromExpression "instance.n + 1" .
+ex:Root.f a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffsetFromField ex:Root.n .
+ex:Root.g a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 4 .
+ex:Root.h a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffsetFromExpression "instance.n - 1" .
