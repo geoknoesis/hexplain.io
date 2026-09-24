@@ -24,7 +24,9 @@ def main():
         meta, _, path = line.partition("\t")
         index, work = (meta.split() + ["", ""])[:2]
         attr = meta.split("attr/", 1)[-1]
-        if index in ("i/crlf", "i/mixed"):
+        # A file declared -text (the conformance suite's byte-exact case data, some of whose inputs
+        # are CRLF text on purpose) is binary to git: its bytes are the content, not line endings.
+        if index in ("i/crlf", "i/mixed") and "-text" not in attr:
             bad.append(f"{path}: committed with {index[2:].upper()} line endings")
         if "eol=lf" in attr:
             checked += 1
