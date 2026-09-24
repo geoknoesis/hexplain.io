@@ -126,6 +126,7 @@ def measure():
             'spatialref-competency.tsv':['specification/aspect/spatialref/spatialref.ttl'],
             'core-mapping-competency.tsv':['specification/hexplain/core.ttl'],
             'network-competency.tsv':['specification/npv/net.ttl'],
+            'conformance-competency.tsv':['specification/conf/conf.ttl','specification/conf/shapes.ttl','specification/req/req.ttl','specification/req/shapes.ttl','specification/fn/fn.ttl'],
         }
         for filename,paths in selections.items():
             shapes=Graph()
