@@ -21,7 +21,7 @@ def hel(id, title, intent, reqs, sections, description, data, expected=None, err
 
 PM_SECTIONS = {"context", "stream-metadata", "errors", "algorithm", "multi-part-assets", "struct-size"}
 TYPE_ERROR = "req-pm-errors-6"
-SYNTAX = ["req-pm-errors-15", "req-hel-conformance-1", "req-hel-conformance-2"]
+SYNTAX = ["req-pm-errors-16", "req-hel-conformance-1", "req-hel-conformance-2"]
 
 
 def derived(fields, exprs, preamble=""):

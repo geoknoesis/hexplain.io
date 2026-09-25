@@ -29,7 +29,14 @@ PAGE_LINKS = {"specification/processing/index.html": "../processing/index.html",
               "specification/hel/index.html": "../hel/index.html",
               "specification/hdl/index.html": "../hdl/index.html",
               "specification/conf/index.html": "../conf/index.html",
-              "specification/req/index.html": "../req/index.html"}
+              "specification/req/index.html": "../req/index.html",
+              "specification/bddo/index.html": "../bddo/index.html",
+              "specification/dlv/index.html": "../dlv/index.html",
+              "specification/hexplain/index.html": "../hexplain/index.html",
+              "specification/aspect/bundle/index.html": "../aspect/bundle/index.html",
+              "specification/aspect/geometry/index.html": "../aspect/geometry/index.html",
+              "specification/aspect/raster/index.html": "../aspect/raster/index.html",
+              "specification/aspect/spatialref/index.html": "../aspect/spatialref/index.html"}
 
 
 def manifests():
@@ -55,7 +62,9 @@ def coverage():
     for cls, _ in REQUIREMENT_CLASSES:
         row = {}
         for level in ("MUST", "SHOULD"):
-            ids = [i for i, e in reqs.items() if e["cls"] == cls and e["level"] == level]
+            # A rule on a description's author (audience "description") is no processor's to meet.
+            ids = [i for i, e in reqs.items() if e["cls"] == cls and e["level"] == level
+                   and e.get("audience", "processor") == "processor"]
             covered = [i for i in ids if citing.get(i)]
             row[level] = {"total": len(ids), "covered": len(covered)}
         classes[cls] = row
