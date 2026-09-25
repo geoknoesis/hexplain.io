@@ -131,7 +131,7 @@ conf:_prefixes sh:declare
         sh:select """SELECT $this ?other WHERE {
             $this conf:errorCategory ?c .
             FILTER NOT EXISTS { $this conf:findingKind ?k0 }
-            FILTER NOT EXISTS { $this a ?t0 . FILTER(?t0 IN (conf:Finding, conf:Run, conf:Constraint, req:Requirement)) }
+            FILTER NOT EXISTS { $this a ?t0 . FILTER(?t0 IN (conf:Finding, conf:Run, conf:Constraint, req:Requirement, conf:ParseAttribution)) }
             ?other conf:errorCategory ?c2 .
             FILTER(!sameTerm(?other, $this))
             FILTER NOT EXISTS { ?other conf:findingKind ?k }
@@ -144,7 +144,7 @@ conf:_prefixes sh:declare
 :RunShape a sh:NodeShape ;
     sh:targetClass conf:Run ;
     sh:targetSubjectsOf conf:outcome , conf:verdict , conf:truncated , conf:truncationReason , conf:finding ,
-        conf:versionScopingApplied , conf:fileVersion , conf:ruleSet , conf:failOn ;
+        conf:versionScopingApplied , conf:fileVersion , conf:profile , conf:ruleSet , conf:input , conf:failOn ;
     rdfs:label "Run shape" ;
     rdfs:comment "A run report states exactly one verdict and one truncated flag, links its findings with conf:finding, reports at most one outcome per requirement and one for every requirement in the graph, and is internally consistent: a truncated run is non-conformant, the verdict follows from the findings, outcomes and conf:failOn, and conf:NotApplicable arises only from version scoping." ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
@@ -531,7 +531,7 @@ conf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 <https://hexplain.io/ns/conf#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for conf:assertion, conf:fileVersion, conf:findingMessage, conf:message, conf:truncated, conf:truncationReason, conf:versionScopingApplied. conf:assertion takes an xsd:string literal (rdfs:range xsd:string). conf:fileVersion takes an xsd:string literal (rdfs:range xsd:string). conf:findingMessage takes an xsd:string literal (rdfs:range xsd:string). conf:message takes an xsd:string literal (rdfs:range xsd:string). conf:truncated takes an xsd:boolean literal (rdfs:range xsd:boolean). conf:truncationReason takes an xsd:string literal (rdfs:range xsd:string). conf:versionScopingApplied takes an xsd:boolean literal (rdfs:range xsd:boolean)."@en .
 <https://hexplain.io/ns/conf#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using conf:assertion, conf:fileVersion, conf:findingMessage, conf:message, conf:truncated, conf:truncationReason, conf:versionScopingApplied Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/conf#RunShape> <http://www.w3.org/2004/02/skos/core#definition> "A run report states exactly one verdict and one truncated flag, links its findings with conf:finding, reports at most one outcome per requirement and one for every requirement in the graph, and is internally consistent: a truncated run is non-conformant, the verdict follows from the findings, outcomes and conf:failOn, and conf:NotApplicable arises only from version scoping."@en .
-<https://hexplain.io/ns/conf#RunShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of conf:Run; subjects using conf:failOn, conf:fileVersion, conf:finding, conf:outcome, conf:ruleSet, conf:truncated, conf:truncationReason, conf:verdict, conf:versionScopingApplied Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
+<https://hexplain.io/ns/conf#RunShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of conf:Run; subjects using conf:failOn, conf:fileVersion, conf:finding, conf:input, conf:outcome, conf:profile, conf:ruleSet, conf:truncated, conf:truncationReason, conf:verdict, conf:versionScopingApplied Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/conf#UntypedParseAttributionShape> <http://www.w3.org/2004/02/skos/core#definition> "A node stating conf:errorCategory that is neither a finding, a run, a constraint, a requirement nor a typed conf:ParseAttribution is an untyped parse attribution: it cites exactly one requirement, and its category is attributed once."@en .
 <https://hexplain.io/ns/conf#UntypedParseAttributionShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using conf:errorCategory Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
 <https://hexplain.io/ns/conf#_prefixes> <http://www.w3.org/2004/02/skos/core#definition> "Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data."@en .

@@ -87,6 +87,12 @@ def conf_cases():
     add("input given as a blank node", _sub(REPORT, ('conf:input "input.bin"', "conf:input [ ]")), False)
     add("fail-on outside the SHACL severities", _sub(REPORT, ("conf:failOn sh:Violation", "conf:failOn ex:fatal")), False)
     add("fail-on info with a warning finding", _sub(REPORT, ("conf:failOn sh:Violation", "conf:failOn sh:Info")), True)
+    for prop, first, second in [("input", '"input.bin"', '"copy.bin"'), ("failOn", "sh:Violation", "sh:Warning"),
+                                ("ruleSet", "ex:rules", "ex:other"), ("profile", "ex:profile", "ex:other"),
+                                ("versionScopingApplied", "false", "true")]:
+        add(f"run with two conf:{prop} values", _sub(REPORT, (f"conf:{prop} {first}", f"conf:{prop} {first} , {second}")), False)
+    add("run with two file versions", _sub(REPORT, ("conf:versionScopingApplied false", 'conf:versionScopingApplied true ; conf:fileVersion "1.0" , "2.0"')), False)
+    add("run with two truncation reasons", _sub(REPORT, ("conf:truncated false", 'conf:truncated true ; conf:truncationReason "a" , "b"')), False)
     add("finding not linked to the run", _sub(REPORT, ("conf:finding ex:f1 , ex:f2 .", "conf:finding ex:f1 .")), False)
     add("finding linked by two runs", REPORT + "ex:run2 a conf:Run ; conf:verdict conf:NonConformant ; conf:truncated false ; conf:finding ex:f2 ; "
         "conf:outcome [ conf:outcomeRequirement ex:req1 ; conf:outcomeValue conf:Evaluated ] , [ conf:outcomeRequirement ex:req2 ; conf:outcomeValue conf:Evaluated ] .", False)
@@ -127,6 +133,7 @@ def conf_cases():
     add("error category on a violation finding", _sub(REPORT, ("conf:findingKind conf:Violation ;", "conf:findingKind conf:Violation ; conf:errorCategory conf:SyncError ;")), False)
     add("error category on a constraint", _sub(REPORT, ('conf:message "m" ;', 'conf:message "m" ; conf:errorCategory conf:SyncError ;')), False)
     add("error category on a run", _sub(REPORT, ("conf:truncated false ;", "conf:truncated false ; conf:errorCategory conf:SyncError ;")), False)
+    add("error category on a requirement", _sub(REPORT, ('req:statement "One."', 'req:statement "One." ; conf:errorCategory conf:SyncError')), False)
     add("error category with the wrong case", _sub(REPORT, ("ex:pa a conf:ParseAttribution ; conf:errorCategory conf:BoundsError", 'ex:pa a conf:ParseAttribution ; conf:errorCategory "bounds"')), False)
     add("error category that is not a category", _sub(REPORT, ("ex:pa a conf:ParseAttribution ; conf:errorCategory conf:BoundsError", "ex:pa a conf:ParseAttribution ; conf:errorCategory conf:Parse")), False)
     # An attribution without rdf:type is still an attribution.
@@ -195,6 +202,11 @@ def register_cases():
     add("superseded entry replaced by a current entry", 'ex:current owl:deprecated true ; hexplain:status hexplain:statusSuperseded ; dcterms:isReplacedBy ex:next ; skos:historyNote "Replaced."@en .', True)
     add("superseded entry naming no successor", 'ex:current owl:deprecated true ; hexplain:status hexplain:statusSuperseded ; skos:historyNote "Replaced."@en .', False)
     add("deprecated ontology property needs no register status", "ex:prop a owl:ObjectProperty ; owl:deprecated true .", True)
+    add("entry stated not deprecated", "ex:current owl:deprecated false ; hexplain:status hexplain:statusValid .", True)
+    add("deprecated collection with its record", 'ex:Group a skos:Collection ; skos:member ex:current ; owl:deprecated true ; '
+        'hexplain:status hexplain:statusDeprecated ; skos:historyNote "Withdrawn."@en .', True)
+    add("deprecated collection without a history note", "ex:Group a skos:Collection ; skos:member ex:current ; owl:deprecated true ; "
+        "hexplain:status hexplain:statusDeprecated .", False)
     # Using a retired value is legal (old data keeps its meaning) but reported.
     add("deprecated value of a bound property", 'ex:profile hexplain:usesRegister [ hexplain:forProperty ex:level ; hexplain:register ex:Scheme ] .\n'
         'ex:current owl:deprecated true ; hexplain:status hexplain:statusDeprecated ; skos:historyNote "Retired."@en .\n'
