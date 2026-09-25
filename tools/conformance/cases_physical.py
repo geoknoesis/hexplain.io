@@ -24,7 +24,7 @@ GENERIC = "req-pm-conformance-1"
 
 pp("int-default-big-endian", "Integers default to big-endian",
    "A multi-byte integer with no byte order declared anywhere is read big-endian (the last case of the byte-order list).",
-   [GENERIC, "req-pm-introduction-1"], ["byte-order"],
+   ["req-pm-parsefield-19", "req-pm-parsefield-3", "req-pm-byte-order-1", "req-pm-byte-order-6"], ["byte-order"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint16 .
@@ -35,7 +35,7 @@ pp("int-default-big-endian", "Integers default to big-endian",
 
 pp("int-signed-widths", "Signed integers are two's complement at every width",
    "int8, int16, int32 and int64 decode their two's-complement bit patterns, the int64 minimum included.",
-   [GENERIC], ["byte-order", "value-mapping"],
+   ["req-pm-parsefield-11", "req-pm-byte-order-1"], ["byte-order", "value-mapping"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ex:c ex:d ) .
    ex:a a bddo:Field ; bddo:dataType bddo:int8 .

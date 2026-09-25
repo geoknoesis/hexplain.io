@@ -1,11 +1,11 @@
 """Physical Parser cases: integers, byte order, floats, bit fields and alignment."""
 import struct
 
-from cases_physical import GENERIC, pp
+from cases_physical import pp
 
 pp("int-explicit-order-types", "An explicitly ordered data type wins over every declaration",
    "bddo:uint16le and bddo:int32le read little-endian inside a struct declared big-endian, and bddo:uint16be big-endian inside one declared little-endian.",
-   [GENERIC], ["byte-order"],
+   ["req-pm-byte-order-2"], ["byte-order"],
    """
    ex:Root a bddo:Struct ; bddo:endianness bddo:BigEndian ; bddo:hasField ( ex:a ex:b ex:inner ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint16le .
@@ -19,7 +19,7 @@ pp("int-explicit-order-types", "An explicitly ordered data type wins over every 
 
 pp("int-field-endianness", "A field's own byte order overrides its struct's",
    "bddo:endianness on the field outranks the containing struct's declaration.",
-   [GENERIC], ["byte-order"],
+   ["req-pm-byte-order-3"], ["byte-order"],
    """
    ex:Root a bddo:Struct ; bddo:endianness bddo:BigEndian ; bddo:hasField ( ex:a ex:b ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:endianness bddo:LittleEndian .
@@ -29,7 +29,7 @@ pp("int-field-endianness", "A field's own byte order overrides its struct's",
 
 pp("int-endianness-inherited", "A nested struct inherits the byte order in force",
    "A struct that declares no byte order reads in the order of the struct it is parsed from; a nested declaration wins again below it.",
-   [GENERIC], ["byte-order"],
+   ["req-pm-parsestruct-6", "req-pm-byte-order-5"], ["byte-order"],
    """
    ex:Root a bddo:Struct ; bddo:endianness bddo:LittleEndian ; bddo:hasField ( ex:mid ) .
    ex:mid a bddo:Field ; bddo:dataType ex:Mid .
@@ -46,7 +46,7 @@ pp("int-endianness-inherited", "A nested struct inherits the byte order in force
 
 pp("int-conditional-endianness", "Conditional byte order is resolved from a discriminator field",
    "A TIFF-style II/MM marker selects the struct's byte order once it is bound; later fields and nested structs read in the selected order.",
-   [GENERIC], ["byte-order"],
+   ["req-pm-byte-order-7", "req-pm-byte-order-4"], ["byte-order"],
    """
    ex:Root a bddo:Struct ;
        bddo:hasConditionalEndianness (
@@ -64,7 +64,7 @@ pp("int-conditional-endianness", "Conditional byte order is resolved from a disc
 
 pp("int-conditional-endianness-provisional", "Fields before a conditional byte order resolves use the provisional order",
    "Until a rule matches, fields read in the inherited order (big-endian at the root); a rule naming a field not yet bound counts as not holding.",
-   [GENERIC], ["byte-order"],
+   ["req-pm-byte-order-7", "req-pm-byte-order-4"], ["byte-order"],
    """
    ex:Root a bddo:Struct ;
        bddo:hasConditionalEndianness (
@@ -79,7 +79,7 @@ pp("int-conditional-endianness-provisional", "Fields before a conditional byte o
 
 pp("float-ieee754", "Floats decode as IEEE 754 in the resolved byte order",
    "float32 and float64, big- and little-endian.",
-   [GENERIC], ["byte-order", "value-mapping"],
+   ["req-pm-parsefield-11", "req-pm-byte-order-1"], ["byte-order", "value-mapping"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ex:c ex:d ) .
    ex:a a bddo:Field ; bddo:dataType bddo:float32 .
@@ -92,7 +92,7 @@ pp("float-ieee754", "Floats decode as IEEE 754 in the resolved byte order",
 
 pp("float-nan-infinity", "NaN and infinities survive decoding",
    "A float field holding NaN or an infinity yields that value; the canonical form spells them as strings.",
-   [GENERIC], ["value-mapping"],
+   ["req-pm-parsefield-11"], ["value-mapping"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ex:c ) .
    ex:a a bddo:Field ; bddo:dataType bddo:float32 .
@@ -117,7 +117,7 @@ pp("members-in-list-order", "Members are processed in bddo:hasField list order",
 
 pp("bits-msb-first", "Bit fields pack most-significant bit first by default",
    "Two 4-bit fields over 0x45 read 4 and 5 (the IPv4 version/IHL byte); a following byte field starts on the next byte.",
-   [GENERIC], ["bit-cursor"],
+   ["req-pm-bit-cursor-1", "req-pm-size-resolution-5", "req-pm-bit-cursor-3", "req-pm-bit-cursor-4"], ["bit-cursor"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:version ex:ihl ex:tos ) .
    ex:version a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 4 .
@@ -128,7 +128,7 @@ pp("bits-msb-first", "Bit fields pack most-significant bit first by default",
 
 pp("bits-span-byte-boundary", "A bit field continues into the next byte",
    "A 4-bit field then a 12-bit field over AB CD read 0xA and 0xBCD, the second spanning the byte boundary.",
-   [GENERIC], ["bit-cursor"],
+   ["req-pm-bit-cursor-1", "req-pm-bit-cursor-2", "req-pm-bit-cursor-4"], ["bit-cursor"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 4 .
@@ -138,7 +138,7 @@ pp("bits-span-byte-boundary", "A bit field continues into the next byte",
 
 pp("bits-lsb-first", "bddo:LSBFirst takes bits from the least-significant end",
    "Under LSBFirst a 3-bit then a 5-bit field over 0xB4 (1011 0100) take the low three bits (100 = 4) and then the high five (10110 = 22); each value keeps its bits' significance.",
-   [GENERIC], ["bit-cursor"],
+   ["req-pm-bit-cursor-1", "req-pm-size-resolution-5", "req-pm-bit-cursor-3", "req-pm-bit-cursor-4"], ["bit-cursor"],
    """
    ex:Root a bddo:Struct ; bddo:bitOrder bddo:LSBFirst ; bddo:hasField ( ex:a ex:b ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 3 .
@@ -148,7 +148,7 @@ pp("bits-lsb-first", "bddo:LSBFirst takes bits from the least-significant end",
 
 pp("bits-lsb-span", "Under LSBFirst a field spanning bytes takes its later bits as more significant",
    "A 4-bit then a 12-bit field over CD AB: the first takes CD's low nibble (0xD), the second CD's high nibble as its low four bits and all of AB above them (0xABC).",
-   [GENERIC], ["bit-cursor"],
+   ["req-pm-bit-cursor-2", "req-pm-bit-cursor-4"], ["bit-cursor"],
    """
    ex:Root a bddo:Struct ; bddo:bitOrder bddo:LSBFirst ; bddo:hasField ( ex:a ex:b ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 4 .
@@ -158,7 +158,7 @@ pp("bits-lsb-span", "Under LSBFirst a field spanning bytes takes its later bits 
 
 pp("bits-realign-before-byte-field", "The bit cursor realigns before a byte-oriented read",
    "After a 3-bit field the remaining five bits of the byte are skipped; the uint8 reads the next byte.",
-   [GENERIC], ["bit-cursor"],
+   ["req-pm-bit-cursor-5"], ["bit-cursor"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 3 .
@@ -168,7 +168,7 @@ pp("bits-realign-before-byte-field", "The bit cursor realigns before a byte-orie
 
 pp("bits-realign-at-struct-end", "The bit cursor realigns at the end of a struct",
    "A nested struct holding one 4-bit field consumes its whole byte; the sibling bit field after it reads the next byte.",
-   [GENERIC], ["bit-cursor"],
+   ["req-pm-bit-cursor-5"], ["bit-cursor"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:head ex:b ) .
    ex:head a bddo:Field ; bddo:dataType ex:Head .
@@ -180,7 +180,7 @@ pp("bits-realign-at-struct-end", "The bit cursor realigns at the end of a struct
 
 pp("bits-past-end", "A bit read past the end of the stream is a bounds error",
    "Twelve bits cannot be read from one byte.",
-   ["req-pm-errors-3"], ["bit-cursor", "errors"],
+   ["req-pm-bit-cursor-6", "req-pm-errors-3"], ["bit-cursor", "errors"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:bitLength 12 .
@@ -189,7 +189,7 @@ pp("bits-past-end", "A bit read past the end of the stream is a bounds error",
 
 pp("bits-offset-read-restores-bit-cursor", "An offset-addressed read does not disturb a run of bit fields",
    "Between two 4-bit fields, an offset-addressed byte is read; the second nibble still comes from the first byte.",
-   [GENERIC], ["algorithm", "bit-cursor"],
+   ["req-pm-parsefield-7", "req-pm-bit-cursor-2"], ["algorithm", "bit-cursor"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:hi ex:far ex:lo ) .
    ex:hi a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 4 .
@@ -202,7 +202,7 @@ pp("bits-offset-read-restores-bit-cursor", "An offset-addressed read does not di
 
 pp("align-from-stream-start", "Alignment is measured from the start of the stream",
    "A uint32 aligned to 4 after one byte starts at offset 4; the skipped bytes are not read.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-6"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -212,7 +212,7 @@ pp("align-from-stream-start", "Alignment is measured from the start of the strea
 
 pp("align-region-does-not-move-origin", "A bounded region does not move the alignment origin",
    "Inside a 10-byte region starting at offset 6, a field aligned to 4 after one byte starts at offset 8, not 10.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-6"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:pad ex:box ) .
    ex:pad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 6 .

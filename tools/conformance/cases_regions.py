@@ -1,12 +1,12 @@
 """Physical Parser cases: strings, terminators, sizes and regions, repetition, offsets, sync,
 presence, derived values, constraints and root keys."""
-from cases_physical import GENERIC, pp
+from cases_physical import pp
 
 # ----------------------------------------------------------------- strings
 
 pp("str-encodings", "Strings decode in their declared encoding",
    "ASCII, UTF-8 (a two-byte character), ISO-8859-1 and UTF-16BE strings of fixed size.",
-   [GENERIC], ["algorithm", "value-mapping"],
+   ["req-pm-parsefield-11"], ["algorithm", "value-mapping"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ex:c ex:d ) .
    ex:a a bddo:Field ; bddo:dataType bddo:string ; bddo:size 4 ; bddo:encoding bddo:ascii .
@@ -19,7 +19,7 @@ pp("str-encodings", "Strings decode in their declared encoding",
 
 pp("str-trim-null", "bddo:trimNull ends a fixed-size string at its first NUL",
    "With trimNull the value is the characters before the first NUL; without it, the NUL padding is part of the value.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-11"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ) .
    ex:a a bddo:Field ; bddo:dataType bddo:string ; bddo:size 8 ; bddo:encoding bddo:utf8 ; bddo:trimNull true .
@@ -30,7 +30,7 @@ pp("str-trim-null", "bddo:trimNull ends a fixed-size string at its first NUL",
 
 pp("str-trim-null-utf16", "A UTF-16 string is trimmed at a NUL code unit, not a zero byte",
    "In UTF-16LE the bytes 41 00 00 42 00 00 hold 'A', U+4200 and a NUL: the zero bytes inside the first two code units do not end the string.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-11"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ) .
    ex:a a bddo:Field ; bddo:dataType bddo:string ; bddo:size 8 ; bddo:encoding bddo:utf16le ; bddo:trimNull true .
@@ -39,7 +39,7 @@ pp("str-trim-null-utf16", "A UTF-16 string is trimmed at a NUL code unit, not a 
 
 pp("bytes-value", "A bytes field yields its raw bytes",
    "bddo:bytes is not decoded; the canonical form writes it as lower-case hex.",
-   [GENERIC], ["algorithm", "value-mapping"],
+   ["req-pm-parsefield-11", "req-pm-size-resolution-9"], ["algorithm", "value-mapping"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ) .
    ex:a a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 .
@@ -51,7 +51,7 @@ pp("bytes-value", "A bytes field yields its raw bytes",
 
 pp("term-nul", "A terminator is consumed but is not part of the value",
    "A NUL-terminated string is followed directly by the next field.",
-   [GENERIC], ["terminators"],
+   ["req-pm-terminators-1", "req-pm-terminators-4"], ["terminators"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:s ex:n ) .
    ex:s a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:utf8 ; bddo:terminator "00"^^xsd:hexBinary .
@@ -61,7 +61,7 @@ pp("term-nul", "A terminator is consumed but is not part of the value",
 
 pp("term-multibyte", "A multi-byte terminator is matched as a sequence",
    "A CR LF terminator ends the value at the first CR LF; a lone CR earlier does not.",
-   [GENERIC], ["terminators"],
+   ["req-pm-terminators-3"], ["terminators"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:s ex:n ) .
    ex:s a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:ascii ; bddo:terminator "0D0A"^^xsd:hexBinary .
@@ -71,7 +71,7 @@ pp("term-multibyte", "A multi-byte terminator is matched as a sequence",
 
 pp("term-in-declared-region", "With a declared region the cursor moves to the region end",
    "An 8-byte string terminated by NUL: the value ends at the NUL and the bytes after it are padding.",
-   [GENERIC], ["terminators", "size-resolution"],
+   ["req-pm-terminators-5"], ["terminators", "size-resolution"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:s ex:n ) .
    ex:s a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:ascii ; bddo:size 8 ; bddo:terminator "00"^^xsd:hexBinary .
@@ -81,7 +81,7 @@ pp("term-in-declared-region", "With a declared region the cursor moves to the re
 
 pp("term-bytes", "A bytes field may be terminated",
    "The terminator search is byte-aligned for bytes.",
-   [GENERIC], ["terminators"],
+   ["req-pm-terminators-1", "req-pm-terminators-4"], ["terminators"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:b ex:n ) .
    ex:b a bddo:Field ; bddo:dataType bddo:bytes ; bddo:terminator "FFFF"^^xsd:hexBinary .
@@ -91,7 +91,7 @@ pp("term-bytes", "A bytes field may be terminated",
 
 pp("term-utf16-code-unit-aligned", "A UTF-16 terminator only matches on a code-unit boundary",
    "In 41 00 00 42 00 00 the pair 00 00 at offset 1 straddles two code units and does not count; the terminator is the pair at offset 4.",
-   [GENERIC], ["terminators"],
+   ["req-pm-terminators-3"], ["terminators"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:s ex:n ) .
    ex:s a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:utf16le ; bddo:terminator "0000"^^xsd:hexBinary .
@@ -101,7 +101,7 @@ pp("term-utf16-code-unit-aligned", "A UTF-16 terminator only matches on a code-u
 
 pp("term-not-found", "A missing terminator is a bounds error",
    "No NUL occurs before the end of the stream.",
-   ["req-pm-errors-3"], ["terminators", "errors"],
+   ["req-pm-terminators-6", "req-pm-errors-3"], ["terminators", "errors"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:s ) .
    ex:s a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:ascii ; bddo:terminator "00"^^xsd:hexBinary .
@@ -121,7 +121,7 @@ pp("term-bounded-by-enclosing-region", "The terminator search is bounded by the 
 
 pp("term-empty", "An empty terminator is a description error",
    "bddo:terminator with no bytes cannot end anything.",
-   ["req-pm-errors-8", "req-pm-errors-9"], ["terminators", "errors"],
+   ["req-pm-terminators-2", "req-pm-errors-8", "req-pm-errors-9"], ["terminators", "errors"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:s ) .
    ex:s a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:ascii ; bddo:terminator ""^^xsd:hexBinary .
@@ -132,7 +132,7 @@ pp("term-empty", "An empty terminator is a description error",
 
 pp("size-from-field", "bddo:sizeFromField sizes a field from a bound sibling",
    "The length prefix gives the byte count of the data that follows.",
-   [GENERIC], ["size-resolution"],
+   ["req-pm-size-resolution-9"], ["size-resolution"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:data ex:tail ) .
    ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -143,7 +143,7 @@ pp("size-from-field", "bddo:sizeFromField sizes a field from a bound sibling",
 
 pp("size-from-parent-field", "bddo:sizeFromField falls back to the parent struct",
    "A field of a nested struct is sized by a field of the struct that contains it.",
-   [GENERIC], ["size-resolution"],
+   ["req-pm-size-resolution-9"], ["size-resolution"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:sub ex:tail ) .
    ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -156,7 +156,7 @@ pp("size-from-parent-field", "bddo:sizeFromField falls back to the parent struct
 
 pp("size-from-expression", "bddo:sizeFromExpression sizes a field by a HEL expression",
    "The size is twice the count field.",
-   [GENERIC], ["size-resolution"],
+   ["req-pm-size-resolution-9"], ["size-resolution"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:data ) .
    ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -176,7 +176,7 @@ pp("size-from-text-number", "A size read from a number written as text is accept
 
 pp("size-to-end-of-stream", "bddo:sizeToEndOfStream takes the rest of the stream",
    "Without an enclosing region the field runs to the end of the input.",
-   [GENERIC], ["size-resolution"],
+   ["req-pm-size-resolution-9"], ["size-resolution"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:rest ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -186,7 +186,7 @@ pp("size-to-end-of-stream", "bddo:sizeToEndOfStream takes the rest of the stream
 
 pp("size-to-end-of-region", "bddo:sizeToEndOfStream inside a region stops at the region end",
    "In a 4-byte struct region the field takes the three bytes left in the region, not the rest of the stream.",
-   [GENERIC], ["size-resolution", "algorithm"],
+   ["req-pm-size-resolution-9", "req-pm-parsestruct-5"], ["size-resolution", "algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:box ex:tail ) .
    ex:box a bddo:Field ; bddo:dataType ex:Box .
@@ -199,7 +199,7 @@ pp("size-to-end-of-region", "bddo:sizeToEndOfStream inside a region stops at the
 
 pp("size-precedence", "Of several region forms the first in the normative order decides",
    "A field declaring both bddo:size 2 and bddo:sizeFromField (3) takes two bytes: bddo:size precedes bddo:sizeFromField.",
-   ["req-pm-size-resolution-1"], ["size-resolution"],
+   ["req-pm-size-resolution-9", "req-pm-size-resolution-4"], ["size-resolution"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:data ex:tail ) .
    ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -210,7 +210,7 @@ pp("size-precedence", "Of several region forms the first in the normative order 
 
 pp("size-ignored-on-fixed-width", "A size on a fixed-width type does not change its width",
    "A uint16 declaring bddo:size 4 still occupies two bytes.",
-   [GENERIC], ["size-resolution"],
+   ["req-pm-size-resolution-7"], ["size-resolution"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:size 4 .
@@ -220,7 +220,7 @@ pp("size-ignored-on-fixed-width", "A size on a fixed-width type does not change 
 
 pp("size-region-skips-remainder", "After a sized struct field the cursor moves to the region end",
    "A 3-byte region holding a one-byte struct: the two bytes after it are skipped.",
-   [GENERIC], ["size-resolution"],
+   ["req-pm-parsestruct-8", "req-pm-size-resolution-9"], ["size-resolution"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:small ex:tail ) .
    ex:small a bddo:Field ; bddo:dataType ex:Small ; bddo:size 3 .
@@ -271,7 +271,7 @@ pp("size-no-extent", "A variable-length field with no extent is a description er
 
 pp("struct-size-literal", "A literal struct size skips the struct's trailing padding",
    "A 4-byte struct holding one byte: the next field reads after the padding.",
-   [GENERIC], ["struct-size"],
+   ["req-pm-parsestruct-8", "req-pm-struct-size-3", "req-pm-parsestruct-5"], ["struct-size"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:rec ex:b ) .
    ex:rec a bddo:Field ; bddo:dataType ex:Rec .
@@ -283,7 +283,7 @@ pp("struct-size-literal", "A literal struct size skips the struct's trailing pad
 
 pp("struct-size-from-own-field", "A struct sized by its own first field bounds the rest of it",
    "A box whose length (counted from the box's first byte) is its first field: the payload runs to the box end, not the stream end.",
-   [GENERIC], ["struct-size", "size-resolution"],
+   ["req-pm-struct-size-3", "req-pm-parsestruct-5"], ["struct-size", "size-resolution"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:box ex:tail ) .
    ex:box a bddo:Field ; bddo:dataType ex:Box .
@@ -333,7 +333,7 @@ pp("bounds-nested-region", "A nested read crossing its struct's region is a boun
 
 pp("rep-count", "Repeat counts: literal, from a field and from an expression",
    "bddo:repeatCount, bddo:repeatCountFromField and bddo:repeatCountFromExpression each give the element count; a zero count is an empty array.",
-   [GENERIC], ["algorithm", "size-resolution"],
+   ["req-pm-parsefield-8", "req-pm-size-resolution-10"], ["algorithm", "size-resolution"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:lit ex:byField ex:byExpr ex:none ) .
    ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -347,7 +347,7 @@ pp("rep-count", "Repeat counts: literal, from a field and from an expression",
 
 pp("rep-struct-elements", "A repeated struct field is an array of structs",
    "Two entries of a two-field struct.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-8"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:entries ) .
    ex:entries a bddo:Field ; bddo:dataType ex:Entry ; bddo:repeatCount 2 .
@@ -408,7 +408,7 @@ pp("rep-until-scalar-parent", "Over scalar elements, parent is the containing st
 
 pp("rep-until-eof-region", "repeatUntil eof() stops at the end of the innermost region",
    "Inside a 4-byte struct region eof() is true at the region end, not at the end of the stream.",
-   [GENERIC], ["stream-metadata", "repeat-until-bindings"],
+   ["req-pm-size-resolution-10"], ["stream-metadata", "repeat-until-bindings"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:box ex:tail ) .
    ex:box a bddo:Field ; bddo:dataType ex:Box .
@@ -420,7 +420,7 @@ pp("rep-until-eof-region", "repeatUntil eof() stops at the end of the innermost 
 
 pp("rep-until-region-exhausted", "A repeatUntil sequence stops when its declared region is exhausted",
    "A 3-byte region whose condition never holds yields three elements and no error.",
-   [GENERIC], ["size-resolution"],
+   ["req-pm-size-resolution-10"], ["size-resolution"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:vals ex:tail ) .
    ex:vals a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:size 3 ; bddo:repeatUntil "self == 255" .
@@ -430,7 +430,7 @@ pp("rep-until-region-exhausted", "A repeatUntil sequence stops when its declared
 
 pp("rep-until-negative-size", "A negative declared size makes a repeatUntil sequence empty",
    "For a repeatUntil sequence only, a negative size (n - 4 with n = 2) is an empty sequence, not an error.",
-   [GENERIC], ["size-resolution"],
+   ["req-pm-size-resolution-10"], ["size-resolution"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:vals ex:tail ) .
    ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -465,7 +465,7 @@ pp("rep-until-on-text-container", "repeatUntil on a text container is a descript
 
 pp("offset-literal-restores-cursor", "An offset-addressed field does not advance sibling parsing",
    "The field at offset 3 is read, then the cursor returns to where it was.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-7"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:far ex:b ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -476,7 +476,7 @@ pp("offset-literal-restores-cursor", "An offset-addressed field does not advance
 
 pp("offset-from-field-and-expression", "Offsets from a field and from an expression",
    "bddo:atOffsetFromField and bddo:atOffsetFromExpression address from the stream start by default.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-7"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:ptr ex:val ex:next ) .
    ex:ptr a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -487,7 +487,7 @@ pp("offset-from-field-and-expression", "Offsets from a field and from an express
 
 pp("offset-stream-end", "bddo:streamEnd counts backward from the end of the stream",
    "Offset 1 from the stream end is the last byte.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-7"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:last ex:first ) .
    ex:last a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 1 ; bddo:offsetBase bddo:streamEnd .
@@ -497,7 +497,7 @@ pp("offset-stream-end", "bddo:streamEnd counts backward from the end of the stre
 
 pp("offset-current-position", "bddo:currentPosition moves the cursor and does not restore it",
    "Offset 1 from the current position skips one byte, and the next field continues after the read.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-7"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ex:c ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -520,7 +520,7 @@ pp("offset-outside-region", "An offset outside the innermost region is a bounds 
 
 pp("offset-stream-scope", "bddo:streamScope lets one offset read leave the region",
    "The same read with seekScope streamScope resolves against the whole stream, and the region bound is back in force afterwards.",
-   [GENERIC], ["algorithm", "stream-metadata"],
+   ["req-pm-parsefield-7"], ["algorithm", "stream-metadata"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:box ex:tail ) .
    ex:box a bddo:Field ; bddo:dataType ex:Box .
@@ -545,7 +545,7 @@ pp("offset-past-end", "An offset past the end of the stream is a bounds error",
 
 pp("sync-marker", "bddo:syncOnMarker advances the cursor past the marker",
    "The bytes before the next FF D8 are skipped and the marker is consumed: the struct's first field follows it.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsestruct-2", "req-pm-parsestruct-3"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:seg ex:tail ) .
    ex:seg a bddo:Field ; bddo:dataType ex:Seg .
@@ -582,7 +582,7 @@ pp("present-if", "bddo:isPresentIf false skips the field and binds it to Null",
 
 pp("derived-value", "A derived field consumes no bytes",
    "bddo:valueFromExpression binds w * h and the next field reads the next byte.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-5"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:w ex:h ex:area ex:tail ) .
    ex:w a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -604,7 +604,7 @@ pp("derived-null", "A derived field whose value is Null is unbound",
 
 pp("valid-if", "bddo:validIf false is a validation error",
    "self <= 10 fails for 11.",
-   ["req-pm-errors-4"], ["algorithm"],
+   ["req-pm-parsefield-17", "req-pm-errors-4"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:v ) .
    ex:v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self <= 10" .
@@ -613,7 +613,7 @@ pp("valid-if", "bddo:validIf false is a validation error",
 
 pp("valid-if-holds", "bddo:validIf true accepts the value",
    "self <= 10 holds for 10.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-17"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:v ) .
    ex:v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self <= 10" .
@@ -631,7 +631,7 @@ pp("valid-if-evaluation-failure", "A validIf that fails to evaluate is a Type / 
 
 pp("root-key", "bddo:rootKeyFromField binds a record's value in the root context",
    "Records name their values; a later field reads root.WDTH, and an unbound data-named key reads Null (first occurrence wins).",
-   [GENERIC], ["algorithm", "hel/index.html#key-resolution"],
+   ["req-pm-parsefield-18"], ["algorithm", "hel/index.html#key-resolution"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:records ex:width ) .
    ex:records a bddo:Field ; bddo:dataType ex:Record ; bddo:repeatCount 3 .
@@ -643,6 +643,19 @@ pp("root-key", "bddo:rootKeyFromField binds a record's value in the root context
    b"HGHT\x02WDTH\x05WDTH\x09",
    {"records": [{"name": "HGHT", "value": 2}, {"name": "WDTH", "value": 5}, {"name": "WDTH", "value": 9}],
     "width": 5})
+
+pp("root-key-unbound", "A root key the data never binds reads Null",
+   "The records name only HGHT, so root.WDTH, a key only data could bind, is Null rather than an undefined name.",
+   ["req-pm-parsefield-18", "req-hel-undefined-names-5"], ["algorithm", "hel/index.html#key-resolution"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:records ex:width ) .
+   ex:records a bddo:Field ; bddo:dataType ex:Record ; bddo:repeatCount 1 .
+   ex:Record a bddo:Struct ; bddo:hasField ( ex:name ex:value ) .
+   ex:name a bddo:Field ; bddo:dataType bddo:string ; bddo:size 4 ; bddo:encoding bddo:ascii .
+   ex:value a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:rootKeyFromField ex:name .
+   ex:width a bddo:Field ; bddo:valueFromExpression "root.WDTH" .
+   """,
+   b"HGHT\x02", {"records": [{"name": "HGHT", "value": 2}], "width": None})
 
 pp("rep-count-negative", "A negative repeat count is a bounds error",
    "n - 3 with n = 1: a repeat count must be a non-negative integer, and a negative one is a bounds error, as a negative size is.",

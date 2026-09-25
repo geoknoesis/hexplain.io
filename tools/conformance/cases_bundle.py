@@ -75,8 +75,8 @@ bp("part-extension", "partExtension() reads which alternative extension a part m
    """)
 
 bp("carried-part", "A part whose spec has no abnd:describedBy is carried but not parsed",
-   "The .prj part is linked and typed but contributes no content.",
-   ["req-pm-multi-part-assets-1"], ["multi-part-assets"],
+   "The .prj part is linked and typed but contributes no content: it is still minted <part>#root, as every part root is.",
+   ["req-pm-multi-part-assets-4", "req-pm-multi-part-assets-1"], ["multi-part-assets"],
    """
    ex:Profile a abnd:BundleProfile ; abnd:partSpec
        [ a abnd:PartSpec ; abnd:extension ".dat" ; abnd:partRole rpr:Payload ; abnd:required true ; abnd:describedBy ex:Grid ] ,
@@ -192,4 +192,4 @@ bp("nested-profile-unclaimed", "abnd:nestedProfile is refused with Unsupported f
    ex:Inner a abnd:BundleProfile ; abnd:partSpec [ a abnd:PartSpec ; abnd:pathPattern "*.xml" ; abnd:partRole rpr:Metadata ] .
    """,
    [part("annotation/a.xml", b"<a/>")], error="Unsupported",
-   manifest={"features": {"unclaimed": ["abnd:nestedProfile"]}})
+   manifest={"features": {"unclaimed": ["nested-profiles"]}})

@@ -51,8 +51,24 @@ def registry():
     return json.loads((SUITE / "requirements.json").read_text(encoding="utf-8"))["requirements"]
 
 
+#: Requirements every case may cite without saying anything specific (tools/conformance/suite.py BLANKET): they are
+#: left out of the coverage figures, since citing them shows nothing about which rule a case exercises.
+BLANKET = ("req-pm-conformance-1", "req-pm-introduction-1", "req-hdl-conformance-section-1", "req-hel-conformance-1",
+           "req-ce-conf-conformance-1")
+#: The processor conformance classes, and the requirement classes of the registry whose MUSTs each must meet.
+PROCESSOR_CLASSES = (("Physical Parser", ("physical-parser", "hel")), ("Semantic Emitter", ("semantic-emitter",)),
+                     ("Bundle Processor", ("bundle-processor",)), ("HDL Compiler", ("hdl-compiler",)),
+                     ("Conformance Evaluator", ("conformance-evaluator",)))
+
+
+def counted(entry, rid):
+    """Whether a requirement counts toward coverage: live, not blanket, and binding a processor (a requirement whose
+    registry audience is description binds only the author of a description, which no processor case can observe)."""
+    return not entry.get("withdrawn") and rid not in BLANKET and entry.get("audience", "processor") != "description"
+
+
 def coverage():
-    reqs = {i: e for i, e in registry().items() if not e.get("withdrawn")}
+    reqs = {i: e for i, e in registry().items() if counted(e, i)}
     cases = manifests()
     citing = defaultdict(list)
     for case in cases:
@@ -72,10 +88,17 @@ def coverage():
     for case in cases:
         kinds[case["class"]] += 1
     sections = Counter(s for case in cases for s in case["sections"])
+    processors = {}
+    for label, members in PROCESSOR_CLASSES:
+        ids = [i for i, e in reqs.items() if e["cls"] in members and e["level"] == "MUST"]
+        processors[label] = {"total": len(ids), "covered": sum(1 for i in ids if citing.get(i)),
+                             "uncovered": sorted(i for i in ids if not citing.get(i))}
     return {
         "cases": {cls: kinds[cls] for cls in CASE_CLASSES},
+        "excluded": {"blanket": list(BLANKET), "audience": "description"},
+        "processorMust": processors,
         "requirements": classes,
-        "citations": {i: sorted(citing.get(i, [])) for i in reqs},
+        "citations": {i: sorted(citing.get(i, [])) for i, e in registry().items() if not e.get("withdrawn")},
         "sections": dict(sorted(sections.items())),
     }
 
@@ -92,8 +115,10 @@ def render(data):
              f"<p>{total_cases} cases. A requirement counts as covered when at least one case cites its identifier; "
              "a case cites the requirements whose text its expected output is read from. The table is generated from "
              "the case manifests and the requirement registry (<a href=\"coverage.json\">coverage.json</a>); "
-             "requirements that no black-box case can observe, such as a processor stating its claims, stay "
-             "uncovered here and are listed below with no case.</p>",
+             "requirements that no black-box case can observe stay uncovered here and are listed below with no case. The "
+             "figures leave out the blanket requirements every case may cite (" + ", ".join(f"<code>{b}</code>" for b in BLANKET)
+             + ") and the requirements whose registry audience is <code>description</code>, which bind the author of a "
+             "description rather than a processor.</p>",
              '<div class="table"><table><thead><tr><th>Case class</th><th>Cases</th></tr></thead><tbody>',
              rows, "</tbody></table></div>",
              '<div class="table"><table><thead><tr><th>Requirements of</th><th>MUST-level covered</th>'
@@ -103,6 +128,16 @@ def render(data):
         parts.append(f"<tr><td>{label}</td><td>{must['covered']} of {must['total']} "
                      f"({percent(must['covered'], must['total'])})</td><td>{should['covered']} of {should['total']} "
                      f"({percent(should['covered'], should['total'])})</td></tr>")
+    parts.append("</tbody></table></div>")
+    parts.append('<h3 id="processor-coverage">Processor MUSTs by conformance class</h3><p>The MUST-level requirements '
+                 "a processor of each class is bound by (a Physical Parser by the Processing Model's physical rules and "
+                 "by HEL), how many at least one case cites, and those none does yet.</p>"
+                 '<div class="table"><table><thead><tr><th>Conformance class</th><th>MUSTs covered</th><th>Not yet cited</th>'
+                 "</tr></thead><tbody>")
+    for label, row in data["processorMust"].items():
+        missing = ", ".join(f"<code>{html.escape(i)}</code>" for i in row["uncovered"]) or "none"
+        parts.append(f"<tr><td>{label}</td><td>{row['covered']} of {row['total']} ({percent(row['covered'], row['total'])})"
+                     f"</td><td>{missing}</td></tr>")
     parts.append("</tbody></table></div>")
     parts.append('<h3 id="requirement-index">Requirement index</h3><p>Every anchored requirement, its level and the cases '
                  "that cite it.</p>")

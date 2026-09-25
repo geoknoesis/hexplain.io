@@ -1,0 +1,9 @@
+format: t
+namespace: "https://example.org/hc-checksum-fixed-terminator-yaml#"
+structs:
+  Root:
+    fields:
+      - { name: magic, type: bytes, size: 4, fixed: 0x89504E47 }
+      - { name: code, type: i32, fixed: 9994 }
+      - { name: name, type: ascii, terminator: 0x00 }
+      - { name: crc, type: u32, checksum: { algorithm: crc32, from: magic, to: name } }

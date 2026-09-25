@@ -8,7 +8,7 @@ import hashlib
 import struct
 import zlib
 
-from cases_physical import GENERIC, pp
+from cases_physical import pp
 
 
 def crc16_ccitt_false(data):
@@ -52,7 +52,7 @@ CRC_BODY = """
 
 pp("checksum-crc32", "CRC-32 over a field range, as zlib computes it",
    "coversFromField..coversToField covers the type and data fields inclusive.",
-   [GENERIC], ["algorithm"], CRC_BODY,
+   ["req-pm-parsefield-16"], ["algorithm"], CRC_BODY,
    b"IENDabc" + struct.pack(">I", zlib.crc32(b"IENDabc")),
    {"type": "IEND", "data": b"abc", "crc": zlib.crc32(b"IENDabc")})
 
@@ -63,7 +63,7 @@ pp("checksum-crc32-mismatch", "A checksum mismatch is a checksum error",
 
 pp("checksum-adler32", "Adler-32 over a field range",
    "Adler-32 of 'Wikipedia' is 0x11E60398.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-16"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:text ex:sum ) .
    ex:text a bddo:Field ; bddo:dataType bddo:string ; bddo:size 9 ; bddo:encoding bddo:ascii .
@@ -76,7 +76,7 @@ pp("checksum-adler32", "Adler-32 over a field range",
 
 pp("checksum-crc16-ccitt-false", "bddo:crc16 is CRC-16/CCITT-FALSE",
    "Polynomial 0x1021, initial value 0xFFFF: the check value over '123456789' is 0x29B1.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-16"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:text ex:sum ) .
    ex:text a bddo:Field ; bddo:dataType bddo:string ; bddo:size 9 ; bddo:encoding bddo:ascii .
@@ -103,7 +103,7 @@ for algorithm, fn in DIGESTS.items():
     digest = fn(b"hexplain").digest()
     pp(f"checksum-{algorithm}", f"A {algorithm.upper()} digest is compared byte for byte",
        f"A {len(digest)}-byte bytes field holds the {algorithm} digest of the text before it.",
-       [GENERIC], ["algorithm"],
+       ["req-pm-parsefield-16"], ["algorithm"],
        f"""
        ex:Root a bddo:Struct ; bddo:hasField ( ex:text ex:digest ) .
        ex:text a bddo:Field ; bddo:dataType bddo:string ; bddo:size 8 ; bddo:encoding bddo:ascii .
@@ -127,7 +127,7 @@ pp("checksum-sha256-mismatch", "A digest mismatch is a checksum error",
 
 pp("checksum-covers-expressions", "Coverage by expressions: start inclusive, end exclusive",
    "coversFromExpression 1 and coversToExpression 4 cover bytes 1, 2 and 3.",
-   [GENERIC], ["algorithm", "hel/index.html#name-binding"],
+   ["req-pm-parsefield-16"], ["algorithm", "hel/index.html#name-binding"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:data ex:crc ) .
    ex:data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 5 .
@@ -151,7 +151,7 @@ pp("checksum-coverage-out-of-bounds", "A coverage bound outside the stream is a 
 
 pp("checksum-empty-range", "A coverage range whose end precedes its start is not checked",
    "From offset 3 to offset 1 covers nothing, so the stored value (0) is not compared.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-16"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:data ex:crc ) .
    ex:data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 5 .
@@ -226,13 +226,13 @@ pp("codec-zlib-adler-mismatch", "A zlib Adler-32 mismatch is a checksum error",
 
 pp("codec-zlib-trailing-bytes", "Bytes after the end of a zlib stream inside its block are a validation error",
    "One stray byte follows the zlib trailer within the field's region.",
-   ["req-pm-minimum-codecs-5", "req-pm-errors-4"], ["minimum-codecs"],
+   ["req-pm-minimum-codecs-10", "req-pm-minimum-codecs-5"], ["minimum-codecs"],
    codec_field("hexplain:isEncodedWith menc:Zlib", len(ZLIB_123) + 1),
    ZLIB_123 + b"\x00", error="Validation")
 
 pp("codec-deflate-truncated", "Compressed data that cannot be decoded is a validation error",
    "A raw DEFLATE block cut short by two bytes.",
-   ["req-pm-minimum-codecs-4"], ["minimum-codecs"],
+   ["req-pm-minimum-codecs-10", "req-pm-minimum-codecs-4"], ["minimum-codecs"],
    codec_field("hexplain:isEncodedWith menc:Deflate", len(RAW_DEFLATE) - 3),
    RAW_DEFLATE[:-3], error="Validation")
 
@@ -337,7 +337,7 @@ pp("codec-beyond-minimum-set", "A codec beyond the minimum set that the processo
     "req-pm-errors-11"],
    ["minimum-codecs", "refusal"],
    codec_field("hexplain:isEncodedWith menc:Zstd", 3), b"\x28\xb5\x2f", error="Unsupported",
-   manifest={"features": {"unclaimed": ["codecs beyond the minimum set"]}})
+   manifest={"features": {"unclaimed": ["codecs-beyond-minimum"]}})
 
 pp("codec-decoded-byte-limit", "Decoded output counts toward the decoded-byte limit",
    "Inflating to 17 bytes under a 10-byte maxDecodedBytes is a ResourceLimit error.",

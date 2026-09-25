@@ -1,6 +1,123 @@
 {
  "schema": 1,
  "requirements": {
+  "req-pm-bit-cursor-1": {
+   "page": "specification/processing/index.html",
+   "section": "bit-cursor",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Physical Parser MUST move the bit cursor by these rules:",
+   "sha256": "f6cebd18f88b7fcc"
+  },
+  "req-pm-bit-cursor-2": {
+   "page": "specification/processing/index.html",
+   "section": "bit-cursor",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Consecutive bddo:bitLength fields pack contiguously: each consumes the next bitLength bits from the current bit offset, advancing the cursor (rolling into the next byte when it reaches 8).",
+   "sha256": "44e23fdba172e850"
+  },
+  "req-pm-bit-cursor-3": {
+   "page": "specification/processing/index.html",
+   "section": "bit-cursor",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Bits are consumed within each byte per the effective bddo:bitOrder: bddo:MSBFirst takes bits from the most-significant end first; bddo:LSBFirst from the least-significant end.",
+   "sha256": "de1ff3eb250d3cf6"
+  },
+  "req-pm-bit-cursor-4": {
+   "page": "specification/processing/index.html",
+   "section": "bit-cursor",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Every bit keeps its significance: under bddo:MSBFirst the first bit taken is the most significant bit of the field's value, under bddo:LSBFirst the least significant (as DEFLATE and GIF read their codes), so a 3-bit field read LSBFirst from 0xB4 is 4, the low three bits' value. A field spanning a byte boundary continues into the next byte in the same bit order, its later bits more significant under LSBFirst and less significant under MSBFirst.",
+   "sha256": "d10b8dcc2e5b6845"
+  },
+  "req-pm-bit-cursor-5": {
+   "page": "specification/processing/index.html",
+   "section": "bit-cursor",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The bit cursor realigns to the next whole byte boundary before any byte-oriented read (a field without bitLength), before bddo:alignment, and at the end of a Struct; partial bits before the boundary are skipped.",
+   "sha256": "bcfc28fa22694a81"
+  },
+  "req-pm-bit-cursor-6": {
+   "page": "specification/processing/index.html",
+   "section": "bit-cursor",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A bit read that would cross the end of the innermost bounded region (or |S|) raises a bounds error.",
+   "sha256": "10bcb0e657f13e76"
+  },
+  "req-pm-byte-order-1": {
+   "page": "specification/processing/index.html",
+   "section": "byte-order",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Physical Parser MUST read a multi-byte integer or float in the byte order given by the first of the following that applies:",
+   "sha256": "0beda1e56cfdfad5"
+  },
+  "req-pm-byte-order-2": {
+   "page": "specification/processing/index.html",
+   "section": "byte-order",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The data type's own byte order: an explicit big- or little-endian type such as bddo:uint32be or bddo:float64le always reads in its own order.",
+   "sha256": "2c10620269277633"
+  },
+  "req-pm-byte-order-3": {
+   "page": "specification/processing/index.html",
+   "section": "byte-order",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The field's own declaration: bddo:endianness on the field, or the first rule of the field's bddo:hasConditionalEndianness whose condition holds, evaluated just before the field is read.",
+   "sha256": "fc8f1f9d5516331c"
+  },
+  "req-pm-byte-order-4": {
+   "page": "specification/processing/index.html",
+   "section": "byte-order",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The containing struct's own declaration: its bddo:endianness, or its resolved bddo:hasConditionalEndianness (below). The two are mutually exclusive.",
+   "sha256": "30e7c01947b8a4aa"
+  },
+  "req-pm-byte-order-5": {
+   "page": "specification/processing/index.html",
+   "section": "byte-order",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The byte order inherited from the enclosing struct: the order that was in force (by this same list) for the field through which this struct is being parsed. This applies equally to a struct re-parsed from a decoded sub-stream.",
+   "sha256": "37fbf5f85a6bde30"
+  },
+  "req-pm-byte-order-6": {
+   "page": "specification/processing/index.html",
+   "section": "byte-order",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Big-endian.",
+   "sha256": "126ee21fef18040c"
+  },
+  "req-pm-byte-order-7": {
+   "page": "specification/processing/index.html",
+   "section": "byte-order",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST resolve a struct's conditional byte order as follows.",
+   "sha256": "ea1c140c3c80e6cc"
+  },
   "req-pm-conformance-1": {
    "page": "specification/processing/index.html",
    "section": "conformance",
@@ -202,6 +319,69 @@
    "text": "Before any cell is addressed, a processor MUST resolve the layout against the field's containing struct: each dlv:dimensionSizeFromField, dlv:dimensionStrideFromField and dlv:cellBitWidthFromField reads the named field (looked up as for bddo:sizeFromField), each dlv:dimensionStrideFromExpression is evaluated, and the first holding arm of dlv:hasConditionalCellDataType and of dlv:hasConditionalDimensionOrder is selected (DLV conditional layout).",
    "sha256": "d2d5f154f88e5b48"
   },
+  "req-pm-delimited-records-1": {
+   "page": "specification/processing/index.html",
+   "section": "delimited-records",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Physical Parser MUST split a delimited container into records and values by these rules:",
+   "sha256": "8170dc8e704fdf5c"
+  },
+  "req-pm-delimited-records-2": {
+   "page": "specification/processing/index.html",
+   "section": "delimited-records",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The bytes are decoded in the bddo:encoding declared on the field through which the container is parsed, or as UTF-8 when none is declared. A malformed sequence is a validation error (recorded as a finding and skipped in a lenient mode); it is never replaced silently. A leading UTF-8 byte order mark is ignored.",
+   "sha256": "fee76b7436fe1e7c"
+  },
+  "req-pm-delimited-records-3": {
+   "page": "specification/processing/index.html",
+   "section": "delimited-records",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The text is split into records at each occurrence of bddo:recordDelimiter (default 0A, LF) that is not inside a quoted value (below). When the delimiter is 0A, a CR immediately before it is removed, so CRLF text reads the same as LF text. A record delimiter at the very end yields no final empty record.",
+   "sha256": "b374c13b3fcffb4c"
+  },
+  "req-pm-delimited-records-4": {
+   "page": "specification/processing/index.html",
+   "section": "delimited-records",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The first bddo:skipRecords records (default 0) are discarded; then every record that, after leading whitespace, begins with bddo:commentPrefix is discarded.",
+   "sha256": "460c9ac56a0c7f7d"
+  },
+  "req-pm-delimited-records-5": {
+   "page": "specification/processing/index.html",
+   "section": "delimited-records",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Values within a record. With bddo:fieldDelimiter, a record is split into values at each occurrence of the delimiter sequence outside a quoted value. With bddo:whitespaceSeparated true, values are separated by runs of space, tab, CR or LF: a run of any length separates exactly two values, and leading and trailing whitespace on the record is ignored; if bddo:recordDelimiter is also absent, the whole content is one flat sequence of values, whose shape comes from the field's layout or repeat count. With neither, a record is a single value.",
+   "sha256": "7051d83cbd6f948d"
+  },
+  "req-pm-delimited-records-6": {
+   "page": "specification/processing/index.html",
+   "section": "delimited-records",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Quoting. With bddo:quoteChar q, a value that begins with q is quoted: it extends to the next q not immediately followed by another q, may contain the field delimiter, the record delimiter and line breaks, and has its quotes removed; a doubled qq inside it denotes one literal q. With bddo:escapeChar e, e followed by any character yields that character with no delimiter or quote meaning. A quoted value still open at the end of the container is a validation error.",
+   "sha256": "e10716a782db170e"
+  },
+  "req-pm-delimited-records-7": {
+   "page": "specification/processing/index.html",
+   "section": "delimited-records",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "With bddo:trimWhitespace true, leading and trailing whitespace is removed from every key and value.",
+   "sha256": "9608d1d6c53205f3"
+  },
   "req-pm-delimited-tables-1": {
    "page": "specification/processing/index.html",
    "section": "delimited-tables",
@@ -210,6 +390,15 @@
    "audience": "processor",
    "text": "A bddo:whitespaceSeparated container with no bddo:recordDelimiter is one sequence of values; every Physical Parser MUST support it.",
    "sha256": "7d4d8f8fcb304658"
+  },
+  "req-pm-delimited-tables-2": {
+   "page": "specification/processing/index.html",
+   "section": "delimited-tables",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST bind the records of a table as this paragraph states.",
+   "sha256": "dd424fcd1c075f02"
   },
   "req-pm-emission-1": {
    "page": "specification/processing/index.html",
@@ -231,6 +420,69 @@
    "audience": "processor",
    "text": "If an enumeration matched, a processor SHOULD also emit the symbolic value (the bddo:enumSymbol IRI, if any) alongside the raw literal.",
    "sha256": "27e14f0fac42154e"
+  },
+  "req-pm-emission-3": {
+   "page": "specification/processing/index.html",
+   "section": "emission",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Semantic Emitter MUST emit these triples:",
+   "sha256": "6b0424a688c7e1e6"
+  },
+  "req-pm-emission-4": {
+   "page": "specification/processing/index.html",
+   "section": "emission",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "For a Struct instance s whose description has hexplain:mapsToClass C, emit <IRI(s)> rdf:type C.",
+   "sha256": "3a7db9144b5a09ae"
+  },
+  "req-pm-emission-5": {
+   "page": "specification/processing/index.html",
+   "section": "emission",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "For a Field with hexplain:mapsToProperty P, emit <IRI(parent)> P \"value\"^^xsdType. If the field also carries hexplain:valueExpression E, emit instead the value obtained by evaluating E in the field's context (e.g. fixed-point or unit scaling), typed with hexplain:valueDatatype if given, else the natural datatype of the HEL result.",
+   "sha256": "21dbcbc036363c4e"
+  },
+  "req-pm-emission-6": {
+   "page": "specification/processing/index.html",
+   "section": "emission",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "For a Field with hexplain:mapsToObjectProperty P, emit <IRI(parent)> P o, where o is the IRI minted for the struct instance the field holds when its data type is a bddo:Struct, or the bddo:enumSymbol IRI of the matched bddo:EnumValue when the field carries an enumeration; a value that has neither emits nothing.",
+   "sha256": "b533f2770bbfd5b4"
+  },
+  "req-pm-emission-7": {
+   "page": "specification/processing/index.html",
+   "section": "emission",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "For a Field with hexplain:hasConditionalMapping, evaluate rules in order and emit the property of the first rule whose condition holds.",
+   "sha256": "9610c9c414c0f207"
+  },
+  "req-pm-emission-8": {
+   "page": "specification/processing/index.html",
+   "section": "emission",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A repeated field emits one such triple per element, in element order; a Null element, like an unbound field, emits nothing.",
+   "sha256": "91b3e51d794c9ddc"
+  },
+  "req-pm-emission-9": {
+   "page": "specification/processing/index.html",
+   "section": "emission",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "For a Field with hexplain:hasDataLayout, the layout (DLV) governs how the multi-dimensional cells are addressed; a processor MAY additionally emit per-cell triples but is not required to materialize them.",
+   "sha256": "d5fe09562a84c271"
   },
   "req-pm-errors-1": {
    "page": "specification/processing/index.html",
@@ -298,8 +550,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Dispatch error | No bddo:DataTypeRule matched and no default bddo:dataType exists.",
-   "sha256": "e70ca9d4a80a7e1c"
+   "text": "Dispatch error | No bddo:DataTypeRule matched and no default bddo:dataType exists. A category of its own: neither a Validation error nor a Description error, and reported (and attributed) as Dispatch.",
+   "sha256": "91ad6b6cd17d37a9",
+   "history": [
+    "e70ca9d4a80a7e1c"
+   ]
   },
   "req-pm-errors-8": {
    "page": "specification/processing/index.html",
@@ -307,10 +562,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Description error | The description itself is inconsistent: two dispatch arms with one key, both dispatch mechanisms on one field, an empty terminator, a variable-length field with no extent, an unbound namespace prefix, cyclic cross-part references, two part specs described by structs sharing a local name, a malformed fixed value, a packed width on a non-integer cell type, a bddo:repeatUntil on a text container, a codec parameter that is unknown, missing or out of range. A Description error SHOULD be raised when the description is loaded.",
-   "sha256": "6d63f31091bf4ed6",
+   "text": "Description error | The description itself is inconsistent: two dispatch arms with one key, both dispatch mechanisms on one field, an empty terminator, a variable-length field with no extent, an unbound namespace prefix, cyclic cross-part references, two part specs described by structs sharing a local name, a malformed fixed value, a packed width on a non-integer cell type, a bddo:repeatUntil on a text container, a codec parameter that is unknown, missing or out of range, a pair of conflicting forms (a repeat count with a repeat-until condition, two count or offset forms, a dispatch table with conditional type rules, two values of a functional property), two fields of one struct sharing a local name. An invalid profile or rule set is a Description error when it is loaded: a description, conformance profile or rule set that the family’s shapes reject, including a requirement identity stated twice (by IRI, or by a blank-node pair with one req:requirementId and req:fromStandard), a requirement without a statement, and a parse attribution naming ResourceLimit. A Description error SHOULD be raised when the description is loaded.",
+   "sha256": "99099e6d77370703",
    "history": [
-    "0cb63e59ec525203"
+    "0cb63e59ec525203",
+    "6d63f31091bf4ed6"
    ]
   },
   "req-pm-errors-9": {
@@ -439,6 +695,15 @@
    "text": "A processor MAY offer alternative minting policies (e.g. hash-based or field-derived keys) but MUST document them and MUST be deterministic: parsing the same bytes with the same description and base IRI MUST yield an isomorphic graph.",
    "sha256": "a0181ca973e4851a"
   },
+  "req-pm-key-value-1": {
+   "page": "specification/processing/index.html",
+   "section": "key-value",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST locate the fields of a key/value header as this paragraph states.",
+   "sha256": "bbd304d9550ba372"
+  },
   "req-pm-minimum-codecs-1": {
    "page": "specification/processing/index.html",
    "section": "minimum-codecs",
@@ -520,6 +785,15 @@
    "text": "Other values (for example TIFF's floating-point predictor 3) are not defined by this version: a processor MUST refuse them with Unsupported feature.",
    "sha256": "9a471558ea5d01f5"
   },
+  "req-pm-minimum-codecs-10": {
+   "page": "specification/processing/index.html",
+   "section": "minimum-codecs",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST report compressed data that cannot be decoded (truncated, malformed, needing a preset dictionary, or followed by trailing bytes inside a zlib or raw DEFLATE block) as a Validation error.",
+   "sha256": "0db8ee5e319f5589"
+  },
   "req-pm-multi-part-assets-1": {
    "page": "specification/processing/index.html",
    "section": "multi-part-assets",
@@ -547,6 +821,15 @@
    "text": "A processor that is not a Bundle Processor MUST treat the asset root and partExtension() as HEL errors when a single part is parsed on its own, so that a description depending on a sibling part fails rather than reading Null.",
    "sha256": "c8464037bd471338"
   },
+  "req-pm-multi-part-assets-4": {
+   "page": "specification/processing/index.html",
+   "section": "multi-part-assets",
+   "cls": "bundle-processor",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A part that is carried but not parsed (its spec has no abnd:describedBy) MUST still be minted the same way: its root is <part>#root, which the lifting below links and types, and which carries no triple of its own content.",
+   "sha256": "6a5d5330e8283c4a"
+  },
   "req-pm-parsefield-1": {
    "page": "specification/processing/index.html",
    "section": "parsefield",
@@ -562,8 +845,209 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "On a numeric field a numeric literal is compared by value (so \"9994\"^^xsd:int matches the integer 9994 however it is stored); an xsd:hexBinary literal is the field's encoding in the field's byte order and MUST be exactly the field's width.",
-   "sha256": "64a4b780f3117d1d"
+   "text": "Only an xsd:hexBinary literal denotes bytes: on a bytes or string field a processor MUST compare it with the field's raw bytes, byte for byte, and on a numeric field it is the field's encoding in the field's byte order and MUST be exactly the field's width.",
+   "sha256": "20f55ec2d4ad1b4a",
+   "history": [
+    "64a4b780f3117d1d"
+   ]
+  },
+  "req-pm-parsefield-3": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Physical Parser MUST parse a field by these steps, in this order; a step whose property the field does not declare does nothing:",
+   "sha256": "8e2aaa4e35735370"
+  },
+  "req-pm-parsefield-4": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Presence. If bddo:isPresentIf is present and its HEL expression evaluates to false, skip the field (bind it to Null in the context) and return.",
+   "sha256": "d2d9a19e3823065c"
+  },
+  "req-pm-parsefield-5": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Derived value. If bddo:valueFromExpression E is present, evaluate E in the field's context (The HEL Parsing Context), bind the result under the field's key, and return. The field consumes no bytes and has no byte extent; none of the steps below apply to it. A Null result leaves the field unbound, exactly as an absent optional field.",
+   "sha256": "e753ca288fdff583"
+  },
+  "req-pm-parsefield-6": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Alignment. If bddo:alignment = a, advance the cursor to the next multiple of a, measured from the start of the current stream: the input stream, or, inside a field decoded by hexplain:isEncodedWith and re-parsed as a struct, the decoded sub-stream, whose offsets start at 0 (Stream metadata). Bounded regions do not move the origin: a field aligned to 4 inside a region starting at offset 6 starts at offset 8, not 10. The same origin applies to an offset-addressed field's aligned target.",
+   "sha256": "43fde060c6f91a65"
+  },
+  "req-pm-parsefield-7": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Addressing. If an offset property is present, compute the target offset from bddo:atOffset / atOffsetFromField / atOffsetFromExpression, relative to bddo:offsetBase: streamStart (the default) counts from the start of the current stream, streamEnd counts backward from |S|, the length of the current stream, and currentPosition from the cursor. The current stream is the input stream or, inside a field decoded by hexplain:isEncodedWith and re-parsed as a struct, the decoded sub-stream (Stream metadata); a bounded region is not a stream, so streamEnd inside one still counts from the end of the stream that holds it. Save the current cursor — the byte position and any partially consumed byte of the bit cursor — seek to the target, parse, then restore the saved cursor, bit position included (an offset field does not advance sibling parsing and does not disturb a run of bit fields) unless offsetBase is currentPosition. A target outside the innermost bounded region raises a bounds error, unless the field declares bddo:seekScope bddo:streamScope: then the target is resolved against the whole stream [0, |S|) and the region bound is suspended for the duration of this one read (and restored before the cursor is).",
+   "sha256": "86d8e34170e64e1f"
+  },
+  "req-pm-parsefield-8": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Repetition. If a repetition property is present, determine the iteration policy: a fixed bddo:repeatCount, a count via repeatCountFromField/repeatCountFromExpression, or repeat-until (bddo:repeatUntil, evaluated after each element with the bindings of The HEL Parsing Context). A bddo:repeatUntil on a field whose data type is a text container (Delimited, key/value and tree containers) is a description error: the container consumes its whole region, so no element could follow the first. Produce an ordered array node; each element is parsed by the single-value procedure below, and the fixed-value, enumeration and bddo:validIf steps apply to each element, self being the element.",
+   "sha256": "0b5eb2faad7ad3b1"
+  },
+  "req-pm-parsefield-9": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "If bddo:hasDispatchTable is present, a processor MUST evaluate the table's key — the parsed value of bddo:dispatchOnField, or bddo:dispatchOnExpression evaluated exactly as a bddo:DataTypeRule condition is — and select the bddo:DispatchArm of that table whose bddo:armKey equals it (strings by code points, integers numerically); if none matches, it uses bddo:dispatchDefault, else bddo:dataType.",
+   "sha256": "01fcff4a7dc1d978"
+  },
+  "req-pm-parsefield-10": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Otherwise, if bddo:hasConditionalDataType is present, a processor MUST evaluate each bddo:DataTypeRule in list order and take the effective type from the first whose bddo:condition is true, via its bddo:ruleDataType.",
+   "sha256": "6286aca028a646dc"
+  },
+  "req-pm-parsefield-11": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Value. If the effective type is a bddo:Struct, recurse via ParseStruct. If it is a bddo:DataType:",
+   "sha256": "e4d21caff3c52a61"
+  },
+  "req-pm-parsefield-12": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Every other string literal (an xsd:string, a plain or a language-tagged literal) denotes characters, never hexadecimal digits: on a bytes field a processor MUST compare the field's bytes with the literal's UTF-8 encoding, so \"CAFE\" matches the four bytes 43 41 46 45 and not CA FE, and on a string field it MUST compare the decoded value — after bddo:trimNull, when the field declares it — with the literal by code points, whatever the field's bddo:encoding (a bddo:utf16le field holding 41 00 42 00 matches \"AB\", and a six-byte NUL-padded field holding 41 42 00 00 00 00 matches it too).",
+   "sha256": "7af1691f1e0cab35"
+  },
+  "req-pm-parsefield-13": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A numeric literal on a numeric field MUST be compared by value at the field's width: an integer field matches an integer literal of equal value however the literal is typed and the field stored (\"9994\"^^xsd:int matches the integer 9994), and a float field matches the literal's value rounded to the field's format, so \"0.1\"^^xsd:double on a bddo:float32 field matches the float32 nearest to 0.1.",
+   "sha256": "624db4ae6106cf91"
+  },
+  "req-pm-parsefield-14": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST raise a description error, when the description is loaded, for an xsd:hexBinary of another width on a numeric field, a string or Boolean literal on a numeric field, a numeric or Boolean literal on a string or bytes field, a fraction on an integer field, an integer outside the field's range, and a finite value that overflows a float field's format.",
+   "sha256": "8f43f900712445ab"
+  },
+  "req-pm-parsefield-15": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Enumeration. If bddo:enumeration is present, look up the raw value among the enumeration's bddo:EnumValue resources; the matching symbol/label is attached to the value node (and emitted per Semantic Triple Emission). If the enumeration has bddo:enumIsFlags true, the raw value is a bitmask: every bddo:EnumValue whose raw value's bits are all set in the parsed value matches, and all matching symbols are attached/emitted.",
+   "sha256": "e4826959aad9cb5d"
+  },
+  "req-pm-parsefield-16": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Checksum. If bddo:checksum is present, compute the algorithm over the covered byte range — from the first byte of coversFromField, or the offset coversFromExpression yields, to the last byte of coversToField (inclusive), or up to and excluding the offset coversToExpression yields (the two bounds may mix a field and an expression); or the [start, end) range yielded by the deprecated coversExpression — and compare with the stored value; a mismatch raises a checksum error. A coverage bound outside the current (sub-)stream raises a bounds error; a range whose end precedes its start covers nothing and is not checked. The bddo:checksumAlgorithm values are bddo:crc32 (CRC-32 as in zlib), bddo:adler32, bddo:crc16 (CRC-16/CCITT-FALSE: polynomial 0x1021, initial value 0xFFFF), bddo:md5, bddo:sha1 and bddo:sha256; an integer checksum is compared numerically, a digest byte for byte.",
+   "sha256": "8bdf97ff4687a0ea"
+  },
+  "req-pm-parsefield-17": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Constraint. If bddo:validIf E is present, evaluate E once the field is bound (after the fixed-value and checksum checks), with self bound to the field's value (The HEL Parsing Context). false raises a validation error; an evaluation failure raises a Type / HEL error, not a validation error, because it reports a defect of the description rather than of the data.",
+   "sha256": "8b0b97d705131ae4"
+  },
+  "req-pm-parsefield-18": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Root key. If bddo:rootKeyFromField is present, let k be the parsed value of the named sibling field; if k is a string and the root context has no binding for k, bind this field's value in the root context under k (first occurrence wins). This is what lets a later field say root.k.… about a record inside a repeated sequence.",
+   "sha256": "594d687aa654bb15"
+  },
+  "req-pm-parsefield-19": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Bind the field's value into node under the field's simple key, and return.",
+   "sha256": "4229f058ba57664a"
+  },
+  "req-pm-parsefield-20": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST raise a description error, when the description is loaded, for each of these:",
+   "sha256": "e1ebf89edb7897f1"
+  },
+  "req-pm-parsefield-21": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A repeat count and a repeat-until condition on one field: any of bddo:repeatCount, bddo:repeatCountFromField and bddo:repeatCountFromExpression together with bddo:repeatUntil, or two of the three count forms.",
+   "sha256": "2c302e2b24438323"
+  },
+  "req-pm-parsefield-22": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Two offset forms on one field: two of bddo:atOffset, bddo:atOffsetFromField and bddo:atOffsetFromExpression.",
+   "sha256": "692d9bf7bd555bcc"
+  },
+  "req-pm-parsefield-23": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A dispatch table and conditional type rules on one field: bddo:hasDispatchTable together with bddo:hasConditionalDataType.",
+   "sha256": "900310f57df96a08"
+  },
+  "req-pm-parsefield-24": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "More than one value of a functional property on one resource: a property the family's vocabularies or shapes allow at most once, stated with two different values (for example two bddo:dataType, two bddo:size, two bddo:endianness or two bddo:hasFixedValue values on one field). The data type individuals the family's vocabularies define themselves (bddo:uint32 and the like) are exempt.",
+   "sha256": "80565eb0a525ea11"
   },
   "req-pm-parsestruct-1": {
    "page": "specification/processing/index.html",
@@ -573,6 +1057,114 @@
    "audience": "processor",
    "text": "Members MUST be processed in list order.",
    "sha256": "c381ed89f6bd0a4a"
+  },
+  "req-pm-parsestruct-2": {
+   "page": "specification/processing/index.html",
+   "section": "parsestruct",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Physical Parser MUST parse a struct by these steps, in this order:",
+   "sha256": "206c27a1d728c6ab"
+  },
+  "req-pm-parsestruct-3": {
+   "page": "specification/processing/index.html",
+   "section": "parsestruct",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "If struct has bddo:syncOnMarker, advance the cursor past the next occurrence of the marker bytes: the marker is consumed, and the struct (its start offset and its first field) begins after it. If no occurrence exists, raise a sync error.",
+   "sha256": "f41a3e64bca618f0"
+  },
+  "req-pm-parsestruct-4": {
+   "page": "specification/processing/index.html",
+   "section": "parsestruct",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Create a new context node n with a back-link to parent; record its start offset.",
+   "sha256": "ce6bcc40925857e0"
+  },
+  "req-pm-parsestruct-5": {
+   "page": "specification/processing/index.html",
+   "section": "parsestruct",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Bounded region. If struct declares a size (bddo:size / bddo:sizeFromField / bddo:sizeFromExpression), it establishes a bounded region [start, start+size). A read by this struct or any descendant that would cross the region end raises a bounds error, and a descendant's bddo:sizeToEndOfStream resolves to the region end (not |S|). This is what lets length-delimited containers (ISOBMFF/MP4 boxes, EBML, chunk payloads) bound their children. A literal bddo:size establishes the region before the first field is read; a bddo:sizeFromField or bddo:sizeFromExpression establishes it as soon as every field it references is bound (Struct-level size). A region whose end would lie beyond the enclosing region, or a negative size, raises a bounds error.",
+   "sha256": "8e8f2c0792d04af1"
+  },
+  "req-pm-parsestruct-6": {
+   "page": "specification/processing/index.html",
+   "section": "parsestruct",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Resolve the effective byte order and bit order (Byte order and bit order). The byte order declared by an ancestor struct is inherited, which is what \"nearest declaration wins\" means: DataType > Field > this Struct (fixed or conditional) > inherited from the enclosing struct > big-endian.",
+   "sha256": "0512837a47e13898"
+  },
+  "req-pm-parsestruct-7": {
+   "page": "specification/processing/index.html",
+   "section": "parsestruct",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "If struct is a bddo:DelimitedRecords (or subclass) or a bddo:TreeDocument, parse it by the container rules of Delimited, key/value and tree containers instead of the next step, then continue at the last step.",
+   "sha256": "9e9bfad9c78c0ac9"
+  },
+  "req-pm-parsestruct-8": {
+   "page": "specification/processing/index.html",
+   "section": "parsestruct",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "If struct declared a size, advance the cursor to start+size (skipping any trailing padding/unknown bytes); otherwise the end offset is the current cursor. Record the node's end offset (sizeof = end − start) and return n.",
+   "sha256": "fac865442e35cb7d"
+  },
+  "req-pm-recovery-1": {
+   "page": "specification/processing/index.html",
+   "section": "recovery",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "When reading a field fails, a processor in a lenient mode MUST record the error once and recover by the first of these rules that applies:",
+   "sha256": "f94528144b540e71"
+  },
+  "req-pm-recovery-2": {
+   "page": "specification/processing/index.html",
+   "section": "recovery",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Pointer. A field read at an offset (bddo:atOffset, bddo:atOffsetFromField, bddo:atOffsetFromExpression) that fails leaves the field unbound and does not move the cursor: the saved cursor is restored, as after any offset-addressed read, and parsing continues with the next field.",
+   "sha256": "7585cef95e7a8c1f"
+  },
+  "req-pm-recovery-3": {
+   "page": "specification/processing/index.html",
+   "section": "recovery",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Counted sequence of known-width elements. A repeated field whose count is known (its repeat count resolved) and each of whose elements has a width known before it is read (a data type with a bddo:bitWidth and no bddo:bitLength, or a literal bddo:size) is left unbound, and the cursor moves to the field's start plus count × width, or to the end of the innermost bounded region if that comes first; parsing continues with the next field.",
+   "sha256": "7c0348d0b5a0fd15"
+  },
+  "req-pm-recovery-4": {
+   "page": "specification/processing/index.html",
+   "section": "recovery",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Otherwise, abandon up to the nearest known end. The field that failed is left unbound, and so is everything after it up to the nearest end the processor knows: the end of the failing field's own declared region (Size resolution), of a bounded bddo:repeatUntil sequence, of a decoded block, or of a struct with a declared size (Struct-level size), whichever encloses the failure most closely. The cursor moves to that end and parsing continues with whatever follows it; the fields read before the failure keep their values, and each struct that was abandoned is bound, with the fields it has, in its parent. When no enclosing end is known, every struct up to the root is abandoned and the parse ends.",
+   "sha256": "e422c8aca3c4ed7d"
+  },
+  "req-pm-recovery-5": {
+   "page": "specification/processing/index.html",
+   "section": "recovery",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST NOT recover from a ResourceLimit, Description or Unsupported feature error (Error Handling), and MUST NOT use a recovery rule to skip a read it could have made.",
+   "sha256": "f18557222684c381"
   },
   "req-pm-resource-limits-1": {
    "page": "specification/processing/index.html",
@@ -637,6 +1229,69 @@
    "text": "A repeat count MUST be a non-negative integer; a negative count is a bounds error, as a negative size is.",
    "sha256": "a9dcc25721844ecd"
   },
+  "req-pm-size-resolution-4": {
+   "page": "specification/processing/index.html",
+   "section": "size-resolution",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Physical Parser MUST take the first of these cases that matches, and MUST NOT consult the later ones:",
+   "sha256": "a6666021059a6871"
+  },
+  "req-pm-size-resolution-5": {
+   "page": "specification/processing/index.html",
+   "section": "size-resolution",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Bits. A field with bddo:bitLength occupies that many bits (Parse Algorithm, bit cursor).",
+   "sha256": "ebfd5a138658c28f"
+  },
+  "req-pm-size-resolution-6": {
+   "page": "specification/processing/index.html",
+   "section": "size-resolution",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Separated. A field with bddo:separatedBy is read as a separated token (Numbers written as text, separated tokens and varints). The bddo:FieldShape forbids combining it with any size or terminator.",
+   "sha256": "11f6efa7baca3836"
+  },
+  "req-pm-size-resolution-7": {
+   "page": "specification/processing/index.html",
+   "section": "size-resolution",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Fixed width. A field whose effective data type has a bddo:bitWidth occupies bitWidth / 8 bytes. Size properties on such a field do not change its width and are ignored.",
+   "sha256": "ca167c410bfbdd45"
+  },
+  "req-pm-size-resolution-8": {
+   "page": "specification/processing/index.html",
+   "section": "size-resolution",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Self-delimiting. A variable-length integer (bddo:varuint, bddo:varint, bddo:sqliteVarint) occupies as many bytes as its encoding says (Numbers written as text, separated tokens and varints).",
+   "sha256": "d892cb91f44b6735"
+  },
+  "req-pm-size-resolution-9": {
+   "page": "specification/processing/index.html",
+   "section": "size-resolution",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Declared region and terminator. Otherwise (bytes, string, numbers written as text, and fields whose type is a Struct), the field's declared region is given by the first of these that the field declares: bddo:sizeToEndOfStream (up to the end of the innermost bounded region, or of the current stream if there is none), bddo:size, bddo:sizeFromField, bddo:sizeFromExpression. The region starts at the cursor.",
+   "sha256": "86b442708a620c2a"
+  },
+  "req-pm-size-resolution-10": {
+   "page": "specification/processing/index.html",
+   "section": "size-resolution",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST read a repeated field's extent as follows.",
+   "sha256": "7ed82e147634a430"
+  },
   "req-pm-struct-size-1": {
    "page": "specification/processing/index.html",
    "section": "struct-size",
@@ -655,6 +1310,69 @@
    "text": "The struct MUST NOT be left unbounded instead.",
    "sha256": "b556e11fa03cacf5"
   },
+  "req-pm-struct-size-3": {
+   "page": "specification/processing/index.html",
+   "section": "struct-size",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST apply a struct-level size as this section states.",
+   "sha256": "a1d36927d1c73fcc"
+  },
+  "req-pm-terminators-1": {
+   "page": "specification/processing/index.html",
+   "section": "terminators",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Physical Parser MUST read a field that declares bddo:terminator by these rules:",
+   "sha256": "8b18773d3dce9bf2"
+  },
+  "req-pm-terminators-2": {
+   "page": "specification/processing/index.html",
+   "section": "terminators",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The terminator is the byte sequence given by bddo:terminator; an empty terminator is a description error.",
+   "sha256": "9966097c8ca67ad4"
+  },
+  "req-pm-terminators-3": {
+   "page": "specification/processing/index.html",
+   "section": "terminators",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The search starts at the cursor and finds the first occurrence of the sequence that lies entirely within the search bound. For a bddo:string whose bddo:encoding has a multi-byte code unit (bddo:utf16le, bddo:utf16be), only occurrences that start at an offset from the search start that is a multiple of the code-unit size (2) count, so a terminator can never match across two code units. For every other encoding and for bytes the search is byte-aligned.",
+   "sha256": "119f53f0b6ddb54e"
+  },
+  "req-pm-terminators-4": {
+   "page": "specification/processing/index.html",
+   "section": "terminators",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The value is the bytes from the search start up to, and excluding, the terminator. The terminator is consumed: it is part of the field's byte extent but not of its value.",
+   "sha256": "f0cb622a1d0e0596"
+  },
+  "req-pm-terminators-5": {
+   "page": "specification/processing/index.html",
+   "section": "terminators",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "With a declared region, the cursor then moves to the end of the region (the bytes after the terminator are padding); without one, the cursor moves to just after the terminator.",
+   "sha256": "d2499aa8ea6bf054"
+  },
+  "req-pm-terminators-6": {
+   "page": "specification/processing/index.html",
+   "section": "terminators",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "If no occurrence lies within the search bound, raise a bounds error.",
+   "sha256": "3b0b8aa4e262b408"
+  },
   "req-pm-text-numbers-1": {
    "page": "specification/processing/index.html",
    "section": "text-numbers",
@@ -664,6 +1382,33 @@
    "text": "The scan is byte-wise, so the field's encoding MUST be UTF-8, US-ASCII or ISO-8859-1; any other is a validation error.",
    "sha256": "7454a96b095c374e"
   },
+  "req-pm-text-numbers-2": {
+   "page": "specification/processing/index.html",
+   "section": "text-numbers",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Physical Parser MUST read these self-describing values as follows:",
+   "sha256": "1663ebc79f8cd163"
+  },
+  "req-pm-text-numbers-3": {
+   "page": "specification/processing/index.html",
+   "section": "text-numbers",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Text numbers. A field of bddo:asciiInteger or bddo:asciiDecimal (or any type with an integer or float base type and no bit width) is read from its extent (Size resolution) and decoded per its bddo:encoding. Surrounding whitespace and NUL bytes and a leading + are removed. An integer is then read in radix bddo:numericBase (8, 10 or 16; default 10); a decimal accepts a sign, a decimal point, and an exponent introduced by E, e, D or d, and the spelling nan in any case with an optional sign. Anything else, including an infinite value, is a validation error: the value is never kept as a string.",
+   "sha256": "98b82ac359516147"
+  },
+  "req-pm-text-numbers-4": {
+   "page": "specification/processing/index.html",
+   "section": "text-numbers",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Varints. bddo:varuint is LEB128: seven value bits per byte, least-significant group first, the high bit set on every byte but the last. bddo:varint is a LEB128 value carrying a zigzag-encoded signed integer. bddo:sqliteVarint is one to nine big-endian bytes, the high bit of each of the first eight a continuation flag and the ninth contributing all eight bits. A varint that runs past its bound, or that exceeds the 64-bit range, is a bounds error.",
+   "sha256": "4764d5cbd8a208e7"
+  },
   "req-pm-tree-documents-1": {
    "page": "specification/processing/index.html",
    "section": "tree-documents",
@@ -672,6 +1417,15 @@
    "audience": "processor",
    "text": "An XML parser MUST NOT fetch external entities or DTDs, and entity expansion counts toward the resource limits; a processor MAY decline to process a document type declaration at all, and a reference to an entity that only a declaration would define is then a validation error (the reference implementation processes no DTD, so the billion-laughs and external-entity attacks both end there).",
    "sha256": "98ef6f4dc5f75576"
+  },
+  "req-pm-tree-documents-2": {
+   "page": "specification/processing/index.html",
+   "section": "tree-documents",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A reference to an external entity MUST be reported as a validation error whether or not the processor reads the declaration, since the entity's text is never fetched.",
+   "sha256": "e80bb089f7603dcc"
   },
   "req-pm-typed-cells-1": {
    "page": "specification/processing/index.html",
@@ -751,8 +1505,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "Yield a Boolean in a boolean context, an Integer in a numeric context and a String in a string context, as the name-binding table gives for each property (e.g. a hexplain:valueExpression whose hexplain:valueDatatype is xsd:string yields a String); any other result is an error.",
-   "sha256": "fa1efc549f828c8a"
+   "text": "Yield a Boolean in a boolean context, an Integer in a numeric context and a String in a string context, as the name-binding table gives for each property (e.g. a hexplain:valueExpression whose hexplain:valueDatatype is xsd:string yields a String); any other result is an error, and a Float is never an Integer, even one whose value is integral: a size expression that yields 2.0 is an error, not a size of 2.",
+   "sha256": "21612bbcced6952e",
+   "history": [
+    "fa1efc549f828c8a"
+   ]
   },
   "req-hel-conformance-7": {
    "page": "specification/hel/index.html",
@@ -780,6 +1537,15 @@
    "audience": "processor",
    "text": "Produce, for every row of hel-vectors.tsv whose functions it implements, the value the row gives, or an error whose diagnostic contains the row's text.",
    "sha256": "7d6ed94652ec55e2"
+  },
+  "req-hel-conformance-10": {
+   "page": "specification/hel/index.html",
+   "section": "conformance",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An evaluator MUST count depth this way, so that a long flat sum or conjunction, which descriptions generate, is accepted whatever its length allows.",
+   "sha256": "ff8bd9bae83424ab"
   },
   "req-hel-core-functions-1": {
    "page": "specification/hel/index.html",
@@ -852,6 +1618,15 @@
    "audience": "processor",
    "text": "Resolution is strict: every field MUST be in range for the date it names, so 30 February, day 00, month 13 or hour 24 is not a valid date-time and is never rolled over into another date.",
    "sha256": "64c17691cfe8b05d"
+  },
+  "req-hel-ext-temporal-3": {
+   "page": "specification/hel/index.html",
+   "section": "ext-temporal",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "It is a parameter supplied to the run: an evaluator MUST take it from the run and MUST NOT read it from the wall clock, so that re-running the same evidence gives identical results.",
+   "sha256": "daae7f55ec3a1eb0"
   },
   "req-hel-ext-text-1": {
    "page": "specification/hel/index.html",
@@ -936,6 +1711,15 @@
    "audience": "processor",
    "text": "The index expression MUST evaluate to a non-negative Integer strictly less than the array's length (elements are 0-based); otherwise a range error is raised.",
    "sha256": "a22981bdbf0e7166"
+  },
+  "req-hel-key-resolution-5": {
+   "page": "specification/hel/index.html",
+   "section": "key-resolution",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST reject a description in which two fields of one struct share a local name, with a Description error when the description is loaded: an expression could not tell which of them a name reads.",
+   "sha256": "d4a362a66c27ce97"
   },
   "req-hel-name-binding-1": {
    "page": "specification/hel/index.html",
@@ -1045,6 +1829,15 @@
    "text": "The operands of and, or and not MUST be Booleans, and both operands of and and or are type-checked: false and 1 is an error even though false decides the result.",
    "sha256": "8176b78f78094772"
   },
+  "req-hel-operator-precedence-4": {
+   "page": "specification/hel/index.html",
+   "section": "operator-precedence",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The logical and and or operators MUST evaluate BOTH operands: they do not short-circuit, so an expression whose right operand raises — a division by zero, an out-of-range subscript — raises even when the left operand already decides the result.",
+   "sha256": "050505d9e1750eb3"
+  },
   "req-hel-reserved-roots-1": {
    "page": "specification/hel/index.html",
    "section": "reserved-roots",
@@ -1135,6 +1928,42 @@
    "text": "An integer @fixed on a numeric field is emitted typed with the field's XSD type (@fixed 9994 on an i32 becomes \"9994\"^^xsd:int) and is compared by value; a hex @fixed stays xsd:hexBinary and, on a numeric field, MUST have exactly the field's width in bytes (Processing Model, Fixed value).",
    "sha256": "3de86e6ecf8dd16c"
   },
+  "req-hdl-clauses-2": {
+   "page": "specification/hdl/index.html",
+   "section": "clauses",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A field MUST NOT carry two clauses of one kind, and a compiler MUST report an ERROR for a second size (two […]), count (two repeat), offset (two @at), fixed value (two @fixed), byte order (two @endian) or type selection (two of switch and dispatch), rather than emit both values of a property the Processing Model reads once.",
+   "sha256": "edb7b86be31796fb"
+  },
+  "req-hdl-clauses-3": {
+   "page": "specification/hdl/index.html",
+   "section": "clauses",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "It MUST also report an ERROR for a derive field with a repeat clause (a derived field reads no bytes, so it has no elements), for @pipeline together with @encoded-with on one field, and for two declarations of one struct, header, table or document name in a document.",
+   "sha256": "bc73bb454654654e"
+  },
+  "req-hdl-clauses-4": {
+   "page": "specification/hdl/index.html",
+   "section": "clauses",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST report an ERROR for a literal outside the range of its position — a field size or struct @size below 1 (bytes[0], bytes[-3]), a repeat count or offset below 0 (repeat -2, @at -2), a stride below 1 (stride 0) — and for a FLOAT literal in any of these positions (bytes[2.0], repeat 1.5, @at 1e0): they take integers, and an integral float is not one.",
+   "sha256": "0528766a462f226c"
+  },
+  "req-hdl-clauses-5": {
+   "page": "specification/hdl/index.html",
+   "section": "clauses",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The literal positions differ in what they accept, and a compiler MUST hold each to its own set. @prop takes an IRIREF, a CURIE, or an INT, HEX, STRING, true or false literal, never a bare NAME (write the string \"x\" or the CURIE ex:x).",
+   "sha256": "0edb16ce7c8f934b"
+  },
   "req-hdl-compilation-model-1": {
    "page": "specification/hdl/index.html",
    "section": "compilation-model",
@@ -1186,8 +2015,11 @@
    "cls": "hdl-compiler",
    "level": "MUST",
    "audience": "processor",
-   "text": "Apply the field-form-vs-expression-form rule and resolve expression identifiers per §Expressions and the HEL name-binding rules, emitting canonical HEL validated against [[?hel]]; a bare reference to an undeclared name MUST yield an ERROR diagnostic, and so MUST every other static error §Expressions lists, a forward reference included: the compiler knows the declaration order of every struct it compiles, so a forward reference is always statically determinable within one document.",
-   "sha256": "4371349aaa6e61eb"
+   "text": "Apply the field-form-vs-expression-form rule and resolve expression identifiers per §Expressions and the HEL name-binding rules, emitting canonical HEL validated against [[?hel]]; a bare reference to an undeclared name MUST yield an ERROR diagnostic, and so MUST every other static error §Expressions lists, a forward reference included, wherever it is statically determinable (§Expressions): the compiler knows the declaration order of every struct it compiles, so every bare-name forward reference, and every root.",
+   "sha256": "1ac18444164f15b8",
+   "history": [
+    "4371349aaa6e61eb"
+   ]
   },
   "req-hdl-conformance-section-6": {
    "page": "specification/hdl/index.html",
@@ -1261,6 +2093,33 @@
    "text": "The names in a layout — a dimension's size and chunk, cell-bits from, chunks offsets/lengths, a stride expression, and the guards of cell switch and order switch — are sibling references like any other: each MUST name a field of the containing struct, and an unknown one is an ERROR.",
    "sha256": "6a924a762e781962"
   },
+  "req-hdl-expressions-3": {
+   "page": "specification/hdl/index.html",
+   "section": "expressions",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A root.k path whose k is not a field of the root struct is an undeclared name, except when some struct of the document declares @root-key: k may then be a key only the data names (Processing Model, Root key), and a compiler MUST then accept root.k for any identifier k.",
+   "sha256": "5990d4666a1dc02e"
+  },
+  "req-hdl-expressions-4": {
+   "page": "specification/hdl/index.html",
+   "section": "expressions",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST resolve the names of a repeat until condition as follows.",
+   "sha256": "cdeeee6b28f4fd9b"
+  },
+  "req-hdl-expressions-5": {
+   "page": "specification/hdl/index.html",
+   "section": "expressions",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST report an ERROR for a key step applied to a field that holds a scalar (n.foo), or to a repeated field without a subscript (es.size; the number of elements is len(es)): neither has fields.",
+   "sha256": "f2cc12cbfb117bf2"
+  },
   "req-hdl-form-rule-1": {
    "page": "specification/hdl/index.html",
    "section": "form-rule",
@@ -1269,6 +2128,15 @@
    "audience": "processor",
    "text": "For any size, offset, or count clause: when the expression is exactly one sibling field name, a conforming compiler MUST emit the specific …FromField object property; otherwise it MUST emit the …FromExpression datatype property carrying the synthesized HEL string.",
    "sha256": "e42307a8b5732533"
+  },
+  "req-hdl-form-rule-2": {
+   "page": "specification/hdl/index.html",
+   "section": "form-rule",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST emit every integer it writes as an xsd:integer literal (Turtle's bare integer), except where this document names another datatype: a size, repeat count, offset, alignment, radix, bit length, skip count, dimension size, stride, chunk extent, cell width, part count, enumeration raw value, dispatch key, pipeline parameter or @prop value is an xsd:integer, never an xsd:long or xsd:int, whatever range the targeted property declares; an integer @fixed on a numeric field takes the field's XSD type (Fixed values).",
+   "sha256": "49d3c8b57c5501a0"
   },
   "req-hdl-grammar-1": {
    "page": "specification/hdl/index.html",
@@ -1378,6 +2246,15 @@
    "text": "A compiler MUST report an ERROR for a hyphenated, dotted or reserved field name (the reference compiler suggests byte_order for byte-order).",
    "sha256": "082853ee14eae179"
   },
+  "req-hdl-lexical-3": {
+   "page": "specification/hdl/index.html",
+   "section": "lexical",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Digits are ASCII only: a compiler MUST report a lexical ERROR for a non-ASCII digit (the Arabic-Indic ٣, the fullwidth １) outside a string, comment or raw-turtle block, never read it as a digit.",
+   "sha256": "ca957a3be482f281"
+  },
   "req-hdl-modules-1": {
    "page": "specification/hdl/index.html",
    "section": "modules",
@@ -1414,6 +2291,15 @@
    "text": "A CURIE whose prefix is none of the above — not predeclared, not bound by use, and not an import alias — is an error: a conforming compiler MUST report an ERROR diagnostic for it wherever it occurs (a means, @datatype, @encoded-with, @pipeline step, @object, @unit, @prop, enum symbol, register, part role, carries, or type position), and MUST NOT emit the unexpanded CURIE as an IRI.",
    "sha256": "d9c06cc039814a72"
   },
+  "req-hdl-types-1": {
+   "page": "specification/hdl/index.html",
+   "section": "types",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST report an ERROR for a bracket size after a fixed-width numeric type (u8 … f64be) or a variable-length integer type: the Processing Model ignores a size on a fixed-width field, so u32[4] could only mislead its reader into expecting four bytes of something else, or four elements.",
+   "sha256": "3e6ae75fc29895d7"
+  },
   "req-hdl-versioning-1": {
    "page": "specification/hdl/index.html",
    "section": "versioning",
@@ -1431,6 +2317,15 @@
    "audience": "processor",
    "text": "A conforming YAML loader MUST restrict implicit boolean resolution to true/false; the YAML 1.1 words on/off/yes/no are strings (so a struct field or switch key named on is not silently coerced).",
    "sha256": "5e95d544f7c76464"
+  },
+  "req-hdl-yaml-2": {
+   "page": "specification/hdl/index.html",
+   "section": "yaml",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A conforming YAML loader MUST report an ERROR for a mapping that repeats a key (YAML leaves the outcome to the loader, and last-wins would drop a field or a clause silently) and for a null entry in a sequence (a stray - in a field list), rather than skip it.",
+   "sha256": "a3bab5ffda14214b"
   },
   "req-ce-conf-conformance-1": {
    "page": "specification/conf/index.html",

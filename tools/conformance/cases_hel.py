@@ -105,7 +105,7 @@ hel("forward-reference-parent", "A parent field not yet parsed is a forward refe
 
 hel("absent-optional-null", "An absent optional field reads as Null, and every comparison but == with Null is false",
     "opt == 1 and opt != 1 are both false; opt == opt is true (Null == Null); parent fields already parsed are visible.",
-    ["req-hel-undefined-names-5", "req-hel-conformance-4"], ["undefined-names", "coercion"],
+    ["req-hel-undefined-names-5", "req-hel-conformance-4", "req-pm-parsefield-4"], ["undefined-names", "coercion"],
     derived(["ex:opt a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:isPresentIf \\\"false\\\" ."],
             {"eq": "opt == 1", "ne": "opt != 1", "same": "opt == opt"}).replace('\\"', '"'),
     b"", {"opt": None, "eq": False, "ne": False, "same": True})
@@ -242,22 +242,24 @@ hel("quantifiers", "all and any evaluate their predicate per element",
              "emptyAll": "all(none, false)", "emptyAny": "any(none, true)"}, ITEM),
     b"\x01\x02\x03\x04",
     {"items": [{"v": 1}, {"v": 2}], "vals": [3, 4], "none": [], "allPos": True, "anyBig": False,
-     "scalars": True, "emptyAll": True, "emptyAny": False})
+     "scalars": True, "emptyAll": True, "emptyAny": False}, manifest={"features": {"requires": ["hel-ext-quantifier"]}})
 
 hel("quantifier-not-array", "A quantifier's first argument must be an array",
     "all(5, true).",
-    ["req-hel-ext-quantifiers-1", TYPE_ERROR], ["ext-quantifiers"], one("all(5, true)"), b"", error="Expression")
+    ["req-hel-ext-quantifiers-1", TYPE_ERROR], ["ext-quantifiers"], one("all(5, true)"), b"", error="Expression",
+    manifest={"features": {"requires": ["hel-ext-quantifier"]}})
 
 hel("quantifier-non-boolean", "A quantifier predicate must yield a Boolean",
     "all(items, v) yields Integers.",
     ["req-hel-ext-quantifiers-2", TYPE_ERROR], ["ext-quantifiers"],
-    derived(ITEMS, {"d": "all(items, v)"}, ITEM), b"\x01\x02", error="Expression")
+    derived(ITEMS, {"d": "all(items, v)"}, ITEM), b"\x01\x02", error="Expression",
+    manifest={"features": {"requires": ["hel-ext-quantifier"]}})
 
 # ----------------------------------------------------------------- operators
 
 hel("and-evaluates-both-operands", "and does not short-circuit",
     "false and (1 / z == 0) raises the division by zero even though false decides the result.",
-    ["req-hel-operator-precedence-1", "req-hel-numeric-semantics-2", TYPE_ERROR], ["evaluation"],
+    ["req-hel-operator-precedence-4", "req-hel-numeric-semantics-2", TYPE_ERROR], ["evaluation"],
     one("false and (1 / z == 0)", ["ex:z a bddo:Field ; bddo:dataType bddo:uint8 ."]), b"\x00", error="Expression")
 
 hel("ternary-guard", "The ternary evaluates only the selected branch",
@@ -345,7 +347,7 @@ hel("function-arity", "A core function called with the wrong number of arguments
 
 hel("sizeof-nodes", "sizeof measures any parsed node: a struct, an array element, a field",
     "A 3-byte header, the second 2-byte entry, and a 2-byte field reached through root.",
-    ["req-hel-core-functions-1"], ["core-functions", "struct-size"],
+    ["req-hel-core-functions-1", "req-pm-parsestruct-4"], ["core-functions", "struct-size"],
     derived(["ex:hdr a bddo:Field ; bddo:dataType ex:Hdr .",
              "ex:entries a bddo:Field ; bddo:dataType ex:Entry ; bddo:repeatCount 2 ."],
             {"hdrSize": "sizeof(hdr)", "entrySize": "sizeof(entries[1])", "viaRoot": "sizeof(root.hdr.b)"},
@@ -402,19 +404,19 @@ hel("text-group", "The text group: matches is anchored at both ends",
     derived([], {"partial": "matches('IHDR', 'IH')", "whole": "matches('IHDR', 'I.*')",
                  "starts": "startsWith('IHDR', 'IH')", "clamped": "substr('abc', 1, 10)"}),
     b"", {"partial": False, "whole": True, "starts": True, "clamped": "bc"},
-    manifest={"features": {"requires": ["HEL extension groups"]}})
+    manifest={"features": {"requires": ["hel-ext-text"]}})
 
 hel("text-pattern-not-string", "A matches pattern must be a String",
     "matches('a', 1).",
     ["req-hel-ext-text-1", TYPE_ERROR], ["ext-text"], one("matches('a', 1)"), b"", error="Expression",
-    manifest={"features": {"requires": ["HEL extension groups"]}})
+    manifest={"features": {"requires": ["hel-ext-text"]}})
 
 hel("temporal-group", "datetime is strict: an impossible date is Null, never rolled over",
     "2024-02-29 12:00:00 is 1709208000 seconds after the epoch; 2024-02-30 is not a date.",
     ["req-hel-ext-temporal-2"], ["ext-temporal"],
     derived([], {"leap": "datetime('2024-02-29 12:00:00', 'yyyy-MM-dd HH:mm:ss')",
                  "bad": "datetime('2024-02-30 12:00:00', 'yyyy-MM-dd HH:mm:ss')"}),
-    b"", {"leap": 1709208000, "bad": None}, manifest={"features": {"requires": ["HEL extension groups"]}})
+    b"", {"leap": 1709208000, "bad": None}, manifest={"features": {"requires": ["hel-ext-temporal"]}})
 
 # ----------------------------------------------------------------- the asset root outside a bundle
 
@@ -450,4 +452,4 @@ hel("extension-group-unclaimed", "A function of an extension group the processor
     "matches() belongs to the text group; a processor without it rejects the description when it is loaded, not at the first evaluation.",
     ["req-hel-extension-groups-1", "req-hel-conformance-5", "req-pm-errors-10"], ["extension-groups", "conformance"],
     one("matches('a', 'a')"), b"", error="Unsupported",
-    manifest={"features": {"unclaimed": ["HEL extension groups"]}})
+    manifest={"claims": {"withdraw": ["hel-ext-text"]}})

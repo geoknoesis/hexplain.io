@@ -221,6 +221,126 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
   (`req-pm-errors-1` is no longer excused by an entry for `req-pm-errors-10`) in the Unreleased
   section of this file, not anywhere in it.
 
+### Errors table (round-4 integration)
+
+- `req-pm-errors-8` (Description error) now lists the conflicting forms (`#conflicting-forms`),
+  two fields of one struct sharing a local name, and states that an invalid profile or rule set
+  (one the family's shapes reject: a requirement identity stated twice, a requirement without a
+  statement, a parse attribution naming ResourceLimit) is a Description error when it is loaded.
+- `req-pm-errors-7`: the Dispatch error row says Dispatch is a category of its own, neither Validation nor Description.
+- The nine RDF-form run report cases (`ce-report-rdf-*`) are generated now that the conf vocabulary
+  declares the run terms: categories as `conf:*Error` IRIs, `conf:failOn` only when it is not
+  `sh:Violation`, `conf:fileVersion` only when version scoping was applied. The comparator's
+  self-check compares an expected run report as the pattern it is; shape conformance applies to an
+  implementation's report. `pp-hel-reserved-word-key` cites `req-pm-errors-16` in place of the
+  withdrawn `req-pm-errors-15`.
+- The HEL expression nesting depth limit counts depth as HEL's Expression depth
+  (`hel/#expression-depth`) defines, an n-ary chain being one node.
+
+### Language and processing rules settled for the conformance suite (round 4)
+
+Processing Model:
+
+- Optional features have normative feature tokens (`tree-documents`, `grouped-headers`,
+  `nested-profiles`, `chunked-cell-access`, `chunk-order-other`, `hel-ext-text`,
+  `hel-ext-temporal`, `hel-ext-quantifier`, `hel-ext-geometry`, `hel-ext-register`,
+  `codecs-beyond-minimum`); each HEL extension group is its own feature. Claims, suite
+  manifests and unsupported-feature reports name features by token.
+- Fixed values (`req-pm-parsefield-2`, reworded): only an `xsd:hexBinary` literal denotes
+  bytes. Any other string literal denotes characters: on a bytes field it is compared as its
+  UTF-8 encoding (`"CAFE"` is `43 41 46 45`, not `CA FE`), on a string field by code points in
+  any encoding. A numeric literal is compared by value at the field's width, a float32 field
+  against the literal rounded to float32.
+- Conflicting forms the text does not order are a Description error, raised at load: a repeat
+  count together with a repeat-until condition, two offset forms, a dispatch table together
+  with conditional type rules, and more than one value of a functional property. The
+  precedence of the four size forms is unchanged.
+- `streamEnd` counts back from |S|, the length of the current stream; a decoded sub-stream is
+  a stream, a bounded region is not.
+- New section Recovery in a Lenient Mode: a failed pointer read does not move the cursor; a
+  counted sequence of known-width elements skips count × width (bounded by the region); any
+  other read failure abandons everything up to the nearest known end (a sized field, a bounded
+  sequence, a decoded block or a sized struct), recording one error and no follow-up error.
+  A failed check on a value read in full is recorded and parsing continues. Fixed strings on
+  string fields are compared after `bddo:trimNull`.
+- The steps of ParseStruct and ParseField, the bit-cursor, size-resolution, terminator,
+  byte-order, text-number, record, key/value, table and emission rules are now stated as
+  requirements, so the conformance suite can cite each rule by identifier.
+- A key/value header field with no `bddo:key` is located by its simple key; a reference to an
+  external XML entity is a Validation error whether or not the declaration is read; a carried
+  (unparsed) bundle part is still minted as `<part>#root`; `hexplain:mapsToObjectProperty`
+  emits the struct instance's IRI or the matched enumeration symbol's IRI.
+
+HEL:
+
+- A Float is never an Integer where a context requires one, even `2.0`
+  (`req-hel-conformance-6`, reworded; any other result type stays an error).
+- String literals may hold any control character literally (the `SChar` production now agrees
+  with the prose and the lexer); the new informative Canonical Form section defines expression
+  equivalence (the suite compares HEL-bearing literals by it) and the spelling the reference
+  serializer writes, which escapes controls other than tab, LF and CR as `\xHH`.
+- Expression depth: a left-associative chain of one binary operator counts as one n-ary node
+  for the nesting-depth limit.
+- `and`/`or` evaluating both operands, and `evaluationInstant()` never reading the wall clock,
+  are stated as requirements; a call to a function outside the core set and every group is a
+  load-time Type / HEL error.
+
+HDL:
+
+- Forward references are compile-time errors wherever statically determinable: bare names in
+  every expression role, `root.` paths the compiler can follow, and `parent.` paths from a
+  struct with a single container (`req-hdl-conformance-section-5`, reworded: it claimed every
+  forward reference was determinable).
+- New ERRORs: a bracket size on a fixed-width numeric type (`u32[4]`); a second clause of one
+  kind (size, count, offset, fixed, endian, type selection); `derive` with `repeat`;
+  `@pipeline` with `@encoded-with`; duplicate struct declarations; negative literal sizes,
+  counts and offsets; `stride 0`; float literals in size, count and offset positions;
+  non-ASCII digits; lone surrogate escapes; duplicate YAML keys and null YAML list entries.
+- Literal positions: `@prop` takes an IRI, CURIE or literal but never a bare name; a bare-name
+  switch key is a string key; `@fixed` rejects names, CURIEs and Booleans.
+- `root.<k>` is accepted for any identifier when a struct declares `@root-key`; a
+  `repeat until` bare name falls back from the element to the containing struct (`parent.x`),
+  an ambiguous name being an ERROR; a quoted header key is reachable only through its alias,
+  and an unquoted header field is located by its own name; a key step on a scalar, or on a
+  repeated field without a subscript (`es.size`), is an ERROR.
+- Literal ranges: a size or struct `@size` below 1, a count or offset below 0, a stride below 1
+  and a float in any of these positions are ERRORs; a `bytes` or string field of a binary
+  struct with neither size nor terminator is an ERROR; `@fixed` rejects a string on a numeric
+  field and an integer on a bytes field; YAML `hdl:` is spelt exactly `1.0` or `"1.0"`.
+- YAML: scalars follow YAML's own quoting and escaping; the layout keys (`cell dims order
+  chunks cell-bits packing`) belong to the `layout:` mapping, not to the field.
+- Import resolution documents the reference CLI's `--vocab`, `--no-validate` and default SHACL
+  validation.
+
+### Processor conformance suite, round 4
+
+- 450 cases (272 Physical Parser, 16 Semantic Emitter, 13 Bundle Processor, 118 HDL Compiler,
+  31 Conformance Evaluator), up from 320; nine more Conformance Evaluator cases, whose
+  `expected-report.ttl` states the run in the conf run terms (`conf:verdict`, `conf:finding`,
+  `conf:truncated`, `conf:versionScopingApplied`, `conf:fileVersion`, `conf:failOn`,
+  `conf:profile`, `conf:input`), are generated once the conf vocabulary declares those terms.
+- New cases cover the rules above and the round-3 regressions: string fixed values on bytes and
+  UTF-16 fields, float32 fixed values, conflicting forms, `streamEnd` in a sub-stream and in a
+  region, lenient recovery after pointer, counted-sequence and other read failures, the
+  Dispatch category, integral Float results, control characters in HEL strings, n-ary
+  expression depth, the geometry and register groups, XML external entities and DTDs, a
+  base-less emission, a processor's claims statement, invalid conformance profiles, exact
+  version matching (`"2.0"` is not `"2.00"`), and every new HDL ERROR, with a YAML mirror of each
+  successful HDL compilation.
+- Manifests name optional features by token and may withdraw claims (`claims.withdraw`);
+  every case cites at least one specific requirement; `ce-parse-attribution` records exactly one
+  error whatever a lenient parse does next; `hc-import-outside-root` imports a module inside its
+  own case directory that lies outside the import root.
+- Comparison: HDL literal datatypes match exactly, the `owl:Ontology` header is compared only
+  when a case asks, HEL-bearing literals compare by expression equivalence, and an HDL error
+  line is compared only when the case states it.
+- `tools/conformance/compare.py` (with a HEL parser and canonical serializer in `hel.py`) is a
+  standalone comparator for any implementation's outputs, and `tools/conformance/run_suite.py`
+  runs an implementation's command lines through the suite; the gate
+  `test_conformance_comparator` tests every comparison rule. The coverage table leaves out
+  blanket requirements and description-audience requirements, and reports processor MUST
+  coverage per conformance class.
+
 ### Processor conformance suite
 
 `specification/conformance/` is an executable, portable conformance suite for the five

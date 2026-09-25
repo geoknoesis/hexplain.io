@@ -1,0 +1,23 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/ce-recovery-counted-sequence#> .
+
+ex:R1 a req:Requirement ; req:requirementId "R1" ; req:fromStandard "Example Format 1" ; req:statement "R1 holds." ; req:discrepancyType req:Syntactic .
+ex:R2 a req:Requirement ; req:requirementId "R2" ; req:fromStandard "Example Format 1" ; req:statement "R2 holds." ; req:discrepancyType req:Syntactic .
+ex:R3 a req:Requirement ; req:requirementId "R3" ; req:fromStandard "Example Format 1" ; req:statement "R3 holds." ; req:discrepancyType req:Syntactic .
+
+   ex:PA a conf:ParseAttribution ; conf:errorCategory "Bounds" ; conf:satisfies ex:R3 .
+   ex:C1 a conf:Constraint ; conf:scope ex:Inner ; conf:assertion "d == 7" ; conf:satisfies ex:R1 ;
+       conf:message "failed at {field}" .
+   ex:C2 a conf:Constraint ; conf:scope ex:Root ; conf:assertion "tail == 9" ; conf:satisfies ex:R2 ;
+       conf:message "failed at {field}" .
