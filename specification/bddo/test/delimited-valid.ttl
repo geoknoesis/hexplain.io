@@ -14,7 +14,7 @@ ex:EnviHeader a bddo:KeyValueHeader ;
     bddo:commentPrefix ";" ;
     bddo:trimWhitespace true ;
     bddo:keyIsCaseInsensitive true ;
-    bddo:hasField ( ex:EnviHeader.samples ex:EnviHeader.lines ) .
+    bddo:hasField ( ex:EnviHeader.samples ex:EnviHeader.lines ex:EnviHeader.bands ) .
 
 # A field of a delimited-record container takes its extent from the container's
 # recordDelimiter/keyValueSeparator; it declares no size or terminator of its own.
@@ -25,6 +25,11 @@ ex:EnviHeader.samples a bddo:Field ;
 ex:EnviHeader.lines a bddo:Field ;
     bddo:key "lines" ; bddo:dataType bddo:asciiInteger ;
     hexplain:mapsToProperty araster:height .
+
+# A field with no bddo:key is located by its simple key -- "bands", the local name of its IRI
+# after the last '.' (Processing Model, key/value headers). It is what an HDL compiler emits
+# for an unquoted header field name.
+ex:EnviHeader.bands a bddo:Field ; bddo:dataType bddo:asciiInteger .
 
 # --- CSV table: positional columns, one header row skipped ---
 ex:PointCsv a bddo:DelimitedTable ;

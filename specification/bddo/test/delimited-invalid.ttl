@@ -1,5 +1,5 @@
-# Two violations: a KeyValueHeader whose field declares no bddo:key, and a
-# KeyValueHeader with no keyValueSeparator.
+# Two violations: a KeyValueHeader whose field declares two bddo:key values (a field is
+# located at most one way), and a KeyValueHeader with no keyValueSeparator.
 # Expected to trip bddo:KeyValueHeaderShape.
 # expect: ex:BadHeader bddo:KeyValueHeaderShape sh:MinCountConstraintComponent
 # expect: ex:BadHeader bddo:KeyValueHeaderShape sh:NodeConstraintComponent
@@ -10,9 +10,10 @@
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 ex:BadHeader a bddo:KeyValueHeader ;
-    rdfs:comment "Expected to trip bddo:KeyValueHeaderShape (no keyValueSeparator; field has no key)." ;
+    rdfs:comment "Expected to trip bddo:KeyValueHeaderShape (no keyValueSeparator; field has two keys)." ;
     bddo:recordDelimiter "0A"^^xsd:hexBinary ;
     bddo:hasField ( ex:BadHeader.orphan ) .
 
 ex:BadHeader.orphan a bddo:Field ;
+    bddo:key "samples" , "lines" ;
     bddo:dataType bddo:asciiInteger ; bddo:terminator "0A"^^xsd:hexBinary .
