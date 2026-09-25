@@ -1,4 +1,4 @@
-# Hexplain SPARQL function library (hxf) 0.2
+# Hexplain SPARQL function library (hxf) 0.3
 # One IRI per function. Pure functions carry a SHACL-AF body any SHACL-AF engine can run;
 # native functions need the Hexplain engine (io.hexplain.query) behind the query.
 @prefix :        <https://hexplain.io/ns/fn#> .
@@ -19,8 +19,8 @@
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
 <https://hexplain.io/ns/fn> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/fn/0.2> ; owl:versionInfo "0.2" ;
-    owl:priorVersion <https://hexplain.io/ns/fn/0.1> ;
+    owl:versionIRI <https://hexplain.io/ns/fn/0.3> ; owl:versionInfo "0.3" ;
+    owl:priorVersion <https://hexplain.io/ns/fn/0.2> ;
     dcterms:modified "2026-09-24"^^xsd:date ;
     # Every vocabulary whose terms the functions read (hxf:reads) or name in their bodies.
     owl:imports <https://hexplain.io/ns/core> , <https://hexplain.io/ns/dlv> ,
@@ -97,7 +97,7 @@
 :digest a :Function ; :kind :Native ; :layer 0 ; rdfs:label "digest" ;
     :signature "digest(node: IRI, algorithm: IRI | string) -> xsd:string" ;
     :reads hexplain:byteOffset, hexplain:byteLength ;
-    rdfs:comment "Lower-case hex digest of the node's raw bytes. The algorithm is a checksum-register concept (rck:SHA256, rck:CRC32, ...) or a name." ;
+    rdfs:comment "Lower-case hex digest of the node's raw bytes: exactly the extent the node was parsed from (its hexplain:byteOffset and hexplain:byteLength), nothing before or after it. hxf:digest(<asset#root>) therefore covers the root struct's extent only, not trailing bytes of the file that the profile does not describe; it is not a digest of the file. The algorithm is a checksum-register concept (rck:SHA256, rck:CRC32, ...) or a name." ;
     :unboundWhen "The algorithm is not one the runtime implements."@en .
 
 # ---- Layer 1: parsed values ----
@@ -128,8 +128,8 @@
     :unboundWhen "The index tuple is outside the array extent, or its arity does not match the array rank."@en .
 :stat a :Function ; :kind :Native ; :layer 2 ; rdfs:label "statistic" ;
     :signature "stat(array: IRI, kind: string) -> literal | stat(array: IRI, kind: string, lo1, hi1, ..., lon, hin: integer) -> literal" ;
-    rdfs:comment "min, max, sum, mean or count over the whole array or a half-open window. Only VALID cells enter a statistic: a cell whose value is the no-data value in effect for the array's band (as hxf:isNoData decides) and a NaN cell are excluded from every statistic, count included, so count is the number of valid cells. A window may visit at most hxf:maxCellsPerWindow cells, valid or not; a larger one is refused. Over a window with no valid cell, count is 0 and sum is 0." ;
-    :unboundWhen "The named statistic is not one this library computes; the window is outside the array or empty; the window has more cells than hxf:maxCellsPerWindow; or the statistic is min, max or mean and the window has no valid cell."@en .
+    rdfs:comment "min, max, sum, mean or count over the whole array or a half-open window. Only VALID cells enter a statistic: a cell whose value is the no-data value in effect for the array's band (as hxf:isNoData decides) and a NaN cell are excluded from every statistic, count included, so count is the number of valid cells. A window may visit at most hxf:maxCellsPerWindow cells, valid or not; a larger one is refused. Over a window with no valid cell -- an empty window, or one whose every cell is no-data or NaN -- count is 0 and sum is 0, and min, max and mean are unbound." ;
+    :unboundWhen "The named statistic is not one this library computes; the window is outside the array; the window has more cells than hxf:maxCellsPerWindow; or the statistic is min, max or mean and the window has no valid cell (an empty window, or one whose every cell is no-data or NaN)."@en .
 :window a :Function ; :kind :Native ; :layer 2 ; rdfs:label "window" ;
     :signature "(array: IRI, lo1, hi1, ..., lon, hin: integer) hxf:window (i1, ..., in, value)" ;
     rdfs:comment "Property function enumerating every cell of a half-open window, row-major, binding its indices and value. Refused above hxf:maxCellsPerWindow. NON-PORTABLE: this is an Apache Jena ARQ property function (a magic predicate in a triple pattern), not a SPARQL 1.1 filter function nor a SHACL-AF function, so it runs only on Jena/ARQ with the Hexplain engine registered; other SPARQL processors read it as an ordinary triple pattern that matches nothing." ;
@@ -164,21 +164,32 @@
 :isNoData a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "is no-data" ;
     :signature "isNoData(band: IRI, value: number) -> xsd:boolean" ;
     :reads araster:noDataValue, araster:hasBand, asamp:sampleFormat, asamp:bitDepth ;
-    rdfs:comment "True when value equals the no-data value in effect: the band's own araster:noDataValue, else that of the grid that has the band (araster:hasBand). The two are compared in the band's declared numeric type, stated by asamp:sampleFormat and asamp:bitDepth on the band or, failing that, on its grid: for asamp:Float with bitDepth 32 both are first rounded to the nearest binary32 value, so a float32 no-data value written in decimal (for example -3.4028234663852886e38) matches the stored float32 sample; for an integer format both must be the same integer; with no declared type they are compared as xsd:double. A NaN no-data value matches a NaN value, although NaN never equals itself numerically. False when no no-data value is in effect. Deterministic: exactly one answer or none. The SPARQL body relies on xsd:float casts rounding to binary32, as Apache Jena's do; a SPARQL processor that holds xsd:float in binary64 compares such values as doubles." ;
-    :unboundWhen "The band carries more than one distinct araster:noDataValue, or it has none and the grids having it carry more than one distinct one between them: which applies is undefined, so no value is returned rather than an arbitrary one."@en ;
+    rdfs:comment "True when value equals the no-data value in effect: the band's own araster:noDataValue, else that of the grid that has the band (araster:hasBand). The two are compared in the band's declared numeric type, stated by asamp:sampleFormat and asamp:bitDepth on the band or, failing that, on the grids that have it (which must then agree): for asamp:Float with bitDepth 32 both are first rounded to the nearest binary32 value, so a float32 no-data value written in decimal (for example -3.4028234663852886e38) matches the stored float32 sample; for an integer format both must be the same integer; with no declared type they are compared as xsd:double. A NaN no-data value matches a NaN value, although NaN never equals itself numerically. False when no no-data value is in effect. Deterministic: exactly one answer or none. The SPARQL body relies on xsd:float casts rounding to binary32, as Apache Jena's do; a SPARQL processor that holds xsd:float in binary64 compares such values as doubles." ;
+    :unboundWhen "The band carries more than one distinct araster:noDataValue, or it has none and the grids having it carry more than one distinct one between them; or the sample format or bit depth in effect is ambiguous (several of the band's own, or none of its own and the grids having it disagree): which applies is undefined, so no value is returned rather than an arbitrary one."@en ;
     sh:parameter {{constraint:pattern_000}} , [ sh:path :arg2 ; sh:order 1 ; sh:description "value" ] ;
     sh:returnType xsd:boolean ;
     sh:prefixes <https://hexplain.io/ns/fn> ;
-    sh:select """SELECT ?result WHERE {
+    sh:select """SELECT DISTINCT ?result WHERE {
   BIND ( EXISTS { $arg1 <https://hexplain.io/ns/aspect/raster#noDataValue> ?any } AS ?hasOwn )
   FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/raster#noDataValue> ?a , ?b . FILTER ( !sameTerm(?a, ?b) ) }
   FILTER ( ?hasOwn || NOT EXISTS {
     ?g <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/raster#noDataValue> ?a .
     ?h <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/raster#noDataValue> ?b .
     FILTER ( !sameTerm(?a, ?b) ) } )
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/sampling#sampleFormat> ?f1 , ?f2 . FILTER ( !sameTerm(?f1, ?f2) ) }
+  FILTER NOT EXISTS { $arg1 <https://hexplain.io/ns/aspect/sampling#bitDepth> ?d1 , ?d2 . FILTER ( !sameTerm(?d1, ?d2) ) }
+  FILTER ( EXISTS { $arg1 <https://hexplain.io/ns/aspect/sampling#sampleFormat> ?anyF } || NOT EXISTS {
+    ?gf1 <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/sampling#sampleFormat> ?f1 .
+    ?gf2 <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/sampling#sampleFormat> ?f2 .
+    FILTER ( !sameTerm(?f1, ?f2) ) } )
+  FILTER ( EXISTS { $arg1 <https://hexplain.io/ns/aspect/sampling#bitDepth> ?anyD } || NOT EXISTS {
+    ?gd1 <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/sampling#bitDepth> ?d1 .
+    ?gd2 <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/sampling#bitDepth> ?d2 .
+    FILTER ( !sameTerm(?d1, ?d2) ) } )
   OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/sampling#sampleFormat> ?fmtOwn }
   OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/sampling#bitDepth> ?bitsOwn }
-  OPTIONAL { ?grid0 <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 . OPTIONAL { ?grid0 <https://hexplain.io/ns/aspect/sampling#sampleFormat> ?fmtGrid } OPTIONAL { ?grid0 <https://hexplain.io/ns/aspect/sampling#bitDepth> ?bitsGrid } }
+  OPTIONAL { ?gf <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/sampling#sampleFormat> ?fmtGrid }
+  OPTIONAL { ?gb <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/sampling#bitDepth> ?bitsGrid }
   BIND ( COALESCE(?fmtOwn, ?fmtGrid) AS ?fmt ) BIND ( COALESCE(?bitsOwn, ?bitsGrid) AS ?bits )
   BIND ( BOUND(?fmt) && ?fmt = <https://hexplain.io/ns/aspect/sampling#Float> && BOUND(?bits) && xsd:integer(?bits) = 32 AS ?f32 )
   BIND ( IF(?hasOwn,
