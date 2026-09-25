@@ -24,7 +24,24 @@ PREFIX = {"physical-parser": "pp", "semantic-emitter": "se", "bundle-processor":
 CATEGORIES = ("Sync", "Bounds", "Validation", "Checksum", "Expression", "Dispatch", "Description",
               "Unsupported", "ResourceLimit")
 #: Artifacts of which a case has exactly one.
-EXPECTED = ("expected.json", "expected.ttl", "expected-error.json", "expected-report.json")
+EXPECTED = ("expected.json", "expected.ttl", "expected-error.json", "expected-report.json", "expected-report.ttl",
+            "expected-claims.json")
+#: The error categories a conformance run's Parse finding names (a ResourceLimit is never a finding).
+FINDING_CATEGORIES = tuple(c for c in CATEGORIES if c != "ResourceLimit")
+#: The requirement identifiers every case of a class may cite without saying anything specific: a case
+#: cites at least one identifier outside this set.
+BLANKET = ("req-pm-conformance-1", "req-pm-introduction-1", "req-hdl-conformance-section-1", "req-hel-conformance-1",
+           "req-ce-conf-conformance-1")
+#: The placeholder base of a case whose manifest gives no base (Processing Model, IRI minting): the
+#: processor chooses and reports its own base, and the comparator reads that base as this IRI.
+REPORTED_BASE = "urn:hexplain:suite:reported-base"
+
+
+def feature_tokens():
+    """The optional-feature tokens of the Processing Model's closed list (processing/index.html)."""
+    import re
+    page = (ROOT / "specification/processing/index.html").read_text(encoding="utf-8")
+    return tuple(re.findall(r'<li data-feature="([^"]+)">', page))
 #: Limits a manifest may lower (Processing Model, Resource Limits), plus the evaluator's findings cap.
 LIMITS = ("maxInputBytes", "maxDepth", "maxTreeDepth", "maxVisitedNodes", "maxMaterializedBytes",
           "maxDecodedBytes", "maxHelDepth", "maxHelLength", "maxTriples", "maxFindings")
@@ -74,6 +91,8 @@ class Case:
     report: dict = None              # conformance-evaluator expected report summary
     hdl: str = None                  # hdl-compiler source
     hdl_error: dict = None           # hdl-compiler expected diagnostic
+    report_ttl: str = None           # conformance-evaluator expected run report, as Turtle (conf: run terms)
+    claims: dict = None              # expected-claims.json: what a processor's claims statement must satisfy
 
     def artifacts(self):
         """{file name: bytes} of the case directory."""
@@ -94,7 +113,8 @@ class Case:
             out["input.hx"] = dedent(self.hdl).encode("utf-8")
         for name, content in self.files.items():
             out[name] = content if isinstance(content, bytes) else content.encode("utf-8")
-        if self.expected is not None or (self.cls == "physical-parser" and self.error is None and self.expected_ttl is None):
+        if self.expected is not None or (self.cls == "physical-parser" and self.error is None and self.expected_ttl is None
+                                         and self.claims is None):
             out["expected.json"] = canonical_json(self.expected)
         if self.expected_ttl is not None:
             out["expected.ttl"] = turtle(self.id, self.expected_ttl).encode("utf-8")
@@ -106,6 +126,10 @@ class Case:
             out["expected-error.json"] = dump(self.hdl_error)
         if self.report is not None:
             out["expected-report.json"] = dump(self.report)
+        if self.report_ttl is not None:
+            out["expected-report.ttl"] = turtle(self.id, self.report_ttl).encode("utf-8")
+        if self.claims is not None:
+            out["expected-claims.json"] = dump(self.claims)
         out["manifest.json"] = dump(man)
         return out
 
