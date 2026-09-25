@@ -146,7 +146,8 @@ def cases():
     from _remaining_contract_cases import cases as remaining
     from _closure_contract_cases import cases as closure
     from _range_contract_cases import cases as ranges
-    everything = result+mappings()+integers()+physical()+spatial()+requirements()+raster()+core()+layout_properties()+structural()+tree()+semantic()+remaining()+closure()+ranges()
+    from _review_contract_cases import cases as review
+    everything = result+mappings()+integers()+physical()+spatial()+requirements()+raster()+core()+layout_properties()+structural()+tree()+semantic()+remaining()+closure()+ranges()+review()
     # A case is about one obligation. An advisory result from some other shape -- a level with no
     # rank, say -- must not decide it, or every advisory constraint added later would silently
     # rewrite the expected outcome of cases that have nothing to do with it. Cases that are

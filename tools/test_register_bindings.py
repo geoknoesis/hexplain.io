@@ -22,8 +22,12 @@ def conforms(path):
 
 valid_ok, valid_text = conforms("specification/hexplain/test/register-binding-valid.ttl")
 invalid_ok, _ = conforms("specification/hexplain/test/register-binding-invalid.ttl")
+# One property bound to two registers (US and NATO): a value in either scheme is valid.
+multi_ok, multi_text = conforms("specification/hexplain/test/register-binding-multi-valid.ttl")
 
 problems = []
+if not multi_ok:
+    problems.append("a value in one of two registers bound to the same property did NOT conform:\n" + multi_text)
 if not valid_ok:
     problems.append("value inside the declared register did NOT conform:\n" + valid_text)
 if invalid_ok:

@@ -7,7 +7,11 @@ saying what changed, and, when superseded, dcterms:isReplacedBy naming a current
 same register. This gate checks those rules for every register module, that no scheme carries
 its own owl:versionInfo (the register ontology's version is the only version; a scheme-level
 "1.0" inside a 1.1 register contradicted it), that a current ordered collection lists no
-deprecated member, and that every register IRI of the latest snapshot is still defined.
+deprecated member, and that every register IRI of the latest snapshot is still defined. A
+valid entry is never deprecated, no entry replaces itself, and a deprecated entry is neither a
+member of a current skos:Collection nor a top concept of its scheme (it stays skos:inScheme).
+The same rules are shapes of the core vocabulary (hexplain:RegisterStatusShape,
+hexplain:RegisterLifecycleShape), so a register published elsewhere is checked by SHACL alone.
 """
 import json
 import sys
@@ -44,6 +48,8 @@ def check(path, g, failures):
             failures.append(f"{path}: {s} has hexplain:status {status}, not one of the closed set")
         if status in RETIRED and s not in deprecated:
             failures.append(f"{path}: {s} is {status.split('#')[-1]} but not owl:deprecated true")
+        if status == HEX.statusValid and s in deprecated:
+            failures.append(f"{path}: {s} is statusValid but owl:deprecated true")
     defined = {s for s in g.subjects(RDF.type) if isinstance(s, URIRef)}
     for s in sorted(deprecated):
         statuses = set(g.objects(s, HEX.status))
@@ -55,7 +61,9 @@ def check(path, g, failures):
         if HEX.statusSuperseded in statuses and not successors:
             failures.append(f"{path}: superseded {s} names no dcterms:isReplacedBy")
         for n in successors:
-            if n not in defined:
+            if n == s:
+                failures.append(f"{path}: {s} is replaced by itself")
+            elif n not in defined:
                 failures.append(f"{path}: {s} is replaced by {n}, which this register does not define")
             elif n in deprecated:
                 failures.append(f"{path}: {s} is replaced by {n}, which is itself deprecated")
@@ -66,6 +74,15 @@ def check(path, g, failures):
             for member in Collection(g, head):
                 if member in deprecated:
                     failures.append(f"{path}: current ordered collection {coll} lists deprecated {member}")
+    # A current grouping, and a scheme's top level, offer current entries only; a retired entry
+    # stays skos:inScheme so data that carries it keeps validating.
+    for coll in set(g.subjects(RDF.type, SKOS.Collection)) - deprecated:
+        for member in g.objects(coll, SKOS.member):
+            if member in deprecated:
+                failures.append(f"{path}: current collection {coll} lists deprecated {member}")
+    for s in deprecated:
+        for scheme in set(g.objects(s, SKOS.topConceptOf)) | set(g.subjects(SKOS.hasTopConcept, s)):
+            failures.append(f"{path}: deprecated {s} is still a top concept of {scheme}")
     return defined
 
 
@@ -85,7 +102,24 @@ def snapshot_terms(paths):
     return latest.parent.name, out
 
 
+def _self_test():
+    """Each rule must notice its defect, or passing proves nothing."""
+    g = Graph().parse(format="turtle", data="""
+        @prefix skos: <http://www.w3.org/2004/02/skos/core#> . @prefix owl: <http://www.w3.org/2002/07/owl#> .
+        @prefix h: <https://hexplain.io/ns/core#> . @prefix dct: <http://purl.org/dc/terms/> .
+        <urn:S> a skos:ConceptScheme .
+        <urn:valid> a skos:Concept ; skos:inScheme <urn:S> ; h:status h:statusValid ; owl:deprecated true .
+        <urn:self> a skos:Concept ; skos:inScheme <urn:S> ; skos:topConceptOf <urn:S> ; owl:deprecated true ;
+            h:status h:statusSuperseded ; dct:isReplacedBy <urn:self> ; skos:historyNote "x" .
+        <urn:C> a skos:Collection ; skos:member <urn:self> .""")
+    found = []
+    check("probe", g, found)
+    for needle in ("statusValid but owl:deprecated", "replaced by itself", "current collection", "still a top concept"):
+        assert any(needle in f for f in found), (needle, found)
+
+
 def main():
+    _self_test()
     failures = []
     paths = register_files()
     current = {}

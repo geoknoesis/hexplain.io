@@ -54,13 +54,21 @@ ex:F3 a conf:Finding ;
     conf:findingMessage "Header truncated at byte 4." ;
     hexplain:byteOffset 4 .
 
-# A parse error of a category no attribution names is reported against no requirement.
+# A parse error of a category no attribution names is reported against no requirement. The
+# category is a conf:ErrorCategory; the string form above ("Bounds") is the deprecated spelling.
 ex:F4 a conf:Finding ;
     conf:findingKind conf:Parse ;
-    conf:errorCategory "Checksum" ;
+    conf:errorCategory conf:ChecksumError ;
     conf:findingMessage "CRC mismatch in chunk IHDR." .
 
-# The run records one outcome per requirement.
+# The run records one outcome per requirement, its verdict and whether it was truncated, and
+# links every finding it reports.
 ex:Run1 a conf:Run ;
+    conf:verdict conf:NonConformant ;
+    conf:truncated false ;
+    conf:versionScopingApplied false ;
+    conf:ruleSet ex:rules ;
+    conf:input "sample.ntf" ;
+    conf:finding ex:F1 , ex:F2 , ex:F3 , ex:F4 ;
     conf:outcome [ conf:outcomeRequirement ex:R-FHDR ; conf:outcomeValue conf:Evaluated ] ,
                  [ conf:outcomeRequirement ex:R-FVER ; conf:outcomeValue conf:NotReached ] .

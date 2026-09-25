@@ -108,7 +108,7 @@
     "source": "../hexplain/index.html",
     "procedure": [
       "Normalize one isEncodedWith codec to a one-element codec sequence.",
-      "Normalize hasEncodingStep by reading each codec in list order. The interpreter carries per-stage integer options. Zlib and raw DEFLATE support level=-1 or 0..9; other settings reject explicitly.",
+      "Normalize hasEncodingStep by reading each codec in list order, each stage with its own hexplain:codecParameter settings. Which settings a processor executes is part of its capability claims (the reference implementation's are in reference-engine-claims.json); a setting it does not execute is refused, never ignored.",
       "Encode in declared order; decode in reverse. Each codec retains its framing, failure and byte-budget contract.",
       "Reject simultaneous forms, malformed/cyclic lists, missing or multiple codecs and empty pipelines. Unknown codec execution fails; no identity fallback is allowed."
     ],
@@ -145,8 +145,8 @@
       ],
       [
         "Other codec options",
-        "Not yet supported by the interpreter",
-        "Unknown names, unsupported codecs, duplicate names and noninteger or out-of-range values reject. Generated Kotlin readers and writers preserve these settings on supported byte fields. Single and counted byte or nested-struct blocks support explicit fixed, field-referenced or expression extents. Each element has its own encoded frame and shared decoding budget. Inferred lengths must agree across elements; declared encoded sizes are validated after layout convergence. Encoded repeat-until blocks and encoded fields with unsupported dispatch or layouts retain capability rejection."
+        "Named by hexplain:parameterName, valued by hexplain:parameterValue; their meaning is the codec's",
+        "A processor that does not execute a setting refuses it (Unsupported feature) rather than ignoring it; an unknown name, a duplicate name or an out-of-range value is a description error. Each element of a repeated encoded block has its own encoded frame and shares the decoded-byte budget. Which settings the reference implementation executes is stated in reference-engine-claims.json, not here."
       ],
       [
         "IR encodingOptions",

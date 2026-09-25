@@ -8,6 +8,7 @@
 # expect: ex:F-Untyped conf:FindingShape sh:OrConstraintComponent
 # expect: ex:C-Untyped conf:ConstraintShape sh:MinCountConstraintComponent
 # expect: ex:Run-Twice conf:RunShape sh:SPARQLConstraintComponent
+# expect: ex:Run-Twice conf:RunShape sh:ClassConstraintComponent
 # expect: ex:O-BadValue conf:OutcomeShape sh:InConstraintComponent
 # expect: ex:R-Untyped req:RequirementShape sh:MinCountConstraintComponent
 @prefix conf:     <https://hexplain.io/ns/conf#> .
@@ -46,7 +47,6 @@ ex:F-ParseWithConstraint a conf:Finding ;
     conf:findingKind conf:Parse ;
     conf:errorCategory "Validation" ;
     conf:findingConstraint ex:C1 ;
-    conf:findingRequirement ex:R1 ;
     conf:findingMessage "Fixed value mismatch." .
 
 # C1 cites R1 only, so a finding of C1 cannot be attributed to R2.
@@ -65,12 +65,16 @@ ex:F-Untyped conf:findingKind conf:Violation ;
 ex:C-Untyped conf:scope ex:Header ; conf:assertion "true" ; conf:satisfies ex:R1 .
 
 # Two outcomes for one requirement.
-ex:Run-Twice a conf:Run ;
+ex:Run-Twice a conf:Run ; conf:verdict conf:NonConformant ; conf:truncated false ;
+    conf:finding ex:F-ParseWithConstraint , ex:F-Miscited , ex:F-Untyped ;
     conf:outcome [ conf:outcomeRequirement ex:R1 ; conf:outcomeValue conf:Evaluated ] ,
-                 [ conf:outcomeRequirement ex:R1 ; conf:outcomeValue conf:NotExercised ] .
+                 [ conf:outcomeRequirement ex:R1 ; conf:outcomeValue conf:NotExercised ] ,
+                 [ conf:outcomeRequirement ex:R2 ; conf:outcomeValue conf:Evaluated ] .
 
 # A finding kind is not an evaluation outcome.
-ex:Run-BadValue a conf:Run ; conf:outcome ex:O-BadValue .
+ex:Run-BadValue a conf:Run ; conf:verdict conf:NonConformant ; conf:truncated true ;
+    conf:truncationReason "finding limit" ;
+    conf:outcome ex:O-BadValue , [ conf:outcomeRequirement ex:R1 ; conf:outcomeValue conf:NotReached ] .
 ex:O-BadValue conf:outcomeRequirement ex:R2 ; conf:outcomeValue conf:Violation .
 
 # Untyped requirement without a statement: req:requirementId activates the requirement shape.

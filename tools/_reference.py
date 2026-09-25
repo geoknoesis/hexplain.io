@@ -4,7 +4,7 @@ from pathlib import Path
 from collections import defaultdict
 from rdflib import Graph,RDF,RDFS,OWL,URIRef,BNode,Namespace
 import specgraph
-from _term_editorial import DEFINITIONS
+from _term_editorial import DEFINITIONS, SCOPE_NOTES
 
 ROOT=Path(__file__).resolve().parent.parent
 SKOS=Namespace('http://www.w3.org/2004/02/skos/core#')
@@ -67,6 +67,9 @@ def shape_targets(g,t):
     for predicate,phrase in TARGETS.items():
         vals=sorted(g.objects(t,predicate),key=str)
         if vals:parts.append(phrase+' '+', '.join(compact(g,x) for x in vals))
+    # A SPARQL-based target (sh:target) is a target too; saying "no automatic target" of
+    # hexplain:RegisterBindingShape was false.
+    if list(g.objects(t,SH.target)):parts.append('the nodes its SPARQL target selects')
     return '; '.join(parts) or 'No automatic target; applied only when another shape references it or a caller explicitly selects it.'
 
 def shape_properties(g,shape):
@@ -134,26 +137,53 @@ SCOPE={
  'time':'Use for temporal metadata of content. Numeric durations and frame/sample counts are not interchangeable without a timing model.',
 }
 
-# Modules whose terms each carry their own skos:scopeNote in the canonical RDF. For them the
-# module sentence above describes the MODULE only: prefixing it to a class, an individual or a
-# property said, for example, that conf:Finding and conf:NotExercised were "for constraints
-# evaluated against a declared structural scope", which is wrong for both. A term of such a
-# module without its own note gets only the kind sentence.
-TERM_SCOPED={'conf','req'}
+# Modules whose terms each carry their own skos:scopeNote, in the canonical RDF or in
+# _term_editorial.SCOPE_NOTES. For them the module sentence above describes the MODULE only:
+# prefixing it to a class, an individual or a property said, for example, that conf:Finding was
+# "for constraints evaluated against a declared structural scope", and that hexplain:RegisterStatus
+# was for "linking a physical format description to semantic RDF output"; both wrong. A term of
+# such a module without a note of its own gets only the kind sentence that is true of it.
+TERM_SCOPED={'conf','req','core','bundle'}
+SUBCLASS_NOTE=' Its subclass links below are the asserted hierarchy, not merely similarity links.'
+PATH_NOTE=' Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage.'
+NO_PATH_NOTE=' No shape of the family constrains it, and no global domain is inferred.'
+
+def has_hierarchy(g,t):
+    return (t,RDFS.subClassOf,None) in g or (None,RDFS.subClassOf,t) in g
+
+_FAMILY=[]
+def family_graph():
+    """Every module of the family without its generated documentation, loaded once."""
+    if not _FAMILY:_FAMILY.append(load(specgraph.ontology_paths(),base=True))
+    return _FAMILY[0]
+
+def constrained(g,t):
+    """True when a shape anywhere in the family uses the property as a path or targets its subjects or objects."""
+    f=family_graph()
+    return any((None,p,t) in f for p in (SH.path,SH.targetSubjectsOf,SH.targetObjectsOf))
+
+def kind_sentence(g,t,k):
+    """The sentence about how a term of kind [k] is used, claiming only what is true of [t]."""
+    if k=='Class':return 'Assert this class on a resource representing the defined entity.'+(SUBCLASS_NOTE if has_hierarchy(g,t) else '')
+    if 'property' in k.lower():return 'Use it as a predicate.'+(PATH_NOTE if constrained(g,t) else NO_PATH_NOTE)
+    if k=='Named individual':return 'Use this IRI as a controlled value where the profile or a shape accepts its declared type.'
+    return ''
 
 def scope(g,t):
     k=kind(g,t);ns=str(owner(t));module=ns.removesuffix('/shapes').rsplit('/',1)[-1]
-    if module in TERM_SCOPED and k not in ['Ontology','Node shape','Property shape','SHACL prefix declarations']:
-        own=g.value(t,SKOS.scopeNote)
-        if own is not None:return str(own)
-        return {'Class':'Assert this class on a resource representing the defined entity.','Named individual':'Use this IRI as a controlled value where a shape accepts its declared type.'}.get(k,'Use it as a predicate; applicable SHACL paths and their focus-node scopes are listed below.')
+    if module=='hexplain':module='core'
+    for key in (str(t),compact(g,t)):
+        if key in SCOPE_NOTES:return SCOPE_NOTES[key]
     if k in ['Node shape','Property shape']:return 'Validation activation: '+shape_targets(g,t)+' Constraints apply only within that activation or through shape references; they are not global OWL domain axioms.'
     if k=='SHACL prefix declarations':return 'Used by named SHACL SPARQL constraints/rules in this module. Not intended for instance-data assertions.'
+    if module in TERM_SCOPED and k!='Ontology':
+        own=g.value(t,SKOS.scopeNote)
+        if own is not None:return str(own)
+        return kind_sentence(g,t,k)
     if '/register/' in ns:
+        if k=='Ontology':return 'Load to obtain the concepts of this register. A profile binds its schemes to the properties they supply with hexplain:usesRegister; the aspect the values serve does not import it.'
         return ('Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code.'+
           (' This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects.' if module=='us-nato-security' else ' Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile.' if module in ['media-encoding','checksum'] else ' Use concept IRIs as values; concept schemes and collections organize those values rather than describing parsed instances.'))
     result=SCOPE[module]
-    if k=='Class':result+=' Assert this class on a resource representing the defined entity; subclass links below are the asserted hierarchy, not merely similarity links.'
-    elif 'property' in k.lower():result+=' Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage.'
-    elif k=='Named individual':result+=' Use this IRI as a controlled value where the profile or a shape accepts its declared type.'
-    return result
+    sentence=kind_sentence(g,t,k)
+    return result+(' '+sentence if sentence else '')

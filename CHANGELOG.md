@@ -6,6 +6,221 @@ snapshots are recorded under `releases/`.
 
 ## Unreleased (changes since snapshot 2026-09-24.2)
 
+### Module versions
+
+Every module whose canonical Turtle differs from snapshot 2026-09-24.2 has a new version IRI
+naming the version that snapshot froze as `owl:priorVersion`, and `dcterms:modified 2026-09-24`.
+Most changed only in their generated scope notes (below); `owl:versionInfo` is now the bare
+version number everywhere, and the three working drafts say so with
+`schema:creativeWorkStatus "working draft"`. Unchanged: aspect/color, aspect/encoding,
+aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/time.
+
+| Module | Was | Now |
+|---|---|---|
+| archive (axv) | 1.2 | 1.3 |
+| aspect/bundle | 1.4 | 1.5 |
+| aspect/geometry | 1.3 working draft | 1.4 (working draft) |
+| aspect/integrity | 1.1 | 1.2 |
+| aspect/packaging | 1.1 | 1.2 |
+| aspect/provenance | 1.2 | 1.3 |
+| aspect/raster | 1.2 working draft | 1.3 (working draft) |
+| aspect/sampling | 1.1 | 1.2 |
+| aspect/signal | 1.1 | 1.2 |
+| aspect/spatialref | 1.3 working draft | 1.4 (working draft) |
+| aspect/tabular | 1.1 | 1.2 |
+| audio (adv) | 1.1 | 1.2 |
+| bddo | 1.2 | 1.3 |
+| conf | 1.2 | 1.3 |
+| conf/shapes | 1.2 | 1.3 |
+| core (hexplain) | 1.2 | 1.3 |
+| dlv | 1.2 | 1.3 |
+| docfont (dfv) | 1.2 | 1.3 |
+| fn | 0.2 | 0.3 |
+| geo (gv) | 1.1 | 1.2 |
+| image (idv) | 1.2 | 1.3 |
+| net (npv) | 1.2 | 1.3 |
+| register/checksum | 1.2 | 1.3 |
+| register/color | 1.0 | 1.1 |
+| register/geometry-type | 1.2 | 1.3 |
+| register/media-encoding | 1.1 | 1.2 |
+| register/part-role | 1.0 | 1.1 |
+| register/us-nato-security | 1.2 | 1.3 |
+| req | 1.2 | 1.3 |
+| req/shapes | 1.2 | 1.3 |
+| video (vdv) | 1.1 | 1.2 |
+
+### Conformance run reports (conf 1.3)
+
+- **New terms.** `conf:finding` (run to finding), `conf:verdict` with `conf:Verdict`
+  (`conf:Conformant`, `conf:NonConformant`), `conf:truncated` (xsd:boolean),
+  `conf:truncationReason`, `conf:versionScopingApplied` (xsd:boolean), `conf:fileVersion`,
+  `conf:profile`, `conf:input` (IRI or literal), `conf:ruleSet`, `conf:failOn` (sh:Violation,
+  sh:Warning or sh:Info). Error categories are individuals: `conf:ErrorCategory` with
+  `conf:SyncError`, `conf:BoundsError`, `conf:ValidationError`, `conf:ChecksumError`,
+  `conf:ExpressionError`, `conf:DispatchError`, `conf:DescriptionError`,
+  `conf:UnsupportedFeature`, each with its old string name as `skos:notation`. `owl:AllDifferent`
+  axioms for the finding kinds, outcomes, verdicts and categories.
+- **`conf:errorCategory`** takes a `conf:ErrorCategory`. The string names stay accepted as a
+  deprecated form of the same value (the engine writes strings today). **Dispatch is its own
+  category** (it was folded into Description). **ResourceLimit is not a category**: a resource
+  limit is never a finding (it fails or truncates the run), and a parse attribution naming it
+  is rejected.
+- **Stricter shapes (`conf/shapes.ttl`).** A run states exactly one verdict and one truncated
+  flag; a truncated run is non-conformant and only a truncated run states a reason; the verdict
+  must follow from the findings, outcomes and `conf:failOn`; `conf:fileVersion` is stated exactly
+  when version scoping was applied; `conf:NotApplicable` requires a requirement with
+  `req:appliesToVersion` that version scoping excluded; every requirement in the graph gets an
+  outcome; every finding of a graph that holds a run is linked by `conf:finding`, from at most one
+  run. A finding's severity equals its constraint's (absent reads as sh:Violation), and a rule
+  error or Parse finding is at sh:Violation; a Parse finding cites exactly the requirement of its
+  category's attribution, or none; `conf:errorCategory` appears only on Parse findings and parse
+  attributions; an untyped node stating a category is checked as an attribution
+  (`conf:UntypedParseAttributionShape`); a category named once by IRI and once by string is a
+  duplicate; `conf:Finding`, `conf:Run`, `conf:Constraint`, `conf:ParseAttribution` and
+  `req:Requirement` are disjoint (`conf:DisjointKindsShape`). New shapes:
+  `conf:FindingSeverityShape`, `conf:ParseFindingAttributionShape`, `conf:ErrorCategoryUseShape`,
+  `conf:UntypedParseAttributionShape`, `conf:DisjointKindsShape`.
+- **A report validates on its own.** It carries copies of the requirements, constraints and
+  parse attributions it references (Processing Model `req-pm-conformance-evaluation-8`,
+  `req-ce-conf-conformance-12`); blank-node requirements are copied under skolem IRIs.
+
+### Requirements (req 1.3)
+
+- `req:requirementId`, `req:fromStandard` and `req:statement` must contain a visible character:
+  white space, no-break spaces, zero-width spaces and the byte-order mark alone are rejected.
+  The identity check normalises no-break and other Unicode spaces to a space and drops
+  zero-width characters before comparing.
+- `req:statement` may be language-tagged (`rdf:langString`); its range is now `rdfs:Literal`.
+
+### Registers and core (core 1.3, registers)
+
+- **Lifecycle holes closed** (`hexplain:RegisterStatusShape`, new
+  `hexplain:RegisterLifecycleShape`): a `hexplain:statusValid` entry that is `owl:deprecated`, a
+  deprecated entry with no status or no `skos:historyNote`/`skos:changeNote`, an entry replaced by
+  itself and an entry replaced by a deprecated entry are rejected, as `test_register_lifecycle`
+  already required. Using a deprecated register value in a bound property is reported at
+  `sh:Warning` (`hexplain:RegisterDeprecatedValueShape`).
+- **Bindings read together.** `hexplain:RegisterBindingShape` accepts a value that is in any
+  scheme bound to the property: with a US and a NATO binding for one property, every value used
+  to fail one of them. Its generated scope note no longer says it has no target.
+- **us-nato-security 1.3:** `usnato:Restricted` is no longer a top concept of the US scheme, and
+  `usnato:Fouo` is no longer a member of `usnato:HandlingCaveats`; both stay `skos:inScheme`.
+- **geometry-type 1.3:** a concept points at its Simple Features class with `rdfs:seeAlso`, not
+  `skos:closeMatch` (sf:Point is an OWL class). `test_ontology_design` now also rejects a SKOS
+  mapping whose object is an ontology entity.
+
+### Bundle (aspect/bundle 1.5)
+
+- `abnd:extension` and `abnd:pathPattern` are checked as whole strings: an extension is a dot
+  and one or more non-empty steps; a pattern is `/`-separated, non-empty segments relative to
+  the asset root, never `.` or `..`, with no backslash, drive letter or colon, and not empty.
+- A required spec may not state `abnd:maxParts 0`; `abnd:partRole` must be a `skos:Concept` IRI;
+  `abnd:liftsProperty` must be an IRI; a profile may not nest itself through
+  `abnd:nestedProfile`, directly or through other profiles.
+
+### bddo 1.3
+
+- `bddo:TreePrefixBindingShape` matches a bound prefix literally (a prefix such as `a.b` was a
+  regular expression that also matched `axb`).
+- `bddo:nodePath` requires every container of the field to be a tree document; a field shared
+  with a binary struct used to pass.
+
+### fn 0.3
+
+- `hxf:isNoData` is unbound when the sample format or bit depth in effect is ambiguous (several
+  on the band, or none on the band and the grids having it disagree), and its body returns one
+  answer (`SELECT DISTINCT`).
+- `hxf:stat`: over an empty window, or one whose cells are all no-data or NaN, count is 0 and sum
+  is 0, and min, max and mean are unbound (the unbound condition no longer also said "empty").
+- `hxf:digest` covers the node's extent only: `hxf:digest(<asset#root>)` is the root struct's
+  bytes, not the file's.
+- The function catalogue of `fn/index.html` is generated from `fn.ttl` (`test_fn_catalogue`); it
+  still said `hxf:column`/`hxf:row` round to the nearest cell centre for `asref:PixelCenter`.
+
+### Documentation annotations
+
+- Scope notes are no longer one shared template: a note says "subclass links below" only of a
+  class that has one, "SHACL paths are listed below" only of a property a shape uses, and "No
+  automatic target" only of a shape without one (a SPARQL-based target counts). Core, conf, req
+  and bundle terms have notes of their own; the core module sentence ("use when linking a
+  physical format description to semantic RDF output") no longer appears on the register-lifecycle
+  terms. New gate `test_scope_notes` checks each templated claim against the graph.
+- Mojibake removed from sampling and signal (`â€”` for an em dash) and from the pages generated
+  from them.
+
+### Processing Model
+
+- Conformance Evaluation: a ResourceLimit is never a Parse finding (it fails or truncates the
+  run, as item 5 and Resource Limits say); Dispatch is a category of its own; the verdict uses the
+  run's fail-on severity; a new Report item states what an RDF report carries and that it
+  validates on its own. The reference implementation note maps Dispatch to `DISPATCH`.
+
+### Governance and snapshots
+
+- New gate `test_version_immutability`: one `owl:versionIRI` names one graph in every snapshot
+  and in the working tree. Two frozen violations (bddo 1.0 and aspect/bundle 1.2 in 2026-09-08.1
+  and .2) cannot be rewritten; `releases/ERRATA.md` records them (E1, E2) with the dangling and
+  missing `owl:priorVersion` values of frozen versions (E3, E4) and the false "canonical graphs
+  unchanged" note (E5), and the gate allows exactly those.
+- `releases/lineage.json` records the commit that added each snapshot and every module's
+  versions in order, with corrected prior versions.
+- `releases/index.html` lists snapshots newest first, no longer says 2026-09-08.1 left the
+  canonical graphs unchanged, and is in the sitemap.
+- `conf/shapes` and `req/shapes` no longer claim the `conf` and `req` namespace prefixes.
+
+### Strict profile and tooling
+
+- The optional strict profile closes each class over its own properties (25 classes, read from
+  the family's shapes) instead of one union of 144, targets by class and by the properties only
+  that class uses, and finds engine profiles by their content (bddo terms), which adds
+  `core/src/test/resources/nitf/nitf.ttl` and four other descriptions to the lint.
+- `test_review_mutations`: 150 probes of the defects above (the pre-review tree gets 97 right: it
+  accepts 39 of the defects and rejects 14 valid graphs); 135 of them are also module contracts.
+- Pages: `review.html` is marked historical; `shared-patterns` no longer states engine status
+  (moved to `reference-engine-claims.json` as `codecs.parameters`); the homepage states the
+  number of vocabulary modules (36, checked) and no single family version.
+
+### Requirement registry
+
+- **Changed text, one clause one level.** `req-pm-errors-9` was a fragment ("SHOULD be raised
+  when the description is loaded."); it is now "A Description error SHOULD be raised when the
+  description is loaded.", which also changes the row `req-pm-errors-8` that contains it.
+  `req-pm-errors-11` and `req-pm-conformance-classes-3` each held a SHOULD and a MUST clause;
+  each now keeps its SHOULD sentence, and the MUST clause is a sentence of its own
+  (`req-pm-errors-17`, `req-pm-conformance-classes-9`).
+- **Withdrawn:** `req-pm-errors-15` anchored the same table row as `req-pm-errors-6`. Its
+  load-time clause is now a sentence of its own, `req-pm-errors-16` ("A malformed HEL expression
+  SHOULD be raised when the description is loaded, and is a Type / HEL error even then"); cite
+  `req-pm-errors-6` for the category and `req-pm-errors-16` for the load-time rule.
+- **New:** `req-pm-conformance-evaluation-7` (what an RDF run report states) and
+  `req-pm-conformance-evaluation-8` (a report validates on its own; blank-node requirements get
+  skolem IRIs), restated on the conf page (`req-ce-conf-conformance-11`,
+  `req-ce-conf-conformance-12`). `req-ce-conf-conformance-5` now says that the category
+  is a `conf:ErrorCategory`, that Dispatch is one of its own, and that a resource limit is never
+  a finding.
+- **Rendered text.** The registry records a sentence as a reader sees it: an empty link reads as
+  the title of the section it points to (ten entries read "(see )" or "()"), and a superscript
+  as `^` (2^63 - 1). The recorded text, not the sentence, of these entries changed:
+  `req-pm-conformance-1`, `req-pm-conformance-classes-6`, `req-pm-context-1`, `req-pm-emission-1`,
+  `req-pm-errors-4`, `req-pm-errors-6` (whose row also lost its load-time clause to
+  `req-pm-errors-16`), `req-pm-errors-10`, `req-hel-formal-grammar-2`, `req-hel-numeric-semantics-1`,
+  `req-hel-numeric-semantics-4`, `req-hel-numeric-semantics-5`.
+- **Class per sentence.** `req-pm-conformance-classes-1` binds the Bundle Processor,
+  `req-pm-conformance-classes-2` the HDL Compiler, `req-pm-errors-13` and `req-pm-errors-14` the
+  Conformance Evaluator (the lenient mode of a conformance run), and `req-pm-multi-part-assets-3`,
+  `req-hdl-layout-1`, `req-pm-emission-1` the Physical Parser.
+- **Audience.** Every entry states `audience`: `processor`, or `description` for a rule on a
+  description's author that no processor can fail (`req-hel-key-resolution-3`,
+  `req-hel-name-binding-2`, `req-pm-context-2`, `req-hel-operator-precedence-1`, and the
+  vocabulary-page rules below that constrain descriptions). They are not processor requirements.
+- **Vocabulary pages.** The normative sentences of the bddo, dlv, core, bundle, geometry,
+  raster and spatialref pages are registered (`req-bddo-…`, `req-dlv-…`, `req-core-…`,
+  `req-geometry-…`, `req-raster-…`, `req-spatialref-…`). Those a family shape enforces are of kind
+  `shape-backed` and name the shapes.
+- **Stricter gate.** A changed or withdrawn requirement must be named as a whole word
+  (`req-pm-errors-1` is no longer excused by an entry for `req-pm-errors-10`) in the Unreleased
+  section of this file, not anywhere in it.
+
 ### Processor conformance suite
 
 `specification/conformance/` is an executable, portable conformance suite for the five
@@ -42,7 +257,8 @@ section exists, exactly one expected artifact per case, coverage page current).
   `bddo:coversExpression`.
 - Error table: a malformed HEL expression, and the `asset` root or `partExtension()` in a part
   parsed on its own, are Type / HEL errors, even when found as the description is loaded
-  (`req-pm-errors-6`, and the new `req-pm-errors-15`); the Unsupported feature row no longer
+  (`req-pm-errors-6`, and the load-time clause `req-pm-errors-16`; `req-pm-errors-15` is
+  withdrawn, see above); the Unsupported feature row no longer
   gives the asset root as its example, which contradicted Multi-part Assets
   (`req-pm-errors-10`).
 - A negative repeat count is a bounds error, as a negative size is (`req-pm-size-resolution-3`).

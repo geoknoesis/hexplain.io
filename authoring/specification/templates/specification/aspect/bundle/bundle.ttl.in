@@ -1,4 +1,4 @@
-# Hexplain Aspect — Bundle (hx-bundle) 1.4
+# Hexplain Aspect — Bundle (hx-bundle) 1.5
 # Base container-tier aspect: one logical Asset realized by N physical Parts, bound by
 # containment / naming-convention / manifest-reference / concatenation. Imports BDDO
 # (a part is described by a bddo:Struct).
@@ -16,8 +16,8 @@
 @prefix vann:    <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/aspect/bundle> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.4> ; owl:versionInfo "1.4" ;
-    owl:priorVersion <https://hexplain.io/ns/aspect/bundle/1.3> ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.5> ; owl:versionInfo "1.5" ;
+    owl:priorVersion <https://hexplain.io/ns/aspect/bundle/1.4> ;
     dcterms:modified "2026-09-24"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/bddo> ;
     rdfs:label "Hexplain Aspect — Bundle (hx-bundle)" ;
@@ -226,18 +226,30 @@ abnd:PartSpecShape a sh:NodeShape ;
     sh:or ( [ sh:property [ sh:path abnd:extension ; sh:minCount 1 ] ]
             [ sh:property [ sh:path abnd:pathPattern ; sh:minCount 1 ] ] ) ;
     sh:message "A part spec is located by abnd:extension or abnd:pathPattern; with neither it matches no file." ;
-    sh:property [ sh:path abnd:extension ; sh:pattern "^[.][^./]" ;
-        sh:message "An abnd:extension begins with a dot (\".dbf\"); without one it would also match a longer suffix such as roads_dbf." ] ;
-    sh:sparql [ sh:message "An abnd:pathPattern must not contain a '..' segment or begin with '/': a pattern matches paths inside the asset root, never above it." ;
-        sh:prefixes abnd:_prefixes ;
-        sh:select """SELECT $this ?value WHERE {
-            $this abnd:pathPattern ?value .
-            FILTER(REGEX(?value, "(^|/)[.][.](/|$)") || STRSTARTS(?value, "/"))
-        }""" ] ;
-    sh:sparql [ sh:message "A required part spec must not declare abnd:minParts 0 -- the two contradict." ;
+    # Whole-string rules. An extension is a dot and one or more dot-separated steps, none empty
+    # and none holding a path separator or a drive colon. A pattern is one or more '/'-separated
+    # segments relative to the asset root: no empty segment (so no leading '/', trailing '/' or
+    # '//'), no '.' or '..' segment, no backslash and no drive letter or other colon.
+    sh:property [ sh:path abnd:extension ; sh:pattern "^[.][^/\\\\:.]+([.][^/\\\\:.]+)*$" ;
+        sh:message "An abnd:extension is a dot followed by one or more non-empty, dot-separated steps (\".dbf\", \".tar.gz\") with no '/', '\\' or ':'; without the dot it would also match a longer suffix such as roads_dbf." ] ;
+    sh:property [ sh:path abnd:pathPattern ; sh:pattern "^([^/\\\\:.][^/\\\\:]*|[.][^/\\\\:.][^/\\\\:]*|[.][.][^/\\\\:]+)(/([^/\\\\:.][^/\\\\:]*|[.][^/\\\\:.][^/\\\\:]*|[.][.][^/\\\\:]+))*$" ;
+        sh:message "An abnd:pathPattern is a relative path inside the asset root: '/'-separated, non-empty segments, none '.' or '..', with no backslash, no drive letter or other ':', and no leading '/'." ] ;
+    sh:property [ sh:path abnd:partRole ; sh:nodeKind sh:IRI ; sh:class skos:Concept ;
+        sh:message "abnd:partRole names a skos:Concept of the bound part-role register." ] ;
+    sh:property [ sh:path abnd:liftsProperty ; sh:nodeKind sh:IRI ;
+        sh:message "abnd:liftsProperty names a property by IRI." ] ;
+    sh:sparql [ sh:message "A required part spec must not declare abnd:minParts 0 or abnd:maxParts 0 -- the two contradict." ;
         sh:prefixes abnd:_prefixes ;
         sh:select """SELECT $this WHERE {
-            $this abnd:required true ; abnd:minParts 0 .
+            $this abnd:required true .
+            { $this abnd:minParts 0 } UNION { $this abnd:maxParts 0 }
+        }""" ] ;
+    sh:sparql [ sh:message "abnd:nestedProfile {?nested} leads back to the profile that holds this part spec; a profile cannot nest itself." ;
+        sh:prefixes abnd:_prefixes ;
+        sh:select """SELECT $this ?nested WHERE {
+            $this abnd:nestedProfile ?nested .
+            ?nested (abnd:partSpec/abnd:nestedProfile)* ?reached .
+            ?reached abnd:partSpec $this .
         }""" ] .
 
 # A profile names at most one primary member, and names its described parts unambiguously:

@@ -1,4 +1,4 @@
-# Hexplain Register — US/NATO Security Marking 1.2
+# Hexplain Register — US/NATO Security Marking 1.3
 # Controlled values for the hx-security aspect, as set by US and NATO policy. Split out of the
 # aspect so another jurisdiction can publish a sibling register without forking the aspect or
 # minting into a namespace it does not own.
@@ -22,8 +22,8 @@
 @prefix hexplain: <https://hexplain.io/ns/core#> .
 
 <https://hexplain.io/ns/register/us-nato-security> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/register/us-nato-security/1.2> ; owl:versionInfo "1.2" ;
-    owl:priorVersion <https://hexplain.io/ns/register/us-nato-security/1.1> ;
+    owl:versionIRI <https://hexplain.io/ns/register/us-nato-security/1.3> ; owl:versionInfo "1.3" ;
+    owl:priorVersion <https://hexplain.io/ns/register/us-nato-security/1.2> ;
     dcterms:modified "2026-09-24"^^xsd:date ;
     # core supplies the register lifecycle terms (hexplain:status and its values).
     owl:imports <https://hexplain.io/ns/core> ;
@@ -45,9 +45,10 @@ usnato:ClassificationLevelScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https:
     skos:scopeNote "The United States classification levels (EO 13526 Section 1.2: Top Secret, Secret, Confidential) and Unclassified. NATO levels are in usnato:NatoClassificationLevelScheme."@en ;
     skos:historyNote "Before register 1.2 this scheme also held Restricted, and its ordered collection placed it between Unclassified and Confidential. Restricted is not a US classification level; it is now usnato:NatoRestricted in the NATO scheme, and usnato:Restricted is superseded."@en .
 usnato:Unclassified a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Unclassified"@en .
-usnato:Restricted   a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Restricted"@en ;
+usnato:Restricted   a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:prefLabel "Restricted"@en ;
     owl:deprecated true ; hexplain:status hexplain:statusSuperseded ; dcterms:isReplacedBy usnato:NatoRestricted ;
-    skos:historyNote "Superseded in register 1.2. Restricted is not a US classification level (EO 13526 Section 1.2 defines Top Secret, Secret and Confidential); the level this concept denoted in NATO-marked data is usnato:NatoRestricted. The IRI stays resolvable so existing data keeps its meaning."@en .
+    skos:historyNote "Superseded in register 1.2. Restricted is not a US classification level (EO 13526 Section 1.2 defines Top Secret, Secret and Confidential); the level this concept denoted in NATO-marked data is usnato:NatoRestricted. The IRI stays resolvable so existing data keeps its meaning."@en ;
+    skos:changeNote "Register 1.3: no longer a top concept of usnato:ClassificationLevelScheme. It stays skos:inScheme, so data that carries it still validates against a binding to the scheme, but a retired entry is not offered as a current top-level value."@en .
 usnato:Confidential a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Confidential"@en .
 usnato:Secret       a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Secret"@en .
 usnato:TopSecret    a skos:Concept ; skos:inScheme usnato:ClassificationLevelScheme ; skos:topConceptOf usnato:ClassificationLevelScheme ; skos:prefLabel "Top Secret"@en .
@@ -133,7 +134,8 @@ usnato:Compartments a skos:Collection ; skos:prefLabel "Compartments / SCI"@en ;
 usnato:DisseminationControls a skos:Collection ; skos:prefLabel "Dissemination Controls"@en ;
     skos:member usnato:Orcon , usnato:Propin , usnato:UsOnly , usnato:NoContract , usnato:Wnintel , usnato:Efto .
 usnato:HandlingCaveats a skos:Collection ; skos:prefLabel "Handling Caveats"@en ;
-    skos:member usnato:Fouo , usnato:Cui , usnato:LimitedDissemination , usnato:LimitedOfficialUse , usnato:PersonalData , usnato:NonCompartment , usnato:FormerlyRestrictedData , usnato:Genser , usnato:Nato , usnato:Copyright , usnato:WarningNotice .
+    skos:historyNote "Register 1.3 removed usnato:Fouo, superseded by usnato:Cui in register 1.2: a current grouping lists current entries only. usnato:Fouo stays resolvable and skos:inScheme usnato:MarkingScheme."@en ;
+    skos:member usnato:Cui , usnato:LimitedDissemination , usnato:LimitedOfficialUse , usnato:PersonalData , usnato:NonCompartment , usnato:FormerlyRestrictedData , usnato:Genser , usnato:Nato , usnato:Copyright , usnato:WarningNotice .
 
 # ---------- Declassification Type Register ----------
 usnato:DeclassTypeScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/us-nato-security> ;
@@ -191,7 +193,7 @@ usnato:X259 a skos:Concept ; skos:inScheme usnato:ExemptionScheme ; skos:topConc
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/register/us-nato-security> <http://www.w3.org/2004/02/skos/core#definition> "The vocabulary module publishing Hexplain Register — US/NATO Security Marking terms, its imports and associated validation declarations."@en .
-<https://hexplain.io/ns/register/us-nato-security> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
+<https://hexplain.io/ns/register/us-nato-security> <http://www.w3.org/2004/02/skos/core#scopeNote> "Load to obtain the concepts of this register. A profile binds its schemes to the properties they supply with hexplain:usesRegister; the aspect the values serve does not import it."@en .
 <https://hexplain.io/ns/register/us-nato-security#Atomal> <http://www.w3.org/2004/02/skos/core#definition> "The legacy security marking designation “ATOMAL” as an interoperable concept IRI. It records the designation found in a source; it does not determine current handling authority or grant access."@en .
 <https://hexplain.io/ns/register/us-nato-security#Atomal> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects."@en .
 <https://hexplain.io/ns/register/us-nato-security#Atomal> <http://www.w3.org/2000/01/rdf-schema#label> "ATOMAL"@en .

@@ -115,6 +115,11 @@ DELIBERATELY_CHANGED = {
      rdflib.URIRef("https://www.iso.org/standard/75400.html")),
     (rdflib.URIRef("https://hexplain.io/ns/register/geometry-type#Point"), SKOS.closeMatch,
      rdflib.URIRef("http://www.opengis.net/ont/geosparql#Point")),
+    # Register 1.3: a retired entry is no longer offered as current. usnato:Restricted stays
+    # skos:inScheme but is no longer a top concept, and usnato:Fouo left the current
+    # HandlingCaveats grouping (both recorded in the register's history and change notes).
+    (rdflib.URIRef(_UNS + "Restricted"), SKOS.topConceptOf, rdflib.URIRef(_UNS + "ClassificationLevelScheme")),
+    (rdflib.URIRef(_UNS + "HandlingCaveats"), SKOS.member, rdflib.URIRef(_UNS + "Fouo")),
 }
 
 def original(aspect):

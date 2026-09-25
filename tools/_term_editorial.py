@@ -338,3 +338,92 @@ ALGORITHMS={
 }
 for term,definition in ALGORITHMS.items():DEFINITIONS['bddo:'+term]=definition
 for term,key in [('CRC16','crc16'),('CRC32','crc32'),('Adler32','adler32'),('MD5','md5'),('SHA1','sha1'),('SHA256','sha256')]:DEFINITIONS['rck:'+term]=ALGORITHMS[key]
+
+# Term-specific usage notes (skos:scopeNote). A term listed here gets exactly this note; a term of
+# a module in _reference.TERM_SCOPED that is not listed and states no note of its own gets only
+# the sentences that are true of it. The module sentence of _reference.SCOPE is NOT prefixed to
+# these: "Use when linking a physical format description to semantic RDF output" was wrong for
+# hexplain:RegisterStatus, hexplain:status and hexplain:correspondsTo, which concern registers.
+SCOPE_NOTES = {}
+def notes(prefix, text):
+    for line in text.strip().splitlines():
+        term, note = line.split('|', 1)
+        SCOPE_NOTES[prefix+':'+term] = note
+
+notes('hexplain', '''
+ClassMappingRule|Assert on each member of a hexplain:hasConditionalClassMapping list, with one hexplain:condition and one hexplain:semanticClass. Rules are tried in list order; the first whose condition holds decides the struct's class.
+CodecParameter|Assert on each object of hexplain:codecParameter, with exactly one hexplain:parameterName and one hexplain:parameterValue, spelt as the codec itself names the setting.
+EncodingStep|Assert on each member of a hexplain:hasEncodingStep list, naming exactly one hexplain:codec and any hexplain:codecParameter settings it was applied with. List the steps in the order the encoder applied them.
+MappingRule|Assert on each member of a hexplain:hasConditionalMapping list, with one hexplain:condition and one hexplain:semanticProperty, and optionally a hexplain:valueExpression computing the value that arm emits.
+RegisterBinding|Assert on the object of each hexplain:usesRegister, with exactly one hexplain:forProperty and one hexplain:register. Several bindings for one property are read together: a value in any of their schemes is accepted.
+RegisterStatus|The class of the three controlled values of hexplain:status; do not mint further statuses. A register publishes the status of its entries; data never states it.
+byteLength|Stated by a processor on the resources it lifts, with hexplain:byteOffset, when it records byte ranges; a profile does not declare it. Also locates a conf:Finding's evidence.
+byteOffset|Stated by a processor on the resources it lifts, with hexplain:byteLength, when it records byte ranges; a profile does not declare it. Also locates a conf:Finding's evidence.
+codec|Use exactly once on a hexplain:EncodingStep, naming a concept of the codec or compression register the profile binds.
+codecParameter|Use on a hexplain:EncodingStep, once per setting the codec was applied with; omit it for a codec that takes none.
+condition|Use exactly once on a hexplain:MappingRule or hexplain:ClassMappingRule: a HEL Boolean expression evaluated in the context of the field or struct being mapped.
+correspondsTo|Use on a register concept to name the ontology individual that denotes the same thing in another layer (a checksum concept and its bddo:ChecksumAlgorithm). It is an annotation: never a SKOS mapping, never equivalence, and it licenses no inference.
+forProperty|Use exactly once on a hexplain:RegisterBinding, naming the property whose values the binding constrains.
+hasConditionalClassMapping|Use at most once on a bddo:Struct whose class depends on a discriminator; its object is an rdf:List of hexplain:ClassMappingRule. Do not combine with hexplain:mapsToClass on the same struct.
+hasConditionalMapping|Use at most once on a bddo:Field whose meaning depends on a discriminator; its object is an rdf:List of hexplain:MappingRule, the first matching rule deciding the property and value emitted.
+hasDataLayout|Use at most once on a bddo:Field whose bytes are a multi-dimensional array, naming the dlv:DataLayout that addresses its cells.
+hasEncodingStep|Use at most once on a bddo:Field whose bytes pass through a pipeline of codecs; its object is an rdf:List of hexplain:EncodingStep in encoding order. Do not combine with hexplain:isEncodedWith.
+isEncodedWith|Use at most once on a bddo:Field whose bytes are encoded by a single codec without parameters. For several codecs or parameterised ones, use hexplain:hasEncodingStep instead.
+language|Use at most once on a bddo:Field that emits a string literal, with a BCP 47 tag fixed by the format. Do not combine with hexplain:languageFromField.
+languageFromField|Use at most once on a bddo:Field whose language the data states in a sibling field, naming that field. Do not combine with hexplain:language.
+mapsToClass|Use at most once on a bddo:Struct, naming the owl:Class every parsed instance of it is typed with. Use hexplain:hasConditionalClassMapping when the class depends on a discriminator.
+mapsToObjectProperty|Use at most once on a bddo:Field whose emitted object is an IRI: a nested struct's resource or an enumeration symbol. Use hexplain:mapsToProperty for a literal value.
+mapsToProperty|Use on a bddo:Field that emits a literal, naming the property the literal is the value of.
+parameterName|Use exactly once on a hexplain:CodecParameter.
+parameterValue|Use exactly once on a hexplain:CodecParameter, as the literal the format carries, with the datatype that literal naturally has.
+register|Use exactly once on a hexplain:RegisterBinding, naming the skos:ConceptScheme whose members are permitted values of the bound property.
+semanticClass|Use exactly once on a hexplain:ClassMappingRule, naming the class chosen when its condition holds.
+semanticProperty|Use exactly once on a hexplain:MappingRule, naming the property emitted when its condition holds.
+status|Use at most once on a register entry (a concept, collection or scheme) that a register retires or reaffirms. A deprecated or superseded entry is also owl:deprecated true and has a history note; a superseded one names its replacement with dcterms:isReplacedBy.
+statusDeprecated|Use as the hexplain:status of a retired register entry that has no single replacement.
+statusSuperseded|Use as the hexplain:status of a retired register entry that names its replacement with dcterms:isReplacedBy.
+statusValid|Use as the hexplain:status of a current register entry, where saying so explicitly helps; an entry with no status is current unless it is owl:deprecated.
+unit|Use at most once on a bddo:Field whose value is a quantity, naming its unit of measure. It records the unit; it does not rescale the value.
+usesRegister|Use on the profile, once per property it binds to a register; the object is a hexplain:RegisterBinding.
+valueDatatype|Use at most once beside a hexplain:valueExpression, naming the datatype of the literal it emits when the HEL result's natural datatype is not the one wanted.
+valueExpression|Use at most once on a bddo:Field or a hexplain:MappingRule, when the emitted value is computed from the parsed one (scaling, offsets, unit conversion) rather than copied.
+''')
+
+notes('abnd', '''
+Asset|Assert on the IRI of one logical asset a Bundle Processor assembled from its parts; it is linked to its profile by dcterms:conformsTo and carries the facets lifted from its parts.
+BindingKind|The class of the four controlled values of abnd:boundBy; do not mint further kinds.
+BundleProfile|Assert on a reusable description of a multi-part format: its abnd:partSpec members and, optionally, its abnd:boundBy kind.
+Concatenation|Use as the abnd:boundBy of an asset whose parts are consecutive fragments of one byte stream, ordered by abnd:partIndex.
+Containment|Use as the abnd:boundBy of an asset whose parts are members of one container stream (a ZIP or TAR archive).
+ManifestReference|Use as the abnd:boundBy of an asset whose primary part names its other members by path or IRI.
+NamingConvention|Use as the abnd:boundBy of an asset whose members are sibling files sharing a stem, one role per extension.
+Part|Assert on each part root a Bundle Processor lifts; it carries its spec's abnd:partRole and the facet properties parsed from the part.
+PartSpec|Assert on each object of abnd:partSpec: one expected member, located by abnd:extension or abnd:pathPattern, with a role and optionally its struct, count bounds and carried aspect.
+boundBy|Use at most once on an abnd:Asset or abnd:BundleProfile, with one of the four abnd:BindingKind values.
+carriesAspect|Use on an abnd:PartSpec to name the aspect ontology whose properties the part contributes to the asset. It is not an owl:imports.
+describedBy|Use at most once on an abnd:PartSpec, naming the bddo:Struct that parses the member. The struct's local name is the part's name in HEL (asset.Name), so no two specs of one profile may use structs with the same local name.
+extension|Use on an abnd:PartSpec to locate a member at the asset root by its file-name ending, a dot and one or more steps (".dbf", ".tar.gz"). Several values are alternatives. Do not combine with abnd:pathPattern.
+hasPart|Use on an abnd:Asset, once per part root it was assembled from.
+liftsProperty|Use on an abnd:PartSpec, once per property of the carried aspect the asset receives from the part, by IRI. Listing the properties is recommended: without a list, every property the aspect defines is lifted.
+maxParts|Use at most once on an abnd:PartSpec when a member may match more than one file; absent means one for an extension and unbounded for a pattern. Never 0 on a required spec.
+minParts|Use at most once on an abnd:PartSpec that matches several files; absent means 1 when abnd:required is true and 0 otherwise. Never 0 on a required spec.
+nestedProfile|Use at most once on an abnd:PartSpec whose member is a directory with a structure of its own, naming the abnd:BundleProfile of that directory. A profile may not nest itself, directly or through other profiles.
+partIndex|Use at most once on an abnd:Part of a concatenated asset, giving its zero-based position in the byte stream.
+partOf|Use on an abnd:Part to name its asset where the data states it; a Bundle Processor does not infer it from abnd:hasPart.
+partRole|Use exactly once on an abnd:PartSpec and on each abnd:Part it matched, naming a concept of the part-role register the profile binds.
+partSpec|Use on an abnd:BundleProfile, once per expected member.
+pathPattern|Use on an abnd:PartSpec to locate a member by its path relative to the asset root: '/'-separated segments, with * within a segment, ** across segments and ? for one character, never '.', '..', a backslash or a drive letter. Several values are alternatives. Do not combine with abnd:extension.
+primary|Use at most once on an abnd:PartSpec, true for the one member that anchors recognition of the asset; a profile has at most one primary spec.
+primaryPart|Use at most once on an abnd:Asset, naming the part root matched to the primary spec.
+required|Use at most once on an abnd:PartSpec, true when an asset without that member is invalid.
+stem|Use at most once on an abnd:Asset bound by naming convention, giving the basename its members share.
+''')
+
+
+# Module notes, by ontology IRI.
+SCOPE_NOTES['https://hexplain.io/ns/core'] = 'Import to link a physical description (bddo, dlv) to the RDF it emits: class and property mappings, conditional mappings, computed values, encoding pipelines, register bindings and the register lifecycle. It adds no byte-layout terms of its own.'
+SCOPE_NOTES['https://hexplain.io/ns/aspect/bundle'] = "Import to describe an asset made of several files, or of several members of one container, and the reusable profiles that say which members such an asset has. It says nothing about the members' bytes: those are bddo descriptions named by abnd:describedBy."
+SCOPE_NOTES['https://hexplain.io/ns/conf'] = 'Import to bind executable HEL assertions and parse attributions to the requirements they check, and to read or write the run reports of a Conformance Evaluator. Load conf/shapes.ttl to validate profiles and reports.'
+SCOPE_NOTES['https://hexplain.io/ns/req'] = 'Import to identify the requirements of a standards document that constraints cite and run reports account for. It describes what documents demand, not how a check is executed.'
+SCOPE_NOTES['https://hexplain.io/ns/conf/shapes'] = 'Load with the conf vocabulary to validate conformance profiles (constraints, parse attributions) and run reports (runs, outcomes, findings). A report validates on its own because it carries copies of the requirements, constraints and attributions it cites.'
+SCOPE_NOTES['https://hexplain.io/ns/req/shapes'] = 'Load with the req vocabulary to validate requirements: a non-blank identifier, standard and statement, one discrepancy type, and one requirement per normalised (standard, identifier) pair.'

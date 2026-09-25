@@ -23,7 +23,8 @@ class Page(HTMLParser):
 
 
 def pages():
-    return [ROOT/"index.html", *sorted((ROOT/"specification").rglob("*.html"))]
+    # The snapshot index is public too: it is where a pinned version is downloaded from.
+    return [ROOT/"index.html", ROOT/"releases/index.html", *sorted((ROOT/"specification").rglob("*.html"))]
 
 
 def print_link(page):
