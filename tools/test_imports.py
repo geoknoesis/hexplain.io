@@ -91,11 +91,17 @@ def main():
     ns_of = {}
     for ont in mods:
         uri = whole.value(ont, VANN_URI)
+        # A shapes document (<vocabulary>/shapes) claims no namespace of its own: its terms are in
+        # the namespace of the vocabulary it validates and imports, which alone claims the prefix.
+        vocabulary = URIRef(str(ont).removesuffix("/shapes"))
+        if uri is None and vocabulary != ont and (ont, OWL.imports, vocabulary) in whole:
+            uri = whole.value(vocabulary, VANN_URI)
         if uri is None:
             print(f"FAIL: {ont} declares no vann:preferredNamespaceUri")
             sys.exit(1)
         ns_of[ont] = str(uri)
-    ont_of = {ns: ont for ont, ns in ns_of.items()}
+    # The vocabulary, not its shapes document, is the namespace's owner.
+    ont_of = {ns: ont for ont, ns in sorted(ns_of.items(), key=lambda item: str(item[0]).endswith("/shapes"), reverse=True)}
     namespaces = sorted(ont_of, key=len, reverse=True)
     prefixes = {}
     for entries in mods.values():

@@ -130,6 +130,12 @@ for rel in family:
             version_failures.append(f"{page.as_posix()}: subtitle says Version {subtitle.group(1)}, "
                                     f"{rel} is {info}")
     prefix, uri = g.value(ontology, VANN.preferredNamespacePrefix), g.value(ontology, VANN.preferredNamespaceUri)
+    if str(ontology).endswith("/shapes"):
+        # A shapes document's terms are in its vocabulary's namespace; only the vocabulary
+        # claims the prefix, so a shapes document that claims one too is the defect.
+        if prefix is not None or uri is not None:
+            version_failures.append(f"{rel}: a shapes document claims its vocabulary's namespace prefix")
+        continue
     if prefix is None or uri is None:
         version_failures.append(f"{rel}: no vann:preferredNamespacePrefix/Uri to register")
     elif f"<code>{prefix}</code></td><td><code>{uri}</code>" not in registry:
