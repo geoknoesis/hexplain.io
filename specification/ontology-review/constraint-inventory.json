@@ -1,6 +1,6 @@
 {
   "scope": "Named node-shape inventory. Direct path references are discovery aids, not proof of activation or constraint coverage. Nested paths, SPARQL and ontology axioms require manual review.",
-  "resources": 902,
+  "resources": 931,
   "shapes": [
     {
       "shape": "https://hexplain.io/ns/audio#IntegerValueShape",
@@ -189,9 +189,11 @@
       ],
       "direct_property_paths": [
         "https://hexplain.io/ns/aspect/bundle#extension",
+        "https://hexplain.io/ns/aspect/bundle#liftsProperty",
         "https://hexplain.io/ns/aspect/bundle#maxParts",
         "https://hexplain.io/ns/aspect/bundle#minParts",
         "https://hexplain.io/ns/aspect/bundle#nestedProfile",
+        "https://hexplain.io/ns/aspect/bundle#partRole",
         "https://hexplain.io/ns/aspect/bundle#pathPattern"
       ],
       "candidate_cases": [
@@ -212,6 +214,7 @@
         "layout-competency.tsv:nested compound scoped independently",
         "layout-competency.tsv:parent does not satisfy child role",
         "layout-competency.tsv:primary alone satisfies required role",
+        "layout-competency.tsv:primary typed part",
         "layout-competency.tsv:primary wrong role still rejects",
         "layout-competency.tsv:required compound part",
         "layout-competency.tsv:required zero contradiction"
@@ -1625,17 +1628,48 @@
         "https://hexplain.io/ns/conf#severity"
       ],
       "candidate_cases": [
+        "conformance-competency.tsv:conformant verdict despite a violation",
         "conformance-competency.tsv:constraint citing a non-requirement",
         "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
         "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:finding at a severity its constraint does not report",
         "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:finding the run does not link",
         "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:parse attribution naming a resource limit",
         "conformance-competency.tsv:parse attribution naming an unknown category",
         "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:parse attribution of a dispatch error by category IRI",
         "conformance-competency.tsv:rule error without its constraint",
         "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
-        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements"
+        "conformance-competency.tsv:run without a verdict",
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:truncated run that is conformant"
       ],
+      "review_status": "needs constraint-level review"
+    },
+    {
+      "shape": "https://hexplain.io/ns/conf#DisjointKindsShape",
+      "source": "specification/conf/shapes.ttl",
+      "targets": [
+        "https://hexplain.io/ns/conf#Constraint",
+        "https://hexplain.io/ns/conf#Finding",
+        "https://hexplain.io/ns/conf#ParseAttribution",
+        "https://hexplain.io/ns/conf#Run",
+        "https://hexplain.io/ns/req#Requirement"
+      ],
+      "direct_property_paths": [],
+      "candidate_cases": [],
+      "review_status": "needs constraint-level review"
+    },
+    {
+      "shape": "https://hexplain.io/ns/conf#ErrorCategoryUseShape",
+      "source": "specification/conf/shapes.ttl",
+      "targets": [
+        "https://hexplain.io/ns/conf#errorCategory"
+      ],
+      "direct_property_paths": [],
+      "candidate_cases": [],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1649,10 +1683,21 @@
       "review_status": "needs constraint-level review"
     },
     {
+      "shape": "https://hexplain.io/ns/conf#FindingSeverityShape",
+      "source": "specification/conf/shapes.ttl",
+      "targets": [
+        "https://hexplain.io/ns/conf#findingKind"
+      ],
+      "direct_property_paths": [],
+      "candidate_cases": [],
+      "review_status": "needs constraint-level review"
+    },
+    {
       "shape": "https://hexplain.io/ns/conf#FindingShape",
       "source": "specification/conf/shapes.ttl",
       "targets": [
         "https://hexplain.io/ns/conf#Finding",
+        "https://hexplain.io/ns/conf#finding",
         "https://hexplain.io/ns/conf#findingConstraint",
         "https://hexplain.io/ns/conf#findingKind",
         "https://hexplain.io/ns/conf#findingMessage",
@@ -1670,14 +1715,19 @@
         "https://hexplain.io/ns/core#byteOffset"
       ],
       "candidate_cases": [
+        "conformance-competency.tsv:conformant verdict despite a violation",
         "conformance-competency.tsv:constraint citing a non-requirement",
         "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
         "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:finding at a severity its constraint does not report",
         "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:finding the run does not link",
         "conformance-competency.tsv:outcome value that is a finding kind",
         "conformance-competency.tsv:rule error without its constraint",
         "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
-        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements"
+        "conformance-competency.tsv:run without a verdict",
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:truncated run that is conformant"
       ],
       "review_status": "needs constraint-level review"
     },
@@ -1694,10 +1744,15 @@
         "https://hexplain.io/ns/conf#outcomeValue"
       ],
       "candidate_cases": [
+        "conformance-competency.tsv:conformant verdict despite a violation",
+        "conformance-competency.tsv:finding at a severity its constraint does not report",
         "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:finding the run does not link",
         "conformance-competency.tsv:outcome value that is a finding kind",
         "conformance-competency.tsv:rule error without its constraint",
-        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:run without a verdict",
+        "conformance-competency.tsv:truncated run that is conformant"
       ],
       "review_status": "needs constraint-level review"
     },
@@ -1712,12 +1767,19 @@
         "https://hexplain.io/ns/conf#errorCategory"
       ],
       "candidate_cases": [
+        "conformance-competency.tsv:conformant verdict despite a violation",
+        "conformance-competency.tsv:finding at a severity its constraint does not report",
         "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:finding the run does not link",
         "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:parse attribution naming a resource limit",
         "conformance-competency.tsv:parse attribution naming an unknown category",
         "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:parse attribution of a dispatch error by category IRI",
         "conformance-competency.tsv:rule error without its constraint",
-        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:run without a verdict",
+        "conformance-competency.tsv:truncated run that is conformant"
       ],
       "review_status": "needs constraint-level review"
     },
@@ -1731,17 +1793,34 @@
         "https://hexplain.io/ns/conf#satisfies"
       ],
       "candidate_cases": [
+        "conformance-competency.tsv:conformant verdict despite a violation",
         "conformance-competency.tsv:constraint citing a non-requirement",
         "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
         "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:finding at a severity its constraint does not report",
         "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:finding the run does not link",
         "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:parse attribution naming a resource limit",
         "conformance-competency.tsv:parse attribution naming an unknown category",
         "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:parse attribution of a dispatch error by category IRI",
         "conformance-competency.tsv:rule error without its constraint",
         "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
-        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements"
+        "conformance-competency.tsv:run without a verdict",
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:truncated run that is conformant"
       ],
+      "review_status": "needs constraint-level review"
+    },
+    {
+      "shape": "https://hexplain.io/ns/conf#ParseFindingAttributionShape",
+      "source": "specification/conf/shapes.ttl",
+      "targets": [
+        "https://hexplain.io/ns/conf#findingKind"
+      ],
+      "direct_property_paths": [],
+      "candidate_cases": [],
       "review_status": "needs constraint-level review"
     },
     {
@@ -1749,27 +1828,36 @@
       "source": "specification/conf/shapes.ttl",
       "targets": [
         "https://hexplain.io/ns/conf#assertion",
-        "https://hexplain.io/ns/conf#errorCategory",
+        "https://hexplain.io/ns/conf#fileVersion",
         "https://hexplain.io/ns/conf#findingMessage",
-        "https://hexplain.io/ns/conf#message"
+        "https://hexplain.io/ns/conf#message",
+        "https://hexplain.io/ns/conf#truncated",
+        "https://hexplain.io/ns/conf#truncationReason",
+        "https://hexplain.io/ns/conf#versionScopingApplied"
       ],
       "direct_property_paths": [
         "https://hexplain.io/ns/conf#assertion",
-        "https://hexplain.io/ns/conf#errorCategory",
+        "https://hexplain.io/ns/conf#fileVersion",
         "https://hexplain.io/ns/conf#findingMessage",
-        "https://hexplain.io/ns/conf#message"
+        "https://hexplain.io/ns/conf#message",
+        "https://hexplain.io/ns/conf#truncated",
+        "https://hexplain.io/ns/conf#truncationReason",
+        "https://hexplain.io/ns/conf#versionScopingApplied"
       ],
       "candidate_cases": [
+        "conformance-competency.tsv:conformant verdict despite a violation",
         "conformance-competency.tsv:constraint citing a non-requirement",
         "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
         "conformance-competency.tsv:constraint with two severities",
+        "conformance-competency.tsv:finding at a severity its constraint does not report",
         "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:finding the run does not link",
         "conformance-competency.tsv:outcome value that is a finding kind",
-        "conformance-competency.tsv:parse attribution naming an unknown category",
-        "conformance-competency.tsv:parse attribution of a checksum error",
         "conformance-competency.tsv:rule error without its constraint",
         "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
-        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements"
+        "conformance-competency.tsv:run without a verdict",
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:truncated run that is conformant"
       ],
       "review_status": "needs constraint-level review"
     },
@@ -1778,17 +1866,52 @@
       "source": "specification/conf/shapes.ttl",
       "targets": [
         "https://hexplain.io/ns/conf#Run",
-        "https://hexplain.io/ns/conf#outcome"
+        "https://hexplain.io/ns/conf#failOn",
+        "https://hexplain.io/ns/conf#fileVersion",
+        "https://hexplain.io/ns/conf#finding",
+        "https://hexplain.io/ns/conf#input",
+        "https://hexplain.io/ns/conf#outcome",
+        "https://hexplain.io/ns/conf#profile",
+        "https://hexplain.io/ns/conf#ruleSet",
+        "https://hexplain.io/ns/conf#truncated",
+        "https://hexplain.io/ns/conf#truncationReason",
+        "https://hexplain.io/ns/conf#verdict",
+        "https://hexplain.io/ns/conf#versionScopingApplied"
       ],
       "direct_property_paths": [
-        "https://hexplain.io/ns/conf#outcome"
+        "https://hexplain.io/ns/conf#failOn",
+        "https://hexplain.io/ns/conf#fileVersion",
+        "https://hexplain.io/ns/conf#finding",
+        "https://hexplain.io/ns/conf#input",
+        "https://hexplain.io/ns/conf#outcome",
+        "https://hexplain.io/ns/conf#profile",
+        "https://hexplain.io/ns/conf#ruleSet",
+        "https://hexplain.io/ns/conf#truncated",
+        "https://hexplain.io/ns/conf#truncationReason",
+        "https://hexplain.io/ns/conf#verdict",
+        "https://hexplain.io/ns/conf#versionScopingApplied"
       ],
       "candidate_cases": [
+        "conformance-competency.tsv:conformant verdict despite a violation",
+        "conformance-competency.tsv:finding at a severity its constraint does not report",
         "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:finding the run does not link",
         "conformance-competency.tsv:outcome value that is a finding kind",
         "conformance-competency.tsv:rule error without its constraint",
-        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes"
+        "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:run without a verdict",
+        "conformance-competency.tsv:truncated run that is conformant"
       ],
+      "review_status": "needs constraint-level review"
+    },
+    {
+      "shape": "https://hexplain.io/ns/conf#UntypedParseAttributionShape",
+      "source": "specification/conf/shapes.ttl",
+      "targets": [
+        "https://hexplain.io/ns/conf#errorCategory"
+      ],
+      "direct_property_paths": [],
+      "candidate_cases": [],
       "review_status": "needs constraint-level review"
     },
     {
@@ -2503,6 +2626,24 @@
       "review_status": "needs constraint-level review"
     },
     {
+      "shape": "https://hexplain.io/ns/core#RegisterDeprecatedValueShape",
+      "source": "specification/hexplain/core.ttl",
+      "targets": [],
+      "direct_property_paths": [],
+      "candidate_cases": [],
+      "review_status": "needs constraint-level review"
+    },
+    {
+      "shape": "https://hexplain.io/ns/core#RegisterLifecycleShape",
+      "source": "specification/hexplain/core.ttl",
+      "targets": [
+        "http://www.w3.org/2002/07/owl#deprecated"
+      ],
+      "direct_property_paths": [],
+      "candidate_cases": [],
+      "review_status": "needs constraint-level review"
+    },
+    {
       "shape": "https://hexplain.io/ns/core#RegisterStatusShape",
       "source": "specification/hexplain/core.ttl",
       "targets": [
@@ -2707,29 +2848,34 @@
       "targets": [
         "https://hexplain.io/ns/req#appliesToVersion",
         "https://hexplain.io/ns/req#fromStandard",
-        "https://hexplain.io/ns/req#requirementId",
-        "https://hexplain.io/ns/req#statement"
+        "https://hexplain.io/ns/req#requirementId"
       ],
       "direct_property_paths": [
         "https://hexplain.io/ns/req#appliesToVersion",
         "https://hexplain.io/ns/req#fromStandard",
-        "https://hexplain.io/ns/req#requirementId",
-        "https://hexplain.io/ns/req#statement"
+        "https://hexplain.io/ns/req#requirementId"
       ],
       "candidate_cases": [
+        "conformance-competency.tsv:conformant verdict despite a violation",
         "conformance-competency.tsv:constraint citing a non-requirement",
         "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
         "conformance-competency.tsv:constraint with two severities",
         "conformance-competency.tsv:empty version",
+        "conformance-competency.tsv:finding at a severity its constraint does not report",
         "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:finding the run does not link",
         "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:parse attribution naming a resource limit",
         "conformance-competency.tsv:parse attribution naming an unknown category",
         "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:parse attribution of a dispatch error by category IRI",
         "conformance-competency.tsv:rule error without its constraint",
         "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:run without a verdict",
         "conformance-competency.tsv:same identifier in one standard written with other case",
         "conformance-competency.tsv:same identifier in two standards",
-        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements"
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:truncated run that is conformant"
       ],
       "review_status": "needs constraint-level review"
     },
@@ -2763,19 +2909,26 @@
         "https://hexplain.io/ns/req#statement"
       ],
       "candidate_cases": [
+        "conformance-competency.tsv:conformant verdict despite a violation",
         "conformance-competency.tsv:constraint citing a non-requirement",
         "conformance-competency.tsv:constraint scoped to something that is not a struct or field",
         "conformance-competency.tsv:constraint with two severities",
         "conformance-competency.tsv:empty version",
+        "conformance-competency.tsv:finding at a severity its constraint does not report",
         "conformance-competency.tsv:finding attributed to a requirement its constraint does not cite",
+        "conformance-competency.tsv:finding the run does not link",
         "conformance-competency.tsv:outcome value that is a finding kind",
+        "conformance-competency.tsv:parse attribution naming a resource limit",
         "conformance-competency.tsv:parse attribution naming an unknown category",
         "conformance-competency.tsv:parse attribution of a checksum error",
+        "conformance-competency.tsv:parse attribution of a dispatch error by category IRI",
         "conformance-competency.tsv:rule error without its constraint",
         "conformance-competency.tsv:run with a violation, an unattributed parse finding and two outcomes",
+        "conformance-competency.tsv:run without a verdict",
         "conformance-competency.tsv:same identifier in one standard written with other case",
         "conformance-competency.tsv:same identifier in two standards",
-        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements"
+        "conformance-competency.tsv:struct- and field-scoped constraints citing requirements",
+        "conformance-competency.tsv:truncated run that is conformant"
       ],
       "review_status": "needs constraint-level review"
     },
