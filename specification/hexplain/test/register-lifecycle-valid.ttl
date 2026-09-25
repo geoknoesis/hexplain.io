@@ -1,0 +1,19 @@
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix dcterms:  <http://purl.org/dc/terms/> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix ex:       <https://example.org/ex#> .
+@prefix reg:      <https://example.org/reg#> .
+
+reg:Scheme a skos:ConceptScheme .
+reg:Current a skos:Concept ; skos:inScheme reg:Scheme ; hexplain:status hexplain:statusValid .
+reg:Retired a skos:Concept ; skos:inScheme reg:Scheme ; owl:deprecated true ;
+    hexplain:status hexplain:statusDeprecated ; skos:changeNote "Withdrawn with no successor."@en .
+reg:Replaced a skos:Concept ; skos:inScheme reg:Scheme ; owl:deprecated true ;
+    hexplain:status hexplain:statusSuperseded ; dcterms:isReplacedBy reg:Current ;
+    skos:historyNote "Replaced by reg:Current."@en .
+reg:OldOrder a skos:OrderedCollection ; owl:deprecated true ; hexplain:status hexplain:statusDeprecated ;
+    skos:historyNote "No longer published."@en ; skos:memberList ( reg:Current ) .
+# A deprecated ontology term is not a register entry.
+ex:oldProperty a owl:ObjectProperty ; owl:deprecated true .

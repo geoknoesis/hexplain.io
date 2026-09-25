@@ -1,0 +1,35 @@
+# expect-only
+# expect: reg:ValidButDeprecated hexplain:RegisterStatusShape sh:SPARQLConstraintComponent
+# expect: reg:ValidButDeprecated hexplain:RegisterLifecycleShape sh:OrConstraintComponent
+# expect: reg:NoStatus hexplain:RegisterLifecycleShape sh:OrConstraintComponent
+# expect: reg:NoHistory hexplain:RegisterLifecycleShape sh:OrConstraintComponent
+# expect: reg:Self hexplain:RegisterLifecycleShape sh:SPARQLConstraintComponent
+# expect: reg:ToRetired hexplain:RegisterLifecycleShape sh:SPARQLConstraintComponent
+# expect: reg:OrderNoHistory hexplain:RegisterLifecycleShape sh:OrConstraintComponent
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix dcterms:  <http://purl.org/dc/terms/> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix ex:       <https://example.org/ex#> .
+@prefix reg:      <https://example.org/reg#> .
+
+reg:Scheme a skos:ConceptScheme .
+# Valid and deprecated at once.
+reg:ValidButDeprecated a skos:Concept ; skos:inScheme reg:Scheme ; owl:deprecated true ;
+    hexplain:status hexplain:statusValid ; skos:historyNote "Contradictory."@en .
+# Deprecated without saying how.
+reg:NoStatus a skos:Concept ; skos:inScheme reg:Scheme ; owl:deprecated true ; skos:historyNote "Retired."@en .
+# Deprecated without saying what changed.
+reg:NoHistory a skos:Concept ; skos:inScheme reg:Scheme ; owl:deprecated true ; hexplain:status hexplain:statusDeprecated .
+# Replaced by itself.
+reg:Self a skos:Concept ; skos:inScheme reg:Scheme ; owl:deprecated true ; hexplain:status hexplain:statusSuperseded ;
+    dcterms:isReplacedBy reg:Self ; skos:historyNote "Replaced."@en .
+# Replaced by an entry that is itself retired.
+reg:ToRetired a skos:Concept ; skos:inScheme reg:Scheme ; owl:deprecated true ; hexplain:status hexplain:statusSuperseded ;
+    dcterms:isReplacedBy reg:Gone ; skos:historyNote "Replaced."@en .
+reg:Gone a skos:Concept ; skos:inScheme reg:Scheme ; owl:deprecated true ; hexplain:status hexplain:statusDeprecated ;
+    skos:historyNote "Withdrawn."@en .
+# An ordered collection is a register entry too.
+reg:OrderNoHistory a skos:OrderedCollection ; owl:deprecated true ; hexplain:status hexplain:statusDeprecated ;
+    skos:memberList ( reg:Gone ) .

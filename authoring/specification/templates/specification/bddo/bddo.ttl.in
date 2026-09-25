@@ -1,4 +1,4 @@
-# Binary Data Description Ontology (BDDO) 1.2 — vocabulary + SHACL shapes
+# Binary Data Description Ontology (BDDO) 1.3 — vocabulary + SHACL shapes
 # Canonical machine-readable artifact. Namespace: https://hexplain.io/ns/bddo#
 # Modeling: properties declare rdfs:range (value type). Domain and cardinality
 # are expressed in SHACL only (no rdfs:domain), to avoid over-committing subjects.
@@ -13,9 +13,9 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/bddo> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/bddo/1.2> ;
-    owl:versionInfo "1.2" ;
-    owl:priorVersion <https://hexplain.io/ns/bddo/1.1> ;
+    owl:versionIRI <https://hexplain.io/ns/bddo/1.3> ;
+    owl:versionInfo "1.3" ;
+    owl:priorVersion <https://hexplain.io/ns/bddo/1.2> ;
     dcterms:modified "2026-09-24"^^xsd:date ;
     rdfs:label "Binary Data Description Ontology (BDDO)" ;
     rdfs:comment "Vocabulary for declaratively describing the physical structure of binary data." ;
@@ -793,7 +793,10 @@ bddo:TreePrefixBindingShape a sh:NodeShape ;
             } GROUP BY $this }
             $this bddo:hasField/rdf:rest*/rdf:first ?f .
             ?f bddo:nodePath ?p .
-            BIND(REPLACE(?p, CONCAT("(^|[/@])(", IF(?alts != "", CONCAT(?alts, "|"), ""), "xml):"), "$1") AS ?rest)
+            # Each bound prefix is matched literally: an NCName may hold '.' and '-', which a
+            # regular expression reads as metacharacters, so each is put in a class of its own.
+            BIND(REPLACE(?alts, "([.-])", "[$1]") AS ?quoted)
+            BIND(REPLACE(?p, CONCAT("(^|[/@])(", IF(?quoted != "", CONCAT(?quoted, "|"), ""), "xml):"), "$1") AS ?rest)
             FILTER(REGEX(?rest, "(^|[/@])[^/@:]+:"))
         }""" ] .
 
@@ -820,13 +823,17 @@ bddo:NodePathShape a sh:NodeShape ;
             ?container bddo:hasField/rdf:rest*/rdf:first $this ; bddo:treeSyntax bddo:xml .
             FILTER(!REGEX(?p, "^(/?([^/@\\\\[\\\\]:\\\\s]+:)?[^/@\\\\[\\\\]:\\\\s]+(\\\\[[1-9][0-9]*\\\\])?(/([^/@\\\\[\\\\]:\\\\s]+:)?[^/@\\\\[\\\\]:\\\\s]+(\\\\[[1-9][0-9]*\\\\])?)*(/@([^/@\\\\[\\\\]:\\\\s]+:)?[^/@\\\\[\\\\]:\\\\s]+)?|@([^/@\\\\[\\\\]:\\\\s]+:)?[^/@\\\\[\\\\]:\\\\s]+)$"))
         }""" ] ;
-    sh:sparql [ sh:message "bddo:nodePath locates a node in a parsed tree, so its container must be a bddo:TreeDocument." ;
+    # Every container, not just one: a field shared by a tree document and a binary struct would
+    # otherwise pass, and the struct would read a field it cannot locate.
+    sh:sparql [ sh:message "bddo:nodePath locates a node in a parsed tree, so every container of the field must be a bddo:TreeDocument ({?container} is not, or there is none)." ;
         sh:prefixes bddo:_prefixes ;
-        sh:select """SELECT $this WHERE {
+        sh:select """SELECT $this ?container WHERE {
             $this bddo:nodePath ?p .
-            FILTER NOT EXISTS {
+            {
+                FILTER NOT EXISTS { ?any bddo:hasField/rdf:rest*/rdf:first $this }
+            } UNION {
                 ?container bddo:hasField/rdf:rest*/rdf:first $this .
-                ?container a bddo:TreeDocument .
+                FILTER NOT EXISTS { ?container a bddo:TreeDocument }
             }
         }""" ] .
 

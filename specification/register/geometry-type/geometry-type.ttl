@@ -1,7 +1,9 @@
-# Hexplain Register — Geometry Type 1.2
+# Hexplain Register — Geometry Type 1.3
 # Controlled values for the hx-geometry aspect: geometry-type identifiers aligned to the
 # OGC Simple Features vocabulary (the sf: namespace GeoSPARQL uses for geometry types;
-# GeoSPARQL itself has no geo:Point class). Split out of the aspect so another jurisdiction
+# GeoSPARQL itself has no geo:Point class). A concept points at its Simple Features class with
+# rdfs:seeAlso, not a SKOS mapping: sf:Point is an OWL class, and skos:closeMatch relates
+# concepts. Split out of the aspect so another jurisdiction
 # or profile can publish a sibling register without forking the aspect or minting into a
 # namespace it does not own.
 # Codes are NOT here: a raw wire code belongs to the format that encodes it, and is carried
@@ -16,8 +18,8 @@
 @prefix sf:     <http://www.opengis.net/ont/sf#> .
 
 <https://hexplain.io/ns/register/geometry-type> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/register/geometry-type/1.2> ; owl:versionInfo "1.2" ;
-    owl:priorVersion <https://hexplain.io/ns/register/geometry-type/1.1> ;
+    owl:versionIRI <https://hexplain.io/ns/register/geometry-type/1.3> ; owl:versionInfo "1.3" ;
+    owl:priorVersion <https://hexplain.io/ns/register/geometry-type/1.2> ;
     dcterms:modified "2026-09-24"^^xsd:date ;
     rdfs:label "Hexplain Register — Geometry Type" ;
     dcterms:created "2026-08-08"^^xsd:date ;
@@ -30,21 +32,21 @@
 rgeo:GeometryTypeScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/geometry-type> ;
     skos:prefLabel "Geometry Type Register"@en .
 rgeo:Point a skos:Concept ; skos:inScheme rgeo:GeometryTypeScheme ; skos:topConceptOf rgeo:GeometryTypeScheme ;
-    skos:prefLabel "Point"@en ; skos:closeMatch sf:Point .
+    skos:prefLabel "Point"@en ; rdfs:seeAlso sf:Point .
 rgeo:LineString a skos:Concept ; skos:inScheme rgeo:GeometryTypeScheme ; skos:topConceptOf rgeo:GeometryTypeScheme ;
-    skos:prefLabel "LineString"@en ; skos:closeMatch sf:LineString .
+    skos:prefLabel "LineString"@en ; rdfs:seeAlso sf:LineString .
 rgeo:Polygon a skos:Concept ; skos:inScheme rgeo:GeometryTypeScheme ; skos:topConceptOf rgeo:GeometryTypeScheme ;
-    skos:prefLabel "Polygon"@en ; skos:closeMatch sf:Polygon .
+    skos:prefLabel "Polygon"@en ; rdfs:seeAlso sf:Polygon .
 rgeo:MultiPoint a skos:Concept ; skos:inScheme rgeo:GeometryTypeScheme ; skos:topConceptOf rgeo:GeometryTypeScheme ;
-    skos:prefLabel "MultiPoint"@en ; skos:closeMatch sf:MultiPoint .
+    skos:prefLabel "MultiPoint"@en ; rdfs:seeAlso sf:MultiPoint .
 rgeo:MultiLineString a skos:Concept ; skos:inScheme rgeo:GeometryTypeScheme ; skos:topConceptOf rgeo:GeometryTypeScheme ;
-    skos:prefLabel "MultiLineString"@en ; skos:closeMatch sf:MultiLineString .
+    skos:prefLabel "MultiLineString"@en ; rdfs:seeAlso sf:MultiLineString .
 rgeo:MultiPolygon a skos:Concept ; skos:inScheme rgeo:GeometryTypeScheme ; skos:topConceptOf rgeo:GeometryTypeScheme ;
-    skos:prefLabel "MultiPolygon"@en ; skos:closeMatch sf:MultiPolygon .
+    skos:prefLabel "MultiPolygon"@en ; rdfs:seeAlso sf:MultiPolygon .
 
 rgeo:GeometryCollection a skos:Concept ;
     skos:inScheme rgeo:GeometryTypeScheme ; skos:topConceptOf rgeo:GeometryTypeScheme ;
-    skos:prefLabel "GeometryCollection"@en ; skos:closeMatch sf:GeometryCollection ; rdfs:label "Geometry collection" ;
+    skos:prefLabel "GeometryCollection"@en ; rdfs:seeAlso sf:GeometryCollection ; rdfs:label "Geometry collection" ;
     rdfs:isDefinedBy <https://hexplain.io/ns/register/geometry-type> ;
     rdfs:comment "A geometry containing zero or more member geometries, potentially of different geometry types." ;
     skos:definition "A geometry containing zero or more member geometries, potentially of different geometry types."@en ;
@@ -53,7 +55,7 @@ rgeo:GeometryCollection a skos:Concept ;
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/register/geometry-type> <http://www.w3.org/2004/02/skos/core#definition> "The vocabulary module publishing Hexplain Register — Geometry Type terms, its imports and associated validation declarations."@en .
-<https://hexplain.io/ns/register/geometry-type> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Use concept IRIs as values; concept schemes and collections organize those values rather than describing parsed instances."@en .
+<https://hexplain.io/ns/register/geometry-type> <http://www.w3.org/2004/02/skos/core#scopeNote> "Load to obtain the concepts of this register. A profile binds its schemes to the properties they supply with hexplain:usesRegister; the aspect the values serve does not import it."@en .
 <https://hexplain.io/ns/register/geometry-type#GeometryTypeScheme> <http://www.w3.org/2004/02/skos/core#definition> "The controlled concept scheme grouping geometry type values. Membership identifies the applicable value set; raw format codes are defined by profiles rather than by this scheme."@en .
 <https://hexplain.io/ns/register/geometry-type#GeometryTypeScheme> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Use concept IRIs as values; concept schemes and collections organize those values rather than describing parsed instances."@en .
 <https://hexplain.io/ns/register/geometry-type#GeometryTypeScheme> <http://www.w3.org/2000/01/rdf-schema#label> "Geometry Type Register"@en .
