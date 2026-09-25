@@ -1,5 +1,5 @@
 """Physical Parser cases: type selection (conditional data types and dispatch tables) and fixed values."""
-from cases_physical import GENERIC, pp
+from cases_physical import pp
 
 CHUNKS = """
    ex:A a bddo:Struct ; bddo:hasField ( ex:a ) .
@@ -12,7 +12,7 @@ CHUNKS = """
 
 pp("cond-type-first-match", "The first DataTypeRule whose condition holds supplies the type",
    "Two rules hold; the earlier one in list order wins.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-10"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:kind ex:body ) .
    ex:kind a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -25,7 +25,7 @@ pp("cond-type-first-match", "The first DataTypeRule whose condition holds suppli
 
 pp("cond-type-default", "With no rule holding, bddo:dataType is the type",
    "Neither rule holds, so the field is read as its declared bytes.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-10"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:kind ex:body ) .
    ex:kind a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -49,7 +49,7 @@ pp("cond-type-no-match", "No rule and no default is a dispatch error",
 
 pp("cond-type-parent-alias", "In a DataTypeRule condition, parent is a deprecated alias of instance",
    "parent.kind reads the containing struct's kind, as descriptions written against the earlier reading expect.",
-   ["req-hel-name-binding-2", "req-pm-context-2"], ["context", "hel/index.html#name-binding"],
+   ["req-hel-name-binding-1", "req-pm-parsefield-10"], ["context", "hel/index.html#name-binding"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:kind ex:body ) .
    ex:kind a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -61,7 +61,7 @@ pp("cond-type-parent-alias", "In a DataTypeRule condition, parent is a deprecate
 
 pp("dispatch-string-key", "A dispatch table selects the arm whose key equals the discriminator",
    "String keys compare by code points.",
-   ["req-pm-parsefield-1"], ["algorithm"],
+   ["req-pm-parsefield-9", "req-pm-parsefield-1"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:tag ex:body ) .
    ex:tag a bddo:Field ; bddo:dataType bddo:string ; bddo:size 2 ; bddo:encoding bddo:ascii .
@@ -74,7 +74,7 @@ pp("dispatch-string-key", "A dispatch table selects the arm whose key equals the
 
 pp("dispatch-integer-key", "Integer and string keys are distinct arms",
    "An integer discriminator 7 matches the integer key 7, not the string \"7\".",
-   ["req-pm-parsefield-1"], ["algorithm"],
+   ["req-pm-parsefield-9", "req-pm-parsefield-1"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:tag ex:body ) .
    ex:tag a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -115,7 +115,7 @@ pp("dispatch-duplicate-key", "Two arms with one key are a description error",
 
 pp("dispatch-and-conditional-type", "Both type-selection mechanisms on one field is a description error",
    "A field declaring a dispatch table and conditional data types.",
-   ["req-pm-errors-8"], ["algorithm", "errors"],
+   ["req-pm-parsefield-23", "req-pm-parsefield-20", "req-pm-errors-8"], ["algorithm", "errors"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:tag ex:body ) .
    ex:tag a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -128,7 +128,7 @@ pp("dispatch-and-conditional-type", "Both type-selection mechanisms on one field
 
 pp("dispatch-no-arm-no-default", "No arm, no default and no data type is a dispatch error",
    "The key 3 has no arm.",
-   ["req-pm-errors-7"], ["algorithm", "errors"],
+   ["req-pm-parsefield-10", "req-pm-errors-7"], ["algorithm", "errors"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:tag ex:body ) .
    ex:tag a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -152,7 +152,7 @@ pp("fixed-numeric-by-value", "A numeric fixed value is compared by value",
 
 pp("fixed-numeric-mismatch", "A fixed value mismatch is a validation error",
    "9995 is read where 9994 is fixed.",
-   ["req-pm-errors-4"], ["algorithm", "errors"],
+   ["req-pm-parsefield-13", "req-pm-errors-4"], ["algorithm", "errors"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:code ) .
    ex:code a bddo:Field ; bddo:dataType bddo:int32 ; bddo:hasFixedValue "9994"^^xsd:int .
@@ -197,7 +197,7 @@ pp("fixed-out-of-range", "A fixed value outside the field's range is a descripti
 
 pp("fixed-string-and-bytes", "String and bytes fixed values compare by code points and byte for byte",
    "A PNG-style signature and a two-character tag.",
-   [GENERIC], ["algorithm"],
+   ["req-pm-parsefield-2", "req-pm-parsefield-12"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:sig ex:tag ) .
    ex:sig a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 ; bddo:hasFixedValue "89504E47"^^xsd:hexBinary .
@@ -207,7 +207,7 @@ pp("fixed-string-and-bytes", "String and bytes fixed values compare by code poin
 
 pp("fixed-string-mismatch", "A string fixed value mismatch is a validation error",
    "\"PK\" is fixed and \"PX\" is read.",
-   ["req-pm-errors-4"], ["algorithm", "errors"],
+   ["req-pm-parsefield-12", "req-pm-errors-4"], ["algorithm", "errors"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:tag ) .
    ex:tag a bddo:Field ; bddo:dataType bddo:string ; bddo:size 2 ; bddo:encoding bddo:ascii ; bddo:hasFixedValue "PK" .

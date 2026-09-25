@@ -27,9 +27,11 @@ Processing Model:
 - `streamEnd` counts back from |S|, the length of the current stream; a decoded sub-stream is
   a stream, a bounded region is not.
 - New section Recovery in a Lenient Mode: a failed pointer read does not move the cursor; a
-  counted sequence of fixed-width elements skips count × width (bounded by the region); any
-  other read failure abandons the rest of its struct, recording one error. A failed check on a
-  value read in full is recorded and parsing continues.
+  counted sequence of known-width elements skips count × width (bounded by the region); any
+  other read failure abandons everything up to the nearest known end (a sized field, a bounded
+  sequence, a decoded block or a sized struct), recording one error and no follow-up error.
+  A failed check on a value read in full is recorded and parsing continues. Fixed strings on
+  string fields are compared after `bddo:trimNull`.
 - The steps of ParseStruct and ParseField, the bit-cursor, size-resolution, terminator,
   byte-order, text-number, record, key/value, table and emission rules are now stated as
   requirements, so the conformance suite can cite each rule by identifier.
@@ -81,8 +83,8 @@ HDL:
 
 ### Processor conformance suite, round 4
 
-- 445 cases (270 Physical Parser, 16 Semantic Emitter, 13 Bundle Processor, 118 HDL Compiler,
-  28 Conformance Evaluator), up from 320; nine more Conformance Evaluator cases, whose
+- 450 cases (272 Physical Parser, 16 Semantic Emitter, 13 Bundle Processor, 118 HDL Compiler,
+  31 Conformance Evaluator), up from 320; nine more Conformance Evaluator cases, whose
   `expected-report.ttl` states the run in the conf run terms (`conf:verdict`, `conf:finding`,
   `conf:truncated`, `conf:versionScopingApplied`, `conf:fileVersion`, `conf:failOn`,
   `conf:profile`, `conf:input`), are generated once the conf vocabulary declares those terms.

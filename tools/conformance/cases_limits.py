@@ -96,4 +96,4 @@ pp("limit-tree-depth", "A tree document nested beyond maxTreeDepth is a Resource
    ex:Root.a a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath "/a" .
    """,
    b'{"a": "x", "b": {"c": {"d": {"e": 1}}}}', error="ResourceLimit",
-   manifest={"limits": {"maxTreeDepth": 3}, "features": {"requires": ["tree documents"]}})
+   manifest={"limits": {"maxTreeDepth": 3}, "features": {"requires": ["tree-documents"]}})

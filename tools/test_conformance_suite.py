@@ -19,7 +19,7 @@ sys.path.insert(0, str(HERE / "conformance"))
 
 import _build_conformance_page  # noqa: E402
 import generate_inputs  # noqa: E402
-from suite import CATEGORIES, CLASSES, EXPECTED, LIMITS, PREFIX, SUITE  # noqa: E402
+from suite import BLANKET, CATEGORIES, CLASSES, EXPECTED, LIMITS, PREFIX, SUITE, feature_tokens  # noqa: E402
 
 REQUIRED = ("id", "class", "title", "description", "requirements", "sections")
 MINIMUM_CASES = 150
@@ -44,8 +44,7 @@ def main():
 
     registry = json.loads((SUITE / "requirements.json").read_text(encoding="utf-8"))["requirements"]
     live = {i for i, e in registry.items() if not e.get("withdrawn")}
-    claims = json.loads((ROOT / "specification/reference-engine-claims.json").read_text(encoding="utf-8"))
-    features = set(claims["optionalFeatures"])
+    features = set(feature_tokens())
     pages = {}
     counts = {cls: 0 for cls in CLASSES}
     for cls in CLASSES:
@@ -65,6 +64,8 @@ def main():
             for rid in man.get("requirements", []):
                 if rid not in live:
                     problems.append(f"{where}: cites {rid}, which the requirement registry does not list")
+            if man.get("requirements") and not set(man["requirements"]) - set(BLANKET):
+                problems.append(f"{where}: cites only blanket requirements {man['requirements']}; cite the specific rule")
             for section in man.get("sections", []):
                 document, _, anchor = section.partition("#")
                 if document not in pages:
@@ -75,12 +76,13 @@ def main():
             if len(expected) != 1:
                 problems.append(f"{where}: {len(expected)} expected artifacts, want exactly one ({expected})")
             files = [man.get("input"), man.get("rules")] + [p.get("file") for p in man.get("parts", [])]
-            if cls != "hdl-compiler":
+            files += list(man.get("registers", []))
+            if cls != "hdl-compiler" and "check" not in man:
                 files.append("description.ttl")
             for name in filter(None, files):
                 if not (case_dir / name).is_file():
                     problems.append(f"{where}: manifest names {name}, which does not exist")
-            for name in ("description.ttl", "rules.ttl", "expected.ttl"):
+            for name in ["description.ttl", "rules.ttl", "expected.ttl", "expected-report.ttl"] + list(man.get("registers", [])):
                 if (case_dir / name).is_file():
                     try:
                         rdflib.Graph().parse(case_dir / name, format="turtle")
@@ -105,7 +107,26 @@ def main():
                     problems.append(f"{where}: unknown features member {kind}")
                 for name in names:
                     if name not in features:
-                        problems.append(f"{where}: optional feature {name!r} is not one reference-engine-claims.json lists")
+                        problems.append(f"{where}: {name!r} is not a feature token of the Processing Model's optional features")
+            for kind, names in man.get("claims", {}).items():
+                if kind != "withdraw":
+                    problems.append(f"{where}: unknown claims member {kind}")
+                for name in names:
+                    if name not in features:
+                        problems.append(f"{where}: claims withdraws {name!r}, which is not a feature token")
+            if "compareOntologyHeader" in man and (cls != "hdl-compiler" or not isinstance(man["compareOntologyHeader"], bool)):
+                problems.append(f"{where}: compareOntologyHeader is a Boolean of an HDL Compiler case")
+            if "base" in man and man["base"] is None and cls != "semantic-emitter":
+                problems.append(f"{where}: only a Semantic Emitter case may leave the base to the processor")
+            if man.get("parseMode", "lenient") not in ("lenient", "strict"):
+                problems.append(f"{where}: parseMode is lenient or strict")
+            for key in ("reportConformsToShapes",):
+                if key in man and (cls != "conformance-evaluator" or not isinstance(man[key], bool)):
+                    problems.append(f"{where}: {key} is a Boolean of a Conformance Evaluator case")
+            if man.get("reportForm", "json") not in ("json", "rdf"):
+                problems.append(f"{where}: reportForm is json or rdf")
+            if man.get("check") not in (None, "claims"):
+                problems.append(f"{where}: unknown check {man['check']!r}")
             if man.get("orError") and man["orError"] not in CATEGORIES:
                 problems.append(f"{where}: unknown orError category {man['orError']}")
     for cls, n in counts.items():

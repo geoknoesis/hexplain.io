@@ -761,8 +761,8 @@
    "section": "parsefield",
    "cls": "physical-parser",
    "level": "MUST",
-   "text": "Every other string literal (an xsd:string, a plain or a language-tagged literal) denotes characters, never hexadecimal digits: on a bytes field a processor MUST compare the field's bytes with the literal's UTF-8 encoding, so \"CAFE\" matches the four bytes 43 41 46 45 and not CA FE, and on a string field it MUST compare the decoded value with the literal by code points, whatever the field's bddo:encoding (a bddo:utf16le field holding 41 00 42 00 matches \"AB\").",
-   "sha256": "68ea84f13353a581"
+   "text": "Every other string literal (an xsd:string, a plain or a language-tagged literal) denotes characters, never hexadecimal digits: on a bytes field a processor MUST compare the field's bytes with the literal's UTF-8 encoding, so \"CAFE\" matches the four bytes 43 41 46 45 and not CA FE, and on a string field it MUST compare the decoded value — after bddo:trimNull, when the field declares it — with the literal by code points, whatever the field's bddo:encoding (a bddo:utf16le field holding 41 00 42 00 matches \"AB\", and a six-byte NUL-padded field holding 41 42 00 00 00 00 matches it too).",
+   "sha256": "7af1691f1e0cab35"
   },
   "req-pm-parsefield-13": {
    "page": "specification/processing/index.html",
@@ -857,8 +857,8 @@
    "section": "parsefield",
    "cls": "physical-parser",
    "level": "MUST",
-   "text": "More than one value of a functional property on one resource: a property the family's vocabularies or shapes allow at most once (for example two bddo:dataType, two bddo:size, two bddo:endianness or two bddo:hasFixedValue values on one field).",
-   "sha256": "d302ed5756f1073a"
+   "text": "More than one value of a functional property on one resource: a property the family's vocabularies or shapes allow at most once, stated with two different values (for example two bddo:dataType, two bddo:size, two bddo:endianness or two bddo:hasFixedValue values on one field). The data type individuals the family's vocabularies define themselves (bddo:uint32 and the like) are exempt.",
+   "sha256": "80565eb0a525ea11"
   },
   "req-pm-parsestruct-1": {
    "page": "specification/processing/index.html",
@@ -945,16 +945,16 @@
    "section": "recovery",
    "cls": "physical-parser",
    "level": "MUST",
-   "text": "Counted sequence of fixed-width elements. A repeated field whose count is known (its repeat count resolved) and whose elements have a fixed width (a data type with a bddo:bitWidth and no bddo:bitLength) is left unbound, and the cursor moves to the field's start plus count × width, or to the end of the innermost bounded region if that comes first; parsing continues with the next field.",
-   "sha256": "8f9d6d0bab0a094b"
+   "text": "Counted sequence of known-width elements. A repeated field whose count is known (its repeat count resolved) and each of whose elements has a width known before it is read (a data type with a bddo:bitWidth and no bddo:bitLength, or a literal bddo:size) is left unbound, and the cursor moves to the field's start plus count × width, or to the end of the innermost bounded region if that comes first; parsing continues with the next field.",
+   "sha256": "7c0348d0b5a0fd15"
   },
   "req-pm-recovery-4": {
    "page": "specification/processing/index.html",
    "section": "recovery",
    "cls": "physical-parser",
    "level": "MUST",
-   "text": "Otherwise, abandon the rest of the struct. The field that failed and every later field of its struct are left unbound, the fields read before it keep their values, and the cursor moves to the struct's declared end (the end of its bounded region, ) or, when it has none, to the end of the innermost enclosing bounded region, or of the current stream. The struct's node, with the fields it has, is bound in its parent, which continues with its next field. Abandoning the root struct ends the parse.",
-   "sha256": "be61e758c5d3f2c2"
+   "text": "Otherwise, abandon up to the nearest known end. The field that failed is left unbound, and so is everything after it up to the nearest end the processor knows: the end of the failing field's own declared region (), of a bounded bddo:repeatUntil sequence, of a decoded block, or of a struct with a declared size (), whichever encloses the failure most closely. The cursor moves to that end and parsing continues with whatever follows it; the fields read before the failure keep their values, and each struct that was abandoned is bound, with the fields it has, in its parent. When no enclosing end is known, every struct up to the root is abandoned and the parse ends.",
+   "sha256": "3f2fa8fd8cd2e4c6"
   },
   "req-pm-recovery-5": {
    "page": "specification/processing/index.html",

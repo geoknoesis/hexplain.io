@@ -6,7 +6,7 @@ Expected graphs are compared by isomorphism, literals by value.
 import struct
 import zlib
 
-from suite import BASE, Case
+from suite import BASE, REPORTED_BASE, Case
 
 PM = "processing#"
 CASES = []
@@ -25,7 +25,7 @@ MINT = ["req-pm-iri-minting-1", "req-pm-iri-minting-3"]
 
 se("class-and-literals", "A mapped struct is typed and its mapped fields become typed literals",
    "Each literal's datatype is the bddo:xsdType of the field's data type: unsignedInt, unsignedByte, short, double, string and hexBinary.",
-   MINT, ["emission", "value-mapping", "iri-minting"],
+   MINT + ["req-pm-emission-3", "req-pm-emission-4", "req-pm-emission-5"], ["emission", "value-mapping", "iri-minting"],
    """
    ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Image ; bddo:hasField ( ex:w ex:depth ex:off ex:scale ex:name ex:raw ) .
    ex:w a bddo:Field ; bddo:dataType bddo:uint32 ; hexplain:mapsToProperty ex:width .
@@ -97,7 +97,7 @@ se("unmapped-root-silences-descendants", "The descendants of an unmapped struct 
 
 se("object-property", "hexplain:mapsToObjectProperty links a struct to a nested struct's resource",
    "The edge's object is the IRI minted for the nested struct instance.",
-   MINT, ["iri-minting", "emission"],
+   MINT + ["req-pm-emission-6"], ["iri-minting", "emission"],
    """
    ex:Root a bddo:Struct ; hexplain:mapsToClass ex:File ; bddo:hasField ( ex:hdr ) .
    ex:hdr a bddo:Field ; bddo:dataType ex:Hdr ; hexplain:mapsToObjectProperty ex:header .
@@ -112,7 +112,7 @@ se("object-property", "hexplain:mapsToObjectProperty links a struct to a nested 
 
 se("value-expression", "hexplain:valueExpression emits a computed value in hexplain:valueDatatype",
    "A raw temperature times 0.5, typed xsd:double, is emitted instead of the raw value.",
-   MINT, ["emission"],
+   MINT + ["req-pm-emission-5"], ["emission"],
    """
    ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Reading ; bddo:hasField ( ex:raw ) .
    ex:raw a bddo:Field ; bddo:dataType bddo:int16 ; hexplain:mapsToProperty ex:celsius ;
@@ -122,7 +122,7 @@ se("value-expression", "hexplain:valueExpression emits a computed value in hexpl
 
 se("conditional-mapping", "hexplain:hasConditionalMapping emits the property of the first holding rule",
    "Records name their value by a key; each record's value goes to the property its key selects, on the root's subject.",
-   MINT, ["emission", "iri-minting"],
+   MINT + ["req-pm-emission-7"], ["emission", "iri-minting"],
    """
    ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Image ; bddo:hasField ( ex:records ) .
    ex:records a bddo:Field ; bddo:dataType ex:Rec ; bddo:repeatCount 3 .
@@ -163,7 +163,7 @@ se("language-tags", "hexplain:language and hexplain:languageFromField tag string
 
 se("root-sequence", "A root parsed as a repeatUntil sequence mints root/i for its elements",
    "Each record of a root sequence is minted root/0, root/1, ...",
-   MINT, ["iri-minting"],
+   MINT + ["req-pm-emission-8"], ["iri-minting"],
    """
    ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Rec ; bddo:repeatUntil "eof()" ; bddo:hasField ( ex:v ) .
    ex:v a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty ex:value .
@@ -187,11 +187,11 @@ se("key-percent-encoding", "A '/' in a container field's key is percent-encoded 
    f"""
    {ROOT} a ex:Doc .
    <{BASE}#root/%2Fmeta> a ex:MetaClass ; ex:name "x" .
-   """, manifest={"features": {"requires": ["tree documents"]}})
+   """, manifest={"features": {"requires": ["tree-documents"]}})
 
 se("enum-symbol-object", "An enumeration's symbol IRI is emitted through hexplain:mapsToObjectProperty",
    "Colour type 2 maps to the enumeration's RGB symbol.",
-   MINT + ["req-pm-emission-2"], ["emission"],
+   MINT + ["req-pm-parsefield-15", "req-pm-emission-6"], ["emission"],
    """
    ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Image ; bddo:hasField ( ex:colour ) .
    ex:colour a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToObjectProperty ex:colourType ;
@@ -233,3 +233,17 @@ se("triple-limit", "More triples than the emitted-triples limit is a ResourceLim
    b"\x01\x02\x03\x04", error="ResourceLimit", manifest={"limits": {"maxTriples": 3}})
 
 assert zlib.decompress(bytes.fromhex("78da6364620600000d0007")) == b"\x01\x02\x03"
+
+se("base-reported", "Without a base IRI the processor chooses one, mints against it and reports it",
+   "The manifest gives no base. The processor picks its own base and reports it with the graph; the runner reads the "
+   "reported base as the placeholder urn:hexplain:suite:reported-base, so the root is that base's #root. A processor that "
+   "reports no base, or mints against another than the one it reports, fails.",
+   MINT + ["req-pm-iri-minting-2"], ["iri-minting"],
+   """
+   ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Image ; bddo:hasField ( ex:w ) .
+   ex:w a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty ex:width .
+   """,
+   b"\x07",
+   f"""
+   <{REPORTED_BASE}#root> a ex:Image ; ex:width "7"^^xsd:unsignedByte .
+   """, manifest={"base": None})
