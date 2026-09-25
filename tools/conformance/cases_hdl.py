@@ -149,19 +149,25 @@ hc("switch", "A switch compiles to an ordered bddo:hasConditionalDataType list",
    """)
 
 hc("semantic-mapping", "means maps a struct to a class and a field to a property; value and @datatype give a computed value",
-   "The prefix ex: is bound with use, since the base namespace has no text-surface spelling.",
-   OK + ["req-hdl-conformance-section-4"], ["semantic", "prefixes"],
+   "The prefix ex: is bound with use, since the base namespace has no text-surface spelling. The class and the "
+   "property are the format's own terms, so the description declares them (raw-turtle): hexplain:MapsToClassShape and "
+   "hexplain:MapsToPropertyShape require a mapped term to be typed as a class or a property, and HDL, Conformance "
+   "lets the vocabulary's shapes govern the validity of the output.",
+   OK + ["req-hdl-conformance-section-4", "req-hdl-conformance-section-8"], ["semantic", "prefixes", "escape-hatch"],
    """
    format t @namespace "{ns}"
    use ex: <{ns}>
    struct Root means ex:Reading {
      raw : i16 means ex:celsius value raw * 0.5 @datatype xsd:double
+     raw-turtle { :Reading a owl:Class . :celsius a owl:DatatypeProperty . }
    }
    """,
    """
    ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Reading ; bddo:hasField ( ex:Root.raw ) .
    ex:Root.raw a bddo:Field ; bddo:dataType bddo:int16 ; hexplain:mapsToProperty ex:celsius ;
        hexplain:valueExpression "instance.raw * 0.5" ; hexplain:valueDatatype xsd:double .
+   ex:Reading a <http://www.w3.org/2002/07/owl#Class> .
+   ex:celsius a <http://www.w3.org/2002/07/owl#DatatypeProperty> .
    """)
 
 hc("contextual-keywords", "Keywords are contextual: a field may be named type, size or value",
@@ -611,6 +617,7 @@ twin("semantic-mapping", """
        means: ex:Reading
        fields:
          - { name: raw, type: i16, means: ex:celsius, value: { expr: "raw * 0.5", datatype: "xsd:double" } }
+       raw-turtle: ':Reading a owl:Class . :celsius a owl:DatatypeProperty .'
    """)
 
 twin("contextual-keywords", """

@@ -70,7 +70,7 @@
     rdfs:comment "A Struct whose children are located by delimiter position rather than byte offset: a byte run split into records by recordDelimiter, each record optionally split into values by fieldDelimiter." .
 :KeyValueHeader a owl:Class ; rdfs:subClassOf :DelimitedRecords ; rdfs:label "Key/Value Header" ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "DelimitedRecords whose records are key/value pairs split by keyValueSeparator. Each expected key is a Field carrying bddo:key; record order is not significant." .
+    rdfs:comment "DelimitedRecords whose records are key/value pairs split by keyValueSeparator. Each expected key is a Field carrying bddo:key, or, with no bddo:key, named by its simple key (the local name of its IRI after the last '.'); record order is not significant." .
 :DelimitedTable a owl:Class ; rdfs:subClassOf :DelimitedRecords ; rdfs:label "Delimited Table" ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "DelimitedRecords whose records are rows with a fixed column sequence. The hasField list gives the columns in order; the row structure repeats until the byte run is exhausted." .
@@ -209,7 +209,7 @@
     rdfs:comment "The separator used in this container's keyPath values. Default '/'. Declared on the container rather than repeated per field, and needed because a format whose group names may contain '/' has to choose something else." .
 
 :key                    a owl:DatatypeProperty ; rdfs:label "key" ; rdfs:range xsd:string ;
-    rdfs:comment "The key naming this Field within a KeyValueHeader. Replaces positional location: the Field takes the value of whichever record carries this key." .
+    rdfs:comment "The key naming this Field within a KeyValueHeader. Replaces positional location: the Field takes the value of whichever record carries this key. A field of a flat KeyValueHeader that declares no bddo:key is located by its simple key instead." .
 :keyIsCaseInsensitive   a owl:DatatypeProperty ; rdfs:label "key is case insensitive" ; rdfs:range xsd:boolean ;
     rdfs:comment "If true, bddo:key matching ignores ASCII case. Default false." .
 :numericBase            a owl:DatatypeProperty ; rdfs:label "numeric base" ; rdfs:range xsd:positiveInteger ;
@@ -718,19 +718,24 @@ bddo:DelimitedRecordsShape a sh:NodeShape ;
     sh:property [ sh:path bddo:hasField ; sh:minCount 1 ;
         sh:message "A bddo:DelimitedRecords must declare at least one field." ] .
 
-# A KeyValueHeader needs a separator, and every one of its fields needs a key.
+# A KeyValueHeader needs a separator, and each of its fields is located at most one way. A field
+# with neither locator is located by its simple key (Processing Model, key/value headers), which
+# is what an HDL compiler emits for an unquoted header field name.
 bddo:KeyValueHeaderShape a sh:NodeShape ;
     sh:targetClass bddo:KeyValueHeader ;
     sh:property [ sh:path bddo:keyValueSeparator ; sh:minCount 1 ;
         sh:message "A bddo:KeyValueHeader must declare bddo:keyValueSeparator." ] ;
-    # Exactly one locator per field: bddo:key in a flat header, bddo:keyPath in a nested one.
+    # At most one locator per field: bddo:key in a flat header, bddo:keyPath in a nested one, or
+    # neither, when the field is located by its simple key.
     sh:property [ sh:path ( bddo:hasField [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
         sh:node [ sh:xone (
             [ sh:property [ sh:path bddo:key ; sh:minCount 1 ; sh:maxCount 1 ] ;
               sh:property {{constraint:pattern_144}} ]
             [ sh:property [ sh:path bddo:keyPath ; sh:minCount 1 ; sh:maxCount 1 ] ;
-              sh:property {{constraint:pattern_141}} ] ) ;
-          sh:message "Every field of a bddo:KeyValueHeader must declare exactly one of bddo:key (flat) or bddo:keyPath (nested), never both." ] ] .
+              sh:property {{constraint:pattern_141}} ]
+            [ sh:property {{constraint:pattern_141}} ;
+              sh:property {{constraint:pattern_144}} ] ) ;
+          sh:message "Every field of a bddo:KeyValueHeader declares at most one bddo:key (flat) or one bddo:keyPath (nested), never both; a field with neither is located by its simple key." ] ] .
 
 # ---------- Tree documents ----------
 bddo:TreeDocumentShape a sh:NodeShape ;

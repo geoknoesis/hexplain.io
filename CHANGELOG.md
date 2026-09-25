@@ -124,6 +124,12 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
   regular expression that also matched `axb`).
 - `bddo:nodePath` requires every container of the field to be a tree document; a field shared
   with a binary struct used to pass.
+- `bddo:KeyValueHeaderShape` accepts a header field with neither `bddo:key` nor `bddo:keyPath`:
+  the Processing Model locates such a field by its simple key, and an HDL compiler emits no
+  `bddo:key` for an unquoted header field name, but the shape still required one locator of every
+  field, so the `hdl` command line rejected its own output for `hc-quoted-header-keys`. A field
+  still declares at most one `bddo:key` or one `bddo:keyPath`, never both. The `bddo:KeyValueHeader`
+  and `bddo:key` definitions say so.
 
 ### fn 0.3
 
@@ -331,6 +337,11 @@ HDL:
   every case cites at least one specific requirement; `ce-parse-attribution` records exactly one
   error whatever a lenient parse does next; `hc-import-outside-root` imports a module inside its
   own case directory that lies outside the import root.
+- `hc-semantic-mapping` (and its YAML mirror) declares the format-local class and property it
+  maps to, in a `raw-turtle` block: `hexplain:MapsToClassShape` and `hexplain:MapsToPropertyShape`
+  require a mapped term to be typed as a class or a property, and the HDL specification lets the
+  vocabulary's shapes govern the validity of the output, so the undeclared terms made the case's
+  description invalid on its own (the `hdl` command line rejected it with validation on).
 - Comparison: HDL literal datatypes match exactly, the `owl:Ontology` header is compared only
   when a case asks, HEL-bearing literals compare by expression equivalence, and an HDL error
   line is compared only when the case states it.
