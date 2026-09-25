@@ -103,6 +103,11 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
 - **Bindings read together.** `hexplain:RegisterBindingShape` accepts a value that is in any
   scheme bound to the property: with a US and a NATO binding for one property, every value used
   to fail one of them. Its generated scope note no longer says it has no target.
+- **`hexplain:mapsToClass` accepts an `rdfs:Class`** (`hexplain:MapsToClassShape`): the target
+  must be typed `owl:Class` or `rdfs:Class`. Requiring `owl:Class` rejected every profile mapping
+  a struct to a vocabulary that types its classes `rdfs:Class`, schema.org among them. A term that
+  is neither (a property, an untyped IRI, a literal) is still rejected.
+  `hexplain:MapsToPropertyShape` already accepted `rdf:Property`.
 - **us-nato-security 1.3:** `usnato:Restricted` is no longer a top concept of the US scheme, and
   `usnato:Fouo` is no longer a member of `usnato:HandlingCaveats`; both stay `skos:inScheme`.
 - **geometry-type 1.3:** a concept points at its Simple Features class with `rdfs:seeAlso`, not

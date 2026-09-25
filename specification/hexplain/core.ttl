@@ -161,7 +161,9 @@ hexplain:correspondsTo a owl:AnnotationProperty ; rdfs:label "corresponds to" ;
 hexplain:MapsToClassShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToClass ;
     sh:class bddo:Struct ;
-    sh:property [ sh:path hexplain:mapsToClass ; sh:nodeKind sh:IRI ; sh:class owl:Class ] .
+    # OWL vocabularies type classes owl:Class; RDFS ones (schema.org, for one) type them rdfs:Class.
+    sh:property [ sh:path hexplain:mapsToClass ; sh:nodeKind sh:IRI ;
+        sh:or ( [ sh:class owl:Class ] [ sh:class rdfs:Class ] ) ] .
 hexplain:MapsToPropertyShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToProperty ;
     sh:class bddo:Field ;

@@ -27,6 +27,9 @@ def cases():
     for value,ok in [('ex:Class',True),('ex:unknown',False),('"Class"',False)]:
         add('class mapping '+value,'ex:struct h:mapsToClass '+value+'.',ok,'' if ok else 'mapsToClass')
     add('class mapping wrong owner','ex:f h:mapsToClass ex:Class.',False)
+    # RDFS vocabularies (schema.org) type their classes rdfs:Class; a property is no class.
+    add('class mapping rdfs:Class','ex:RdfsClass a <http://www.w3.org/2000/01/rdf-schema#Class>. ex:struct h:mapsToClass ex:RdfsClass.',True)
+    add('class mapping property','ex:struct h:mapsToClass ex:p.',False,'mapsToClass')
     for kind,property_,target in [('MappingRule','semanticProperty','ex:p'),('ClassMappingRule','semanticClass','ex:Class')]:
         base=f'ex:r a h:{kind}; h:condition "true"; h:{property_} {target}.'
         add(kind+' valid',base,True)
