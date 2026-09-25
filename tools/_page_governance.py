@@ -38,8 +38,15 @@ def layout_cases():
     return sum(1 for line in lines if line.strip() and not line.startswith('#'))
 
 
+def vocabulary_modules():
+    """Family modules other than the shapes documents of conf and req (the homepage said "16+")."""
+    files = json.loads((ROOT/'specification/family.json').read_text(encoding='utf-8'))['files']
+    return sum(1 for f in files if not f.endswith('/shapes.ttl'))
+
+
 # Phrase a page uses for a quantity, and the authority that quantity comes from.
 QUANTITIES = {
+    'vocabulary_modules': (r'(\d[\d,]*)\s+vocabulary modules', vocabulary_modules),
     'review_resources': (r'(\d[\d,]*)\s+resources', review_resources),
     'review_modules': (r'(\d[\d,]*)\s+modules', review_modules),
     'layout_cases': (r'(\d[\d,]*)\s+identical cases', layout_cases),
