@@ -12,10 +12,10 @@
 @prefix vann:    <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/conf> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/conf/1.2> ;
-    owl:priorVersion <https://hexplain.io/ns/conf/1.1> ;
+    owl:versionIRI <https://hexplain.io/ns/conf/1.3> ;
+    owl:priorVersion <https://hexplain.io/ns/conf/1.2> ;
     rdfs:label "Hexplain Conformance Vocabulary" ;
-    owl:versionInfo "1.2" ;
+    owl:versionInfo "1.3" ;
     dcterms:modified "2026-09-24"^^xsd:date ;
     # The vocabulary needs only req. Its shapes document (conf/shapes.ttl) imports core, which
     # supplies hexplain:byteOffset/byteLength for locating findings and imports bddo, whose
@@ -50,8 +50,8 @@ conf:NotReached or conf:NotExercised, with that precedence (see conf:EvaluationO
     skos:scopeNote "Assert in a conformance profile, one per error category that a requirement governs; it carries exactly one conf:errorCategory and exactly one conf:satisfies, and a profile attributes each category at most once. It is not a conf:Constraint: it has no scope and no assertion."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
 :Run a owl:Class ; rdfs:label "Run" ;
-    rdfs:comment "One evaluation of a conformance profile over one input. Its conf:outcome values give run coverage: one outcome per requirement of the profile." ;
-    skos:scopeNote "Assert on the resource a conformance evaluator emits for a run report. The report's findings are conf:Finding resources; the run itself records the outcome of every requirement."@en ;
+    rdfs:comment "One evaluation of a conformance profile over one input. Its conf:outcome values give run coverage: one outcome per requirement of the profile. It states exactly one conf:verdict and one conf:truncated flag, links every finding with conf:finding, and records what was evaluated (conf:profile, conf:ruleSet, conf:input) and how (conf:failOn, conf:versionScopingApplied, conf:fileVersion, conf:truncationReason)." ;
+    skos:scopeNote "Assert on the resource a conformance evaluator emits for a run report. The report's findings are conf:Finding resources linked by conf:finding; the run itself records the outcome of every requirement."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
 :Finding a owl:Class ; rdfs:label "Finding" ;
     rdfs:comment "One reported discrepancy of a conformance run: a failed evaluation of a constraint (conf:Violation), a constraint whose evaluation could not complete (conf:RuleError), or an error raised while parsing the input (conf:Parse). A constraint finding is attributed to every requirement the constraint cites; a failed evaluation yields exactly one finding however many requirements the constraint cites. A Parse finding has no constraint, reports at sh:Violation and is attributed to the requirement a conf:ParseAttribution names for its error category, or to no requirement when none does. Otherwise a finding's severity is its constraint's conf:severity." ;
@@ -60,6 +60,14 @@ conf:NotReached or conf:NotExercised, with that precedence (see conf:EvaluationO
 :FindingKind a owl:Class ; rdfs:label "Finding Kind" ;
     rdfs:comment "Whether a finding reports a defect in the input found by a constraint (conf:Violation), a failure to evaluate a constraint (conf:RuleError), or an error raised while parsing the input (conf:Parse). Closed set." ;
     skos:scopeNote "The class of the three controlled values of conf:findingKind; do not mint further kinds."@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
+:Verdict a owl:Class ; rdfs:label "Verdict" ;
+    rdfs:comment "Whether a conformance run found its input conformant (conf:Conformant) or not (conf:NonConformant). Closed set of two." ;
+    skos:scopeNote "The class of the two controlled values of conf:verdict; do not mint further verdicts."@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
+:ErrorCategory a owl:Class ; rdfs:label "Error Category" ;
+    rdfs:comment "A Processing Model error category, as a conf:Parse finding or a conf:ParseAttribution names it. Closed set of eight: conf:SyncError, conf:BoundsError, conf:ValidationError, conf:ChecksumError, conf:ExpressionError (the Type / HEL error), conf:DispatchError, conf:DescriptionError and conf:UnsupportedFeature. Each carries as skos:notation the name that the string form of conf:errorCategory uses. A ResourceLimit is not a category of this set: it is never a finding, it ends or truncates the run." ;
+    skos:scopeNote "The class of the eight controlled values of conf:errorCategory; do not mint further categories."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
 :EvaluationOutcome a owl:Class ; rdfs:label "Evaluation Outcome" ;
     rdfs:comment """The run-coverage outcome of one requirement in one conformance run. Closed set of five.
@@ -103,6 +111,45 @@ attribution of the profile.""" ;
 :NotApplicable a :EvaluationOutcome ; rdfs:label "Not Applicable" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     rdfs:comment "The run was given the input's format version, and the requirement's req:appliesToVersion values do not include it; it takes precedence over every other outcome. Engine outcome NOT_APPLICABLE." ;
     skos:scopeNote "Use as a conf:outcomeValue. It never arises when the run was given no format version: every requirement is then evaluated and the report says that version scoping was not applied."@en .
+:Conformant a :Verdict ; rdfs:label "Conformant" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The run was not truncated, the parse completed, no finding reached the run's conf:failOn severity (sh:Violation when absent), and no requirement's outcome is conf:Errored or conf:NotReached." ;
+    skos:scopeNote "Use as the conf:verdict of a run that meets every condition above; findings below the conf:failOn severity are still reported."@en .
+:NonConformant a :Verdict ; rdfs:label "Non-conformant" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "At least one condition of conf:Conformant fails: the run was truncated, a finding reached the conf:failOn severity (every conf:Parse and conf:RuleError finding is at sh:Violation), or a requirement's outcome is conf:Errored or conf:NotReached." ;
+    skos:scopeNote "Use as the conf:verdict of every truncated run and of every run with a reason above."@en .
+
+# Error categories. skos:notation is the name the deprecated string form of conf:errorCategory
+# uses; the local names end in Error (or Feature) so that a category and a finding kind never share one.
+:SyncError a :ErrorCategory ; rdfs:label "Sync error" ; skos:notation "Sync" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The Processing Model's Sync error: a bddo:syncOnMarker marker was not found." ;
+    skos:scopeNote "Use as the conf:errorCategory of a conf:ParseAttribution or of a conf:Parse finding."@en .
+:BoundsError a :ErrorCategory ; rdfs:label "Bounds error" ; skos:notation "Bounds" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The Processing Model's Bounds error: a read would pass the end of the stream or of the innermost bounded region." ;
+    skos:scopeNote "Use as the conf:errorCategory of a conf:ParseAttribution or of a conf:Parse finding."@en .
+:ValidationError a :ErrorCategory ; rdfs:label "Validation error" ; skos:notation "Validation" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The Processing Model's Validation error: a fixed value mismatched, a tree document was not well-formed, or a multi-part asset did not assemble." ;
+    skos:scopeNote "Use as the conf:errorCategory of a conf:ParseAttribution or of a conf:Parse finding."@en .
+:ChecksumError a :ErrorCategory ; rdfs:label "Checksum error" ; skos:notation "Checksum" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The Processing Model's Checksum error: a bddo:Checksum or a codec's integrity check mismatched." ;
+    skos:scopeNote "Use as the conf:errorCategory of a conf:ParseAttribution or of a conf:Parse finding."@en .
+:ExpressionError a :ErrorCategory ; rdfs:label "Type / HEL error" ; skos:notation "Expression" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The Processing Model's Type / HEL error: a HEL type error, division by zero, undefined name, forward reference, out-of-range subscript or malformed expression." ;
+    skos:scopeNote "Use as the conf:errorCategory of a conf:ParseAttribution or of a conf:Parse finding."@en .
+:DispatchError a :ErrorCategory ; rdfs:label "Dispatch error" ; skos:notation "Dispatch" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The Processing Model's Dispatch error: no bddo:DataTypeRule matched and no default bddo:dataType exists. A category of its own, not a Description error." ;
+    skos:scopeNote "Use as the conf:errorCategory of a conf:ParseAttribution or of a conf:Parse finding."@en .
+:DescriptionError a :ErrorCategory ; rdfs:label "Description error" ; skos:notation "Description" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The Processing Model's Description error: the description itself is inconsistent." ;
+    skos:scopeNote "Use as the conf:errorCategory of a conf:ParseAttribution or of a conf:Parse finding."@en .
+:UnsupportedFeature a :ErrorCategory ; rdfs:label "Unsupported feature" ; skos:notation "Unsupported" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The Processing Model's Unsupported feature error: the description uses a class or optional feature the processor does not claim." ;
+    skos:scopeNote "Use as the conf:errorCategory of a conf:ParseAttribution or of a conf:Parse finding."@en .
+
+# The controlled individuals are pairwise distinct (no unique-name assumption in OWL).
+[] a owl:AllDifferent ; owl:distinctMembers ( :Violation :RuleError :Parse ) .
+[] a owl:AllDifferent ; owl:distinctMembers ( :NotApplicable :Errored :Evaluated :NotReached :NotExercised ) .
+[] a owl:AllDifferent ; owl:distinctMembers ( :Conformant :NonConformant ) .
+[] a owl:AllDifferent ; owl:distinctMembers ( :SyncError :BoundsError :ValidationError :ChecksumError :ExpressionError :DispatchError :DescriptionError :UnsupportedFeature ) .
 
 # --- Properties ---
 :scope a owl:ObjectProperty ; rdfs:label "scope" ;
@@ -134,10 +181,16 @@ as its characters; Bytes as upper-case hexadecimal digits; a Boolean as true or 
     rdfs:comment "On a conf:Constraint, the severity at which it reports its findings: sh:Violation, sh:Warning or sh:Info; absent means sh:Violation. On a conf:Finding, the severity the finding was reported at: its constraint's severity, and sh:Violation for a conf:RuleError or conf:Parse finding. Independent of req:discrepancyType, which classifies the defect but never sets severity. When a constraint cites several requirements, its single finding per failed evaluation carries this severity for all of them." ;
     skos:scopeNote "Use at most once on a conf:Constraint or a conf:Finding. Only findings at sh:Violation make a run non-conformant."@en ;
     rdfs:range sh:Severity .
-:errorCategory a owl:DatatypeProperty ; rdfs:label "error category" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
-    rdfs:comment "The Processing Model error category a conf:ParseAttribution governs, or that a conf:Parse finding reports, by name: Sync, Bounds, Validation, Checksum, Expression (the Type / HEL error), Description (also covering the Dispatch error), Unsupported or ResourceLimit." ;
-    skos:scopeNote "Use exactly once on a conf:ParseAttribution and on a conf:Parse finding; the value is one of the eight names, spelt exactly."@en ;
-    rdfs:range xsd:string .
+:errorCategory a owl:ObjectProperty ; rdfs:label "error category" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment """The Processing Model error category a conf:ParseAttribution governs, or that a conf:Parse
+finding reports: one of the eight conf:ErrorCategory individuals (conf:SyncError, conf:BoundsError,
+conf:ValidationError, conf:ChecksumError, conf:ExpressionError, conf:DispatchError,
+conf:DescriptionError, conf:UnsupportedFeature). Deprecated form, still accepted: the category's
+skos:notation as a plain string (Sync, Bounds, Validation, Checksum, Expression, Dispatch,
+Description, Unsupported); a consumer treats the string and the individual whose notation it is
+as the same category. ResourceLimit is not a category: a resource limit is never a finding, and
+a parse attribution naming it is a description error.""" ;
+    skos:scopeNote "Use exactly once on a conf:ParseAttribution and on a conf:Parse finding, and on nothing else. Write the conf:ErrorCategory IRI; the notation string is accepted for reports written before conf 1.3."@en .
 :outcome a owl:ObjectProperty ; rdfs:label "outcome" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     rdfs:comment "Links a conf:Run to the outcome of one requirement: a node with exactly one conf:outcomeRequirement and exactly one conf:outcomeValue. A run has one such node per requirement of the profile." ;
     skos:scopeNote "Use on a conf:Run only, once per requirement of the profile."@en ;
@@ -171,6 +224,49 @@ as its characters; Bytes as upper-case hexadecimal digits; a Boolean as true or 
     skos:scopeNote "Use exactly once on each conf:Finding of a run report."@en ;
     rdfs:range xsd:string .
 
+# --- Run report ---
+# The properties of the conf:Run resource a conformance evaluator emits. A report validates on
+# its own: it carries copies of the req:Requirement and conf:Constraint descriptions it
+# references (Processing Model, Conformance Evaluation), so conf/shapes.ttl can check a finding
+# against its constraint without the profile.
+:finding a owl:ObjectProperty ; rdfs:label "finding" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "Links a conf:Run to one of its findings. Every finding of a run report is the object of exactly one conf:finding." ;
+    skos:scopeNote "Use on a conf:Run, once per finding the run reports."@en ;
+    rdfs:range :Finding .
+:verdict a owl:ObjectProperty ; rdfs:label "verdict" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "Whether the run found the input conformant: conf:Conformant or conf:NonConformant, as the Processing Model's verdict rule decides it with the run's conf:failOn severity. Exactly one." ;
+    skos:scopeNote "Use exactly once on a conf:Run. A truncated run is always conf:NonConformant."@en ;
+    rdfs:range :Verdict .
+:truncated a owl:DatatypeProperty ; rdfs:label "truncated" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "True when the run stopped at a resource limit before visiting the whole input and returned the report it had, false otherwise. Exactly one. A truncated report is never conformant." ;
+    skos:scopeNote "Use exactly once on a conf:Run; state conf:truncationReason with true."@en ;
+    rdfs:range xsd:boolean .
+:truncationReason a owl:DatatypeProperty ; rdfs:label "truncation reason" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The limit that truncated the run, in words (for example the finding limit, or a parse limit and its value)." ;
+    skos:scopeNote "Use at most once on a conf:Run, and only when conf:truncated is true."@en ;
+    rdfs:range xsd:string .
+:versionScopingApplied a owl:DatatypeProperty ; rdfs:label "version scoping applied" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "True when the caller supplied the input's format version and req:appliesToVersion was applied; false when no version was supplied and every requirement was evaluated." ;
+    skos:scopeNote "Use at most once on a conf:Run; state conf:fileVersion with true."@en ;
+    rdfs:range xsd:boolean .
+:fileVersion a owl:DatatypeProperty ; rdfs:label "file version" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The input's format version as the caller supplied it, compared with req:appliesToVersion values by exact string equality." ;
+    skos:scopeNote "Use at most once on a conf:Run, when conf:versionScopingApplied is true."@en ;
+    rdfs:range xsd:string .
+:profile a owl:ObjectProperty ; rdfs:label "profile" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The format description (profile) the input was parsed with, by IRI." ;
+    skos:scopeNote "Use at most once on a conf:Run, with an IRI."@en .
+:ruleSet a owl:ObjectProperty ; rdfs:label "rule set" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The conformance profile evaluated: the IRI of the graph or document holding its conf:Constraint, conf:ParseAttribution and req:Requirement resources. The report copies those of them it references, so it validates without the rule set; validated together with the rule set, every requirement of the rule set must have an outcome." ;
+    skos:scopeNote "Use at most once on a conf:Run, with an IRI."@en .
+:input a owl:ObjectProperty ; rdfs:label "input" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The input the run evaluated: its IRI, or, when it has none, a literal naming it (for example a file name). Findings locate their evidence in it." ;
+    skos:scopeNote "Use at most once on a conf:Run, with an IRI or a literal."@en .
+:failOn a owl:ObjectProperty ; rdfs:label "fail on" ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    rdfs:comment "The lowest finding severity that makes the run non-conformant: sh:Violation (the default when absent), sh:Warning or sh:Info." ;
+    skos:scopeNote "Use at most once on a conf:Run, when the caller chose a fail-on severity."@en ;
+    rdfs:range sh:Severity .
+
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/conf> <http://www.w3.org/2004/02/skos/core#definition> """Binds executable HEL assertions to the standards requirements they check, and
@@ -189,8 +285,14 @@ and needs no input.
 Run coverage: for one run over one input, every requirement of the profile receives exactly
 one conf:EvaluationOutcome -- conf:NotApplicable, conf:Errored, conf:Evaluated,
 conf:NotReached or conf:NotExercised, with that precedence (see conf:EvaluationOutcome)."""@en .
-<https://hexplain.io/ns/conf> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself."@en .
+<https://hexplain.io/ns/conf> <http://www.w3.org/2004/02/skos/core#scopeNote> "Import to bind executable HEL assertions and parse attributions to the requirements they check, and to read or write the run reports of a Conformance Evaluator. Load conf/shapes.ttl to validate profiles and reports."@en .
+<https://hexplain.io/ns/conf#BoundsError> <http://www.w3.org/2004/02/skos/core#definition> "The Processing Model's Bounds error: a read would pass the end of the stream or of the innermost bounded region."@en .
+<https://hexplain.io/ns/conf#ChecksumError> <http://www.w3.org/2004/02/skos/core#definition> "The Processing Model's Checksum error: a bddo:Checksum or a codec's integrity check mismatched."@en .
+<https://hexplain.io/ns/conf#Conformant> <http://www.w3.org/2004/02/skos/core#definition> "The run was not truncated, the parse completed, no finding reached the run's conf:failOn severity (sh:Violation when absent), and no requirement's outcome is conf:Errored or conf:NotReached."@en .
 <https://hexplain.io/ns/conf#Constraint> <http://www.w3.org/2004/02/skos/core#definition> "An executable check: a HEL assertion evaluated within a scope, citing the requirements it enforces."@en .
+<https://hexplain.io/ns/conf#DescriptionError> <http://www.w3.org/2004/02/skos/core#definition> "The Processing Model's Description error: the description itself is inconsistent."@en .
+<https://hexplain.io/ns/conf#DispatchError> <http://www.w3.org/2004/02/skos/core#definition> "The Processing Model's Dispatch error: no bddo:DataTypeRule matched and no default bddo:dataType exists. A category of its own, not a Description error."@en .
+<https://hexplain.io/ns/conf#ErrorCategory> <http://www.w3.org/2004/02/skos/core#definition> "A Processing Model error category, as a conf:Parse finding or a conf:ParseAttribution names it. Closed set of eight: conf:SyncError, conf:BoundsError, conf:ValidationError, conf:ChecksumError, conf:ExpressionError (the Type / HEL error), conf:DispatchError, conf:DescriptionError and conf:UnsupportedFeature. Each carries as skos:notation the name that the string form of conf:errorCategory uses. A ResourceLimit is not a category of this set: it is never a finding, it ends or truncates the run."@en .
 <https://hexplain.io/ns/conf#Errored> <http://www.w3.org/2004/02/skos/core#definition> "Evaluating at least one constraint citing the requirement raised a rule error; it takes precedence over conf:Evaluated so a partial check is never reported as complete. Engine outcome ERRORED."@en .
 <https://hexplain.io/ns/conf#Evaluated> <http://www.w3.org/2004/02/skos/core#definition> "At least one check citing the requirement was carried out without error (a constraint evaluated on at least one scoped instance, or a parse attribution checked by a parse that ran to its end or raised the attributed category), and none raised a rule error. Engine outcome EVALUATED."@en .
 <https://hexplain.io/ns/conf#EvaluationOutcome> <http://www.w3.org/2004/02/skos/core#definition> """The run-coverage outcome of one requirement in one conformance run. Closed set of five.
@@ -206,24 +308,41 @@ raised an error of the attributed category);
 the input had been visited;
 (5) conf:NotExercised -- otherwise, including a requirement cited by no constraint or parse
 attribution of the profile."""@en .
+<https://hexplain.io/ns/conf#ExpressionError> <http://www.w3.org/2004/02/skos/core#definition> "The Processing Model's Type / HEL error: a HEL type error, division by zero, undefined name, forward reference, out-of-range subscript or malformed expression."@en .
 <https://hexplain.io/ns/conf#Finding> <http://www.w3.org/2004/02/skos/core#definition> "One reported discrepancy of a conformance run: a failed evaluation of a constraint (conf:Violation), a constraint whose evaluation could not complete (conf:RuleError), or an error raised while parsing the input (conf:Parse). A constraint finding is attributed to every requirement the constraint cites; a failed evaluation yields exactly one finding however many requirements the constraint cites. A Parse finding has no constraint, reports at sh:Violation and is attributed to the requirement a conf:ParseAttribution names for its error category, or to no requirement when none does. Otherwise a finding's severity is its constraint's conf:severity."@en .
 <https://hexplain.io/ns/conf#FindingKind> <http://www.w3.org/2004/02/skos/core#definition> "Whether a finding reports a defect in the input found by a constraint (conf:Violation), a failure to evaluate a constraint (conf:RuleError), or an error raised while parsing the input (conf:Parse). Closed set."@en .
+<https://hexplain.io/ns/conf#NonConformant> <http://www.w3.org/2004/02/skos/core#definition> "At least one condition of conf:Conformant fails: the run was truncated, a finding reached the conf:failOn severity (every conf:Parse and conf:RuleError finding is at sh:Violation), or a requirement's outcome is conf:Errored or conf:NotReached."@en .
 <https://hexplain.io/ns/conf#NotApplicable> <http://www.w3.org/2004/02/skos/core#definition> "The run was given the input's format version, and the requirement's req:appliesToVersion values do not include it; it takes precedence over every other outcome. Engine outcome NOT_APPLICABLE."@en .
 <https://hexplain.io/ns/conf#NotExercised> <http://www.w3.org/2004/02/skos/core#definition> "The whole input was visited and no scoped instance of any constraint citing the requirement occurred in it, or no constraint or parse attribution cites the requirement, so nothing checked it. Engine outcome NOT_EXERCISED."@en .
 <https://hexplain.io/ns/conf#NotReached> <http://www.w3.org/2004/02/skos/core#definition> "No check citing the requirement was carried out, and the run stopped before visiting the whole input (a resource limit truncated it, or the parse stopped at an error), so the requirement might have been exercised by the part not visited. Engine outcome NOT_REACHED."@en .
 <https://hexplain.io/ns/conf#Parse> <http://www.w3.org/2004/02/skos/core#definition> "Parsing the input raised an error of a Processing Model category (conf:errorCategory): the input could not be read as the description says. Engine kind PARSE."@en .
 <https://hexplain.io/ns/conf#ParseAttribution> <http://www.w3.org/2004/02/skos/core#definition> "A statement that a parse error of one Processing Model category (conf:errorCategory) is a failure of one requirement (conf:satisfies). When parsing the input raises an error of that category, the conformance run reports a finding of kind conf:Parse attributed to that requirement, so a file that cannot even be parsed is reported against the requirement it breaks rather than as an anonymous failure."@en .
 <https://hexplain.io/ns/conf#RuleError> <http://www.w3.org/2004/02/skos/core#definition> "The assertion could not be evaluated (a HEL error, a non-Boolean result, a missing operand): conformance to the cited requirements is unknown, not refuted. Engine kind RULE_ERROR."@en .
-<https://hexplain.io/ns/conf#Run> <http://www.w3.org/2004/02/skos/core#definition> "One evaluation of a conformance profile over one input. Its conf:outcome values give run coverage: one outcome per requirement of the profile."@en .
+<https://hexplain.io/ns/conf#Run> <http://www.w3.org/2004/02/skos/core#definition> "One evaluation of a conformance profile over one input. Its conf:outcome values give run coverage: one outcome per requirement of the profile. It states exactly one conf:verdict and one conf:truncated flag, links every finding with conf:finding, and records what was evaluated (conf:profile, conf:ruleSet, conf:input) and how (conf:failOn, conf:versionScopingApplied, conf:fileVersion, conf:truncationReason)."@en .
+<https://hexplain.io/ns/conf#SyncError> <http://www.w3.org/2004/02/skos/core#definition> "The Processing Model's Sync error: a bddo:syncOnMarker marker was not found."@en .
+<https://hexplain.io/ns/conf#UnsupportedFeature> <http://www.w3.org/2004/02/skos/core#definition> "The Processing Model's Unsupported feature error: the description uses a class or optional feature the processor does not claim."@en .
+<https://hexplain.io/ns/conf#ValidationError> <http://www.w3.org/2004/02/skos/core#definition> "The Processing Model's Validation error: a fixed value mismatched, a tree document was not well-formed, or a multi-part asset did not assemble."@en .
+<https://hexplain.io/ns/conf#Verdict> <http://www.w3.org/2004/02/skos/core#definition> "Whether a conformance run found its input conformant (conf:Conformant) or not (conf:NonConformant). Closed set of two."@en .
 <https://hexplain.io/ns/conf#Violation> <http://www.w3.org/2004/02/skos/core#definition> "The assertion evaluated to false: the input does not conform to the cited requirements. Engine kind VIOLATION."@en .
 <https://hexplain.io/ns/conf#assertion> <http://www.w3.org/2004/02/skos/core#definition> "A HEL expression evaluating to Boolean. True means conformant; false raises a conf:Violation finding; any other result, or an evaluation error, raises a conf:RuleError finding."@en .
 <https://hexplain.io/ns/conf#assertion> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/conf> .
-<https://hexplain.io/ns/conf#errorCategory> <http://www.w3.org/2004/02/skos/core#definition> "The Processing Model error category a conf:ParseAttribution governs, or that a conf:Parse finding reports, by name: Sync, Bounds, Validation, Checksum, Expression (the Type / HEL error), Description (also covering the Dispatch error), Unsupported or ResourceLimit."@en .
+<https://hexplain.io/ns/conf#errorCategory> <http://www.w3.org/2004/02/skos/core#definition> """The Processing Model error category a conf:ParseAttribution governs, or that a conf:Parse
+finding reports: one of the eight conf:ErrorCategory individuals (conf:SyncError, conf:BoundsError,
+conf:ValidationError, conf:ChecksumError, conf:ExpressionError, conf:DispatchError,
+conf:DescriptionError, conf:UnsupportedFeature). Deprecated form, still accepted: the category's
+skos:notation as a plain string (Sync, Bounds, Validation, Checksum, Expression, Dispatch,
+Description, Unsupported); a consumer treats the string and the individual whose notation it is
+as the same category. ResourceLimit is not a category: a resource limit is never a finding, and
+a parse attribution naming it is a description error."""@en .
+<https://hexplain.io/ns/conf#failOn> <http://www.w3.org/2004/02/skos/core#definition> "The lowest finding severity that makes the run non-conformant: sh:Violation (the default when absent), sh:Warning or sh:Info."@en .
+<https://hexplain.io/ns/conf#fileVersion> <http://www.w3.org/2004/02/skos/core#definition> "The input's format version as the caller supplied it, compared with req:appliesToVersion values by exact string equality."@en .
+<https://hexplain.io/ns/conf#finding> <http://www.w3.org/2004/02/skos/core#definition> "Links a conf:Run to one of its findings. Every finding of a run report is the object of exactly one conf:finding."@en .
 <https://hexplain.io/ns/conf#findingConstraint> <http://www.w3.org/2004/02/skos/core#definition> "The constraint whose evaluation produced the finding. Exactly one for a conf:Violation or conf:RuleError finding; absent for a conf:Parse finding."@en .
 <https://hexplain.io/ns/conf#findingKind> <http://www.w3.org/2004/02/skos/core#definition> "Whether the finding is a conf:Violation, a conf:RuleError or a conf:Parse finding. Exactly one."@en .
 <https://hexplain.io/ns/conf#findingMessage> <http://www.w3.org/2004/02/skos/core#definition> "The rendered finding text: the constraint's conf:message with its placeholders interpolated, the rule error's description, or the parse error's description. Exactly one, non-empty."@en .
 <https://hexplain.io/ns/conf#findingRequirement> <http://www.w3.org/2004/02/skos/core#definition> "A requirement the finding is attributed to. Repeated for each requirement the constraint cites, and every one of them is cited by that constraint; at least one, except that a conf:Parse finding whose category no parse attribution names has none."@en .
 <https://hexplain.io/ns/conf#focusNode> <http://www.w3.org/2004/02/skos/core#definition> "The parsed instance (struct or field node) the failed evaluation was about. At most one. Its location in the input is stated on the finding with hexplain:byteOffset and hexplain:byteLength."@en .
+<https://hexplain.io/ns/conf#input> <http://www.w3.org/2004/02/skos/core#definition> "The input the run evaluated: its IRI, or, when it has none, a literal naming it (for example a file name). Findings locate their evidence in it."@en .
 <https://hexplain.io/ns/conf#message> <http://www.w3.org/2004/02/skos/core#definition> """Finding text template. Two placeholders are interpolated when the finding is rendered;
 any other text, including other braces, is copied unchanged.
 {field} -- the node path of the focus node (the Processing Model's instance node path, e.g.
@@ -238,8 +357,14 @@ as its characters; Bytes as upper-case hexadecimal digits; a Boolean as true or 
 <https://hexplain.io/ns/conf#outcome> <http://www.w3.org/2004/02/skos/core#definition> "Links a conf:Run to the outcome of one requirement: a node with exactly one conf:outcomeRequirement and exactly one conf:outcomeValue. A run has one such node per requirement of the profile."@en .
 <https://hexplain.io/ns/conf#outcomeRequirement> <http://www.w3.org/2004/02/skos/core#definition> "The requirement an outcome node reports on."@en .
 <https://hexplain.io/ns/conf#outcomeValue> <http://www.w3.org/2004/02/skos/core#definition> "The conf:EvaluationOutcome of the requirement an outcome node reports on."@en .
+<https://hexplain.io/ns/conf#profile> <http://www.w3.org/2004/02/skos/core#definition> "The format description (profile) the input was parsed with, by IRI."@en .
+<https://hexplain.io/ns/conf#ruleSet> <http://www.w3.org/2004/02/skos/core#definition> "The conformance profile evaluated: the IRI of the graph or document holding its conf:Constraint, conf:ParseAttribution and req:Requirement resources. The report copies those of them it references, so it validates without the rule set; validated together with the rule set, every requirement of the rule set must have an outcome."@en .
 <https://hexplain.io/ns/conf#satisfies> <http://www.w3.org/2004/02/skos/core#definition> "A requirement this constraint enforces, or the requirement a parse attribution's error category breaks. Required: an unattributed rule cannot be reported or counted toward coverage."@en .
 <https://hexplain.io/ns/conf#satisfies> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/conf> .
 <https://hexplain.io/ns/conf#scope> <http://www.w3.org/2004/02/skos/core#definition> "The bddo:Struct or bddo:Field the assertion is evaluated against. A Struct scope fires once per parsed instance of that struct, with instance and self bound to the instance. A Field scope fires once per parsed value of that field -- each element of a repeated field is one value, and an absent optional field fires nothing -- with instance bound to the containing struct and self to the value. The rdfs:range stays open; ConstraintShape restricts values to a bddo:Struct or bddo:Field."@en .
 <https://hexplain.io/ns/conf#scope> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/conf> .
 <https://hexplain.io/ns/conf#severity> <http://www.w3.org/2004/02/skos/core#definition> "On a conf:Constraint, the severity at which it reports its findings: sh:Violation, sh:Warning or sh:Info; absent means sh:Violation. On a conf:Finding, the severity the finding was reported at: its constraint's severity, and sh:Violation for a conf:RuleError or conf:Parse finding. Independent of req:discrepancyType, which classifies the defect but never sets severity. When a constraint cites several requirements, its single finding per failed evaluation carries this severity for all of them."@en .
+<https://hexplain.io/ns/conf#truncated> <http://www.w3.org/2004/02/skos/core#definition> "True when the run stopped at a resource limit before visiting the whole input and returned the report it had, false otherwise. Exactly one. A truncated report is never conformant."@en .
+<https://hexplain.io/ns/conf#truncationReason> <http://www.w3.org/2004/02/skos/core#definition> "The limit that truncated the run, in words (for example the finding limit, or a parse limit and its value)."@en .
+<https://hexplain.io/ns/conf#verdict> <http://www.w3.org/2004/02/skos/core#definition> "Whether the run found the input conformant: conf:Conformant or conf:NonConformant, as the Processing Model's verdict rule decides it with the run's conf:failOn severity. Exactly one."@en .
+<https://hexplain.io/ns/conf#versionScopingApplied> <http://www.w3.org/2004/02/skos/core#definition> "True when the caller supplied the input's format version and req:appliesToVersion was applied; false when no version was supplied and every requirement was evaluated."@en .

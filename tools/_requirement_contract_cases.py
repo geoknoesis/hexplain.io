@@ -40,9 +40,9 @@ def cases():
     located = {'h:byteOffset': '0', 'h:byteLength': '4'}
     core = 'https://hexplain.io/ns/core#'
 
-    def finding_case(name, changed, expected, path=''):
+    def finding_case(name, changed, expected, path='', extra=''):
         body = 'ex:fd a c:Finding . ' + ''.join(
-            f'ex:fd {k if ":" in k else "c:"+k} {v} . ' for k, v in changed.items() if v is not None)
+            f'ex:fd {k if ":" in k else "c:"+k} {v} . ' for k, v in changed.items() if v is not None) + extra
         full = core+path if path in ('byteOffset', 'byteLength') else ('https://hexplain.io/ns/conf#'+path if path else '')
         rows.append(dict(name='conf finding '+name, module='specification/conf/shapes.ttl', data=conf+body,
                          expected=expected, path=full))
@@ -57,10 +57,13 @@ def cases():
     finding_case('findingRequirement missing', {**finding, 'findingRequirement': None}, False)
     parse = {'findingKind': 'c:Parse', 'errorCategory': '"Bounds"', 'findingMessage': '"Truncated"'}
     finding_case('parse without requirement', parse, True)
-    finding_case('severity stated', {**finding, 'severity': 'sh:Warning'}, True)
+    finding_case('severity stated', {**finding, 'severity': 'sh:Violation'}, True)
+    finding_case('severity other than the constraint', {**finding, 'severity': 'sh:Warning'}, False)
     finding_case('severity unknown', {**finding, 'severity': 'c:Violation'}, False, 'severity')
     finding_case('severity twice', {**finding, 'severity': 'sh:Warning, sh:Info'}, False, 'severity')
-    finding_case('parse with requirement', {**parse, 'findingRequirement': 'ex:req'}, True)
+    finding_case('parse with requirement', {**parse, 'findingRequirement': 'ex:req'}, True,
+                 extra='ex:pa a c:ParseAttribution ; c:errorCategory "Bounds" ; c:satisfies ex:req . ')
+    finding_case('parse with an unattributed requirement', {**parse, 'findingRequirement': 'ex:req'}, False)
     finding_case('parse with constraint', {**parse, 'findingConstraint': 'ex:con'}, False)
     finding_case('parse without category', {**parse, 'errorCategory': None}, False)
     finding_case('parse category wrong value', {**parse, 'errorCategory': '"Overflow"'}, False, 'errorCategory')
@@ -91,7 +94,8 @@ def cases():
             ('attribution without category', 'ex:pa a c:ParseAttribution ; c:satisfies ex:req . ', False, 'errorCategory'),
             ('attribution repeated category', 'ex:pa a c:ParseAttribution ; c:errorCategory "Sync" ; c:satisfies ex:req . '
                 'ex:pb a c:ParseAttribution ; c:errorCategory "Sync" ; c:satisfies ex:req2 . ', False, ''),
-            ('run valid', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req ; c:outcomeValue c:NotReached ] . ', True, ''),
+            ('run valid', 'ex:run a c:Run ; c:verdict c:NonConformant ; c:truncated false ; c:outcome [ c:outcomeRequirement ex:req ; c:outcomeValue c:NotReached ] , '
+                '[ c:outcomeRequirement ex:req2 ; c:outcomeValue c:NotReached ] . ', True, ''),
             ('outcome without value', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req ] . ', False, 'outcomeValue'),
             ('outcome wrong value', 'ex:run a c:Run ; c:outcome [ c:outcomeRequirement ex:req ; c:outcomeValue c:Parse ] . ', False, 'outcomeValue'),
             ('outcome without requirement', 'ex:run a c:Run ; c:outcome [ c:outcomeValue c:Evaluated ] . ', False, 'outcomeRequirement'),

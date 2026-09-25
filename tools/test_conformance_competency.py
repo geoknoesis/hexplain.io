@@ -66,7 +66,8 @@ def cases():
            'conf:findingRequirement ex:r1 ; conf:severity sh:Violation ; conf:findingMessage "Magic is XX." ; conf:focusNode ex:h0 .\n'
            'ex:f2 a conf:Finding ; conf:findingKind conf:Parse ; conf:errorCategory "Bounds" ; conf:severity sh:Violation ; '
            'conf:findingMessage "Truncated at byte 12." .\n'
-           'ex:run a conf:Run ; conf:outcome [ conf:outcomeRequirement ex:r1 ; conf:outcomeValue conf:Evaluated ] , '
+           'ex:run a conf:Run ; conf:verdict conf:NonConformant ; conf:truncated false ; conf:finding ex:f1 , ex:f2 ; '
+           'conf:outcome [ conf:outcomeRequirement ex:r1 ; conf:outcomeValue conf:Evaluated ] , '
            '[ conf:outcomeRequirement ex:r2 ; conf:outcomeValue conf:NotReached ] .\n')
     add("run with a violation, an unattributed parse finding and two outcomes", run, True)
     add("finding attributed to a requirement its constraint does not cite",
@@ -75,6 +76,18 @@ def cases():
         run.replace("conf:outcomeValue conf:NotReached", "conf:outcomeValue conf:RuleError"), False, "conf:outcomeValue")
     add("rule error without its constraint",
         run.replace("conf:findingKind conf:Violation ; conf:findingConstraint ex:c1 ;", "conf:findingKind conf:RuleError ;"), False)
+    # Does a run report say what it decided, and is the decision consistent? (run report)
+    add("conformant verdict despite a violation", run.replace("conf:verdict conf:NonConformant", "conf:verdict conf:Conformant"), False)
+    add("truncated run that is conformant", run.replace("conf:verdict conf:NonConformant ; conf:truncated false",
+        'conf:verdict conf:Conformant ; conf:truncated true ; conf:truncationReason "finding limit"'), False)
+    add("run without a verdict", run.replace("conf:verdict conf:NonConformant ; ", ""), False, "conf:verdict")
+    add("finding the run does not link", run.replace("conf:finding ex:f1 , ex:f2 ; ", "conf:finding ex:f1 ; "), False)
+    add("finding at a severity its constraint does not report", run.replace(
+        "conf:findingRequirement ex:r1 ; conf:severity sh:Violation", "conf:findingRequirement ex:r1 ; conf:severity sh:Info"), False)
+    add("parse attribution naming a resource limit",
+        REQ + 'ex:pa a conf:ParseAttribution ; conf:errorCategory "ResourceLimit" ; conf:satisfies ex:r1 .', False, "conf:errorCategory")
+    add("parse attribution of a dispatch error by category IRI",
+        REQ + "ex:pa a conf:ParseAttribution ; conf:errorCategory conf:DispatchError ; conf:satisfies ex:r1 .", True)
     # Is a requirement identified once? (requirement identity)
     add("same identifier in two standards", REQ + 'ex:r3 a req:Requirement ; req:requirementId "R-1" ; '
         'req:fromStandard "Other Format 1.0" ; req:statement "Other." ; req:discrepancyType req:Functional .', True)
