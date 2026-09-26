@@ -29,7 +29,9 @@ extended=json.loads((root/'extended-evidence.json').read_text(encoding='utf-8'))
 assert extended['counts']==evidence['counts']
 assert sum(t['tests'] for t in extended['tests'])==39
 assert len(extended['contracts'])==8
-assert len(extended['retained_tiff_rejections'])==11
+# Every GTiff rejection of the comparison is listed and assessed, no more and no fewer.
+assert sorted(r['path'] for r in extended['retained_tiff_rejections'])==sorted(
+    r['path'] for r in evidence['all_results'] if r['status']=='hexplain-rejected' and r['gdal_driver']=='GTiff')
 assert all(c[k] for c in extended['contracts'] for k in ['name','implementation','scope','range','evidence','limits'])
 # Public evidence integrity does not require access to proprietary implementation bytes.
 # The private engine release workflow separately verifies these hashes against its checkout.

@@ -1,12 +1,12 @@
 {
   "scope": "Scoped runtime extension; not universal format support",
   "counts": {
-    "equal": 611,
+    "equal": 860,
     "not-implemented": 816,
     "oracle-only": 3931,
-    "hexplain-unsupported": 248,
-    "hexplain-rejected": 15,
-    "documented-type-difference": 1
+    "hexplain-rejected": 13,
+    "documented-type-difference": 1,
+    "hexplain-unsupported": 1
   },
   "tests": [
     {
@@ -36,12 +36,12 @@
   ],
   "contracts": [
     {
-      "name": "Zarr v2 numeric array",
-      "implementation": "Native Hexplain",
-      "scope": "Explicit local array directory or .zarray; rank 1\u20138; signed/unsigned 8/16/32/64-bit and Float32/64; C/F chunks; endian normalization; full edge chunks; explicit fill; none/zlib/gzip compression.",
+      "name": "Zarr array (v2, v3 and Kerchunk references)",
+      "implementation": "Native Hexplain; Kerchunk Parquet rows through the DuckDB adapter",
+      "scope": "Array or group directory, .zarray/.zgroup/.zmetadata/zarr.json, or a Kerchunk JSON/Parquet reference; a group resolves to the array GDAL classic raster mode selects. Rank 1\u20138 integer, Float16/32/64 and boolean dtypes; C/F chunks; GDAL zero fill for absent chunks with a null fill_value. v2 numcodecs compressors zlib, gzip, LZ4, Zstd, LZMA (.xz), Blosc1 (with BloscLZ) and imagecodecs_tiff; delta, fixedscaleoffset, quantize, shuffle and bitround filters. v3 codecs bytes, transpose, gzip, zstd, blosc, crc32c and nested sharding_indexed.",
       "range": "RasterPixels: last axis X, penultimate Y, earlier axes flattened as BSQ bands; little-endian samples.",
-      "evidence": "29 GDAL entry-point matches; repeated directory/.zarray openings are not independent datasets.",
-      "limits": "Groups, v3, filters, other compressors, compound types and undefined missing-chunk fills remain unsupported. No CF axis/georeferencing inference."
+      "evidence": "154 GDAL entry-point matches, every Zarr fixture GDAL decodes; repeated directory/.zarray openings are not independent datasets.",
+      "limits": "Groups GDAL shows as subdatasets, structured dtypes, irregular chunk grids, storage transformers, other codecs and Kerchunk templates/generators remain unsupported. No CF axis/georeferencing inference."
     },
     {
       "name": "HDF5 numeric dataset",
@@ -101,24 +101,6 @@
     }
   ],
   "retained_tiff_rejections": [
-    {
-      "path": "autotest/gcore/data/cog_sparse_strile_arrays_zeroified_when_possible.tif",
-      "gdal_driver": "GTiff",
-      "gdal_status": "decoded",
-      "status": "hexplain-rejected",
-      "reason": "Truncated TIFF LZW stream",
-      "assessment": "COG repair/optimized-read fixture with zeroed strile entries; no repair inference added.",
-      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/autotest/gcore/tiff_read.py#L4175"
-    },
-    {
-      "path": "autotest/gcore/data/cog_strile_arrays_zeroified_when_possible.tif",
-      "gdal_driver": "GTiff",
-      "gdal_status": "decoded",
-      "status": "hexplain-rejected",
-      "reason": "Truncated TIFF LZW stream",
-      "assessment": "COG repair/optimized-read fixture with zeroed strile entries; no repair inference added.",
-      "reference": "https://github.com/OSGeo/gdal/blob/c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc/autotest/gcore/tiff_read.py#L4175"
-    },
     {
       "path": "autotest/gcore/data/huge-implied-number-strips.tif",
       "gdal_driver": "GTiff",
@@ -223,21 +205,36 @@
     "laspy": "2.7.0",
     "scipy": "1.16.3"
   },
-  "oracle_status": "The GDAL 3.13.3 pixel baseline is retained. Fresh semantic comparisons use pinned Rasterio 1.4.3 / GDAL 3.9.3 and Fiona 1.10.1 / GDAL 3.9.1 wheels. Nine TIFF datasets, one selected CF variable and two XYZ features match. All eleven dataset/feature checks also pass independently in pinned GDAL 3.13.3 through Docker. Semantic checks remain separate from the 611 pixel counter.",
+  "oracle_status": "The GDAL 3.13.3 pixel baseline is retained. Fresh semantic comparisons use pinned Rasterio 1.4.3 / GDAL 3.9.3 and Fiona 1.10.1 / GDAL 3.9.1 wheels. Nine TIFF datasets, one selected CF variable and two XYZ features match. All eleven dataset/feature checks also pass independently in pinned GDAL 3.13.3 through Docker. Semantic checks remain separate from the 860 pixel counter.",
   "scores": "Overall scores held at previous review values; this scoped pass does not establish >9.5 or production readiness.",
   "sources": {
+    "core/src/main/kotlin/io/hexplain/core/raster/BmpRle.kt": "7c82857b01640a7c4423fda70a92e65f56e706d21d414e2af66461b45b8d8ac0",
     "core/src/main/kotlin/io/hexplain/core/raster/GdalCodecFixtures.kt": "0f7c3406b22bc673129b425160657e8a313f47b24fd76c3a5f01c76d83ad9c80",
     "core/src/main/kotlin/io/hexplain/core/raster/GeometryDecoder.kt": "c95927cfe0ac41652d640b0a32eeb94f6ee13daebd1d3b9b99ae50fb225c7426",
     "core/src/main/kotlin/io/hexplain/core/raster/LasDecoder.kt": "d67d4e800826d9f4cde842042cd4fe5e74702b8c1cfca235ff90b741546a14dc",
     "core/src/main/kotlin/io/hexplain/core/raster/NetCdfClassicDecoder.kt": "88c75558929281f7b915cb4aa95dc84e41c288c5cb7fc742d4816f51a042c283",
     "core/src/main/kotlin/io/hexplain/core/raster/NetCdfDatasetDecoder.kt": "246ba7c179b955b7e00af6ae573d319a9544b655eb9d4b059fa62c707255afa1",
-    "core/src/main/kotlin/io/hexplain/core/raster/RasterDecoder.kt": "1824f101ca8264a72912058f737ebb5e8165e423e62bb8e9641ae13d00e29fe9",
+    "core/src/main/kotlin/io/hexplain/core/raster/RasterDecoder.kt": "0111133e4100e494f21d8bd59c9b19fae5637e1bb5beb59cc7c9f47384ac3273",
     "core/src/main/kotlin/io/hexplain/core/raster/RasterSemantics.kt": "bd76ea36eca9e2a891a71881afb2b68282fe20eb36068c0573d300bb3843c6d1",
+    "core/src/main/kotlin/io/hexplain/core/raster/TiffColorConversion.kt": "e8e7754344524a12603309677a1006655555d357d88474b47d35e618a73d20f8",
+    "core/src/main/kotlin/io/hexplain/core/raster/TiffColorLossyDecoder.kt": "7017963145acd16eaf2691dd37fbec771df09f3cbc68c91092e58694bcc57351",
     "core/src/main/kotlin/io/hexplain/core/raster/TiffDatasetDecoder.kt": "ac5e63a2aa7a9e3ce7b54adfdc2645cf7ab6421250ad486e6ae6c2576008ec6d",
-    "core/src/main/kotlin/io/hexplain/core/raster/TiffRasterDecoder.kt": "271624732eef7acc9483cb62aff6bfe7502f9247220c5ee9e1773155d6b32684",
-    "core/src/main/kotlin/io/hexplain/core/raster/ZarrRasterDecoder.kt": "f5e676539ef3e288fc5acde87abc59f1fb4f702fe43b4d92c11363783f803a89",
-    "adapters/src/main/kotlin/io/hexplain/core/raster/GdalProbe.kt": "85ea2b070f81b6eeee1ce8d6c2fc9771f247da5c546469832d36aa60cf0aed56",
+    "core/src/main/kotlin/io/hexplain/core/raster/TiffIfd.kt": "9bc70a1ee7fb89227e467f0355a1a69b876186a9ef7afe7b0a782b9e4ef1050c",
+    "core/src/main/kotlin/io/hexplain/core/raster/TiffJpegDecoder.kt": "41079f89a670af572b7884f136ae363a5c1824819a6297a747043d5ba6dfc281",
+    "core/src/main/kotlin/io/hexplain/core/raster/TiffJxlDecoder.kt": "3527279a404d48d6b7194d4a9f435811e94a311844473ac85b9ead50bef96bcb",
+    "core/src/main/kotlin/io/hexplain/core/raster/TiffNoData.kt": "c831e0b00b17a9b7607643a09b524af3abe864ce83c556c9edd4981a1f0b9d5f",
+    "core/src/main/kotlin/io/hexplain/core/raster/TiffRasterDecoder.kt": "8fbce4b0f307aa33318ca4f01f943c19e8b505b18200e453ba47535914c74b9c",
+    "core/src/main/kotlin/io/hexplain/core/raster/TiffRowCodecs.kt": "a0b947c382da2835a708027a499224f151ff9565798c12688809181b89ae59cd",
+    "core/src/main/kotlin/io/hexplain/core/raster/TiffSamples.kt": "0e4cb58a2df159d7df044a79281f27018ba3ba69cf78642fd868bb607cd3cf92",
+    "core/src/main/kotlin/io/hexplain/core/raster/TiffWebpDecoder.kt": "3fcee36a934f77182e448969cb5fab263f551b29229f8cb6c2a8f59fa1414346",
+    "core/src/main/kotlin/io/hexplain/core/raster/ZarrBlosc.kt": "d65cd5b0bd4f60060acbdfc479ed7af47e7acb709b45dccda3361904125c1c62",
+    "core/src/main/kotlin/io/hexplain/core/raster/ZarrNumcodecs.kt": "96ee25489bda20b3d8e2d060dd683c8ad4938e782b60e68a32da1ed50322a336",
+    "core/src/main/kotlin/io/hexplain/core/raster/ZarrRasterDecoder.kt": "61ccbc2800ab3f6eeeb475db1e30fbb7c3b2633b0a19bc498ce6247a26273754",
+    "core/src/main/kotlin/io/hexplain/core/raster/ZarrStore.kt": "c2792cef4228a2aaf91be1960d4aea885df456b1f22ab77caa5b767de79bac83",
+    "core/src/main/kotlin/io/hexplain/core/raster/ZarrV3Codecs.kt": "b925a70f0aeb689f251a08f068b2eb102510e77efee4c40d935eccfaefe00531",
+    "adapters/src/main/kotlin/io/hexplain/core/raster/GdalProbe.kt": "b860d5f98e3abb6fc7fcbbe1c4fcaf786d11b6287df25a55c7c82eadfead159d",
     "adapters/src/main/kotlin/io/hexplain/core/raster/HdfRasterDecoder.kt": "8366ae3736812683e11c05bcd7fff15f8f7f32e99a468dcd6ce40b2ad074ec58",
+    "adapters/src/main/kotlin/io/hexplain/core/raster/KerchunkParquetAdapter.kt": "fd12e2cbaa9b62d7df7568a9daf1a39d1ded728bcde4b62cfe188e2d61d96388",
     "adapters/src/main/kotlin/io/hexplain/core/raster/NativeAdapterProbe.kt": "d08e71cfcec7d0028b36cff84569c7458a0d5641dc835842f691a4acd787ea49",
     "adapters/src/main/kotlin/io/hexplain/core/raster/TabularDecoder.kt": "e1bbfa993b78d72de80feeb4fdaf7f0d4c30bd87e5989f569940ac4bf0bdec57"
   },
@@ -282,5 +279,5 @@
     "adapters/src/main/kotlin/io/hexplain/core/raster/TabularDecoder.kt": "e1bbfa993b78d72de80feeb4fdaf7f0d4c30bd87e5989f569940ac4bf0bdec57"
   },
   "sources_hash_policy": "SHA-256 of UTF-8 source text normalized to LF; previous raw worktree hashes retained. Normalization does not rerun or expand differential evidence.",
-  "source_reference_revision": "d0c3f3a2d44700ae9b312660e898c6f4b6e8170c"
+  "source_reference_revision": "86f9650abc3d4e7e7d5ed9250c7043ed2b1ffa52"
 }
