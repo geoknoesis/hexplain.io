@@ -1,0 +1,23 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/pp-param-quantifier-element#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ex:Root.below ex:Root.low ex:Root.high ) .
+ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 2 ; bddo:hasArgument ( "9" ) .
+ex:Root.below a bddo:Field ; bddo:valueFromExpression "all(instance.items, instance.v < param.stop)" .
+ex:Root.low a bddo:Field ; bddo:valueFromExpression "all(items, low)" .
+ex:Root.high a bddo:Field ; bddo:valueFromExpression "any(root.items, not low)" .
+ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.stop ) ; bddo:hasField ( ex:Item.v ex:Item.low ) .
+ex:Item.stop a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+ex:Item.v a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:Item.low a bddo:LocalBinding ; bddo:localExpression "instance.v < param.stop" .

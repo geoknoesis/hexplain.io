@@ -119,6 +119,40 @@ New requirements: `req-pm-parsestruct-9`, `req-pm-parsestruct-10`, `req-pm-parse
 
 New conformance cases, 106 (68 Physical Parser, 1 Semantic Emitter, 37 HDL Compiler): `hc-bracket-size-after-u24`, `hc-checksum-crc-field-width`, `hc-checksum-custom-crc`, `hc-checksum-custom-crc-64-bit`, `hc-checksum-custom-crc-missing-parameter`, `hc-checksum-custom-crc-repeated-parameter`, `hc-checksum-custom-crc-value-too-wide`, `hc-checksum-custom-crc-width-out-of-range`, `hc-checksum-custom-crc-yaml`, `hc-checksum-named-crcs`, `hc-fixed-24-bit-and-half`, `hc-let-binding`, `hc-let-binding-yaml`, `hc-let-forward-reference`, `hc-let-in-header`, `hc-let-name-clash`, `hc-let-reads-parameter`, `hc-let-where-field-required`, `hc-param-argument-forward-reference`, `hc-param-arguments-for-plain-struct`, `hc-param-arity-mismatch`, `hc-param-dispatch-default`, `hc-param-field-clash`, `hc-param-literal-type-mismatch`, `hc-param-missing-arguments`, `hc-param-nested-arguments`, `hc-param-recursion`, `hc-param-reserved-name`, `hc-param-root-struct`, `hc-param-struct`, `hc-param-struct-yaml`, `hc-param-switch-arms`, `hc-param-switch-arms-yaml`, `hc-param-undeclared`, `hc-param-unknown-type`, `hc-types-24-bit-and-half`, `hc-types-24-bit-and-half-yaml`, `pp-codec-lz4-block`, `pp-codec-lz4-block-bad-offset`, `pp-codec-lz4-block-missing-size`, `pp-codec-lz4-block-shorthand`, `pp-codec-lz4-block-size-mismatch`, `pp-codec-lz4-content-checksum-mismatch`, `pp-codec-lz4-frame`, `pp-codec-lz4-frame-block-checksums`, `pp-codec-lz4-frame-concatenated`, `pp-codec-lz4-frame-substream`, `pp-codec-lz4-frame-truncated`, `pp-codec-lz4-header-checksum-mismatch`, `pp-codec-zstd-checksum-mismatch`, `pp-codec-zstd-concatenated`, `pp-codec-zstd-dictionary`, `pp-codec-zstd-frame`, `pp-codec-zstd-parameter-unknown`, `pp-codec-zstd-truncated`, `pp-crc-crc16arc`, `pp-crc-crc16modbus`, `pp-crc-crc16x25`, `pp-crc-crc16xmodem`, `pp-crc-crc32bzip2`, `pp-crc-crc32c`, `pp-crc-crc32mpeg2`, `pp-crc-crc64ecma`, `pp-crc-crc64xz`, `pp-crc-crc8`, `pp-crc-custom`, `pp-crc-custom-24-bit`, `pp-crc-custom-invalid-width`, `pp-crc-custom-mismatch`, `pp-crc-field-too-narrow`, `pp-crc-field-too-wide`, `pp-crc-named-mismatch`, `pp-crc-stored-little-endian`, `pp-float16-fixed-value`, `pp-float16-fixed-value-mismatch`, `pp-float16-fixed-value-overflow`, `pp-float16-infinities-and-nan`, `pp-float16-normal-values`, `pp-float16-subnormals-and-zeros`, `pp-int24-negative`, `pp-int24-repeated`, `pp-let-forward-reference`, `pp-let-in-header`, `pp-let-name-clash`, `pp-let-not-reachable-through-parent`, `pp-let-size-and-count`, `pp-let-struct-size`, `pp-let-with-parameter`, `pp-param-argument-forward-reference`, `pp-param-arguments-without-parameters`, `pp-param-arity-mismatch`, `pp-param-basic`, `pp-param-field-name-clash`, `pp-param-float-accepts-integer`, `pp-param-nested-arguments`, `pp-param-recursion`, `pp-param-recursion-depth-limit`, `pp-param-repeated-field`, `pp-param-root-struct`, `pp-param-rule-and-arm-arguments`, `pp-param-type-mismatch`, `pp-param-undeclared`, `pp-uint24-both-byte-orders`, `pp-uint24-fixed-hex-width`, `pp-uint24-fixed-value`, `se-parameters-and-bindings-not-emitted`. The LZ4 inputs are written by `tools/conformance/lz4frames.py` (a plain-Python block compressor, frame writer and xxHash-32, each block checked by its own decoder); the Zstandard frames are pre-made with python-zstandard 0.25 and committed as hex in `tools/conformance/zstdframes.py`, pinned by SHA-256 and checked against a plain-Python XXH64 of their content, so neither package is a dependency; CRCs come from the Rocksoft model in `tools/conformance/crc.py`.
 
+### Parameters and bindings: three clarifications
+
+- **Argument types.** An argument that is not of its parameter's `bddo:parameterType` is a
+  Description error when the description shows it (a literal, or a negated numeric literal, for a
+  typed parameter), raised when the description is loaded; any other argument's value is known only
+  when it is evaluated, and a mismatch there is a Type / HEL (Expression) error, never a Description
+  error. New Processing Model paragraph `processing#argument-types`.
+- **Quantifiers over struct elements.** Inside the predicate of `all`/`any` over struct elements
+  `instance` is each element, so `param.<name>` and a name that reaches a local binding resolve
+  against the element's struct, not the struct holding the expression, and the load-time check of
+  `param.<name>` is made against the element's struct wherever the description determines it. The
+  same holds for an HDL `repeat until` over struct elements: a bare name that is only a parameter of
+  the holding struct is an ERROR there. `self.<name>` never reaches a local binding, even where
+  `self` and `instance` are the same element.
+- **Text containers.** A delimited, key/value or tree container may declare neither parameters
+  (new) nor local bindings (as before); either is a Description error. HDL: `params` beside a YAML
+  `kind` other than `struct` is an ERROR.
+
+Requirement text changed: `req-pm-parsefield-11` (the category of an argument type mismatch
+depends on when it is known), `req-pm-errors-6` (an evaluated argument of the wrong type),
+`req-pm-errors-8` (a literal argument of the wrong type; `param.<name>` against the element's struct
+in a quantifier; parameters or bindings in any text container), `req-hel-reserved-roots-2` (unchanged
+sentence, now followed by `req-hel-reserved-roots-3`), `req-bddo-parameterised-structs-3` (text
+containers named in full) and `req-hdl-parameters-1` (parameters on a header, table or document).
+
+New requirements: `req-pm-context-3`, `req-pm-context-4`, `req-hel-reserved-roots-3`,
+`req-hel-ext-quantifiers-3`, `req-hdl-parameters-2` and `req-bddo-parameterised-structs-4`.
+
+New conformance cases, 8 (5 Physical Parser, 3 HDL Compiler): `pp-param-type-mismatch-evaluated`,
+`pp-param-quantifier-element`, `pp-param-quantifier-holding-struct`, `pp-param-on-text-container`,
+`pp-let-not-reachable-through-self`, `hc-param-element-scope`,
+`hc-param-holding-struct-in-element-scope`, `hc-param-on-header`; `pp-param-type-mismatch` now also
+cites `req-pm-context-3`.
+
 ### Conformance run reports (conf 1.3)
 
 - **New terms.** `conf:finding` (run to finding), `conf:verdict` with `conf:Verdict`

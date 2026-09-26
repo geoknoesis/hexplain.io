@@ -310,6 +310,24 @@
    "text": "The alias is deprecated in HEL 1.0: a processor SHOULD warn when it loads a description that uses it, new descriptions MUST NOT use it, and an HDL compiler never emits it.",
    "sha256": "d721bca7e60b0fd0"
   },
+  "req-pm-context-3": {
+   "page": "specification/processing/index.html",
+   "section": "context",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An argument that is a literal, or a negated numeric literal, of the wrong kind for a typed parameter is known from the description alone: a processor MUST raise it as a description error, when the description is loaded.",
+   "sha256": "fc571f8dac1b9aa9"
+  },
+  "req-pm-context-4": {
+   "page": "specification/processing/index.html",
+   "section": "context",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Any other argument is known only once it is evaluated: a processor MUST raise a value of the wrong type, a struct or an array as a Type / HEL error when the argument is evaluated (ParseField, Value), not as a description error.",
+   "sha256": "91dd207630a0a59d"
+  },
   "req-pm-data-layouts-1": {
    "page": "specification/processing/index.html",
    "section": "data-layouts",
@@ -550,10 +568,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Type / HEL error | A HEL type error, division/modulo by zero, undefined name, forward reference, or an array subscript out of range; asset.X read before part X is parsed or naming a part the asset does not have, and the asset root or partExtension() in a part parsed on its own (Multi-part Assets); a malformed HEL expression (one the HEL grammar does not generate, including an out-of-range literal, an unknown escape or a call with the wrong number of arguments). A malformed HEL expression SHOULD be raised when the description is loaded, and is a Type / HEL error even then, not a Description error.",
-   "sha256": "b6a99a1f2f5f0a6a",
+   "text": "Type / HEL error | A HEL type error, division/modulo by zero, undefined name, forward reference, or an array subscript out of range; an argument whose evaluated value is not of its parameter’s type (a literal one is a Description error); asset.X read before part X is parsed or naming a part the asset does not have, and the asset root or partExtension() in a part parsed on its own (Multi-part Assets); a malformed HEL expression (one the HEL grammar does not generate, including an out-of-range literal, an unknown escape or a call with the wrong number of arguments). A malformed HEL expression SHOULD be raised when the description is loaded, and is a Type / HEL error even then, not a Description error.",
+   "sha256": "cdde20164ff65352",
    "history": [
-    "e2d64805d37ebc6e"
+    "e2d64805d37ebc6e",
+    "b6a99a1f2f5f0a6a"
    ]
   },
   "req-pm-errors-7": {
@@ -574,13 +593,14 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Description error | The description itself is inconsistent: two dispatch arms with one key, both dispatch mechanisms on one field, an empty terminator, a variable-length field with no extent, an unbound namespace prefix, cyclic cross-part references, two part specs described by structs sharing a local name, a malformed fixed value, a packed width on a non-integer cell type, a bddo:repeatUntil on a text container, a codec parameter that is unknown, missing or out of range, a pair of conflicting forms (a repeat count with a repeat-until condition, two count or offset forms, a dispatch table with conditional type rules, two values of a functional property), two fields of one struct sharing a local name; a parameterised struct named with a number of arguments other than its number of parameters, arguments for a struct without parameters or for a data type, an argument that is not of its parameter's type, a parameter or local binding sharing its name with a field, parameter or binding of its struct, param.x in an expression whose struct has no parameter x, a root or bundle-part struct with parameters, a parameterised struct named by a bddo:dispatchDefault (which cannot state arguments), a local binding in a delimited or tree container; a CRC whose checksum field is not an integer exactly as wide as the CRC; an menc:LZ4Block step without a valid decodedSize. An invalid profile or rule set is a Description error when it is loaded: a description, conformance profile or rule set that the family’s shapes reject, including a requirement identity stated twice (by IRI, or by a blank-node pair with one req:requirementId and req:fromStandard), a requirement without a statement, and a parse attribution naming ResourceLimit. A Description error SHOULD be raised when the description is loaded.",
-   "sha256": "f8ffe1ebc5e7b4d8",
+   "text": "Description error | The description itself is inconsistent: two dispatch arms with one key, both dispatch mechanisms on one field, an empty terminator, a variable-length field with no extent, an unbound namespace prefix, cyclic cross-part references, two part specs described by structs sharing a local name, a malformed fixed value, a packed width on a non-integer cell type, a bddo:repeatUntil on a text container, a codec parameter that is unknown, missing or out of range, a pair of conflicting forms (a repeat count with a repeat-until condition, two count or offset forms, a dispatch table with conditional type rules, two values of a functional property), two fields of one struct sharing a local name; a parameterised struct named with a number of arguments other than its number of parameters, arguments for a struct without parameters or for a data type, a literal argument that is not of its parameter's type (an evaluated one is a Type / HEL error: ParseField, Value), a parameter or local binding sharing its name with a field, parameter or binding of its struct, param.x in an expression whose instance struct has no parameter x (inside a quantifier over struct elements, the element’s struct: Stream metadata and eof()), a root or bundle-part struct with parameters, a parameterised struct named by a bddo:dispatchDefault (which cannot state arguments), a parameter or a local binding declared by a text container (a delimited table or record sequence, a key/value header or a tree document); a CRC whose checksum field is not an integer exactly as wide as the CRC; an menc:LZ4Block step without a valid decodedSize. An invalid profile or rule set is a Description error when it is loaded: a description, conformance profile or rule set that the family’s shapes reject, including a requirement identity stated twice (by IRI, or by a blank-node pair with one req:requirementId and req:fromStandard), a requirement without a statement, and a parse attribution naming ResourceLimit. A Description error SHOULD be raised when the description is loaded.",
+   "sha256": "346d0c03b0091053",
    "history": [
     "0cb63e59ec525203",
     "6d63f31091bf4ed6",
     "99099e6d77370703",
-    "e7406fe5e260e93c"
+    "e7406fe5e260e93c",
+    "f8ffe1ebc5e7b4d8"
    ]
   },
   "req-pm-errors-9": {
@@ -1006,11 +1026,12 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Value. If the effective type is a bddo:Struct, recurse via ParseStruct. When that struct declares parameters, the arguments are evaluated first — the bddo:hasArgument list of what named the struct: the bddo:DataTypeRule or bddo:DispatchArm that selected it, or the field when it is the field's bddo:dataType — in list order, each with the containing struct as instance exactly as a bddo:sizeFromExpression of the field is evaluated, and passed to ParseStruct; for a repeated field they are evaluated anew before each element. An argument whose value is not of its parameter's bddo:parameterType (an Integer is accepted for bddo:FloatParameter and converted to Float), or that is a struct or array node, is a description error. If the effective type is a bddo:DataType:",
-   "sha256": "f8ffe558bc642800",
+   "text": "Value. If the effective type is a bddo:Struct, recurse via ParseStruct. When that struct declares parameters, the arguments are evaluated first — the bddo:hasArgument list of what named the struct: the bddo:DataTypeRule or bddo:DispatchArm that selected it, or the field when it is the field's bddo:dataType — in list order, each with the containing struct as instance exactly as a bddo:sizeFromExpression of the field is evaluated, and passed to ParseStruct; for a repeated field they are evaluated anew before each element. An argument whose value is not of its parameter's bddo:parameterType (an Integer is accepted for bddo:FloatParameter and converted to Float), or that is a struct or array node, is an error: a description error when it is a literal, known when the description is loaded, and otherwise a Type / HEL error raised when the argument is evaluated (Stream metadata and eof()). If the effective type is a bddo:DataType:",
+   "sha256": "dfbd7f5dbfdd2f68",
    "history": [
     "e4d21caff3c52a61",
-    "3300fc4b796a1b90"
+    "3300fc4b796a1b90",
+    "f8ffe558bc642800"
    ]
   },
   "req-pm-parsefield-12": {
@@ -1713,6 +1734,15 @@
    "text": "Each evaluation MUST yield a Boolean, else it is an error.",
    "sha256": "91ef726bcb30e3d0"
   },
+  "req-hel-ext-quantifiers-3": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "When the element is a struct node, param.n and a name that reaches a local binding MUST resolve against the element’s struct: param.n is the argument the element was parsed with, a bare name or instance.name may name a local binding of the element’s struct, and the parameters and bindings of the struct holding the expression are not reachable in the predicate.",
+   "sha256": "029360d627ecf81c"
+  },
   "req-hel-ext-temporal-1": {
    "page": "specification/hel/index.html",
    "section": "ext-temporal",
@@ -1973,6 +2003,15 @@
    "audience": "processor",
    "text": "A processor MUST raise a Description error, when the description is loaded, for param.n in an expression whose instance struct declares no parameter n, and for param without a key: whether a struct has a parameter is known from the description alone, so this is never deferred to the data.",
    "sha256": "35164e3a9a9ebe69"
+  },
+  "req-hel-reserved-roots-3": {
+   "page": "specification/hel/index.html",
+   "section": "reserved-roots",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Inside the predicate of all/any over struct elements instance is the element, so a processor MUST make that check against the element’s struct, not the struct holding the expression, wherever the description determines the element’s struct (the collection is a path of fields whose declared types are structs, none chosen at parse time); where it does not, a param.n the element’s struct lacks is an undefined name when it is evaluated.",
+   "sha256": "b02626e351a9181d"
   },
   "req-hel-tonumber-1": {
    "page": "specification/hel/index.html",
@@ -2430,11 +2469,21 @@
    "cls": "hdl-compiler",
    "level": "MUST",
    "audience": "processor",
-   "text": "A compiler MUST report an ERROR for: a type position that supplies a number of arguments other than its struct's number of parameters (including arguments for a struct without parameters, and none for one with parameters); a parameterised struct in a position that cannot state arguments — a dispatch default, a layout cell type, a described-by part struct, and the root struct (@root, or the first struct) — since none of them has a caller that could supply them; two parameters, two bindings, or a parameter, binding and field of one struct, that share a name; a parameter type other than the five words above; param used as a name, and param.x in a struct with no parameter x; a forward or self reference in an argument, which is evaluated at the position of the field that passes it, or in a let expression, which is evaluated at the binding's position; a clause on a let (it has a name and an expression, nothing else); a let binding named where a field is required — a layout extent or stride, a checksum range bound, @root-key, @lang-from — since it has neither bytes nor a place in the tree; and a let in a header, table or document, whose members have no evaluation order.",
-   "sha256": "9ce7b1c5cdb5b371",
+   "text": "A compiler MUST report an ERROR for: a type position that supplies a number of arguments other than its struct's number of parameters (including arguments for a struct without parameters, and none for one with parameters); a parameterised struct in a position that cannot state arguments — a dispatch default, a layout cell type, a described-by part struct, and the root struct (@root, or the first struct) — since none of them has a caller that could supply them; two parameters, two bindings, or a parameter, binding and field of one struct, that share a name; a parameter type other than the five words above; param used as a name, and param.x in a struct with no parameter x; a forward or self reference in an argument, which is evaluated at the position of the field that passes it, or in a let expression, which is evaluated at the binding's position; a clause on a let (it has a name and an expression, nothing else); a let binding named where a field is required — a layout extent or stride, a checksum range bound, @root-key, @lang-from — since it has neither bytes nor a place in the tree; a let in a header, table or document, whose members have no evaluation order; and parameters on a header, table or document (in YAML, params beside a kind other than struct), which has no scope to bind them in.",
+   "sha256": "ed34b0d59e5bdfa8",
    "history": [
-    "8df4d62c14048686"
+    "8df4d62c14048686",
+    "9ce7b1c5cdb5b371"
    ]
+  },
+  "req-hdl-parameters-2": {
+   "page": "specification/hdl/index.html",
+   "section": "parameters",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Where instance is an element — the condition of a repeat until over struct elements, and the predicate of all/any over them — a compiler MUST resolve a bare name against the element struct’s parameters and let bindings (param.name, instance.name) and check param.x against the element struct’s parameters, not those of the struct holding the field, and MUST report an ERROR for a name that is only a parameter of the holding struct, which param never reaches there; the holding struct passes such a value to the element struct as an argument instead.",
+   "sha256": "61084c3a46696c2c"
   },
   "req-hdl-prefixes-1": {
    "page": "specification/hdl/index.html",
@@ -2888,12 +2937,24 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "description",
-   "text": "A local binding MUST be named by an IRI, MUST NOT share its name with a field, a parameter or another binding of its struct, and MUST NOT be a member of a delimited or tree container, whose members have no evaluation order; bddo:LocalBindingShape checks the first and the last.",
-   "sha256": "8cbc555f039ca8be",
+   "text": "A local binding MUST be named by an IRI, MUST NOT share its name with a field, a parameter or another binding of its struct, and MUST NOT be a member of a text container (a delimited, key/value or tree container), whose members have no evaluation order; bddo:LocalBindingShape checks the first and the last.",
+   "sha256": "0ae8df25d929e4be",
    "kind": "shape-backed",
    "shapes": [
     "https://hexplain.io/ns/bddo#LocalBindingShape"
+   ],
+   "history": [
+    "8cbc555f039ca8be"
    ]
+  },
+  "req-bddo-parameterised-structs-4": {
+   "page": "specification/bddo/index.html",
+   "section": "parameterised-structs",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "description",
+   "text": "A text container — a bddo:DelimitedTable, bddo:DelimitedRecords, bddo:KeyValueHeader or bddo:TreeDocument — MUST NOT declare bddo:hasParameter: its members are located by key, column or path rather than read in order, so it has no scope to bind arguments in, and a processor raises a Description error for it (Processing Model, Errors).",
+   "sha256": "5b4df30c015014eb"
   },
   "req-bddo-structural-properties-1": {
    "page": "specification/bddo/index.html",

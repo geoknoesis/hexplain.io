@@ -1,0 +1,22 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/pp-param-quantifier-holding-struct#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.o ) .
+ex:Root.o a bddo:Field ; bddo:dataType ex:Outer ; bddo:hasArgument ( "5" ) .
+ex:Outer a bddo:Struct ; bddo:hasParameter ( ex:Outer.limit ) ; bddo:hasField ( ex:Outer.items ex:Outer.ok ) .
+ex:Outer.limit a bddo:Parameter .
+ex:Outer.items a bddo:Field ; bddo:dataType ex:Plain ; bddo:repeatCount 2 .
+ex:Outer.ok a bddo:Field ; bddo:valueFromExpression "all(instance.items, instance.v < param.limit)" .
+ex:Plain a bddo:Struct ; bddo:hasField ( ex:Plain.v ) .
+ex:Plain.v a bddo:Field ; bddo:dataType bddo:uint8 .

@@ -468,6 +468,71 @@ err("param-undeclared", "param.x in a struct with no parameter x is an ERROR",
     struct Row(w) { cells : bytes[`param.x`] }
     """, line=5)
 
+HDL_ELEMENT = ["req-hdl-parameters-2"]
+hc("param-element-scope", "Over struct elements, bare names and param are the element's",
+   "In a repeat until and a quantifier predicate over E elements, stop and small are E's parameter and binding: "
+   "param.stop and instance.small. The argument lim is resolved in R, the caller.",
+   OK + HDL_ELEMENT + HDL_PARAMS, ["parameters"],
+   """
+   format t @namespace "{ns}"
+   struct Root {
+     r : R(3)
+   }
+   struct R(lim) {
+     es : E(lim) repeat until v == stop
+     ok : derive all(es, small)
+   }
+   struct E(stop) {
+     v : u8
+     let small = v < stop
+   }
+   """,
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.r ) .
+   ex:Root.r a bddo:Field ; bddo:dataType ex:R ; bddo:hasArgument ( "3" ) .
+   ex:R a bddo:Struct ; bddo:hasParameter ( ex:R.lim ) ; bddo:hasField ( ex:R.es ex:R.ok ) .
+   ex:R.lim a bddo:Parameter .
+   ex:R.es a bddo:Field ; bddo:dataType ex:E ; bddo:hasArgument ( "param.lim" ) ;
+       bddo:repeatUntil "instance.v == param.stop" .
+   ex:R.ok a bddo:Field ; bddo:valueFromExpression "all(instance.es, instance.small)" .
+   ex:E a bddo:Struct ; bddo:hasParameter ( ex:E.stop ) ; bddo:hasField ( ex:E.v ex:E.small ) .
+   ex:E.stop a bddo:Parameter .
+   ex:E.v a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:E.small a bddo:LocalBinding ; bddo:localExpression "instance.v < param.stop" .
+   """)
+
+err("param-holding-struct-in-element-scope", "A parameter of the holding struct, read where an element is instance, is an ERROR",
+    "Inside the predicate over E elements, param is E's, and E declares no lim.", HDL_ELEMENT, ["parameters"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      r : R(3)
+    }
+    struct R(lim) {
+      es : E repeat 2
+      ok : derive all(es, v < lim)
+    }
+    struct E { v : u8 }
+    """, line=7)
+
+err("param-on-header", "Parameters on a header are an ERROR",
+    "A header locates its members by key, so it has no scope to bind arguments in.", HDL_PARAMS + ["req-hdl-conformance-section-2"],
+    ["parameters", "yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        fields:
+          - { name: h, type: { struct: Hdr, args: [ "1" ] }, size: 8 }
+      Hdr:
+        kind: header
+        separator: "="
+        params: [ n ]
+        fields:
+          - { name: samples, type: anum }
+    """, yaml=True)
+
 # ----------------------------------------------------------------- local bindings
 
 LET_TTL = """

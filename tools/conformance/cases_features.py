@@ -548,7 +548,7 @@ pp("param-field-name-clash", "A parameter sharing its name with a field of its s
 
 pp("param-type-mismatch", "An argument that is not of its parameter's type is a description error",
    "The parameter is a bddo:IntegerParameter and the argument is the String 'abc'.",
-   ["req-pm-errors-8", "req-pm-parsefield-11"], ["errors", "algorithm"],
+   ["req-pm-errors-8", "req-pm-parsefield-11", "req-pm-context-3"], ["errors", "algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.b ) .
    ex:Root.b a bddo:Field ; bddo:dataType ex:Blob ; bddo:hasArgument ( "'abc'" ) .
@@ -556,6 +556,19 @@ pp("param-type-mismatch", "An argument that is not of its parameter's type is a 
    ex:Blob.size a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
    ex:Blob.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 1 .
    """, b"\x01", error="Description")
+
+pp("param-type-mismatch-evaluated", "An evaluated argument that is not of its parameter's type is an expression error",
+   "The argument reads the string field tag, whose value is known only when it is evaluated: a Type / HEL error, not a "
+   "description error.",
+   ["req-pm-errors-6", "req-pm-parsefield-11", "req-pm-context-4"], ["errors", "algorithm"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.tag ex:Root.b ) .
+   ex:Root.tag a bddo:Field ; bddo:dataType bddo:string ; bddo:size 1 ; bddo:encoding bddo:ascii .
+   ex:Root.b a bddo:Field ; bddo:dataType ex:Blob ; bddo:hasArgument ( "instance.tag" ) .
+   ex:Blob a bddo:Struct ; bddo:hasParameter ( ex:Blob.size ) ; bddo:hasField ( ex:Blob.data ) .
+   ex:Blob.size a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Blob.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 1 .
+   """, b"a\x01", error="Expression")
 
 pp("param-float-accepts-integer", "An Integer argument for a bddo:FloatParameter is converted to Float",
    "The derived field reads the parameter back: 3 becomes 3.0.",
@@ -579,6 +592,52 @@ pp("param-undeclared", "param.x in a struct with no parameter x is a description
    ex:Blob.size a bddo:Parameter .
    ex:Blob.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.length" .
    """, b"\x01", error="Description")
+
+QUANTIFIER = {"features": {"requires": ["hel-ext-quantifier"]}}
+pp("param-quantifier-element", "Inside a quantifier over struct elements, param and bare names are the element's",
+   "The predicates read the element's parameter stop and its binding low; the root declares neither, and the description "
+   "loads. Items 1 and 12 against stop 9: not all below, not all low, some not low.",
+   ["req-hel-ext-quantifiers-3", "req-hel-reserved-roots-3", "req-pm-parsestruct-9", "req-pm-parsestruct-10"],
+   ["parameter-scope", "hel/index.html#ext-quantifiers"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ex:Root.below ex:Root.low ex:Root.high ) .
+   ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 2 ; bddo:hasArgument ( "9" ) .
+   ex:Root.below a bddo:Field ; bddo:valueFromExpression "all(instance.items, instance.v < param.stop)" .
+   ex:Root.low a bddo:Field ; bddo:valueFromExpression "all(items, low)" .
+   ex:Root.high a bddo:Field ; bddo:valueFromExpression "any(root.items, not low)" .
+   ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.stop ) ; bddo:hasField ( ex:Item.v ex:Item.low ) .
+   ex:Item.stop a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Item.v a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Item.low a bddo:LocalBinding ; bddo:localExpression "instance.v < param.stop" .
+   """,
+   b"\x01\x0c", {"items": [{"v": 1}, {"v": 12}], "below": False, "low": False, "high": True}, manifest=QUANTIFIER)
+
+pp("param-quantifier-holding-struct", "Inside a quantifier over struct elements, the holding struct's parameters are not reachable",
+   "Outer declares limit, but the predicate runs with each Plain element as instance, and Plain declares no parameter: "
+   "a description error when the description is loaded.",
+   ["req-hel-reserved-roots-3", "req-hel-ext-quantifiers-3", "req-pm-errors-8"], ["errors", "hel/index.html#reserved-roots"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.o ) .
+   ex:Root.o a bddo:Field ; bddo:dataType ex:Outer ; bddo:hasArgument ( "5" ) .
+   ex:Outer a bddo:Struct ; bddo:hasParameter ( ex:Outer.limit ) ; bddo:hasField ( ex:Outer.items ex:Outer.ok ) .
+   ex:Outer.limit a bddo:Parameter .
+   ex:Outer.items a bddo:Field ; bddo:dataType ex:Plain ; bddo:repeatCount 2 .
+   ex:Outer.ok a bddo:Field ; bddo:valueFromExpression "all(instance.items, instance.v < param.limit)" .
+   ex:Plain a bddo:Struct ; bddo:hasField ( ex:Plain.v ) .
+   ex:Plain.v a bddo:Field ; bddo:dataType bddo:uint8 .
+   """, b"\x01\x02", error="Description", manifest=QUANTIFIER)
+
+pp("param-on-text-container", "A text container with parameters is a description error",
+   "The key/value header declares bddo:hasParameter; its members are located by key, so it has no scope for arguments.",
+   ["req-bddo-parameterised-structs-4", "req-pm-errors-8"], ["errors", "bddo/index.html#parameterised-structs"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.h ) .
+   ex:Root.h a bddo:Field ; bddo:dataType ex:Hdr ; bddo:size 10 ; bddo:hasArgument ( "1" ) .
+   ex:Hdr a bddo:KeyValueHeader ; bddo:keyValueSeparator "3D"^^xsd:hexBinary ; bddo:recordDelimiter "0A"^^xsd:hexBinary ;
+       bddo:hasParameter ( ex:Hdr.n ) ; bddo:hasField ( ex:Hdr.samples ) .
+   ex:Hdr.n a bddo:Parameter .
+   ex:Hdr.samples a bddo:Field ; bddo:dataType bddo:asciiInteger .
+   """, b"samples=4\n", error="Description")
 
 pp("param-root-struct", "A root struct with parameters is a description error",
    "The root has no caller to supply its argument.",
@@ -669,6 +728,18 @@ pp("let-not-reachable-through-parent", "A local binding is not a node: parent.<n
    ex:Child a bddo:Struct ; bddo:hasField ( ex:Child.data ) .
    ex:Child.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "parent.area" .
    """, b"\x02abcd", error="Expression")
+
+pp("let-not-reachable-through-self", "A local binding is not a node: self.<name> does not reach it",
+   "The repeat-until condition over struct elements reads self.last; self is the element, as instance is, but a binding "
+   "is reached only through instance: an undefined name.",
+   ["req-hel-undefined-names-2", "req-hel-key-resolution-2"], ["parameter-scope", "hel/index.html#local-bindings"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ) .
+   ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatUntil "self.last" .
+   ex:Item a bddo:Struct ; bddo:hasField ( ex:Item.v ex:Item.last ) .
+   ex:Item.v a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Item.last a bddo:LocalBinding ; bddo:localExpression "instance.v == 9" .
+   """, b"\x09", error="Expression")
 
 pp("let-name-clash", "A local binding sharing its name with a field is a description error",
    "The binding ex:Root.w and the field ex:w have the same simple key.",

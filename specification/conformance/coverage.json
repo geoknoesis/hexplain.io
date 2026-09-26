@@ -1,9 +1,9 @@
 {
  "cases": {
-  "physical-parser": 340,
+  "physical-parser": 345,
   "semantic-emitter": 17,
   "bundle-processor": 13,
-  "hdl-compiler": 155,
+  "hdl-compiler": 158,
   "conformance-evaluator": 40
  },
  "excluded": {
@@ -18,8 +18,8 @@
  },
  "processorMust": {
   "Physical Parser": {
-   "total": 188,
-   "covered": 177,
+   "total": 192,
+   "covered": 181,
    "uncovered": [
     "req-bddo-addressing-1",
     "req-bddo-bitfields-1",
@@ -55,8 +55,8 @@
    "uncovered": []
   },
   "HDL Compiler": {
-   "total": 47,
-   "covered": 47,
+   "total": 48,
+   "covered": 48,
    "uncovered": []
   },
   "Conformance Evaluator": {
@@ -73,8 +73,8 @@
  "requirements": {
   "physical-parser": {
    "MUST": {
-    "total": 141,
-    "covered": 131
+    "total": 143,
+    "covered": 133
    },
    "SHOULD": {
     "total": 5,
@@ -83,8 +83,8 @@
   },
   "hel": {
    "MUST": {
-    "total": 47,
-    "covered": 46
+    "total": 49,
+    "covered": 48
    },
    "SHOULD": {
     "total": 2,
@@ -123,8 +123,8 @@
   },
   "hdl-compiler": {
    "MUST": {
-    "total": 47,
-    "covered": 47
+    "total": 48,
+    "covered": 48
    },
    "SHOULD": {
     "total": 0,
@@ -254,6 +254,12 @@
    "pp-param-argument-forward-reference"
   ],
   "req-pm-context-2": [],
+  "req-pm-context-3": [
+   "pp-param-type-mismatch"
+  ],
+  "req-pm-context-4": [
+   "pp-param-type-mismatch-evaluated"
+  ],
   "req-pm-data-layouts-1": [
    "pp-layout-conditional-cell-no-arm",
    "pp-layout-read-as-bytes",
@@ -438,6 +444,7 @@
    "pp-hel-unknown-function",
    "pp-layout-conditional-cell-no-arm",
    "pp-layout-size-not-integer",
+   "pp-param-type-mismatch-evaluated",
    "pp-struct-size-never-bound",
    "pp-valid-if-evaluation-failure"
   ],
@@ -482,6 +489,8 @@
    "pp-param-arguments-without-parameters",
    "pp-param-arity-mismatch",
    "pp-param-field-name-clash",
+   "pp-param-on-text-container",
+   "pp-param-quantifier-holding-struct",
    "pp-param-root-struct",
    "pp-param-type-mismatch",
    "pp-param-undeclared",
@@ -773,6 +782,7 @@
    "pp-param-repeated-field",
    "pp-param-rule-and-arm-arguments",
    "pp-param-type-mismatch",
+   "pp-param-type-mismatch-evaluated",
    "pp-str-encodings",
    "pp-str-trim-null",
    "pp-str-trim-null-utf16"
@@ -902,6 +912,7 @@
    "pp-let-with-parameter",
    "pp-param-basic",
    "pp-param-nested-arguments",
+   "pp-param-quantifier-element",
    "pp-param-recursion",
    "pp-param-recursion-depth-limit",
    "pp-param-repeated-field",
@@ -912,7 +923,8 @@
    "pp-let-forward-reference",
    "pp-let-size-and-count",
    "pp-let-struct-size",
-   "pp-let-with-parameter"
+   "pp-let-with-parameter",
+   "pp-param-quantifier-element"
   ],
   "req-pm-recovery-1": [
    "ce-recovery-abandon-struct",
@@ -1176,6 +1188,10 @@
   "req-hel-ext-quantifiers-2": [
    "pp-hel-quantifier-non-boolean"
   ],
+  "req-hel-ext-quantifiers-3": [
+   "pp-param-quantifier-element",
+   "pp-param-quantifier-holding-struct"
+  ],
   "req-hel-ext-temporal-1": [],
   "req-hel-ext-temporal-2": [
    "pp-hel-temporal-group"
@@ -1208,7 +1224,8 @@
   ],
   "req-hel-key-resolution-2": [
    "pp-hel-undefined-name-after-first-step",
-   "pp-let-not-reachable-through-parent"
+   "pp-let-not-reachable-through-parent",
+   "pp-let-not-reachable-through-self"
   ],
   "req-hel-key-resolution-3": [
    "pp-hel-reserved-word-key"
@@ -1278,6 +1295,10 @@
    "pp-param-basic",
    "pp-param-undeclared"
   ],
+  "req-hel-reserved-roots-3": [
+   "pp-param-quantifier-element",
+   "pp-param-quantifier-holding-struct"
+  ],
   "req-hel-tonumber-1": [
    "pp-hel-tonumber-float-lexeme",
    "pp-hel-tonumber-hex",
@@ -1291,7 +1312,8 @@
    "pp-hel-stream-unknown-key",
    "pp-hel-undefined-name",
    "pp-hel-undefined-name-after-first-step",
-   "pp-let-not-reachable-through-parent"
+   "pp-let-not-reachable-through-parent",
+   "pp-let-not-reachable-through-self"
   ],
   "req-hel-undefined-names-3": [
    "pp-hel-undefined-name",
@@ -1440,8 +1462,10 @@
    "hc-param-arity-mismatch",
    "hc-param-dispatch-default",
    "hc-param-field-clash",
+   "hc-param-holding-struct-in-element-scope",
    "hc-param-literal-type-mismatch",
    "hc-param-missing-arguments",
+   "hc-param-on-header",
    "hc-param-reserved-name",
    "hc-param-root-struct",
    "hc-param-undeclared",
@@ -1562,10 +1586,13 @@
    "hc-param-arguments-for-plain-struct",
    "hc-param-arity-mismatch",
    "hc-param-dispatch-default",
+   "hc-param-element-scope",
    "hc-param-field-clash",
+   "hc-param-holding-struct-in-element-scope",
    "hc-param-literal-type-mismatch",
    "hc-param-missing-arguments",
    "hc-param-nested-arguments",
+   "hc-param-on-header",
    "hc-param-recursion",
    "hc-param-reserved-name",
    "hc-param-root-struct",
@@ -1645,6 +1672,7 @@
    "hc-fixed-strings-yaml",
    "hc-layout-cell-yaml",
    "hc-let-binding-yaml",
+   "hc-param-on-header",
    "hc-param-struct-yaml",
    "hc-param-switch-arms-yaml",
    "hc-prop-values-yaml",
@@ -1690,6 +1718,7 @@
    "hc-let-binding",
    "hc-let-binding-yaml",
    "hc-let-reads-parameter",
+   "hc-param-element-scope",
    "hc-param-nested-arguments",
    "hc-param-recursion",
    "hc-param-struct",
@@ -1776,6 +1805,7 @@
    "hc-let-binding",
    "hc-let-binding-yaml",
    "hc-let-reads-parameter",
+   "hc-param-element-scope",
    "hc-param-nested-arguments",
    "hc-param-recursion",
    "hc-param-struct",
@@ -1873,8 +1903,10 @@
    "hc-param-arity-mismatch",
    "hc-param-dispatch-default",
    "hc-param-field-clash",
+   "hc-param-holding-struct-in-element-scope",
    "hc-param-literal-type-mismatch",
    "hc-param-missing-arguments",
+   "hc-param-on-header",
    "hc-param-reserved-name",
    "hc-param-root-struct",
    "hc-param-undeclared",
@@ -2084,10 +2116,12 @@
    "hc-param-arguments-for-plain-struct",
    "hc-param-arity-mismatch",
    "hc-param-dispatch-default",
+   "hc-param-element-scope",
    "hc-param-field-clash",
    "hc-param-literal-type-mismatch",
    "hc-param-missing-arguments",
    "hc-param-nested-arguments",
+   "hc-param-on-header",
    "hc-param-recursion",
    "hc-param-root-struct",
    "hc-param-struct",
@@ -2096,6 +2130,10 @@
    "hc-param-switch-arms-yaml",
    "hc-param-undeclared",
    "hc-param-unknown-type"
+  ],
+  "req-hdl-parameters-2": [
+   "hc-param-element-scope",
+   "hc-param-holding-struct-in-element-scope"
   ],
   "req-hdl-prefixes-1": [
    "hc-aspect-prefix-not-predeclared",
@@ -2336,6 +2374,9 @@
    "pp-let-in-header",
    "pp-let-name-clash"
   ],
+  "req-bddo-parameterised-structs-4": [
+   "pp-param-on-text-container"
+  ],
   "req-bddo-structural-properties-1": [
    "pp-let-size-and-count"
   ],
@@ -2373,7 +2414,7 @@
  "sections": {
   "bddo/index.html#checksum-algorithms": 14,
   "bddo/index.html#odd-widths": 7,
-  "bddo/index.html#parameterised-structs": 8,
+  "bddo/index.html#parameterised-structs": 9,
   "conf/index.html#conformance": 1,
   "hdl/index.html#bundle-profile": 4,
   "hdl/index.html#checksums": 10,
@@ -2399,7 +2440,7 @@
   "hdl/index.html#literal-datatypes": 2,
   "hdl/index.html#literal-values": 22,
   "hdl/index.html#modules": 3,
-  "hdl/index.html#parameters": 23,
+  "hdl/index.html#parameters": 26,
   "hdl/index.html#prefixes": 6,
   "hdl/index.html#raw-hel": 2,
   "hdl/index.html#repeat-until-names": 4,
@@ -2409,28 +2450,28 @@
   "hdl/index.html#structure": 2,
   "hdl/index.html#types": 10,
   "hdl/index.html#versioning": 3,
-  "hdl/index.html#yaml": 30,
+  "hdl/index.html#yaml": 31,
   "hel/index.html#coercion": 8,
   "hel/index.html#conformance": 11,
   "hel/index.html#core-functions": 9,
   "hel/index.html#evaluation": 4,
   "hel/index.html#expression-depth": 2,
   "hel/index.html#ext-geometry": 3,
-  "hel/index.html#ext-quantifiers": 3,
+  "hel/index.html#ext-quantifiers": 4,
   "hel/index.html#ext-register": 1,
   "hel/index.html#ext-temporal": 2,
   "hel/index.html#ext-text": 2,
   "hel/index.html#extension-groups": 2,
   "hel/index.html#key-resolution": 6,
-  "hel/index.html#local-bindings": 1,
+  "hel/index.html#local-bindings": 2,
   "hel/index.html#name-binding": 9,
   "hel/index.html#numeric-semantics": 13,
-  "hel/index.html#reserved-roots": 9,
+  "hel/index.html#reserved-roots": 10,
   "hel/index.html#syntax": 8,
   "hel/index.html#tonumber": 4,
   "hel/index.html#undefined-names": 10,
   "hel/index.html#versioning": 1,
-  "processing#algorithm": 94,
+  "processing#algorithm": 95,
   "processing#bit-cursor": 8,
   "processing#byte-order": 12,
   "processing#conflicting-forms": 5,
@@ -2442,7 +2483,7 @@
   "processing#delimited-tables": 7,
   "processing#delta-parameters": 10,
   "processing#emission": 13,
-  "processing#errors": 42,
+  "processing#errors": 45,
   "processing#fixed-values": 13,
   "processing#iri-minting": 11,
   "processing#key-value": 4,
@@ -2451,7 +2492,7 @@
   "processing#multi-part-assets": 15,
   "processing#optional-codecs": 17,
   "processing#optional-features": 1,
-  "processing#parameter-scope": 7,
+  "processing#parameter-scope": 9,
   "processing#recovery": 7,
   "processing#refusal": 2,
   "processing#repeat-until-bindings": 5,
