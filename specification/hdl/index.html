@@ -74,6 +74,8 @@
                     <tr><td><code>struct Chunk</code></td><td><code>&lt;base&gt;Chunk</code> — a <code>bddo:Struct</code></td></tr>
                     <tr><td>field <code>length</code> in <code>struct Chunk</code></td><td><code>&lt;base&gt;Chunk.length</code> — a <code>bddo:Field</code></td></tr>
                     <tr><td><code>length as ChunkLength</code></td><td><code>&lt;base&gt;ChunkLength</code> (the alias replaces the local name)</td></tr>
+                    <tr><td>parameter <code>n</code> of <code>struct Row(n, w)</code></td><td><code>&lt;base&gt;Row.n</code> &mdash; a <code>bddo:Parameter</code></td></tr>
+                    <tr><td><code>let area = &#8230;</code> in <code>struct Image</code></td><td><code>&lt;base&gt;Image.area</code> &mdash; a <code>bddo:LocalBinding</code></td></tr>
                     <tr><td><code>bundle Shapefile</code></td><td><code>&lt;base&gt;Shapefile</code> — an <code>abnd:BundleProfile</code></td></tr>
                     <tr><td><code>asset roads</code></td><td><code>&lt;base&gt;roads</code> — an <code>abnd:Asset</code></td></tr>
                 </tbody>
@@ -110,7 +112,7 @@
         <ul>
             <li><b>Comments.</b> <code>//</code> to end of line; <code>/* &#8230; */</code> block (not nested). A block comment left open at end of input is a lexical <code>ERROR</code>.</li>
             <li><b>Names.</b> A name starts with a letter or <code>_</code> and continues with letters, digits, <code>_</code> and <code>:</code>; a <em>single</em> <code>-</code> or <code>.</code> is also folded into the name when a letter, digit or <code>_</code> follows it. So <code>naming-convention</code>, <code>roads.shp</code>, <code>root.Directory</code> and <code>araster:RasterGrid</code> are each one token, while <code>a..b</code>, <code>a--b</code> and a trailing <code>a-</code> are not; a name containing <code>:</code> is a CURIE and a name ending in <code>:</code> is a prefix label (<code>ageom:</code>).</li>
-            <li><b>Field names.</b> <span class="req" id="req-hdl-lexical-1"></span>Although the lexer folds <code>-</code> and <code>.</code>, a field's name and its <code>as</code> alias MUST be <b>HEL identifiers</b> &#8212; an ASCII letter or <code>_</code> followed by ASCII letters, digits and <code>_</code>, and not one of <code>instance parent root self stream asset and or not true false</code> &#8212; because expressions reach a field by that name (<code>asset</code> is HEL's multi-part root, so a field so named could never be read). <span class="req" id="req-hdl-lexical-2"></span>A compiler MUST report an <code>ERROR</code> for a hyphenated, dotted or reserved field name (the reference compiler suggests <code>byte_order</code> for <code>byte-order</code>). A quoted <code>header</code>/<code>document</code> key is a record key, not a name, and is exempt; its alias, if any, is not, and an expression reaches such a field only by its alias: a bare name that spells a quoted key, even one that is a HEL identifier, is an undeclared name. An <em>unquoted</em> name in a <code>header</code> is a field name like any other, and the record key the field is located by: the compiler emits no <code>bddo:key</code> for it, and the processor locates it by its simple key (<a href="../processing/index.html#key-value">Processing Model, key/value headers</a>).</li>
+            <li><b>Field names.</b> <span class="req" id="req-hdl-lexical-1"></span>Although the lexer folds <code>-</code> and <code>.</code>, a field's name and its <code>as</code> alias, a struct parameter's name and a <code>let</code> binding's name MUST be <b>HEL identifiers</b> &#8212; an ASCII letter or <code>_</code> followed by ASCII letters, digits and <code>_</code>, and not one of <code>instance parent root self stream asset param and or not true false</code> &#8212; because expressions reach a field by that name (<code>asset</code> is HEL's multi-part root, so a field so named could never be read). <span class="req" id="req-hdl-lexical-2"></span>A compiler MUST report an <code>ERROR</code> for a hyphenated, dotted or reserved field name (the reference compiler suggests <code>byte_order</code> for <code>byte-order</code>). A quoted <code>header</code>/<code>document</code> key is a record key, not a name, and is exempt; its alias, if any, is not, and an expression reaches such a field only by its alias: a bare name that spells a quoted key, even one that is a HEL identifier, is an undeclared name. An <em>unquoted</em> name in a <code>header</code> is a field name like any other, and the record key the field is located by: the compiler emits no <code>bddo:key</code> for it, and the processor locates it by its simple key (<a href="../processing/index.html#key-value">Processing Model, key/value headers</a>).</li>
             <li><b>Literals.</b> integers (<code>42</code>, <code>-1</code>, <code>0b1010</code>; a binary literal is emitted in HEL as its decimal value; every integer fits in a signed 64-bit integer), floats (<code>1.5</code>, <code>2.5e-3</code>, <code>1e6</code>), strings (<code>"&#8230;"</code> or <code>'&#8230;'</code>, with the escape set HEL uses &#8212; <code>\\ \' \" \n \t \r \0 \xHH \uHHHH</code> &#8212; any other escape being an <code>ERROR</code>; either quoting becomes a single-quoted HEL string with the same content), hex byte strings (<code>0x89504E47</code>), booleans (<code>true</code>/<code>false</code>). The lexer reads the whole alphanumeric run after <code>0x</code> or <code>0b</code>, so <code>0x12G4</code> and <code>0b102</code> are lexical errors, not a number followed by a name. <span class="req" id="req-hdl-lexical-3"></span>Digits are ASCII only: a compiler MUST report a lexical <code>ERROR</code> for a non-ASCII digit (the Arabic-Indic <code>&#x0663;</code>, the fullwidth <code>&#xFF11;</code>) outside a string, comment or <code>raw-turtle</code> block, never read it as a digit. A <code>\uHHHH</code> escape naming a surrogate that is not half of a high-low pair is an <code>ERROR</code>, as it is in HEL.</li>
             <li><b>Unknown characters.</b> A character that cannot begin any token (for example <code>;</code>, <code>#</code> or <code>$</code> outside a string, bracketed or backtick expression, IRI, <code>raw-turtle</code> block or comment) is a lexical <code>ERROR</code>; a string, block comment, backtick expression, bracketed expression or <code>raw-turtle</code> block left unterminated at end of input is also an <code>ERROR</code>.</li>
             <li><b>Annotations.</b> begin with <code>@</code> (<code>@endian</code>, <code>@at</code>, <code>@fixed</code>, <code>@bound-by</code>, &#8230;).</li>
@@ -149,15 +151,15 @@ struct PLTE_ChunkData {
   entries : bytes[..]
 }
         </pre>
-        <p>A struct MAY carry <code>@endian big|little</code>, <code>@bit-order msb|lsb</code>, a <code>means</code> clause (§<a href="#semantic">Semantic Mapping</a>), a <code>@root</code> annotation (marking the format's entry point; the first struct is the default root), and an <code>as</code> alias. A <code>field</code> declared at document scope (outside any struct) mints a standalone <code>bddo:Field</code>.</p>
+        <p>A struct MAY declare parameters after its name (<a href="#parameters">&#167;Parameters and local bindings</a>), and MAY carry <code>@endian big|little</code>, <code>@bit-order msb|lsb</code>, a <code>means</code> clause (§<a href="#semantic">Semantic Mapping</a>), a <code>@root</code> annotation (marking the format's entry point; the first struct is the default root), and an <code>as</code> alias. A <code>field</code> declared at document scope (outside any struct) mints a standalone <code>bddo:Field</code>.</p>
 
         <section id="types">
             <h3>Types</h3>
             <table class="simple">
                 <thead><tr><th>HDL type</th><th>BDDO</th></tr></thead>
                 <tbody>
-                    <tr><td><code>u8 i8 u16 u16le u16be u32 u32be u64 &#8230; i16 &#8230; i64</code></td><td><code>bddo:uint8</code> / <code>bddo:int16be</code> / &#8230;</td></tr>
-                    <tr><td><code>f32 f32le f32be f64 f64le f64be</code></td><td><code>bddo:float32</code> / &#8230;</td></tr>
+                    <tr><td><code>u8 i8 u16 u16le u16be u24 u24le u24be u32 u32be u64 &#8230; i16 &#8230; i24 i24le i24be &#8230; i64</code></td><td><code>bddo:uint8</code> / <code>bddo:int16be</code> / <code>bddo:uint24le</code> / &#8230;</td></tr>
+                    <tr><td><code>f16 f16le f16be f32 f32le f32be f64 f64le f64be</code></td><td><code>bddo:float16</code> / <code>bddo:float32</code> / &#8230;</td></tr>
                     <tr><td><code>bytes</code></td><td><code>bddo:bytes</code> (requires a sizing or terminator clause)</td></tr>
                     <tr><td><code>str</code></td><td><code>bddo:string</code>, encoding <code>bddo:utf8</code> (default)</td></tr>
                     <tr><td><code>ascii utf8 utf16le utf16be latin1</code></td><td><code>bddo:string</code> + <code>bddo:encoding</code></td></tr>
@@ -165,6 +167,7 @@ struct PLTE_ChunkData {
                     <tr><td><code>varuint varint sqvarint</code></td><td><code>bddo:varuint</code> / <code>bddo:varint</code> / <code>bddo:sqliteVarint</code> (width discovered from the bytes)</td></tr>
                     <tr><td><code>anum adec</code></td><td><code>bddo:asciiInteger</code> / <code>bddo:asciiDecimal</code> (digits written as text; takes a <code>[n]</code> size, and <code>anum</code> an optional <code>@base 8|10|16</code>)</td></tr>
                     <tr><td><code>&lt;StructName&gt;</code></td><td>a nested/typed field (<code>bddo:dataType</code> that Struct)</td></tr>
+                    <tr><td><code>&lt;StructName&gt;(&lt;expr&gt;, &#8230;)</code></td><td>a field of a parameterised struct: <code>bddo:dataType</code> that Struct and <code>bddo:hasArgument</code> the arguments, in order (<a href="#parameters">&#167;Parameters and local bindings</a>)</td></tr>
                     <tr><td><code>&lt;prefix:Name&gt;</code></td><td>an imported struct (<code>alias:Name</code>, <a href="#modules">&#167;Modules</a>) or a custom <code>bddo:DataType</code> individual</td></tr>
                     <tr><td><code>switch &lt;expr&gt; { &#8230; }</code> in place of a type</td><td>no <code>bddo:dataType</code> of its own: the dispatched struct supplies both type and extent</td></tr>
                     <tr><td><code>derive &lt;expr&gt;</code></td><td>a derived, zero-byte field: <code>bddo:valueFromExpression</code>, no <code>bddo:dataType</code> and no other byte-consuming clause</td></tr>
@@ -184,7 +187,7 @@ struct PLTE_ChunkData {
                     <tr><td>presence</td><td><code>if hasGamma == 1</code></td><td><code>isPresentIf</code></td></tr>
                     <tr><td>fixed value</td><td><code>@fixed 0x89504E470D0A1A0A</code></td><td><code>hasFixedValue</code></td></tr>
                     <tr><td>enumeration</td><td><code>u8 enum { 0=&gt;Grayscale, 2=&gt;RGB }</code> &middot; <code>enum flags {&#8230;}</code></td><td>inline <code>Enumeration</code>/<code>EnumValue</code>, <code>enumIsFlags</code></td></tr>
-                    <tr><td>checksum</td><td><code>@checksum crc32(type .. data)</code></td><td>inline <code>Checksum</code> (<code>coversFromField..coversToField</code>)</td></tr>
+                    <tr><td>checksum</td><td><code>@checksum crc32(type .. data)</code> &middot; <code>@checksum crc16modbus(a .. b)</code> &middot; <code>@checksum crc(width: 16, poly: 0x8005, init: 0x0000, refin: true, refout: true, xorout: 0x0000)(a .. b)</code></td><td>inline <code>Checksum</code> (<code>coversFromField..coversToField</code>); a named algorithm, or an inline <code>bddo:CustomCrc</code> (<a href="#checksums">&#167;Checksums</a>)</td></tr>
                     <tr><td>terminator</td><td><code>str @terminator 0x00</code> &middot; <code>@trim-null</code></td><td><code>terminator</code> / <code>trimNull</code></td></tr>
                     <tr><td>overrides</td><td><code>@endian little</code> &middot; <code>@align 4</code> &middot; <code>@bit-order lsb</code> &middot; <code>@encoding latin1</code></td><td>per-field properties</td></tr>
                     <tr><td>conditional type</td><td><code>switch &lt;expr?&gt; { &lt;val|when expr&gt; =&gt; &lt;Struct&gt; &#8230; }</code></td><td><code>hasConditionalDataType</code> (<code>DataTypeRule</code> list)</td></tr>
@@ -195,7 +198,7 @@ struct PLTE_ChunkData {
             </table>
             <p id="clause-multiplicity"><b>One of each.</b> <span class="req" id="req-hdl-clauses-2"></span>A field MUST NOT carry two clauses of one kind, and a compiler MUST report an <code>ERROR</code> for a second size (two <code>[&#8230;]</code>), count (two <code>repeat</code>), offset (two <code>@at</code>), fixed value (two <code>@fixed</code>), byte order (two <code>@endian</code>) or type selection (two of <code>switch</code> and <code>dispatch</code>), rather than emit both values of a property the Processing Model reads once. <span class="req" id="req-hdl-clauses-3"></span>It MUST also report an <code>ERROR</code> for a <code>derive</code> field with a <code>repeat</code> clause (a derived field reads no bytes, so it has no elements), for <code>@pipeline</code> together with <code>@encoded-with</code> on one field, and for two declarations of one struct, header, table or document name in a document. A <code>bytes</code> or string field of a binary struct with neither a size nor a terminator has no extent (Processing Model, Size resolution) and is an <code>ERROR</code>; the fields of a <code>header</code>, <code>table</code> or <code>document</code> are exempt, since their container gives their extent. A size together with <code>@terminator</code> is not two clauses of one kind: the terminator is searched for inside the declared region, as the Processing Model defines.</p>
         <p id="literal-values"><b>Literal values.</b> <span class="req" id="req-hdl-clauses-4"></span>A compiler MUST report an <code>ERROR</code> for a literal outside the range of its position &#8212; a field size or struct <code>@size</code> below 1 (<code>bytes[0]</code>, <code>bytes[-3]</code>), a repeat count or offset below 0 (<code>repeat -2</code>, <code>@at -2</code>), a stride below 1 (<code>stride 0</code>) &#8212; and for a FLOAT literal in any of these positions (<code>bytes[2.0]</code>, <code>repeat 1.5</code>, <code>@at 1e0</code>): they take integers, and an integral float is not one. <span class="req" id="req-hdl-clauses-5"></span>The literal positions differ in what they accept, and a compiler MUST hold each to its own set. <code>@prop</code> takes an IRIREF, a CURIE, or an INT, HEX, STRING, <code>true</code> or <code>false</code> literal, never a bare NAME (write the string <code>"x"</code> or the CURIE <code>ex:x</code>). A NAME or a CURIE as the key of a <code>switch</code> arm is the string it spells: <code>IHDR =&gt; S</code> tests <code>discriminator == 'IHDR'</code>; an IRIREF there is an <code>ERROR</code>. An enumeration value is neither an IRIREF nor a bare NAME. <code>@fixed</code> takes an INT (typed with the field's XSD type), a STRING (<code>xsd:string</code>) or a HEX (<code>xsd:hexBinary</code>) only; a NAME, a CURIE or a Boolean there is an <code>ERROR</code>, and so, as the Processing Model makes them description errors, are a STRING on a numeric field and an INT on a bytes or string field.</p>
-        <p><b>Fixed values.</b> <span class="req" id="req-hdl-clauses-1"></span>An integer <code>@fixed</code> on a numeric field is emitted typed with the field's XSD type (<code>@fixed 9994</code> on an <code>i32</code> becomes <code>"9994"^^xsd:int</code>) and is compared by value; a hex <code>@fixed</code> stays <code>xsd:hexBinary</code> and, on a numeric field, MUST have exactly the field's width in bytes (<a href="../processing/index.html#algorithm">Processing Model, Fixed value</a>).</p>
+        <p><b>Fixed values.</b> <span class="req" id="req-hdl-clauses-1"></span>An integer <code>@fixed</code> on a numeric field is emitted typed with the field's XSD type (<code>@fixed 9994</code> on an <code>i32</code> becomes <code>"9994"^^xsd:int</code>) and is compared by value; a hex <code>@fixed</code> stays <code>xsd:hexBinary</code> and, on a numeric field, MUST have exactly the field's width in bytes (<a href="../processing/index.html#algorithm">Processing Model, Fixed value</a>). The widths are those of the types: three bytes for <code>u24</code> and <code>i24</code>, two for <code>f16</code>, on which an integer <code>@fixed</code> is typed <code>xsd:float</code> and compared at binary16 width (<code>@fixed 1</code> on an <code>f16</code> matches <code>3C 00</code> big-endian).</p>
         <p><code>offsetBase</code> keywords: <code>stream-start stream-end parent-start current</code>. A <code>switch</code> arm may match a literal value against the discriminator (<code>"IHDR" =&gt; S</code>) or supply a full boolean guard (<code>when expr =&gt; S</code>).</p>
         </section>
 
@@ -204,6 +207,82 @@ struct PLTE_ChunkData {
             <p><span class="req" id="req-hdl-form-rule-1"></span>For any size, offset, or count clause: when the expression is <b>exactly one sibling field name</b>, a conforming compiler MUST emit the specific <code>&#8230;FromField</code> object property; otherwise it MUST emit the <code>&#8230;FromExpression</code> datatype property carrying the synthesized HEL string. An integer literal emits the plain form (<code>bddo:size</code>, <code>bddo:repeatCount</code>, <code>bddo:atOffset</code>). This rule is deterministic and identical across both surfaces. (DLV <code>dimensionSize</code> has no expression form: an integer &#8594; <code>dimensionSize</code>, a sibling name &#8594; <code>dimensionSizeFromField</code>.)</p>
                     <p id="literal-datatypes"><b>Literal datatypes.</b> <span class="req" id="req-hdl-form-rule-2"></span>A compiler MUST emit every integer it writes as an <code>xsd:integer</code> literal (Turtle's bare integer), except where this document names another datatype: a size, repeat count, offset, alignment, radix, bit length, skip count, dimension size, stride, chunk extent, cell width, part count, enumeration raw value, dispatch key, pipeline parameter or <code>@prop</code> value is an <code>xsd:integer</code>, never an <code>xsd:long</code> or <code>xsd:int</code>, whatever range the targeted property declares; an integer <code>@fixed</code> on a numeric field takes the field's XSD type (<a href="#clauses">Fixed values</a>). A conformance suite compares literal datatypes exactly, so the choice is not left to the implementation.</p>
         </section>
+    </section>
+
+    <section id="checksums">
+        <h2>Checksums</h2>
+        <p><code>@checksum &lt;algorithm&gt;(&lt;from&gt; .. &lt;to&gt;)</code> names the algorithm, then the covered range as the first and last covered sibling (or <code>covers(&lt;start&gt;, &lt;end&gt;)</code> as two offset expressions). The algorithm is one of the names below, each emitted as the BDDO individual beside it (<a href="../bddo/index.html#checksum-algorithms">BDDO, Checksum Algorithms</a>), or <code>crc(&#8230;)</code>, a CRC given by its six Rocksoft parameters.</p>
+        <table class="simple">
+            <thead><tr><th>HDL</th><th>BDDO</th><th>HDL</th><th>BDDO</th></tr></thead>
+            <tbody>
+                <tr><td><code>crc8</code></td><td><code>bddo:crc8Smbus</code></td><td><code>crc32</code></td><td><code>bddo:crc32</code></td></tr>
+                <tr><td><code>crc16</code></td><td><code>bddo:crc16</code> (CCITT-FALSE)</td><td><code>crc32c</code></td><td><code>bddo:crc32c</code></td></tr>
+                <tr><td><code>crc16arc</code></td><td><code>bddo:crc16Arc</code></td><td><code>crc32bzip2</code></td><td><code>bddo:crc32Bzip2</code></td></tr>
+                <tr><td><code>crc16xmodem</code></td><td><code>bddo:crc16Xmodem</code></td><td><code>crc32mpeg2</code></td><td><code>bddo:crc32Mpeg2</code></td></tr>
+                <tr><td><code>crc16modbus</code></td><td><code>bddo:crc16Modbus</code></td><td><code>crc64ecma</code></td><td><code>bddo:crc64Ecma182</code></td></tr>
+                <tr><td><code>crc16x25</code></td><td><code>bddo:crc16X25</code></td><td><code>crc64xz</code></td><td><code>bddo:crc64Xz</code></td></tr>
+                <tr><td><code>adler32</code></td><td><code>bddo:adler32</code></td><td><code>md5</code> <code>sha1</code> <code>sha256</code></td><td><code>bddo:md5</code> <code>bddo:sha1</code> <code>bddo:sha256</code></td></tr>
+            </tbody>
+        </table>
+        <pre class="nohighlight">
+struct Frame @endian little {
+  header  : bytes[4]
+  payload : bytes[8]
+  crc     : u16 @checksum crc(width: 16, poly: 0x8005, init: 0x0000, refin: true, refout: true, xorout: 0x0000)(header .. payload)
+}
+        </pre>
+        <p>compiles the checksum to</p>
+        <pre class="nohighlight">
+ex:Frame.crc a bddo:Field ; bddo:dataType bddo:uint16 ;
+    bddo:checksum [ a bddo:Checksum ; bddo:coversFromField ex:Frame.header ; bddo:coversToField ex:Frame.payload ;
+        bddo:checksumAlgorithm [ a bddo:CustomCrc ; bddo:crcWidth 16 ; bddo:crcPolynomial 32773 ; bddo:crcInit 0 ;
+            bddo:crcReflectIn true ; bddo:crcReflectOut true ; bddo:crcXorOut 0 ] ] .
+        </pre>
+        <p><span class="req" id="req-hdl-checksums-1"></span>In <code>crc(&#8230;)</code> a compiler MUST accept the six parameters <code>width</code>, <code>poly</code>, <code>init</code>, <code>refin</code>, <code>refout</code> and <code>xorout</code> in any order, each exactly once, and MUST report an <code>ERROR</code> for a missing, repeated or unknown parameter, a <code>width</code> outside 8..64, a <code>poly</code>, <code>init</code> or <code>xorout</code> that is negative or not below 2<sup>width</sup>, and a reflection flag that is not <code>true</code> or <code>false</code>. <code>width</code>, <code>poly</code>, <code>init</code> and <code>xorout</code> take an INT or a HEX, a HEX here denoting the unsigned integer its digits spell, of any length up to sixteen digits (<code>0x8005</code> is 32773, <code>0xFFFFFFFFFFFFFFFF</code> is 2<sup>64</sup>&minus;1); they are emitted as <code>xsd:integer</code> literals and the flags as <code>xsd:boolean</code>. A parameter's name and its colon may be written together (<code>width:</code>, which the lexer reads as one NAME ending in <code>:</code>) or apart (<code>width :</code>); both are the same parameter. The checksum field's own type decides how the stored value is read, so a little-endian CRC-16 is a <code>u16le</code> field, or a <code>u16</code> in a little-endian struct. <span class="req" id="req-hdl-checksums-2"></span>A CRC's width, named or custom, MUST equal the bit width of its checksum field's integer type; any other checksum field is an <code>ERROR</code> (the Processing Model makes it a description error).</p>
+    </section>
+
+    <section id="parameters">
+        <h2>Parameters and local bindings</h2>
+        <p>A struct may take <b>parameters</b>: values its caller supplies, such as the element count of a row held by the table around it, or a width shared by every row. A parameter list follows the struct's name; each parameter is a name, optionally followed by a colon and the kind of value it accepts (<code>int</code>, <code>float</code>, <code>string</code>, <code>bytes</code>, <code>bool</code> &#8594; <code>bddo:parameterType</code> <code>bddo:IntegerParameter</code>, <code>bddo:FloatParameter</code>, <code>bddo:StringParameter</code>, <code>bddo:BytesParameter</code>, <code>bddo:BooleanParameter</code>). A field whose type is a parameterised struct supplies the arguments in parentheses after the struct name, in the same order, and so does a <code>switch</code> or <code>dispatch</code> arm that selects one. A <b>local binding</b>, <code>let &lt;name&gt; = &lt;expr&gt;</code> as a member of a struct, names a value computed where it stands, for the members after it.</p>
+        <pre class="nohighlight">
+struct Header { count : u8  width : u8 }
+
+struct Table {
+  hdr  : Header
+  rows : Row(hdr.count, 4)
+}
+
+struct Row(n: int, w) {
+  cells : bytes[w] repeat n
+}
+
+struct Image {
+  width  : u16
+  height : u16
+  let area = width * height
+  pixels : bytes[area]
+}
+        </pre>
+        <p>compiles to</p>
+        <pre class="nohighlight">
+ex:Table.rows a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( "instance.hdr.count" "4" ) .
+ex:Row a bddo:Struct ; bddo:hasParameter ( ex:Row.n ex:Row.w ) ; bddo:hasField ( ex:Row.cells ) .
+ex:Row.n a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+ex:Row.w a bddo:Parameter .
+ex:Row.cells a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.w" ;
+    bddo:repeatCountFromExpression "param.n" .
+ex:Image a bddo:Struct ; bddo:hasField ( ex:Image.width ex:Image.height ex:Image.area ex:Image.pixels ) .
+ex:Image.area a bddo:LocalBinding ; bddo:localExpression "instance.width * instance.height" .
+ex:Image.pixels a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "instance.area" .
+        </pre>
+        <ul>
+            <li><b>Names.</b> Inside a parameterised struct, a bare name that names one of its parameters compiles to <code>param.<i>name</i></code>, and a bare name that names a <code>let</code> binding compiles to <code>instance.<i>name</i></code>, as a sibling field's does. A parameter, a binding and a field are all members of one namespace per struct, so a bare name has one reading. A reference to a binding never takes the <code>&#8230;FromField</code> form of the <a href="#form-rule">field-form rule</a>, because a binding is not a field: <code>bytes[area]</code> is <code>bddo:sizeFromExpression "instance.area"</code>.</li>
+            <li><b>Arguments.</b> Each argument is an expression, ended by a <code>,</code> or the closing <code>)</code> at parenthesis depth 0, and is resolved in the <em>caller's</em> struct: bare names are its fields, bindings and parameters, so <code>Cell(w)</code> inside <code>Row</code> passes <code>param.w</code> on. It is emitted as the canonical HEL string, an integer literal included (<code>"4"</code>).</li>
+            <li><b>Order.</b> A <code>let</code> binding is a member of the struct's <code>bddo:hasField</code> list at its position, and a reference to it from an earlier member is a forward reference under the rules of <a href="#forward-references">&#167;Expressions</a>, exactly as a reference to a later field is.</li>
+            <li><b>Recursion.</b> A struct may name itself, with arguments, in its own fields: <code>struct Node(depth) { v : u8  child : Node(depth - 1) if depth &gt; 0 }</code>. The Processing Model's nesting-depth limit bounds a recursion the data does not end.</li>
+            <li><b>Colons.</b> The colon of a typed parameter, like that of a <code>crc(&#8230;)</code> parameter, may be written with or without spaces: in a parameter list the lexer's <code>n:</code> (a NAME ending in <code>:</code>) and <code>n:int</code> (a NAME that would elsewhere be a CURIE) are read as the name, colon and type they spell.</li>
+        </ul>
+        <p><span class="req" id="req-hdl-parameters-1"></span>A compiler MUST report an <code>ERROR</code> for: a type position that supplies a number of arguments other than its struct's number of parameters (including arguments for a struct without parameters, and none for one with parameters); a parameterised struct in a position that cannot state arguments &#8212; a <code>dispatch</code> <code>default</code>, a layout <code>cell</code> type, a <code>described-by</code> part struct, and the root struct (<code>@root</code>, or the first struct) &#8212; since none of them has a caller that could supply them; two parameters, two bindings, or a parameter, binding and field of one struct, that share a name; a parameter type other than the five words above; <code>param</code> used as a name, and <code>param.<i>x</i></code> in a struct with no parameter <i>x</i>; a forward or self reference in an argument, which is evaluated at the position of the field that passes it, or in a <code>let</code> expression, which is evaluated at the binding's position; a clause on a <code>let</code> (it has a name and an expression, nothing else); a <code>let</code> binding named where a field is required &#8212; a layout extent or stride, a checksum range bound, <code>@root-key</code>, <code>@lang-from</code> &#8212; since it has neither bytes nor a place in the tree; and a <code>let</code> in a <code>header</code>, <code>table</code> or <code>document</code>, whose members have no evaluation order. A literal argument whose kind differs from a typed parameter's (<code>Row("a", 4)</code> for <code>n: int</code>) is also an <code>ERROR</code>; an argument that is an expression is checked by the processor when it is evaluated.</p>
     </section>
 
     <section id="delimited">
@@ -330,7 +409,8 @@ header Label @record-separator 0x0A @separator 0x3D @trim
             <li>A <b>bare name</b> <code>x</code> is shorthand for <code>instance.x</code>: a field of the same struct (a sibling of the field being described). The compiler emits it in the canonical form <code>instance.&lt;name&gt;</code>, after applying any <code>as</code> alias of that sibling.</li>
             <li>A field of the enclosing struct's parent is written <code>parent.x</code>; a field of the root struct is <code>root.x</code>. What <code>parent.x</code> reads depends on the property: for a field-level expression it is a field of the struct that contains the containing struct (never a sibling); for <code>repeat until</code> over struct elements it is a field of the struct that contains the repeated field; for a struct-level expression it is a field of the struct's parent. The deprecated alias that made <code>parent</code> mean <code>instance</code> in a dispatch condition is never emitted.</li>
             <li>In the predicate of <code>all</code>/<code>any</code> over struct elements, a bare name resolves to a field of the element (<code>instance.v</code>) or, failing that, of the enclosing struct (<code>parent.n</code>); a name that both declare is an <code>ERROR</code>, since either reading would be a guess.</li>
-            <li>The reserved roots <code>instance parent root self stream asset</code> and the HEL function names (<code>sizeof len count eof trim substringBefore substringAfter substring concat toNumber partExtension</code>, when followed by <code>(</code>) pass through unchanged.</li>
+            <li>A bare name that names a parameter of the containing struct becomes <code>param.<i>name</i></code>; one that names a <code>let</code> binding becomes <code>instance.<i>name</i></code> (<a href="#parameters">&#167;Parameters and local bindings</a>).</li>
+            <li>The reserved roots <code>instance parent root self stream asset param</code> and the HEL function names (<code>sizeof len count eof trim substringBefore substringAfter substring concat toNumber partExtension</code>, when followed by <code>(</code>) pass through unchanged.</li>
             <li>Dotted paths and subscripts pass through: <code>root.Directory[i].Entries[0].Tag</code>.</li>
             <li>Contents of string literals are never rewritten (so <code>type == 'IHDR'</code> keeps <code>'IHDR'</code> intact).</li>
         </ul>
@@ -414,6 +494,10 @@ struct Tile {
             Other register concepts &#8212; <code>menc:Blosc</code>, <code>menc:Zstd</code>, &#8230; &#8212;
             compile and describe the encoding faithfully, but are optional: a processor that has no codec
             for a step refuses the description with Unsupported feature rather than returning undecoded bytes.
+            The Processing Model defines three of them (<a href="../processing/index.html#optional-codecs">Codecs beyond the minimum set</a>):
+            <code>menc:LZ4</code> (the LZ4 frame format) and <code>menc:Zstd</code> take no parameters, and
+            <code>menc:LZ4Block</code>, a bare LZ4 block, requires its decoded size:
+            <code>@pipeline { menc:LZ4Block(decodedSize 4096) }</code>.
         </p>
         <p>
             <b>Order is ENCODE order</b> &#8212; the steps as the writer applied them, so a reader
@@ -708,12 +792,12 @@ structs:
             <tbody>
                 <tr><td>top level</td><td><code>hdl format namespace endian bit-order use structs fields bundles assets register enums</code></td><td><code>hdl: 1.0</code> is the version declaration <code>hdl 1.0</code>, written exactly as the plain scalar <code>1.0</code> or the string <code>"1.0"</code>; any other spelling (<code>1.00</code>, <code>1</code>) is an unsupported language version, as in text; <code>format</code> header, <code>use</code>, declarations; <code>use: { menc: "https://&#8230;#" }</code>; <code>register: { abnd:partRole: rpr:PartRoleScheme }</code></td></tr>
                 <tr><td><code>enums: { Name: &#8230; }</code></td><td><code>as label flags values</code></td><td>top-level <code>enum</code>; <code>values: { 0: Grayscale, 2: { symbol: RGB, label: "Truecolour" }, 3: {} }</code> (an empty mapping is a bare valid value)</td></tr>
-                <tr><td>struct</td><td><code>kind as root means endian bit-order sync size label comment prop raw-turtle means-when fields</code></td><td><code>kind: struct|header|table|document</code> (default <code>struct</code>); <code>endian</code> is a scalar or a list of <code>{ when, order }</code> (<code>@endian switch</code>); <code>sync</code> is a quoted hex string; <code>means-when</code> is a list of <code>{ when, class }</code>; <code>prop</code> is a map <code>{ curie: value }</code></td></tr>
+                <tr><td>struct</td><td><code>kind as root means endian bit-order sync size label comment prop raw-turtle means-when params fields</code></td><td><code>params: [ w, { n: int } ]</code> declares the parameters in order, each a name (untyped) or a one-entry mapping from the name to its type; a <code>fields</code> entry <code>{ let: area, value: "width * height" }</code> is a local binding; <code>kind: struct|header|table|document</code> (default <code>struct</code>); <code>endian</code> is a scalar or a list of <code>{ when, order }</code> (<code>@endian switch</code>); <code>sync</code> is a quoted hex string; <code>means-when</code> is a list of <code>{ when, class }</code>; <code>prop</code> is a map <code>{ curie: value }</code></td></tr>
                 <tr><td>container (<code>kind</code> not <code>struct</code>)</td><td><code>record-separator separator quote escape comment skip trim ci whitespace group path-separator syntax ns</code></td><td><code>group: { style: keyed|valued|section, open, close }</code>; <code>syntax: xml|json</code> and <code>ns: { "prefix": "iri" }</code> for <code>kind: document</code>; <code>comment</code> here is the comment <em>prefix</em>, as <code>@comment</code> is on a container</td></tr>
-                <tr><td>field: identity and type</td><td><code>name as key type derive bit-length</code></td><td><code>key</code> is a header record key / document node path (and the name when <code>name</code> is absent); <code>type</code> takes every text type name, including <code>varuint varint sqvarint</code>, <code>anum adec</code>, a CURIE datatype (<code>type: nitf:BCSA</code>), <code>bits</code> with <code>bit-length</code>, and <code>switch</code> (type-less, with a <code>switch:</code> key); <code>derive: &lt;expr&gt;</code> replaces <code>type</code></td></tr>
+                <tr><td>field: identity and type</td><td><code>name as key type derive bit-length</code></td><td><code>type: { struct: Row, args: [ "hdr.count", 4 ] }</code> names a parameterised struct with its arguments, one expression scalar each (the same mapping is a <code>switch</code> case's or <code>when</code> arm's type); <code>key</code> is a header record key / document node path (and the name when <code>name</code> is absent); <code>type</code> takes every text type name, including <code>varuint varint sqvarint</code>, <code>anum adec</code>, a CURIE datatype (<code>type: nitf:BCSA</code>), <code>bits</code> with <code>bit-length</code>, and <code>switch</code> (type-less, with a <code>switch:</code> key); <code>derive: &lt;expr&gt;</code> replaces <code>type</code></td></tr>
                 <tr><td>field: structure</td><td><code>size repeat at if valid root-key fixed terminator trim-null separated endian bit-order align encoding</code></td><td><code>repeat: { count | until }</code>; <code>at: { offset, from }</code></td></tr>
                 <tr><td>field: documentation</td><td><code>label comment base prop</code></td><td><code>@label</code>, <code>@comment</code>, <code>@base</code>, <code>@prop</code> (<code>prop: { curie: value }</code>)</td></tr>
-                <tr><td>field: enum, checksum, switch</td><td><code>enum checksum switch</code></td><td><code>enum: Name</code> or <code>{ flags, values }</code>; <code>checksum: { algorithm, from, to }</code> or <code>{ algorithm, covers: [a, b] }</code>; <code>switch: { on, cases: { literal: Struct }, when: [ { cond, type } ] }</code></td></tr>
+                <tr><td>field: enum, checksum, switch</td><td><code>enum checksum switch</code></td><td><code>enum: Name</code> or <code>{ flags, values }</code>; <code>checksum: { algorithm, from, to }</code> or <code>{ algorithm, covers: [a, b] }</code>, the algorithm a name (<code>crc16modbus</code>); a custom CRC replaces <code>algorithm</code> with <code>crc: { width: 16, poly: 0x8005, init: 0, refin: true, refout: true, xorout: 0 }</code>; <code>switch: { on, cases: { literal: Struct }, when: [ { cond, type } ] }</code>, where a case's or arm's struct may be <code>{ struct: Row, args: [ &#8230; ] }</code></td></tr>
                 <tr><td>field: semantics</td><td><code>means value object unit lang lang-from encoded-with pipeline map</code></td><td><code>value: { expr, datatype }</code>; <code>pipeline: [ { codec, params: { name: int } } ]</code>; <code>map: [ { when, property, value, datatype } ]</code></td></tr>
                 <tr><td>field: <code>layout</code> (a mapping under the field key <code>layout</code>)</td><td><code>cell dims order chunks cell-bits packing</code>, as keys of the <code>layout:</code> mapping, never of the field</td><td><code>layout: { cell: u8, dims: [ &#8230; ] }</code>; <code>cell</code> is a type name or a list of <code>{ when, type }</code> (<code>cell switch</code>); <code>dims: [ { axis, size, stride, chunk } ]</code>; <code>order: [ { when, axes: [..] } ]</code>; <code>chunks: { offsets, lengths, base, order }</code>; <code>cell-bits</code> is an integer or a field name</td></tr>
                 <tr><td><code>bundles: { Name: &#8230; }</code></td><td><code>as bound-by parts</code></td><td>each part: <code>extension</code> or <code>pattern</code> (a string, or a list of alternatives: <code>extension: [".bil", ".flt"]</code>), <code>role required primary carries described-by min max nested</code></td></tr>
@@ -813,8 +897,11 @@ Alias          ::= "as" NAME
         <section id="grammar-structs">
             <h3>Structs and containers</h3>
             <pre class="ebnf">
-StructDecl     ::= "@root"? "struct" NAME Alias? ( "means" CURIE )? StructAnnot*
+StructDecl     ::= "@root"? "struct" NAME Params? Alias? ( "means" CURIE )? StructAnnot*
                    "{" StructMember* "}"
+Params         ::= "(" ( Param ( "," Param )* )? ")"   /* bddo:hasParameter */
+Param          ::= NAME ( ":" ParamType )?
+ParamType      ::= "int" | "float" | "string" | "bytes" | "bool"   /* bddo:parameterType */
 StructAnnot    ::= "@endian" ( Endian | "switch" EndianArms )
                  | "@bit-order" BitOrder
                  | "@sync" ( HEX | INT )          /* bddo:syncOnMarker */
@@ -822,7 +909,8 @@ StructAnnot    ::= "@endian" ( Endian | "switch" EndianArms )
                  | "@label" STRING                /* rdfs:label */
                  | "@comment" STRING              /* rdfs:comment */
 EndianArms     ::= "{" ( "when"? Guard "=&gt;" Endian ","? )* "}"   /* bddo:hasConditionalEndianness */
-StructMember   ::= FieldDecl | PropClause | RawTurtle | MeansWhen
+StructMember   ::= FieldDecl | LetDecl | PropClause | RawTurtle | MeansWhen
+LetDecl        ::= "let" NAME "=" Expr                /* bddo:LocalBinding */
 MeansWhen      ::= "means-when" Guard "=&gt;" CURIE  /* hexplain:hasConditionalClassMapping arm */
 RawTurtle      ::= "raw-turtle" RAW_BLOCK
 
@@ -857,17 +945,21 @@ Type           ::= PrimType | "bytes" | StrType
                  | "anum" | "adec"                /* ASCII-coded integer / decimal */
                  | "bits" BRACKET_EXPR            /* content: an integer literal 1..64 */
                  | "derive" Expr                  /* zero-byte computed field */
-                 | TypeName
+                 | TypeRef
 PrimType       ::= "u8" | "i8"
                  | "u16" | "u16le" | "u16be" | "i16" | "i16le" | "i16be"
+                 | "u24" | "u24le" | "u24be" | "i24" | "i24le" | "i24be"
                  | "u32" | "u32le" | "u32be" | "i32" | "i32le" | "i32be"
                  | "u64" | "u64le" | "u64be" | "i64" | "i64le" | "i64be"
+                 | "f16" | "f16le" | "f16be"
                  | "f32" | "f32le" | "f32be" | "f64" | "f64le" | "f64be"
                  | "varuint" | "varint" | "sqvarint"   /* variable-length integers */
 StrType        ::= "str" | StrEncoding
 StrEncoding    ::= "ascii" | "utf8" | "utf16le" | "utf16be" | "latin1"
 TypeName       ::= NAME | CURIE    /* NAME: a struct of this document;
                                       CURIE: an imported struct (alias:Name) or a bddo:DataType individual */
+TypeRef        ::= TypeName Arguments?
+Arguments      ::= "(" ( CoverExpr ( "," CoverExpr )* )? ")"   /* bddo:hasArgument, in order */
 
 Clause         ::= SizeClause
                  | "repeat" ( "until" Expr | Expr )
@@ -899,9 +991,9 @@ SizeClause     ::= BRACKET_EXPR | BACKTICK_EXPR   /* the bracket content ".." = 
 PropClause     ::= "@prop" CURIE ( IRIREF | CURIE | INT | HEX | STRING | "true" | "false" )
 
 SwitchClause   ::= "switch" Expr? "{" ( SwitchArm ","? )* "}"
-SwitchArm      ::= ( "when" Guard | Literal ) "=&gt;" TypeName     /* a NAME or CURIE key is a string key */
+SwitchArm      ::= ( "when" Guard | Literal ) "=&gt;" TypeRef      /* a NAME or CURIE key is a string key */
 DispatchClause ::= "dispatch" NAME "on" Expr ( "default" TypeName )? DispatchArms
-DispatchArms   ::= "{" ( ( STRING | INT ) "=&gt;" TypeName ","? )* "}"
+DispatchArms   ::= "{" ( ( STRING | INT ) "=&gt;" TypeRef ","? )* "}"
 MapClause      ::= "map" "{" ( MapArm ","? )* "}"
 MapArm         ::= "when" Guard "=&gt;" CURIE ( "value" Expr ( "@datatype" CURIE )? )?
 EnumClause     ::= "enum" "flags"? ( EnumBody | NAME )     /* inline, or a top-level enum by name */
@@ -909,14 +1001,20 @@ EnumBody       ::= "{" ( EnumPair ","? )* "}"
 EnumPair       ::= Literal ( "=&gt;" ( NAME | CURIE ) )? ( "(" STRING ")" )?   /* the Literal is not a NAME */
 ChecksumClause ::= "@checksum" ChecksumAlgo "("
                      ( NAME ".." NAME | "covers" "(" CoverExpr "," CoverExpr ")" ) ")"
-ChecksumAlgo   ::= "crc16" | "crc32" | "adler32" | "md5" | "sha1" | "sha256"
+ChecksumAlgo   ::= "crc8" | "crc16" | "crc16arc" | "crc16xmodem" | "crc16modbus" | "crc16x25"
+                 | "crc32" | "crc32c" | "crc32bzip2" | "crc32mpeg2" | "crc64ecma" | "crc64xz"
+                 | "adler32" | "md5" | "sha1" | "sha256"
+                 | "crc" "(" CrcParam ( "," CrcParam )* ")"      /* an inline bddo:CustomCrc */
+CrcParam       ::= ( "width" | "poly" | "init" | "xorout" ) ":" ( INT | HEX )
+                 | ( "refin" | "refout" ) ":" ( "true" | "false" )
 PipelineClause ::= "@pipeline" "{" ( PipelineStep ","? )* "}"
 PipelineStep   ::= CURIE ( "(" ( NAME Literal ","? )* ")" )?
             </pre>
             <ul>
                 <li>A <code>switch</code> with any literal arm needs a discriminator <code>Expr</code> (the arm tests <code>discriminator == literal</code>); a switch whose arms are all <code>when</code> guards needs none. A field has at most one <code>switch</code> or <code>dispatch</code>, not both.</li>
                 <li><code>@seek</code> requires an <code>@at</code> on the same field. <code>@base</code> is valid only on an <code>anum</code> field. An <code>EnumPair</code> without <code>=&gt;</code> declares a member of a valid-value set and binds no concept.</li>
-                <li><code>NAME ".." NAME</code> in a checksum names the first and last covered sibling; <code>covers(a, b)</code> gives the covered range as two expressions. <span class="req" id="req-hdl-grammar-fields-1"></span>A <code>PipelineStep</code> parameter value MUST be an integer literal (<a href="#semantic">&#167;Semantic Mapping</a>).</li>
+                <li><code>NAME ".." NAME</code> in a checksum names the first and last covered sibling; <code>covers(a, b)</code> gives the covered range as two expressions. A <code>CrcParam</code>'s name and <code>":"</code> may be one NAME token (<code>width:</code>); each of the six parameters appears exactly once (<a href="#checksums">&#167;Checksums</a>).</li>
+                <li>A <code>TypeRef</code>'s <code>Arguments</code> follow the <code>TypeName</code> directly and are allowed only when it names a struct with parameters, exactly one per parameter (<a href="#parameters">&#167;Parameters and local bindings</a>). A <code>LetDecl</code>'s <code>"="</code> is the OP token <code>=</code>; its expression is a TokenRun, which ends at the next member. <span class="req" id="req-hdl-grammar-fields-1"></span>A <code>PipelineStep</code> parameter value MUST be an integer literal (<a href="#semantic">&#167;Semantic Mapping</a>).</li>
                 <li>A <code>Literal</code> never includes a <code>FLOAT</code>: <code>@fixed</code>, <code>@prop</code>, enum values and pipeline parameters take integers, hex byte strings, strings, booleans or CURIEs, as each position allows (<a href="#literal-values">Literal values</a>).</li>
                 <li>A field carries at most one clause of each kind (<a href="#clause-multiplicity">One of each</a>).</li>
             </ul>
@@ -1021,11 +1119,11 @@ CoverToken     ::= /* any token except "{" and "}"; "(" and ")" must balance */
                 <thead><tr><th>Class</th><th>Words</th></tr></thead>
                 <tbody>
                     <tr><td>Declarations (top level)</td><td><code>format module import use register struct header table document field enum bundle asset extend</code>; first only: <code>hdl</code></td></tr>
-                    <tr><td>Clauses and bodies</td><td><code>as means means-when value map when switch dispatch on default repeat until if from derive flags layout cell cell-bits packing order dim axis size stride chunk chunks offsets lengths base covers raw-turtle part pattern role required optional primary min max carries described-by nested conforms</code></td></tr>
+                    <tr><td>Clauses and bodies</td><td><code>as means means-when value map when switch dispatch on default repeat until if from derive let crc width poly init refin refout xorout int float string bool flags layout cell cell-bits packing order dim axis size stride chunk chunks offsets lengths base covers raw-turtle part pattern role required optional primary min max carries described-by nested conforms</code></td></tr>
                     <tr><td>Values</td><td><code>true false big little msb lsb stream region stream-start stream-end parent-start current keyed valued section row-major column-major morton hilbert X Y Z Band Time containment naming-convention manifest-reference concatenation</code>, the type names of <code>PrimType</code>/<code>StrType</code>, <code>bytes bits anum adec</code>, and the checksum algorithms</td></tr>
                     <tr><td>Annotations</td><td>every <code>"@&#8230;"</code> word in the productions above; an annotation not valid in its position is an error</td></tr>
-                    <tr><td><b>Expression stoppers</b></td><td><code>means means-when value map enum layout switch repeat if from until as dim chunk chunks dispatch default on when order cell cell-bits packing</code> &#8212; end an unbracketed expression when they appear in keyword position (after a complete operand); in operand position they are ordinary sibling names</td></tr>
-                    <tr><td>Not valid as field names</td><td><code><span class="req" id="req-hdl-grammar-keywords-1"></span>instance parent root self stream asset and or not true false</code> &#8212; HEL reads them as roots, operators or literals, so a compiler MUST reject a field or alias so named.</td></tr>
+                    <tr><td><b>Expression stoppers</b></td><td><code>means means-when value map enum layout switch repeat if from until as dim chunk chunks dispatch default on when order cell cell-bits packing let</code> &#8212; end an unbracketed expression when they appear in keyword position (after a complete operand); in operand position they are ordinary sibling names</td></tr>
+                    <tr><td>Not valid as field names</td><td><code><span class="req" id="req-hdl-grammar-keywords-1"></span>instance parent root self stream asset param and or not true false</code> &#8212; HEL reads them as roots, operators or literals, so a compiler MUST reject a field, alias, parameter or <code>let</code> binding so named.</td></tr>
                 </tbody>
             </table>
         </section>

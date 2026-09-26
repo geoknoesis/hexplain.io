@@ -100,9 +100,13 @@
       "note": "The HEL extension group register, implemented in full."
     },
     "codecs-beyond-minimum": {
-      "claimed": false,
-      "terms": [],
-      "note": "No register codec beyond the minimum set is decoded; the others (menc:Zstd, menc:Blosc, ...) are refused with Unsupported feature. TIFF PackBits and LZW are decoded under engine-specific identifiers only."
+      "claimed": true,
+      "terms": [
+        "menc:LZ4",
+        "menc:LZ4Block",
+        "menc:Zstd"
+      ],
+      "note": "LZ4 Frame (menc:LZ4), LZ4 Block (menc:LZ4Block, with its decodedSize parameter) and Zstandard frames (menc:Zstd) are decoded as the Processing Model defines them, checksums verified; a dictionary is refused with Unsupported feature. Every other codec beyond the minimum set (menc:Blosc, menc:Snappy, ...) is refused with Unsupported feature. TIFF PackBits and LZW are decoded under engine-specific identifiers only."
     }
   },
   "helExtensionGroups": [
@@ -119,10 +123,13 @@
       "Deflate",
       "Zlib",
       "Gzip",
-      "Delta"
+      "Delta",
+      "LZ4",
+      "LZ4Block",
+      "Zstd"
     ],
-    "note": "The minimum codec set of the Processing Model. The engine also decodes TIFF PackBits and LZW under its own identifiers, which are not register concepts.",
-    "parameters": "Codec settings executed: a compression level (-1 for the default, or 0..9) for Zlib and raw DEFLATE, validated before execution; every other codec option is refused. Generated Kotlin readers and writers preserve these settings on supported byte fields."
+    "note": "The minimum codec set of the Processing Model, and the three codecs beyond it that the Processing Model defines (LZ4 Frame, LZ4 Block, Zstandard). The engine also decodes TIFF PackBits and LZW under its own identifiers, which are not register concepts.",
+    "parameters": "Codec settings executed: a compression level (-1 for the default, or 0..9) for Zlib and raw DEFLATE, validated before execution; the Delta parameters; and decodedSize for LZ4Block, which is required. Every other codec option is refused. Generated Kotlin readers and writers preserve these settings on supported byte fields."
   },
   "limits": {
     "maxInputBytes": 268435456,

@@ -91,6 +91,7 @@ DESCRIPTION_AUDIENCE = {
     "req-spatialref-document-7",      # a polynomialBasis IRI MUST identify a published contract
     "req-spatialref-document-8",      # coefficient orders MUST NOT be interchanged
     "req-spatialref-document-9",      # a profile MUST identify the complete contract
+    "req-bddo-parameterised-structs-2",  # a parameter MUST NOT share its name with another member
 }
 _B, _D, _C = "https://hexplain.io/ns/bddo#", "https://hexplain.io/ns/dlv#", "https://hexplain.io/ns/core#"
 _SR, _R = "https://hexplain.io/ns/aspect/spatialref#", "https://hexplain.io/ns/aspect/raster#"
@@ -113,6 +114,9 @@ SHAPE_BACKED = {
     "req-bddo-field-properties-9": [_B + "DelimitedRecordsShape", _B + "RangeDatatypeShape"],
     "req-bddo-field-properties-10": [_B + "DelimitedRecordsShape", _B + "RangeDatatypeShape"],
     "req-bddo-data-type-rule-1": [_B + "DataTypeShape"],
+    "req-bddo-checksum-algorithms-1": [_B + "CustomCrcShape"],
+    "req-bddo-parameterised-structs-1": [_B + "ArgumentArityShape"],
+    "req-bddo-parameterised-structs-3": [_B + "LocalBindingShape"],
     "req-dlv-properties-1": [_D + "DataLayoutShape"],
     "req-dlv-properties-2": [_D + "DimensionShape"],
     "req-core-static-mapping-properties-1": [_C + "MapsToClassShape"],

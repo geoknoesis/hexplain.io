@@ -484,6 +484,15 @@
    "text": "For a Field with hexplain:hasDataLayout, the layout (DLV) governs how the multi-dimensional cells are addressed; a processor MAY additionally emit per-cell triples but is not required to materialize them.",
    "sha256": "d5fe09562a84c271"
   },
+  "req-pm-emission-10": {
+   "page": "specification/processing/index.html",
+   "section": "emission",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST NOT emit anything for a bddo:Parameter or a bddo:LocalBinding: they are not nodes of the parsed tree, have no node path, and carry no mapping.",
+   "sha256": "77658f23686b6b5f"
+  },
   "req-pm-errors-1": {
    "page": "specification/processing/index.html",
    "section": "errors",
@@ -529,8 +538,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Checksum error | bddo:Checksum mismatch; an integrity-check mismatch inside a codec (zlib Adler-32, gzip CRC-32, length or header CRC).",
-   "sha256": "0be475d71ec283ae"
+   "text": "Checksum error | bddo:Checksum mismatch; an integrity-check mismatch inside a codec (zlib Adler-32, gzip CRC-32, length or header CRC, an LZ4 header, block or content checksum, a Zstandard content checksum, or an LZ4 or Zstandard declared content size).",
+   "sha256": "e655cd8a8b265a05",
+   "history": [
+    "0be475d71ec283ae"
+   ]
   },
   "req-pm-errors-6": {
    "page": "specification/processing/index.html",
@@ -562,11 +574,13 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Description error | The description itself is inconsistent: two dispatch arms with one key, both dispatch mechanisms on one field, an empty terminator, a variable-length field with no extent, an unbound namespace prefix, cyclic cross-part references, two part specs described by structs sharing a local name, a malformed fixed value, a packed width on a non-integer cell type, a bddo:repeatUntil on a text container, a codec parameter that is unknown, missing or out of range, a pair of conflicting forms (a repeat count with a repeat-until condition, two count or offset forms, a dispatch table with conditional type rules, two values of a functional property), two fields of one struct sharing a local name. An invalid profile or rule set is a Description error when it is loaded: a description, conformance profile or rule set that the family’s shapes reject, including a requirement identity stated twice (by IRI, or by a blank-node pair with one req:requirementId and req:fromStandard), a requirement without a statement, and a parse attribution naming ResourceLimit. A Description error SHOULD be raised when the description is loaded.",
-   "sha256": "99099e6d77370703",
+   "text": "Description error | The description itself is inconsistent: two dispatch arms with one key, both dispatch mechanisms on one field, an empty terminator, a variable-length field with no extent, an unbound namespace prefix, cyclic cross-part references, two part specs described by structs sharing a local name, a malformed fixed value, a packed width on a non-integer cell type, a bddo:repeatUntil on a text container, a codec parameter that is unknown, missing or out of range, a pair of conflicting forms (a repeat count with a repeat-until condition, two count or offset forms, a dispatch table with conditional type rules, two values of a functional property), two fields of one struct sharing a local name; a parameterised struct named with a number of arguments other than its number of parameters, arguments for a struct without parameters or for a data type, an argument that is not of its parameter's type, a parameter or local binding sharing its name with a field, parameter or binding of its struct, param.x in an expression whose struct has no parameter x, a root or bundle-part struct with parameters, a parameterised struct named by a bddo:dispatchDefault (which cannot state arguments), a local binding in a delimited or tree container; a CRC whose checksum field is not an integer exactly as wide as the CRC; an menc:LZ4Block step without a valid decodedSize. An invalid profile or rule set is a Description error when it is loaded: a description, conformance profile or rule set that the family’s shapes reject, including a requirement identity stated twice (by IRI, or by a blank-node pair with one req:requirementId and req:fromStandard), a requirement without a statement, and a parse attribution naming ResourceLimit. A Description error SHOULD be raised when the description is loaded.",
+   "sha256": "f8ffe1ebc5e7b4d8",
    "history": [
     "0cb63e59ec525203",
-    "6d63f31091bf4ed6"
+    "6d63f31091bf4ed6",
+    "99099e6d77370703",
+    "e7406fe5e260e93c"
    ]
   },
   "req-pm-errors-9": {
@@ -830,6 +844,69 @@
    "text": "A part that is carried but not parsed (its spec has no abnd:describedBy) MUST still be minted the same way: its root is <part>#root, which the lifting below links and types, and which carries no triple of its own content.",
    "sha256": "6a5d5330e8283c4a"
   },
+  "req-pm-optional-codecs-1": {
+   "page": "specification/processing/index.html",
+   "section": "optional-codecs",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor that decodes these codecs MUST report their failures in these categories: a checksum or content-size mismatch that the format declares is a Checksum error; data that is not a well-formed frame or block — a wrong magic number, reserved bits set, a truncated frame or block, a match offset of 0 or reaching before the start of the output, a block that decodes to more or fewer bytes than decodedSize or than its frame's maximum block size allows, or bytes after the last frame that do not begin another frame — is a Validation error, as Codecs requires for every codec; a dictionary is Unsupported feature; and a missing or invalid decodedSize is a Description error.",
+   "sha256": "a1f2329d32e09f08"
+  },
+  "req-pm-optional-codecs-2": {
+   "page": "specification/processing/index.html",
+   "section": "optional-codecs",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The decoded output counts toward the decoded-byte limit as it is produced, and a processor MUST raise ResourceLimit before decoding when a decodedSize or a declared content size already exceeds what remains of that limit.",
+   "sha256": "48d8c617ef6ef3c6"
+  },
+  "req-pm-optional-codecs-3": {
+   "page": "specification/processing/index.html",
+   "section": "optional-codecs",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor that claims the feature MUST state which codecs beyond the minimum set it decodes, MUST decode each codec this section defines that it states exactly as defined here, and MUST raise Unsupported feature for every codec it does not state.",
+   "sha256": "8fac43df41a265b5"
+  },
+  "req-pm-optional-codecs-4": {
+   "page": "specification/processing/index.html",
+   "section": "optional-codecs",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST verify every checksum the frame declares — the header checksum, each block checksum and the content checksum, all the xxHash-32 the format specifies — and the content size when the descriptor states one; a mismatch is a Checksum error.",
+   "sha256": "e6f3317a52905cc8"
+  },
+  "req-pm-optional-codecs-5": {
+   "page": "specification/processing/index.html",
+   "section": "optional-codecs",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The format records neither its own length nor its output's, so the step takes the parameter decodedSize below: the block is the whole encoded byte run, and decoding it MUST yield exactly decodedSize bytes.",
+   "sha256": "eeac62bac673909e"
+  },
+  "req-pm-optional-codecs-6": {
+   "page": "specification/processing/index.html",
+   "section": "optional-codecs",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST verify the content checksum (the low 32 bits of the frame's XXH64) when the frame declares one, and the frame content size when the header states one; a mismatch is a Checksum error.",
+   "sha256": "08061772fa7eb00c"
+  },
+  "req-pm-optional-codecs-7": {
+   "page": "specification/processing/index.html",
+   "section": "optional-codecs",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "REQUIRED: an integer literal ≥ 0",
+   "sha256": "70789cf89313f520"
+  },
   "req-pm-parsefield-1": {
    "page": "specification/processing/index.html",
    "section": "parsefield",
@@ -929,8 +1006,12 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Value. If the effective type is a bddo:Struct, recurse via ParseStruct. If it is a bddo:DataType:",
-   "sha256": "e4d21caff3c52a61"
+   "text": "Value. If the effective type is a bddo:Struct, recurse via ParseStruct. When that struct declares parameters, the arguments are evaluated first — the bddo:hasArgument list of what named the struct: the bddo:DataTypeRule or bddo:DispatchArm that selected it, or the field when it is the field's bddo:dataType — in list order, each with the containing struct as instance exactly as a bddo:sizeFromExpression of the field is evaluated, and passed to ParseStruct; for a repeated field they are evaluated anew before each element. An argument whose value is not of its parameter's bddo:parameterType (an Integer is accepted for bddo:FloatParameter and converted to Float), or that is a struct or array node, is a description error. If the effective type is a bddo:DataType:",
+   "sha256": "f8ffe558bc642800",
+   "history": [
+    "e4d21caff3c52a61",
+    "3300fc4b796a1b90"
+   ]
   },
   "req-pm-parsefield-12": {
    "page": "specification/processing/index.html",
@@ -974,8 +1055,12 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Checksum. If bddo:checksum is present, compute the algorithm over the covered byte range — from the first byte of coversFromField, or the offset coversFromExpression yields, to the last byte of coversToField (inclusive), or up to and excluding the offset coversToExpression yields (the two bounds may mix a field and an expression); or the [start, end) range yielded by the deprecated coversExpression — and compare with the stored value; a mismatch raises a checksum error. A coverage bound outside the current (sub-)stream raises a bounds error; a range whose end precedes its start covers nothing and is not checked. The bddo:checksumAlgorithm values are bddo:crc32 (CRC-32 as in zlib), bddo:adler32, bddo:crc16 (CRC-16/CCITT-FALSE: polynomial 0x1021, initial value 0xFFFF), bddo:md5, bddo:sha1 and bddo:sha256; an integer checksum is compared numerically, a digest byte for byte.",
-   "sha256": "8bdf97ff4687a0ea"
+   "text": "Checksum. If bddo:checksum is present, compute the algorithm over the covered byte range — from the first byte of coversFromField, or the offset coversFromExpression yields, to the last byte of coversToField (inclusive), or up to and excluding the offset coversToExpression yields (the two bounds may mix a field and an expression); or the [start, end) range yielded by the deprecated coversExpression — and compare with the stored value; a mismatch raises a checksum error. A coverage bound outside the current (sub-)stream raises a bounds error; a range whose end precedes its start covers nothing and is not checked. The bddo:checksumAlgorithm values are the named algorithms of BDDO, Checksum Algorithms — bddo:crc32 (CRC-32 as in zlib), bddo:crc16 (CRC-16/CCITT-FALSE: polynomial 0x1021, initial value 0xFFFF), the further CRC-8, CRC-16, CRC-32 and CRC-64 variants, bddo:adler32, bddo:md5, bddo:sha1 and bddo:sha256 — and bddo:CustomCrc; an integer checksum is compared numerically, a digest byte for byte. Every CRC, named or custom, is computed by the Rocksoft model with the algorithm's six parameters as BDDO defines it, and compared with the checksum field's value read in the field's own data type, width and byte order. A CRC whose checksum field is not an integer field exactly as wide as the CRC (a bddo:uint16 for a CRC-16, a bddo:uint24 for a 24-bit custom CRC) is a description error.",
+   "sha256": "3ea125439989b8d4",
+   "history": [
+    "8bdf97ff4687a0ea",
+    "9c7f7d2454eface5"
+   ]
   },
   "req-pm-parsefield-17": {
    "page": "specification/processing/index.html",
@@ -1049,6 +1134,15 @@
    "text": "More than one value of a functional property on one resource: a property the family's vocabularies or shapes allow at most once, stated with two different values (for example two bddo:dataType, two bddo:size, two bddo:endianness or two bddo:hasFixedValue values on one field). The data type individuals the family's vocabularies define themselves (bddo:uint32 and the like) are exempt.",
    "sha256": "80565eb0a525ea11"
   },
+  "req-pm-parsefield-26": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "On a bddo:float16 field a processor MUST round the literal to binary16 (round half to even) and compare at that width: \"0.1\"^^xsd:double matches the stored 2E 66 (0.0999755859375), \"65504\"^^xsd:float matches 7B FF, and a finite literal that rounds beyond 65504 overflows the format.",
+   "sha256": "9090f4f99db3c8a3"
+  },
   "req-pm-parsestruct-1": {
    "page": "specification/processing/index.html",
    "section": "parsestruct",
@@ -1120,6 +1214,24 @@
    "audience": "processor",
    "text": "If struct declared a size, advance the cursor to start+size (skipping any trailing padding/unknown bytes); otherwise the end offset is the current cursor. Record the node's end offset (sizeof = end − start) and return n.",
    "sha256": "fac865442e35cb7d"
+  },
+  "req-pm-parsestruct-9": {
+   "page": "specification/processing/index.html",
+   "section": "parsestruct",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "If struct declares bddo:hasParameter, a processor MUST bind each parameter, by name, to the argument its caller supplied in the same position (ParseField, Value), in a parameter scope of n that HEL reads as param.name and that is not a child of n.",
+   "sha256": "41bbb60cd35224f3"
+  },
+  "req-pm-parsestruct-10": {
+   "page": "specification/processing/index.html",
+   "section": "parsestruct",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A member that is a bddo:LocalBinding is not a field: when its position is reached a processor MUST evaluate its bddo:localExpression with n as instance and bind the result under the binding's name in a local scope of n, which HEL reads by bare name or instance.name from the next member on; the binding consumes no bytes, is not a child of n, and a Null result binds Null.",
+   "sha256": "b9fe5c0966dba4d3"
   },
   "req-pm-recovery-1": {
    "page": "specification/processing/index.html",
@@ -1691,8 +1803,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "A key MUST name a field declared by the bddo:Struct of the node it is applied to, or be the keyword parent; this is checked at every step of a path, not only the first, and inside the predicate of all/any a bare name is checked against the element's struct.",
-   "sha256": "c015429a1662eece"
+   "text": "A key MUST name a field declared by the bddo:Struct of the node it is applied to, or be the keyword parent; a bare name, or a key applied directly to instance, MAY also name a bddo:LocalBinding of that struct, and a key after param names a parameter.",
+   "sha256": "5d845739c0016770",
+   "history": [
+    "c015429a1662eece"
+   ]
   },
   "req-hel-key-resolution-3": {
    "page": "specification/hel/index.html",
@@ -1700,8 +1815,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "description",
-   "text": "A name that is also a reserved word (instance parent root self stream asset and or not true false) cannot be written as a bare name or a key, so a field that expressions need to reference MUST NOT have such a local name.",
-   "sha256": "cb101823406ffe2a"
+   "text": "A name that is also a reserved word (instance parent root self stream asset param and or not true false) cannot be written as a bare name or a key, so a field, parameter or local binding that expressions need to reference MUST NOT have such a local name.",
+   "sha256": "5c0de2414f5eec77",
+   "history": [
+    "cb101823406ffe2a"
+   ]
   },
   "req-hel-key-resolution-4": {
    "page": "specification/hel/index.html",
@@ -1847,6 +1965,15 @@
    "text": "The key after the part name MUST name a field of that part's root struct.",
    "sha256": "35072eeff0259e85"
   },
+  "req-hel-reserved-roots-2": {
+   "page": "specification/hel/index.html",
+   "section": "reserved-roots",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST raise a Description error, when the description is loaded, for param.n in an expression whose instance struct declares no parameter n, and for param without a key: whether a struct has a parameter is known from the description alone, so this is never deferred to the data.",
+   "sha256": "35164e3a9a9ebe69"
+  },
   "req-hel-tonumber-1": {
    "page": "specification/hel/index.html",
    "section": "tonumber",
@@ -1918,6 +2045,24 @@
    "audience": "processor",
    "text": "The function library is divided into a core set, which every conforming evaluator MUST implement, and named extension groups, which an evaluator MAY implement.",
    "sha256": "f3199bac0d33250b"
+  },
+  "req-hdl-checksums-1": {
+   "page": "specification/hdl/index.html",
+   "section": "checksums",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "In crc(…) a compiler MUST accept the six parameters width, poly, init, refin, refout and xorout in any order, each exactly once, and MUST report an ERROR for a missing, repeated or unknown parameter, a width outside 8..64, a poly, init or xorout that is negative or not below 2^width, and a reflection flag that is not true or false.",
+   "sha256": "5cc5fc181d6bc474"
+  },
+  "req-hdl-checksums-2": {
+   "page": "specification/hdl/index.html",
+   "section": "checksums",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A CRC's width, named or custom, MUST equal the bit width of its checksum field's integer type; any other checksum field is an ERROR (the Processing Model makes it a description error).",
+   "sha256": "943819f45414636b"
   },
   "req-hdl-clauses-1": {
    "page": "specification/hdl/index.html",
@@ -2198,8 +2343,11 @@
    "cls": "hdl-compiler",
    "level": "MUST",
    "audience": "processor",
-   "text": "instance parent root self stream asset and or not true false — HEL reads them as roots, operators or literals, so a compiler MUST reject a field or alias so named.",
-   "sha256": "297f8a0c0b41b31b"
+   "text": "instance parent root self stream asset param and or not true false — HEL reads them as roots, operators or literals, so a compiler MUST reject a field, alias, parameter or let binding so named.",
+   "sha256": "4ccbce36c5c4c80e",
+   "history": [
+    "297f8a0c0b41b31b"
+   ]
   },
   "req-hdl-grammar-layout-1": {
    "page": "specification/hdl/index.html",
@@ -2234,8 +2382,11 @@
    "cls": "hdl-compiler",
    "level": "MUST",
    "audience": "processor",
-   "text": "Although the lexer folds - and ., a field's name and its as alias MUST be HEL identifiers — an ASCII letter or _ followed by ASCII letters, digits and _, and not one of instance parent root self stream asset and or not true false — because expressions reach a field by that name (asset is HEL's multi-part root, so a field so named could never be read).",
-   "sha256": "2100b85236774c45"
+   "text": "Although the lexer folds - and ., a field's name and its as alias, a struct parameter's name and a let binding's name MUST be HEL identifiers — an ASCII letter or _ followed by ASCII letters, digits and _, and not one of instance parent root self stream asset param and or not true false — because expressions reach a field by that name (asset is HEL's multi-part root, so a field so named could never be read).",
+   "sha256": "e986edec576d6178",
+   "history": [
+    "2100b85236774c45"
+   ]
   },
   "req-hdl-lexical-2": {
    "page": "specification/hdl/index.html",
@@ -2272,6 +2423,18 @@
    "audience": "processor",
    "text": "escape, or a symbolic link pointing out of the tree, since links are resolved to their real path before the check — MUST be rejected with an ERROR diagnostic on the import line; the root is inherited by every nested import, so an imported module cannot widen it.",
    "sha256": "84609b0da6d323e4"
+  },
+  "req-hdl-parameters-1": {
+   "page": "specification/hdl/index.html",
+   "section": "parameters",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST report an ERROR for: a type position that supplies a number of arguments other than its struct's number of parameters (including arguments for a struct without parameters, and none for one with parameters); a parameterised struct in a position that cannot state arguments — a dispatch default, a layout cell type, a described-by part struct, and the root struct (@root, or the first struct) — since none of them has a caller that could supply them; two parameters, two bindings, or a parameter, binding and field of one struct, that share a name; a parameter type other than the five words above; param used as a name, and param.x in a struct with no parameter x; a forward or self reference in an argument, which is evaluated at the position of the field that passes it, or in a let expression, which is evaluated at the binding's position; a clause on a let (it has a name and an expression, nothing else); a let binding named where a field is required — a layout extent or stride, a checksum range bound, @root-key, @lang-from — since it has neither bytes nor a place in the tree; and a let in a header, table or document, whose members have no evaluation order.",
+   "sha256": "9ce7b1c5cdb5b371",
+   "history": [
+    "8df4d62c14048686"
+   ]
   },
   "req-hdl-prefixes-1": {
    "page": "specification/hdl/index.html",
@@ -2492,6 +2655,19 @@
    "text": "A run of bit fields SHOULD align to a byte boundary; a processor MUST pad to the next byte before parsing a subsequent non-bit field.",
    "sha256": "cabe19dce3312c02"
   },
+  "req-bddo-checksum-algorithms-1": {
+   "page": "specification/bddo/index.html",
+   "section": "checksum-algorithms",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "description",
+   "text": "A bddo:CustomCrc MUST state each of the six exactly once: a width from 8 to 64, a polynomial (in normal, unreflected form, without its top term), an initial value and a final XOR that are non-negative integers below 2^width, and the two reflection flags as xsd:boolean literals.",
+   "sha256": "f19b07cacac8c1a1",
+   "kind": "shape-backed",
+   "shapes": [
+    "https://hexplain.io/ns/bddo#CustomCrcShape"
+   ]
+  },
   "req-bddo-conformance-1": {
    "page": "specification/bddo/index.html",
    "section": "conformance",
@@ -2522,6 +2698,24 @@
    "shapes": [
     "https://hexplain.io/ns/bddo#VarintWidthShape"
    ]
+  },
+  "req-bddo-core-datatypes-3": {
+   "page": "specification/bddo/index.html",
+   "section": "core-datatypes",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST read a bddo:uint24 as the unsigned value of its three bytes in the effective byte order (0 to 16,777,215), and a bddo:int24 as the same 24 bits read as a two's-complement integer (−8,388,608 to 8,388,607): FF FF FE big-endian is −2, never 16,777,214.",
+   "sha256": "638dbf92c900e53b"
+  },
+  "req-bddo-core-datatypes-4": {
+   "page": "specification/bddo/index.html",
+   "section": "core-datatypes",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "It MUST read a bddo:float16 as an IEEE 754 binary16 value — one sign bit, five exponent bits with bias 15, ten fraction bits — including subnormals (exponent field 0: the fraction times 2^−24), both zeros, both infinities and NaN, and its value is the exact binary16 value as a HEL Float, with no rounding, since every binary16 value is exactly a binary64 one: 3C 00 is 1.0, 00 01 is 2^−24, 7B FF is 65504, 7C 00 is +Infinity.",
+   "sha256": "7b083e326294d4a7"
   },
   "req-bddo-data-type-rule-1": {
    "page": "specification/bddo/index.html",
@@ -2666,17 +2860,55 @@
     "https://hexplain.io/ns/bddo#RangeDatatypeShape"
    ]
   },
+  "req-bddo-parameterised-structs-1": {
+   "page": "specification/bddo/index.html",
+   "section": "parameterised-structs",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "description",
+   "text": "Every place that names a parameterised struct as a type MUST supply exactly one argument per parameter, and a place that names a struct without parameters, or a bddo:DataType, MUST supply none; bddo:ArgumentArityShape checks the three direct forms.",
+   "sha256": "1aa5cdf6d6437ef6",
+   "kind": "shape-backed",
+   "shapes": [
+    "https://hexplain.io/ns/bddo#ArgumentArityShape"
+   ]
+  },
+  "req-bddo-parameterised-structs-2": {
+   "page": "specification/bddo/index.html",
+   "section": "parameterised-structs",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "description",
+   "text": "Within one struct, a parameter MUST NOT share its name with a field, a local binding or another parameter of that struct.",
+   "sha256": "5cc436a68566eeea"
+  },
+  "req-bddo-parameterised-structs-3": {
+   "page": "specification/bddo/index.html",
+   "section": "parameterised-structs",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "description",
+   "text": "A local binding MUST be named by an IRI, MUST NOT share its name with a field, a parameter or another binding of its struct, and MUST NOT be a member of a delimited or tree container, whose members have no evaluation order; bddo:LocalBindingShape checks the first and the last.",
+   "sha256": "8cbc555f039ca8be",
+   "kind": "shape-backed",
+   "shapes": [
+    "https://hexplain.io/ns/bddo#LocalBindingShape"
+   ]
+  },
   "req-bddo-structural-properties-1": {
    "page": "specification/bddo/index.html",
    "section": "structural-properties",
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "description",
-   "text": "The object MUST be an rdf:List of bddo:Field to preserve order.",
-   "sha256": "a749a962efbc0d23",
+   "text": "The object MUST be an rdf:List whose members are bddo:Field or bddo:LocalBinding resources, to preserve order.",
+   "sha256": "5cd0d93922960b48",
    "kind": "shape-backed",
    "shapes": [
     "https://hexplain.io/ns/bddo#StructShape"
+   ],
+   "history": [
+    "a749a962efbc0d23"
    ]
   },
   "req-bddo-structural-properties-2": {

@@ -49,6 +49,76 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### New language features (bddo 1.3, register/checksum 1.3, register/media-encoding 1.2)
+
+All additions are to the unreleased working versions; no module needed a further version bump.
+
+- **Scalar types.** `bddo:uint24`, `bddo:int24` (three-byte two's complement) and `bddo:float16`
+  (IEEE 754 binary16, subnormals, both zeros, both infinities and NaN included; the decoded value
+  is the exact binary16 value as a Float), each with `be`/`le` forms (`bddo:uint24be`,
+  `bddo:uint24le`, `bddo:int24be`, `bddo:int24le`, `bddo:float16be`, `bddo:float16le`), as
+  datatype individuals like the others: `bddo:bitWidth` 24/16, `bddo:xsdType` `xsd:unsignedInt`,
+  `xsd:int` and `xsd:float`. HDL: `u24 u24le u24be i24 i24le i24be f16 f16le f16be`. A fixed value
+  on a `bddo:float16` field is compared at binary16 width (`req-pm-parsefield-26`); a hex fixed
+  value on a 24-bit field is three bytes.
+- **CRC variants.** `bddo:crc16` (CRC-16/CCITT-FALSE) and `bddo:crc32` (CRC-32/ISO-HDLC) are
+  unchanged in meaning. New named algorithms `bddo:crc8Smbus`, `bddo:crc16Arc`, `bddo:crc16Xmodem`,
+  `bddo:crc16Modbus`, `bddo:crc16X25`, `bddo:crc32c`, `bddo:crc32Bzip2`, `bddo:crc32Mpeg2`,
+  `bddo:crc64Ecma182`, `bddo:crc64Xz`, each stating its Rocksoft parameters and its catalogue
+  check value over "123456789" with the new properties `bddo:crcWidth`, `bddo:crcPolynomial`,
+  `bddo:crcInit`, `bddo:crcReflectIn`, `bddo:crcReflectOut`, `bddo:crcXorOut` and `bddo:crcCheck`
+  (also stated on `bddo:crc16` and `bddo:crc32`). New class `bddo:CustomCrc`
+  (`rdfs:subClassOf bddo:ChecksumAlgorithm`) states any other CRC by the six parameters, all
+  required (`bddo:CustomCrcShape`: width 8..64, register values below 2^width).
+  `bddo:ChecksumShape` accepts the named algorithms or a `bddo:CustomCrc`. The checksum register
+  mirrors every named algorithm (`rck:CRC8SMBus`, `rck:CRC16ARC`, `rck:CRC16XMODEM`,
+  `rck:CRC16MODBUS`, `rck:CRC16X25`, `rck:CRC32C`, `rck:CRC32BZIP2`, `rck:CRC32MPEG2`,
+  `rck:CRC64ECMA182`, `rck:CRC64XZ`), each `hexplain:correspondsTo` its individual. New gate
+  `test_crc_catalogue` recomputes every check value from the stated parameters. HDL:
+  `@checksum crc8|crc16arc|crc16xmodem|crc16modbus|crc16x25|crc32c|crc32bzip2|crc32mpeg2|crc64ecma|crc64xz(a .. b)`
+  and `@checksum crc(width: 16, poly: 0x8005, init: 0x0000, refin: true, refout: true, xorout: 0x0000)(a .. b)`.
+  The checksum value is the checksum field's own value, in its declared type, width and byte order;
+  the field's integer width equals the CRC's (anything else is a Description error). YAML:
+  `checksum: { crc: { width, poly, init, refin, refout, xorout }, from, to }`.
+- **LZ4 and Zstandard.** New register concept `menc:LZ4Block` (a bare LZ4 block); `menc:LZ4` is
+  now defined as the LZ4 Frame format and `menc:Zstd` as Zstandard frames. The Processing Model
+  defines all three under `codecs-beyond-minimum` (new section `processing#optional-codecs`):
+  checksums verified (a mismatch is a Checksum error), dictionaries refused with Unsupported
+  feature, malformed data a Validation error, and `menc:LZ4Block`'s required `decodedSize`
+  parameter (a missing one is a Description error).
+- **Parameterised structs.** New class `bddo:Parameter` and properties `bddo:hasParameter`
+  (on a struct), `bddo:parameterType` (class `bddo:ParameterType`, individuals `bddo:IntegerParameter`,
+  `bddo:FloatParameter`, `bddo:StringParameter`, `bddo:BytesParameter`, `bddo:BooleanParameter`) and `bddo:hasArgument` (a list of HEL strings on a Field, `bddo:DataTypeRule`
+  or `bddo:DispatchArm`, evaluated in the caller's context). New HEL root `param`
+  (`param.<name>`), now a reserved word. Shapes `bddo:ParameterisedStructShape`,
+  `bddo:ParameterShape`, `bddo:ArgumentListShape` and `bddo:ArgumentArityShape`. Parameters are
+  named by the simple key of their IRI, as fields are (BDDO has no separate name property).
+  A `bddo:dispatchDefault` never names a parameterised struct (it cannot state arguments).
+  HDL: `struct Row(n: int, w) { cells : bytes[w] repeat n }`, `r : Row(hdr.count, 4)`; YAML
+  `params: [ { n: int }, w ]` and `type: { struct: Row, args: [ … ] }`.
+- **Local bindings.** New class `bddo:LocalBinding`, a member of `bddo:hasField` that is not a
+  field, and property `bddo:localExpression`; shape `bddo:LocalBindingShape`. A binding is
+  evaluated at its position, is read by bare name or `instance.<name>`, consumes no bytes and is
+  neither in the parsed tree nor emitted. `bddo:StructShape` accepts a local binding as a list
+  member. HDL: `let area = width * height`; YAML `- let: { name: area, value: "width * height" }`.
+- **Reference engine claims.** `codecs-beyond-minimum` is claimed (LZ4 Frame, LZ4 Block,
+  Zstandard); `reference-engine-claims.json` and the Processing Model's note say so.
+
+Requirement text changed (the sentences now cover the new constructs): `req-pm-parsefield-11`
+(arguments are evaluated before a parameterised struct is parsed), `req-pm-parsefield-16` (the
+checksum algorithms include the CRC variants and `bddo:CustomCrc`, computed by the Rocksoft model
+and compared at the field's own width), `req-pm-errors-5` (LZ4 and Zstandard checksum and
+content-size mismatches), `req-pm-errors-8` (the Description errors of parameters, arguments,
+local bindings, CRC fields and `menc:LZ4Block`), `req-hel-key-resolution-2` (a key may name a
+local binding or, after `param`, a parameter), `req-hel-key-resolution-3` and
+`req-hdl-grammar-keywords-1` (`param` is reserved), `req-hdl-lexical-1` (parameter and binding
+names follow the field-name rule), `req-bddo-structural-properties-1` (a `bddo:hasField` list may
+hold local bindings).
+
+New requirements: `req-pm-parsestruct-9`, `req-pm-parsestruct-10`, `req-pm-parsefield-26`, `req-pm-emission-10`, `req-pm-optional-codecs-1` to `req-pm-optional-codecs-7`, `req-hel-reserved-roots-2`, `req-hdl-checksums-1`, `req-hdl-checksums-2`, `req-hdl-parameters-1`, `req-bddo-core-datatypes-3`, `req-bddo-core-datatypes-4`, `req-bddo-checksum-algorithms-1` and `req-bddo-parameterised-structs-1` to `req-bddo-parameterised-structs-3`.
+
+New conformance cases, 106 (68 Physical Parser, 1 Semantic Emitter, 37 HDL Compiler): `hc-bracket-size-after-u24`, `hc-checksum-crc-field-width`, `hc-checksum-custom-crc`, `hc-checksum-custom-crc-64-bit`, `hc-checksum-custom-crc-missing-parameter`, `hc-checksum-custom-crc-repeated-parameter`, `hc-checksum-custom-crc-value-too-wide`, `hc-checksum-custom-crc-width-out-of-range`, `hc-checksum-custom-crc-yaml`, `hc-checksum-named-crcs`, `hc-fixed-24-bit-and-half`, `hc-let-binding`, `hc-let-binding-yaml`, `hc-let-forward-reference`, `hc-let-in-header`, `hc-let-name-clash`, `hc-let-reads-parameter`, `hc-let-where-field-required`, `hc-param-argument-forward-reference`, `hc-param-arguments-for-plain-struct`, `hc-param-arity-mismatch`, `hc-param-dispatch-default`, `hc-param-field-clash`, `hc-param-literal-type-mismatch`, `hc-param-missing-arguments`, `hc-param-nested-arguments`, `hc-param-recursion`, `hc-param-reserved-name`, `hc-param-root-struct`, `hc-param-struct`, `hc-param-struct-yaml`, `hc-param-switch-arms`, `hc-param-switch-arms-yaml`, `hc-param-undeclared`, `hc-param-unknown-type`, `hc-types-24-bit-and-half`, `hc-types-24-bit-and-half-yaml`, `pp-codec-lz4-block`, `pp-codec-lz4-block-bad-offset`, `pp-codec-lz4-block-missing-size`, `pp-codec-lz4-block-shorthand`, `pp-codec-lz4-block-size-mismatch`, `pp-codec-lz4-content-checksum-mismatch`, `pp-codec-lz4-frame`, `pp-codec-lz4-frame-block-checksums`, `pp-codec-lz4-frame-concatenated`, `pp-codec-lz4-frame-substream`, `pp-codec-lz4-frame-truncated`, `pp-codec-lz4-header-checksum-mismatch`, `pp-codec-zstd-checksum-mismatch`, `pp-codec-zstd-concatenated`, `pp-codec-zstd-dictionary`, `pp-codec-zstd-frame`, `pp-codec-zstd-parameter-unknown`, `pp-codec-zstd-truncated`, `pp-crc-crc16arc`, `pp-crc-crc16modbus`, `pp-crc-crc16x25`, `pp-crc-crc16xmodem`, `pp-crc-crc32bzip2`, `pp-crc-crc32c`, `pp-crc-crc32mpeg2`, `pp-crc-crc64ecma`, `pp-crc-crc64xz`, `pp-crc-crc8`, `pp-crc-custom`, `pp-crc-custom-24-bit`, `pp-crc-custom-invalid-width`, `pp-crc-custom-mismatch`, `pp-crc-field-too-narrow`, `pp-crc-field-too-wide`, `pp-crc-named-mismatch`, `pp-crc-stored-little-endian`, `pp-float16-fixed-value`, `pp-float16-fixed-value-mismatch`, `pp-float16-fixed-value-overflow`, `pp-float16-infinities-and-nan`, `pp-float16-normal-values`, `pp-float16-subnormals-and-zeros`, `pp-int24-negative`, `pp-int24-repeated`, `pp-let-forward-reference`, `pp-let-in-header`, `pp-let-name-clash`, `pp-let-not-reachable-through-parent`, `pp-let-size-and-count`, `pp-let-struct-size`, `pp-let-with-parameter`, `pp-param-argument-forward-reference`, `pp-param-arguments-without-parameters`, `pp-param-arity-mismatch`, `pp-param-basic`, `pp-param-field-name-clash`, `pp-param-float-accepts-integer`, `pp-param-nested-arguments`, `pp-param-recursion`, `pp-param-recursion-depth-limit`, `pp-param-repeated-field`, `pp-param-root-struct`, `pp-param-rule-and-arm-arguments`, `pp-param-type-mismatch`, `pp-param-undeclared`, `pp-uint24-both-byte-orders`, `pp-uint24-fixed-hex-width`, `pp-uint24-fixed-value`, `se-parameters-and-bindings-not-emitted`. The LZ4 inputs are written by `tools/conformance/lz4frames.py` (a plain-Python block compressor, frame writer and xxHash-32, each block checked by its own decoder); the Zstandard frames are pre-made with python-zstandard 0.25 and committed as hex in `tools/conformance/zstdframes.py`, pinned by SHA-256 and checked against a plain-Python XXH64 of their content, so neither package is a dependency; CRCs come from the Rocksoft model in `tools/conformance/crc.py`.
+
 ### Conformance run reports (conf 1.3)
 
 - **New terms.** `conf:finding` (run to finding), `conf:verdict` with `conf:Verdict`
