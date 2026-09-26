@@ -60,8 +60,12 @@ PREFIX = "https://hexplain.io/ns/validation/strict#"
 EXTRA = {
     BDDO + "Field": ["endianness", "hasConditionalEndianness", "hasEndianness", "hasFixedValue", "numericBase",
                      "repeatCount", "repeatCountFromExpression", "repeatCountFromField", "repeatUntil",
-                     "keyIsCaseInsensitive", CORE + "isEncodedWith", CORE + "hasEncodingStep"],
-    BDDO + "Struct": ["hasConditionalEndianness", "hasEndianness", "usesStruct"],
+                     "keyIsCaseInsensitive", CORE + "isEncodedWith", CORE + "hasEncodingStep", "hasArgument"],
+    BDDO + "Struct": ["hasConditionalEndianness", "hasEndianness", "usesStruct", "hasParameter"],
+    # bddo:ArgumentListShape and bddo:ParameterisedStructShape target the subjects of the property,
+    # not a class, so the classes the vocabulary text puts them on are named here.
+    BDDO + "DataTypeRule": ["hasArgument"],
+    BDDO + "DispatchArm": ["hasArgument"],
     BDDO + "KeyValueHeader": ["keyIsCaseInsensitive"],
     CORE + "RegisterBinding": [CORE + "forProperty", CORE + "register"],
 }

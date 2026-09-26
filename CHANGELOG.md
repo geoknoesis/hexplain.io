@@ -136,6 +136,8 @@ New conformance cases, 106 (68 Physical Parser, 1 Semantic Emitter, 37 HDL Compi
 - **Text containers.** A delimited, key/value or tree container may declare neither parameters
   (new) nor local bindings (as before); either is a Description error. HDL: `params` beside a YAML
   `kind` other than `struct` is an ERROR.
+- **Strict profile.** The optional strict profile now admits `bddo:hasParameter` on a struct and
+  `bddo:hasArgument` on a field, data-type rule and dispatch arm, which its closed shapes refused.
 
 Requirement text changed: `req-pm-parsefield-11` (the category of an argument type mismatch
 depends on when it is known), `req-pm-errors-6` (an evaluated argument of the wrong type),
