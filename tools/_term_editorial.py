@@ -313,9 +313,10 @@ Deflate|Identifier for the DEFLATE compression format. A gzip or zlib wrapper mu
 Gzip|Identifier for gzip-framed compressed data, distinct from an unwrapped DEFLATE bitstream.
 BZip2|Identifier for bzip2 compressed data; the profile must identify framing and relevant options when they affect interpretation.
 LZMA|Identifier for the LZMA compression family; framing, dictionary and variant information must be supplied where required.
-Zstd|Identifier for Zstandard compressed data; dictionary and framing requirements belong to the profile.
+Zstd|Identifier for data in the Zstandard frame format (one or more concatenated frames); dictionary requirements belong to the profile.
 Snappy|Identifier for Snappy compression; raw versus framed representation must be determined by the profile.
-LZ4|Identifier for LZ4 compression; raw block versus framed representation and parameters must be declared by the profile.
+LZ4|Identifier for data in the LZ4 Frame format, the self-describing framed representation of LZ4 compression; the raw block representation is menc:LZ4Block.
+LZ4Block|Identifier for a single raw LZ4 compressed block, which carries no length of its own: the decoded size must be supplied by the profile.
 RunLength|An encoding that represents repeated values as runs; the profile must identify the actual run/count representation.
 Blosc|Identifier for the Blosc compression framework, which combines an inner compressor with configurable preprocessing and block settings.
 Delta|A predictive transform that represents values by differences from preceding or predicted values; the variant and arithmetic are profile parameters.
@@ -329,15 +330,28 @@ BT709|Identifier for color interpretation associated with the BT.709 high-defini
 BT2020|Identifier for color interpretation associated with the BT.2020 ultra-high-definition television convention; this does not by itself choose an HDR transfer function.
 ''')
 ALGORITHMS={
- 'crc16':'The CRC-16/CCITT-FALSE integrity check: polynomial 0x1021, initial value 0xFFFF, no input or output reflection and final XOR 0x0000 (check value 0x29B1 over the ASCII bytes 123456789). Other CRC-16 variants, such as CRC-16/ARC or CRC-16/XMODEM, are not identified by this term; identifiers for them are future work.',
- 'crc32':'The CRC-32/ISO-HDLC integrity check used by zlib and PNG: reflected polynomial 0xEDB88320, initial value 0xFFFFFFFF and final XOR 0xFFFFFFFF (check value 0xCBF43926 over the ASCII bytes 123456789). Other 32-bit CRC variants, such as CRC-32C, are not identified by this term.',
+ 'crc16':'The CRC-16/CCITT-FALSE integrity check: polynomial 0x1021, initial value 0xFFFF, no input or output reflection and final XOR 0x0000 (check value 0x29B1 over the ASCII bytes 123456789). Other CRC-16 variants, such as CRC-16/ARC or CRC-16/XMODEM, have identifiers of their own.',
+ 'crc32':'The CRC-32/ISO-HDLC integrity check used by zlib and PNG: reflected polynomial 0xEDB88320, initial value 0xFFFFFFFF and final XOR 0xFFFFFFFF (check value 0xCBF43926 over the ASCII bytes 123456789). Other 32-bit CRC variants, such as CRC-32C, have identifiers of their own.',
+ 'crc8Smbus':'The CRC-8/SMBUS integrity check: width 8, polynomial 0x07, initial value 0x00, no input or output reflection and final XOR 0x00 (check value 0xF4 over the ASCII bytes 123456789).',
+ 'crc16Arc':'The CRC-16/ARC integrity check: width 16, polynomial 0x8005, initial value 0x0000, input and output reflected and final XOR 0x0000 (check value 0xBB3D over the ASCII bytes 123456789).',
+ 'crc16Xmodem':'The CRC-16/XMODEM integrity check: width 16, polynomial 0x1021, initial value 0x0000, no input or output reflection and final XOR 0x0000 (check value 0x31C3 over the ASCII bytes 123456789).',
+ 'crc16Modbus':'The CRC-16/MODBUS integrity check: width 16, polynomial 0x8005, initial value 0xFFFF, input and output reflected and final XOR 0x0000 (check value 0x4B37 over the ASCII bytes 123456789).',
+ 'crc16X25':'The CRC-16/IBM-SDLC (X-25) integrity check: width 16, polynomial 0x1021, initial value 0xFFFF, input and output reflected and final XOR 0xFFFF (check value 0x906E over the ASCII bytes 123456789).',
+ 'crc32c':'The CRC-32/ISCSI (CRC-32C) integrity check: width 32, polynomial 0x1EDC6F41, initial value 0xFFFFFFFF, input and output reflected and final XOR 0xFFFFFFFF (check value 0xE3069283 over the ASCII bytes 123456789).',
+ 'crc32Bzip2':'The CRC-32/BZIP2 integrity check: width 32, polynomial 0x04C11DB7, initial value 0xFFFFFFFF, no input or output reflection and final XOR 0xFFFFFFFF (check value 0xFC891918 over the ASCII bytes 123456789).',
+ 'crc32Mpeg2':'The CRC-32/MPEG-2 integrity check: width 32, polynomial 0x04C11DB7, initial value 0xFFFFFFFF, no input or output reflection and final XOR 0x00000000 (check value 0x0376E6E7 over the ASCII bytes 123456789).',
+ 'crc64Ecma182':'The CRC-64/ECMA-182 integrity check: width 64, polynomial 0x42F0E1EBA9EA3693, initial value 0x0000000000000000, no input or output reflection and final XOR 0x0000000000000000 (check value 0x6C40DF5F0B497347 over the ASCII bytes 123456789).',
+ 'crc64Xz':'The CRC-64/XZ integrity check: width 64, polynomial 0x42F0E1EBA9EA3693, initial value 0xFFFFFFFFFFFFFFFF, input and output reflected and final XOR 0xFFFFFFFFFFFFFFFF (check value 0x995DC9BBDF1939FA over the ASCII bytes 123456789).',
  'adler32':'The Adler-32 checksum identifier, producing a 32-bit integrity value for a byte sequence.',
  'md5':'The MD5 message-digest identifier, producing a 128-bit digest; this term identifies a stored integrity algorithm and does not claim cryptographic security.',
  'sha1':'The SHA-1 message-digest identifier, producing a 160-bit digest; this term does not claim suitability for collision-resistant security uses.',
  'sha256':'The SHA-256 message-digest identifier, producing a 256-bit digest of the covered byte sequence.',
 }
 for term,definition in ALGORITHMS.items():DEFINITIONS['bddo:'+term]=definition
-for term,key in [('CRC16','crc16'),('CRC32','crc32'),('Adler32','adler32'),('MD5','md5'),('SHA1','sha1'),('SHA256','sha256')]:DEFINITIONS['rck:'+term]=ALGORITHMS[key]
+for term,key in [('CRC16','crc16'),('CRC32','crc32'),('Adler32','adler32'),('MD5','md5'),('SHA1','sha1'),('SHA256','sha256'),
+                 ('CRC8SMBus','crc8Smbus'),('CRC16ARC','crc16Arc'),('CRC16XMODEM','crc16Xmodem'),('CRC16MODBUS','crc16Modbus'),
+                 ('CRC16X25','crc16X25'),('CRC32C','crc32c'),('CRC32BZIP2','crc32Bzip2'),('CRC32MPEG2','crc32Mpeg2'),
+                 ('CRC64ECMA182','crc64Ecma182'),('CRC64XZ','crc64Xz')]:DEFINITIONS['rck:'+term]=ALGORITHMS[key]
 
 # Term-specific usage notes (skos:scopeNote). A term listed here gets exactly this note; a term of
 # a module in _reference.TERM_SCOPED that is not listed and states no note of its own gets only

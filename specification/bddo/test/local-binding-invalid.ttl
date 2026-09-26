@@ -1,0 +1,31 @@
+# Local bindings that are wrongly stated or wrongly placed, and a struct member that is neither a
+# field nor a local binding.
+# expect: ex:Struct.none bddo:LocalBindingShape sh:MinCountConstraintComponent
+# expect: ex:Struct.two bddo:LocalBindingShape sh:MaxCountConstraintComponent
+# expect: ex:Struct.number bddo:LocalBindingShape sh:DatatypeConstraintComponent
+# expect: ex:Struct.both bddo:LocalBindingShape sh:NotConstraintComponent
+# expect: ex:Header.bound bddo:LocalBindingShape sh:SPARQLConstraintComponent
+# expect: ex:Other bddo:StructShape sh:OrConstraintComponent
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/local-binding-invalid#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Struct a bddo:Struct ; bddo:hasField ( ex:Struct.v ex:Struct.none ex:Struct.two ex:Struct.number ex:Struct.both ) .
+ex:Struct.v a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:Struct.none a bddo:LocalBinding .
+ex:Struct.two a bddo:LocalBinding ; bddo:localExpression "instance.v" , "instance.v + 1" .
+ex:Struct.number a bddo:LocalBinding ; bddo:localExpression 3 .
+ex:Struct.both a bddo:LocalBinding , bddo:Field ; bddo:localExpression "instance.v" ; bddo:dataType bddo:uint8 .
+
+# A key/value header has no member order to evaluate a binding at.
+ex:Header a bddo:KeyValueHeader ; bddo:keyValueSeparator "3D"^^xsd:hexBinary ;
+    bddo:hasField ( ex:Header.samples ex:Header.bound ) .
+ex:Header.samples a bddo:Field ; bddo:dataType bddo:asciiInteger .
+ex:Header.bound a bddo:LocalBinding ; bddo:localExpression "instance.samples * 2" .
+
+# A member that is neither a field nor a local binding.
+ex:Other a bddo:Struct ; bddo:hasField ( ex:Other.what ) .
+ex:Other.what bddo:localExpression "1" ; bddo:dataType bddo:uint8 .
+
+# A binding named by no IRI has no name to be read by.
+ex:Anon a bddo:Struct ; bddo:hasField ( [ a bddo:LocalBinding ; bddo:localExpression "1" ] ) .

@@ -1,0 +1,25 @@
+# A parameterised struct, the arguments that instantiate it from a field, a conditional type rule
+# and a dispatch arm, and a local binding.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/parameters-valid#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Table a bddo:Struct ;
+    bddo:hasField ( ex:Table.count ex:Table.width ex:Table.cells ex:Table.rows ex:Table.alt ex:Table.keyed ) .
+ex:Table.count a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:Table.width a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:Table.cells a bddo:LocalBinding ; bddo:localExpression "instance.count * instance.width" .
+ex:Table.rows a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( "instance.count" "instance.width" ) .
+ex:Table.alt a bddo:Field ;
+    bddo:hasConditionalDataType ( [ a bddo:DataTypeRule ; bddo:condition "instance.count > 0" ;
+        bddo:ruleDataType ex:Row ; bddo:hasArgument ( "1" "1" ) ] ) .
+ex:Table.keyed a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 1 ; bddo:hasDispatchTable ex:Kinds .
+ex:Kinds a bddo:DispatchTable ; bddo:dispatchOnField ex:Table.count .
+ex:oneRow a bddo:DispatchArm ; bddo:armTable ex:Kinds ; bddo:armKey 1 ; bddo:armDataType ex:Row ;
+    bddo:hasArgument ( "1" "1" ) .
+
+ex:Row a bddo:Struct ; bddo:hasParameter ( ex:Row.n ex:Row.w ) ; bddo:hasField ( ex:Row.data ) .
+ex:Row.n a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+ex:Row.w a bddo:Parameter .
+ex:Row.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.w" ;
+    bddo:repeatCountFromExpression "param.n" .

@@ -44,8 +44,12 @@ def main():
     accepted = set()
     for pshape in g.objects(BDDO.ChecksumShape, SH.property):
         if g.value(pshape, SH.path) == BDDO.checksumAlgorithm:
-            for lst in g.objects(pshape, SH["in"]):
-                accepted |= set(Collection(g, lst))
+            # The named algorithms are an sh:in list, directly or as one branch of the sh:or that
+            # also admits a bddo:CustomCrc.
+            branches = [pshape] + [b for lst in g.objects(pshape, SH["or"]) for b in Collection(g, lst)]
+            for branch in branches:
+                for lst in g.objects(branch, SH["in"]):
+                    accepted |= set(Collection(g, lst))
     if accepted != algorithms:
         failures.append(f"bddo:ChecksumShape accepts {sorted(map(str, accepted))} but the individuals are "
                         f"{sorted(map(str, algorithms))}")

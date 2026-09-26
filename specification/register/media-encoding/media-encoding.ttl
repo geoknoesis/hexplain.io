@@ -64,9 +64,15 @@ menc:Deflate a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topCon
 menc:Gzip a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "gzip"@en .
 menc:BZip2 a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "bzip2"@en .
 menc:LZMA a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "LZMA"@en .
-menc:Zstd a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Zstandard"@en .
+menc:Zstd a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Zstandard"@en ;
+    skos:note "Zstandard frames (RFC 8878), one or several concatenated; skippable frames are skipped. The Processing Model (Codecs beyond the minimum set) defines decoding; a frame that needs a dictionary is refused." .
 menc:Snappy a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Snappy"@en .
-menc:LZ4 a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "LZ4"@en .
+menc:LZ4 a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "LZ4"@en ;
+    skos:note "The LZ4 Frame format: magic number 184D2204, a frame descriptor, blocks and an optional content checksum. A raw block without the frame is menc:LZ4Block." .
+# The raw block format carries no length and no magic, so it cannot share the frame's concept:
+# a decoder has to be told both that it is looking at a bare block and how long its output is.
+menc:LZ4Block a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "LZ4 block"@en ;
+    skos:note "One LZ4 compressed block, without the frame format's header. Its decoded length is not recorded in the data, so a pipeline step names it with the parameter decodedSize (Processing Model, Codecs beyond the minimum set)." .
 menc:RunLength a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Run-length encoding"@en .
 menc:Blosc a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Blosc"@en ;
     skos:note "A meta-compressor: it wraps an inner codec and its own shuffle and level settings, which travel as hexplain:codecParameter on the step." .
@@ -139,10 +145,14 @@ menc:BitShuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:top
 <https://hexplain.io/ns/register/media-encoding#HEVC> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#HEVC> <http://www.w3.org/2000/01/rdf-schema#label> "H.265"@en .
 <https://hexplain.io/ns/register/media-encoding#HEVC> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
-<https://hexplain.io/ns/register/media-encoding#LZ4> <http://www.w3.org/2004/02/skos/core#definition> "Identifier for LZ4 compression; raw block versus framed representation and parameters must be declared by the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#LZ4> <http://www.w3.org/2004/02/skos/core#definition> "Identifier for data in the LZ4 Frame format, the self-describing framed representation of LZ4 compression; the raw block representation is menc:LZ4Block."@en .
 <https://hexplain.io/ns/register/media-encoding#LZ4> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#LZ4> <http://www.w3.org/2000/01/rdf-schema#label> "LZ4"@en .
 <https://hexplain.io/ns/register/media-encoding#LZ4> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#LZ4Block> <http://www.w3.org/2004/02/skos/core#definition> "Identifier for a single raw LZ4 compressed block, which carries no length of its own: the decoded size must be supplied by the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#LZ4Block> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#LZ4Block> <http://www.w3.org/2000/01/rdf-schema#label> "LZ4 block"@en .
+<https://hexplain.io/ns/register/media-encoding#LZ4Block> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#LZMA> <http://www.w3.org/2004/02/skos/core#definition> "Identifier for the LZMA compression family; framing, dictionary and variant information must be supplied where required."@en .
 <https://hexplain.io/ns/register/media-encoding#LZMA> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#LZMA> <http://www.w3.org/2000/01/rdf-schema#label> "LZMA"@en .
@@ -191,7 +201,7 @@ menc:BitShuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:top
 <https://hexplain.io/ns/register/media-encoding#Zlib> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#Zlib> <http://www.w3.org/2000/01/rdf-schema#label> "zlib"@en .
 <https://hexplain.io/ns/register/media-encoding#Zlib> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
-<https://hexplain.io/ns/register/media-encoding#Zstd> <http://www.w3.org/2004/02/skos/core#definition> "Identifier for Zstandard compressed data; dictionary and framing requirements belong to the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#Zstd> <http://www.w3.org/2004/02/skos/core#definition> "Identifier for data in the Zstandard frame format (one or more concatenated frames); dictionary requirements belong to the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#Zstd> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#Zstd> <http://www.w3.org/2000/01/rdf-schema#label> "Zstandard"@en .
 <https://hexplain.io/ns/register/media-encoding#Zstd> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .

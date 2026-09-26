@@ -44,6 +44,28 @@
     rdfs:comment "One key-to-type association of a DispatchTable: the type a field takes when the table's key equals armKey. Keys are unique within a table across every graph that contributes to it." .
 :SeekScope a owl:Class ; rdfs:label "Seek Scope" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "How far an offset-addressed read may reach: the innermost bounded region (the default, regionScope) or the whole stream (streamScope)." .
+# A struct that is instantiated with values: the same row layout used for several widths, or a
+# record whose element count is carried by the struct that holds it. Parameters are named like
+# fields (by the simple key of their IRI) and read in HEL through the root `param`.
+:Parameter a owl:Class ; rdfs:label "Parameter" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "One formal parameter of a parameterised Struct, a member of its bddo:hasParameter list. Its name is the simple key of its IRI (the local name after the last '.'), as for a Field; HEL reads the value the caller supplied as param.<name>. A parameter consumes no bytes, is not a field of the parsed tree and is never lifted." .
+# A named intermediate value, computed once where it stands in the member list. It is a member
+# of hasField (so its position, and therefore what it may read and what may read it, is the
+# list order) but not a field: it consumes no bytes and is neither in the parsed tree nor lifted.
+:ParameterType a owl:Class ; rdfs:label "Parameter Type" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The kind of HEL value a Parameter accepts: one of the five individuals below, one per HEL scalar value type." .
+:IntegerParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Integer parameter" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The parameter accepts a HEL Integer." .
+:FloatParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Float parameter" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The parameter accepts a HEL Float; an Integer argument is converted to the Float of the same value." .
+:StringParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "String parameter" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The parameter accepts a HEL String." .
+:BytesParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Bytes parameter" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The parameter accepts a HEL Bytes value." .
+:BooleanParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Boolean parameter" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The parameter accepts a HEL Boolean." .
+:LocalBinding a owl:Class ; rdfs:label "Local Binding" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A named HEL value local to one Struct instance: a member of the struct's bddo:hasField list whose bddo:localExpression is evaluated when its position in the list is reached, in the struct's context. Later members, and the struct's own size, count, offset and presence expressions evaluated after it, read it by bare name or instance.<name>. It consumes no bytes, is not part of the parsed tree and is never lifted. Its name is the simple key of its IRI, as for a Field." .
 # A struct, a field and a data type are different kinds of thing: a field's value may be typed
 # BY a struct, but no resource is both.
 [] a owl:AllDisjointClasses ; owl:members ( :Struct :Field :DataType ) .
@@ -102,13 +124,26 @@
 :OffsetBase       a owl:Class ; rdfs:label "Offset Base" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :Encoding         a owl:Class ; rdfs:label "Encoding" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :ChecksumAlgorithm a owl:Class ; rdfs:label "Checksum Algorithm" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+# Any CRC is fixed by the six parameters of the Rocksoft model, so one class covers every CRC a
+# format uses without a new individual per variant. The named CRC individuals below carry the
+# same six parameters, and their catalogue check value, as statements about themselves.
+:CustomCrc a owl:Class ; rdfs:subClassOf :ChecksumAlgorithm ; rdfs:label "Custom CRC" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A CRC stated by its Rocksoft-model parameters rather than named: bddo:crcWidth (8..64 bits), bddo:crcPolynomial, bddo:crcInit, bddo:crcReflectIn, bddo:crcReflectOut and bddo:crcXorOut, all six required. Used as the value of bddo:checksumAlgorithm for a CRC that no named algorithm identifies." .
 # Union of DataType and Struct, used as the range of dataType / ruleDataType
 :DataTypeOrStruct a owl:Class ; rdfs:label "Data Type or Struct" ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; owl:unionOf ( :DataType :Struct ) .
 
 # ---------- Structural properties ----------
 :hasField     a owl:ObjectProperty ; rdfs:label "has field" ; rdfs:range rdf:List ;
-    rdfs:comment "Ordered rdf:List of the Fields that make up a Struct." .
+    rdfs:comment "Ordered rdf:List of the members of a Struct: its Fields, and any LocalBindings among them, in the order they are processed." .
+:hasParameter a owl:ObjectProperty ; rdfs:label "has parameter" ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Ordered rdf:List of the bddo:Parameter resources of a parameterised Struct. Every place that names the struct as a type supplies exactly one argument per parameter, positionally, with bddo:hasArgument." .
+:parameterType a owl:ObjectProperty ; rdfs:label "parameter type" ; rdfs:range :ParameterType ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Restricts the kind of value a Parameter accepts to one HEL value type: bddo:IntegerParameter, bddo:FloatParameter (an Integer argument is converted to Float), bddo:StringParameter, bddo:BytesParameter or bddo:BooleanParameter. Absent, the parameter accepts any scalar value, Null included." .
+:hasArgument a owl:ObjectProperty ; rdfs:label "has argument" ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Ordered rdf:List of HEL expression strings, the positional arguments for the parameterised Struct this resource names as a type: on a Field, for its bddo:dataType; on a DataTypeRule, for its bddo:ruleDataType; on a DispatchArm, for its bddo:armDataType. A bddo:dispatchDefault has nowhere to state arguments, so it never names a parameterised struct. Each is evaluated in the CALLER's context -- the struct containing the field -- at the point the field is read." .
+:localExpression a owl:DatatypeProperty ; rdfs:label "local expression" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The HEL expression giving a LocalBinding's value, evaluated with the containing struct as instance when the binding's position in the hasField list is reached." .
 :endianness   a owl:ObjectProperty ; rdfs:label "endianness" ; rdfs:range :Endianness ;
     rdfs:comment "Byte order for a Struct, Field, or DataType." .
 :hasConditionalEndianness a owl:ObjectProperty ; rdfs:label "has conditional endianness" ; rdfs:range rdf:List ;
@@ -268,6 +303,22 @@
 :coversExpression  a owl:DatatypeProperty ; rdfs:label "covers expression" ; rdfs:range xsd:string ;
     owl:deprecated true ;
     rdfs:comment "Deprecated: a single expression yielding the whole [start,end) range. Superseded by the coversFromExpression/coversToExpression pair, which states each bound separately and so can mix field and expression ends. Retained for descriptions written against earlier BDDO." .
+# The Rocksoft CRC model. Required on a bddo:CustomCrc; also stated on the named CRC individuals,
+# where they record what the name means (tools/test_crc_catalogue.py recomputes each check value).
+:crcWidth a owl:DatatypeProperty ; rdfs:label "CRC width" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The width of a CRC in bits, 8 to 64: the degree of its generator polynomial and the width of its register and result." .
+:crcPolynomial a owl:DatatypeProperty ; rdfs:label "CRC polynomial" ; rdfs:range xsd:nonNegativeInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The generator polynomial of a CRC without its top (x^width) term, in normal (unreflected) form, as a non-negative integer below 2^width: CRC-32's is 0x04C11DB7 (79764919), not the reflected 0xEDB88320." .
+:crcInit a owl:DatatypeProperty ; rdfs:label "CRC initial value" ; rdfs:range xsd:nonNegativeInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The value the CRC register holds before the first byte is processed, unreflected, below 2^width." .
+:crcReflectIn a owl:DatatypeProperty ; rdfs:label "CRC reflect input" ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "If true, each input byte is processed least-significant bit first (reflected); if false, most-significant bit first." .
+:crcReflectOut a owl:DatatypeProperty ; rdfs:label "CRC reflect output" ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "If true, the final register is bit-reversed over its width before the final XOR." .
+:crcXorOut a owl:DatatypeProperty ; rdfs:label "CRC final XOR" ; rdfs:range xsd:nonNegativeInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The value XORed into the (possibly reflected) final register to give the CRC, below 2^width." .
+:crcCheck a owl:DatatypeProperty ; rdfs:label "CRC check value" ; rdfs:range xsd:nonNegativeInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The CRC of the nine ASCII bytes \"123456789\" under the algorithm's parameters: the catalogue check value that identifies a CRC variant. Informative on a named algorithm; never required, and never read by a processor." .
 
 # ---------- Deprecated pre-release terms ----------
 # Profiles written before BDDO 1.0 still use these IRIs and conforming processors still read
@@ -313,13 +364,47 @@
 :utf16be a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 BE" .
 :latin1 a owl:NamedIndividual, :Encoding ; rdfs:label "ISO-8859-1" .
 :crc16 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16" ;
-    rdfs:comment "CRC-16/CCITT-FALSE: polynomial 0x1021, initial value 0xFFFF, no input or output reflection, final XOR 0x0000; check value 0x29B1 over the ASCII bytes \"123456789\". No other CRC-16 variant is identified by this term." .
+    :crcWidth 16 ; :crcPolynomial 4129 ; :crcInit 65535 ; :crcReflectIn false ; :crcReflectOut false ; :crcXorOut 0 ; :crcCheck 10673 ;
+    rdfs:comment "CRC-16/CCITT-FALSE (the catalogue's CRC-16/IBM-3740): polynomial 0x1021, initial value 0xFFFF, no input or output reflection, final XOR 0x0000; check value 0x29B1 over the ASCII bytes \"123456789\". No other CRC-16 variant is identified by this term: CRC-16/ARC, XMODEM, MODBUS and X-25 have terms of their own, and any other is a bddo:CustomCrc. HDL: crc16." .
 :crc32 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32" ;
-    rdfs:comment "CRC-32/ISO-HDLC (the zlib/PNG CRC): reflected polynomial 0xEDB88320, initial value 0xFFFFFFFF, final XOR 0xFFFFFFFF; check value 0xCBF43926 over the ASCII bytes \"123456789\"." .
+    :crcWidth 32 ; :crcPolynomial 79764919 ; :crcInit 4294967295 ; :crcReflectIn true ; :crcReflectOut true ; :crcXorOut 4294967295 ; :crcCheck 3421780262 ;
+    rdfs:comment "CRC-32/ISO-HDLC (the zlib/PNG CRC): polynomial 0x04C11DB7 (0xEDB88320 reflected), initial value 0xFFFFFFFF, input and output reflected, final XOR 0xFFFFFFFF; check value 0xCBF43926 over the ASCII bytes \"123456789\". CRC-32C, BZIP2 and MPEG-2 have terms of their own. HDL: crc32." .
 :adler32 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "Adler-32" .
 :md5 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "MD5" .
 :sha1 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "SHA-1" .
 :sha256 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "SHA-256" .
+# Named CRC variants (Rocksoft model; parameters and check values from the CRC catalogue,
+# reveng.sourceforge.io/crc-catalogue). Integers are written in decimal; the comment gives hex.
+:crc8Smbus a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-8/SMBUS" ;
+    :crcWidth 8 ; :crcPolynomial 7 ; :crcInit 0 ; :crcReflectIn false ; :crcReflectOut false ; :crcXorOut 0 ; :crcCheck 244 ;
+    rdfs:comment "CRC-8/SMBUS: width 8, polynomial 0x07, initial value 0x00, input not reflected, output not reflected, final XOR 0x00; check value 0xF4 over the ASCII bytes \"123456789\". HDL: crc8." .
+:crc16Arc a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16/ARC" ;
+    :crcWidth 16 ; :crcPolynomial 32773 ; :crcInit 0 ; :crcReflectIn true ; :crcReflectOut true ; :crcXorOut 0 ; :crcCheck 47933 ;
+    rdfs:comment "CRC-16/ARC: width 16, polynomial 0x8005, initial value 0x0000, input reflected, output reflected, final XOR 0x0000; check value 0xBB3D over the ASCII bytes \"123456789\". HDL: crc16arc." .
+:crc16Xmodem a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16/XMODEM" ;
+    :crcWidth 16 ; :crcPolynomial 4129 ; :crcInit 0 ; :crcReflectIn false ; :crcReflectOut false ; :crcXorOut 0 ; :crcCheck 12739 ;
+    rdfs:comment "CRC-16/XMODEM: width 16, polynomial 0x1021, initial value 0x0000, input not reflected, output not reflected, final XOR 0x0000; check value 0x31C3 over the ASCII bytes \"123456789\". HDL: crc16xmodem." .
+:crc16Modbus a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16/MODBUS" ;
+    :crcWidth 16 ; :crcPolynomial 32773 ; :crcInit 65535 ; :crcReflectIn true ; :crcReflectOut true ; :crcXorOut 0 ; :crcCheck 19255 ;
+    rdfs:comment "CRC-16/MODBUS: width 16, polynomial 0x8005, initial value 0xFFFF, input reflected, output reflected, final XOR 0x0000; check value 0x4B37 over the ASCII bytes \"123456789\". HDL: crc16modbus." .
+:crc16X25 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16/X-25" ;
+    :crcWidth 16 ; :crcPolynomial 4129 ; :crcInit 65535 ; :crcReflectIn true ; :crcReflectOut true ; :crcXorOut 65535 ; :crcCheck 36974 ;
+    rdfs:comment "CRC-16/IBM-SDLC (X-25): width 16, polynomial 0x1021, initial value 0xFFFF, input reflected, output reflected, final XOR 0xFFFF; check value 0x906E over the ASCII bytes \"123456789\". HDL: crc16x25." .
+:crc32c a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32C" ;
+    :crcWidth 32 ; :crcPolynomial 517762881 ; :crcInit 4294967295 ; :crcReflectIn true ; :crcReflectOut true ; :crcXorOut 4294967295 ; :crcCheck 3808858755 ;
+    rdfs:comment "CRC-32/ISCSI (CRC-32C): width 32, polynomial 0x1EDC6F41, initial value 0xFFFFFFFF, input reflected, output reflected, final XOR 0xFFFFFFFF; check value 0xE3069283 over the ASCII bytes \"123456789\". HDL: crc32c." .
+:crc32Bzip2 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32/BZIP2" ;
+    :crcWidth 32 ; :crcPolynomial 79764919 ; :crcInit 4294967295 ; :crcReflectIn false ; :crcReflectOut false ; :crcXorOut 4294967295 ; :crcCheck 4236843288 ;
+    rdfs:comment "CRC-32/BZIP2: width 32, polynomial 0x04C11DB7, initial value 0xFFFFFFFF, input not reflected, output not reflected, final XOR 0xFFFFFFFF; check value 0xFC891918 over the ASCII bytes \"123456789\". HDL: crc32bzip2." .
+:crc32Mpeg2 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32/MPEG-2" ;
+    :crcWidth 32 ; :crcPolynomial 79764919 ; :crcInit 4294967295 ; :crcReflectIn false ; :crcReflectOut false ; :crcXorOut 0 ; :crcCheck 58124007 ;
+    rdfs:comment "CRC-32/MPEG-2: width 32, polynomial 0x04C11DB7, initial value 0xFFFFFFFF, input not reflected, output not reflected, final XOR 0x00000000; check value 0x0376E6E7 over the ASCII bytes \"123456789\". HDL: crc32mpeg2." .
+:crc64Ecma182 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-64/ECMA-182" ;
+    :crcWidth 64 ; :crcPolynomial 4823603603198064275 ; :crcInit 0 ; :crcReflectIn false ; :crcReflectOut false ; :crcXorOut 0 ; :crcCheck 7800480153909949255 ;
+    rdfs:comment "CRC-64/ECMA-182: width 64, polynomial 0x42F0E1EBA9EA3693, initial value 0x0000000000000000, input not reflected, output not reflected, final XOR 0x0000000000000000; check value 0x6C40DF5F0B497347 over the ASCII bytes \"123456789\". HDL: crc64ecma." .
+:crc64Xz a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-64/XZ" ;
+    :crcWidth 64 ; :crcPolynomial 4823603603198064275 ; :crcInit 18446744073709551615 ; :crcReflectIn true ; :crcReflectOut true ; :crcXorOut 18446744073709551615 ; :crcCheck 11051210869376104954 ;
+    rdfs:comment "CRC-64/XZ: width 64, polynomial 0x42F0E1EBA9EA3693, initial value 0xFFFFFFFFFFFFFFFF, input reflected, output reflected, final XOR 0xFFFFFFFFFFFFFFFF; check value 0x995DC9BBDF1939FA over the ASCII bytes \"123456789\". HDL: crc64xz." .
 
 # ---------- Core primitive DataType instances ----------
 {{datatype:uint8}}
@@ -327,6 +412,9 @@
 {{datatype:uint16}}
 {{datatype:uint16be}}
 {{datatype:uint16le}}
+{{datatype:uint24}}
+{{datatype:uint24be}}
+{{datatype:uint24le}}
 {{datatype:uint32}}
 {{datatype:uint32be}}
 {{datatype:uint32le}}
@@ -336,12 +424,18 @@
 {{datatype:int16}}
 {{datatype:int16be}}
 {{datatype:int16le}}
+{{datatype:int24}}
+{{datatype:int24be}}
+{{datatype:int24le}}
 {{datatype:int32}}
 {{datatype:int32be}}
 {{datatype:int32le}}
 {{datatype:int64}}
 {{datatype:int64be}}
 {{datatype:int64le}}
+{{datatype:float16}}
+{{datatype:float16be}}
+{{datatype:float16le}}
 {{datatype:float32}}
 {{datatype:float32be}}
 {{datatype:float32le}}
@@ -392,8 +486,8 @@ bddo:StructShape a sh:NodeShape ;
     sh:property [ sh:path bddo:hasField ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
         sh:message "bddo:hasField must point to a single rdf:List." ] ;
     sh:property [ sh:path ( bddo:hasField [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
-        sh:class bddo:Field ;
-        sh:message "Every member of a Struct's hasField list must be a bddo:Field." ] ;
+        sh:or ( [ sh:class bddo:Field ] [ sh:class bddo:LocalBinding ] ) ;
+        sh:message "Every member of a Struct's hasField list must be a bddo:Field or a bddo:LocalBinding." ] ;
     sh:property {{constraint:pattern_123}} ;
     sh:property [ sh:path bddo:bitOrder ; sh:maxCount 1 ; sh:in ( bddo:MSBFirst bddo:LSBFirst ) ] ;
     sh:property [ sh:path bddo:syncOnMarker ; sh:maxCount 1 ; sh:datatype xsd:hexBinary ] ;
@@ -624,7 +718,9 @@ bddo:ChecksumShape a sh:NodeShape ;
     sh:targetClass bddo:Checksum ;
     sh:targetObjectsOf bddo:checksum ;
     sh:property [ sh:path bddo:checksumAlgorithm ; sh:minCount 1 ; sh:maxCount 1 ;
-        sh:in ( bddo:crc16 bddo:crc32 bddo:adler32 bddo:md5 bddo:sha1 bddo:sha256 ) ] ;
+        sh:or ( [ sh:in ( bddo:crc16 bddo:crc32 bddo:adler32 bddo:md5 bddo:sha1 bddo:sha256 bddo:crc8Smbus bddo:crc16Arc bddo:crc16Xmodem bddo:crc16Modbus bddo:crc16X25 bddo:crc32c bddo:crc32Bzip2 bddo:crc32Mpeg2 bddo:crc64Ecma182 bddo:crc64Xz ) ]
+                [ sh:class bddo:CustomCrc ] ) ;
+        sh:message "bddo:checksumAlgorithm is one of the named algorithms or a bddo:CustomCrc." ] ;
     sh:property [ sh:path bddo:coversFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:coversToField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:coversExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
@@ -644,6 +740,99 @@ bddo:ChecksumShape a sh:NodeShape ;
                                 [ sh:property {{constraint:pattern_116}} ]
                                 [ sh:property {{constraint:pattern_110}} ]
                                 [ sh:property {{constraint:pattern_114}} ] ) ] ) ] .
+
+# ---------- Custom CRC ----------
+bddo:CustomCrcShape a sh:NodeShape ;
+    sh:targetClass bddo:CustomCrc ;
+    # Datatypes and non-negativity come from bddo:RangeDatatypeShape, which applies wherever the
+    # properties are used; this shape adds presence, uniqueness and the width's bounds.
+    sh:property [ sh:path bddo:crcWidth ; sh:minCount 1 ; sh:maxCount 1 ; sh:minInclusive 8 ; sh:maxInclusive 64 ;
+        sh:message "A bddo:CustomCrc states exactly one bddo:crcWidth, an integer from 8 to 64." ] ;
+    sh:property [ sh:path bddo:crcPolynomial ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A bddo:CustomCrc states exactly one bddo:crcPolynomial." ] ;
+    sh:property [ sh:path bddo:crcInit ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A bddo:CustomCrc states exactly one bddo:crcInit." ] ;
+    sh:property [ sh:path bddo:crcXorOut ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A bddo:CustomCrc states exactly one bddo:crcXorOut." ] ;
+    sh:property [ sh:path bddo:crcReflectIn ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A bddo:CustomCrc states exactly one bddo:crcReflectIn." ] ;
+    sh:property [ sh:path bddo:crcReflectOut ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A bddo:CustomCrc states exactly one bddo:crcReflectOut." ] ;
+    # Each register value fits the register: below 2^width. SPARQL has neither a power function
+    # nor, in a SHACL constraint, a VALUES table, so 2^width is 256^k * 2^r for width = 8k + r.
+    sh:sparql [ sh:message "{?p} {?v} does not fit a {?w}-bit CRC: it must be below 2^{?w}." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this ?p ?v ?w WHERE {
+            $this bddo:crcWidth ?w ; ?p ?v .
+            FILTER(?p IN (bddo:crcPolynomial, bddo:crcInit, bddo:crcXorOut))
+            FILTER(isNumeric(?w) && isNumeric(?v) && ?w >= 8 && ?w <= 64)
+            BIND(FLOOR(?w / 8) AS ?k)
+            BIND(?w - 8 * ?k AS ?r)
+            BIND(IF(?k = 1, 256, IF(?k = 2, 65536, IF(?k = 3, 16777216, IF(?k = 4, 4294967296,
+                 IF(?k = 5, 1099511627776, IF(?k = 6, 281474976710656, IF(?k = 7, 72057594037927936,
+                 18446744073709551616))))))) AS ?bytes)
+            BIND(IF(?r = 0, 1, IF(?r = 1, 2, IF(?r = 2, 4, IF(?r = 3, 8, IF(?r = 4, 16, IF(?r = 5, 32,
+                 IF(?r = 6, 64, 128))))))) AS ?bits)
+            FILTER(?v >= ?bytes * ?bits)
+        }""" ] .
+
+# ---------- Parameterised structs ----------
+bddo:ParameterisedStructShape a sh:NodeShape ;
+    sh:targetSubjectsOf bddo:hasParameter ;
+    sh:property [ sh:path bddo:hasParameter ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:message "bddo:hasParameter must point to a single rdf:List." ] ;
+    sh:property [ sh:path ( bddo:hasParameter [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:class bddo:Parameter ; sh:nodeKind sh:IRI ;
+        sh:message "Every member of a hasParameter list is a bddo:Parameter named by its IRI." ] ;
+    sh:property [ sh:path rdf:type ; sh:hasValue bddo:Struct ;
+        sh:message "bddo:hasParameter is declared on a bddo:Struct." ] .
+
+bddo:ParameterShape a sh:NodeShape ;
+    sh:targetClass bddo:Parameter ;
+    sh:targetSubjectsOf bddo:parameterType ;
+    sh:property [ sh:path bddo:parameterType ; sh:maxCount 1 ;
+        sh:in ( bddo:IntegerParameter bddo:FloatParameter bddo:StringParameter bddo:BytesParameter bddo:BooleanParameter ) ;
+        sh:message "bddo:parameterType is one of bddo:IntegerParameter, bddo:FloatParameter, bddo:StringParameter, bddo:BytesParameter and bddo:BooleanParameter." ] ;
+    sh:not [ sh:class bddo:Field ] .
+
+bddo:ArgumentListShape a sh:NodeShape ;
+    sh:targetSubjectsOf bddo:hasArgument ;
+    sh:property [ sh:path bddo:hasArgument ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:message "bddo:hasArgument must point to a single rdf:List." ] ;
+    sh:property [ sh:path ( bddo:hasArgument [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:datatype xsd:string ;
+        sh:message "Every member of a hasArgument list is a HEL expression, an xsd:string literal." ] .
+
+# Arity: every place that names a struct as a type supplies one argument per parameter. List
+# NODES are counted, not members, so two equal argument strings still count twice.
+bddo:ArgumentArityShape a sh:NodeShape ;
+    sh:targetSubjectsOf bddo:dataType , bddo:ruleDataType , bddo:armDataType ;
+    sh:sparql [ sh:message "{?s} declares {?np} parameter(s), but {?na} argument(s) are supplied for it." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this ?s (COUNT(DISTINCT ?pn) AS ?np) (COUNT(DISTINCT ?an) AS ?na) WHERE {
+            $this ?tp ?s .
+            FILTER(?tp IN (bddo:dataType, bddo:ruleDataType, bddo:armDataType))
+            ?s a bddo:Struct .
+            OPTIONAL { ?s bddo:hasParameter/rdf:rest* ?pn . FILTER(?pn != rdf:nil) }
+            OPTIONAL { $this bddo:hasArgument/rdf:rest* ?an . FILTER(?an != rdf:nil) }
+        } GROUP BY $this ?s HAVING (COUNT(DISTINCT ?pn) != COUNT(DISTINCT ?an))""" ] .
+
+# ---------- Local bindings ----------
+bddo:LocalBindingShape a sh:NodeShape ;
+    sh:targetClass bddo:LocalBinding ;
+    sh:targetSubjectsOf bddo:localExpression ;
+    sh:nodeKind sh:IRI ;
+    sh:property [ sh:path bddo:localExpression ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+        sh:message "A bddo:LocalBinding states exactly one bddo:localExpression." ] ;
+    sh:not [ sh:class bddo:Field ] ;
+    # A text container locates its fields by delimiter, key or path rather than by list order,
+    # so a binding in one would have no position to be evaluated at.
+    sh:sparql [ sh:message "A bddo:LocalBinding is a member of a binary struct; {?container} is a delimited or tree container." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this ?container WHERE {
+            ?container bddo:hasField/rdf:rest*/rdf:first $this ; a ?c .
+            FILTER(?c IN (bddo:DelimitedRecords, bddo:KeyValueHeader, bddo:DelimitedTable, bddo:TreeDocument))
+        }""" ] .
 
 # An ASCII-coded numeric field must have a width, a terminator or a separator, or it cannot be
 # read. bddo:separatedBy is an extent mechanism in its own right -- the element is bounded by the
@@ -915,6 +1104,13 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         bddo:coversExpression ,
         bddo:coversFromExpression ,
         bddo:coversToExpression ,
+        bddo:crcCheck ,
+        bddo:crcInit ,
+        bddo:crcPolynomial ,
+        bddo:crcReflectIn ,
+        bddo:crcReflectOut ,
+        bddo:crcWidth ,
+        bddo:crcXorOut ,
         bddo:dispatchOnExpression ,
         bddo:enumIsFlags ,
         bddo:escapeChar ,
@@ -927,6 +1123,7 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         bddo:keyIsCaseInsensitive ,
         bddo:keyPath ,
         bddo:keyValueSeparator ,
+        bddo:localExpression ,
         bddo:namespaceIRI ,
         bddo:namespacePrefix ,
         bddo:nodePath ,
@@ -969,6 +1166,20 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         sh:message "bddo:coversFromExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:coversToExpression ; sh:datatype xsd:string ;
         sh:message "bddo:coversToExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:crcCheck ; sh:node bddo:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "bddo:crcCheck takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path bddo:crcInit ; sh:node bddo:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "bddo:crcInit takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path bddo:crcPolynomial ; sh:node bddo:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "bddo:crcPolynomial takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path bddo:crcReflectIn ; sh:datatype xsd:boolean ;
+        sh:message "bddo:crcReflectIn takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
+    sh:property [ sh:path bddo:crcReflectOut ; sh:datatype xsd:boolean ;
+        sh:message "bddo:crcReflectOut takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
+    sh:property [ sh:path bddo:crcWidth ; sh:node bddo:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "bddo:crcWidth takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path bddo:crcXorOut ; sh:node bddo:IntegerValueShape ; sh:minInclusive 0 ;
+        sh:message "bddo:crcXorOut takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
     sh:property [ sh:path bddo:dispatchOnExpression ; sh:datatype xsd:string ;
         sh:message "bddo:dispatchOnExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:enumIsFlags ; sh:datatype xsd:boolean ;
@@ -993,6 +1204,8 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         sh:message "bddo:keyPath takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:keyValueSeparator ; sh:datatype xsd:hexBinary ;
         sh:message "bddo:keyValueSeparator takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
+    sh:property [ sh:path bddo:localExpression ; sh:datatype xsd:string ;
+        sh:message "bddo:localExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:namespaceIRI ; sh:datatype xsd:anyURI ;
         sh:message "bddo:namespaceIRI takes an xsd:anyURI literal (rdfs:range xsd:anyURI)." ] ;
     sh:property [ sh:path bddo:namespacePrefix ; sh:datatype xsd:string ;

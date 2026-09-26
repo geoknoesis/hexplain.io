@@ -1,0 +1,27 @@
+# Custom CRCs that are not fully or not validly stated, and an algorithm that is neither named
+# nor a custom CRC.
+# expect: ex:missing bddo:CustomCrcShape sh:MinCountConstraintComponent
+# expect: ex:twice bddo:CustomCrcShape sh:MaxCountConstraintComponent
+# expect: ex:narrow bddo:CustomCrcShape sh:MinInclusiveConstraintComponent
+# expect: ex:wide bddo:CustomCrcShape sh:MaxInclusiveConstraintComponent
+# expect: ex:overflow bddo:CustomCrcShape sh:SPARQLConstraintComponent
+# expect: ex:unknown bddo:ChecksumShape sh:OrConstraintComponent
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/custom-crc-invalid#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# No initial value, no final XOR, no reflection flags, no width, no polynomial.
+ex:missing a bddo:CustomCrc .
+# Each parameter stated twice.
+ex:twice a bddo:CustomCrc ; bddo:crcWidth 16 , 32 ; bddo:crcPolynomial 4129 , 32773 ; bddo:crcInit 0 , 1 ;
+    bddo:crcReflectIn true , false ; bddo:crcReflectOut true , false ; bddo:crcXorOut 0 , 1 .
+# A width outside 8..64.
+ex:narrow a bddo:CustomCrc ; bddo:crcWidth 7 ; bddo:crcPolynomial 3 ; bddo:crcInit 0 ;
+    bddo:crcReflectIn false ; bddo:crcReflectOut false ; bddo:crcXorOut 0 .
+ex:wide a bddo:CustomCrc ; bddo:crcWidth 65 ; bddo:crcPolynomial 3 ; bddo:crcInit 0 ;
+    bddo:crcReflectIn false ; bddo:crcReflectOut false ; bddo:crcXorOut 0 .
+# 0x18005 does not fit a 16-bit register (it is CRC-16/ARC's polynomial WITH its top term).
+ex:overflow a bddo:CustomCrc ; bddo:crcWidth 16 ; bddo:crcPolynomial 98309 ; bddo:crcInit 0 ;
+    bddo:crcReflectIn true ; bddo:crcReflectOut true ; bddo:crcXorOut 65536 .
+
+ex:unknown a bddo:Checksum ; bddo:checksumAlgorithm ex:crc99 .

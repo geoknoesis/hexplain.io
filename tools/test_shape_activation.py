@@ -47,6 +47,7 @@ CLASS_ONLY = {
     "https://hexplain.io/ns/aspect/bundle#LiftByCarriedAspectRule": "a SHACL rule, not a constraint: it derives facets only for typed assets",
     "https://hexplain.io/ns/aspect/bundle#RequiredPartsShape": "joins through dcterms:conformsTo, which non-asset resources also use",
     "https://hexplain.io/ns/aspect/raster#ArrayDimensionShape": "dimension properties are shared with DLV dimensions",
+    "https://hexplain.io/ns/bddo#CustomCrcShape": "the CRC parameters are also stated, alone, on the named algorithm individuals and in range contracts; an untyped custom CRC already fails bddo:ChecksumShape, whose sh:or admits only the named algorithms or a node typed bddo:CustomCrc",
     "https://hexplain.io/ns/bddo#DisjointKindsShape": "it checks the types themselves: an untyped node has nothing to contradict",
     "https://hexplain.io/ns/conf#ParseAttributionTargetShape": "conf:errorCategory and conf:satisfies are shared with conf:Parse findings and constraints; an untyped attribution is checked by conf:UntypedParseAttributionShape, which is activated by conf:errorCategory",
     "https://hexplain.io/ns/conf#DisjointKindsShape": "it checks the types themselves: an untyped node has nothing to contradict",

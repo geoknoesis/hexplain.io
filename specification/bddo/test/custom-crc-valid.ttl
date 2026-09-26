@@ -1,0 +1,20 @@
+# Named CRC variants and a custom CRC stated by its six Rocksoft parameters.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/custom-crc-valid#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Frame a bddo:Struct ; bddo:hasField ( ex:Frame.body ex:Frame.named ex:Frame.custom ex:Frame.wide ) .
+ex:Frame.body a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 9 .
+ex:Frame.named a bddo:Field ; bddo:dataType bddo:uint16 ;
+    bddo:checksum [ a bddo:Checksum ; bddo:checksumAlgorithm bddo:crc16Modbus ;
+        bddo:coversFromField ex:Frame.body ; bddo:coversToField ex:Frame.body ] .
+ex:Frame.custom a bddo:Field ; bddo:dataType bddo:uint16le ;
+    bddo:checksum [ a bddo:Checksum ; bddo:coversFromField ex:Frame.body ; bddo:coversToField ex:Frame.body ;
+        bddo:checksumAlgorithm [ a bddo:CustomCrc ; bddo:crcWidth 16 ; bddo:crcPolynomial 32773 ;
+            bddo:crcInit 0 ; bddo:crcReflectIn true ; bddo:crcReflectOut true ; bddo:crcXorOut 0 ] ] .
+# The largest register values a 64-bit CRC admits: 2^64 - 1 is below the 2^64 limit.
+ex:Frame.wide a bddo:Field ; bddo:dataType bddo:uint64 ;
+    bddo:checksum [ a bddo:Checksum ; bddo:coversFromField ex:Frame.body ; bddo:coversToField ex:Frame.body ;
+        bddo:checksumAlgorithm [ a bddo:CustomCrc ; bddo:crcWidth 64 ; bddo:crcPolynomial 4823603603198064275 ;
+            bddo:crcInit 18446744073709551615 ; bddo:crcReflectIn false ; bddo:crcReflectOut false ;
+            bddo:crcXorOut 18446744073709551615 ] ] .

@@ -1,0 +1,44 @@
+# Parameter lists, parameters, argument lists and arities that are wrong.
+# expect: ex:TwoLists bddo:ParameterisedStructShape sh:MaxCountConstraintComponent
+# expect: ex:LiteralList bddo:ParameterisedStructShape sh:NodeKindConstraintComponent
+# expect: ex:BadMember bddo:ParameterisedStructShape sh:ClassConstraintComponent
+# expect: ex:BadMember bddo:ParameterisedStructShape sh:NodeKindConstraintComponent
+# expect: ex:NotAStruct bddo:ParameterisedStructShape sh:HasValueConstraintComponent
+# expect: ex:p1 bddo:ParameterShape sh:InConstraintComponent
+# expect: ex:p2 bddo:ParameterShape sh:MaxCountConstraintComponent
+# expect: ex:p3 bddo:ParameterShape sh:NotConstraintComponent
+# expect: ex:twoArgLists bddo:ArgumentListShape sh:MaxCountConstraintComponent
+# expect: ex:literalArgs bddo:ArgumentListShape sh:NodeKindConstraintComponent
+# expect: ex:numericArg bddo:ArgumentListShape sh:DatatypeConstraintComponent
+# expect: ex:tooFew bddo:ArgumentArityShape sh:SPARQLConstraintComponent
+# expect: ex:tooMany bddo:ArgumentArityShape sh:SPARQLConstraintComponent
+# expect: ex:unexpected bddo:ArgumentArityShape sh:SPARQLConstraintComponent
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/parameters-invalid#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Row a bddo:Struct ; bddo:hasParameter ( ex:Row.n ex:Row.w ) ; bddo:hasField ( ex:Row.data ) .
+ex:Row.n a bddo:Parameter .
+ex:Row.w a bddo:Parameter .
+ex:Row.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.w" .
+ex:Plain a bddo:Struct ; bddo:hasField ( ex:Plain.v ) .
+ex:Plain.v a bddo:Field ; bddo:dataType bddo:uint8 .
+
+ex:TwoLists a bddo:Struct ; bddo:hasParameter ( ex:Row.n ) , ( ex:Row.w ) ; bddo:hasField ( ex:Plain.v ) .
+ex:LiteralList a bddo:Struct ; bddo:hasParameter "n w" ; bddo:hasField ( ex:Plain.v ) .
+# A member that is a blank node, and not typed bddo:Parameter.
+ex:BadMember a bddo:Struct ; bddo:hasParameter ( [ bddo:parameterType bddo:IntegerParameter ] ) ; bddo:hasField ( ex:Plain.v ) .
+ex:NotAStruct bddo:hasParameter ( ex:Row.n ) .
+
+ex:p1 a bddo:Parameter ; bddo:parameterType xsd:integer .
+ex:p2 a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter , bddo:StringParameter .
+ex:p3 a bddo:Parameter , bddo:Field ; bddo:dataType bddo:uint8 .
+
+ex:twoArgLists a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( "1" "2" ) , ( "3" "4" ) .
+ex:literalArgs a bddo:Field ; bddo:dataType ex:Plain ; bddo:hasArgument "1" .
+ex:numericArg a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( 1 "2" ) .
+
+ex:tooFew a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( "1" ) .
+# Two equal argument strings are still two arguments: three for two parameters.
+ex:tooMany a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( "1" "1" "1" ) .
+ex:unexpected a bddo:Field ; bddo:dataType ex:Plain ; bddo:hasArgument ( "1" ) .
