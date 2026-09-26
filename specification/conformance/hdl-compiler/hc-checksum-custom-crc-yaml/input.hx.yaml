@@ -1,0 +1,10 @@
+format: t
+namespace: "https://example.org/hc-checksum-custom-crc-yaml#"
+structs:
+  Frame:
+    fields:
+      - { name: header, type: bytes, size: 4 }
+      - { name: payload, type: bytes, size: 8 }
+      - name: crc
+        type: u16le
+        checksum: { crc: { width: 16, poly: 0x8005, init: 0, refin: true, refout: true, xorout: 0 }, from: header, to: payload }

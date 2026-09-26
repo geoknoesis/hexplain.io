@@ -19,7 +19,7 @@ from suite import CLASSES, PREFIX, SUITE  # noqa: E402
 #: Case modules. The physical-parser modules after cases_physical add to its CASES list.
 MODULES = ("cases_physical", "cases_integers", "cases_regions", "cases_selection", "cases_integrity",
            "cases_text", "cases_limits", "cases_hel", "cases_rules", "cases_semantic", "cases_bundle", "cases_hdl",
-           "cases_evaluator")
+           "cases_evaluator", "cases_features", "cases_features_hdl")
 
 
 def all_cases():

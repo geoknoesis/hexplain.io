@@ -1,0 +1,22 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/hc-param-recursion#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.levels ex:Root.tree ) .
+ex:Root.levels a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:Root.tree a bddo:Field ; bddo:dataType ex:Node ; bddo:hasArgument ( "instance.levels" ) .
+ex:Node a bddo:Struct ; bddo:hasParameter ( ex:Node.depth ) ; bddo:hasField ( ex:Node.v ex:Node.child ) .
+ex:Node.depth a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+ex:Node.v a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:Node.child a bddo:Field ; bddo:dataType ex:Node ; bddo:hasArgument ( "param.depth - 1" ) ;
+    bddo:isPresentIf "param.depth > 1" .

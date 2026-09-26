@@ -1,0 +1,21 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/hc-checksum-custom-crc-yaml#> .
+
+ex:Frame a bddo:Struct ; bddo:hasField ( ex:Frame.header ex:Frame.payload ex:Frame.crc ) .
+ex:Frame.header a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 .
+ex:Frame.payload a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 8 .
+ex:Frame.crc a bddo:Field ; bddo:dataType bddo:uint16le ;
+    bddo:checksum [ a bddo:Checksum ; bddo:coversFromField ex:Frame.header ; bddo:coversToField ex:Frame.payload ;
+        bddo:checksumAlgorithm [ a bddo:CustomCrc ; bddo:crcWidth 16 ; bddo:crcPolynomial 32773 ; bddo:crcInit 0 ;
+            bddo:crcReflectIn true ; bddo:crcReflectOut true ; bddo:crcXorOut 0 ] ] .

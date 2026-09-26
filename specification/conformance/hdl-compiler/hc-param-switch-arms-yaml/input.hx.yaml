@@ -1,0 +1,13 @@
+format: t
+namespace: "https://example.org/hc-param-switch-arms-yaml#"
+structs:
+  Root:
+    fields:
+      - { name: kind, type: u8 }
+      - name: body
+        type: switch
+        switch: { on: kind, cases: { 1: { struct: Blob, args: [2] }, 2: { struct: Blob, args: [4] } } }
+  Blob:
+    params: [ { size: int } ]
+    fields:
+      - { name: data, type: bytes, size: size }

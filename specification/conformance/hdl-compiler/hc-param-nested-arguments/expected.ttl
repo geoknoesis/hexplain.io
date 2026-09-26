@@ -1,0 +1,26 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/hc-param-nested-arguments#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.hdr ex:Root.a ex:Root.b ) .
+ex:Root.hdr a bddo:Field ; bddo:dataType ex:Header .
+ex:Root.a a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( "instance.hdr.count" ) .
+ex:Root.b a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( "4" ) .
+ex:Header a bddo:Struct ; bddo:hasField ( ex:Header.count ) .
+ex:Header.count a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:Row a bddo:Struct ; bddo:hasParameter ( ex:Row.w ) ; bddo:hasField ( ex:Row.cell ) .
+ex:Row.w a bddo:Parameter .
+ex:Row.cell a bddo:Field ; bddo:dataType ex:Cell ; bddo:hasArgument ( "param.w + 1" ) .
+ex:Cell a bddo:Struct ; bddo:hasParameter ( ex:Cell.size ) ; bddo:hasField ( ex:Cell.data ) .
+ex:Cell.size a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+ex:Cell.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.size" .

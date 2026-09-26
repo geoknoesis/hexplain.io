@@ -1,0 +1,12 @@
+format: t
+namespace: "https://example.org/hc-param-struct-yaml#"
+structs:
+  Table:
+    fields:
+      - { name: count, type: u8 }
+      - { name: width, type: u8 }
+      - { name: rows, type: { struct: Row, args: [count, width] } }
+  Row:
+    params: [ { n: int }, w ]
+    fields:
+      - { name: cells, type: bytes, size: w, repeat: { count: n } }
