@@ -49,6 +49,12 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### Review of the normative documents (2026-09-27)
+
+- **BCP 14.** Every conventions section (Processing Model, HEL, HDL, the conformance sections of
+  conf and req, and the vocabulary pages that have one) now cites RFC 8174 alongside RFC 2119 and
+  says the key words carry their meaning only in all capitals.
+
 ### New language features (bddo 1.3, register/checksum 1.3, register/media-encoding 1.2)
 
 All additions are to the unreleased working versions; no module needed a further version bump.
