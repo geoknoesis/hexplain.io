@@ -400,6 +400,14 @@ pp("codec-zstd-checksum-mismatch", "A Zstandard content checksum mismatch is a c
    encoded("hexplain:isEncodedWith menc:Zstd", len(Z1)), Z1[:-1] + bytes([Z1[-1] ^ 0xFF]),
    error="Checksum", manifest=CODECS)
 
+ZSIZE = zstdframes.content_size_mismatch_frame(zstdframes.CONTENT_1)
+pp("codec-zstd-content-size-mismatch", "A Zstandard frame that decodes to fewer bytes than its Frame_Content_Size is a checksum error",
+   f"The frame header declares {len(zstdframes.CONTENT_1) + 1} bytes of content; the frame is otherwise intact (its "
+   f"block and content checksum are those of the {len(zstdframes.CONTENT_1)} bytes it decodes to). A declared content "
+   "size that the decoded content does not match is a Checksum error, like a content checksum mismatch.",
+   [OPTIONAL, "req-pm-optional-codecs-6", "req-pm-optional-codecs-1", "req-pm-errors-5"], ["optional-codecs", "errors"],
+   encoded("hexplain:isEncodedWith menc:Zstd", len(ZSIZE)), ZSIZE, error="Checksum", manifest=CODECS)
+
 pp("codec-zstd-truncated", "A truncated Zstandard frame is a validation error",
    "The frame is cut six bytes short, inside its compressed block.",
    [OPTIONAL, "req-pm-optional-codecs-1", "req-pm-minimum-codecs-10"], ["optional-codecs", "minimum-codecs"],

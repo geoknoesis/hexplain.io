@@ -96,6 +96,17 @@ def frame(content):
     return data
 
 
+def content_size_mismatch_frame(content):
+    """The pre-made frame of `content` with its Frame_Content_Size one larger than the content. The frame is
+    single-segment with a one-byte content size (Frame_Header_Descriptor 0x24: Single_Segment_flag and
+    Content_Checksum_flag), so the size is the byte after the descriptor; the window is that size, so the block
+    still fits it, and the content checksum still matches the content: only the declared size is wrong."""
+    data = bytearray(frame(content))
+    assert data[4] == 0x24 and data[5] == len(content) < 255
+    data[5] = len(content) + 1
+    return bytes(data)
+
+
 def dictionary_frame(content, dictionary_id):
     """A single-segment frame of one raw block that names a dictionary: Frame_Header_Descriptor
     0x21 (Single_Segment_flag, a one-byte Dictionary_ID, a one-byte Frame_Content_Size, no

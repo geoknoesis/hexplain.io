@@ -364,6 +364,24 @@ se("value-datatype-fraction-as-integer", "A fractional Float typed with an integ
    TYPED, ["computed-values"], computed("raw * 0.5", RAW, "xsd:integer"), struct.pack(">h", 21) + b"\x00",
    error="Expression")
 
+se("value-datatype-integral-float-as-integer", "A Float with no fractional part typed with an integer datatype is a Type / HEL error",
+   "raw * 2.0 is the Float 42.0. A Float has no value in an integer datatype even when it is integral, as a Float is "
+   "never an Integer in HEL, so typing it xsd:integer is an error, not the integer 42.",
+   TYPED + ["req-hel-conformance-6"], ["computed-values"], computed("raw * 2.0", RAW, "xsd:integer"),
+   struct.pack(">h", 21) + b"\x00", error="Expression")
+
+se("value-datatype-float-as-decimal", "A finite Float typed xsd:decimal is emitted as that decimal",
+   "raw * 0.5 is the Float 10.5, which has a value in xsd:decimal's value space.",
+   TYPED, ["computed-values"], computed("raw * 0.5", RAW, "xsd:decimal"), struct.pack(">h", 21) + b"\x00",
+   f'{ROOT} a ex:Rec ; ex:value "10.5"^^xsd:decimal .')
+
+se("value-datatype-bytes-as-base64", "Bytes typed xsd:base64Binary are emitted in base64",
+   "The expression passes the two bytes CA FE through; with hexplain:valueDatatype xsd:base64Binary the literal is yv4=, "
+   "the same bytes as the natural xsd:hexBinary CAFE.",
+   TYPED, ["computed-values"],
+   computed("tag", ["ex:tag a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 2 ."], "xsd:base64Binary"),
+   bytes.fromhex("cafe00"), f'{ROOT} a ex:Rec ; ex:value "yv4="^^xsd:base64Binary .')
+
 
 se("key-percent-sign", "A '%' in a key is always percent-encoded as %25",
    "The nested document's key is the JSON pointer /a%20b, naming the member \"a%20b\". Its '%' is encoded as %25 even "

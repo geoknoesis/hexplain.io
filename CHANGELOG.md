@@ -86,7 +86,14 @@ rewritten.
   With a `hexplain:valueDatatype`, the result must have a value in that datatype's value space
   (`req-pm-computed-values-2`); a processor never re-labels the datatype to fit. The HEL
   name-binding row for `hexplain:valueExpression` points to the rule. Fourteen new Semantic Emitter
-  cases (`se-value-natural-*`, `se-value-datatype-*`).
+  cases (`se-value-natural-*`, `se-value-datatype-*`). Clarified for the engine implementer
+  (`req-pm-computed-values-2`): a Float never has a value in an integer datatype, even with no
+  fractional part (`50.0` typed `xsd:integer` is a Type / HEL error, as a Float is never an Integer
+  in HEL), while `xsd:decimal` takes an Integer or a finite Float; and Bytes have a value in both
+  `xsd:hexBinary` and `xsd:base64Binary`. New cases `se-value-datatype-integral-float-as-integer`,
+  `se-value-datatype-float-as-decimal` and `se-value-datatype-bytes-as-base64`. A Zstandard frame
+  whose `Frame_Content_Size` the decoded content does not match stays a Checksum error, as the
+  error table says; new case `pp-codec-zstd-content-size-mismatch` checks it.
 - **Decoding text.** Text containers said a malformed sequence is a validation error "never
   replaced silently", HEL said malformed bytes decode to U+FFFD, and plain string fields had no
   rule. New section `processing#text-decoding` gives one: what is well-formed in each
