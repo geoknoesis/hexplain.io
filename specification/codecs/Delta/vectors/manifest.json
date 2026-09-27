@@ -1,0 +1,198 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#Delta",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "processing-model",
+      "url": "https://hexplain.io/specification/processing/#delta-parameters",
+      "description": "Worked from the Processing Model's Delta definition by hand.",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "chunky-rgb",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 1,
+            "samplesPerPixel": 3
+          },
+          "input": {
+            "hex": "0a141e010203"
+          },
+          "expect": {
+            "hex": "0a141e0b1621"
+          }
+        }
+      ],
+      "source": "processing-model"
+    },
+    {
+      "id": "big-endian-16",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 2
+          },
+          "input": {
+            "hex": "000100010001"
+          },
+          "expect": {
+            "hex": "000100020003"
+          }
+        }
+      ],
+      "source": "processing-model"
+    },
+    {
+      "id": "little-endian-16",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 2,
+            "littleEndian": 1
+          },
+          "input": {
+            "hex": "01000100"
+          },
+          "expect": {
+            "hex": "01000200"
+          }
+        }
+      ],
+      "source": "processing-model"
+    },
+    {
+      "id": "rows-restart",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 1,
+            "rowBytes": 4
+          },
+          "input": {
+            "hex": "0101010105010101"
+          },
+          "expect": {
+            "hex": "0102030405060708"
+          }
+        }
+      ],
+      "source": "processing-model"
+    },
+    {
+      "id": "wraps-modulo",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 1
+          },
+          "input": {
+            "hex": "fa0a"
+          },
+          "expect": {
+            "hex": "fa04"
+          }
+        }
+      ],
+      "source": "processing-model"
+    },
+    {
+      "id": "predictor-none",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 1,
+            "predictor": 1
+          },
+          "input": {
+            "hex": "0101"
+          },
+          "expect": {
+            "hex": "0101"
+          }
+        }
+      ],
+      "source": "processing-model"
+    },
+    {
+      "id": "encode-chunky-rgb",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "elementSize": 1,
+            "samplesPerPixel": 3
+          },
+          "input": {
+            "hex": "0a141e0b1621"
+          },
+          "expect": {
+            "hex": "0a141e010203"
+          }
+        }
+      ],
+      "source": "processing-model"
+    },
+    {
+      "id": "predictor-3-unsupported",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 1,
+            "predictor": 3
+          },
+          "input": {
+            "hex": "01"
+          },
+          "expect": {
+            "error": "Unsupported"
+          }
+        }
+      ],
+      "source": "processing-model"
+    },
+    {
+      "id": "missing-element-size",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "01"
+          },
+          "expect": {
+            "error": "Description"
+          }
+        }
+      ],
+      "source": "processing-model"
+    },
+    {
+      "id": "partial-element",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 2
+          },
+          "input": {
+            "hex": "010203"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "processing-model"
+    }
+  ]
+}

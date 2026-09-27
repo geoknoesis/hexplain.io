@@ -12,11 +12,14 @@
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
 
 <https://hexplain.io/ns/register/media-encoding> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/register/media-encoding/1.2> ; owl:versionInfo "1.2" ;
     owl:priorVersion <https://hexplain.io/ns/register/media-encoding/1.1> ;
     dcterms:modified "2026-09-27"^^xsd:date ;
+    # core supplies the codec contract vocabulary the minimum-set concepts carry below.
+    owl:imports <https://hexplain.io/ns/core> ;
     rdfs:label "Hexplain Register — Media Encoding"@en ;
     dcterms:created "2026-08-08"^^xsd:date ;
     dcterms:creator <https://geoknoesis.com> ;
@@ -86,6 +89,57 @@ menc:Delta a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConce
 menc:Shuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Byte shuffle"@en ;
     skos:note "Groups the Nth byte of every value together, so the high bytes of similar numbers become runs. HDF5 and Blosc both use it."@en .
 menc:BitShuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Bit shuffle"@en .
+
+# ---------- Codec contracts: the Processing Model's minimum set ----------
+menc:Store hexplain:codecContract [ a hexplain:CodecContract ;
+    hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ;
+    hexplain:raisesCategory "ResourceLimit" ] .
+menc:Deflate hexplain:codecContract [ a hexplain:CodecContract ;
+    hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ;
+    hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "level" ;
+        hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue -1 ;
+        hexplain:minimumValue -1 ; hexplain:maximumValue 9 ] ] .
+menc:Zlib hexplain:codecContract [ a hexplain:CodecContract ;
+    hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ;
+    hexplain:raisesCategory "Validation", "Checksum", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "level" ;
+          hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue -1 ;
+          hexplain:minimumValue -1 ; hexplain:maximumValue 9 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "trailing" ;
+          hexplain:parameterType hexplain:StringParameterType ; hexplain:defaultValue "refuse" ;
+          hexplain:allowedValue "refuse", "ignore" ] ] .
+menc:Gzip hexplain:codecContract [ a hexplain:CodecContract ;
+    hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ;
+    hexplain:raisesCategory "Validation", "Checksum", "ResourceLimit" ;
+    hexplain:declaresParameter [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "trailing" ;
+        hexplain:parameterType hexplain:StringParameterType ; hexplain:defaultValue "refuse" ;
+        hexplain:allowedValue "refuse", "ignore" ] ] .
+menc:Delta hexplain:codecContract [ a hexplain:CodecContract ;
+    hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ;
+    hexplain:raisesCategory "Validation", "Unsupported", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "elementSize" ;
+          hexplain:parameterType hexplain:IntegerParameterType ; hexplain:requiredParameter true ;
+          hexplain:allowedValue 1, 2, 4, 8 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "predictor" ;
+          hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 2 ;
+          hexplain:minimumValue 1 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "littleEndian" ;
+          hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 0 ;
+          hexplain:allowedValue 0, 1 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "samplesPerPixel" ;
+          hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 1 ;
+          hexplain:minimumValue 1 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "rowBytes" ;
+          hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 0 ;
+          hexplain:minimumValue 0 ] ] .
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.

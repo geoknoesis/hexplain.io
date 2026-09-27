@@ -1,0 +1,79 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#Store",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "processing-model",
+      "url": "https://hexplain.io/specification/processing/#delta-parameters",
+      "description": "Worked from the Processing Model's Delta definition by hand.",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "identity",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0001ff"
+          },
+          "expect": {
+            "hex": "0001ff"
+          }
+        }
+      ],
+      "source": "processing-model"
+    },
+    {
+      "id": "empty",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": ""
+          },
+          "expect": {
+            "hex": ""
+          }
+        }
+      ],
+      "source": "processing-model"
+    },
+    {
+      "id": "encode-identity",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {},
+          "input": {
+            "hex": "0708"
+          },
+          "expect": {
+            "hex": "0708"
+          }
+        }
+      ],
+      "source": "processing-model"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "00000000000000000000"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 4
+        }
+      ],
+      "source": "processing-model"
+    }
+  ]
+}

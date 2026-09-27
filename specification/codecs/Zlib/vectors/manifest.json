@@ -1,0 +1,183 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#Zlib",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "zlib",
+      "url": "https://zlib.net/",
+      "description": "Compressed with zlib 1.2.13 through CPython 3.11.4 (tools/codecs/_generate_minimum_vectors.py); corruptions are single-byte edits of those streams.",
+      "licence": "zlib licence (library); inputs CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "level6",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "789cf348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea0090c5a16e"
+          },
+          "expect": {
+            "sha256": "0d587915c91aa7c0876b7bfa7fd8a6bd963cf02161b42d8e9bee45f2238de0e1",
+            "size": 2560
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "empty",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "789c030000000001"
+          },
+          "expect": {
+            "hex": ""
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "adler-mismatch",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "789cf348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea0090c5a16f"
+          },
+          "expect": {
+            "error": "Checksum"
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "truncated",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "789cf348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "trailing-refused",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "789cf348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea0090c5a16e00"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "trailing-ignored",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "trailing": "ignore"
+          },
+          "input": {
+            "hex": "789cf348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea0090c5a16e0001"
+          },
+          "expect": {
+            "sha256": "0d587915c91aa7c0876b7bfa7fd8a6bd963cf02161b42d8e9bee45f2238de0e1",
+            "size": 2560
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "preset-dictionary",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "78bb0000000103000000ff"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "789cf348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea0090c5a16e"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 100
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "bad-level",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "level": 10
+          },
+          "input": {
+            "hex": "789cf348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea0090c5a16e"
+          },
+          "expect": {
+            "error": "Description"
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "bad-trailing",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "trailing": "maybe"
+          },
+          "input": {
+            "hex": "789cf348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea0090c5a16e"
+          },
+          "expect": {
+            "error": "Description"
+          }
+        }
+      ],
+      "source": "zlib"
+    }
+  ]
+}
