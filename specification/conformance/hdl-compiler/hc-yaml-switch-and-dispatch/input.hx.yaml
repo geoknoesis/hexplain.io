@@ -1,0 +1,13 @@
+format: t
+namespace: "https://example.org/hc-yaml-switch-and-dispatch#"
+structs:
+  Root:
+    fields:
+      - { name: kind, type: u8 }
+      - name: body
+        type: switch
+        switch: { on: kind, cases: { 1: A } }
+        dispatch: { name: T, on: kind, cases: { 2: A } }
+  A:
+    fields:
+      - { name: x, type: u8 }

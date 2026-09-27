@@ -956,6 +956,88 @@ hc("import-within-root", "An import inside the import root compiles, and the ont
    struct Box { n : u8 }
    """})
 
+hc("import-within-root-yaml", "A YAML imports: entry resolves like a text import",
+   "The YAML root document imports lib/mod.hx through imports: { lib: ... }; the path resolves inside the import root "
+   "exactly as the text import of hc-import-within-root does, and the module, a .hx file, is read as the text surface.",
+   OK + ["req-hdl-modules-1", "req-hdl-conformance-section-2"], ["modules", "import-resolution", "yaml"],
+   """
+   format: t
+   namespace: "{ns}"
+   imports: { lib: "lib/mod.hx" }
+   structs:
+     Root:
+       fields:
+         - name: b
+           type: lib:Box
+   """,
+   """
+   <https://example.org/hc-import-within-root-yaml> a <http://www.w3.org/2002/07/owl#Ontology> ;
+       <http://www.w3.org/2002/07/owl#imports> <https://example.org/hc-import-within-root-yaml/lib> .
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.b ) .
+   ex:Root.b a bddo:Field ; bddo:dataType <https://example.org/hc-import-within-root-yaml/lib#Box> .
+   """,
+   manifest={"compareOntologyHeader": True}, yaml=True,
+   files={"lib/mod.hx": """
+   module lib @namespace "https://example.org/hc-import-within-root-yaml/lib#"
+   struct Box { n : u8 }
+   """})
+
+hc("import-yaml-module", "An imported module's surface follows its file name",
+   "The text root document imports lib/mod.hx.yaml, a module written on the YAML surface (module: lib); a file whose name "
+   "ends .yaml is read as YAML whatever the surface of the document that imports it.",
+   OK + ["req-hdl-modules-1", "req-hdl-conformance-section-2"], ["modules", "import-resolution", "yaml"],
+   """
+   format t @namespace "{ns}"
+   import "lib/mod.hx.yaml" as lib
+   struct Root { b : lib:Box }
+   """,
+   """
+   <https://example.org/hc-import-yaml-module> a <http://www.w3.org/2002/07/owl#Ontology> ;
+       <http://www.w3.org/2002/07/owl#imports> <https://example.org/hc-import-yaml-module/lib> .
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.b ) .
+   ex:Root.b a bddo:Field ; bddo:dataType <https://example.org/hc-import-yaml-module/lib#Box> .
+   """,
+   manifest={"compareOntologyHeader": True},
+   files={"lib/mod.hx.yaml": """
+   module: lib
+   namespace: "https://example.org/hc-import-yaml-module/lib#"
+   structs:
+     Box:
+       fields:
+         - { name: n, type: u8 }
+   """})
+
+pair("quoted-key-percent-encoded", "A quoted key without an alias mints <struct>.<key>, percent-encoding what an IRI cannot hold",
+     "\"byte order\" has no alias, so its IRI is <base>H.byte%20order: the space, which Turtle cannot hold in an IRI, is "
+     "percent-encoded; \"bands\" holds no such character and keeps <base>H.bands. The runtime name is the last segment "
+     "decoded, byte order, and the key is located as written.",
+     OK, ["iri-minting", "delimited"],
+     """
+     format t @namespace "{ns}"
+     header H @record-separator 0x0A @separator 0x3D {
+       "byte order" : anum
+       "bands" : anum
+     }
+     """,
+     """
+     format: t
+     namespace: "{ns}"
+     structs:
+       H:
+         kind: header
+         record-separator: 0x0A
+         separator: 0x3D
+         fields:
+           - { key: "byte order", type: anum }
+           - { key: bands, type: anum }
+     """,
+     """
+     ex:H a bddo:KeyValueHeader ; bddo:recordDelimiter "0A"^^xsd:hexBinary ; bddo:keyValueSeparator "3D"^^xsd:hexBinary ;
+         bddo:hasField ( ex:H.byte%20order ex:H.bands ) .
+     ex:H.byte%20order a bddo:Field ; bddo:dataType bddo:asciiInteger ; bddo:key "byte order" .
+     ex:H.bands a bddo:Field ; bddo:dataType bddo:asciiInteger ; bddo:key "bands" .
+     """)
+
 # ----------------------------------------------------------------- new diagnostics (round 3 regressions and rules)
 
 err("root-path-without-root-key", "root.<k> naming no root field is an ERROR when no struct declares @root-key",
@@ -1292,6 +1374,84 @@ err("yaml-null-list-entry", "A null entry in a YAML field list is an ERROR",
           -
     """, yaml=True)
 
+
+err("yaml-import-key", "import: is not a YAML key; the key is imports:",
+    "A key the YAML table does not list is an ERROR at the top level as on a field; the singular import: is one of them.",
+    ["req-hdl-conformance-section-2"], ["yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    import: { lib: "lib/mod.hx" }
+    structs:
+      Root:
+        fields:
+          - { name: a, type: u8 }
+    """, yaml=True,
+    files={"lib/mod.hx": """
+    module lib @namespace "https://example.org/hc-yaml-import-key/lib#"
+    struct Box { n : u8 }
+    """})
+
+err("yaml-format-and-module", "A YAML document with both format: and module: is an ERROR",
+    "A document is a format or a module, not both.",
+    ["req-hdl-conformance-section-2"], ["yaml", "modules"],
+    """
+    format: t
+    module: m
+    namespace: "{ns}"
+    structs:
+      Root:
+        fields:
+          - { name: a, type: u8 }
+    """, yaml=True)
+
+err("yaml-seek-without-at", "seek: on a YAML field with no at: is an ERROR",
+    "The YAML mirror of hc-seek-without-at: seek scope only bounds an offset-addressed read.",
+    ["req-hdl-grammar-1", "req-hdl-conformance-section-2"], ["yaml", "modules"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        fields:
+          - { name: a, type: u8, seek: stream }
+    """, yaml=True)
+
+err("yaml-switch-and-dispatch", "A YAML field with both switch: and dispatch: is an ERROR",
+    "The YAML mirror of hc-switch-and-dispatch: two type selections on one field.",
+    ["req-hdl-conformance-section-2"], ["yaml", "modules"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        fields:
+          - { name: kind, type: u8 }
+          - name: body
+            type: switch
+            switch: { on: kind, cases: { 1: A } }
+            dispatch: { name: T, on: kind, cases: { 2: A } }
+      A:
+        fields:
+          - { name: x, type: u8 }
+    """, yaml=True)
+
+err("namespace-not-absolute", "An @namespace that is not an absolute IRI is an ERROR",
+    "not/an/iri# has no scheme; the compiler reports it and goes on with the default namespace.",
+    ["req-hdl-conformance-section-4"], ["iri-minting"],
+    """
+    format t @namespace "not/an/iri#"
+    struct Root { a : u8 }
+    """, line=1)
+
+err("use-not-absolute", "A use IRI that is not absolute is an ERROR",
+    "A prefix is bound to an absolute namespace IRI; lib/ns# has no scheme.",
+    ["req-hdl-conformance-section-4"], ["prefixes"],
+    """
+    format t @namespace "{ns}"
+    use lib: "lib/ns#"
+    struct Root { a : u8 }
+    """, line=2)
 
 # ----------------------------------------------------------------- further rules settled with the HDL compiler
 

@@ -213,6 +213,27 @@ rewritten.
 - **IRI minting.** New `req-pm-iri-minting-4`: a `%` in a key is always percent-encoded as `%25`,
   so the keys `a b` and `a%20b` cannot mint one IRI (the reference engine already does this). New
   case `se-key-percent-sign`.
+- **HDL as the compiler now implements it.** The YAML surface is no longer a subset: the
+  sentence making `module`, `import`/`imports`, `extend`, `dispatch` and `seek` text-only and
+  rejected is gone (`hdl#yaml`). New top-level keys `module: <name>` (a document has `format:` or
+  `module:`, not both), `imports: { alias: "path" }` and `extend: { Table: { key: Struct } }`, and
+  field keys `dispatch: { name, on, default, cases }`, whose case keys are typed as in text, and
+  `seek: stream|region`; `import:` is an unknown key. `req-hdl-conformance-section-2` no longer
+  carves out the text-only constructs. Import resolution (`hdl#import-resolution`): YAML imports
+  resolve like text imports through the same sandbox, and an imported module's surface follows its
+  file name (`.hx` text, `.yaml`/`.yml` YAML); a compiler bounds what imports read, per file and per
+  compilation, and reports an import over a bound as an `ERROR` on its line
+  (`req-hdl-modules-3`, marked not suite-testable: the bounds are the compiler's own; the reference
+  compiler's are 1 MiB per file and 16 MiB per compilation). IRI minting (`hdl#iri-minting`): a
+  quoted key without an alias mints `<struct>.<key>` with the characters Turtle cannot hold in an
+  IRI percent-encoded, a key already valid keeping its IRI, and the runtime name is the last
+  segment decoded; `@namespace` and `use` IRIs must be absolute, and an invalid `@namespace` is an
+  `ERROR` after which the default namespace is used. The command-line tool reports a diagnostic
+  from an imported module at the module's own `file:line:column`, followed by where it was
+  imported. New HDL Compiler cases `hc-import-within-root-yaml`, `hc-import-yaml-module`,
+  `hc-quoted-key-percent-encoded` (and its `-yaml` mirror), `hc-yaml-import-key`,
+  `hc-yaml-format-and-module`, `hc-yaml-seek-without-at`, `hc-yaml-switch-and-dispatch`,
+  `hc-namespace-not-absolute` and `hc-use-not-absolute`.
 
 ### New language features (bddo 1.3, register/checksum 1.3, register/media-encoding 1.2)
 

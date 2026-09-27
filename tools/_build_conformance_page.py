@@ -88,6 +88,8 @@ NOT_SUITE_TESTABLE = {
     "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the "
                                   "condition is asserted by the HEL vectors (validation/test/hel-vectors.tsv, "
                                   "req-hel-conformance-9).",
+    "req-hdl-modules-3": "The import bounds are the compiler's own; a case would need an imported file larger than every "
+                         "conforming compiler's bound, and no size is.",
 }
 
 
