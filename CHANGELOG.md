@@ -92,6 +92,13 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
   `pp-str-latin1-every-byte`, `pp-textnum-non-ascii-digit`, `pp-hel-bytes-malformed-argument`,
   `ce-recovery-malformed-text`; `pp-hel-bytes-vs-string` now expects a malformed byte to equal no
   String.
+- **Sync markers.** `req-pm-parsestruct-3` now bounds the `bddo:syncOnMarker` search: it starts
+  at the cursor (a marker exactly there counts) and stops at the current bound, the end of the
+  innermost bounded region or of the current stream, so an occurrence that runs past the bound is
+  not found; the struct's own size, applied after the seek, is measured from after the marker.
+  The error table's Sync row (`req-pm-errors-2`) says so. New cases `pp-sync-marker-at-cursor`,
+  `pp-sync-bounded-by-region`, `pp-sync-marker-straddles-bound`,
+  `pp-sync-struct-size-after-marker`.
 - **IRI minting.** New `req-pm-iri-minting-4`: a `%` in a key is always percent-encoded as `%25`,
   so the keys `a b` and `a%20b` cannot mint one IRI (the reference engine already does this). New
   case `se-key-percent-sign`.

@@ -566,6 +566,57 @@ pp("sync-missing", "A missing sync marker is a sync error",
    """,
    b"\x00\x11\xff\x07", error="Sync")
 
+SEG = """
+   ex:Seg a bddo:Struct ; bddo:syncOnMarker "FFD8"^^xsd:hexBinary ; bddo:hasField ( ex:v ) .
+   ex:v a bddo:Field ; bddo:dataType bddo:uint8 .
+   """
+
+pp("sync-marker-at-cursor", "A sync marker that starts at the cursor is found there",
+   "The stream starts with FF D8: the search starts at the cursor, so the marker is consumed at offset 0 and v is 7.",
+   ["req-pm-parsestruct-3"], ["algorithm"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:seg ex:tail ) .
+   ex:seg a bddo:Field ; bddo:dataType ex:Seg .
+   ex:tail a bddo:Field ; bddo:dataType bddo:uint8 .
+   """ + SEG,
+   b"\xff\xd8\x07\x09", {"seg": {"v": 7}, "tail": 9})
+
+pp("sync-bounded-by-region", "The sync search stops at the end of the enclosing region",
+   "Seg is parsed inside a three-byte region that holds no FF D8; the marker after the region is not found, a sync error.",
+   ["req-pm-parsestruct-3", "req-pm-errors-2"], ["algorithm", "errors"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:box ex:after ) .
+   ex:box a bddo:Field ; bddo:dataType ex:Box ; bddo:size 3 .
+   ex:after a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true .
+   ex:Box a bddo:Struct ; bddo:hasField ( ex:seg ) .
+   ex:seg a bddo:Field ; bddo:dataType ex:Seg .
+   """ + SEG,
+   b"\x00\x11\x22\xff\xd8\x07", error="Sync")
+
+pp("sync-marker-straddles-bound", "A sync marker that runs past the enclosing region's end is not found",
+   "The four-byte region ends between FF and D8: the occurrence does not lie entirely in the region, a sync error.",
+   ["req-pm-parsestruct-3", "req-pm-errors-2"], ["algorithm", "errors"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:box ex:after ) .
+   ex:box a bddo:Field ; bddo:dataType ex:Box ; bddo:size 4 .
+   ex:after a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true .
+   ex:Box a bddo:Struct ; bddo:hasField ( ex:seg ) .
+   ex:seg a bddo:Field ; bddo:dataType ex:Seg .
+   """ + SEG,
+   b"\x00\x11\x22\xff\xd8\x07", error="Sync")
+
+pp("sync-struct-size-after-marker", "A synced struct's own size is measured from after the marker",
+   "Seg declares size 2 and syncs on FF D8 at offset 1: its region is [3, 5), so v is AA, BB is padding, and tail is CC.",
+   ["req-pm-parsestruct-3", "req-pm-struct-size-3", "req-pm-parsestruct-8"], ["algorithm", "struct-size"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:seg ex:tail ) .
+   ex:seg a bddo:Field ; bddo:dataType ex:Seg .
+   ex:tail a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Seg a bddo:Struct ; bddo:syncOnMarker "FFD8"^^xsd:hexBinary ; bddo:size 2 ; bddo:hasField ( ex:v ) .
+   ex:v a bddo:Field ; bddo:dataType bddo:uint8 .
+   """,
+   b"\x00\xff\xd8\xaa\xbb\xcc", {"seg": {"v": 0xAA}, "tail": 0xCC})
+
 # ----------------------------------------------------------------- presence, derived values, constraints
 
 pp("present-if", "bddo:isPresentIf false skips the field and binds it to Null",

@@ -619,8 +619,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Sync error | bddo:syncOnMarker not found.",
-   "sha256": "ea057ab4e953fa2e"
+   "text": "Sync error | bddo:syncOnMarker not found before the current bound (ParseStruct, step 1).",
+   "sha256": "f662732f1e4ccde4",
+   "history": [
+    "ea057ab4e953fa2e"
+   ]
   },
   "req-pm-errors-3": {
    "page": "specification/processing/index.html",
@@ -1295,8 +1298,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "If struct has bddo:syncOnMarker, advance the cursor past the next occurrence of the marker bytes: the marker is consumed, and the struct (its start offset and its first field) begins after it. If no occurrence exists, raise a sync error.",
-   "sha256": "f41a3e64bca618f0"
+   "text": "If struct has bddo:syncOnMarker, advance the cursor past the first occurrence of the marker bytes that starts at or after the cursor — one that starts exactly at the cursor counts — and lies entirely before the current bound: the end of the innermost bounded region in force, or of the current stream when none is (Stream metadata). The struct’s own size is applied after the seek, so it does not bound the search. The marker is consumed, and the struct begins after it: its start offset, from which its own size region is measured, and its first field. If no occurrence lies entirely before the bound — including one that starts before the bound and ends after it — raise a sync error; the search never continues past the bound.",
+   "sha256": "12798522c099a587",
+   "history": [
+    "f41a3e64bca618f0"
+   ]
   },
   "req-pm-parsestruct-4": {
    "page": "specification/processing/index.html",
