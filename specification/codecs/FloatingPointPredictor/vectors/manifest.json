@@ -1,0 +1,143 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#FloatingPointPredictor",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "tiff-tn3",
+      "url": "https://chriscox.org/TIFFTN3d1.pdf",
+      "description": "Rows encoded by tools/codecs/_generate_tiff_vectors.py from the floating-point predictor of Adobe Photoshop TIFF Technical Note 3 (April 2005).",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "float32-one-row",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 4
+          },
+          "input": {
+            "hex": "3f0180823ea030783800000000000000"
+          },
+          "expect": {
+            "hex": "0000803f00002040000050c00000c842"
+          }
+        }
+      ],
+      "source": "tiff-tn3"
+    },
+    {
+      "id": "float32-big-endian",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 4,
+            "littleEndian": 0
+          },
+          "input": {
+            "hex": "3f0180823ea030783800000000000000"
+          },
+          "expect": {
+            "hex": "3f80000040200000c050000042c80000"
+          }
+        }
+      ],
+      "source": "tiff-tn3"
+    },
+    {
+      "id": "float64-two-rows-two-samples",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 8,
+            "samplesPerPixel": 2,
+            "rowBytes": 16
+          },
+          "input": {
+            "hex": "3fbfa1312010000000000000000000004040c8ddf8e300000000000000000000"
+          },
+          "expect": {
+            "hex": "000000000000e03f000000000000f0bf00000000000008400000000000001d40"
+          }
+        }
+      ],
+      "source": "tiff-tn3"
+    },
+    {
+      "id": "encode-float32",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "elementSize": 4
+          },
+          "input": {
+            "hex": "0000803f00002040000050c00000c842"
+          },
+          "expect": {
+            "hex": "3f0180823ea030783800000000000000"
+          }
+        }
+      ],
+      "source": "tiff-tn3"
+    },
+    {
+      "id": "partial-row",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 4,
+            "rowBytes": 8
+          },
+          "input": {
+            "hex": "000000000000000000000000"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "tiff-tn3"
+    },
+    {
+      "id": "row-not-whole-pixels",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 4,
+            "rowBytes": 6
+          },
+          "input": {
+            "hex": "0000000000000000"
+          },
+          "expect": {
+            "error": "Description"
+          }
+        }
+      ],
+      "source": "tiff-tn3"
+    },
+    {
+      "id": "missing-element-size",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0000000000000000"
+          },
+          "expect": {
+            "error": "Description"
+          }
+        }
+      ],
+      "source": "tiff-tn3"
+    }
+  ]
+}

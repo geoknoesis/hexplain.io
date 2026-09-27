@@ -70,6 +70,29 @@ menc:LZMA a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConcep
 menc:XZ a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "XZ"@en ;
     rdfs:comment "The .xz container: one or more streams of LZMA2-filtered blocks with an integrity check (CRC32, CRC64 or SHA-256). menc:LZMA names the algorithm family, not this framing." ;
     skos:note "TIFF compression 34925 and numcodecs' LZMA compressor store this container. Parameters: concatenated (1, the default, decodes every stream with stream padding as the xz tool does; 0 decodes the first stream and ignores what follows, as libtiff and GDAL's Zarr reader do), level (0-9, used when encoding) and memoryLimitKiB (the decoder memory a stream may need, default 73728)." .
+
+menc:TransformScheme a skos:ConceptScheme ; skos:prefLabel "Transform Register"@en ;
+    rdfs:comment "Format-neutral byte and sample transforms a pipeline step can apply: predictors, bit reversal, colour conversions and array filters." .
+
+menc:LZW a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "LZW"@en ;
+    rdfs:comment "Lempel-Ziv-Welch coding with a 12-bit dictionary. The parameter variant names the framing; this version defines \"tiff\": TIFF 6.0 section 13, codes most significant bit first, Clear 256 and EndOfInformation 257, and the early change to a wider code one entry before the dictionary fills." .
+menc:PackBits a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "PackBits"@en ;
+    rdfs:comment "Byte-oriented run-length coding (TIFF 6.0 section 9): a signed control byte n copies n+1 literal bytes (0 <= n <= 127), repeats the next byte 1-n times (-127 <= n <= -1), or does nothing (-128)." .
+menc:CCITTModifiedHuffman a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "CCITT Modified Huffman"@en ;
+    rdfs:comment "One-dimensional CCITT T.4 run-length coding of bilevel rows without EOL codes, each row starting on a byte (rowAlignment 8, TIFF compression 2) or 16-bit word (rowAlignment 16, TIFF compression 32771) boundary, decoded with libtiff's recovery rules. Output: rows of ceil(columns / 8) bytes, most significant bit first, 1 for black." .
+menc:CCITTGroup3 a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "CCITT Group 3"@en ;
+    rdfs:comment "CCITT T.4 (Group 3) facsimile coding, one- or two-dimensional as bit 0 of options (the T4Options tag) says, each row after an EOL code unless noEol, decoded with libtiff's recovery rules; the reference line carries across strips in the session." .
+menc:CCITTGroup4 a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "CCITT Group 4"@en ;
+    rdfs:comment "CCITT T.6 (Group 4) two-dimensional facsimile coding without EOL codes, decoded with libtiff's recovery rules; an early EOFB ends the output." .
+menc:NeXT a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "NeXT 2-bit RLE"@en ;
+    rdfs:comment "NeXT's run-length coding of 2-bit grey rows (literal rows, literal spans and runs), as libtiff's tif_next.c decodes it." .
+menc:ThunderScan a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "ThunderScan 4-bit RLE"@en ;
+    rdfs:comment "ThunderScan's 4-bit run-length and delta coding of grey rows, as libtiff's tif_thunder.c decodes it." .
+menc:FloatingPointPredictor a skos:Concept ; skos:inScheme menc:TransformScheme ; skos:topConceptOf menc:TransformScheme ; skos:prefLabel "Floating-point predictor"@en ;
+    rdfs:comment "Adobe TIFF Technical Note 3's floating-point predictor: each row's sample bytes regrouped by significance (every sample's most significant byte first) and differenced byte by byte, each byte predicted from the byte samplesPerPixel positions earlier. Decoding sums the differences and reassembles the samples in the byte order littleEndian names." .
+menc:BitReverse a skos:Concept ; skos:inScheme menc:TransformScheme ; skos:topConceptOf menc:TransformScheme ; skos:prefLabel "Bit reversal"@en ;
+    rdfs:comment "Reverses the order of the bits within every byte (TIFF FillOrder 2 to FillOrder 1). Its own inverse." .
+
 menc:Zstd a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Zstandard"@en ;
     skos:note "Zstandard frames (RFC 8878), one or several concatenated; skippable frames are skipped. The Processing Model (Codecs beyond the minimum set) defines decoding; a frame that needs a dictionary is refused."@en .
 menc:Snappy a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Snappy"@en .
@@ -171,6 +194,79 @@ menc:XZ hexplain:codecContract [ a hexplain:CodecContract ;
         [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "memoryLimitKiB" ;
           hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 73728 ;
           hexplain:minimumValue 1 ; hexplain:maximumValue 4194304 ] ] .
+menc:LZW hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ;
+    hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "variant" ;
+        hexplain:parameterType hexplain:StringParameterType ; hexplain:defaultValue "tiff" ; hexplain:allowedValue "tiff" ] ] .
+menc:PackBits hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:raisesCategory "Validation", "ResourceLimit" ] .
+menc:CCITTModifiedHuffman hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession true ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 1 ; hexplain:maximumValue 536870848 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 0 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "fillOrder" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:defaultValue 1 ; hexplain:allowedValue 1, 2 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "rowAlignment" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:defaultValue 8 ; hexplain:allowedValue 8, 16 ] ] .
+menc:CCITTGroup3 hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession true ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 1 ; hexplain:maximumValue 536870848 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 0 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "options" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:defaultValue 0 ; hexplain:minimumValue 0 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "fillOrder" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:defaultValue 1 ; hexplain:allowedValue 1, 2 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "noEol" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:defaultValue 0 ; hexplain:allowedValue 0, 1 ] ] .
+menc:CCITTGroup4 hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession true ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 1 ; hexplain:maximumValue 536870848 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 0 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "options" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:defaultValue 0 ; hexplain:minimumValue 0 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "fillOrder" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:defaultValue 1 ; hexplain:allowedValue 1, 2 ] ] .
+menc:NeXT hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 1 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "rowBytes" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 1 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 0 ] ] .
+menc:ThunderScan hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 1 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "rowBytes" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 1 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 0 ] ] .
+menc:FloatingPointPredictor hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "elementSize" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:allowedValue 2, 3, 4, 8 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "samplesPerPixel" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:defaultValue 1 ; hexplain:minimumValue 1 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "rowBytes" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:defaultValue 0 ; hexplain:minimumValue 0 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "littleEndian" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:defaultValue 1 ; hexplain:allowedValue 0, 1 ] ] .
+menc:BitReverse hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:raisesCategory "ResourceLimit" ] .
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
@@ -192,6 +288,10 @@ menc:XZ hexplain:codecContract [ a hexplain:CodecContract ;
 <https://hexplain.io/ns/register/media-encoding#BZip2> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#BZip2> <http://www.w3.org/2000/01/rdf-schema#label> "bzip2"@en .
 <https://hexplain.io/ns/register/media-encoding#BZip2> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#BitReverse> <http://www.w3.org/2004/02/skos/core#definition> "Reverses the order of the bits within every byte (TIFF FillOrder 2 to FillOrder 1). Its own inverse."@en .
+<https://hexplain.io/ns/register/media-encoding#BitReverse> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#BitReverse> <http://www.w3.org/2000/01/rdf-schema#label> "Bit reversal"@en .
+<https://hexplain.io/ns/register/media-encoding#BitReverse> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#BitShuffle> <http://www.w3.org/2004/02/skos/core#definition> "A reversible transform grouping corresponding bits of successive values to prepare them for compression; element/block parameters belong to the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#BitShuffle> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#BitShuffle> <http://www.w3.org/2000/01/rdf-schema#label> "Bit shuffle"@en .
@@ -200,6 +300,18 @@ menc:XZ hexplain:codecContract [ a hexplain:CodecContract ;
 <https://hexplain.io/ns/register/media-encoding#Blosc> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#Blosc> <http://www.w3.org/2000/01/rdf-schema#label> "Blosc"@en .
 <https://hexplain.io/ns/register/media-encoding#Blosc> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#CCITTGroup3> <http://www.w3.org/2004/02/skos/core#definition> "CCITT T.4 (Group 3) facsimile coding, one- or two-dimensional as bit 0 of options (the T4Options tag) says, each row after an EOL code unless noEol, decoded with libtiff's recovery rules; the reference line carries across strips in the session."@en .
+<https://hexplain.io/ns/register/media-encoding#CCITTGroup3> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#CCITTGroup3> <http://www.w3.org/2000/01/rdf-schema#label> "CCITT Group 3"@en .
+<https://hexplain.io/ns/register/media-encoding#CCITTGroup3> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#CCITTGroup4> <http://www.w3.org/2004/02/skos/core#definition> "CCITT T.6 (Group 4) two-dimensional facsimile coding without EOL codes, decoded with libtiff's recovery rules; an early EOFB ends the output."@en .
+<https://hexplain.io/ns/register/media-encoding#CCITTGroup4> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#CCITTGroup4> <http://www.w3.org/2000/01/rdf-schema#label> "CCITT Group 4"@en .
+<https://hexplain.io/ns/register/media-encoding#CCITTGroup4> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#CCITTModifiedHuffman> <http://www.w3.org/2004/02/skos/core#definition> "One-dimensional CCITT T.4 run-length coding of bilevel rows without EOL codes, each row starting on a byte (rowAlignment 8, TIFF compression 2) or 16-bit word (rowAlignment 16, TIFF compression 32771) boundary, decoded with libtiff's recovery rules. Output: rows of ceil(columns / 8) bytes, most significant bit first, 1 for black."@en .
+<https://hexplain.io/ns/register/media-encoding#CCITTModifiedHuffman> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#CCITTModifiedHuffman> <http://www.w3.org/2000/01/rdf-schema#label> "CCITT Modified Huffman"@en .
+<https://hexplain.io/ns/register/media-encoding#CCITTModifiedHuffman> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#CodecScheme> <http://www.w3.org/2004/02/skos/core#definition> "The controlled concept scheme grouping codec values. Membership identifies the applicable value set; raw format codes are defined by profiles rather than by this scheme."@en .
 <https://hexplain.io/ns/register/media-encoding#CodecScheme> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#CodecScheme> <http://www.w3.org/2000/01/rdf-schema#label> "Codec Register"@en .
@@ -218,6 +330,10 @@ menc:XZ hexplain:codecContract [ a hexplain:CodecContract ;
 <https://hexplain.io/ns/register/media-encoding#FLAC> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#FLAC> <http://www.w3.org/2000/01/rdf-schema#label> "FLAC"@en .
 <https://hexplain.io/ns/register/media-encoding#FLAC> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#FloatingPointPredictor> <http://www.w3.org/2004/02/skos/core#definition> "Adobe TIFF Technical Note 3's floating-point predictor: each row's sample bytes regrouped by significance (every sample's most significant byte first) and differenced byte by byte, each byte predicted from the byte samplesPerPixel positions earlier. Decoding sums the differences and reassembles the samples in the byte order littleEndian names."@en .
+<https://hexplain.io/ns/register/media-encoding#FloatingPointPredictor> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#FloatingPointPredictor> <http://www.w3.org/2000/01/rdf-schema#label> "Floating-point predictor"@en .
+<https://hexplain.io/ns/register/media-encoding#FloatingPointPredictor> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#Gzip> <http://www.w3.org/2004/02/skos/core#definition> "Identifier for gzip-framed compressed data, distinct from an unwrapped DEFLATE bitstream."@en .
 <https://hexplain.io/ns/register/media-encoding#Gzip> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#Gzip> <http://www.w3.org/2000/01/rdf-schema#label> "gzip"@en .
@@ -242,10 +358,18 @@ menc:XZ hexplain:codecContract [ a hexplain:CodecContract ;
 <https://hexplain.io/ns/register/media-encoding#LZMA> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#LZMA> <http://www.w3.org/2000/01/rdf-schema#label> "LZMA"@en .
 <https://hexplain.io/ns/register/media-encoding#LZMA> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#LZW> <http://www.w3.org/2004/02/skos/core#definition> "Lempel-Ziv-Welch coding with a 12-bit dictionary. The parameter variant names the framing; this version defines \"tiff\": TIFF 6.0 section 13, codes most significant bit first, Clear 256 and EndOfInformation 257, and the early change to a wider code one entry before the dictionary fills."@en .
+<https://hexplain.io/ns/register/media-encoding#LZW> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#LZW> <http://www.w3.org/2000/01/rdf-schema#label> "LZW"@en .
+<https://hexplain.io/ns/register/media-encoding#LZW> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#MP3> <http://www.w3.org/2004/02/skos/core#definition> "Identifier for MPEG audio Layer III coded audio, distinct from a file's metadata-tag container."@en .
 <https://hexplain.io/ns/register/media-encoding#MP3> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#MP3> <http://www.w3.org/2000/01/rdf-schema#label> "MP3"@en .
 <https://hexplain.io/ns/register/media-encoding#MP3> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#NeXT> <http://www.w3.org/2004/02/skos/core#definition> "NeXT's run-length coding of 2-bit grey rows (literal rows, literal spans and runs), as libtiff's tif_next.c decodes it."@en .
+<https://hexplain.io/ns/register/media-encoding#NeXT> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#NeXT> <http://www.w3.org/2000/01/rdf-schema#label> "NeXT 2-bit RLE"@en .
+<https://hexplain.io/ns/register/media-encoding#NeXT> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#Opus> <http://www.w3.org/2004/02/skos/core#definition> "Identifier for Opus coded audio; transport/container framing is not implied by this concept alone."@en .
 <https://hexplain.io/ns/register/media-encoding#Opus> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#Opus> <http://www.w3.org/2000/01/rdf-schema#label> "Opus"@en .
@@ -254,6 +378,10 @@ menc:XZ hexplain:codecContract [ a hexplain:CodecContract ;
 <https://hexplain.io/ns/register/media-encoding#PCM> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#PCM> <http://www.w3.org/2000/01/rdf-schema#label> "Linear PCM"@en .
 <https://hexplain.io/ns/register/media-encoding#PCM> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#PackBits> <http://www.w3.org/2004/02/skos/core#definition> "Byte-oriented run-length coding (TIFF 6.0 section 9): a signed control byte n copies n+1 literal bytes (0 <= n <= 127), repeats the next byte 1-n times (-127 <= n <= -1), or does nothing (-128)."@en .
+<https://hexplain.io/ns/register/media-encoding#PackBits> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#PackBits> <http://www.w3.org/2000/01/rdf-schema#label> "PackBits"@en .
+<https://hexplain.io/ns/register/media-encoding#PackBits> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#ProRes> <http://www.w3.org/2004/02/skos/core#definition> "Identifier for the ProRes video coding family; the concrete variant belongs to the format/profile metadata."@en .
 <https://hexplain.io/ns/register/media-encoding#ProRes> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#ProRes> <http://www.w3.org/2000/01/rdf-schema#label> "Apple ProRes"@en .
@@ -274,6 +402,14 @@ menc:XZ hexplain:codecContract [ a hexplain:CodecContract ;
 <https://hexplain.io/ns/register/media-encoding#Store> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#Store> <http://www.w3.org/2000/01/rdf-schema#label> "Store (none)"@en .
 <https://hexplain.io/ns/register/media-encoding#Store> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#ThunderScan> <http://www.w3.org/2004/02/skos/core#definition> "ThunderScan's 4-bit run-length and delta coding of grey rows, as libtiff's tif_thunder.c decodes it."@en .
+<https://hexplain.io/ns/register/media-encoding#ThunderScan> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#ThunderScan> <http://www.w3.org/2000/01/rdf-schema#label> "ThunderScan 4-bit RLE"@en .
+<https://hexplain.io/ns/register/media-encoding#ThunderScan> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#TransformScheme> <http://www.w3.org/2004/02/skos/core#definition> "Format-neutral byte and sample transforms a pipeline step can apply: predictors, bit reversal, colour conversions and array filters."@en .
+<https://hexplain.io/ns/register/media-encoding#TransformScheme> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#TransformScheme> <http://www.w3.org/2000/01/rdf-schema#label> "Transform Register"@en .
+<https://hexplain.io/ns/register/media-encoding#TransformScheme> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#VP9> <http://www.w3.org/2004/02/skos/core#definition> "Identifier for the VP9 video coding format; container framing remains separate."@en .
 <https://hexplain.io/ns/register/media-encoding#VP9> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#VP9> <http://www.w3.org/2000/01/rdf-schema#label> "VP9"@en .

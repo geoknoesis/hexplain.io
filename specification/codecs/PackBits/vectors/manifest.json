@@ -1,0 +1,95 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#PackBits",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "tiff-6.0",
+      "url": "https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf",
+      "description": "Worked examples of TIFF Revision 6.0 (Adobe, 1992): PackBits (section 9) and LZW (section 13), encoded as bytes by tools/codecs/_generate_tiff_vectors.py.",
+      "licence": "CC0-1.0 (the byte strings)"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "tiff6-example",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "feaa0280002afdaa0380002a22f7aa"
+          },
+          "expect": {
+            "hex": "aaaaaa80002aaaaaaaaa80002a22aaaaaaaaaaaaaaaaaaaa"
+          }
+        }
+      ],
+      "source": "tiff-6.0"
+    },
+    {
+      "id": "no-op-control",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "80004180"
+          },
+          "expect": {
+            "hex": "41"
+          }
+        }
+      ],
+      "source": "tiff-6.0"
+    },
+    {
+      "id": "truncated-literal",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "054142"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "tiff-6.0"
+    },
+    {
+      "id": "truncated-repeat",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "fe"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "tiff-6.0"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "feaa0280002afdaa0380002a22f7aa"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 10
+        }
+      ],
+      "source": "tiff-6.0"
+    }
+  ]
+}
