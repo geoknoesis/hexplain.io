@@ -16,7 +16,7 @@
     owl:versionIRI <https://hexplain.io/ns/bddo/1.3> ;
     owl:versionInfo "1.3" ;
     owl:priorVersion <https://hexplain.io/ns/bddo/1.2> ;
-    dcterms:modified "2026-09-24"^^xsd:date ;
+    dcterms:modified "2026-09-27"^^xsd:date ;
     rdfs:label "Binary Data Description Ontology (BDDO)" ;
     rdfs:comment "Vocabulary for declaratively describing the physical structure of binary data." ;
     dcterms:created "2025-08-16"^^xsd:date ;
@@ -806,6 +806,7 @@ bddo:ArgumentListShape a sh:NodeShape ;
 # Arity: every place that names a struct as a type supplies one argument per parameter. List
 # NODES are counted, not members, so two equal argument strings still count twice.
 bddo:ArgumentArityShape a sh:NodeShape ;
+    rdfs:comment "Wherever a bddo:Struct that declares parameters is named as a type (by bddo:dataType, bddo:ruleDataType or bddo:armDataType), the naming node supplies exactly one bddo:hasArgument list member per parameter. List nodes are counted, so two equal argument strings count twice."@en ;
     sh:targetSubjectsOf bddo:dataType , bddo:ruleDataType , bddo:armDataType ;
     sh:sparql [ sh:message "{?s} declares {?np} parameter(s), but {?na} argument(s) are supplied for it." ;
         sh:prefixes bddo:_prefixes ;
@@ -969,6 +970,7 @@ bddo:NamespaceBindingShape a sh:NodeShape ;
 
 # The prefixes a tree document's XML paths use: each bound once, and every one used is bound.
 bddo:TreePrefixBindingShape a sh:NodeShape ;
+    rdfs:comment "An XML tree document binds each namespace prefix at most once, and every prefix its fields' bddo:nodePath values use is bound by one of its bddo:hasNamespaceBinding entries; only xml is predeclared."@en ;
     sh:targetClass bddo:TreeDocument ;
     sh:targetSubjectsOf bddo:hasNamespaceBinding ;
     sh:sparql [ sh:message "Two bddo:hasNamespaceBinding entries of one tree document bind the prefix '{?px}'; a prefix is bound at most once." ;

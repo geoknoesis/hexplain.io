@@ -5,6 +5,8 @@ from collections import defaultdict
 from rdflib import Graph,RDF,RDFS,OWL,URIRef,BNode,Namespace
 import specgraph
 from _term_editorial import DEFINITIONS, SCOPE_NOTES
+from _shape_text import PLACEHOLDER, Unhandled, constrains_value, value_phrase
+from _shape_text import message as shape_message
 
 ROOT=Path(__file__).resolve().parent.parent
 SKOS=Namespace('http://www.w3.org/2004/02/skos/core#')
@@ -75,16 +77,63 @@ def shape_targets(g,t):
 def shape_properties(g,shape):
     return sorted({o for s in closure(g,shape) for o in g.objects(s,SH.path) if isinstance(o,URIRef)},key=str)
 
+def stated_definition(g,t):
+    """The definition a term's documentation gives: its skos:definition, else its rdfs:comment.
+
+    One rule for the whole family: rdfs:comment is the author's definition where the source gives
+    one; a skos:definition is added only where it says something the comment does not (an
+    editorial definition for a term whose source has no comment, or one that replaces an
+    inadequate comment). The two never repeat each other (tools/test_documentation_annotations.py).
+    """
+    return g.value(t,SKOS.definition) or g.value(t,RDFS.comment)
+
+def _prefixes(g):
+    out={p:str(n) for p,n in g.namespace_manager.namespaces() if p}
+    for ontology in g.subjects(VANN.preferredNamespacePrefix,None):
+        prefix=str(g.value(ontology,VANN.preferredNamespacePrefix));uri=g.value(ontology,VANN.preferredNamespaceUri)
+        if uri is not None:
+            out={k:v for k,v in out.items() if v!=str(uri)};out[prefix]=str(uri)
+    return out
+
+def shape_definition(g,t):
+    """A definition for a shape whose source gives none, built from what the shape checks.
+
+    Sentences come from the shape's own validation messages and, for a value shape, from its
+    constraints. A message that names SPARQL result variables ({?x}) is never copied: it reads
+    as a template, not a definition. A shape with nothing to say needs an editorial rdfs:comment.
+    """
+    if list(g.objects(t,SH.rule)):return 'A SHACL rule-bearing shape that derives additional triples for its selected focus nodes. Its rule is an inference operation, not a validation constraint; see the executable rule and activation scope below.'
+    prefixes=_prefixes(g);sentences=[]
+    def add(text):
+        text=str(text).strip()
+        if text and not PLACEHOLDER.search(text) and text not in sentences:sentences.append(text)
+    for message in g.objects(t,SH.message):add(message)
+    if constrains_value(g,t):
+        try:add(('Each focus node is ' if any((t,p,None) in g for p in TARGETS) or (t,SH.target,None) in g else 'A conforming value is ')+value_phrase(g,t,prefixes)+'.')
+        except Unhandled:pass
+    for pshape in sorted(g.objects(t,SH.property),key=lambda p:str(g.value(p,SH.path))):
+        stated=[m for m in g.objects(pshape,SH.message) if not PLACEHOLDER.search(str(m))]
+        if stated:
+            for m in stated:add(m)
+        else:
+            try:add(shape_message(g,pshape,prefixes))
+            except Unhandled:pass
+    for constraint in g.objects(t,SH.sparql):
+        for message in g.objects(constraint,SH.message):add(message)
+    if not sentences:
+        raise ValueError(f'Editorial definition required: {compact(g,t)} (a shape whose constraints cannot be stated and that has no rdfs:comment)')
+    targets=shape_targets(g,t)
+    opening='Applied through references from other shapes.' if targets.startswith('No automatic target') else 'Applies to '+targets+'.'
+    return opening+' '+' '.join(sentences)
+
 def definition(g,t):
+    """The skos:definition to generate for [t], or None when the source already defines it."""
     key=compact(g,t);name=label(g,t);k=kind(g,t)
-    if key in DEFINITIONS:return DEFINITIONS[key]
-    existing=g.value(t,SKOS.definition) or g.value(t,RDFS.comment)
-    if existing:return str(existing)
-    if k in ['Node shape','Property shape']:
-        props=shape_properties(g,t)
-        messages=[str(o) for s in closure(g,t) for o in g.objects(s,SH.message)]
-        if list(g.objects(t,SH.rule)):return 'A SHACL rule-bearing shape that derives additional triples for its selected focus nodes. Its rule is an inference operation, not a validation constraint; see the executable rule and activation scope below.'
-        return ('A reusable validation contract for '+(', '.join(compact(g,p) for p in props) if props else name.removesuffix(' shape').removesuffix(' Shape'))+'. '+(' '.join(sorted(set(messages))) if messages else 'Its constraints below specify the permitted values and combinations.'))
+    stated=stated_definition(g,t)
+    if key in DEFINITIONS:
+        return None if stated is not None and str(stated).strip()==DEFINITIONS[key].strip() else DEFINITIONS[key]
+    if stated is not None:return None
+    if k in ['Node shape','Property shape']:return shape_definition(g,t)
     if k=='SHACL prefix declarations':return 'Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data.'
     if (t,RDF.type,BDDO.DataType) in g and g.value(t,BDDO.bitWidth):
         width=str(g.value(t,BDDO.bitWidth));base=g.value(t,BDDO.baseType);signed=g.value(t,BDDO.isSigned)
@@ -170,20 +219,19 @@ def kind_sentence(g,t,k):
     return ''
 
 def scope(g,t):
+    """The skos:scopeNote to generate for [t], or None.
+
+    Only notes that say something about the term itself are generated: the module's note on its
+    ontology, and a term's editorial note (_term_editorial.SCOPE_NOTES). Generating the module
+    sentence, a kind sentence or a shape's activation onto every term repeated, 987 times, what
+    the ontology's note and the term reference's own rows (activation, shape usage) already say.
+    """
     k=kind(g,t);ns=str(owner(t));module=ns.removesuffix('/shapes').rsplit('/',1)[-1]
     if module=='hexplain':module='core'
     for key in (str(t),compact(g,t)):
         if key in SCOPE_NOTES:return SCOPE_NOTES[key]
-    if k in ['Node shape','Property shape']:return 'Validation activation: '+shape_targets(g,t)+' Constraints apply only within that activation or through shape references; they are not global OWL domain axioms.'
-    if k=='SHACL prefix declarations':return 'Used by named SHACL SPARQL constraints/rules in this module. Not intended for instance-data assertions.'
-    if module in TERM_SCOPED and k!='Ontology':
-        own=g.value(t,SKOS.scopeNote)
-        if own is not None:return str(own)
-        return kind_sentence(g,t,k)
+    if k!='Ontology':return None
     if '/register/' in ns:
-        if k=='Ontology':return 'Load to obtain the concepts of this register. A profile binds its schemes to the properties they supply with hexplain:usesRegister; the aspect the values serve does not import it.'
-        return ('Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code.'+
-          (' This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects.' if module=='us-nato-security' else ' Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile.' if module in ['media-encoding','checksum'] else ' Use concept IRIs as values; concept schemes and collections organize those values rather than describing parsed instances.'))
-    result=SCOPE[module]
-    sentence=kind_sentence(g,t,k)
-    return result+(' '+sentence if sentence else '')
+        return 'Load to obtain the concepts of this register. A profile binds its schemes to the properties they supply with hexplain:usesRegister; the aspect the values serve does not import it.'+(
+          ' This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects.' if module=='us-nato-security' else ' Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile.' if module in ['media-encoding','checksum'] else ' Use concept IRIs as values; concept schemes and collections organize those values rather than describing parsed instances.')
+    return SCOPE.get(module)

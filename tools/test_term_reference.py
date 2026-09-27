@@ -39,9 +39,12 @@ for directory,paths in modules().items():
     for t in owned(g):
         total+=1
         assert g.value(t,RDFS.label) or g.value(t,SKOS.prefLabel),t
-        definition=g.value(t,SKOS.definition);scope_note=g.value(t,SKOS.scopeNote)
+        # A term's definition is its skos:definition, else its rdfs:comment (the family rule in
+        # specification/ontology-design, Documentation annotations); only an ontology must carry a
+        # scope note, and a term's note, when it has one, says something.
+        definition=g.value(t,SKOS.definition) or g.value(t,RDFS.comment);scope_note=g.value(t,SKOS.scopeNote)
         assert definition and len(str(definition))>25 and str(definition).strip()!=label(g,t),t
-        assert scope_note and len(str(scope_note))>40,t
+        assert (scope_note is None and kind(g,t)!='Ontology') or (scope_note and len(str(scope_note))>40),t
         assert kind(g,t)=='Ontology' or g.value(t,RDFS.isDefinedBy),t
         shapes+=kind(g,t) in ['Node shape','Property shape']
     p=ROOT/directory/'index.html';page=Page();page.feed(p.read_text(encoding='utf-8'));pages[p]=page

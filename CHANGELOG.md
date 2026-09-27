@@ -9,25 +9,34 @@ snapshots are recorded under `releases/`.
 ### Module versions
 
 Every module whose canonical Turtle differs from snapshot 2026-09-24.2 has a new version IRI
-naming the version that snapshot froze as `owl:priorVersion`, and `dcterms:modified 2026-09-24`.
-Most changed only in their generated scope notes (below); `owl:versionInfo` is now the bare
-version number everywhere, and the three working drafts say so with
-`schema:creativeWorkStatus "working draft"`. Unchanged: aspect/color, aspect/encoding,
-aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/time.
+naming the version that snapshot froze as `owl:priorVersion`, and `dcterms:modified` (2026-09-27
+for every module since the review fixes below). Most changed only in their generated
+documentation (below); `owl:versionInfo` is now the bare version number everywhere, and the three
+working drafts say so with `schema:creativeWorkStatus "working draft"`. aspect/color,
+aspect/encoding, aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security and
+aspect/time, unchanged until then, took a new version when their generated documentation was
+rewritten.
 
 | Module | Was | Now |
 |---|---|---|
 | archive (axv) | 1.2 | 1.3 |
 | aspect/bundle | 1.4 | 1.5 |
+| aspect/color | 1.0 | 1.1 |
+| aspect/encoding | 1.1 | 1.2 |
+| aspect/fsmeta | 1.1 | 1.2 |
 | aspect/geometry | 1.3 working draft | 1.4 (working draft) |
 | aspect/integrity | 1.1 | 1.2 |
+| aspect/networkflow | 1.2 | 1.3 |
 | aspect/packaging | 1.1 | 1.2 |
+| aspect/pointcloud | 1.1 | 1.2 |
 | aspect/provenance | 1.2 | 1.3 |
 | aspect/raster | 1.2 working draft | 1.3 (working draft) |
 | aspect/sampling | 1.1 | 1.2 |
+| aspect/security | 2.1 | 2.2 |
 | aspect/signal | 1.1 | 1.2 |
 | aspect/spatialref | 1.3 working draft | 1.4 (working draft) |
 | aspect/tabular | 1.1 | 1.2 |
+| aspect/time | 1.0 | 1.1 |
 | audio (adv) | 1.1 | 1.2 |
 | bddo | 1.2 | 1.3 |
 | conf | 1.2 | 1.3 |
@@ -268,6 +277,24 @@ cites `req-pm-context-3`.
 
 ### Documentation annotations
 
+- One definition rule: a term's `rdfs:comment` is its definition; the generator adds a
+  `skos:definition` only where it says what no comment says (an editorial definition, or a
+  shape's or primitive's generated one). 267 generated definitions that repeated their comment
+  word for word are gone, and so is the hand-written duplicate on `rgeo:GeometryCollection`.
+  The term reference shows the `skos:definition`, else the comment.
+- Generated scope notes are only the module note on each ontology and the editorial notes of
+  `_term_editorial.SCOPE_NOTES`; the 987 templated notes (module sentence, "Use it as a
+  predicate", a shape's activation) are gone. A shape's activation and a property's shape usage
+  remain rows of every term card.
+- Shape definitions no longer open "A reusable validation contract for": they state the shape's
+  activation and what it checks, from its messages or, lacking one, from its constraints
+  (`tools/_shape_text.py`). A message naming SPARQL result variables is never copied, so the six
+  definitions that read "{?s} declares {?np} parameter(s)" are gone; `bddo:ArgumentArityShape`
+  and `bddo:TreePrefixBindingShape` have editorial comments instead.
+- The generated block is readable Turtle with its own `@prefix` lines and one statement per
+  term, instead of N-Triples.
+- New gate `test_documentation_annotations`: no placeholder in any label, comment, definition or
+  scope note, no definition repeating its comment, no retired template, no N-Triples block.
 - Scope notes are no longer one shared template: a note says "subclass links below" only of a
   class that has one, "SHACL paths are listed below" only of a property a shape uses, and "No
   automatic target" only of a shape without one (a SPARQL-based target counts). Core, conf, req
