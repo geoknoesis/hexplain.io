@@ -35,6 +35,28 @@
 :platformName a owl:DatatypeProperty ; rdfs:label "platform name" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/provenance> ; rdfs:range xsd:string .
 :sensorType a owl:DatatypeProperty ; rdfs:label "sensor type" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/provenance> ; rdfs:range xsd:string .
 
+# The three classes were unrelated: nothing said which platform or sensor model an acquisition
+# used, so a record could only repeat their names as text (platformName, sensorType). Linked,
+# not subsumed: sosa:isHostedBy relates a sensor DEVICE to its platform and sosa:madeBySensor an
+# observation to a device, while an AcquisitionInfo is a record about an acquisition and a
+# SensorModel a kind of sensor.
+:hasPlatform a owl:ObjectProperty ; rdfs:label "has platform" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/provenance> ;
+    rdfs:range :Platform ; rdfs:seeAlso sosa:isHostedBy , prov:wasAssociatedWith ;
+    rdfs:comment "The platform (satellite, aircraft, vehicle, vessel, station) that carried the observing equipment during the acquisition an aprov:AcquisitionInfo describes." .
+:hasSensorModel a owl:ObjectProperty ; rdfs:label "has sensor model" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/provenance> ;
+    rdfs:range :SensorModel ; rdfs:seeAlso sosa:madeBySensor , prov:used ;
+    rdfs:comment "The model of sensor or instrument that made the observations of the acquisition an aprov:AcquisitionInfo describes." .
+
+:AcquisitionInfoShape a sh:NodeShape ;
+    rdfs:label "Acquisition info shape" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/provenance> ;
+    rdfs:comment "An acquisition's platform and sensor model are resources of their classes, so a record links the resources rather than repeating a name as text." ;
+    sh:targetClass :AcquisitionInfo ;
+    sh:targetSubjectsOf :hasPlatform , :hasSensorModel ;
+    sh:property [ sh:path :hasPlatform ; sh:nodeKind sh:BlankNodeOrIRI ; sh:class :Platform ;
+        sh:message "Each value of aprov:hasPlatform is a resource typed aprov:Platform." ] ;
+    sh:property [ sh:path :hasSensorModel ; sh:nodeKind sh:BlankNodeOrIRI ; sh:class :SensorModel ;
+        sh:message "Each value of aprov:hasSensorModel is a resource typed aprov:SensorModel." ] .
+
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 @prefix aprov: <https://hexplain.io/ns/aspect/provenance#> .

@@ -1,0 +1,15 @@
+# A platform or sensor model named as text, or a resource of another class, is not a link.
+# expect: ex:Acquisition aprov:AcquisitionInfoShape sh:NodeKindConstraintComponent
+# expect: ex:Acquisition aprov:AcquisitionInfoShape sh:ClassConstraintComponent
+# expect: ex:Acquisition2 aprov:AcquisitionInfoShape sh:NodeKindConstraintComponent
+# expect: ex:Acquisition2 aprov:AcquisitionInfoShape sh:ClassConstraintComponent
+# expect-only
+@prefix ex:    <https://hexplain.io/test/acquisition-invalid#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix aprov: <https://hexplain.io/ns/aspect/provenance#> .
+
+ex:Acquisition a aprov:AcquisitionInfo ;
+    aprov:hasPlatform "Landsat 8" ;
+    aprov:hasSensorModel ex:Landsat8 .
+ex:Landsat8 a aprov:Platform .
+ex:Acquisition2 a aprov:AcquisitionInfo ; aprov:hasSensorModel "Operational Land Imager" .

@@ -84,10 +84,14 @@ def allowed_datatypes(g, shape, seen=frozenset()):
 
 
 def xsd_ranged(g):
-    """(property, range) for every property whose rdfs:range is an XSD datatype, or a union of them."""
-    return sorted(((p, r) for p, r in g.subject_objects(RDFS.range)
-                   if union_members(g, r) and all(isinstance(m, URIRef) and str(m).startswith(str(XSD))
-                                                  for m in union_members(g, r))), key=lambda x: (str(x[0]), str(x[1])))
+    """(property, range) for every property whose rdfs:range is an XSD datatype, or a union of
+    datatypes at least one of which is XSD (asref:footprintWKT: xsd:string or geosparql:wktLiteral)."""
+    def ranged(r):
+        members = union_members(g, r)
+        if isinstance(r, URIRef):
+            return str(r).startswith(str(XSD))
+        return bool(members) and all(isinstance(m, URIRef) for m in members) and any(str(m).startswith(str(XSD)) for m in members)
+    return sorted(((p, r) for p, r in g.subject_objects(RDFS.range) if ranged(r)), key=lambda x: (str(x[0]), str(x[1])))
 
 
 def problems(g):

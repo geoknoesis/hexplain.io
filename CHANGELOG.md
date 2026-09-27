@@ -275,6 +275,31 @@ cites `req-pm-context-3`.
 - New gate `test_ontology_licenses`: every module declares exactly the CC BY 4.0 licence and its
   creator, and `LICENSE` and `LICENSING.md` state both regimes.
 
+### Standards alignments (review fixes)
+
+Only true statements are asserted: `rdfs:subPropertyOf` where every use of the family term
+entails the external one, `rdfs:seeAlso` otherwise (SKOS mapping properties relate concepts only,
+`test_ontology_design`).
+
+- `asref:footprintWKT` accepts `geosparql:wktLiteral`, which new data SHOULD use; its range is
+  the union of `xsd:string` and `geosparql:wktLiteral`, so existing string footprints stay
+  valid. A typed literal follows GeoSPARQL: its CRS is the IRI prefixing the text, CRS84 when
+  none does; a string footprint is still in the resource's CRS. It is not a subproperty of
+  `geosparql:asWKT`, whose domain is `geosparql:Geometry`.
+- `asref:epsgCode` and `asref:crsIdentifier` link each other: EPSG code n is the CRS
+  `<http://www.opengis.net/def/crs/EPSG/0/n>`, which `asref:crsIdentifier` states and new data
+  SHOULD give.
+- `atime:duration` links OWL-Time's `time:hasDuration` and `time:numericDuration`; it is not their
+  subproperty, since they relate temporal entities and durations while `atime:duration` relates
+  content to seconds.
+- New `aprov:hasPlatform` and `aprov:hasSensorModel` relate an `aprov:AcquisitionInfo` to its
+  `aprov:Platform` and `aprov:SensorModel` (linked to `sosa:isHostedBy`, `sosa:madeBySensor`,
+  `prov:wasAssociatedWith`, `prov:used`), checked by the new `aprov:AcquisitionInfoShape`.
+- `afs:modificationTime` and `afs:creationTime` are subproperties of `dcterms:modified` and
+  `dcterms:created` (they were `rdfs:seeAlso`); `abnd:hasPart` and `abnd:partOf` of
+  `dcterms:hasPart` and `dcterms:isPartOf`, so `apkg:hasEntry` is one too. `afs:fileSize` links
+  `dcat:byteSize`, whose `dcat:Distribution` domain an archive entry need not satisfy.
+
 ### HEL expressions as a datatype (bddo 1.3)
 
 - New datatype `bddo:HelExpression` (`rdfs:subClassOf xsd:string`): its lexical space is HEL

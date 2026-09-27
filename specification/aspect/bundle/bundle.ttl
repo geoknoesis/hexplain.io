@@ -40,10 +40,12 @@
     rdfs:comment "One expected member of a BundleProfile: role, extension, requiredness, and the aspect it carries." .
 
 # ---------- Instance-level properties ----------
+# A part is included, logically or physically, in its asset: exactly dcterms:hasPart and
+# dcterms:isPartOf, which state no domain or range, so the subproperties entail nothing false.
 :hasPart a owl:ObjectProperty ; rdfs:label "has part" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
-    rdfs:range :Part ; owl:inverseOf :partOf .
+    rdfs:range :Part ; owl:inverseOf :partOf ; rdfs:subPropertyOf dcterms:hasPart .
 :partOf a owl:ObjectProperty ; rdfs:label "part of" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
-    rdfs:range :Asset .
+    rdfs:range :Asset ; rdfs:subPropertyOf dcterms:isPartOf .
 :primaryPart a owl:ObjectProperty ; rdfs:label "primary part" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
     rdfs:subPropertyOf :hasPart ; rdfs:range :Part ;
     rdfs:comment "The recognition anchor / manifest part (e.g. .shp, .gltf, .mpd)." .
