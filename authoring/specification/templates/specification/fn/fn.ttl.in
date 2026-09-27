@@ -21,14 +21,15 @@
 <https://hexplain.io/ns/fn> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/fn/0.3> ; owl:versionInfo "0.3" ;
     owl:priorVersion <https://hexplain.io/ns/fn/0.2> ;
-    dcterms:modified "2026-09-24"^^xsd:date ;
+    dcterms:modified "2026-09-27"^^xsd:date ;
     # Every vocabulary whose terms the functions read (hxf:reads) or name in their bodies.
     owl:imports <https://hexplain.io/ns/core> , <https://hexplain.io/ns/dlv> ,
         <https://hexplain.io/ns/aspect/raster> , <https://hexplain.io/ns/aspect/spatialref> ,
         <https://hexplain.io/ns/aspect/signal> ;
-    rdfs:label "Hexplain SPARQL function library (hxf)" ;
-    rdfs:comment "Custom SPARQL functions that reach the bytes, parsed values, array cells and aspect coordinates of a file described by a Hexplain profile. Functions bind to the description vocabularies, never to a format." ;
+    rdfs:label "Hexplain SPARQL function library (hxf)"@en ;
+    rdfs:comment "Custom SPARQL functions that reach the bytes, parsed values, array cells and aspect coordinates of a file described by a Hexplain profile. Functions bind to the description vocabularies, never to a format."@en ;
     dcterms:created "2026-09-09"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "hxf" ; vann:preferredNamespaceUri "https://hexplain.io/ns/fn#" ;
     sh:declare [ sh:prefix "xsd" ; sh:namespace "http://www.w3.org/2001/XMLSchema#"^^xsd:anyURI ] ,
                [ sh:prefix "araster" ; sh:namespace "https://hexplain.io/ns/aspect/raster#"^^xsd:anyURI ] ,
@@ -39,115 +40,115 @@
 # them and because a caller that does not know it will read an unbound result as "no such thing"
 # rather than "something went wrong".
 
-:failureContract a owl:DatatypeProperty ; rdfs:label "failure contract" ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+:failureContract a owl:DatatypeProperty ; rdfs:label "failure contract"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
     rdfs:range rdf:langString ;
-    rdfs:comment "How this library reports an argument it cannot resolve or bytes it cannot read." .
+    rdfs:comment "How this library reports an argument it cannot resolve or bytes it cannot read."@en .
 
-:total a owl:DatatypeProperty ; rdfs:label "total" ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+:total a owl:DatatypeProperty ; rdfs:label "total"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
     rdfs:range xsd:boolean ;
-    rdfs:comment "True when this function always answers, so an unbound result from it would be a defect rather than a described outcome. Only hxf:explain claims this: it reports what went wrong, and a diagnostic that can itself go missing is of no use at the moment you need it." .
+    rdfs:comment "True when this function always answers, so an unbound result from it would be a defect rather than a described outcome. Only hxf:explain claims this: it reports what went wrong, and a diagnostic that can itself go missing is of no use at the moment you need it."@en .
 
-:unboundWhen a owl:DatatypeProperty ; rdfs:label "unbound when" ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+:unboundWhen a owl:DatatypeProperty ; rdfs:label "unbound when"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
     rdfs:range rdf:langString ;
-    rdfs:comment "A condition under which this function yields no value rather than a wrong one. Repeatable. Absence does not mean the function is total: the library-wide failure contract still applies." .
+    rdfs:comment "A condition under which this function yields no value rather than a wrong one. Repeatable. Absence does not mean the function is total: the library-wide failure contract still applies."@en .
 
 <https://hexplain.io/ns/fn> :failureContract "A function that cannot answer yields an UNBOUND result rather than an error, and records the reason against its first IRI argument, where hxf:explain retrieves it. Failure records are scoped to ONE query execution: a reason recorded while a query executes is visible only to hxf:explain calls evaluated within that same execution, and every record is discarded when the execution ends. A record never reaches another query, whether concurrent or later, so no function call has an effect that outlives the query that made it, and the same query over the same data explains the same failures however many queries ran before it. A SPARQL expression that projects an unbound value simply has no binding for that variable, so a query over a mixed corpus returns rows for the assets it could read instead of failing wholesale. Two things are deliberately NOT unbound: a cancelled or timed-out query, which must reach the caller, and a malformed call -- wrong argument count -- which is a query error raised when the query is built. An unbound result therefore means \"this function could not answer here\", never \"this query is wrong\"; distinguishing the two is what hxf:explain is for."@en .
 
-:Function a owl:Class ; rdfs:label "Function" ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
-    rdfs:comment "A SPARQL extension function of this library." .
-:Kind a owl:Class ; rdfs:label "Function kind" ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
-    rdfs:comment "Whether a function's body is published SPARQL (:Pure) or needs the Hexplain engine (:Native)." .
-:Pure a :Kind ; rdfs:label "pure" ; rdfs:comment "Computes over values already in the graph; published as a SHACL-AF sh:SPARQLFunction body." .
-:Native a :Kind ; rdfs:label "native" ; rdfs:comment "Needs the bytes of the asset; implemented against the Hexplain engine." .
+:Function a owl:Class ; rdfs:label "Function"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+    rdfs:comment "A SPARQL extension function of this library."@en .
+:Kind a owl:Class ; rdfs:label "Function kind"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+    rdfs:comment "Whether a function's body is published SPARQL (:Pure) or needs the Hexplain engine (:Native)."@en .
+:Pure a owl:NamedIndividual , :Kind ; rdfs:label "pure"@en ; rdfs:comment "Computes over values already in the graph; published as a SHACL-AF sh:SPARQLFunction body."@en .
+:Native a owl:NamedIndividual , :Kind ; rdfs:label "native"@en ; rdfs:comment "Needs the bytes of the asset; implemented against the Hexplain engine."@en .
 :kind a owl:ObjectProperty ; rdfs:range :Kind ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
-    rdfs:comment "The function's kind: :Pure or :Native." .
+    rdfs:comment "The function's kind: :Pure or :Native."@en .
 :signature a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
-    rdfs:comment "Argument list and result, in the notation name(arg: type, ...) -> type. A trailing ? marks an optional argument." .
+    rdfs:comment "Argument list and result, in the notation name(arg: type, ...) -> type. A trailing ? marks an optional argument."@en .
 :reads a owl:ObjectProperty ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
-    rdfs:comment "A vocabulary term the function reads from the graph." .
+    rdfs:comment "A vocabulary term the function reads from the graph."@en .
 :layer a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
-    rdfs:comment "0 bytes, 1 parsed values, 2 arrays, 3 aspect coordinates, 9 diagnostics." .
+    rdfs:comment "0 bytes, 1 parsed values, 2 arrays, 3 aspect coordinates, 9 diagnostics."@en .
 
 # ---------- Resource limits ----------
 # Hard caps every native function enforces. A runtime may configure other values; these are the
 # defaults when it states none. A call that would exceed a limit is unbound (failure contract).
-:maxBytesPerCall a owl:DatatypeProperty ; rdfs:label "max bytes per call" ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+:maxBytesPerCall a owl:DatatypeProperty ; rdfs:label "max bytes per call"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
     rdfs:range xsd:positiveInteger ;
-    rdfs:comment "Largest byte value, in bytes, a single function call may read, decode or return (hxf:bytes, hxf:decodedBytes, hxf:value, hxf:hel). Default 1048576 (1 MiB). A call that would exceed it yields an unbound result and records the reason for hxf:explain." .
-:maxCellsPerWindow a owl:DatatypeProperty ; rdfs:label "max cells per window" ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+    rdfs:comment "Largest byte value, in bytes, a single function call may read, decode or return (hxf:bytes, hxf:decodedBytes, hxf:value, hxf:hel). Default 1048576 (1 MiB). A call that would exceed it yields an unbound result and records the reason for hxf:explain."@en .
+:maxCellsPerWindow a owl:DatatypeProperty ; rdfs:label "max cells per window"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
     rdfs:range xsd:positiveInteger ;
-    rdfs:comment "Largest number of array cells one windowed call may visit (hxf:stat over a window or a whole array, hxf:window). Default 1000000. A window above it is refused: hxf:stat is unbound and hxf:window yields no rows." .
+    rdfs:comment "Largest number of array cells one windowed call may visit (hxf:stat over a window or a whole array, hxf:window). Default 1000000. A window above it is refused: hxf:stat is unbound and hxf:window yields no rows."@en .
 
 # Parameters of pure functions, shared across bodies.
-:arg1 a rdfs:Resource ; rdfs:comment "The first positional parameter of a pure function's sh:SPARQLFunction body; sh:parameter binds its meaning per function." .
-:arg2 a rdfs:Resource ; rdfs:comment "The second positional parameter of a pure function's sh:SPARQLFunction body; sh:parameter binds its meaning per function." .
-:arg3 a rdfs:Resource ; rdfs:comment "The third positional parameter of a pure function's sh:SPARQLFunction body; sh:parameter binds its meaning per function." .
+:arg1 a rdfs:Resource ; rdfs:comment "The first positional parameter of a pure function's sh:SPARQLFunction body; sh:parameter binds its meaning per function."@en .
+:arg2 a rdfs:Resource ; rdfs:comment "The second positional parameter of a pure function's sh:SPARQLFunction body; sh:parameter binds its meaning per function."@en .
+:arg3 a rdfs:Resource ; rdfs:comment "The third positional parameter of a pure function's sh:SPARQLFunction body; sh:parameter binds its meaning per function."@en .
 
 # ---- Layer 0: assets and bytes ----
-:bytes a :Function ; :kind :Native ; :layer 0 ; rdfs:label "bytes" ;
+:bytes a owl:NamedIndividual , :Function ; :kind :Native ; :layer 0 ; rdfs:label "bytes"@en ;
     :signature "bytes(node: IRI) -> xsd:hexBinary | bytes(node: IRI, offset: integer, length: integer) -> xsd:hexBinary" ;
     :reads hexplain:byteOffset, hexplain:byteLength ;
-    rdfs:comment "The node's bytes as they sit in the file, whole or a slice relative to the node. Unbound when the slice leaves the node or exceeds hxf:maxBytesPerCall." ;
+    rdfs:comment "The node's bytes as they sit in the file, whole or a slice relative to the node. Unbound when the slice leaves the node or exceeds hxf:maxBytesPerCall."@en ;
     :unboundWhen "The node has no recorded byte range, or the requested window lies outside the asset."@en .
-:decodedBytes a :Function ; :kind :Native ; :layer 0 ; rdfs:label "decoded bytes" ;
+:decodedBytes a owl:NamedIndividual , :Function ; :kind :Native ; :layer 0 ; rdfs:label "decoded bytes"@en ;
     :signature "decodedBytes(node: IRI) -> xsd:hexBinary" ;
     :reads hexplain:isEncodedWith, hexplain:hasEncodingStep ;
-    rdfs:comment "The node's bytes after the codec chain the profile declares has been inverted." ;
+    rdfs:comment "The node's bytes after the codec chain the profile declares has been inverted."@en ;
     :unboundWhen "The node carries no encoding, or decoding fails."@en .
-:digest a :Function ; :kind :Native ; :layer 0 ; rdfs:label "digest" ;
+:digest a owl:NamedIndividual , :Function ; :kind :Native ; :layer 0 ; rdfs:label "digest"@en ;
     :signature "digest(node: IRI, algorithm: IRI | string) -> xsd:string" ;
     :reads hexplain:byteOffset, hexplain:byteLength ;
-    rdfs:comment "Lower-case hex digest of the node's raw bytes: exactly the extent the node was parsed from (its hexplain:byteOffset and hexplain:byteLength), nothing before or after it. hxf:digest(<asset#root>) therefore covers the root struct's extent only, not trailing bytes of the file that the profile does not describe; it is not a digest of the file. The algorithm is a checksum-register concept (rck:SHA256, rck:CRC32, ...) or a name." ;
+    rdfs:comment "Lower-case hex digest of the node's raw bytes: exactly the extent the node was parsed from (its hexplain:byteOffset and hexplain:byteLength), nothing before or after it. hxf:digest(<asset#root>) therefore covers the root struct's extent only, not trailing bytes of the file that the profile does not describe; it is not a digest of the file. The algorithm is a checksum-register concept (rck:SHA256, rck:CRC32, ...) or a name."@en ;
     :unboundWhen "The algorithm is not one the runtime implements."@en .
 
 # ---- Layer 1: parsed values ----
-:value a :Function ; :kind :Native ; :layer 1 ; rdfs:label "value" ;
+:value a owl:NamedIndividual , :Function ; :kind :Native ; :layer 1 ; rdfs:label "value"@en ;
     :signature "value(node: IRI) -> literal" ;
-    rdfs:comment "The node's parsed scalar, mapped by the profile or not. Unbound for structs, lists and arrays." ;
+    rdfs:comment "The node's parsed scalar, mapped by the profile or not. Unbound for structs, lists and arrays."@en ;
     :unboundWhen "The node has no parsed value in the bound asset."@en .
-:hel a :Function ; :kind :Native ; :layer 1 ; rdfs:label "HEL" ;
+:hel a owl:NamedIndividual , :Function ; :kind :Native ; :layer 1 ; rdfs:label "HEL"@en ;
     :signature "hel(node: IRI, expression: string) -> literal" ;
-    rdfs:comment "A HEL expression evaluated with the node's struct as instance, its container as parent and the file as root." ;
+    rdfs:comment "A HEL expression evaluated with the node's struct as instance, its container as parent and the file as root."@en ;
     :unboundWhen "The expression does not parse, or evaluates against a context the node does not provide."@en .
-:decode a :Function ; :kind :Native ; :layer 1 ; rdfs:label "decode" ;
+:decode a owl:NamedIndividual , :Function ; :kind :Native ; :layer 1 ; rdfs:label "decode"@en ;
     :signature "decode(bytes: xsd:hexBinary, type: bddo:DataType) -> literal" ;
-    rdfs:comment "One scalar decoded from bytes by a BDDO primitive datatype." ;
+    rdfs:comment "One scalar decoded from bytes by a BDDO primitive datatype."@en ;
     :unboundWhen "The bytes are not a well-formed value of the named datatype."@en .
 
 # ---- Layer 2: arrays (DLV) ----
-:rank a :Function ; :kind :Native ; :layer 2 ; rdfs:label "rank" ; :signature "rank(array: IRI) -> xsd:integer" ;
-    :reads dlv:hasDimension ; rdfs:comment "Number of dimensions of the array." ;
+:rank a owl:NamedIndividual , :Function ; :kind :Native ; :layer 2 ; rdfs:label "rank"@en ; :signature "rank(array: IRI) -> xsd:integer" ;
+    :reads dlv:hasDimension ; rdfs:comment "Number of dimensions of the array."@en ;
     :unboundWhen "No array can be resolved for the node."@en .
-:extent a :Function ; :kind :Native ; :layer 2 ; rdfs:label "extent" ;
+:extent a owl:NamedIndividual , :Function ; :kind :Native ; :layer 2 ; rdfs:label "extent"@en ;
     :signature "extent(array: IRI, dimension: integer | dlv:Axis) -> xsd:integer" ;
-    :reads dlv:hasAxis, dlv:dimensionSize ; rdfs:comment "Size of one dimension, named by zero-based position or by axis." ;
+    :reads dlv:hasAxis, dlv:dimensionSize ; rdfs:comment "Size of one dimension, named by zero-based position or by axis."@en ;
     :unboundWhen "The named dimension does not exist on the array."@en .
-:cell a :Function ; :kind :Native ; :layer 2 ; rdfs:label "cell" ;
+:cell a owl:NamedIndividual , :Function ; :kind :Native ; :layer 2 ; rdfs:label "cell"@en ;
     :signature "cell(array: IRI, i1: integer, ..., in: integer) -> literal" ;
-    rdfs:comment "The cell at zero-based indices given in the layout's dimension order. Typed by the cell datatype." ;
+    rdfs:comment "The cell at zero-based indices given in the layout's dimension order. Typed by the cell datatype."@en ;
     :unboundWhen "The index tuple is outside the array extent, or its arity does not match the array rank."@en .
-:stat a :Function ; :kind :Native ; :layer 2 ; rdfs:label "statistic" ;
+:stat a owl:NamedIndividual , :Function ; :kind :Native ; :layer 2 ; rdfs:label "statistic"@en ;
     :signature "stat(array: IRI, kind: string) -> literal | stat(array: IRI, kind: string, lo1, hi1, ..., lon, hin: integer) -> literal" ;
-    rdfs:comment "min, max, sum, mean or count over the whole array or a half-open window. Only VALID cells enter a statistic: a cell whose value is the no-data value in effect for the array's band (as hxf:isNoData decides) and a NaN cell are excluded from every statistic, count included, so count is the number of valid cells. A window may visit at most hxf:maxCellsPerWindow cells, valid or not; a larger one is refused. Over a window with no valid cell -- an empty window, or one whose every cell is no-data or NaN -- count is 0 and sum is 0, and min, max and mean are unbound." ;
+    rdfs:comment "min, max, sum, mean or count over the whole array or a half-open window. Only VALID cells enter a statistic: a cell whose value is the no-data value in effect for the array's band (as hxf:isNoData decides) and a NaN cell are excluded from every statistic, count included, so count is the number of valid cells. A window may visit at most hxf:maxCellsPerWindow cells, valid or not; a larger one is refused. Over a window with no valid cell -- an empty window, or one whose every cell is no-data or NaN -- count is 0 and sum is 0, and min, max and mean are unbound."@en ;
     :unboundWhen "The named statistic is not one this library computes; the window is outside the array; the window has more cells than hxf:maxCellsPerWindow; or the statistic is min, max or mean and the window has no valid cell (an empty window, or one whose every cell is no-data or NaN)."@en .
-:window a :Function ; :kind :Native ; :layer 2 ; rdfs:label "window" ;
+:window a owl:NamedIndividual , :Function ; :kind :Native ; :layer 2 ; rdfs:label "window"@en ;
     :signature "(array: IRI, lo1, hi1, ..., lon, hin: integer) hxf:window (i1, ..., in, value)" ;
-    rdfs:comment "Property function enumerating every cell of a half-open window, row-major, binding its indices and value. Refused above hxf:maxCellsPerWindow. NON-PORTABLE: this is an Apache Jena ARQ property function (a magic predicate in a triple pattern), not a SPARQL 1.1 filter function nor a SHACL-AF function, so it runs only on Jena/ARQ with the Hexplain engine registered; other SPARQL processors read it as an ordinary triple pattern that matches nothing." ;
+    rdfs:comment "Property function enumerating every cell of a half-open window, row-major, binding its indices and value. Refused above hxf:maxCellsPerWindow. NON-PORTABLE: this is an Apache Jena ARQ property function (a magic predicate in a triple pattern), not a SPARQL 1.1 filter function nor a SHACL-AF function, so it runs only on Jena/ARQ with the Hexplain engine registered; other SPARQL processors read it as an ordinary triple pattern that matches nothing."@en ;
     :unboundWhen "The window bounds lie outside the array or their arity does not match its rank; the property function then yields no rows at all rather than partial ones."@en .
-:layout a :Function ; :kind :Native ; :layer 2 ; rdfs:label "layout" ; :signature "layout(array: IRI) -> xsd:string" ;
-    rdfs:comment "The resolved layout: axes, extents, strides and cell type." ;
+:layout a owl:NamedIndividual , :Function ; :kind :Native ; :layer 2 ; rdfs:label "layout"@en ; :signature "layout(array: IRI) -> xsd:string" ;
+    rdfs:comment "The resolved layout: axes, extents, strides and cell type."@en ;
     :unboundWhen "No array can be resolved for the node."@en .
 
 # ---- Layer 3: raster ----
-:sampleAt a :Function ; :kind :Native ; :layer 3 ; rdfs:label "sample at" ;
+:sampleAt a owl:NamedIndividual , :Function ; :kind :Native ; :layer 3 ; rdfs:label "sample at"@en ;
     :signature "sampleAt(grid: IRI, x: integer, y: integer, band?: IRI | integer) -> literal" ;
     :reads araster:hasArray, araster:hasBand, araster:bandIndex, dlv:axisX, dlv:axisY, dlv:axisBand ;
-    rdfs:comment "Raw sample at column x, row y. The array is the band's araster:hasArray, else the grid's, else the grid struct's single array field. A band is a RasterBand IRI or a one-based index and is applied along dlv:axisBand when the array has one." ;
+    rdfs:comment "Raw sample at column x, row y. The array is the band's araster:hasArray, else the grid's, else the grid struct's single array field. A band is a RasterBand IRI or a one-based index and is applied along dlv:axisBand when the array has one."@en ;
     :unboundWhen "The requested cell lies outside the array extent, or no array can be resolved for the grid or band."@en .
-:calibrate a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "calibrate" ;
+:calibrate a owl:NamedIndividual , :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "calibrate"@en ;
     :signature "calibrate(band: IRI, raw: number) -> xsd:double" ;
     :reads araster:sampleScale, araster:sampleOffset ;
-    rdfs:comment "raw * araster:sampleScale + araster:sampleOffset; a scale that is not asserted is 1 and an offset that is not asserted is 0. Deterministic: exactly one answer or none, never one per matching triple." ;
+    rdfs:comment "raw * araster:sampleScale + araster:sampleOffset; a scale that is not asserted is 1 and an offset that is not asserted is 0. Deterministic: exactly one answer or none, never one per matching triple."@en ;
     :unboundWhen "The band carries more than one distinct araster:sampleScale, or more than one distinct araster:sampleOffset: which one applies is undefined, so no value is returned rather than an arbitrary one. Also unbound when the scale, the offset or raw cannot be cast to xsd:double: an asserted but unreadable coefficient is not the same as an absent one, and treating it as 1 or 0 would return a wrong value."@en ;
     sh:parameter {{constraint:pattern_000}} , [ sh:path :arg2 ; sh:order 1 ; sh:description "raw" ] ;
     sh:returnType xsd:double ;
@@ -161,10 +162,10 @@
   BIND ( IF(BOUND(?offset), xsd:double(?offset), 0.0) AS ?o )
   BIND ( xsd:double($arg2) * ?s + ?o AS ?result )
 }""" .
-:isNoData a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "is no-data" ;
+:isNoData a owl:NamedIndividual , :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "is no-data"@en ;
     :signature "isNoData(band: IRI, value: number) -> xsd:boolean" ;
     :reads araster:noDataValue, araster:hasBand, asamp:sampleFormat, asamp:bitDepth ;
-    rdfs:comment "True when value equals the no-data value in effect: the band's own araster:noDataValue, else that of the grid that has the band (araster:hasBand). The two are compared in the band's declared numeric type, stated by asamp:sampleFormat and asamp:bitDepth on the band or, failing that, on the grids that have it (which must then agree): for asamp:Float with bitDepth 32 both are first rounded to the nearest binary32 value, so a float32 no-data value written in decimal (for example -3.4028234663852886e38) matches the stored float32 sample; for an integer format both must be the same integer; with no declared type they are compared as xsd:double. A NaN no-data value matches a NaN value, although NaN never equals itself numerically. False when no no-data value is in effect. Deterministic: exactly one answer or none. The SPARQL body relies on xsd:float casts rounding to binary32, as Apache Jena's do; a SPARQL processor that holds xsd:float in binary64 compares such values as doubles." ;
+    rdfs:comment "True when value equals the no-data value in effect: the band's own araster:noDataValue, else that of the grid that has the band (araster:hasBand). The two are compared in the band's declared numeric type, stated by asamp:sampleFormat and asamp:bitDepth on the band or, failing that, on the grids that have it (which must then agree): for asamp:Float with bitDepth 32 both are first rounded to the nearest binary32 value, so a float32 no-data value written in decimal (for example -3.4028234663852886e38) matches the stored float32 sample; for an integer format both must be the same integer; with no declared type they are compared as xsd:double. A NaN no-data value matches a NaN value, although NaN never equals itself numerically. False when no no-data value is in effect. Deterministic: exactly one answer or none. The SPARQL body relies on xsd:float casts rounding to binary32, as Apache Jena's do; a SPARQL processor that holds xsd:float in binary64 compares such values as doubles."@en ;
     :unboundWhen "The band carries more than one distinct araster:noDataValue, or it has none and the grids having it carry more than one distinct one between them; or the sample format or bit depth in effect is ambiguous (several of the band's own, or none of its own and the grids having it disagree): which applies is undefined, so no value is returned rather than an arbitrary one."@en ;
     sh:parameter {{constraint:pattern_000}} , [ sh:path :arg2 ; sh:order 1 ; sh:description "value" ] ;
     sh:returnType xsd:boolean ;
@@ -201,10 +202,10 @@
                       || ( xsd:double(?nd) != xsd:double(?nd) && xsd:double($arg2) != xsd:double($arg2) ) ) } )
     AS ?result )
 }""" .
-:physicalAt a :Function ; :kind :Native ; :layer 3 ; rdfs:label "physical value at" ;
+:physicalAt a owl:NamedIndividual , :Function ; :kind :Native ; :layer 3 ; rdfs:label "physical value at"@en ;
     :signature "physicalAt(grid: IRI, x: integer, y: integer, band?: IRI | integer) -> xsd:double" ;
     :reads araster:sampleScale, araster:sampleOffset, araster:noDataValue ;
-    rdfs:comment "calibrate(sampleAt(...)); unbound when the raw sample is no-data." ;
+    rdfs:comment "calibrate(sampleAt(...)); unbound when the raw sample is no-data."@en ;
     :unboundWhen "The raw sample equals the band's (or the grid's) araster:noDataValue: a no-data cell has no physical value, and returning the raw code as though it were one would be a wrong answer rather than a missing one."@en .
 
 # ---- Layer 3: spatial reference (affine asref:GeoTransform) ----
@@ -214,10 +215,10 @@
 # The normalized affine is corner-based (GDAL's GT): grid position (0, 0) is the outer corner of
 # the first cell. asref:pixelRegistration says where a cell's VALUE sits and never shifts these.
 # Every coefficient must have one value: a multi-valued coefficient makes the result unbound.
-:worldX a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "world X" ;
+:worldX a owl:NamedIndividual , :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "world X"@en ;
     :signature "worldX(transform: IRI, col: number, row: number) -> xsd:double" ;
     :reads asref:originX, asref:scaleX, asref:skewX ;
-    rdfs:comment "World X of grid position (col, row) under an affine geotransform; a missing skew reads as 0, and a skew that is present but cannot be cast to xsd:double makes the result unbound. Grid positions are corner-based: (0, 0) is the outer corner of the first cell and the centre of cell (c, r) is at (c + 0.5, r + 0.5), whatever asref:pixelRegistration says." ;
+    rdfs:comment "World X of grid position (col, row) under an affine geotransform; a missing skew reads as 0, and a skew that is present but cannot be cast to xsd:double makes the result unbound. Grid positions are corner-based: (0, 0) is the outer corner of the first cell and the centre of cell (c, r) is at (c + 0.5, r + 0.5), whatever asref:pixelRegistration says."@en ;
     :unboundWhen "A coefficient of the transform has more than one distinct value, or originX or scaleX is absent."@en ;
     sh:parameter {{constraint:pattern_001}} , {{constraint:pattern_004}} , {{constraint:pattern_005}} ;
     sh:returnType xsd:double ;
@@ -233,10 +234,10 @@
   OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewX> ?kx }
   BIND ( xsd:double(?ox) + xsd:double($arg2) * xsd:double(?sx) + xsd:double($arg3) * IF(BOUND(?kx), xsd:double(?kx), 0.0) AS ?result )
 }""" .
-:worldY a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "world Y" ;
+:worldY a owl:NamedIndividual , :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "world Y"@en ;
     :signature "worldY(transform: IRI, col: number, row: number) -> xsd:double" ;
     :reads asref:originY, asref:scaleY, asref:skewY ;
-    rdfs:comment "World Y of grid position (col, row) under an affine geotransform; a missing skew reads as 0, and a skew that is present but cannot be cast to xsd:double makes the result unbound. Grid positions are corner-based, as for hxf:worldX." ;
+    rdfs:comment "World Y of grid position (col, row) under an affine geotransform; a missing skew reads as 0, and a skew that is present but cannot be cast to xsd:double makes the result unbound. Grid positions are corner-based, as for hxf:worldX."@en ;
     :unboundWhen "A coefficient of the transform has more than one distinct value, or originY or scaleY is absent."@en ;
     sh:parameter {{constraint:pattern_001}} , {{constraint:pattern_004}} , {{constraint:pattern_005}} ;
     sh:returnType xsd:double ;
@@ -252,10 +253,10 @@
   OPTIONAL { $arg1 <https://hexplain.io/ns/aspect/spatialref#skewY> ?ky }
   BIND ( xsd:double(?oy) + xsd:double($arg2) * IF(BOUND(?ky), xsd:double(?ky), 0.0) + xsd:double($arg3) * xsd:double(?sy) AS ?result )
 }""" .
-:column a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "column" ;
+:column a owl:NamedIndividual , :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "column"@en ;
     :signature "column(transform: IRI, wx: number, wy: number) -> xsd:integer" ;
     :reads asref:originX, asref:originY, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY ;
-    rdfs:comment "Column of the cell containing world point (wx, wy): the floor of the inverse-affine grid coordinate. The affine is corner-based, so no half-pixel shift is applied, and asref:pixelRegistration does not change the result: it states where a cell's value is located within the cell, not where the cell is." ;
+    rdfs:comment "Column of the cell containing world point (wx, wy): the floor of the inverse-affine grid coordinate. The affine is corner-based, so no half-pixel shift is applied, and asref:pixelRegistration does not change the result: it states where a cell's value is located within the cell, not where the cell is."@en ;
     :unboundWhen "A coefficient of the transform has more than one distinct value, a required coefficient is absent, or the transform is singular (determinant 0)."@en ;
     sh:parameter {{constraint:pattern_001}} , {{constraint:pattern_004}} , {{constraint:pattern_005}} ;
     sh:returnType xsd:integer ;
@@ -277,10 +278,10 @@
   BIND ( ( xsd:double(?sy) * (xsd:double($arg2) - xsd:double(?ox)) - ?kxv * (xsd:double($arg3) - xsd:double(?oy)) ) / ?det AS ?c )
   BIND ( xsd:integer(FLOOR(?c)) AS ?result )
 }""" .
-:row a :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "row" ;
+:row a owl:NamedIndividual , :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "row"@en ;
     :signature "row(transform: IRI, wx: number, wy: number) -> xsd:integer" ;
     :reads asref:originX, asref:originY, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY ;
-    rdfs:comment "Row of the cell containing world point (wx, wy): the floor of the inverse-affine grid coordinate. The affine is corner-based, so no half-pixel shift is applied, and asref:pixelRegistration does not change the result: it states where a cell's value is located within the cell, not where the cell is." ;
+    rdfs:comment "Row of the cell containing world point (wx, wy): the floor of the inverse-affine grid coordinate. The affine is corner-based, so no half-pixel shift is applied, and asref:pixelRegistration does not change the result: it states where a cell's value is located within the cell, not where the cell is."@en ;
     :unboundWhen "A coefficient of the transform has more than one distinct value, a required coefficient is absent, or the transform is singular (determinant 0)."@en ;
     sh:parameter {{constraint:pattern_001}} , {{constraint:pattern_004}} , {{constraint:pattern_005}} ;
     sh:returnType xsd:integer ;
@@ -302,32 +303,32 @@
   BIND ( ( - ?kyv * (xsd:double($arg2) - xsd:double(?ox)) + xsd:double(?sx) * (xsd:double($arg3) - xsd:double(?oy)) ) / ?det AS ?r )
   BIND ( xsd:integer(FLOOR(?r)) AS ?result )
 }""" .
-:sampleAtWorld a :Function ; :kind :Native ; :layer 3 ; rdfs:label "sample at world point" ;
+:sampleAtWorld a owl:NamedIndividual , :Function ; :kind :Native ; :layer 3 ; rdfs:label "sample at world point"@en ;
     :signature "sampleAtWorld(dataset: IRI, wx: number, wy: number, band?: IRI | integer) -> literal" ;
     :reads asref:hasGeoTransform ;
-    rdfs:comment "sampleAt at (column(t, wx, wy), row(t, wx, wy)) where t is the dataset's asref:hasGeoTransform." ;
+    rdfs:comment "sampleAt at (column(t, wx, wy), row(t, wx, wy)) where t is the dataset's asref:hasGeoTransform."@en ;
     :unboundWhen "The world coordinate falls outside the raster, or no georeferencing transform is available."@en .
 
 # ---- Layer 3: geometry and signal ----
-:wkt a :Function ; :kind :Native ; :layer 3 ; rdfs:label "WKT" ;
+:wkt a owl:NamedIndividual , :Function ; :kind :Native ; :layer 3 ; rdfs:label "WKT"@en ;
     :signature "wkt(node: IRI) -> geo:wktLiteral" ;
     :reads asref:hasCRS, asref:epsgCode ;
-    rdfs:comment "A GeoSPARQL WKT literal from a WKB or GeoPackage payload. The CRS is the GeoPackage SRS id, else asref:hasCRS/asref:epsgCode on the node or the nearest ancestor." ;
+    rdfs:comment "A GeoSPARQL WKT literal from a WKB or GeoPackage payload. The CRS is the GeoPackage SRS id, else asref:hasCRS/asref:epsgCode on the node or the nearest ancestor."@en ;
     :unboundWhen "The node carries no geometry this library can express as WKT."@en .
-:sampleAtTime a :Function ; :kind :Native ; :layer 3 ; rdfs:label "sample at time" ;
+:sampleAtTime a owl:NamedIndividual , :Function ; :kind :Native ; :layer 3 ; rdfs:label "sample at time"@en ;
     :signature "sampleAtTime(signal: IRI, seconds: number, channel?: integer) -> literal" ;
     :reads asig:sampleRate, araster:hasArray, dlv:axisTime, dlv:axisBand ;
-    rdfs:comment "The cell at round(seconds * asig:sampleRate) along dlv:axisTime; the one-based channel is applied along dlv:axisBand." ;
+    rdfs:comment "The cell at round(seconds * asig:sampleRate) along dlv:axisTime; the one-based channel is applied along dlv:axisBand."@en ;
     :unboundWhen "The requested instant lies outside the signal, or the channel does not exist."@en .
 
 # ---- Diagnostics ----
-:explain a :Function ; :kind :Native ; :layer 9 ; rdfs:label "explain" ; :signature "explain(node: IRI) -> xsd:string" ;
-    rdfs:comment "How the runtime resolves the node (asset, profile, path, kind, byte range, layout) and why the last call on it failed within the same query execution (failure records do not survive the execution that made them). Never unbound." ;
+:explain a owl:NamedIndividual , :Function ; :kind :Native ; :layer 9 ; rdfs:label "explain"@en ; :signature "explain(node: IRI) -> xsd:string" ;
+    rdfs:comment "How the runtime resolves the node (asset, profile, path, kind, byte range, layout) and why the last call on it failed within the same query execution (failure records do not survive the execution that made them). Never unbound."@en ;
     :total true .
 
 # ---------- Shapes ----------
 
-:NativeFunctionShape a sh:NodeShape ; rdfs:label "Native function contract" ;
+:NativeFunctionShape a sh:NodeShape ; rdfs:label "Native function contract"@en ;
     skos:definition "A native function reaches the bytes of an asset, so it can fail to answer in ways a pure function cannot, and a caller reading an unbound result needs to know which outcomes are described and which are defects. Every native function must therefore either state a condition under which it yields no value or declare itself total. This does not narrow the library-wide failure contract, which still applies to all of them."@en ;
     sh:targetClass :Function ;
     sh:or (
@@ -340,10 +341,10 @@
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-hxf:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+hxf:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
-hxf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+hxf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
     sh:targetSubjectsOf hxf:layer ,
         hxf:maxBytesPerCall ,

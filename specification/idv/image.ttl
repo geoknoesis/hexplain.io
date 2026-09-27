@@ -16,57 +16,61 @@
 <https://hexplain.io/ns/image> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/image/1.3> ; owl:versionInfo "1.3" ;
     owl:priorVersion <https://hexplain.io/ns/image/1.2> ;
-    dcterms:modified "2026-09-24"^^xsd:date ;
+    dcterms:modified "2026-09-27"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/aspect/raster> , <https://hexplain.io/ns/aspect/sampling> , <https://hexplain.io/ns/aspect/color> ;
-    rdfs:label "Hexplain Image Vocabulary (IDV)" ;
-    rdfs:comment "Semantic vocabulary for raster image properties." ;
+    rdfs:label "Hexplain Image Vocabulary (IDV)"@en ;
+    rdfs:comment "Semantic vocabulary for raster image properties."@en ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "img" ; vann:preferredNamespaceUri "https://hexplain.io/ns/image#" .
 
-:Image a owl:Class ; rdfs:label "Image" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:seeAlso ma:Image .
-:ImageHeader a owl:Class ; rdfs:label "Image Header" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
-:ColorProfile a owl:Class ; rdfs:label "Color Profile" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
-:PixelData a owl:Class ; rdfs:label "Pixel Data" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
+:Image a owl:Class ; rdfs:label "Image"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:seeAlso ma:Image .
+:ImageHeader a owl:Class ; rdfs:label "Image Header"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
+:ColorProfile a owl:Class ; rdfs:label "Color Profile"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
+:PixelData a owl:Class ; rdfs:label "Pixel Data"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
 
 # Image dimensions, per-component precision, and colour space are the raster/sampling/colour
 # aspects: araster:width, araster:height, asamp:bitDepth, acolor:colorSpace.
 # colorType and the compression/filter/interlace codes below are PNG wire codes. They are
 # deprecated (owl:deprecated true) and belong in a PNG profile; the IRIs stay defined.
-:colorType a owl:DatatypeProperty ; rdfs:label "color type" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
+:colorType a owl:DatatypeProperty ; rdfs:label "color type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
     owl:deprecated true ;
     skos:historyNote "Deprecated in IDV 1.2: a PNG wire code, not an image property. The value only means something under the PNG specification, so it belongs in a PNG format profile (as an enumerated field mapped to register concepts or to the raster, sampling and colour aspects), not in a format-neutral vocabulary. The IRI stays defined so existing graphs keep their meaning."@en .
-:compressionMethod a owl:DatatypeProperty ; rdfs:label "compression method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:seeAlso ma:compression ; rdfs:range xsd:integer ;
+:compressionMethod a owl:DatatypeProperty ; rdfs:label "compression method"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:seeAlso ma:compression ; rdfs:range xsd:integer ;
     owl:deprecated true ;
     skos:historyNote "Deprecated in IDV 1.2: a PNG wire code, not an image property. The value only means something under the PNG specification, so it belongs in a PNG format profile (as an enumerated field mapped to register concepts or to the raster, sampling and colour aspects), not in a format-neutral vocabulary. The IRI stays defined so existing graphs keep their meaning."@en .
-:filterMethod a owl:DatatypeProperty ; rdfs:label "filter method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
+:filterMethod a owl:DatatypeProperty ; rdfs:label "filter method"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
     owl:deprecated true ;
     skos:historyNote "Deprecated in IDV 1.2: a PNG wire code, not an image property. The value only means something under the PNG specification, so it belongs in a PNG format profile (as an enumerated field mapped to register concepts or to the raster, sampling and colour aspects), not in a format-neutral vocabulary. The IRI stays defined so existing graphs keep their meaning."@en .
-:interlaceMethod a owl:DatatypeProperty ; rdfs:label "interlace method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
+:interlaceMethod a owl:DatatypeProperty ; rdfs:label "interlace method"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
     owl:deprecated true ;
     skos:historyNote "Deprecated in IDV 1.2: a PNG wire code, not an image property. The value only means something under the PNG specification, so it belongs in a PNG format profile (as an enumerated field mapped to register concepts or to the raster, sampling and colour aspects), not in a format-neutral vocabulary. The IRI stays defined so existing graphs keep their meaning."@en .
 
 # ---------- SHACL ----------
 img:ImageShape a sh:NodeShape ; sh:targetClass img:ImageHeader ;
-    sh:property [ sh:path araster:width ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path araster:height ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asamp:bitDepth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path acolor:colorSpace ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+    sh:property [ sh:path araster:width ; sh:minExclusive 0 ; sh:maxCount 1 ; sh:message "araster:width takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path araster:height ; sh:minExclusive 0 ; sh:maxCount 1 ; sh:message "araster:height takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path asamp:bitDepth ; sh:minExclusive 0 ; sh:maxCount 1 ; sh:message "asamp:bitDepth takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path acolor:colorSpace ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ; sh:message "acolor:colorSpace takes at most one value; each is an IRI naming an instance of skos:Concept." ] .
 img:CodeShapes a sh:NodeShape ; sh:targetClass img:ImageHeader ;
     sh:targetSubjectsOf img:colorType, img:compressionMethod, img:filterMethod, img:interlaceMethod ;
-    sh:property [ sh:path img:colorType ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
-    sh:property [ sh:path img:compressionMethod ; sh:nodeKind sh:Literal ] ;
-    sh:property [ sh:path img:filterMethod ; sh:nodeKind sh:Literal ] ;
-    sh:property [ sh:path img:interlaceMethod ; sh:nodeKind sh:Literal ] .
+    sh:property [ sh:path img:colorType ; sh:nodeKind sh:Literal ; sh:maxCount 1 ;
+        sh:message "img:colorType takes at most one value; each is a literal." ] ;
+    sh:property [ sh:path img:compressionMethod ; sh:nodeKind sh:Literal ;
+        sh:message "Each value of img:compressionMethod is a literal." ] ;
+    sh:property [ sh:path img:filterMethod ; sh:nodeKind sh:Literal ;
+        sh:message "Each value of img:filterMethod is a literal." ] ;
+    sh:property [ sh:path img:interlaceMethod ; sh:nodeKind sh:Literal ;
+        sh:message "Each value of img:interlaceMethod is a literal." ] .
 
 # ---------- Range datatype shapes ----------
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-img:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+img:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/image> ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
-img:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+img:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/image> ;
     sh:targetSubjectsOf img:colorType ,
         img:compressionMethod ,
@@ -83,33 +87,24 @@ img:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-<https://hexplain.io/ns/image> <http://www.w3.org/2004/02/skos/core#definition> "Semantic vocabulary for raster image properties."@en .
-<https://hexplain.io/ns/image> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for image resources and their components. The legacy integer method/color codes preserve profile-specific wire values; they are not universal algorithm or color identifiers."@en .
-<https://hexplain.io/ns/image#CodeShapes> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for img:colorType, img:compressionMethod, img:filterMethod, img:interlaceMethod. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/image#CodeShapes> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of img:ImageHeader; subjects using img:colorType, img:compressionMethod, img:filterMethod, img:interlaceMethod Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/image#CodeShapes> <http://www.w3.org/2000/01/rdf-schema#label> "Code Shapes"@en .
-<https://hexplain.io/ns/image#CodeShapes> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/image> .
-<https://hexplain.io/ns/image#ColorProfile> <http://www.w3.org/2004/02/skos/core#definition> "A resource describing the color interpretation associated with image samples; its concrete representation is format-specific."@en .
-<https://hexplain.io/ns/image#ColorProfile> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for image resources and their components. The legacy integer method/color codes preserve profile-specific wire values; they are not universal algorithm or color identifiers. Assert this class on a resource representing the defined entity."@en .
-<https://hexplain.io/ns/image#Image> <http://www.w3.org/2004/02/skos/core#definition> "A raster image considered as a semantic resource, with sample dimensions and interpretation supplied by the imported aspects."@en .
-<https://hexplain.io/ns/image#Image> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for image resources and their components. The legacy integer method/color codes preserve profile-specific wire values; they are not universal algorithm or color identifiers. Assert this class on a resource representing the defined entity."@en .
-<https://hexplain.io/ns/image#ImageHeader> <http://www.w3.org/2004/02/skos/core#definition> "A structural component carrying metadata needed to interpret a raster image, separate from its pixel payload."@en .
-<https://hexplain.io/ns/image#ImageHeader> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for image resources and their components. The legacy integer method/color codes preserve profile-specific wire values; they are not universal algorithm or color identifiers. Assert this class on a resource representing the defined entity."@en .
-<https://hexplain.io/ns/image#ImageShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for acolor:colorSpace, araster:height, araster:width, asamp:bitDepth. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/image#ImageShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of img:ImageHeader Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/image#ImageShape> <http://www.w3.org/2000/01/rdf-schema#label> "Image Shape"@en .
-<https://hexplain.io/ns/image#ImageShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/image> .
-<https://hexplain.io/ns/image#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Integer value. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/image#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/image#PixelData> <http://www.w3.org/2004/02/skos/core#definition> "The image component containing encoded or decoded sample values, distinct from header metadata."@en .
-<https://hexplain.io/ns/image#PixelData> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for image resources and their components. The legacy integer method/color codes preserve profile-specific wire values; they are not universal algorithm or color identifiers. Assert this class on a resource representing the defined entity."@en .
-<https://hexplain.io/ns/image#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for img:colorType, img:compressionMethod, img:filterMethod, img:interlaceMethod. img:colorType takes an integer (rdfs:range xsd:integer). img:compressionMethod takes an integer (rdfs:range xsd:integer). img:filterMethod takes an integer (rdfs:range xsd:integer). img:interlaceMethod takes an integer (rdfs:range xsd:integer)."@en .
-<https://hexplain.io/ns/image#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using img:colorType, img:compressionMethod, img:filterMethod, img:interlaceMethod Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/image#colorType> <http://www.w3.org/2004/02/skos/core#definition> "The legacy integer color-type code carried by an image header. In this vocabulary it preserves a PNG-oriented wire code, not a universal color-space identifier."@en .
-<https://hexplain.io/ns/image#colorType> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for image resources and their components. The legacy integer method/color codes preserve profile-specific wire values; they are not universal algorithm or color identifiers. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/image#compressionMethod> <http://www.w3.org/2004/02/skos/core#definition> "The legacy integer compression-method code carried by an image header; the code's interpretation is profile-specific."@en .
-<https://hexplain.io/ns/image#compressionMethod> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for image resources and their components. The legacy integer method/color codes preserve profile-specific wire values; they are not universal algorithm or color identifiers. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/image#filterMethod> <http://www.w3.org/2004/02/skos/core#definition> "The legacy integer filtering-method code carried by an image header; it does not name a general-purpose semantic filter."@en .
-<https://hexplain.io/ns/image#filterMethod> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for image resources and their components. The legacy integer method/color codes preserve profile-specific wire values; they are not universal algorithm or color identifiers. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/image#interlaceMethod> <http://www.w3.org/2004/02/skos/core#definition> "The legacy integer interlacing-method code carried by an image header; decode its meaning using the format profile."@en .
-<https://hexplain.io/ns/image#interlaceMethod> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for image resources and their components. The legacy integer method/color codes preserve profile-specific wire values; they are not universal algorithm or color identifiers. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+@prefix img: <https://hexplain.io/ns/image#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://hexplain.io/ns/image> skos:scopeNote "Use for image resources and their components. The legacy integer method/color codes preserve profile-specific wire values; they are not universal algorithm or color identifiers."@en .
+img:CodeShapes rdfs:label "Code Shapes"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/image> ;
+    skos:definition "Applies to instances of img:ImageHeader; subjects using img:colorType, img:compressionMethod, img:filterMethod, img:interlaceMethod. img:colorType takes at most one value; each is a literal. Each value of img:compressionMethod is a literal. Each value of img:filterMethod is a literal. Each value of img:interlaceMethod is a literal."@en .
+img:ColorProfile skos:definition "A resource describing the color interpretation associated with image samples; its concrete representation is format-specific."@en .
+img:Image skos:definition "A raster image considered as a semantic resource, with sample dimensions and interpretation supplied by the imported aspects."@en .
+img:ImageHeader skos:definition "A structural component carrying metadata needed to interpret a raster image, separate from its pixel payload."@en .
+img:ImageShape rdfs:label "Image Shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/image> ;
+    skos:definition "Applies to instances of img:ImageHeader. acolor:colorSpace takes at most one value; each is an IRI naming an instance of skos:Concept. araster:height takes at most one value; each is a number greater than 0. araster:width takes at most one value; each is a number greater than 0. asamp:bitDepth takes at most one value; each is a number greater than 0."@en .
+img:IntegerValueShape skos:definition "Applied through references from other shapes. A conforming value is an integer (of any XSD integer datatype)."@en .
+img:PixelData skos:definition "The image component containing encoded or decoded sample values, distinct from header metadata."@en .
+img:RangeDatatypeShape skos:definition "Applies to subjects using img:colorType, img:compressionMethod, img:filterMethod, img:interlaceMethod. img:colorType takes an integer (rdfs:range xsd:integer). img:compressionMethod takes an integer (rdfs:range xsd:integer). img:filterMethod takes an integer (rdfs:range xsd:integer). img:interlaceMethod takes an integer (rdfs:range xsd:integer)."@en .
+img:colorType skos:definition "The legacy integer color-type code carried by an image header. In this vocabulary it preserves a PNG-oriented wire code, not a universal color-space identifier."@en .
+img:compressionMethod skos:definition "The legacy integer compression-method code carried by an image header; the code's interpretation is profile-specific."@en .
+img:filterMethod skos:definition "The legacy integer filtering-method code carried by an image header; it does not name a general-purpose semantic filter."@en .
+img:interlaceMethod skos:definition "The legacy integer interlacing-method code carried by an image header; decode its meaning using the format profile."@en .

@@ -10,7 +10,7 @@ does not depend on the subject's type.
 import json
 from pathlib import Path
 
-from rdflib import RDFS, Graph
+from rdflib import RDFS, Graph, URIRef
 
 ROOT = Path(__file__).resolve().parents[1]
 XSD = 'http://www.w3.org/2001/XMLSchema#'
@@ -32,6 +32,10 @@ LITERALS = {
     'anyURI': (f'"https://example.org/"^^<{XSD}anyURI>', '1'), 'language': (f'"en"^^<{XSD}language>', '1'),
 }
 SUBJECT = '<urn:range-contract:f>'
+#: Conforming values of the non-XSD members of a union range.
+UNION_LITERALS = {
+    'http://www.opengis.net/ont/geosparql#wktLiteral': '"POINT(1 2)"^^<http://www.opengis.net/ont/geosparql#wktLiteral>',
+}
 
 
 def _routes():
@@ -74,7 +78,20 @@ def cases():
         rows.append(dict(name='range '+name, module=module, expected=expected,
                          path='' if expected else str(prop), data=f'{SUBJECT} <{prop}> {value} .'))
     witnessed = set()
+    from _range_datatypes import union_members
     for prop, range_ in sorted(g.subject_objects(RDFS.range)):
+        members = union_members(g, range_)
+        if len(members) > 1 and prop in routes and all(str(m) in UNION_LITERALS or str(m).startswith(XSD) for m in members):
+            # A union range: a value of each member conforms, a value of none does not.
+            module, label = routes[prop], g.namespace_manager.normalizeUri(prop)
+            names = [str(m)[len(XSD):] if str(m).startswith(XSD) else str(m) for m in members]
+            for name in names:
+                good = LITERALS[name][0] if name in LITERALS else UNION_LITERALS[name]
+                add(f'{label} accepts {g.namespace_manager.normalizeUri(URIRef(XSD + name) if name in LITERALS else URIRef(name))}',
+                    module, prop, good, True)
+            # The first member's usual counter-example (a decimal for xsd:double), which no member admits.
+            add(f'{label} rejects another datatype', module, prop, LITERALS[names[0]][1] if names[0] in LITERALS else '1', False)
+            continue
         if not str(range_).startswith(XSD) or prop not in routes:
             continue
         module, kind, label = routes[prop], str(range_)[len(XSD):], g.namespace_manager.normalizeUri(prop)
@@ -103,6 +120,4 @@ def cases():
                     witnessed.add(module)
                     for datatype in FAMILY:
                         add(f'{label} accepts xsd:{datatype}', module, prop, f'"1"^^<{XSD}{datatype}>', True)
-            if kind == 'double':
-                add(f'{label} accepts xsd:float', module, prop, f'"1.5"^^<{XSD}float>', True)
     return rows

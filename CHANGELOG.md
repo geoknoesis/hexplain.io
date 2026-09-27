@@ -9,25 +9,34 @@ snapshots are recorded under `releases/`.
 ### Module versions
 
 Every module whose canonical Turtle differs from snapshot 2026-09-24.2 has a new version IRI
-naming the version that snapshot froze as `owl:priorVersion`, and `dcterms:modified 2026-09-24`.
-Most changed only in their generated scope notes (below); `owl:versionInfo` is now the bare
-version number everywhere, and the three working drafts say so with
-`schema:creativeWorkStatus "working draft"`. Unchanged: aspect/color, aspect/encoding,
-aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/time.
+naming the version that snapshot froze as `owl:priorVersion`, and `dcterms:modified` (2026-09-27
+for every module since the review fixes below). Most changed only in their generated
+documentation (below); `owl:versionInfo` is now the bare version number everywhere, and the three
+working drafts say so with `schema:creativeWorkStatus "working draft"`. aspect/color,
+aspect/encoding, aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security and
+aspect/time, unchanged until then, took a new version when their generated documentation was
+rewritten.
 
 | Module | Was | Now |
 |---|---|---|
 | archive (axv) | 1.2 | 1.3 |
 | aspect/bundle | 1.4 | 1.5 |
+| aspect/color | 1.0 | 1.1 |
+| aspect/encoding | 1.1 | 1.2 |
+| aspect/fsmeta | 1.1 | 1.2 |
 | aspect/geometry | 1.3 working draft | 1.4 (working draft) |
 | aspect/integrity | 1.1 | 1.2 |
+| aspect/networkflow | 1.2 | 1.3 |
 | aspect/packaging | 1.1 | 1.2 |
+| aspect/pointcloud | 1.1 | 1.2 |
 | aspect/provenance | 1.2 | 1.3 |
 | aspect/raster | 1.2 working draft | 1.3 (working draft) |
 | aspect/sampling | 1.1 | 1.2 |
+| aspect/security | 2.1 | 2.2 |
 | aspect/signal | 1.1 | 1.2 |
 | aspect/spatialref | 1.3 working draft | 1.4 (working draft) |
 | aspect/tabular | 1.1 | 1.2 |
+| aspect/time | 1.0 | 1.1 |
 | audio (adv) | 1.1 | 1.2 |
 | bddo | 1.2 | 1.3 |
 | conf | 1.2 | 1.3 |
@@ -379,8 +388,152 @@ cites `req-pm-context-3`.
 - The function catalogue of `fn/index.html` is generated from `fn.ttl` (`test_fn_catalogue`); it
   still said `hxf:column`/`hxf:row` round to the nearest cell centre for `asref:PixelCenter`.
 
+### Licensing
+
+- `conf`, `conf/shapes`, `req`, `req/shapes` and `fn` declare `dcterms:license
+  <https://creativecommons.org/licenses/by/4.0/>`, like the other 33 modules; every ontology
+  module is now CC BY 4.0 with `dcterms:creator <https://geoknoesis.com>` as its attribution.
+- New root `LICENSE`: everything in the repository without a notice of its own (tools and code,
+  profiles, documentation, site) is proprietary, all rights reserved (Stephane Fellah /
+  Geoknoesis). It does not override per-file or RDF licence declarations, and the ontology content
+  a page reproduces keeps its CC BY 4.0 licence. `LICENSING.md` states the two regimes.
+- New gate `test_ontology_licenses`: every module declares exactly the CC BY 4.0 licence and its
+  creator, and `LICENSE` and `LICENSING.md` state both regimes.
+
+### Validation messages (review fixes)
+
+- Every property shape whose results a validator reports carries an `sh:message` (223 shapes
+  and 14 shared constraint patterns gained one; 59% had none). Each states the property's whole
+  contract, generated from its constraints by `tools/_shape_text.py` and reviewed ("atime:duration
+  takes at most one value; each is an xsd:decimal or xsd:integer literal at least 0"). Shapes
+  nested in `sh:not`, `sh:or`, `sh:and`, `sh:xone` or `sh:node` are exempt, because SHACL reports
+  the enclosing constraint with the enclosing message; where a nested node shape carried the only
+  message (three `bddo:hasField` list constraints), the reported shape now carries it too. New
+  gate `test_shape_messages`, which also rejects a SPARQL placeholder in a property shape's
+  message.
+- Severity audit: every shape reporting at `sh:Violation` enforces a MUST; the two SHOULD-level
+  rules the shapes enforce (use of a deprecated register value, a sensitivity level without its
+  verbatim text) already report at `sh:Warning`. No severity changed; `specification/ontology-design`
+  states the mapping (MUST: Violation, SHOULD: Warning, MAY: Info or no shape) and that a new
+  Warning or Info shape is itself a compatibility change, since any result makes `sh:conforms`
+  false.
+
+### Namespace prefixes and shape packaging (review fixes)
+
+- `specification/family.json` gains a `namespaces` list: for each vocabulary, its prefix,
+  namespace IRI, ontology IRI, directory and file. It is the authoritative table for the prefixes
+  that do not match their namespace or directory (`adv` for /ns/audio#, `img` in directory `idv`,
+  `gv` for /ns/geo#, `hexplain` for /ns/core#, `hxf` for /ns/fn#, `menc` and `usnato` among the
+  `r…` register prefixes); nothing is renamed. `specification/ontology-design` shows the table.
+  New gate `test_namespace_prefixes`: every module declares exactly its row, no prefix or
+  namespace repeats, and the page lists every row. The `files` list is unchanged.
+- `specification/ontology-design` states where shapes live: in the module, except `conf` and
+  `req`, whose shapes are separate ontologies because the conformance shapes need `core` and
+  `bddo`, which report readers should not have to load (`req` follows `conf`'s layout).
+
+### Language tags and named individuals (review fixes)
+
+- Every `rdfs:label`, `rdfs:comment` and SKOS documentation literal of a family term is tagged
+  `@en` (1,162 literals, 710 of them labels, were plain), in the Turtle and the authoring
+  templates and presets alike. New gate `test_language_tags`.
+- Every individual of a family class is declared `owl:NamedIndividual` (the `bddo:DataType`
+  primitives, the `dlv:Axis` values, the hxf functions and kinds, the conf and req closed sets,
+  the register lifecycle statuses: 104 were not). New gate `test_named_individuals`.
+- No individual is renamed. `specification/ontology-design` (Naming) states the convention for
+  new ones: UpperCamelCase, except that a value joins its set's existing case and a value with an
+  established spelling (a primitive, an encoding, a function) keeps it.
+
+### Standards alignments (review fixes)
+
+Only true statements are asserted: `rdfs:subPropertyOf` where every use of the family term
+entails the external one, `rdfs:seeAlso` otherwise (SKOS mapping properties relate concepts only,
+`test_ontology_design`).
+
+- `asref:footprintWKT` accepts `geosparql:wktLiteral`, which new data SHOULD use; its range is
+  the union of `xsd:string` and `geosparql:wktLiteral`, so existing string footprints stay
+  valid. A typed literal follows GeoSPARQL: its CRS is the IRI prefixing the text, CRS84 when
+  none does; a string footprint is still in the resource's CRS. It is not a subproperty of
+  `geosparql:asWKT`, whose domain is `geosparql:Geometry`.
+- `asref:epsgCode` and `asref:crsIdentifier` link each other: EPSG code n is the CRS
+  `<http://www.opengis.net/def/crs/EPSG/0/n>`, which `asref:crsIdentifier` states and new data
+  SHOULD give.
+- `atime:duration` links OWL-Time's `time:hasDuration` and `time:numericDuration`; it is not their
+  subproperty, since they relate temporal entities and durations while `atime:duration` relates
+  content to seconds.
+- New `aprov:hasPlatform` and `aprov:hasSensorModel` relate an `aprov:AcquisitionInfo` to its
+  `aprov:Platform` and `aprov:SensorModel` (linked to `sosa:isHostedBy`, `sosa:madeBySensor`,
+  `prov:wasAssociatedWith`, `prov:used`), checked by the new `aprov:AcquisitionInfoShape`.
+- `afs:modificationTime` and `afs:creationTime` are subproperties of `dcterms:modified` and
+  `dcterms:created` (they were `rdfs:seeAlso`); `abnd:hasPart` and `abnd:partOf` of
+  `dcterms:hasPart` and `dcterms:isPartOf`, so `apkg:hasEntry` is one too. `afs:fileSize` links
+  `dcat:byteSize`, whose `dcat:Distribution` domain an archive entry need not satisfy.
+
+### HEL expressions as a datatype (bddo 1.3)
+
+- New datatype `bddo:HelExpression` (`rdfs:subClassOf xsd:string`): its lexical space is HEL
+  expression text and a literal's value is that string, so every expression-valued property
+  keeps its `xsd:string` range. The shapes of all 17 expression-valued properties
+  (`bddo:sizeFromExpression`, `bddo:condition`, `bddo:validIf`, `bddo:isPresentIf`,
+  `bddo:repeatUntil`, `bddo:valueFromExpression`, `bddo:localExpression`,
+  `bddo:dispatchOnExpression`, `bddo:atOffsetFromExpression`, `bddo:repeatCountFromExpression`,
+  the three `bddo:covers…Expression`, `hexplain:condition`, `hexplain:valueExpression`,
+  `dlv:dimensionStrideFromExpression`, `conf:assertion`) and the members of `bddo:hasArgument`
+  accept `xsd:string` or `bddo:HelExpression` through the new `bddo:HelExpressionValueShape`.
+  Authoring tools SHOULD emit the new datatype; every existing description stays valid.
+- New optional annotation `bddo:helVersion` on a description's ontology: the HEL version,
+  major.minor ("1.0"), its expressions are written against; absent, the specification edition's.
+  `bddo:HelVersionShape` allows one value matching `^[0-9]+\.[0-9]+$`.
+- Both are in `bddo`, not `core`: `bddo` is the lowest layer that holds expressions and loads
+  without `core`, which imports it.
+
+### Ranges, shapes and deprecations (review fixes)
+
+- `hexplain:unit` has range `rdfs:Resource` instead of `skos:Concept`, which typed every QUDT unit
+  and UCUM-based unit IRI a `skos:Concept`. The shape still requires an IRI; nothing that
+  validated stops validating.
+- `qudt:hasUnit` and `qudt:hasQuantityKind` are no longer asserted on `atime:duration`,
+  `aenc:bitrate`, `asamp:bitDepth`, `asig:sampleRate` and `vdv:frameRate`: they describe a
+  quantity, not a property. Each property links its QUDT unit and quantity kind with
+  `rdfs:seeAlso` and states the unit in its definition.
+- `asref` coefficients: `xsd:float` literals are accepted and the ranges say so. The 23 ranges
+  that were `xsd:double` are the union `[ owl:unionOf ( xsd:double xsd:float ) ]` (the two value
+  spaces are disjoint, so a float value of a double-ranged property was an inconsistency), and
+  `asref:FiniteDoubleShape` accepts a finite `xsd:float` as the range datatype shape already did:
+  a geotransform read from float32 fields conformed to one shape and failed the other. Data typed
+  `xsd:float` keeps validating; NaN and infinities are still rejected. `test_range_datatypes` no
+  longer treats `xsd:double` and `xsd:float` as interchangeable, and understands union ranges and
+  datatypes declared `rdfs:subClassOf` a range.
+- `hexplain:ClassMappingRuleShape` accepts an `rdfs:Class` for `hexplain:semanticClass`, as
+  `hexplain:MapsToClassShape` accepts it for `hexplain:mapsToClass`.
+- `bddo:condition` and `hexplain:condition` are not the same property and now say so: the first
+  guards a physical parsing rule while bytes are read, the second a semantic mapping rule after
+  parsing. Their definitions are sharpened and each links the other with `rdfs:seeAlso`; neither
+  is deprecated.
+- `bddo:coversExpression` names its replacements (`bddo:coversFromExpression`,
+  `bddo:coversToExpression`) with `dcterms:isReplacedBy`; `bddo:usesStruct` explains in a
+  `skos:historyNote` why it has none. New gate `test_deprecations`: every deprecated term names a
+  current replacement or explains why there is none.
+
 ### Documentation annotations
 
+- One definition rule: a term's `rdfs:comment` is its definition; the generator adds a
+  `skos:definition` only where it says what no comment says (an editorial definition, or a
+  shape's or primitive's generated one). 267 generated definitions that repeated their comment
+  word for word are gone, and so is the hand-written duplicate on `rgeo:GeometryCollection`.
+  The term reference shows the `skos:definition`, else the comment.
+- Generated scope notes are only the module note on each ontology and the editorial notes of
+  `_term_editorial.SCOPE_NOTES`; the 987 templated notes (module sentence, "Use it as a
+  predicate", a shape's activation) are gone. A shape's activation and a property's shape usage
+  remain rows of every term card.
+- Shape definitions no longer open "A reusable validation contract for": they state the shape's
+  activation and what it checks, from its messages or, lacking one, from its constraints
+  (`tools/_shape_text.py`). A message naming SPARQL result variables is never copied, so the six
+  definitions that read "{?s} declares {?np} parameter(s)" are gone; `bddo:ArgumentArityShape`
+  and `bddo:TreePrefixBindingShape` have editorial comments instead.
+- The generated block is readable Turtle with its own `@prefix` lines and one statement per
+  term, instead of N-Triples.
+- New gate `test_documentation_annotations`: no placeholder in any label, comment, definition or
+  scope note, no definition repeating its comment, no retired template, no N-Triples block.
 - Scope notes are no longer one shared template: a note says "subclass links below" only of a
   class that has one, "SHACL paths are listed below" only of a property a shape uses, and "No
   automatic target" only of a shape without one (a SPARQL-based target counts). Core, conf, req

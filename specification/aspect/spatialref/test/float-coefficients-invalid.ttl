@@ -1,0 +1,11 @@
+# Accepting xsd:float did not relax finiteness: a NaN or infinite float coefficient is rejected
+# exactly as a NaN or infinite double is.
+# expect: ex:T asref:GeoTransformShape sh:NodeConstraintComponent
+@prefix ex:    <https://hexplain.io/test/float-coefficients-invalid#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix asref: <https://hexplain.io/ns/aspect/spatialref#> .
+
+ex:T a asref:GeoTransform ;
+    asref:originX "NaN"^^xsd:float ; asref:originY "0.0"^^xsd:float ;
+    asref:scaleX "INF"^^xsd:float ; asref:scaleY "-1.0"^^xsd:float .

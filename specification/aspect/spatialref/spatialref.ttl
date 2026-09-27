@@ -16,140 +16,183 @@
     owl:versionIRI <https://hexplain.io/ns/aspect/spatialref/1.4> ; owl:versionInfo "1.4" ;
     <http://schema.org/creativeWorkStatus> "working draft" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/spatialref/1.3> ;
-    dcterms:modified "2026-09-24"^^xsd:date ;
-    rdfs:label "Hexplain Aspect — Spatial Reference (hx-spatialref)" ;
-    rdfs:comment "Aspect for georeferencing: coordinate reference systems, geotransforms, registration. Shared by geospatial raster and vector data." ;
+    dcterms:modified "2026-09-27"^^xsd:date ;
+    rdfs:label "Hexplain Aspect — Spatial Reference (hx-spatialref)"@en ;
+    rdfs:comment "Aspect for georeferencing: coordinate reference systems, geotransforms, registration. Shared by geospatial raster and vector data."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "asref" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/spatialref#" .
 
-:CoordinateReferenceSystem a owl:Class ; rdfs:label "Coordinate Reference System" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> .
-:GeoTransform a owl:Class ; rdfs:label "GeoTransform" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
-    rdfs:comment "The affine mapping from pixel/line to ground coordinates, carrying the six coefficients asref:originX, scaleX, skewX, originY, skewY, scaleY -- GDAL's GT[0..5] in that order. It is always corner-based, as GDAL's is: grid position (0, 0) is the outer corner of the first cell, and asref:pixelRegistration never shifts it. A north-up raster has both skews zero, and an absent skew is zero; only the skews make a rotated grid expressible." .
+:CoordinateReferenceSystem a owl:Class ; rdfs:label "Coordinate Reference System"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> .
+:GeoTransform a owl:Class ; rdfs:label "GeoTransform"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    rdfs:comment "The affine mapping from pixel/line to ground coordinates, carrying the six coefficients asref:originX, scaleX, skewX, originY, skewY, scaleY -- GDAL's GT[0..5] in that order. It is always corner-based, as GDAL's is: grid position (0, 0) is the outer corner of the first cell, and asref:pixelRegistration never shifts it. A north-up raster has both skews zero, and an absent skew is zero; only the skews make a rotated grid expressible."@en .
 
-:wktString a owl:DatatypeProperty ; rdfs:label "WKT string" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:string ; rdfs:comment "Coordinate reference system WKT, not WKT geometry. No equivalence to GeoSPARQL geometry serialization is asserted." .
-:epsgCode a owl:DatatypeProperty ; rdfs:label "EPSG code" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:positiveInteger .
-:originLongitude a owl:DatatypeProperty ; rdfs:label "origin longitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
-    rdfs:comment "Origin easting expressed as a GEOGRAPHIC longitude. Use only when the CRS really is geographic; for an origin in projected units (metres, feet) use asref:originX, of which this is the geographic special case." .
-:originLatitude a owl:DatatypeProperty ; rdfs:label "origin latitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
-    rdfs:comment "Origin northing expressed as a GEOGRAPHIC latitude. See asref:originLongitude; the general form is asref:originY." .
-:originX a owl:DatatypeProperty ; rdfs:label "origin X" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
-    rdfs:comment "Easting of the grid origin in the units of the CRS, degrees or metres alike (affine coefficient GT[0]). The general form of asref:originLongitude, which presumes a geographic CRS and is therefore wrong for the projected rasters that make up most of the corpus." .
-:originY a owl:DatatypeProperty ; rdfs:label "origin Y" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
-    rdfs:comment "Northing of the grid origin in the units of the CRS (affine coefficient GT[3]). The general form of asref:originLatitude." .
-:scaleX a owl:DatatypeProperty ; rdfs:label "X scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
-    rdfs:comment "Ground distance per pixel along X (affine coefficient GT[1])." .
-:scaleY a owl:DatatypeProperty ; rdfs:label "Y scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
-    rdfs:comment "Ground distance per pixel along Y (affine coefficient GT[5]). Conventionally NEGATIVE for a north-up raster, whose rows run southward while northings increase." .
-:skewX a owl:DatatypeProperty ; rdfs:label "X skew" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
-    rdfs:comment "Rotation/shear term: ground X per pixel ROW (affine coefficient GT[2]). Zero for a north-up raster. Without this and asref:skewY a rotated or sheared grid cannot be georeferenced at all, only misplaced." .
-:skewY a owl:DatatypeProperty ; rdfs:label "Y skew" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
-    rdfs:comment "Rotation/shear term: ground Y per pixel COLUMN (affine coefficient GT[4]). Zero for a north-up raster." .
+:wktString a owl:DatatypeProperty ; rdfs:label "WKT string"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:string ; rdfs:comment "Coordinate reference system WKT, not WKT geometry. No equivalence to GeoSPARQL geometry serialization is asserted."@en .
+:epsgCode a owl:DatatypeProperty ; rdfs:label "EPSG code"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:positiveInteger ;
+    rdfs:seeAlso :crsIdentifier ;
+    rdfs:comment "The positive code of a coordinate reference system in the EPSG registry. EPSG code n names the CRS whose IRI is <http://www.opengis.net/def/crs/EPSG/0/n>, which asref:crsIdentifier states on the CRS resource; new data should give that IRI, which also reaches other authorities and compound or vertical systems. The integer remains valid, and is not a substitute for the rest of a CRS's metadata."@en .
+:originLongitude a owl:DatatypeProperty ; rdfs:label "origin longitude"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Origin easting expressed as a GEOGRAPHIC longitude. Use only when the CRS really is geographic; for an origin in projected units (metres, feet) use asref:originX, of which this is the geographic special case."@en .
+:originLatitude a owl:DatatypeProperty ; rdfs:label "origin latitude"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Origin northing expressed as a GEOGRAPHIC latitude. See asref:originLongitude; the general form is asref:originY."@en .
+:originX a owl:DatatypeProperty ; rdfs:label "origin X"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Easting of the grid origin in the units of the CRS, degrees or metres alike (affine coefficient GT[0]). The general form of asref:originLongitude, which presumes a geographic CRS and is therefore wrong for the projected rasters that make up most of the corpus."@en .
+:originY a owl:DatatypeProperty ; rdfs:label "origin Y"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Northing of the grid origin in the units of the CRS (affine coefficient GT[3]). The general form of asref:originLatitude."@en .
+:scaleX a owl:DatatypeProperty ; rdfs:label "X scale"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Ground distance per pixel along X (affine coefficient GT[1])."@en .
+:scaleY a owl:DatatypeProperty ; rdfs:label "Y scale"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Ground distance per pixel along Y (affine coefficient GT[5]). Conventionally NEGATIVE for a north-up raster, whose rows run southward while northings increase."@en .
+:skewX a owl:DatatypeProperty ; rdfs:label "X skew"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Rotation/shear term: ground X per pixel ROW (affine coefficient GT[2]). Zero for a north-up raster. Without this and asref:skewY a rotated or sheared grid cannot be georeferenced at all, only misplaced."@en .
+:skewY a owl:DatatypeProperty ; rdfs:label "Y skew"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Rotation/shear term: ground Y per pixel COLUMN (affine coefficient GT[4]). Zero for a north-up raster."@en .
 
 # ---------- Ground footprint ----------
-:footprintWKT a owl:DatatypeProperty ; rdfs:label "footprint WKT" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
-    rdfs:seeAlso geosparql:asWKT ; rdfs:range xsd:string ;
-    rdfs:comment "The ground area covered, as a WKT geometry in the resource's CRS -- typically a polygon of the four image corners. Formats that state corners directly rather than an affine (NITF's IGEOLO, the BLOCKA corner strings) have no scale or origin to give, so a footprint is the only georeference they carry." .
+:footprintWKT a owl:DatatypeProperty ; rdfs:label "footprint WKT"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    # Not rdfs:subPropertyOf geosparql:asWKT: that property's domain is geosparql:Geometry, and
+    # the subject here is the georeferenced resource, not a geometry of it.
+    rdfs:seeAlso geosparql:asWKT ;
+    # A union range: the GeoSPARQL literal new data should use, and the plain string existing
+    # data uses (still valid).
+    rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:string geosparql:wktLiteral ) ] ;
+    rdfs:comment "The ground area covered, as a WKT geometry -- typically a polygon of the four image corners. Formats that state corners directly rather than an affine (NITF's IGEOLO, the BLOCKA corner strings) have no scale or origin to give, so a footprint is the only georeference they carry. New data should type the value geosparql:wktLiteral, which GeoSPARQL tools read directly; its CRS is then the CRS IRI that may prefix the text, and OGC CRS84 when none does, as GeoSPARQL specifies, so a footprint in any other CRS carries that CRS's IRI. A value typed xsd:string remains valid and is read, as before, in the resource's CRS."@en .
 
 # ---------- Ground control points ----------
 # The other way a format georeferences without an affine: an irregular scatter of
 # pixel-to-ground correspondences, to be fitted or interpolated by the consumer.
-:GroundControlPoint a owl:Class ; rdfs:label "Ground Control Point" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
-    rdfs:comment "One correspondence between a pixel position and a ground position. A set of these georeferences an image that no single affine can, e.g. an unrectified swath." .
-:hasGroundControlPoint a owl:ObjectProperty ; rdfs:label "has ground control point" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+:GroundControlPoint a owl:Class ; rdfs:label "Ground Control Point"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    rdfs:comment "One correspondence between a pixel position and a ground position. A set of these georeferences an image that no single affine can, e.g. an unrectified swath."@en .
+:hasGroundControlPoint a owl:ObjectProperty ; rdfs:label "has ground control point"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
     rdfs:range :GroundControlPoint .
-:gcpPixelX a owl:DatatypeProperty ; rdfs:label "GCP pixel X" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
-    rdfs:comment "Column position of the control point in the image grid." .
-:gcpPixelY a owl:DatatypeProperty ; rdfs:label "GCP pixel Y" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
-    rdfs:comment "Row position of the control point in the image grid." .
-:gcpX a owl:DatatypeProperty ; rdfs:label "GCP ground X" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
-:gcpY a owl:DatatypeProperty ; rdfs:label "GCP ground Y" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
-:gcpZ a owl:DatatypeProperty ; rdfs:label "GCP ground Z" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
-    rdfs:comment "Ground elevation of the control point. Optional: many formats give 2-D control only." .
-:gcpIdentifier a owl:DatatypeProperty ; rdfs:label "GCP identifier" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:string .
-:pixelRegistration a owl:ObjectProperty ; rdfs:label "pixel registration" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
-    rdfs:comment "Where a cell's value is located within the cell. Describes the value, never the grid: the normalized affine stays corner-based." .
+:gcpPixelX a owl:DatatypeProperty ; rdfs:label "GCP pixel X"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Column position of the control point in the image grid."@en .
+:gcpPixelY a owl:DatatypeProperty ; rdfs:label "GCP pixel Y"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Row position of the control point in the image grid."@en .
+:gcpX a owl:DatatypeProperty ; rdfs:label "GCP ground X"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] .
+:gcpY a owl:DatatypeProperty ; rdfs:label "GCP ground Y"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] .
+:gcpZ a owl:DatatypeProperty ; rdfs:label "GCP ground Z"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Ground elevation of the control point. Optional: many formats give 2-D control only."@en .
+:gcpIdentifier a owl:DatatypeProperty ; rdfs:label "GCP identifier"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:string .
+:pixelRegistration a owl:ObjectProperty ; rdfs:label "pixel registration"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    rdfs:comment "Where a cell's value is located within the cell. Describes the value, never the grid: the normalized affine stays corner-based."@en .
 
-:PixelCorner a owl:NamedIndividual ; rdfs:label "Pixel Corner Registration" .
-:PixelCenter a owl:NamedIndividual ; rdfs:label "Pixel Center Registration" .
+:PixelCorner a owl:NamedIndividual ; rdfs:label "Pixel Corner Registration"@en .
+:PixelCenter a owl:NamedIndividual ; rdfs:label "Pixel Center Registration"@en .
 
-:hasCRS a owl:ObjectProperty ; rdfs:range :CoordinateReferenceSystem ; rdfs:label "has coordinate reference system" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "CRS of the resource's ground coordinates. A CRS identifier is not itself a transformation or a geometry." .
-:hasGeoTransform a owl:ObjectProperty ; rdfs:range :GeoTransform ; rdfs:label "has geotransform" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> .
-:groundControlPointCRS a owl:ObjectProperty ; rdfs:range :CoordinateReferenceSystem ; rdfs:label "ground control point CRS" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "CRS of the ground-control-point set, which may differ from the raster's affine CRS. No reprojection or precedence is implied." .
-:coordinateEpoch a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "coordinate epoch" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Coordinate epoch in decimal years for coordinates in a dynamic reference frame; distinct from acquisition time and CRS reference epoch." .
-:crsIdentifier a owl:ObjectProperty ; rdfs:label "CRS identifier" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Authoritative CRS IRI; supports authorities and compound or vertical systems without assuming a single numeric code scheme." .
+:hasCRS a owl:ObjectProperty ; rdfs:range :CoordinateReferenceSystem ; rdfs:label "has coordinate reference system"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "CRS of the resource's ground coordinates. A CRS identifier is not itself a transformation or a geometry."@en .
+:hasGeoTransform a owl:ObjectProperty ; rdfs:range :GeoTransform ; rdfs:label "has geotransform"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> .
+:groundControlPointCRS a owl:ObjectProperty ; rdfs:range :CoordinateReferenceSystem ; rdfs:label "ground control point CRS"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "CRS of the ground-control-point set, which may differ from the raster's affine CRS. No reprojection or precedence is implied."@en .
+:coordinateEpoch a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "coordinate epoch"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Coordinate epoch in decimal years for coordinates in a dynamic reference frame; distinct from acquisition time and CRS reference epoch."@en .
+:crsIdentifier a owl:ObjectProperty ; rdfs:label "CRS identifier"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:seeAlso :epsgCode ;
+    rdfs:comment "The authoritative IRI of a coordinate reference system, such as <http://www.opengis.net/def/crs/EPSG/0/4326> for EPSG code 4326 (the OGC CRS register's form). Supports any authority and compound or vertical systems without assuming a single numeric code scheme; it is the form GeoSPARQL uses to prefix a geosparql:wktLiteral."@en .
 
 # Validation is separate from OWL inference. No universal invertibility requirement:
 # a singular affine may be represented, but an inverse request must fail explicitly.
-:FiniteDoubleShape a sh:NodeShape ; sh:datatype xsd:double ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] .
+# xsd:float as well as xsd:double: a 32-bit coefficient lifts as xsd:float, and the range
+# datatype shape already accepted it, so an affine read from a float32 field conformed there and
+# failed here. The ranges above say the same: each is the union of the two XSD datatypes, whose
+# value spaces are disjoint, so a plain xsd:double range made every float literal inconsistent.
+:FiniteDoubleShape a sh:NodeShape ; sh:or ( [ sh:datatype xsd:double ] [ sh:datatype xsd:float ] ) ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] .
 :CRSShape a sh:NodeShape ; sh:targetClass :CoordinateReferenceSystem ; sh:targetObjectsOf :hasCRS, :groundControlPointCRS ;
     sh:nodeKind sh:BlankNodeOrIRI ;
-    sh:property [ sh:path :wktString ; sh:datatype xsd:string ; sh:minLength 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :crsIdentifier ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :coordinateEpoch ; sh:datatype xsd:decimal ; sh:maxCount 1 ] .
+    sh:property [ sh:path :wktString ; sh:datatype xsd:string ; sh:minLength 1 ; sh:maxCount 1 ;
+        sh:message "asref:wktString takes at most one value; each is an xsd:string literal at least 1 character long." ] ;
+    sh:property [ sh:path :crsIdentifier ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
+        sh:message "asref:crsIdentifier takes at most one value; each is an IRI." ] ;
+    sh:property [ sh:path :coordinateEpoch ; sh:datatype xsd:decimal ; sh:maxCount 1 ;
+        sh:message "asref:coordinateEpoch takes at most one value; each is an xsd:decimal literal." ] .
 
 # ---------- SHACL ----------
 asref:GeoTransformShape a sh:NodeShape ;
     sh:targetClass asref:GeoTransform ; sh:targetObjectsOf asref:hasGeoTransform ;
     sh:nodeKind sh:BlankNodeOrIRI ;
-    sh:property [ sh:path asref:originX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:originY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:scaleX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:scaleY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:originX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:originX takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:originY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:originY takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:scaleX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:scaleX takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:scaleY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:scaleY takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
     # Skews are optional: an absent skew is zero (north-up), as the hxf affine functions read it.
-    sh:property [ sh:path asref:skewX ; sh:node :FiniteDoubleShape ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:skewY ; sh:node :FiniteDoubleShape ; sh:maxCount 1 ] .
+    sh:property [ sh:path asref:skewX ; sh:node :FiniteDoubleShape ; sh:maxCount 1 ;
+        sh:message "asref:skewX takes at most one value; each is a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:skewY ; sh:node :FiniteDoubleShape ; sh:maxCount 1 ;
+        sh:message "asref:skewY takes at most one value; each is a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] .
 
 # A control point is useless without both halves of the correspondence.
 asref:GroundControlPointShape a sh:NodeShape ;
     sh:targetClass asref:GroundControlPoint ; sh:targetObjectsOf asref:hasGroundControlPoint ;
-    sh:property [ sh:path asref:gcpPixelX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:gcpPixelY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:gcpX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:gcpY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:gcpZ ; sh:node :FiniteDoubleShape ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:gcpIdentifier ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+    sh:property [ sh:path asref:gcpPixelX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:gcpPixelX takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:gcpPixelY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:gcpPixelY takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:gcpX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:gcpX takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:gcpY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:gcpY takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:gcpZ ; sh:node :FiniteDoubleShape ; sh:maxCount 1 ;
+        sh:message "asref:gcpZ takes at most one value; each is a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:gcpIdentifier ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "asref:gcpIdentifier takes at most one value; each is an xsd:string literal." ] .
 
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
-:CubicRationalTransform a owl:Class ; rdfs:label "Cubic rational transform" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "A three-input, two-output rational polynomial geolocation model. Four coefficient vectors each have 20 values. polynomialBasis identifies the externally specified monomial order, normalization, input CRS, units and pixel convention. No basis or datum is inferred. Unsupported bases must be reported, not evaluated using a guessed order." .
-:hasRationalTransform a owl:ObjectProperty ; rdfs:range :CubicRationalTransform ; rdfs:label "has rational transform" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> .
-:polynomialBasis a owl:ObjectProperty ; rdfs:label "polynomial basis contract" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "IRI of the complete published polynomial convention. A profile must define the ordered 20 monomials, normalized inputs, CRS/units and pixel reference. Different coefficient orderings are not interchangeable." .
-:lineNumerator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "line numerator coefficients" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed." .
-:lineDenominator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "line denominator coefficients" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed." .
-:sampleNumerator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "sample numerator coefficients" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed." .
-:sampleDenominator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "sample denominator coefficients" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed." .
-:lineOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "line offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:lineScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "line scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:sampleOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "sample offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:sampleScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "sample scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:latitudeOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "latitude offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:latitudeScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "latitude scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:longitudeOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "longitude offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:longitudeScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "longitude scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:heightOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "height offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:heightScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "height scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
+:CubicRationalTransform a owl:Class ; rdfs:label "Cubic rational transform"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "A three-input, two-output rational polynomial geolocation model. Four coefficient vectors each have 20 values. polynomialBasis identifies the externally specified monomial order, normalization, input CRS, units and pixel convention. No basis or datum is inferred. Unsupported bases must be reported, not evaluated using a guessed order."@en .
+:hasRationalTransform a owl:ObjectProperty ; rdfs:range :CubicRationalTransform ; rdfs:label "has rational transform"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> .
+:polynomialBasis a owl:ObjectProperty ; rdfs:label "polynomial basis contract"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "IRI of the complete published polynomial convention. A profile must define the ordered 20 monomials, normalized inputs, CRS/units and pixel reference. Different coefficient orderings are not interchangeable."@en .
+:lineNumerator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "line numerator coefficients"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed."@en .
+:lineDenominator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "line denominator coefficients"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed."@en .
+:sampleNumerator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "sample numerator coefficients"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed."@en .
+:sampleDenominator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "sample denominator coefficients"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed."@en .
+:lineOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "line offset"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:lineScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "line scale"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:sampleOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "sample offset"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:sampleScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "sample scale"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:latitudeOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "latitude offset"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:latitudeScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "latitude scale"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:longitudeOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "longitude offset"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:longitudeScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "longitude scale"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:heightOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "height offset"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:heightScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "height scale"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
 
 :CubicRationalTransformShape a sh:NodeShape ; sh:targetClass :CubicRationalTransform ; sh:targetObjectsOf :hasRationalTransform ;
     sh:nodeKind sh:BlankNodeOrIRI ;
-    sh:property [ sh:path :polynomialBasis ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :lineOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :lineScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ] ;
-    sh:property [ sh:path :sampleOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :sampleScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ] ;
-    sh:property [ sh:path :latitudeOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :latitudeScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ] ;
-    sh:property [ sh:path :longitudeOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :longitudeScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ] ;
-    sh:property [ sh:path :heightOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :heightScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ] ;
-    sh:property [ sh:path :lineNumerator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :lineDenominator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :sampleNumerator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :sampleDenominator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path :polynomialBasis ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:polynomialBasis takes exactly one value, an IRI." ] ;
+    sh:property [ sh:path :lineOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:lineOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path :lineScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ;
+        sh:message "asref:lineScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0." ] ;
+    sh:property [ sh:path :sampleOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:sampleOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path :sampleScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ;
+        sh:message "asref:sampleScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0." ] ;
+    sh:property [ sh:path :latitudeOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:latitudeOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path :latitudeScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ;
+        sh:message "asref:latitudeScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0." ] ;
+    sh:property [ sh:path :longitudeOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:longitudeOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path :longitudeScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ;
+        sh:message "asref:longitudeScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0." ] ;
+    sh:property [ sh:path :heightOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:heightOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path :heightScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ;
+        sh:message "asref:heightScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0." ] ;
+    sh:property [ sh:path :lineNumerator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:lineNumerator takes exactly one value, a value conforming to asref:CoefficientVectorShape." ] ;
+    sh:property [ sh:path :lineDenominator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:lineDenominator takes exactly one value, a value conforming to asref:CoefficientVectorShape." ] ;
+    sh:property [ sh:path :sampleNumerator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:sampleNumerator takes exactly one value, a value conforming to asref:CoefficientVectorShape." ] ;
+    sh:property [ sh:path :sampleDenominator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:sampleDenominator takes exactly one value, a value conforming to asref:CoefficientVectorShape." ] .
 
 :CoefficientVectorShape a sh:NodeShape ; sh:nodeKind sh:BlankNodeOrIRI ;
-    sh:property [ sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:node :FiniteDoubleShape ] ;
+    sh:property [ sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:node :FiniteDoubleShape ;
+        sh:message "Each member of the list is a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
     sh:sparql [ sh:message "A coefficient vector must be a well-formed finite RDF list of exactly 20 cells." ; sh:select """
       PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
       SELECT DISTINCT $this WHERE {
@@ -167,13 +210,13 @@ asref:GroundControlPointShape a sh:NodeShape ;
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-asref:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+asref:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
-asref:FloatValueShape a sh:NodeShape ; rdfs:label "Float value shape" ;
+asref:FloatValueShape a sh:NodeShape ; rdfs:label "Float value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
     sh:or ( [ sh:datatype xsd:double ] [ sh:datatype xsd:float ] ) .
-asref:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+asref:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
     sh:targetSubjectsOf asref:coordinateEpoch ,
         asref:epsgCode ,
@@ -206,182 +249,95 @@ asref:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         sh:message "asref:coordinateEpoch takes an xsd:decimal literal (rdfs:range xsd:decimal)." ] ;
     sh:property [ sh:path asref:epsgCode ; sh:node asref:IntegerValueShape ; sh:minInclusive 1 ;
         sh:message "asref:epsgCode takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
-    sh:property [ sh:path asref:footprintWKT ; sh:datatype xsd:string ;
-        sh:message "asref:footprintWKT takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path asref:footprintWKT ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype geosparql:wktLiteral ] ) ;
+        sh:message "asref:footprintWKT takes a geosparql:wktLiteral or xsd:string literal (rdfs:range: their union)." ] ;
     sh:property [ sh:path asref:gcpIdentifier ; sh:datatype xsd:string ;
         sh:message "asref:gcpIdentifier takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path asref:gcpPixelX ; sh:node asref:FloatValueShape ;
-        sh:message "asref:gcpPixelX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:gcpPixelX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:gcpPixelY ; sh:node asref:FloatValueShape ;
-        sh:message "asref:gcpPixelY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:gcpPixelY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:gcpX ; sh:node asref:FloatValueShape ;
-        sh:message "asref:gcpX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:gcpX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:gcpY ; sh:node asref:FloatValueShape ;
-        sh:message "asref:gcpY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:gcpY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:gcpZ ; sh:node asref:FloatValueShape ;
-        sh:message "asref:gcpZ takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:gcpZ takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:heightOffset ; sh:node asref:FloatValueShape ;
-        sh:message "asref:heightOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:heightOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:heightScale ; sh:node asref:FloatValueShape ;
-        sh:message "asref:heightScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:heightScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:latitudeOffset ; sh:node asref:FloatValueShape ;
-        sh:message "asref:latitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:latitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:latitudeScale ; sh:node asref:FloatValueShape ;
-        sh:message "asref:latitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:latitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:lineOffset ; sh:node asref:FloatValueShape ;
-        sh:message "asref:lineOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:lineOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:lineScale ; sh:node asref:FloatValueShape ;
-        sh:message "asref:lineScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:lineScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:longitudeOffset ; sh:node asref:FloatValueShape ;
-        sh:message "asref:longitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:longitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:longitudeScale ; sh:node asref:FloatValueShape ;
-        sh:message "asref:longitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:longitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:originLatitude ; sh:node asref:FloatValueShape ;
-        sh:message "asref:originLatitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:originLatitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:originLongitude ; sh:node asref:FloatValueShape ;
-        sh:message "asref:originLongitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:originLongitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:originX ; sh:node asref:FloatValueShape ;
-        sh:message "asref:originX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:originX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:originY ; sh:node asref:FloatValueShape ;
-        sh:message "asref:originY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:originY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:sampleOffset ; sh:node asref:FloatValueShape ;
-        sh:message "asref:sampleOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:sampleOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:sampleScale ; sh:node asref:FloatValueShape ;
-        sh:message "asref:sampleScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:sampleScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:scaleX ; sh:node asref:FloatValueShape ;
-        sh:message "asref:scaleX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:scaleX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:scaleY ; sh:node asref:FloatValueShape ;
-        sh:message "asref:scaleY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:scaleY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:skewX ; sh:node asref:FloatValueShape ;
-        sh:message "asref:skewX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:skewX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:skewY ; sh:node asref:FloatValueShape ;
-        sh:message "asref:skewY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] .
+        sh:message "asref:skewY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] .
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-<https://hexplain.io/ns/aspect/spatialref> <http://www.w3.org/2004/02/skos/core#definition> "Aspect for georeferencing: coordinate reference systems, geotransforms, registration. Shared by geospatial raster and vector data."@en .
-<https://hexplain.io/ns/aspect/spatialref> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations."@en .
-<https://hexplain.io/ns/aspect/spatialref#CRSShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for asref:coordinateEpoch, asref:crsIdentifier, asref:wktString. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/aspect/spatialref#CRSShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of asref:CoordinateReferenceSystem; objects of asref:groundControlPointCRS, asref:hasCRS Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/aspect/spatialref#CRSShape> <http://www.w3.org/2000/01/rdf-schema#label> "CRSShape"@en .
-<https://hexplain.io/ns/aspect/spatialref#CRSShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/spatialref> .
-<https://hexplain.io/ns/aspect/spatialref#CoefficientVectorShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Coefficient Vector. A coefficient vector must be a well-formed finite RDF list of exactly 20 cells."@en .
-<https://hexplain.io/ns/aspect/spatialref#CoefficientVectorShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/aspect/spatialref#CoefficientVectorShape> <http://www.w3.org/2000/01/rdf-schema#label> "Coefficient Vector Shape"@en .
-<https://hexplain.io/ns/aspect/spatialref#CoefficientVectorShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/spatialref> .
-<https://hexplain.io/ns/aspect/spatialref#CoordinateReferenceSystem> <http://www.w3.org/2004/02/skos/core#definition> "A resource describing the coordinate system and reference frame in which spatial coordinates are interpreted."@en .
-<https://hexplain.io/ns/aspect/spatialref#CoordinateReferenceSystem> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Assert this class on a resource representing the defined entity."@en .
-<https://hexplain.io/ns/aspect/spatialref#CubicRationalTransform> <http://www.w3.org/2004/02/skos/core#definition> "A three-input, two-output rational polynomial geolocation model. Four coefficient vectors each have 20 values. polynomialBasis identifies the externally specified monomial order, normalization, input CRS, units and pixel convention. No basis or datum is inferred. Unsupported bases must be reported, not evaluated using a guessed order."@en .
-<https://hexplain.io/ns/aspect/spatialref#CubicRationalTransform> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Assert this class on a resource representing the defined entity."@en .
-<https://hexplain.io/ns/aspect/spatialref#CubicRationalTransformShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for asref:heightOffset, asref:heightScale, asref:latitudeOffset, asref:latitudeScale, asref:lineDenominator, asref:lineNumerator, asref:lineOffset, asref:lineScale, asref:longitudeOffset, asref:longitudeScale, asref:polynomialBasis, asref:sampleDenominator, asref:sampleNumerator, asref:sampleOffset, asref:sampleScale. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/aspect/spatialref#CubicRationalTransformShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of asref:CubicRationalTransform; objects of asref:hasRationalTransform Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/aspect/spatialref#CubicRationalTransformShape> <http://www.w3.org/2000/01/rdf-schema#label> "Cubic Rational Transform Shape"@en .
-<https://hexplain.io/ns/aspect/spatialref#CubicRationalTransformShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/spatialref> .
-<https://hexplain.io/ns/aspect/spatialref#FiniteDoubleShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Finite Double. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/aspect/spatialref#FiniteDoubleShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/aspect/spatialref#FiniteDoubleShape> <http://www.w3.org/2000/01/rdf-schema#label> "Finite Double Shape"@en .
-<https://hexplain.io/ns/aspect/spatialref#FiniteDoubleShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/spatialref> .
-<https://hexplain.io/ns/aspect/spatialref#FloatValueShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Float value. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/aspect/spatialref#FloatValueShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/aspect/spatialref#GeoTransform> <http://www.w3.org/2004/02/skos/core#definition> "The affine mapping from pixel/line to ground coordinates, carrying the six coefficients asref:originX, scaleX, skewX, originY, skewY, scaleY -- GDAL's GT[0..5] in that order. It is always corner-based, as GDAL's is: grid position (0, 0) is the outer corner of the first cell, and asref:pixelRegistration never shifts it. A north-up raster has both skews zero, and an absent skew is zero; only the skews make a rotated grid expressible."@en .
-<https://hexplain.io/ns/aspect/spatialref#GeoTransform> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Assert this class on a resource representing the defined entity."@en .
-<https://hexplain.io/ns/aspect/spatialref#GeoTransformShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for asref:originX, asref:originY, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/aspect/spatialref#GeoTransformShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of asref:GeoTransform; objects of asref:hasGeoTransform Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/aspect/spatialref#GeoTransformShape> <http://www.w3.org/2000/01/rdf-schema#label> "Geo Transform Shape"@en .
-<https://hexplain.io/ns/aspect/spatialref#GeoTransformShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/spatialref> .
-<https://hexplain.io/ns/aspect/spatialref#GroundControlPoint> <http://www.w3.org/2004/02/skos/core#definition> "One correspondence between a pixel position and a ground position. A set of these georeferences an image that no single affine can, e.g. an unrectified swath."@en .
-<https://hexplain.io/ns/aspect/spatialref#GroundControlPoint> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Assert this class on a resource representing the defined entity."@en .
-<https://hexplain.io/ns/aspect/spatialref#GroundControlPointShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for asref:gcpIdentifier, asref:gcpPixelX, asref:gcpPixelY, asref:gcpX, asref:gcpY, asref:gcpZ. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/aspect/spatialref#GroundControlPointShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of asref:GroundControlPoint; objects of asref:hasGroundControlPoint Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/aspect/spatialref#GroundControlPointShape> <http://www.w3.org/2000/01/rdf-schema#label> "Ground Control Point Shape"@en .
-<https://hexplain.io/ns/aspect/spatialref#GroundControlPointShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/spatialref> .
-<https://hexplain.io/ns/aspect/spatialref#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Integer value. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/aspect/spatialref#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/aspect/spatialref#PixelCenter> <http://www.w3.org/2004/02/skos/core#definition> "Registration of a cell's value at the centre of its cell (a point sample, such as an elevation post). It does not move the grid: the normalized affine stays corner-based, and a source whose native transform is centre-based is shifted by half a cell when it is normalized, once, at lifting time."@en .
-<https://hexplain.io/ns/aspect/spatialref#PixelCenter> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
-<https://hexplain.io/ns/aspect/spatialref#PixelCenter> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/spatialref> .
-<https://hexplain.io/ns/aspect/spatialref#PixelCorner> <http://www.w3.org/2004/02/skos/core#definition> "Registration of a cell's value at, or as an area from, the cell's upper-left corner. The normalized affine is corner-based whatever the registration: column/row (0, 0) is the outer corner of the first cell."@en .
-<https://hexplain.io/ns/aspect/spatialref#PixelCorner> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use this IRI as a controlled value where the profile or a shape accepts its declared type."@en .
-<https://hexplain.io/ns/aspect/spatialref#PixelCorner> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/aspect/spatialref> .
-<https://hexplain.io/ns/aspect/spatialref#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for asref:coordinateEpoch, asref:epsgCode, asref:footprintWKT, asref:gcpIdentifier, asref:gcpPixelX, asref:gcpPixelY, asref:gcpX, asref:gcpY, asref:gcpZ, asref:heightOffset, asref:heightScale, asref:latitudeOffset, asref:latitudeScale, asref:lineOffset, asref:lineScale, asref:longitudeOffset, asref:longitudeScale, asref:originLatitude, asref:originLongitude, asref:originX, asref:originY, asref:sampleOffset, asref:sampleScale, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY. asref:coordinateEpoch takes an xsd:decimal literal (rdfs:range xsd:decimal). asref:epsgCode takes a positive integer (rdfs:range xsd:positiveInteger). asref:footprintWKT takes an xsd:string literal (rdfs:range xsd:string). asref:gcpIdentifier takes an xsd:string literal (rdfs:range xsd:string). asref:gcpPixelX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:gcpPixelY takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:gcpX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:gcpY takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:gcpZ takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:heightOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:heightScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:latitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:latitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:lineOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:lineScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:longitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:longitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:originLatitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:originLongitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:originX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:originY takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:sampleOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:sampleScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:scaleX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:scaleY takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:skewX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:skewY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)."@en .
-<https://hexplain.io/ns/aspect/spatialref#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using asref:coordinateEpoch, asref:epsgCode, asref:footprintWKT, asref:gcpIdentifier, asref:gcpPixelX, asref:gcpPixelY, asref:gcpX, asref:gcpY, asref:gcpZ, asref:heightOffset, asref:heightScale, asref:latitudeOffset, asref:latitudeScale, asref:lineOffset, asref:lineScale, asref:longitudeOffset, asref:longitudeScale, asref:originLatitude, asref:originLongitude, asref:originX, asref:originY, asref:sampleOffset, asref:sampleScale, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/aspect/spatialref#coordinateEpoch> <http://www.w3.org/2004/02/skos/core#definition> "Coordinate epoch in decimal years for coordinates in a dynamic reference frame; distinct from acquisition time and CRS reference epoch."@en .
-<https://hexplain.io/ns/aspect/spatialref#coordinateEpoch> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#crsIdentifier> <http://www.w3.org/2004/02/skos/core#definition> "Authoritative CRS IRI; supports authorities and compound or vertical systems without assuming a single numeric code scheme."@en .
-<https://hexplain.io/ns/aspect/spatialref#crsIdentifier> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#epsgCode> <http://www.w3.org/2004/02/skos/core#definition> "The positive numeric code identifying a coordinate reference system in the EPSG registry; it is not a complete substitute for all CRS metadata."@en .
-<https://hexplain.io/ns/aspect/spatialref#epsgCode> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#footprintWKT> <http://www.w3.org/2004/02/skos/core#definition> "The ground area covered, as a WKT geometry in the resource's CRS -- typically a polygon of the four image corners. Formats that state corners directly rather than an affine (NITF's IGEOLO, the BLOCKA corner strings) have no scale or origin to give, so a footprint is the only georeference they carry."@en .
-<https://hexplain.io/ns/aspect/spatialref#footprintWKT> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#gcpIdentifier> <http://www.w3.org/2004/02/skos/core#definition> "The source-local identifier distinguishing a control point within its control-point set."@en .
-<https://hexplain.io/ns/aspect/spatialref#gcpIdentifier> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#gcpPixelX> <http://www.w3.org/2004/02/skos/core#definition> "Column position of the control point in the image grid."@en .
-<https://hexplain.io/ns/aspect/spatialref#gcpPixelX> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#gcpPixelY> <http://www.w3.org/2004/02/skos/core#definition> "Row position of the control point in the image grid."@en .
-<https://hexplain.io/ns/aspect/spatialref#gcpPixelY> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#gcpX> <http://www.w3.org/2004/02/skos/core#definition> "The first ground-coordinate ordinate of a control point in the declared control-point CRS."@en .
-<https://hexplain.io/ns/aspect/spatialref#gcpX> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#gcpY> <http://www.w3.org/2004/02/skos/core#definition> "The second ground-coordinate ordinate of a control point in the declared control-point CRS."@en .
-<https://hexplain.io/ns/aspect/spatialref#gcpY> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#gcpZ> <http://www.w3.org/2004/02/skos/core#definition> "Ground elevation of the control point. Optional: many formats give 2-D control only."@en .
-<https://hexplain.io/ns/aspect/spatialref#gcpZ> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#groundControlPointCRS> <http://www.w3.org/2004/02/skos/core#definition> "CRS of the ground-control-point set, which may differ from the raster's affine CRS. No reprojection or precedence is implied."@en .
-<https://hexplain.io/ns/aspect/spatialref#groundControlPointCRS> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#hasCRS> <http://www.w3.org/2004/02/skos/core#definition> "CRS of the resource's ground coordinates. A CRS identifier is not itself a transformation or a geometry."@en .
-<https://hexplain.io/ns/aspect/spatialref#hasCRS> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#hasGeoTransform> <http://www.w3.org/2004/02/skos/core#definition> "The complete affine transformation resource relating grid column/row coordinates to ground coordinates."@en .
-<https://hexplain.io/ns/aspect/spatialref#hasGeoTransform> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#hasGroundControlPoint> <http://www.w3.org/2004/02/skos/core#definition> "A measured or supplied correspondence between an image-grid location and a ground coordinate."@en .
-<https://hexplain.io/ns/aspect/spatialref#hasGroundControlPoint> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#hasRationalTransform> <http://www.w3.org/2004/02/skos/core#definition> "The rational-polynomial geolocation model associated with a resource, with its basis contract declared explicitly."@en .
-<https://hexplain.io/ns/aspect/spatialref#hasRationalTransform> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#heightOffset> <http://www.w3.org/2004/02/skos/core#definition> "Normalization offset for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
-<https://hexplain.io/ns/aspect/spatialref#heightOffset> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#heightScale> <http://www.w3.org/2004/02/skos/core#definition> "Normalization scale for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
-<https://hexplain.io/ns/aspect/spatialref#heightScale> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#latitudeOffset> <http://www.w3.org/2004/02/skos/core#definition> "Normalization offset for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
-<https://hexplain.io/ns/aspect/spatialref#latitudeOffset> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#latitudeScale> <http://www.w3.org/2004/02/skos/core#definition> "Normalization scale for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
-<https://hexplain.io/ns/aspect/spatialref#latitudeScale> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#lineDenominator> <http://www.w3.org/2004/02/skos/core#definition> "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed."@en .
-<https://hexplain.io/ns/aspect/spatialref#lineDenominator> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#lineNumerator> <http://www.w3.org/2004/02/skos/core#definition> "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed."@en .
-<https://hexplain.io/ns/aspect/spatialref#lineNumerator> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#lineOffset> <http://www.w3.org/2004/02/skos/core#definition> "Normalization offset for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
-<https://hexplain.io/ns/aspect/spatialref#lineOffset> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#lineScale> <http://www.w3.org/2004/02/skos/core#definition> "Normalization scale for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
-<https://hexplain.io/ns/aspect/spatialref#lineScale> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#longitudeOffset> <http://www.w3.org/2004/02/skos/core#definition> "Normalization offset for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
-<https://hexplain.io/ns/aspect/spatialref#longitudeOffset> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#longitudeScale> <http://www.w3.org/2004/02/skos/core#definition> "Normalization scale for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
-<https://hexplain.io/ns/aspect/spatialref#longitudeScale> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#originLatitude> <http://www.w3.org/2004/02/skos/core#definition> "Origin northing expressed as a GEOGRAPHIC latitude. See asref:originLongitude; the general form is asref:originY."@en .
-<https://hexplain.io/ns/aspect/spatialref#originLatitude> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#originLongitude> <http://www.w3.org/2004/02/skos/core#definition> "Origin easting expressed as a GEOGRAPHIC longitude. Use only when the CRS really is geographic; for an origin in projected units (metres, feet) use asref:originX, of which this is the geographic special case."@en .
-<https://hexplain.io/ns/aspect/spatialref#originLongitude> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#originX> <http://www.w3.org/2004/02/skos/core#definition> "Easting of the grid origin in the units of the CRS, degrees or metres alike (affine coefficient GT[0]). The general form of asref:originLongitude, which presumes a geographic CRS and is therefore wrong for the projected rasters that make up most of the corpus."@en .
-<https://hexplain.io/ns/aspect/spatialref#originX> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#originY> <http://www.w3.org/2004/02/skos/core#definition> "Northing of the grid origin in the units of the CRS (affine coefficient GT[3]). The general form of asref:originLatitude."@en .
-<https://hexplain.io/ns/aspect/spatialref#originY> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#pixelRegistration> <http://www.w3.org/2004/02/skos/core#definition> "Where a cell's value is located within the cell: at its centre (asref:PixelCenter, a point sample) or representing the cell from its upper-left corner (asref:PixelCorner, an area value). It describes the value, not the grid: the normalized affine (asref:GeoTransform) is always corner-based, so this property never shifts the affine or the column and row of a world point."@en .
-<https://hexplain.io/ns/aspect/spatialref#pixelRegistration> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#polynomialBasis> <http://www.w3.org/2004/02/skos/core#definition> "IRI of the complete published polynomial convention. A profile must define the ordered 20 monomials, normalized inputs, CRS/units and pixel reference. Different coefficient orderings are not interchangeable."@en .
-<https://hexplain.io/ns/aspect/spatialref#polynomialBasis> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#sampleDenominator> <http://www.w3.org/2004/02/skos/core#definition> "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed."@en .
-<https://hexplain.io/ns/aspect/spatialref#sampleDenominator> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#sampleNumerator> <http://www.w3.org/2004/02/skos/core#definition> "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed."@en .
-<https://hexplain.io/ns/aspect/spatialref#sampleNumerator> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#sampleOffset> <http://www.w3.org/2004/02/skos/core#definition> "Normalization offset for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
-<https://hexplain.io/ns/aspect/spatialref#sampleOffset> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#sampleScale> <http://www.w3.org/2004/02/skos/core#definition> "Normalization scale for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
-<https://hexplain.io/ns/aspect/spatialref#sampleScale> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#scaleX> <http://www.w3.org/2004/02/skos/core#definition> "Ground distance per pixel along X (affine coefficient GT[1])."@en .
-<https://hexplain.io/ns/aspect/spatialref#scaleX> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#scaleY> <http://www.w3.org/2004/02/skos/core#definition> "Ground distance per pixel along Y (affine coefficient GT[5]). Conventionally NEGATIVE for a north-up raster, whose rows run southward while northings increase."@en .
-<https://hexplain.io/ns/aspect/spatialref#scaleY> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#skewX> <http://www.w3.org/2004/02/skos/core#definition> "Rotation/shear term: ground X per pixel ROW (affine coefficient GT[2]). Zero for a north-up raster. Without this and asref:skewY a rotated or sheared grid cannot be georeferenced at all, only misplaced."@en .
-<https://hexplain.io/ns/aspect/spatialref#skewX> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#skewY> <http://www.w3.org/2004/02/skos/core#definition> "Rotation/shear term: ground Y per pixel COLUMN (affine coefficient GT[4]). Zero for a north-up raster."@en .
-<https://hexplain.io/ns/aspect/spatialref#skewY> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/spatialref#wktString> <http://www.w3.org/2004/02/skos/core#definition> "Coordinate reference system WKT, not WKT geometry. No equivalence to GeoSPARQL geometry serialization is asserted."@en .
-<https://hexplain.io/ns/aspect/spatialref#wktString> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+@prefix asref: <https://hexplain.io/ns/aspect/spatialref#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://hexplain.io/ns/aspect/spatialref> skos:scopeNote "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations."@en .
+asref:CRSShape rdfs:label "CRSShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    skos:definition "Applies to instances of asref:CoordinateReferenceSystem; objects of asref:groundControlPointCRS, asref:hasCRS. Each focus node is a resource (an IRI or a blank node). asref:coordinateEpoch takes at most one value; each is an xsd:decimal literal. asref:crsIdentifier takes at most one value; each is an IRI. asref:wktString takes at most one value; each is an xsd:string literal at least 1 character long."@en .
+asref:CoefficientVectorShape rdfs:label "Coefficient Vector Shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    skos:definition "Applied through references from other shapes. A conforming value is a resource (an IRI or a blank node). Each member of the list is a finite number (an xsd:double or xsd:float literal, not NaN or infinite). A coefficient vector must be a well-formed finite RDF list of exactly 20 cells."@en .
+asref:CoordinateReferenceSystem skos:definition "A resource describing the coordinate system and reference frame in which spatial coordinates are interpreted."@en .
+asref:CubicRationalTransformShape rdfs:label "Cubic Rational Transform Shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    skos:definition "Applies to instances of asref:CubicRationalTransform; objects of asref:hasRationalTransform. Each focus node is a resource (an IRI or a blank node). asref:heightOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:heightScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0. asref:latitudeOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:latitudeScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0. asref:lineDenominator takes exactly one value, a value conforming to asref:CoefficientVectorShape. asref:lineNumerator takes exactly one value, a value conforming to asref:CoefficientVectorShape. asref:lineOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:lineScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0. asref:longitudeOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:longitudeScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0. asref:polynomialBasis takes exactly one value, an IRI. asref:sampleDenominator takes exactly one value, a value conforming to asref:CoefficientVectorShape. asref:sampleNumerator takes exactly one value, a value conforming to asref:CoefficientVectorShape. asref:sampleOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:sampleScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0."@en .
+asref:FiniteDoubleShape rdfs:label "Finite Double Shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    skos:definition "Applied through references from other shapes. A conforming value is an xsd:double or xsd:float literal that is finite (not NaN or infinite)."@en .
+asref:FloatValueShape skos:definition "Applied through references from other shapes. A conforming value is an xsd:double or xsd:float literal."@en .
+asref:GeoTransformShape rdfs:label "Geo Transform Shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    skos:definition "Applies to instances of asref:GeoTransform; objects of asref:hasGeoTransform. Each focus node is a resource (an IRI or a blank node). asref:originX takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:originY takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:scaleX takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:scaleY takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:skewX takes at most one value; each is a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:skewY takes at most one value; each is a finite number (an xsd:double or xsd:float literal, not NaN or infinite)."@en .
+asref:GroundControlPointShape rdfs:label "Ground Control Point Shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    skos:definition "Applies to instances of asref:GroundControlPoint; objects of asref:hasGroundControlPoint. asref:gcpIdentifier takes at most one value; each is an xsd:string literal. asref:gcpPixelX takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:gcpPixelY takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:gcpX takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:gcpY takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:gcpZ takes at most one value; each is a finite number (an xsd:double or xsd:float literal, not NaN or infinite)."@en .
+asref:IntegerValueShape skos:definition "Applied through references from other shapes. A conforming value is an integer (of any XSD integer datatype)."@en .
+asref:PixelCenter rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    skos:definition "Registration of a cell's value at the centre of its cell (a point sample, such as an elevation post). It does not move the grid: the normalized affine stays corner-based, and a source whose native transform is centre-based is shifted by half a cell when it is normalized, once, at lifting time."@en .
+asref:PixelCorner rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
+    skos:definition "Registration of a cell's value at, or as an area from, the cell's upper-left corner. The normalized affine is corner-based whatever the registration: column/row (0, 0) is the outer corner of the first cell."@en .
+asref:RangeDatatypeShape skos:definition "Applies to subjects using asref:coordinateEpoch, asref:epsgCode, asref:footprintWKT, asref:gcpIdentifier, asref:gcpPixelX, asref:gcpPixelY, asref:gcpX, asref:gcpY, asref:gcpZ, asref:heightOffset, asref:heightScale, asref:latitudeOffset, asref:latitudeScale, asref:lineOffset, asref:lineScale, asref:longitudeOffset, asref:longitudeScale, asref:originLatitude, asref:originLongitude, asref:originX, asref:originY, asref:sampleOffset, asref:sampleScale, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY. asref:coordinateEpoch takes an xsd:decimal literal (rdfs:range xsd:decimal). asref:epsgCode takes a positive integer (rdfs:range xsd:positiveInteger). asref:footprintWKT takes a geosparql:wktLiteral or xsd:string literal (rdfs:range: their union). asref:gcpIdentifier takes an xsd:string literal (rdfs:range xsd:string). asref:gcpPixelX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:gcpPixelY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:gcpX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:gcpY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:gcpZ takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:heightOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:heightScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:latitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:latitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:lineOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:lineScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:longitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:longitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:originLatitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:originLongitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:originX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:originY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:sampleOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:sampleScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:scaleX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:scaleY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:skewX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:skewY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)."@en .
+asref:epsgCode skos:definition "The positive numeric code identifying a coordinate reference system in the EPSG registry; it is not a complete substitute for all CRS metadata."@en .
+asref:gcpIdentifier skos:definition "The source-local identifier distinguishing a control point within its control-point set."@en .
+asref:gcpX skos:definition "The first ground-coordinate ordinate of a control point in the declared control-point CRS."@en .
+asref:gcpY skos:definition "The second ground-coordinate ordinate of a control point in the declared control-point CRS."@en .
+asref:hasGeoTransform skos:definition "The complete affine transformation resource relating grid column/row coordinates to ground coordinates."@en .
+asref:hasGroundControlPoint skos:definition "A measured or supplied correspondence between an image-grid location and a ground coordinate."@en .
+asref:hasRationalTransform skos:definition "The rational-polynomial geolocation model associated with a resource, with its basis contract declared explicitly."@en .
+asref:pixelRegistration skos:definition "Where a cell's value is located within the cell: at its centre (asref:PixelCenter, a point sample) or representing the cell from its upper-left corner (asref:PixelCorner, an area value). It describes the value, not the grid: the normalized affine (asref:GeoTransform) is always corner-based, so this property never shifts the affine or the column and row of a world point."@en .

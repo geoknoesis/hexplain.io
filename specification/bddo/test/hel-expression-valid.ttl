@@ -1,0 +1,37 @@
+# Expressions typed bddo:HelExpression conform wherever an xsd:string expression does: sizes,
+# conditions, presence, validity, derived values, arguments, dimension strides and semantic
+# mapping conditions and values. An untyped expression (Header.count's size) still conforms.
+@prefix ex:       <https://hexplain.io/test/hel-expression-valid#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix bddo:     <https://hexplain.io/ns/bddo#> .
+@prefix dlv:      <https://hexplain.io/ns/dlv#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+
+ex:Header a bddo:Struct ;
+    bddo:endianness bddo:LittleEndian ;
+    bddo:hasField ( ex:Header.kind ex:Header.count ex:Header.body ex:Header.total ex:Header.grid ) .
+ex:Body a bddo:Struct ; bddo:sizeFromExpression "asset.Header.count * 2"^^bddo:HelExpression ;
+    bddo:hasField ( ex:Body.data ) .
+ex:Body.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true .
+ex:Header.kind a bddo:Field ; bddo:dataType bddo:uint8 ;
+    bddo:validIf "kind < 4"^^bddo:HelExpression ;
+    hexplain:hasConditionalMapping ( ex:KindRule ) .
+ex:KindRule a hexplain:MappingRule ;
+    hexplain:condition "kind == 1"^^bddo:HelExpression ;
+    hexplain:semanticProperty ex:kindLabel ;
+    hexplain:valueExpression "concat('kind ', 'one')"^^bddo:HelExpression .
+ex:kindLabel a owl:DatatypeProperty .
+ex:Header.count a bddo:Field ; bddo:dataType bddo:uint16 .
+ex:Header.body a bddo:Field ; bddo:dataType bddo:bytes ;
+    bddo:sizeFromExpression "count * 2"^^bddo:HelExpression ;
+    bddo:isPresentIf "kind != 0"^^bddo:HelExpression .
+ex:Header.total a bddo:Field ;
+    bddo:valueFromExpression "count + 1"^^bddo:HelExpression .
+ex:Header.grid a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "count * 4" ;
+    hexplain:hasDataLayout ex:Layout .
+ex:Layout a dlv:DataLayout ; dlv:cellDataType bddo:uint16 ;
+    dlv:hasDimension ( ex:Rows ex:Cols ) .
+ex:Rows a dlv:Dimension ; dlv:dimensionSize 2 ; dlv:hasAxis dlv:axisY ;
+    dlv:dimensionStrideFromExpression "count * 2"^^bddo:HelExpression .
+ex:Cols a dlv:Dimension ; dlv:dimensionSize 2 ; dlv:hasAxis dlv:axisX .

@@ -1,0 +1,14 @@
+# A HEL version is one major.minor xsd:string: not a bare major number, not two versions at once,
+# and not another datatype.
+# expect: <https://hexplain.io/test/hel-version-invalid/a> bddo:HelVersionShape sh:PatternConstraintComponent
+# expect: <https://hexplain.io/test/hel-version-invalid/b> bddo:HelVersionShape sh:MaxCountConstraintComponent
+# expect: <https://hexplain.io/test/hel-version-invalid/c> bddo:HelVersionShape sh:DatatypeConstraintComponent
+# expect-only
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+
+<https://hexplain.io/test/hel-version-invalid/a> a owl:Ontology ; bddo:helVersion "1" .
+<https://hexplain.io/test/hel-version-invalid/b> a owl:Ontology ; bddo:helVersion "1.0" , "1.1" .
+<https://hexplain.io/test/hel-version-invalid/c> a owl:Ontology ; bddo:helVersion "1.0"^^xsd:token .

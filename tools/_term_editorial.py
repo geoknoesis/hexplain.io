@@ -47,7 +47,7 @@ checksum|The integrity-check declaration associated with a field, including its 
 baseType|The primitive interpretation category from which a datatype is constructed.
 bitWidth|The fixed number of bits used to represent one value of a primitive datatype.
 isSigned|Whether an integer representation includes negative values. This flag does not define byte order.
-condition|The HEL boolean expression that determines whether a conditional type or byte-order rule applies.
+condition|The HEL Boolean expression guarding a physical parsing rule (a bddo:DataTypeRule or bddo:EndiannessRule, or a dlv:CellDataTypeRule or dlv:DimensionOrderRule): evaluated while the bytes are read, in the context of the field or struct being parsed, it decides which datatype, byte order, cell type or dimension order applies. It never chooses the RDF a node is lifted to; that is hexplain:condition.
 ruleDataType|The datatype or structure selected when a conditional datatype rule matches.
 hasEnumValue|An enumeration member associating a raw value or mask with a symbol.
 enumRawValue|The raw literal matched by an enumeration member; for flag enumerations it is interpreted as a bit mask.
@@ -113,7 +113,7 @@ group('hexplain','''
 forProperty|The semantic RDF predicate whose controlled-value register binding is declared by this binding resource.
 codecParameter|A named parameter value associated with one stage of an encoding pipeline.
 hasConditionalMapping|An ordered list of mapping rules that choose a semantic property according to the parsed instance.
-condition|A HEL boolean condition selecting a semantic mapping or conditional class mapping in its declared context.
+condition|The HEL Boolean expression guarding a semantic mapping rule (a hexplain:MappingRule or hexplain:ClassMappingRule): evaluated after the bytes are parsed, in the context of the field or struct being lifted, it decides which property or class the lifted RDF uses. It never changes how bytes are read; that is bddo:condition.
 semanticProperty|The RDF property selected by a matching semantic mapping rule.
 ''')
 group('gv','''

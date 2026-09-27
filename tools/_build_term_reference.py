@@ -26,6 +26,8 @@ from _reference import (
     owner,
     scope,
     shape_targets,
+    stated_definition,
+    VANN,
 )
 
 START='<!-- BEGIN GENERATED TERM REFERENCE -->'
@@ -61,20 +63,53 @@ SH.alternativePath:'Alternative path',SH.inversePath:'Inverse path',SH.zeroOrMor
 def file_subjects(path):
     return set(load([path]).subjects())
 
+LOCAL=re.compile(r'[A-Za-z_][A-Za-z0-9_-]*')
+BLOCK_PREFIXES={'rdfs':str(RDFS),'skos':str(SKOS)}
+
+def block_turtle(rows,namespaces):
+    """The generated annotations as readable Turtle: prefixed names, one subject per statement.
+
+    The block carries its own @prefix lines, so it also parses on its own (the documentation gate
+    subtracts it from the module to prove it adds annotations only)."""
+    prefixes=dict(BLOCK_PREFIXES);prefixes.update(namespaces)
+    def name(node):
+        if isinstance(node,Literal):return node.n3()
+        for p,ns in sorted(prefixes.items(),key=lambda x:-len(x[1])):
+            if str(node).startswith(ns) and LOCAL.fullmatch(str(node)[len(ns):]):return f'{p}:{str(node)[len(ns):]}'
+        return node.n3()
+    order={RDFS.label:0,RDFS.isDefinedBy:1,SKOS.definition:2,SKOS.scopeNote:3}
+    by_subject=defaultdict(list)
+    for s,p,o in rows:by_subject[s].append((p,o))
+    used=set()
+    statements=[]
+    for s in sorted(by_subject,key=str):
+        pairs=sorted(by_subject[s],key=lambda x:(order[x[0]],str(x[1])))
+        statements.append(name(s)+' '+' ;\n    '.join(f'{name(p)} {name(o)}' for p,o in pairs)+' .')
+        used.update(n for n in [s,*[x for pair in pairs for x in pair]] if not isinstance(n,Literal))
+    declared=[p for p,ns in sorted(prefixes.items()) if any(name(n).startswith(p+':') for n in used)]
+    head=''.join(f'@prefix {p}: <{prefixes[p]}> .\n' for p in declared)
+    return head+('\n' if head else '')+'\n'.join(statements)+('\n' if statements else '')
+
 def enrich():
     edits=[]
     for _directory,paths in modules().items():
         g=load(paths,base=True)
+        namespaces={str(g.value(o,VANN.preferredNamespacePrefix)):str(g.value(o,VANN.preferredNamespaceUri))
+                    for o in g.subjects(VANN.preferredNamespacePrefix,None) if g.value(o,VANN.preferredNamespaceUri) is not None}
         for path in paths:
             base=(ROOT/path).read_text(encoding='utf-8').split(ANNOTATION_MARKER)[0].rstrip()+'\n'
             ownfile=Graph().parse(data=base,format='turtle');rows=[]
             for t in owned(ownfile):
-                annotations=[(SKOS.definition,Literal(definition(g,t),lang='en')),(SKOS.scopeNote,Literal(scope(g,t),lang='en'))]
+                annotations=[]
+                text=definition(g,t)
+                if text is not None:annotations.append((SKOS.definition,Literal(text,lang='en')))
+                text=scope(g,t)
+                if text is not None:annotations.append((SKOS.scopeNote,Literal(text,lang='en')))
                 if not list(g.objects(t,RDFS.label)):annotations.append((RDFS.label,Literal(label(g,t),lang='en')))
                 if not list(g.objects(t,RDFS.isDefinedBy)) and kind(g,t)!='Ontology':annotations.append((RDFS.isDefinedBy,owner(t)))
                 for predicate,value in annotations:
-                    if not list(ownfile.objects(t,predicate)):rows.append(f'{t.n3()} {predicate.n3()} {value.n3()} .')
-            edits.append((ROOT/path,base+ANNOTATION_MARKER+'# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.\n'+'\n'.join(rows)+'\n'))
+                    if not list(ownfile.objects(t,predicate)):rows.append((t,predicate,value))
+            edits.append((ROOT/path,base+ANNOTATION_MARKER+'# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.\n'+block_turtle(rows,namespaces)))
     # Resolve every definition before any write, so a missing entry cannot leave half an update.
     for p,text in edits:p.write_text(text,encoding='utf-8',newline='\n')
 
@@ -134,12 +169,13 @@ def reference_section(g,terms,doc,registry,used,existing=''):
     labels={text:f'Shared scope {i}' for i,text in enumerate(sorted(shared),1)}
     cards=[]
     for t in terms:
-        k=kind(g,t);name=label(g,t);definition_text=g.value(t,SKOS.definition);scope_text=g.value(t,SKOS.scopeNote)
-        if not definition_text or not scope_text:raise ValueError(f'Missing canonical documentation: {t}; run with --enrich')
+        k=kind(g,t);name=label(g,t);definition_text=stated_definition(g,t);scope_text=g.value(t,SKOS.scopeNote)
+        if not definition_text or (k=='Ontology' and not scope_text):raise ValueError(f'Missing canonical documentation: {t}; run with --enrich')
         shape=k in ['Node shape','Property shape','SHACL prefix declarations']
         aliases='' if re.search(r'\bid=["\']'+re.escape(local(t))+r'["\']',existing) else f'<span id="{e(local(t))}"></span>'
         def row(title,value):return f'<dt>{e(title)}</dt><dd>{value}</dd>'
-        metadata=row('Label',e(name))+row('Definition',e(str(definition_text)))+row('Usage scope',f'<a href="#{shared[str(scope_text)]}">{labels[str(scope_text)]}</a>' if str(scope_text) in shared else e(str(scope_text)))
+        metadata=row('Label',e(name))+row('Definition',e(str(definition_text)))
+        if scope_text is not None:metadata+=row('Usage scope',f'<a href="#{shared[str(scope_text)]}">{labels[str(scope_text)]}</a>' if str(scope_text) in shared else e(str(scope_text)))
         metadata+=row('Declared RDF type',render.values(g.objects(t,RDF.type)) or 'No rdf:type declared; this node provides the listed infrastructure declarations.')
         if 'property' in k.lower() and not shape:
             metadata+=row('RDFS domain',render.values(g.objects(t,RDFS.domain)) or 'No global domain declared. SHACL usage scopes below do not create a global domain axiom.')

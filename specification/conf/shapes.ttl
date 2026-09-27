@@ -14,13 +14,14 @@
     owl:versionIRI <https://hexplain.io/ns/conf/shapes/1.3> ;
     owl:priorVersion <https://hexplain.io/ns/conf/shapes/1.2> ;
     owl:versionInfo "1.3" ;
-    dcterms:modified "2026-09-24"^^xsd:date ;
-    rdfs:label "Hexplain Conformance Shapes" ;
-    rdfs:comment "The SHACL shapes of the conf vocabulary, published as their own document so that a consumer can load the vocabulary without its validation rules. Terms stay in the conf namespace." ;
+    dcterms:modified "2026-09-27"^^xsd:date ;
+    rdfs:label "Hexplain Conformance Shapes"@en ;
+    rdfs:comment "The SHACL shapes of the conf vocabulary, published as their own document so that a consumer can load the vocabulary without its validation rules. Terms stay in the conf namespace."@en ;
     owl:imports <https://hexplain.io/ns/conf> , <https://hexplain.io/ns/core> ;
     # No vann:preferredNamespacePrefix: the shapes' terms are in the vocabulary's namespace, and
     # only the vocabulary claims its prefix.
-    dcterms:creator <https://geoknoesis.com> .
+    dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
 
 conf:_prefixes sh:declare
     [ sh:prefix "conf" ; sh:namespace "https://hexplain.io/ns/conf#"^^xsd:anyURI ] ,
@@ -33,7 +34,7 @@ conf:_prefixes sh:declare
     sh:targetClass conf:Constraint ;
     sh:targetSubjectsOf conf:assertion , conf:scope , conf:message ;
     sh:targetObjectsOf conf:findingConstraint ;
-    rdfs:label "Constraint shape" ;
+    rdfs:label "Constraint shape"@en ;
     sh:property [
         sh:path conf:scope ;
         sh:nodeKind sh:IRI ;
@@ -43,7 +44,7 @@ conf:_prefixes sh:declare
     ] ;
     sh:property [
         sh:path conf:assertion ;
-        sh:datatype xsd:string ;
+        sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ;
         sh:minCount 1 ; sh:maxCount 1 ;
         sh:minLength 1 ;
         sh:message "A Constraint needs exactly one non-empty conf:assertion HEL expression." ;
@@ -71,8 +72,8 @@ conf:_prefixes sh:declare
 :ParseAttributionShape a sh:NodeShape ;
     sh:targetClass conf:ParseAttribution ;
     sh:targetSubjectsOf conf:errorCategory ;
-    rdfs:label "Parse attribution shape" ;
-    rdfs:comment "A parse attribution, and a conf:Parse finding, names exactly one Processing Model error category: a conf:ErrorCategory individual, or (deprecated) its skos:notation string. ResourceLimit is not a category: a resource limit is never a finding, and a parse attribution naming it is a description error." ;
+    rdfs:label "Parse attribution shape"@en ;
+    rdfs:comment "A parse attribution, and a conf:Parse finding, names exactly one Processing Model error category: a conf:ErrorCategory individual, or (deprecated) its skos:notation string. ResourceLimit is not a category: a resource limit is never a finding, and a parse attribution naming it is a description error."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     sh:property [
         sh:path conf:errorCategory ;
@@ -84,8 +85,8 @@ conf:_prefixes sh:declare
 
 :ParseAttributionTargetShape a sh:NodeShape ;
     sh:targetClass conf:ParseAttribution ;
-    rdfs:label "Parse attribution target shape" ;
-    rdfs:comment "A parse attribution cites exactly one requirement, and no other attribution of the graph governs the same category; a category IRI and its notation string are the same category." ;
+    rdfs:label "Parse attribution target shape"@en ;
+    rdfs:comment "A parse attribution cites exactly one requirement, and no other attribution of the graph governs the same category; a category IRI and its notation string are the same category."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     sh:property [
         sh:path conf:satisfies ;
@@ -116,8 +117,8 @@ conf:_prefixes sh:declare
 # above checks) passing the first alternatives.
 :UntypedParseAttributionShape a sh:NodeShape ;
     sh:targetSubjectsOf conf:errorCategory ;
-    rdfs:label "Untyped parse attribution shape" ;
-    rdfs:comment "A node stating conf:errorCategory that is neither a finding, a run, a constraint, a requirement nor a typed conf:ParseAttribution is an untyped parse attribution: it cites exactly one requirement, and its category is attributed once." ;
+    rdfs:label "Untyped parse attribution shape"@en ;
+    rdfs:comment "A node stating conf:errorCategory that is neither a finding, a run, a constraint, a requirement nor a typed conf:ParseAttribution is an untyped parse attribution: it cites exactly one requirement, and its category is attributed once."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     sh:or (
         [ sh:property [ sh:path conf:findingKind ; sh:minCount 1 ] ]
@@ -145,8 +146,8 @@ conf:_prefixes sh:declare
     sh:targetClass conf:Run ;
     sh:targetSubjectsOf conf:outcome , conf:verdict , conf:truncated , conf:truncationReason , conf:finding ,
         conf:versionScopingApplied , conf:fileVersion , conf:profile , conf:ruleSet , conf:input , conf:failOn ;
-    rdfs:label "Run shape" ;
-    rdfs:comment "A run report states exactly one verdict and one truncated flag, links its findings with conf:finding, reports at most one outcome per requirement and one for every requirement in the graph, and is internally consistent: a truncated run is non-conformant, the verdict follows from the findings, outcomes and conf:failOn, and conf:NotApplicable arises only from version scoping." ;
+    rdfs:label "Run shape"@en ;
+    rdfs:comment "A run report states exactly one verdict and one truncated flag, links its findings with conf:finding, reports at most one outcome per requirement and one for every requirement in the graph, and is internally consistent: a truncated run is non-conformant, the verdict follows from the findings, outcomes and conf:failOn, and conf:NotApplicable arises only from version scoping."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     sh:property [ sh:path conf:outcome ; sh:nodeKind sh:BlankNodeOrIRI ;
         sh:message "conf:outcome links a run to an outcome node." ] ;
@@ -272,8 +273,8 @@ conf:_prefixes sh:declare
 :OutcomeShape a sh:NodeShape ;
     sh:targetObjectsOf conf:outcome ;
     sh:targetSubjectsOf conf:outcomeRequirement , conf:outcomeValue ;
-    rdfs:label "Outcome shape" ;
-    rdfs:comment "An outcome node names exactly one requirement and exactly one of the five evaluation outcomes." ;
+    rdfs:label "Outcome shape"@en ;
+    rdfs:comment "An outcome node names exactly one requirement and exactly one of the five evaluation outcomes."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     sh:property [
         sh:path conf:outcomeRequirement ;
@@ -292,8 +293,8 @@ conf:_prefixes sh:declare
     sh:targetClass conf:Finding ;
     sh:targetSubjectsOf conf:findingKind , conf:findingRequirement , conf:findingConstraint , conf:findingMessage , conf:focusNode ;
     sh:targetObjectsOf conf:finding ;
-    rdfs:label "Finding shape" ;
-    rdfs:comment "A conformance finding: its kind, the requirements it is attributed to, the rendered text, and at most one constraint, focus node, byte range and run. A constraint finding (conf:Violation, conf:RuleError) names exactly one constraint and cites at least one requirement, every one of which that constraint cites, and states no error category; a conf:Parse finding names no constraint, states its error category, and may cite no requirement." ;
+    rdfs:label "Finding shape"@en ;
+    rdfs:comment "A conformance finding: its kind, the requirements it is attributed to, the rendered text, and at most one constraint, focus node, byte range and run. A constraint finding (conf:Violation, conf:RuleError) names exactly one constraint and cites at least one requirement, every one of which that constraint cites, and states no error category; a conf:Parse finding names no constraint, states its error category, and may cite no requirement."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     sh:property [
         sh:path conf:findingKind ;
@@ -371,8 +372,8 @@ conf:_prefixes sh:declare
 
 :FindingAttributionShape a sh:NodeShape ;
     sh:targetSubjectsOf conf:findingConstraint ;
-    rdfs:label "Finding attribution shape" ;
-    rdfs:comment "A constraint finding is attributed only to requirements its constraint cites: its conf:findingRequirement values are a subset of the constraint's conf:satisfies values." ;
+    rdfs:label "Finding attribution shape"@en ;
+    rdfs:comment "A constraint finding is attributed only to requirements its constraint cites: its conf:findingRequirement values are a subset of the constraint's conf:satisfies values."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     sh:sparql [
         sh:message "The finding cites requirement {?r}, which its conf:findingConstraint does not cite with conf:satisfies." ;
@@ -387,8 +388,8 @@ conf:_prefixes sh:declare
 # constraint, so this is checkable on the report alone. An absent severity reads as sh:Violation.
 :FindingSeverityShape a sh:NodeShape ;
     sh:targetSubjectsOf conf:findingKind ;
-    rdfs:label "Finding severity shape" ;
-    rdfs:comment "A conf:Violation finding reports at its constraint's conf:severity (sh:Violation when the constraint states none); a conf:RuleError or conf:Parse finding always reports at sh:Violation. An absent finding severity reads as sh:Violation." ;
+    rdfs:label "Finding severity shape"@en ;
+    rdfs:comment "A conf:Violation finding reports at its constraint's conf:severity (sh:Violation when the constraint states none); a conf:RuleError or conf:Parse finding always reports at sh:Violation. An absent finding severity reads as sh:Violation."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     sh:sparql [
         sh:message "A conf:RuleError or conf:Parse finding reports at sh:Violation, not {?s}." ;
@@ -417,8 +418,8 @@ conf:_prefixes sh:declare
 # and its notation string are the same category.
 :ParseFindingAttributionShape a sh:NodeShape ;
     sh:targetSubjectsOf conf:findingKind ;
-    rdfs:label "Parse finding attribution shape" ;
-    rdfs:comment "A conf:Parse finding cites exactly the requirement of the conf:ParseAttribution for its error category, or no requirement when no attribution names that category." ;
+    rdfs:label "Parse finding attribution shape"@en ;
+    rdfs:comment "A conf:Parse finding cites exactly the requirement of the conf:ParseAttribution for its error category, or no requirement when no attribution names that category."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     sh:sparql [
         sh:message "The Parse finding cites requirement {?r}, which no conf:ParseAttribution of its error category names." ;
@@ -452,8 +453,8 @@ conf:_prefixes sh:declare
 # conf:errorCategory belongs to parse attributions and Parse findings only.
 :ErrorCategoryUseShape a sh:NodeShape ;
     sh:targetSubjectsOf conf:errorCategory ;
-    rdfs:label "Error category use shape" ;
-    rdfs:comment "conf:errorCategory is stated only on a conf:ParseAttribution or a conf:Parse finding: never on a constraint, a run, a requirement or a constraint finding." ;
+    rdfs:label "Error category use shape"@en ;
+    rdfs:comment "conf:errorCategory is stated only on a conf:ParseAttribution or a conf:Parse finding: never on a constraint, a run, a requirement or a constraint finding."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     sh:sparql [
         sh:message "conf:errorCategory is stated only on a conf:ParseAttribution or a conf:Parse finding." ;
@@ -470,8 +471,8 @@ conf:_prefixes sh:declare
 # The report's kinds of resource are disjoint: one node is never two of them.
 :DisjointKindsShape a sh:NodeShape ;
     sh:targetClass conf:Finding , conf:Run , conf:Constraint , conf:ParseAttribution , req:Requirement ;
-    rdfs:label "Disjoint kinds shape" ;
-    rdfs:comment "conf:Finding, conf:Run, conf:Constraint, conf:ParseAttribution and req:Requirement are pairwise disjoint: a node is an instance of exactly one of them." ;
+    rdfs:label "Disjoint kinds shape"@en ;
+    rdfs:comment "conf:Finding, conf:Run, conf:Constraint, conf:ParseAttribution and req:Requirement are pairwise disjoint: a node is an instance of exactly one of them."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     sh:xone ( [ sh:class conf:Finding ] [ sh:class conf:Run ] [ sh:class conf:Constraint ]
               [ sh:class conf:ParseAttribution ] [ sh:class req:Requirement ] ) ;
@@ -481,7 +482,7 @@ conf:_prefixes sh:declare
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-conf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+conf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     sh:targetSubjectsOf conf:assertion ,
         conf:fileVersion ,
@@ -490,8 +491,8 @@ conf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         conf:truncated ,
         conf:truncationReason ,
         conf:versionScopingApplied ;
-    sh:property [ sh:path conf:assertion ; sh:datatype xsd:string ;
-        sh:message "conf:assertion takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path conf:assertion ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ;
+        sh:message "conf:assertion takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path conf:fileVersion ; sh:datatype xsd:string ;
         sh:message "conf:fileVersion takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path conf:findingMessage ; sh:datatype xsd:string ;
@@ -507,36 +508,14 @@ conf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-<https://hexplain.io/ns/conf#ConstraintShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for conf:assertion, conf:message, conf:satisfies, conf:scope, conf:severity. A Constraint must cite at least one req:Requirement; an unattributed rule cannot be reported. A Constraint needs exactly one conf:scope IRI naming the bddo:Struct or bddo:Field it applies to. A Constraint needs exactly one non-empty conf:assertion HEL expression. A Constraint needs exactly one non-empty conf:message finding template. A Constraint states at most one conf:severity: sh:Violation, sh:Warning or sh:Info (absent means sh:Violation)."@en .
-<https://hexplain.io/ns/conf#ConstraintShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of conf:Constraint; subjects using conf:assertion, conf:message, conf:scope; objects of conf:findingConstraint Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/conf#ConstraintShape> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/conf> .
-<https://hexplain.io/ns/conf#DisjointKindsShape> <http://www.w3.org/2004/02/skos/core#definition> "conf:Finding, conf:Run, conf:Constraint, conf:ParseAttribution and req:Requirement are pairwise disjoint: a node is an instance of exactly one of them."@en .
-<https://hexplain.io/ns/conf#DisjointKindsShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of conf:Constraint, conf:Finding, conf:ParseAttribution, conf:Run, req:Requirement Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/conf#ErrorCategoryUseShape> <http://www.w3.org/2004/02/skos/core#definition> "conf:errorCategory is stated only on a conf:ParseAttribution or a conf:Parse finding: never on a constraint, a run, a requirement or a constraint finding."@en .
-<https://hexplain.io/ns/conf#ErrorCategoryUseShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using conf:errorCategory Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/conf#FindingAttributionShape> <http://www.w3.org/2004/02/skos/core#definition> "A constraint finding is attributed only to requirements its constraint cites: its conf:findingRequirement values are a subset of the constraint's conf:satisfies values."@en .
-<https://hexplain.io/ns/conf#FindingAttributionShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using conf:findingConstraint Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/conf#FindingSeverityShape> <http://www.w3.org/2004/02/skos/core#definition> "A conf:Violation finding reports at its constraint's conf:severity (sh:Violation when the constraint states none); a conf:RuleError or conf:Parse finding always reports at sh:Violation. An absent finding severity reads as sh:Violation."@en .
-<https://hexplain.io/ns/conf#FindingSeverityShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using conf:findingKind Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/conf#FindingShape> <http://www.w3.org/2004/02/skos/core#definition> "A conformance finding: its kind, the requirements it is attributed to, the rendered text, and at most one constraint, focus node, byte range and run. A constraint finding (conf:Violation, conf:RuleError) names exactly one constraint and cites at least one requirement, every one of which that constraint cites, and states no error category; a conf:Parse finding names no constraint, states its error category, and may cite no requirement."@en .
-<https://hexplain.io/ns/conf#FindingShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of conf:Finding; subjects using conf:findingConstraint, conf:findingKind, conf:findingMessage, conf:findingRequirement, conf:focusNode; objects of conf:finding Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/conf#OutcomeShape> <http://www.w3.org/2004/02/skos/core#definition> "An outcome node names exactly one requirement and exactly one of the five evaluation outcomes."@en .
-<https://hexplain.io/ns/conf#OutcomeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using conf:outcomeRequirement, conf:outcomeValue; objects of conf:outcome Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/conf#ParseAttributionShape> <http://www.w3.org/2004/02/skos/core#definition> "A parse attribution, and a conf:Parse finding, names exactly one Processing Model error category: a conf:ErrorCategory individual, or (deprecated) its skos:notation string. ResourceLimit is not a category: a resource limit is never a finding, and a parse attribution naming it is a description error."@en .
-<https://hexplain.io/ns/conf#ParseAttributionShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of conf:ParseAttribution; subjects using conf:errorCategory Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/conf#ParseAttributionTargetShape> <http://www.w3.org/2004/02/skos/core#definition> "A parse attribution cites exactly one requirement, and no other attribution of the graph governs the same category; a category IRI and its notation string are the same category."@en .
-<https://hexplain.io/ns/conf#ParseAttributionTargetShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of conf:ParseAttribution Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/conf#ParseFindingAttributionShape> <http://www.w3.org/2004/02/skos/core#definition> "A conf:Parse finding cites exactly the requirement of the conf:ParseAttribution for its error category, or no requirement when no attribution names that category."@en .
-<https://hexplain.io/ns/conf#ParseFindingAttributionShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using conf:findingKind Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/conf#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for conf:assertion, conf:fileVersion, conf:findingMessage, conf:message, conf:truncated, conf:truncationReason, conf:versionScopingApplied. conf:assertion takes an xsd:string literal (rdfs:range xsd:string). conf:fileVersion takes an xsd:string literal (rdfs:range xsd:string). conf:findingMessage takes an xsd:string literal (rdfs:range xsd:string). conf:message takes an xsd:string literal (rdfs:range xsd:string). conf:truncated takes an xsd:boolean literal (rdfs:range xsd:boolean). conf:truncationReason takes an xsd:string literal (rdfs:range xsd:string). conf:versionScopingApplied takes an xsd:boolean literal (rdfs:range xsd:boolean)."@en .
-<https://hexplain.io/ns/conf#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using conf:assertion, conf:fileVersion, conf:findingMessage, conf:message, conf:truncated, conf:truncationReason, conf:versionScopingApplied Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/conf#RunShape> <http://www.w3.org/2004/02/skos/core#definition> "A run report states exactly one verdict and one truncated flag, links its findings with conf:finding, reports at most one outcome per requirement and one for every requirement in the graph, and is internally consistent: a truncated run is non-conformant, the verdict follows from the findings, outcomes and conf:failOn, and conf:NotApplicable arises only from version scoping."@en .
-<https://hexplain.io/ns/conf#RunShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: instances of conf:Run; subjects using conf:failOn, conf:fileVersion, conf:finding, conf:input, conf:outcome, conf:profile, conf:ruleSet, conf:truncated, conf:truncationReason, conf:verdict, conf:versionScopingApplied Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/conf#UntypedParseAttributionShape> <http://www.w3.org/2004/02/skos/core#definition> "A node stating conf:errorCategory that is neither a finding, a run, a constraint, a requirement nor a typed conf:ParseAttribution is an untyped parse attribution: it cites exactly one requirement, and its category is attributed once."@en .
-<https://hexplain.io/ns/conf#UntypedParseAttributionShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using conf:errorCategory Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/conf#_prefixes> <http://www.w3.org/2004/02/skos/core#definition> "Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data."@en .
-<https://hexplain.io/ns/conf#_prefixes> <http://www.w3.org/2004/02/skos/core#scopeNote> "Used by named SHACL SPARQL constraints/rules in this module. Not intended for instance-data assertions."@en .
-<https://hexplain.io/ns/conf#_prefixes> <http://www.w3.org/2000/01/rdf-schema#label> "prefixes"@en .
-<https://hexplain.io/ns/conf#_prefixes> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/conf> .
-<https://hexplain.io/ns/conf/shapes> <http://www.w3.org/2004/02/skos/core#definition> "The SHACL shapes of the conf vocabulary, published as their own document so that a consumer can load the vocabulary without its validation rules. Terms stay in the conf namespace."@en .
-<https://hexplain.io/ns/conf/shapes> <http://www.w3.org/2004/02/skos/core#scopeNote> "Load with the conf vocabulary to validate conformance profiles (constraints, parse attributions) and run reports (runs, outcomes, findings). A report validates on its own because it carries copies of the requirements, constraints and attributions it cites."@en .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+conf:ConstraintShape rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    skos:definition "Applies to instances of conf:Constraint; subjects using conf:assertion, conf:message, conf:scope; objects of conf:findingConstraint. A Constraint needs exactly one non-empty conf:assertion HEL expression. A Constraint needs exactly one non-empty conf:message finding template. A Constraint must cite at least one req:Requirement; an unattributed rule cannot be reported. A Constraint needs exactly one conf:scope IRI naming the bddo:Struct or bddo:Field it applies to. A Constraint states at most one conf:severity: sh:Violation, sh:Warning or sh:Info (absent means sh:Violation)."@en .
+conf:RangeDatatypeShape skos:definition "Applies to subjects using conf:assertion, conf:fileVersion, conf:findingMessage, conf:message, conf:truncated, conf:truncationReason, conf:versionScopingApplied. conf:assertion takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). conf:fileVersion takes an xsd:string literal (rdfs:range xsd:string). conf:findingMessage takes an xsd:string literal (rdfs:range xsd:string). conf:message takes an xsd:string literal (rdfs:range xsd:string). conf:truncated takes an xsd:boolean literal (rdfs:range xsd:boolean). conf:truncationReason takes an xsd:string literal (rdfs:range xsd:string). conf:versionScopingApplied takes an xsd:boolean literal (rdfs:range xsd:boolean)."@en .
+conf:_prefixes rdfs:label "prefixes"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
+    skos:definition "Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data."@en .
+<https://hexplain.io/ns/conf/shapes> skos:scopeNote "Load with the conf vocabulary to validate conformance profiles (constraints, parse attributions) and run reports (runs, outcomes, findings). A report validates on its own because it carries copies of the requirements, constraints and attributions it cites."@en .

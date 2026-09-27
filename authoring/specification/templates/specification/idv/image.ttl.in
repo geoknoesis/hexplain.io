@@ -16,33 +16,33 @@
 <https://hexplain.io/ns/image> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/image/1.3> ; owl:versionInfo "1.3" ;
     owl:priorVersion <https://hexplain.io/ns/image/1.2> ;
-    dcterms:modified "2026-09-24"^^xsd:date ;
+    dcterms:modified "2026-09-27"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/aspect/raster> , <https://hexplain.io/ns/aspect/sampling> , <https://hexplain.io/ns/aspect/color> ;
-    rdfs:label "Hexplain Image Vocabulary (IDV)" ;
-    rdfs:comment "Semantic vocabulary for raster image properties." ;
+    rdfs:label "Hexplain Image Vocabulary (IDV)"@en ;
+    rdfs:comment "Semantic vocabulary for raster image properties."@en ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "img" ; vann:preferredNamespaceUri "https://hexplain.io/ns/image#" .
 
-:Image a owl:Class ; rdfs:label "Image" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:seeAlso ma:Image .
-:ImageHeader a owl:Class ; rdfs:label "Image Header" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
-:ColorProfile a owl:Class ; rdfs:label "Color Profile" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
-:PixelData a owl:Class ; rdfs:label "Pixel Data" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
+:Image a owl:Class ; rdfs:label "Image"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:seeAlso ma:Image .
+:ImageHeader a owl:Class ; rdfs:label "Image Header"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
+:ColorProfile a owl:Class ; rdfs:label "Color Profile"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
+:PixelData a owl:Class ; rdfs:label "Pixel Data"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> .
 
 # Image dimensions, per-component precision, and colour space are the raster/sampling/colour
 # aspects: araster:width, araster:height, asamp:bitDepth, acolor:colorSpace.
 # colorType and the compression/filter/interlace codes below are PNG wire codes. They are
 # deprecated (owl:deprecated true) and belong in a PNG profile; the IRIs stay defined.
-:colorType a owl:DatatypeProperty ; rdfs:label "color type" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
+:colorType a owl:DatatypeProperty ; rdfs:label "color type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
     owl:deprecated true ;
     skos:historyNote "Deprecated in IDV 1.2: a PNG wire code, not an image property. The value only means something under the PNG specification, so it belongs in a PNG format profile (as an enumerated field mapped to register concepts or to the raster, sampling and colour aspects), not in a format-neutral vocabulary. The IRI stays defined so existing graphs keep their meaning."@en .
-:compressionMethod a owl:DatatypeProperty ; rdfs:label "compression method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:seeAlso ma:compression ; rdfs:range xsd:integer ;
+:compressionMethod a owl:DatatypeProperty ; rdfs:label "compression method"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:seeAlso ma:compression ; rdfs:range xsd:integer ;
     owl:deprecated true ;
     skos:historyNote "Deprecated in IDV 1.2: a PNG wire code, not an image property. The value only means something under the PNG specification, so it belongs in a PNG format profile (as an enumerated field mapped to register concepts or to the raster, sampling and colour aspects), not in a format-neutral vocabulary. The IRI stays defined so existing graphs keep their meaning."@en .
-:filterMethod a owl:DatatypeProperty ; rdfs:label "filter method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
+:filterMethod a owl:DatatypeProperty ; rdfs:label "filter method"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
     owl:deprecated true ;
     skos:historyNote "Deprecated in IDV 1.2: a PNG wire code, not an image property. The value only means something under the PNG specification, so it belongs in a PNG format profile (as an enumerated field mapped to register concepts or to the raster, sampling and colour aspects), not in a format-neutral vocabulary. The IRI stays defined so existing graphs keep their meaning."@en .
-:interlaceMethod a owl:DatatypeProperty ; rdfs:label "interlace method" ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
+:interlaceMethod a owl:DatatypeProperty ; rdfs:label "interlace method"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/image> ; rdfs:range xsd:integer ;
     owl:deprecated true ;
     skos:historyNote "Deprecated in IDV 1.2: a PNG wire code, not an image property. The value only means something under the PNG specification, so it belongs in a PNG format profile (as an enumerated field mapped to register concepts or to the raster, sampling and colour aspects), not in a format-neutral vocabulary. The IRI stays defined so existing graphs keep their meaning."@en .
 
@@ -54,19 +54,23 @@ img:ImageShape a sh:NodeShape ; sh:targetClass img:ImageHeader ;
     sh:property {{constraint:pattern_048}} .
 img:CodeShapes a sh:NodeShape ; sh:targetClass img:ImageHeader ;
     sh:targetSubjectsOf img:colorType, img:compressionMethod, img:filterMethod, img:interlaceMethod ;
-    sh:property [ sh:path img:colorType ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
-    sh:property [ sh:path img:compressionMethod ; sh:nodeKind sh:Literal ] ;
-    sh:property [ sh:path img:filterMethod ; sh:nodeKind sh:Literal ] ;
-    sh:property [ sh:path img:interlaceMethod ; sh:nodeKind sh:Literal ] .
+    sh:property [ sh:path img:colorType ; sh:nodeKind sh:Literal ; sh:maxCount 1 ;
+        sh:message "img:colorType takes at most one value; each is a literal." ] ;
+    sh:property [ sh:path img:compressionMethod ; sh:nodeKind sh:Literal ;
+        sh:message "Each value of img:compressionMethod is a literal." ] ;
+    sh:property [ sh:path img:filterMethod ; sh:nodeKind sh:Literal ;
+        sh:message "Each value of img:filterMethod is a literal." ] ;
+    sh:property [ sh:path img:interlaceMethod ; sh:nodeKind sh:Literal ;
+        sh:message "Each value of img:interlaceMethod is a literal." ] .
 
 # ---------- Range datatype shapes ----------
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-img:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+img:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/image> ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
-img:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+img:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/image> ;
     sh:targetSubjectsOf img:colorType ,
         img:compressionMethod ,

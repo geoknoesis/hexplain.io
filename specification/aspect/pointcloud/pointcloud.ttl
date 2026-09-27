@@ -1,4 +1,4 @@
-# Hexplain Aspect — Point Cloud (hx-pointcloud) 1.1
+# Hexplain Aspect — Point Cloud (hx-pointcloud) 1.2
 # Content-representation aspect: an unstructured set of sampled points. Sibling of raster and
 # geometry. Imports BDDO for the per-point record layout; per-point attribute precision uses the
 # sampling aspect's properties, which a profile imports alongside when it states them.
@@ -13,27 +13,27 @@
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 
 <https://hexplain.io/ns/aspect/pointcloud> a owl:Ontology ;
-    owl:versionIRI <https://hexplain.io/ns/aspect/pointcloud/1.1> ; owl:versionInfo "1.1" ;
-    owl:priorVersion <https://hexplain.io/ns/aspect/pointcloud/1.0> ;
-    dcterms:modified "2026-09-23"^^xsd:date ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/pointcloud/1.2> ; owl:versionInfo "1.2" ;
+    owl:priorVersion <https://hexplain.io/ns/aspect/pointcloud/1.1> ;
+    dcterms:modified "2026-09-27"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/bddo> ;
-    rdfs:label "Hexplain Aspect — Point Cloud (hx-pointcloud)" ;
-    rdfs:comment "Aspect for an unstructured set of sampled points (point count, per-point data layout). Per-point attribute precision is stated with hx-sampling properties." ;
+    rdfs:label "Hexplain Aspect — Point Cloud (hx-pointcloud)"@en ;
+    rdfs:comment "Aspect for an unstructured set of sampled points (point count, per-point data layout). Per-point attribute precision is stated with hx-sampling properties."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "apc" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/pointcloud#" .
 
-:pointCount a owl:DatatypeProperty ; rdfs:label "point count" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/pointcloud> ; rdfs:range xsd:unsignedLong .
-:pointDataLayout a owl:ObjectProperty ; rdfs:label "point data layout" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/pointcloud> ; rdfs:range bddo:Struct ; rdfs:comment "The per-point record structure (BDDO struct)." .
+:pointCount a owl:DatatypeProperty ; rdfs:label "point count"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/pointcloud> ; rdfs:range xsd:unsignedLong .
+:pointDataLayout a owl:ObjectProperty ; rdfs:label "point data layout"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/pointcloud> ; rdfs:range bddo:Struct ; rdfs:comment "The per-point record structure (BDDO struct)."@en .
 
 # ---------- Range datatype shapes ----------
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-apc:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+apc:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/pointcloud> ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
-apc:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+apc:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/pointcloud> ;
     sh:targetSubjectsOf apc:pointCount ;
     sh:property [ sh:path apc:pointCount ; sh:node apc:IntegerValueShape ; sh:minInclusive 0 ; sh:maxInclusive 18446744073709551615 ;
@@ -41,13 +41,10 @@ apc:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-<https://hexplain.io/ns/aspect/pointcloud> <http://www.w3.org/2004/02/skos/core#definition> "Aspect for an unstructured set of sampled points (point count, per-point data layout). Per-point attribute precision is stated with hx-sampling properties."@en .
-<https://hexplain.io/ns/aspect/pointcloud> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for unstructured sampled-point collections and their per-point record descriptions; no regular grid topology is implied."@en .
-<https://hexplain.io/ns/aspect/pointcloud#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for Integer value. Its constraints below specify the permitted values and combinations."@en .
-<https://hexplain.io/ns/aspect/pointcloud#IntegerValueShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: No automatic target; applied only when another shape references it or a caller explicitly selects it. Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/aspect/pointcloud#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#definition> "A reusable validation contract for apc:pointCount. apc:pointCount takes an integer within the xsd:unsignedLong value space (rdfs:range xsd:unsignedLong)."@en .
-<https://hexplain.io/ns/aspect/pointcloud#RangeDatatypeShape> <http://www.w3.org/2004/02/skos/core#scopeNote> "Validation activation: subjects using apc:pointCount Constraints apply only within that activation or through shape references; they are not global OWL domain axioms."@en .
-<https://hexplain.io/ns/aspect/pointcloud#pointCount> <http://www.w3.org/2004/02/skos/core#definition> "The declared number of points in an unstructured point collection, including zero for an empty collection."@en .
-<https://hexplain.io/ns/aspect/pointcloud#pointCount> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for unstructured sampled-point collections and their per-point record descriptions; no regular grid topology is implied. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
-<https://hexplain.io/ns/aspect/pointcloud#pointDataLayout> <http://www.w3.org/2004/02/skos/core#definition> "The per-point record structure (BDDO struct)."@en .
-<https://hexplain.io/ns/aspect/pointcloud#pointDataLayout> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use for unstructured sampled-point collections and their per-point record descriptions; no regular grid topology is implied. Use it as a predicate. Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage."@en .
+@prefix apc: <https://hexplain.io/ns/aspect/pointcloud#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://hexplain.io/ns/aspect/pointcloud> skos:scopeNote "Use for unstructured sampled-point collections and their per-point record descriptions; no regular grid topology is implied."@en .
+apc:IntegerValueShape skos:definition "Applied through references from other shapes. A conforming value is an integer (of any XSD integer datatype)."@en .
+apc:RangeDatatypeShape skos:definition "Applies to subjects using apc:pointCount. apc:pointCount takes an integer within the xsd:unsignedLong value space (rdfs:range xsd:unsignedLong)."@en .
+apc:pointCount skos:definition "The declared number of points in an unstructured point collection, including zero for an empty collection."@en .
