@@ -152,7 +152,11 @@ for aspect, reg in PAIRS:
                   if t[0] in moving and t[1] not in (SKOS.notation, RDFS.isDefinedBy)}
     old_wanted -= DELIBERATELY_CHANGED
     got = set(new) | set(rgraph)
-    missing = old_wanted - got
+    # Documentation literals were later tagged @en across the family (tools/test_language_tags.py):
+    # the same text with a language tag is the same annotation, not a lost one.
+    def untagged(t):
+        return tuple(rdflib.Literal(str(x)) if isinstance(x, rdflib.Literal) and x.language == "en" else x for x in t)
+    missing = {untagged(t) for t in old_wanted} - {untagged(t) for t in got}
     if missing:
         problems.append(f"{aspect}: {len(missing)} triple(s) lost, e.g. {sorted(missing, key=str)[:3]}")
 
