@@ -43,16 +43,24 @@
 
 # ---------- SHACL ----------
 axv:ArchiveShape a sh:NodeShape ; sh:targetClass axv:Archive ;
-    sh:property [ sh:path apkg:hasEntry ; sh:class axv:ArchiveEntry ] .
+    sh:property [ sh:path apkg:hasEntry ; sh:class axv:ArchiveEntry ;
+        sh:message "Each value of apkg:hasEntry is an instance of axv:ArchiveEntry." ] .
 axv:EntryShape a sh:NodeShape ; sh:targetClass axv:ArchiveEntry ;
     sh:targetSubjectsOf axv:compressedSize, axv:entryComment ;
-    sh:property [ sh:path afs:fileName ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path afs:fileSize ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path axv:compressedSize ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path aintg:checksum ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
-    sh:property [ sh:path afs:modificationTime ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
-    sh:property [ sh:path afs:isDirectory ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
-    sh:property [ sh:path aenc:compression ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+    sh:property [ sh:path afs:fileName ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "afs:fileName takes at most one value; each is an xsd:string literal." ] ;
+    sh:property [ sh:path afs:fileSize ; sh:minInclusive 0 ; sh:maxCount 1 ;
+        sh:message "afs:fileSize takes at most one value; each is a number at least 0." ] ;
+    sh:property [ sh:path axv:compressedSize ; sh:minInclusive 0 ; sh:maxCount 1 ;
+        sh:message "axv:compressedSize takes at most one value; each is a number at least 0." ] ;
+    sh:property [ sh:path aintg:checksum ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ;
+        sh:message "aintg:checksum takes at most one value; each is an xsd:hexBinary literal." ] ;
+    sh:property [ sh:path afs:modificationTime ; sh:datatype xsd:dateTime ; sh:maxCount 1 ;
+        sh:message "afs:modificationTime takes at most one value; each is an xsd:dateTime literal." ] ;
+    sh:property [ sh:path afs:isDirectory ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
+        sh:message "afs:isDirectory takes at most one value; each is an xsd:boolean literal." ] ;
+    sh:property [ sh:path aenc:compression ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
+        sh:message "aenc:compression takes at most one value; each is an IRI naming an instance of skos:Concept." ] .
 
 # ---------- Range datatype shapes ----------
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by

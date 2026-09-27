@@ -48,16 +48,20 @@
 
 # ---------- SHACL ----------
 img:ImageShape a sh:NodeShape ; sh:targetClass img:ImageHeader ;
-    sh:property [ sh:path araster:width ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path araster:height ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asamp:bitDepth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path acolor:colorSpace ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+    sh:property [ sh:path araster:width ; sh:minExclusive 0 ; sh:maxCount 1 ; sh:message "araster:width takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path araster:height ; sh:minExclusive 0 ; sh:maxCount 1 ; sh:message "araster:height takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path asamp:bitDepth ; sh:minExclusive 0 ; sh:maxCount 1 ; sh:message "asamp:bitDepth takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path acolor:colorSpace ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ; sh:message "acolor:colorSpace takes at most one value; each is an IRI naming an instance of skos:Concept." ] .
 img:CodeShapes a sh:NodeShape ; sh:targetClass img:ImageHeader ;
     sh:targetSubjectsOf img:colorType, img:compressionMethod, img:filterMethod, img:interlaceMethod ;
-    sh:property [ sh:path img:colorType ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
-    sh:property [ sh:path img:compressionMethod ; sh:nodeKind sh:Literal ] ;
-    sh:property [ sh:path img:filterMethod ; sh:nodeKind sh:Literal ] ;
-    sh:property [ sh:path img:interlaceMethod ; sh:nodeKind sh:Literal ] .
+    sh:property [ sh:path img:colorType ; sh:nodeKind sh:Literal ; sh:maxCount 1 ;
+        sh:message "img:colorType takes at most one value; each is a literal." ] ;
+    sh:property [ sh:path img:compressionMethod ; sh:nodeKind sh:Literal ;
+        sh:message "Each value of img:compressionMethod is a literal." ] ;
+    sh:property [ sh:path img:filterMethod ; sh:nodeKind sh:Literal ;
+        sh:message "Each value of img:filterMethod is a literal." ] ;
+    sh:property [ sh:path img:interlaceMethod ; sh:nodeKind sh:Literal ;
+        sh:message "Each value of img:interlaceMethod is a literal." ] .
 
 # ---------- Range datatype shapes ----------
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by

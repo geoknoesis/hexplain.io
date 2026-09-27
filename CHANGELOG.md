@@ -275,6 +275,24 @@ cites `req-pm-context-3`.
 - New gate `test_ontology_licenses`: every module declares exactly the CC BY 4.0 licence and its
   creator, and `LICENSE` and `LICENSING.md` state both regimes.
 
+### Validation messages (review fixes)
+
+- Every property shape whose results a validator reports carries an `sh:message` (223 shapes
+  and 14 shared constraint patterns gained one; 59% had none). Each states the property's whole
+  contract, generated from its constraints by `tools/_shape_text.py` and reviewed ("atime:duration
+  takes at most one value; each is an xsd:decimal or xsd:integer literal at least 0"). Shapes
+  nested in `sh:not`, `sh:or`, `sh:and`, `sh:xone` or `sh:node` are exempt, because SHACL reports
+  the enclosing constraint with the enclosing message; where a nested node shape carried the only
+  message (three `bddo:hasField` list constraints), the reported shape now carries it too. New
+  gate `test_shape_messages`, which also rejects a SPARQL placeholder in a property shape's
+  message.
+- Severity audit: every shape reporting at `sh:Violation` enforces a MUST; the two SHOULD-level
+  rules the shapes enforce (use of a deprecated register value, a sensitivity level without its
+  verbatim text) already report at `sh:Warning`. No severity changed; `specification/ontology-design`
+  states the mapping (MUST: Violation, SHOULD: Warning, MAY: Info or no shape) and that a new
+  Warning or Info shape is itself a compatibility change, since any result makes `sh:conforms`
+  false.
+
 ### Namespace prefixes and shape packaging (review fixes)
 
 - `specification/family.json` gains a `namespaces` list: for each vocabulary, its prefix,

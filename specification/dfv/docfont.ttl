@@ -58,17 +58,25 @@ dfv:DocumentShape a sh:NodeShape ; sh:targetClass dfv:Document ; sh:targetSubjec
     # for dcterms:creator); a document may have several.
     sh:property [ sh:path dcterms:creator ; sh:or ( [ sh:datatype xsd:string ] [ sh:nodeKind sh:BlankNodeOrIRI ] ) ;
         sh:message "dcterms:creator of a document is a string name or an agent IRI or blank node." ] ;
-    sh:property [ sh:path dcterms:title ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dcterms:created ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dcterms:modified ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dfv:pageCount ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+    sh:property [ sh:path dcterms:title ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "dcterms:title takes at most one value; each is an xsd:string literal." ] ;
+    sh:property [ sh:path dcterms:created ; sh:datatype xsd:dateTime ; sh:maxCount 1 ;
+        sh:message "dcterms:created takes at most one value; each is an xsd:dateTime literal." ] ;
+    sh:property [ sh:path dcterms:modified ; sh:datatype xsd:dateTime ; sh:maxCount 1 ;
+        sh:message "dcterms:modified takes at most one value; each is an xsd:dateTime literal." ] ;
+    sh:property [ sh:path dfv:pageCount ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "dfv:pageCount takes at most one value; each is a number greater than 0." ] .
 dfv:PageShape a sh:NodeShape ; sh:targetSubjectsOf dfv:hasBoundingBox ;
-    sh:property [ sh:path dfv:hasBoundingBox ; sh:class dfv:BoundingBox ] .
+    sh:property [ sh:path dfv:hasBoundingBox ; sh:class dfv:BoundingBox ;
+        sh:message "Each value of dfv:hasBoundingBox is an instance of dfv:BoundingBox." ] .
 dfv:FontShape a sh:NodeShape ; sh:targetClass dfv:Font ;
     sh:targetSubjectsOf dfv:fontFamily, dfv:fontStyle, dfv:glyphCount ;
-    sh:property [ sh:path dfv:fontFamily ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dfv:fontStyle ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dfv:glyphCount ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+    sh:property [ sh:path dfv:fontFamily ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "dfv:fontFamily takes at most one value; each is an xsd:string literal." ] ;
+    sh:property [ sh:path dfv:fontStyle ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "dfv:fontStyle takes at most one value; each is an xsd:string literal." ] ;
+    sh:property [ sh:path dfv:glyphCount ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "dfv:glyphCount takes at most one value; each is a number greater than 0." ] .
 
 # ---------- Range datatype shapes ----------
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by

@@ -48,18 +48,25 @@
 
 # ---------- SHACL ----------
 adv:StreamShape a sh:NodeShape ; sh:targetClass adv:AudioStream ; sh:targetSubjectsOf asig:sampleRate ;
-    sh:property [ sh:path asig:sampleRate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asamp:componentCount ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asig:sampleRate ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "asig:sampleRate takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path asamp:componentCount ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "asamp:componentCount takes at most one value; each is a number greater than 0." ] ;
     sh:property {{constraint:pattern_073}} ;
-    sh:property [ sh:path atime:duration ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
+    sh:property [ sh:path atime:duration ; sh:nodeKind sh:Literal ; sh:maxCount 1 ;
+        sh:message "atime:duration takes at most one value; each is a literal." ] ;
     sh:property {{constraint:pattern_053}} ;
     sh:property {{constraint:pattern_054}} .
 adv:TagShape a sh:NodeShape ; sh:targetClass adv:MetadataTag ;
     sh:targetSubjectsOf adv:artist, adv:album, adv:trackTitle, adv:trackNumber ;
-    sh:property [ sh:path adv:artist ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path adv:album ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path adv:trackTitle ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path adv:trackNumber ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+    sh:property [ sh:path adv:artist ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "adv:artist takes at most one value; each is an xsd:string literal." ] ;
+    sh:property [ sh:path adv:album ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "adv:album takes at most one value; each is an xsd:string literal." ] ;
+    sh:property [ sh:path adv:trackTitle ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "adv:trackTitle takes at most one value; each is an xsd:string literal." ] ;
+    sh:property [ sh:path adv:trackNumber ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "adv:trackNumber takes at most one value; each is a number greater than 0." ] .
 
 # ---------- Range datatype shapes ----------
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by

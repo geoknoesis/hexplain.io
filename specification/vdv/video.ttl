@@ -52,24 +52,32 @@
 # ---------- SHACL ----------
 vdv:StreamShape a sh:NodeShape ; sh:targetClass vdv:VideoStream, vdv:VideoTrack ;
     sh:targetSubjectsOf vdv:frameRate, vdv:frameCount, vdv:aspectRatio, vdv:scanType, vdv:audioChannels, vdv:frameRateNumerator, vdv:frameRateDenominator ;
-    sh:property [ sh:path araster:width ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path araster:height ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:frameRate ; sh:or ( [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path atime:duration ; sh:or ( [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] ) ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path aenc:bitrate ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:frameCount ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:unsignedLong ] ) ; sh:minInclusive 0 ; sh:maxInclusive 18446744073709551615 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:audioChannels ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:scanType ; sh:maxCount 1 ; sh:in ( vdv:Progressive vdv:Interlaced ) ] ;
-    sh:property [ sh:path aenc:codec ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] ;
-    sh:property [ sh:path acolor:colorSpace ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] ;
-    sh:property [ sh:path vdv:aspectRatio ; sh:datatype xsd:string ; sh:pattern "^[0-9]+(\\.[0-9]+)?:[0-9]+(\\.[0-9]+)?$" ; sh:maxCount 1 ] .
+    sh:property [ sh:path araster:width ; sh:minExclusive 0 ; sh:maxCount 1 ; sh:message "araster:width takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path araster:height ; sh:minExclusive 0 ; sh:maxCount 1 ; sh:message "araster:height takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path vdv:frameRate ; sh:or ( [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "vdv:frameRate takes at most one value; each is an xsd:decimal or xsd:integer literal greater than 0." ] ;
+    sh:property [ sh:path atime:duration ; sh:or ( [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] ) ; sh:minInclusive 0 ; sh:maxCount 1 ;
+        sh:message "atime:duration takes at most one value; each is an xsd:decimal or xsd:integer literal at least 0." ] ;
+    sh:property [ sh:path aenc:bitrate ; sh:minExclusive 0 ; sh:maxCount 1 ; sh:message "aenc:bitrate takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path vdv:frameCount ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:unsignedLong ] ) ; sh:minInclusive 0 ; sh:maxInclusive 18446744073709551615 ; sh:maxCount 1 ;
+        sh:message "vdv:frameCount takes at most one value; each is an xsd:integer or xsd:unsignedLong literal at least 0, at most 18446744073709551615." ] ;
+    sh:property [ sh:path vdv:audioChannels ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "vdv:audioChannels takes at most one value; each is an xsd:integer or xsd:positiveInteger literal greater than 0." ] ;
+    sh:property [ sh:path vdv:scanType ; sh:maxCount 1 ; sh:in ( vdv:Progressive vdv:Interlaced ) ;
+        sh:message "vdv:scanType takes at most one value; each is either vdv:Progressive or vdv:Interlaced." ] ;
+    sh:property [ sh:path aenc:codec ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ; sh:message "aenc:codec takes at most one value; each is an IRI naming an instance of skos:Concept." ] ;
+    sh:property [ sh:path acolor:colorSpace ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ; sh:message "acolor:colorSpace takes at most one value; each is an IRI naming an instance of skos:Concept." ] ;
+    sh:property [ sh:path vdv:aspectRatio ; sh:datatype xsd:string ; sh:pattern "^[0-9]+(\\.[0-9]+)?:[0-9]+(\\.[0-9]+)?$" ; sh:maxCount 1 ;
+        sh:message "vdv:aspectRatio takes at most one value; each is an xsd:string literal matching the regular expression ^[0-9]+(\\.[0-9]+)?:[0-9]+(\\.[0-9]+)?$." ] .
 
 # Exact nominal rate. For variable-rate streams this does not imply duration = count/rate.
 :frameRateNumerator a owl:DatatypeProperty ; rdfs:label "frame rate numerator"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:positiveInteger ; rdfs:comment "Numerator of the exact nominal frame rate in frames per second; used with frameRateDenominator. A decimal frameRate is a display approximation."@en .
 :frameRateDenominator a owl:DatatypeProperty ; rdfs:label "frame rate denominator"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:positiveInteger ; rdfs:comment "Positive denominator of the exact nominal frame rate, for example 1001 with numerator 30000. Both components must be supplied together."@en .
 :RateShape a sh:NodeShape ; sh:targetSubjectsOf :frameRateNumerator, :frameRateDenominator ;
-    sh:property [ sh:path :frameRateNumerator ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] ) ; sh:minExclusive 0 ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :frameRateDenominator ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] ) ; sh:minExclusive 0 ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path :frameRateNumerator ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] ) ; sh:minExclusive 0 ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "vdv:frameRateNumerator takes exactly one value, an xsd:integer or xsd:positiveInteger literal greater than 0." ] ;
+    sh:property [ sh:path :frameRateDenominator ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] ) ; sh:minExclusive 0 ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "vdv:frameRateDenominator takes exactly one value, an xsd:integer or xsd:positiveInteger literal greater than 0." ] .
 :PositiveAspectRatioShape a sh:NodeShape ; sh:targetSubjectsOf :aspectRatio ;
     sh:sparql [ sh:message "Both aspect-ratio components must be positive." ; sh:select """
         PREFIX v: <https://hexplain.io/ns/video#>
@@ -99,7 +107,7 @@ vdv:RateShape rdfs:label "Rate Shape"@en ;
     skos:definition "Applies to subjects using vdv:frameRateDenominator, vdv:frameRateNumerator. vdv:frameRateDenominator takes exactly one value, an xsd:integer or xsd:positiveInteger literal greater than 0. vdv:frameRateNumerator takes exactly one value, an xsd:integer or xsd:positiveInteger literal greater than 0."@en .
 vdv:StreamShape rdfs:label "Stream Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/video> ;
-    skos:definition "Applies to instances of vdv:VideoStream, vdv:VideoTrack; subjects using vdv:aspectRatio, vdv:audioChannels, vdv:frameCount, vdv:frameRate, vdv:frameRateDenominator, vdv:frameRateNumerator, vdv:scanType. acolor:colorSpace takes at most one value; each is an IRI naming an instance of skos:Concept. aenc:bitrate takes at most one value; each is a number greater than 0. aenc:codec takes at most one value; each is an IRI naming an instance of skos:Concept. araster:height takes at most one value; each is a number greater than 0. araster:width takes at most one value; each is a number greater than 0. atime:duration takes at most one value; each is an xsd:decimal or xsd:integer literal at least 0. vdv:aspectRatio takes at most one value; each is an xsd:string literal matching the regular expression ^[0-9]+(\\.[0-9]+)?:[0-9]+(\\.[0-9]+)?$. vdv:audioChannels takes at most one value; each is an xsd:integer or xsd:positiveInteger literal greater than 0. vdv:frameCount takes at most one value; each is an xsd:integer or xsd:unsignedLong literal at least 0, at most 18446744073709551615. vdv:frameRate takes at most one value; each is an xsd:decimal or xsd:integer literal greater than 0. vdv:scanType takes at most one value; each is one of vdv:Progressive or vdv:Interlaced."@en .
+    skos:definition "Applies to instances of vdv:VideoStream, vdv:VideoTrack; subjects using vdv:aspectRatio, vdv:audioChannels, vdv:frameCount, vdv:frameRate, vdv:frameRateDenominator, vdv:frameRateNumerator, vdv:scanType. acolor:colorSpace takes at most one value; each is an IRI naming an instance of skos:Concept. aenc:bitrate takes at most one value; each is a number greater than 0. aenc:codec takes at most one value; each is an IRI naming an instance of skos:Concept. araster:height takes at most one value; each is a number greater than 0. araster:width takes at most one value; each is a number greater than 0. atime:duration takes at most one value; each is an xsd:decimal or xsd:integer literal at least 0. vdv:aspectRatio takes at most one value; each is an xsd:string literal matching the regular expression ^[0-9]+(\\.[0-9]+)?:[0-9]+(\\.[0-9]+)?$. vdv:audioChannels takes at most one value; each is an xsd:integer or xsd:positiveInteger literal greater than 0. vdv:frameCount takes at most one value; each is an xsd:integer or xsd:unsignedLong literal at least 0, at most 18446744073709551615. vdv:frameRate takes at most one value; each is an xsd:decimal or xsd:integer literal greater than 0. vdv:scanType takes at most one value; each is either vdv:Progressive or vdv:Interlaced."@en .
 vdv:VideoContainer skos:definition "A containing resource for one or more video streams and associated tracks or metadata."@en .
 vdv:VideoStream skos:definition "An ordered video sequence with timing and display properties independent of its container encoding."@en .
 vdv:VideoTrack skos:definition "A container-level track carrying a video sequence; track identity is distinct from individual frames."@en .

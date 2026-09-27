@@ -60,22 +60,30 @@
 :ExtentShape a sh:NodeShape ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] ) ; sh:minInclusive 0 .
 :RasterSizeShape a sh:NodeShape ; sh:targetSubjectsOf :width, :height, :bandCount ;
-    sh:property [ sh:path :width ; sh:node :PositiveCountShape ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :height ; sh:node :PositiveCountShape ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :bandCount ; sh:node :PositiveCountShape ; sh:maxCount 1 ] .
+    sh:property [ sh:path :width ; sh:node :PositiveCountShape ; sh:maxCount 1 ;
+        sh:message "araster:width takes at most one value; each is a value conforming to araster:PositiveCountShape." ] ;
+    sh:property [ sh:path :height ; sh:node :PositiveCountShape ; sh:maxCount 1 ;
+        sh:message "araster:height takes at most one value; each is a value conforming to araster:PositiveCountShape." ] ;
+    sh:property [ sh:path :bandCount ; sh:node :PositiveCountShape ; sh:maxCount 1 ;
+        sh:message "araster:bandCount takes at most one value; each is a value conforming to araster:PositiveCountShape." ] .
 :RasterBandShape a sh:NodeShape ; sh:targetClass :RasterBand ; sh:targetObjectsOf :hasBand, :hasMask ; sh:targetSubjectsOf :sampleScale, :sampleOffset, :bandIndex, :noDataValue, :sampleUnit ;
     sh:nodeKind sh:BlankNodeOrIRI ;
     sh:property [ sh:path [ sh:inversePath :hasBand ] ; sh:maxCount 1 ;
         sh:message "A band belongs to at most one grid (araster:hasBand): no-data inheritance and band indexing need a single owning grid." ] ;
-    sh:property [ sh:path :bandIndex ; sh:node :PositiveCountShape ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :sampleScale ; sh:datatype xsd:double ; sh:maxCount 1 ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] ] ;
-    sh:property [ sh:path :sampleOffset ; sh:datatype xsd:double ; sh:maxCount 1 ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] ] ;
+    sh:property [ sh:path :bandIndex ; sh:node :PositiveCountShape ; sh:maxCount 1 ;
+        sh:message "araster:bandIndex takes at most one value; each is a value conforming to araster:PositiveCountShape." ] ;
+    sh:property [ sh:path :sampleScale ; sh:datatype xsd:double ; sh:maxCount 1 ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] ;
+        sh:message "araster:sampleScale takes at most one value; each is an xsd:double literal that is finite (not NaN or infinite)." ] ;
+    sh:property [ sh:path :sampleOffset ; sh:datatype xsd:double ; sh:maxCount 1 ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] ;
+        sh:message "araster:sampleOffset takes at most one value; each is an xsd:double literal that is finite (not NaN or infinite)." ] ;
     sh:property [ sh:path :noDataValue ; sh:maxCount 1 ;
         sh:or ( [ sh:datatype xsd:double ] [ sh:datatype xsd:float ] [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonPositiveInteger ] [ sh:datatype xsd:negativeInteger ] [ sh:datatype xsd:long ] [ sh:datatype xsd:int ] [ sh:datatype xsd:short ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:unsignedByte ] ) ;
         sh:message "araster:noDataValue is at most one numeric literal (xsd:double/float, including NaN; xsd:decimal; or an integer-family datatype)." ] ;
-    sh:property [ sh:path :sampleUnit ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+    sh:property [ sh:path :sampleUnit ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
+        sh:message "araster:sampleUnit takes at most one value; each is an IRI." ] .
 :BandMembershipShape a sh:NodeShape ; sh:targetSubjectsOf :hasBand ;
-    sh:property [ sh:path :hasBand ; sh:node :RasterBandShape ] ;
+    sh:property [ sh:path :hasBand ; sh:node :RasterBandShape ;
+        sh:message "Each value of araster:hasBand is a value conforming to araster:RasterBandShape." ] ;
     sh:sparql [ sh:message "Band indexes must be unique within one grid and may not exceed its declared count." ; sh:select """
       PREFIX a: <https://hexplain.io/ns/aspect/raster#>
       SELECT $this WHERE {
@@ -89,13 +97,19 @@
     """ ] .
 :ArrayDimensionShape a sh:NodeShape ; sh:targetClass :ArrayDimension ;
     sh:nodeKind sh:BlankNodeOrIRI ;
-    sh:property [ sh:path :dimensionExtent ; sh:node :ExtentShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :dimensionName ; sh:datatype xsd:string ; sh:minLength 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :dimensionKind ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :coordinateArray ; sh:nodeKind sh:BlankNodeOrIRI ; sh:maxCount 1 ] .
+    sh:property [ sh:path :dimensionExtent ; sh:node :ExtentShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "araster:dimensionExtent takes exactly one value, a value conforming to araster:ExtentShape." ] ;
+    sh:property [ sh:path :dimensionName ; sh:datatype xsd:string ; sh:minLength 1 ; sh:maxCount 1 ;
+        sh:message "araster:dimensionName takes at most one value; each is an xsd:string literal at least 1 character long." ] ;
+    sh:property [ sh:path :dimensionKind ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
+        sh:message "araster:dimensionKind takes at most one value; each is an IRI." ] ;
+    sh:property [ sh:path :coordinateArray ; sh:nodeKind sh:BlankNodeOrIRI ; sh:maxCount 1 ;
+        sh:message "araster:coordinateArray takes at most one value; each is a resource (an IRI or a blank node)." ] .
 :SampleArrayShape a sh:NodeShape ; sh:targetClass :SampleArray ; sh:targetSubjectsOf :dimensions ; sh:targetObjectsOf :hasArray, :coordinateArray ;
-    sh:property [ sh:path :dimensions ; sh:nodeKind sh:BlankNodeOrIRI ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path ( :dimensions [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:node :ArrayDimensionShape ] ;
+    sh:property [ sh:path :dimensions ; sh:nodeKind sh:BlankNodeOrIRI ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "araster:dimensions takes exactly one value, a resource (an IRI or a blank node)." ] ;
+    sh:property [ sh:path ( :dimensions [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:node :ArrayDimensionShape ;
+        sh:message "Each member of the araster:dimensions list is a value conforming to araster:ArrayDimensionShape." ] ;
     sh:sparql [ sh:message "Dimension lists must terminate in rdf:nil, contain exactly one first/rest per cell, and contain no cycles." ; sh:select """
       PREFIX a: <https://hexplain.io/ns/aspect/raster#>
       PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -110,7 +124,8 @@
       }
     """ ] .
 :GroupHierarchyShape a sh:NodeShape ; sh:targetSubjectsOf :hasGroup ;
-    sh:property [ sh:path :hasGroup ; sh:nodeKind sh:BlankNodeOrIRI ] ;
+    sh:property [ sh:path :hasGroup ; sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:message "Each value of araster:hasGroup is a resource (an IRI or a blank node)." ] ;
     sh:sparql [ sh:message "Group containment must be acyclic." ; sh:select """
       PREFIX a: <https://hexplain.io/ns/aspect/raster#>
       SELECT $this WHERE { $this a:hasGroup+ $this }

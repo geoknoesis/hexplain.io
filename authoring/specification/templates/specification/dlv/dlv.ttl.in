@@ -107,13 +107,19 @@
 # ---------- SHACL ----------
 dlv:DataLayoutShape a sh:NodeShape ;
     sh:targetClass dlv:DataLayout ;
-    sh:property [ sh:path dlv:hasDimension ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
-    sh:property [ sh:path ( dlv:hasDimension [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class dlv:Dimension ] ;
-    sh:property [ sh:path dlv:cellDataType ; sh:class bddo:DataType ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:cellBitWidth ; {{constraint:pattern_237}} ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:cellBitWidthFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:hasDimension ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:message "dlv:hasDimension takes at most one value; each is a resource (an IRI or a blank node)." ] ;
+    sh:property [ sh:path ( dlv:hasDimension [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class dlv:Dimension ;
+        sh:message "Each member of the dlv:hasDimension list is an instance of dlv:Dimension." ] ;
+    sh:property [ sh:path dlv:cellDataType ; sh:class bddo:DataType ; sh:maxCount 1 ;
+        sh:message "dlv:cellDataType takes at most one value; each is an instance of bddo:DataType." ] ;
+    sh:property [ sh:path dlv:cellBitWidth ; {{constraint:pattern_237}} ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "dlv:cellBitWidth takes at most one value; each is an integer (of any XSD integer datatype) greater than 0." ] ;
+    sh:property [ sh:path dlv:cellBitWidthFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
+        sh:message "dlv:cellBitWidthFromField takes at most one value; each is an instance of bddo:Field." ] ;
     sh:property [ sh:path dlv:cellPackingOrder ; sh:maxCount 1 ;
-        sh:in ( bddo:MSBFirst bddo:LSBFirst ) ] ;
+        sh:in ( bddo:MSBFirst bddo:LSBFirst ) ;
+        sh:message "dlv:cellPackingOrder takes at most one value; each is either bddo:MSBFirst or bddo:LSBFirst." ] ;
     # A packed width is fixed or read, never both.
     sh:not [ sh:and ( [ sh:property [ sh:path dlv:cellBitWidth ; {{constraint:pattern_237}} ; sh:minCount 1 ] ]
                       [ sh:property [ sh:path dlv:cellBitWidthFromField ; sh:minCount 1 ] ] ) ] ;
@@ -125,8 +131,10 @@ dlv:DataLayoutShape a sh:NodeShape ;
             FILTER NOT EXISTS { $this dlv:cellBitWidth ?w }
             FILTER NOT EXISTS { $this dlv:cellBitWidthFromField ?f }
         }""" ] ;
-    sh:property [ sh:path dlv:hasConditionalCellDataType ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
-    sh:property [ sh:path dlv:hasConditionalDimensionOrder ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
+    sh:property [ sh:path dlv:hasConditionalCellDataType ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:message "dlv:hasConditionalCellDataType takes at most one value; each is a resource (an IRI or a blank node)." ] ;
+    sh:property [ sh:path dlv:hasConditionalDimensionOrder ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:message "dlv:hasConditionalDimensionOrder takes at most one value; each is a resource (an IRI or a blank node)." ] ;
     # The cell type is fixed or chosen, never both and never neither.
     sh:xone (
         [ sh:property [ sh:path dlv:cellDataType ; sh:minCount 1 ] ;
@@ -151,12 +159,14 @@ dlv:DataLayoutShape a sh:NodeShape ;
 dlv:CellDataTypeRuleShape a sh:NodeShape ;
     sh:targetClass dlv:CellDataTypeRule ;
     sh:property {{constraint:pattern_106}} ;
-    sh:property [ sh:path dlv:ruleCellDataType ; sh:class bddo:DataType ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path dlv:ruleCellDataType ; sh:class bddo:DataType ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "dlv:ruleCellDataType takes exactly one value, an instance of bddo:DataType." ] .
 
 dlv:DimensionOrderRuleShape a sh:NodeShape ;
     sh:targetClass dlv:DimensionOrderRule ;
     sh:property {{constraint:pattern_106}} ;
-    sh:property [ sh:path dlv:ruleDimensionOrder ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
+    sh:property [ sh:path dlv:ruleDimensionOrder ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:message "dlv:ruleDimensionOrder takes exactly one value, a resource (an IRI or a blank node)." ] ;
     sh:property [ sh:path ( dlv:ruleDimensionOrder [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
         sh:class dlv:Dimension ;
         sh:message "Every member of a ruleDimensionOrder list must be a dlv:Dimension." ] .
@@ -186,14 +196,22 @@ dlv:DimensionShape a sh:NodeShape ;
         [ sh:property [ sh:path dlv:chunkSizeFromField ; sh:minCount 1 ] ;
           sh:property {{constraint:pattern_191}} ]
     ) ;
-    sh:property [ sh:path dlv:dimensionSize ; {{constraint:pattern_237}} ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:dimensionSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:dimensionStride ; {{constraint:pattern_237}} ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:dimensionStrideFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:dimensionStrideFromExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:hasAxis ; sh:nodeKind sh:IRI ; sh:class dlv:Axis ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:chunkSize ; {{constraint:pattern_237}} ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:chunkSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] .
+    sh:property [ sh:path dlv:dimensionSize ; {{constraint:pattern_237}} ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "dlv:dimensionSize takes at most one value; each is an integer (of any XSD integer datatype) greater than 0." ] ;
+    sh:property [ sh:path dlv:dimensionSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
+        sh:message "dlv:dimensionSizeFromField takes at most one value; each is an instance of bddo:Field." ] ;
+    sh:property [ sh:path dlv:dimensionStride ; {{constraint:pattern_237}} ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "dlv:dimensionStride takes at most one value; each is an integer (of any XSD integer datatype) greater than 0." ] ;
+    sh:property [ sh:path dlv:dimensionStrideFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
+        sh:message "dlv:dimensionStrideFromField takes at most one value; each is an instance of bddo:Field." ] ;
+    sh:property [ sh:path dlv:dimensionStrideFromExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:maxCount 1 ;
+        sh:message "dlv:dimensionStrideFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
+    sh:property [ sh:path dlv:hasAxis ; sh:nodeKind sh:IRI ; sh:class dlv:Axis ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "dlv:hasAxis takes exactly one value, an IRI naming an instance of dlv:Axis." ] ;
+    sh:property [ sh:path dlv:chunkSize ; {{constraint:pattern_237}} ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "dlv:chunkSize takes at most one value; each is an integer (of any XSD integer datatype) greater than 0." ] ;
+    sh:property [ sh:path dlv:chunkSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
+        sh:message "dlv:chunkSizeFromField takes at most one value; each is an instance of bddo:Field." ] .
 
 dlv:_prefixes sh:declare
     [ sh:prefix "dlv" ; sh:namespace "https://hexplain.io/ns/dlv#"^^xsd:anyURI ] ,
@@ -202,11 +220,15 @@ dlv:_prefixes sh:declare
 # A chunked layout must say where its chunks are.
 dlv:ChunkedLayoutShape a sh:NodeShape ;
     sh:targetClass dlv:DataLayout ;
-    sh:property [ sh:path dlv:chunkOffsetsFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:chunkLengthsFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:chunkOffsetsFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
+        sh:message "dlv:chunkOffsetsFromField takes at most one value; each is an instance of bddo:Field." ] ;
+    sh:property [ sh:path dlv:chunkLengthsFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
+        sh:message "dlv:chunkLengthsFromField takes at most one value; each is an instance of bddo:Field." ] ;
     sh:property [ sh:path dlv:chunkOffsetBase ; sh:maxCount 1 ;
-        sh:in ( bddo:streamStart bddo:streamEnd bddo:parentStart bddo:currentPosition ) ] ;
-    sh:property [ sh:path dlv:chunkOrder ; sh:maxCount 1 ; sh:class dlv:ChunkOrder ] ;
+        sh:in ( bddo:streamStart bddo:streamEnd bddo:parentStart bddo:currentPosition ) ;
+        sh:message "dlv:chunkOffsetBase takes at most one value; each is one of bddo:streamStart, bddo:streamEnd, bddo:parentStart or bddo:currentPosition." ] ;
+    sh:property [ sh:path dlv:chunkOrder ; sh:maxCount 1 ; sh:class dlv:ChunkOrder ;
+        sh:message "dlv:chunkOrder takes at most one value; each is an instance of dlv:ChunkOrder." ] ;
     sh:sparql [ sh:message "A chunked dlv:DataLayout (any Dimension declaring dlv:chunkSize or dlv:chunkSizeFromField) must declare dlv:chunkOffsetsFromField." ;
         sh:prefixes dlv:_prefixes ;
         sh:select """SELECT $this WHERE {

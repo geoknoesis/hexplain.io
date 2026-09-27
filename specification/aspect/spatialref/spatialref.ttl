@@ -96,31 +96,46 @@
 :FiniteDoubleShape a sh:NodeShape ; sh:or ( [ sh:datatype xsd:double ] [ sh:datatype xsd:float ] ) ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] .
 :CRSShape a sh:NodeShape ; sh:targetClass :CoordinateReferenceSystem ; sh:targetObjectsOf :hasCRS, :groundControlPointCRS ;
     sh:nodeKind sh:BlankNodeOrIRI ;
-    sh:property [ sh:path :wktString ; sh:datatype xsd:string ; sh:minLength 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :crsIdentifier ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :coordinateEpoch ; sh:datatype xsd:decimal ; sh:maxCount 1 ] .
+    sh:property [ sh:path :wktString ; sh:datatype xsd:string ; sh:minLength 1 ; sh:maxCount 1 ;
+        sh:message "asref:wktString takes at most one value; each is an xsd:string literal at least 1 character long." ] ;
+    sh:property [ sh:path :crsIdentifier ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
+        sh:message "asref:crsIdentifier takes at most one value; each is an IRI." ] ;
+    sh:property [ sh:path :coordinateEpoch ; sh:datatype xsd:decimal ; sh:maxCount 1 ;
+        sh:message "asref:coordinateEpoch takes at most one value; each is an xsd:decimal literal." ] .
 
 # ---------- SHACL ----------
 asref:GeoTransformShape a sh:NodeShape ;
     sh:targetClass asref:GeoTransform ; sh:targetObjectsOf asref:hasGeoTransform ;
     sh:nodeKind sh:BlankNodeOrIRI ;
-    sh:property [ sh:path asref:originX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:originY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:scaleX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:scaleY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path asref:originX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:originX takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:originY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:originY takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:scaleX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:scaleX takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:scaleY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:scaleY takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
     # Skews are optional: an absent skew is zero (north-up), as the hxf affine functions read it.
-    sh:property [ sh:path asref:skewX ; sh:node :FiniteDoubleShape ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:skewY ; sh:node :FiniteDoubleShape ; sh:maxCount 1 ] .
+    sh:property [ sh:path asref:skewX ; sh:node :FiniteDoubleShape ; sh:maxCount 1 ;
+        sh:message "asref:skewX takes at most one value; each is a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:skewY ; sh:node :FiniteDoubleShape ; sh:maxCount 1 ;
+        sh:message "asref:skewY takes at most one value; each is a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] .
 
 # A control point is useless without both halves of the correspondence.
 asref:GroundControlPointShape a sh:NodeShape ;
     sh:targetClass asref:GroundControlPoint ; sh:targetObjectsOf asref:hasGroundControlPoint ;
-    sh:property [ sh:path asref:gcpPixelX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:gcpPixelY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:gcpX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:gcpY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:gcpZ ; sh:node :FiniteDoubleShape ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:gcpIdentifier ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+    sh:property [ sh:path asref:gcpPixelX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:gcpPixelX takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:gcpPixelY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:gcpPixelY takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:gcpX ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:gcpX takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:gcpY ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:gcpY takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:gcpZ ; sh:node :FiniteDoubleShape ; sh:maxCount 1 ;
+        sh:message "asref:gcpZ takes at most one value; each is a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path asref:gcpIdentifier ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "asref:gcpIdentifier takes at most one value; each is an xsd:string literal." ] .
 
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
@@ -144,24 +159,40 @@ asref:GroundControlPointShape a sh:NodeShape ;
 
 :CubicRationalTransformShape a sh:NodeShape ; sh:targetClass :CubicRationalTransform ; sh:targetObjectsOf :hasRationalTransform ;
     sh:nodeKind sh:BlankNodeOrIRI ;
-    sh:property [ sh:path :polynomialBasis ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :lineOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :lineScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ] ;
-    sh:property [ sh:path :sampleOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :sampleScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ] ;
-    sh:property [ sh:path :latitudeOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :latitudeScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ] ;
-    sh:property [ sh:path :longitudeOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :longitudeScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ] ;
-    sh:property [ sh:path :heightOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :heightScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ] ;
-    sh:property [ sh:path :lineNumerator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :lineDenominator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :sampleNumerator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :sampleDenominator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path :polynomialBasis ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:polynomialBasis takes exactly one value, an IRI." ] ;
+    sh:property [ sh:path :lineOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:lineOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path :lineScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ;
+        sh:message "asref:lineScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0." ] ;
+    sh:property [ sh:path :sampleOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:sampleOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path :sampleScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ;
+        sh:message "asref:sampleScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0." ] ;
+    sh:property [ sh:path :latitudeOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:latitudeOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path :latitudeScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ;
+        sh:message "asref:latitudeScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0." ] ;
+    sh:property [ sh:path :longitudeOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:longitudeOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path :longitudeScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ;
+        sh:message "asref:longitudeScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0." ] ;
+    sh:property [ sh:path :heightOffset ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:heightOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
+    sh:property [ sh:path :heightScale ; sh:node :FiniteDoubleShape ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0 ;
+        sh:message "asref:heightScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0." ] ;
+    sh:property [ sh:path :lineNumerator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:lineNumerator takes exactly one value, a value conforming to asref:CoefficientVectorShape." ] ;
+    sh:property [ sh:path :lineDenominator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:lineDenominator takes exactly one value, a value conforming to asref:CoefficientVectorShape." ] ;
+    sh:property [ sh:path :sampleNumerator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:sampleNumerator takes exactly one value, a value conforming to asref:CoefficientVectorShape." ] ;
+    sh:property [ sh:path :sampleDenominator ; sh:node :CoefficientVectorShape ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "asref:sampleDenominator takes exactly one value, a value conforming to asref:CoefficientVectorShape." ] .
 
 :CoefficientVectorShape a sh:NodeShape ; sh:nodeKind sh:BlankNodeOrIRI ;
-    sh:property [ sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:node :FiniteDoubleShape ] ;
+    sh:property [ sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:node :FiniteDoubleShape ;
+        sh:message "Each member of the list is a finite number (an xsd:double or xsd:float literal, not NaN or infinite)." ] ;
     sh:sparql [ sh:message "A coefficient vector must be a well-formed finite RDF list of exactly 20 cells." ; sh:select """
       PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
       SELECT DISTINCT $this WHERE {
@@ -288,7 +319,7 @@ asref:CubicRationalTransformShape rdfs:label "Cubic Rational Transform Shape"@en
     skos:definition "Applies to instances of asref:CubicRationalTransform; objects of asref:hasRationalTransform. Each focus node is a resource (an IRI or a blank node). asref:heightOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:heightScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0. asref:latitudeOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:latitudeScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0. asref:lineDenominator takes exactly one value, a value conforming to asref:CoefficientVectorShape. asref:lineNumerator takes exactly one value, a value conforming to asref:CoefficientVectorShape. asref:lineOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:lineScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0. asref:longitudeOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:longitudeScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0. asref:polynomialBasis takes exactly one value, an IRI. asref:sampleDenominator takes exactly one value, a value conforming to asref:CoefficientVectorShape. asref:sampleNumerator takes exactly one value, a value conforming to asref:CoefficientVectorShape. asref:sampleOffset takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite). asref:sampleScale takes exactly one value, a finite number (an xsd:double or xsd:float literal, not NaN or infinite) greater than 0."@en .
 asref:FiniteDoubleShape rdfs:label "Finite Double Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
-    skos:definition "Applied through references from other shapes. A conforming value is an xsd:double or xsd:float literal greater than -inf, less than inf, not a value matching the regular expression ^(nan|[+-]?inf)$ (flags \"i\")."@en .
+    skos:definition "Applied through references from other shapes. A conforming value is an xsd:double or xsd:float literal that is finite (not NaN or infinite)."@en .
 asref:FloatValueShape skos:definition "Applied through references from other shapes. A conforming value is an xsd:double or xsd:float literal."@en .
 asref:GeoTransformShape rdfs:label "Geo Transform Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;

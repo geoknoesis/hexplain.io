@@ -167,20 +167,24 @@ hexplain:MapsToClassShape a sh:NodeShape ;
     sh:class bddo:Struct ;
     # OWL vocabularies type classes owl:Class; RDFS ones (schema.org, for one) type them rdfs:Class.
     sh:property [ sh:path hexplain:mapsToClass ; sh:nodeKind sh:IRI ;
-        sh:or ( [ sh:class owl:Class ] [ sh:class rdfs:Class ] ) ] .
+        sh:or ( [ sh:class owl:Class ] [ sh:class rdfs:Class ] ) ;
+        sh:message "Each value of hexplain:mapsToClass is an IRI naming an instance of owl:Class or rdfs:Class." ] .
 hexplain:MapsToPropertyShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToProperty ;
     sh:class bddo:Field ;
     sh:property [ sh:path hexplain:mapsToProperty ; sh:nodeKind sh:IRI ;
         sh:or ( [ sh:class rdf:Property ] [ sh:class owl:DatatypeProperty ]
-                [ sh:class owl:ObjectProperty ] [ sh:class owl:AnnotationProperty ] ) ] .
+                [ sh:class owl:ObjectProperty ] [ sh:class owl:AnnotationProperty ] ) ;
+        sh:message "Each value of hexplain:mapsToProperty is an IRI naming an instance of rdf:Property, owl:DatatypeProperty, owl:ObjectProperty or owl:AnnotationProperty." ] .
 hexplain:HasDataLayoutShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:hasDataLayout ;
     sh:class bddo:Field ;
-    sh:property [ sh:path hexplain:hasDataLayout ; sh:class dlv:DataLayout ; sh:maxCount 1 ] .
+    sh:property [ sh:path hexplain:hasDataLayout ; sh:class dlv:DataLayout ; sh:maxCount 1 ;
+        sh:message "hexplain:hasDataLayout takes at most one value; each is an instance of dlv:DataLayout." ] .
 hexplain:IsEncodedWithShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:isEncodedWith ;
-    sh:property [ sh:path hexplain:isEncodedWith ; sh:nodeKind sh:IRI ; sh:class skos:Concept ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:isEncodedWith ; sh:nodeKind sh:IRI ; sh:class skos:Concept ; sh:maxCount 1 ;
+        sh:message "hexplain:isEncodedWith takes at most one value; each is an IRI naming an instance of skos:Concept." ] ;
     # A block is encoded one way or the other: a single shorthand codec, or a pipeline.
     sh:not [ sh:and ( [ sh:property [ sh:path hexplain:isEncodedWith ; sh:minCount 1 ] ]
                       [ sh:property [ sh:path hexplain:hasEncodingStep ; sh:minCount 1 ] ] ) ] .
@@ -199,15 +203,18 @@ hexplain:EncodingStepShape a sh:NodeShape ;
     sh:property [ sh:path hexplain:codec ; sh:nodeKind sh:IRI ; sh:class skos:Concept ;
         sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "An encoding step must name exactly one codec." ] ;
-    sh:property [ sh:path hexplain:codecParameter ; sh:class hexplain:CodecParameter ] .
+    sh:property [ sh:path hexplain:codecParameter ; sh:class hexplain:CodecParameter ;
+        sh:message "Each value of hexplain:codecParameter is an instance of hexplain:CodecParameter." ] .
 
 # A parameter without both halves says nothing.
 hexplain:CodecParameterShape a sh:NodeShape ;
     sh:targetClass hexplain:CodecParameter ;
     sh:targetObjectsOf hexplain:codecParameter ;
     sh:targetSubjectsOf hexplain:parameterName , hexplain:parameterValue ;
-    sh:property [ sh:path hexplain:parameterName ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path hexplain:parameterValue ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path hexplain:parameterName ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "hexplain:parameterName takes exactly one value, an xsd:string literal." ] ;
+    sh:property [ sh:path hexplain:parameterValue ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "hexplain:parameterValue takes exactly one value." ] .
 hexplain:ValueExpressionShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:valueExpression, hexplain:valueDatatype ;
     # A Field computes one value; a MappingRule computes the value for the arm it belongs to.
@@ -218,8 +225,8 @@ hexplain:ValueExpressionShape a sh:NodeShape ;
     # seconds, UTM or MGRS depending on ICORDS, and only the first two are even the same
     # quantity.
     sh:or ( [ sh:class bddo:Field ] [ sh:class hexplain:MappingRule ] ) ;
-    sh:property [ sh:path hexplain:valueExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:maxCount 1 ] ;
-    sh:property [ sh:path hexplain:valueDatatype ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+    sh:property [ sh:path hexplain:valueExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:maxCount 1 ; sh:message "hexplain:valueExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
+    sh:property [ sh:path hexplain:valueDatatype ; sh:nodeKind sh:IRI ; sh:maxCount 1 ; sh:message "hexplain:valueDatatype takes at most one value; each is an IRI." ] .
 hexplain:HasConditionalMappingShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:hasConditionalMapping ;
     sh:class bddo:Field ;
@@ -228,18 +235,20 @@ hexplain:HasConditionalMappingShape a sh:NodeShape ;
         sh:message "Every member of a hasConditionalMapping list must be a hexplain:MappingRule." ] .
 hexplain:MappingRuleShape a sh:NodeShape ;
     sh:targetClass hexplain:MappingRule ;
-    sh:property [ sh:path hexplain:condition ; sh:nodeKind sh:Literal ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:condition ; sh:nodeKind sh:Literal ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "hexplain:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
     sh:property [ sh:path hexplain:semanticProperty ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:or ( [ sh:class rdf:Property ] [ sh:class owl:DatatypeProperty ]
-                [ sh:class owl:ObjectProperty ] [ sh:class owl:AnnotationProperty ] ) ] ;
+                [ sh:class owl:ObjectProperty ] [ sh:class owl:AnnotationProperty ] ) ;
+        sh:message "hexplain:semanticProperty takes exactly one value, an IRI naming an instance of rdf:Property, owl:DatatypeProperty, owl:ObjectProperty or owl:AnnotationProperty." ] ;
     # Optional: absent means the arm emits the field's parsed value unchanged.
-    sh:property [ sh:path hexplain:valueExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:maxCount 1 ] ;
-    sh:property [ sh:path hexplain:valueDatatype ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+    sh:property [ sh:path hexplain:valueExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:maxCount 1 ; sh:message "hexplain:valueExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
+    sh:property [ sh:path hexplain:valueDatatype ; sh:nodeKind sh:IRI ; sh:maxCount 1 ; sh:message "hexplain:valueDatatype takes at most one value; each is an IRI." ] .
 hexplain:MapsToObjectPropertyShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToObjectProperty ;
     sh:class bddo:Field ;
     sh:property [ sh:path hexplain:mapsToObjectProperty ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
-        sh:or ( [ sh:class rdf:Property ] [ sh:class owl:ObjectProperty ] ) ] .
+        sh:or ( [ sh:class rdf:Property ] [ sh:class owl:ObjectProperty ] ) ;
+        sh:message "hexplain:mapsToObjectProperty takes at most one value; each is an IRI naming an instance of rdf:Property or owl:ObjectProperty." ] .
 hexplain:HasConditionalClassMappingShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:hasConditionalClassMapping ;
     sh:class bddo:Struct ;
@@ -250,25 +259,29 @@ hexplain:HasConditionalClassMappingShape a sh:NodeShape ;
         sh:message "Every member of a hasConditionalClassMapping list must be a hexplain:ClassMappingRule." ] .
 hexplain:ClassMappingRuleShape a sh:NodeShape ;
     sh:targetClass hexplain:ClassMappingRule ;
-    sh:property [ sh:path hexplain:condition ; sh:nodeKind sh:Literal ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:condition ; sh:nodeKind sh:Literal ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "hexplain:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
     # As for hexplain:mapsToClass: OWL vocabularies type classes owl:Class, RDFS ones (schema.org)
     # rdfs:Class, and a conditional class mapping may choose either.
     sh:property [ sh:path hexplain:semanticClass ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
-        sh:or ( [ sh:class owl:Class ] [ sh:class rdfs:Class ] ) ] .
+        sh:or ( [ sh:class owl:Class ] [ sh:class rdfs:Class ] ) ;
+        sh:message "hexplain:semanticClass takes exactly one value, an IRI naming an instance of owl:Class or rdfs:Class." ] .
 hexplain:UnitShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:unit ;
     sh:class bddo:Field ;
-    sh:property [ sh:path hexplain:unit ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+    sh:property [ sh:path hexplain:unit ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
+        sh:message "hexplain:unit takes at most one value; each is an IRI." ] .
 hexplain:LanguageShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:language ;
     sh:class bddo:Field ;
-    sh:property [ sh:path hexplain:language ; sh:datatype xsd:language ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:language ; sh:datatype xsd:language ; sh:maxCount 1 ;
+        sh:message "hexplain:language takes at most one value; each is an xsd:language literal." ] ;
     sh:property [ sh:path hexplain:languageFromField ; sh:maxCount 0 ;
         sh:message "hexplain:language and hexplain:languageFromField are mutually exclusive." ] .
 hexplain:LanguageFromFieldShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:languageFromField ;
     sh:class bddo:Field ;
-    sh:property [ sh:path hexplain:languageFromField ; sh:class bddo:Field ; sh:maxCount 1 ] .
+    sh:property [ sh:path hexplain:languageFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
+        sh:message "hexplain:languageFromField takes at most one value; each is an instance of bddo:Field." ] .
 
 hexplain:_prefixes sh:declare
     [ sh:prefix "hexplain" ; sh:namespace "https://hexplain.io/ns/core#"^^xsd:anyURI ] ,

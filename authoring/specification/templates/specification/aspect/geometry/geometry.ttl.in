@@ -29,10 +29,14 @@
 :hasZ a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "has elevation ordinate"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ; rdfs:comment "Whether a geometry contains a Z ordinate. Independent of a measure ordinate; missing means unknown, not false."@en .
 :hasM a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "has measure ordinate"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ; rdfs:comment "Whether a geometry contains an M measure ordinate. A measure is not implicitly elevation or time. XYM and XYZ are distinct despite having three ordinates."@en .
 :OrdinateShape a sh:NodeShape ; sh:targetSubjectsOf :hasZ, :hasM, :dimensionality, :geometryType ;
-    sh:property [ sh:path :dimensionality ; {{constraint:pattern_237}} ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :geometryType ; sh:nodeKind sh:IRI ; sh:class skos:Concept ] ;
-    sh:property [ sh:path :hasZ ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
-    sh:property [ sh:path :hasM ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .
+    sh:property [ sh:path :dimensionality ; {{constraint:pattern_237}} ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "ageom:dimensionality takes at most one value; each is an integer (of any XSD integer datatype) greater than 0." ] ;
+    sh:property [ sh:path :geometryType ; sh:nodeKind sh:IRI ; sh:class skos:Concept ;
+        sh:message "Each value of ageom:geometryType is an IRI naming an instance of skos:Concept." ] ;
+    sh:property [ sh:path :hasZ ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
+        sh:message "ageom:hasZ takes at most one value; each is an xsd:boolean literal." ] ;
+    sh:property [ sh:path :hasM ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
+        sh:message "ageom:hasM takes at most one value; each is an xsd:boolean literal." ] .
 
 # ---------- Range datatype shapes ----------
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by

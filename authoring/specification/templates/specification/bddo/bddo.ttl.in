@@ -522,8 +522,10 @@ bddo:StructShape a sh:NodeShape ;
         sh:or ( [ sh:class bddo:Field ] [ sh:class bddo:LocalBinding ] ) ;
         sh:message "Every member of a Struct's hasField list must be a bddo:Field or a bddo:LocalBinding." ] ;
     sh:property {{constraint:pattern_123}} ;
-    sh:property [ sh:path bddo:bitOrder ; sh:maxCount 1 ; sh:in ( bddo:MSBFirst bddo:LSBFirst ) ] ;
-    sh:property [ sh:path bddo:syncOnMarker ; sh:maxCount 1 ; sh:datatype xsd:hexBinary ] ;
+    sh:property [ sh:path bddo:bitOrder ; sh:maxCount 1 ; sh:in ( bddo:MSBFirst bddo:LSBFirst ) ;
+        sh:message "bddo:bitOrder takes at most one value; each is either bddo:MSBFirst or bddo:LSBFirst." ] ;
+    sh:property [ sh:path bddo:syncOnMarker ; sh:maxCount 1 ; sh:datatype xsd:hexBinary ;
+        sh:message "bddo:syncOnMarker takes at most one value; each is an xsd:hexBinary literal." ] ;
     # Struct-level size bounds the byte extent of the Struct (a bounded region for its children).
     sh:property {{constraint:pattern_158}} ;
     sh:property {{constraint:pattern_160}} ;
@@ -548,18 +550,24 @@ bddo:FieldShape a sh:NodeShape ;
         [ sh:property [ sh:path bddo:hasDispatchTable ; sh:minCount 1 ] ]
     ) ;
     sh:property [ sh:path bddo:dataType ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
-        sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ] ;
+        sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ;
+        sh:message "bddo:dataType takes at most one value; each is an IRI naming an instance of bddo:DataType or bddo:Struct." ] ;
     sh:property [ sh:path ( bddo:hasConditionalDataType [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
         sh:class bddo:DataTypeRule ;
         sh:message "Every member of a hasConditionalDataType list must be a bddo:DataTypeRule." ] ;
-    sh:property [ sh:path bddo:hasDispatchTable ; sh:maxCount 1 ; sh:class bddo:DispatchTable ] ;
-    sh:property [ sh:path bddo:seekScope ; sh:maxCount 1 ; sh:in ( bddo:regionScope bddo:streamScope ) ] ;
+    sh:property [ sh:path bddo:hasDispatchTable ; sh:maxCount 1 ; sh:class bddo:DispatchTable ;
+        sh:message "bddo:hasDispatchTable takes at most one value; each is an instance of bddo:DispatchTable." ] ;
+    sh:property [ sh:path bddo:seekScope ; sh:maxCount 1 ; sh:in ( bddo:regionScope bddo:streamScope ) ;
+        sh:message "bddo:seekScope takes at most one value; each is either bddo:regionScope or bddo:streamScope." ] ;
     sh:property {{constraint:pattern_158}} ;
     sh:property {{constraint:pattern_160}} ;
     sh:property {{constraint:pattern_159}} ;
-    sh:property [ sh:path bddo:sizeToEndOfStream ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:terminator ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:separatedBy ; sh:datatype xsd:string ; sh:maxCount 1 ; sh:in ( "whitespace" ) ] ;
+    sh:property [ sh:path bddo:sizeToEndOfStream ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
+        sh:message "bddo:sizeToEndOfStream takes at most one value; each is an xsd:boolean literal." ] ;
+    sh:property [ sh:path bddo:terminator ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ;
+        sh:message "bddo:terminator takes at most one value; each is an xsd:hexBinary literal." ] ;
+    sh:property [ sh:path bddo:separatedBy ; sh:datatype xsd:string ; sh:maxCount 1 ; sh:in ( "whitespace" ) ;
+        sh:message "bddo:separatedBy takes at most one value; each is an xsd:string literal equal to \"whitespace\"." ] ;
     # bddo:separatedBy IS the field's extent, so it excludes every other way of stating one.
     # All five, not just the two literal spellings: a separated field declaring
     # sizeFromField/sizeFromExpression/sizeToEndOfStream would otherwise satisfy both this shape
@@ -581,21 +589,35 @@ bddo:FieldShape a sh:NodeShape ;
     sh:not [ sh:and (
         [ sh:property {{constraint:pattern_156}} ]
         [ sh:property [ sh:path bddo:terminator ; sh:minCount 1 ] ] ) ] ;
-    sh:property [ sh:path bddo:trimNull ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:encoding ; sh:maxCount 1 ; sh:in ( bddo:utf8 bddo:ascii bddo:utf16le bddo:utf16be bddo:latin1 ) ] ;
-    sh:property [ sh:path bddo:bitLength ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:alignment ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:atOffset ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:atOffsetFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:atOffsetFromExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:trimNull ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
+        sh:message "bddo:trimNull takes at most one value; each is an xsd:boolean literal." ] ;
+    sh:property [ sh:path bddo:encoding ; sh:maxCount 1 ; sh:in ( bddo:utf8 bddo:ascii bddo:utf16le bddo:utf16be bddo:latin1 ) ;
+        sh:message "bddo:encoding takes at most one value; each is one of bddo:utf8, bddo:ascii, bddo:utf16le, bddo:utf16be or bddo:latin1." ] ;
+    sh:property [ sh:path bddo:bitLength ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "bddo:bitLength takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path bddo:alignment ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "bddo:alignment takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path bddo:atOffset ; sh:minInclusive 0 ; sh:maxCount 1 ;
+        sh:message "bddo:atOffset takes at most one value; each is a number at least 0." ] ;
+    sh:property [ sh:path bddo:atOffsetFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
+        sh:message "bddo:atOffsetFromField takes at most one value; each is an instance of bddo:Field." ] ;
+    sh:property [ sh:path bddo:atOffsetFromExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ;
+        sh:message "bddo:atOffsetFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
     sh:property [ sh:path bddo:offsetBase ; sh:maxCount 1 ;
-        sh:in ( bddo:streamStart bddo:streamEnd bddo:parentStart bddo:currentPosition ) ] ;
-    sh:property [ sh:path bddo:enumeration ; sh:class bddo:Enumeration ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:checksum ; sh:class bddo:Checksum ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:valueFromExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:validIf ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:rootKeyFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:isPresentIf ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] .
+        sh:in ( bddo:streamStart bddo:streamEnd bddo:parentStart bddo:currentPosition ) ;
+        sh:message "bddo:offsetBase takes at most one value; each is one of bddo:streamStart, bddo:streamEnd, bddo:parentStart or bddo:currentPosition." ] ;
+    sh:property [ sh:path bddo:enumeration ; sh:class bddo:Enumeration ; sh:maxCount 1 ;
+        sh:message "bddo:enumeration takes at most one value; each is an instance of bddo:Enumeration." ] ;
+    sh:property [ sh:path bddo:checksum ; sh:class bddo:Checksum ; sh:maxCount 1 ;
+        sh:message "bddo:checksum takes at most one value; each is an instance of bddo:Checksum." ] ;
+    sh:property [ sh:path bddo:valueFromExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ;
+        sh:message "bddo:valueFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
+    sh:property [ sh:path bddo:validIf ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ;
+        sh:message "bddo:validIf takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
+    sh:property [ sh:path bddo:rootKeyFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
+        sh:message "bddo:rootKeyFromField takes at most one value; each is an instance of bddo:Field." ] ;
+    sh:property [ sh:path bddo:isPresentIf ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ;
+        sh:message "bddo:isPresentIf takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] .
 
 # At most one sizing mechanism per field.
 bddo:FieldSizingShape a sh:NodeShape ;
@@ -674,17 +696,22 @@ bddo:DerivedFieldShape a sh:NodeShape ;
 bddo:DataTypeShape a sh:NodeShape ;
     sh:targetClass bddo:DataType ;
     sh:property [ sh:path bddo:baseType ; sh:maxCount 1 ;
-        sh:in ( bddo:baseInteger bddo:baseFloat bddo:baseString bddo:baseBytes ) ] ;
-    sh:property [ sh:path bddo:bitWidth ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:isSigned ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
+        sh:in ( bddo:baseInteger bddo:baseFloat bddo:baseString bddo:baseBytes ) ;
+        sh:message "bddo:baseType takes at most one value; each is one of bddo:baseInteger, bddo:baseFloat, bddo:baseString or bddo:baseBytes." ] ;
+    sh:property [ sh:path bddo:bitWidth ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "bddo:bitWidth takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path bddo:isSigned ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
+        sh:message "bddo:isSigned takes at most one value; each is an xsd:boolean literal." ] ;
     sh:property {{constraint:pattern_123}} ;
-    sh:property [ sh:path bddo:xsdType ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+    sh:property [ sh:path bddo:xsdType ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
+        sh:message "bddo:xsdType takes at most one value; each is an IRI." ] .
 
 bddo:DataTypeRuleShape a sh:NodeShape ;
     sh:targetClass bddo:DataTypeRule ;
     sh:property {{constraint:pattern_106}} ;
     sh:property [ sh:path bddo:ruleDataType ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
-        sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ] .
+        sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ;
+        sh:message "bddo:ruleDataType takes exactly one value, an IRI naming an instance of bddo:DataType or bddo:Struct." ] .
 
 bddo:DispatchTableShape a sh:NodeShape ;
     sh:targetClass bddo:DispatchTable ;
@@ -692,19 +719,25 @@ bddo:DispatchTableShape a sh:NodeShape ;
         [ sh:property [ sh:path bddo:dispatchOnField ; sh:minCount 1 ] ]
         [ sh:property [ sh:path bddo:dispatchOnExpression ; sh:minCount 1 ] ]
     ) ;
-    sh:property [ sh:path bddo:dispatchOnField ; sh:maxCount 1 ; sh:class bddo:Field ] ;
-    sh:property [ sh:path bddo:dispatchOnExpression ; sh:maxCount 1 ; sh:node bddo:HelExpressionValueShape ] ;
+    sh:property [ sh:path bddo:dispatchOnField ; sh:maxCount 1 ; sh:class bddo:Field ;
+        sh:message "bddo:dispatchOnField takes at most one value; each is an instance of bddo:Field." ] ;
+    sh:property [ sh:path bddo:dispatchOnExpression ; sh:maxCount 1 ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:dispatchOnExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
     sh:property [ sh:path bddo:dispatchDefault ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
-        sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ] .
+        sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ;
+        sh:message "bddo:dispatchDefault takes at most one value; each is an IRI naming an instance of bddo:DataType or bddo:Struct." ] .
 
 bddo:DispatchArmShape a sh:NodeShape ;
     sh:targetClass bddo:DispatchArm ;
     sh:targetSubjectsOf bddo:armTable , bddo:armKey , bddo:armDataType ;
-    sh:property [ sh:path bddo:armTable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class bddo:DispatchTable ] ;
+    sh:property [ sh:path bddo:armTable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class bddo:DispatchTable ;
+        sh:message "bddo:armTable takes exactly one value, an instance of bddo:DispatchTable." ] ;
     sh:property [ sh:path bddo:armKey ; sh:minCount 1 ; sh:maxCount 1 ;
-        sh:or ( [ sh:datatype xsd:string ] [ sh:datatype xsd:integer ] ) ] ;
+        sh:or ( [ sh:datatype xsd:string ] [ sh:datatype xsd:integer ] ) ;
+        sh:message "bddo:armKey takes exactly one value, an xsd:string or xsd:integer literal." ] ;
     sh:property [ sh:path bddo:armDataType ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
-        sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ] .
+        sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ;
+        sh:message "bddo:armDataType takes exactly one value, an IRI naming an instance of bddo:DataType or bddo:Struct." ] .
 
 # Keys are unique per table across every contributing graph: two arms with one key would make
 # the selection depend on graph order, which is exactly what a keyed table exists to rule out.
@@ -739,13 +772,17 @@ bddo:SeekScopeShape a sh:NodeShape ;
 
 bddo:EnumerationShape a sh:NodeShape ;
     sh:targetClass bddo:Enumeration ;
-    sh:property [ sh:path bddo:hasEnumValue ; sh:minCount 1 ; sh:class bddo:EnumValue ] ;
-    sh:property [ sh:path bddo:enumIsFlags ; sh:datatype xsd:boolean ; sh:maxCount 1 ] .
+    sh:property [ sh:path bddo:hasEnumValue ; sh:minCount 1 ; sh:class bddo:EnumValue ;
+        sh:message "bddo:hasEnumValue takes at least one value; each is an instance of bddo:EnumValue." ] ;
+    sh:property [ sh:path bddo:enumIsFlags ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
+        sh:message "bddo:enumIsFlags takes at most one value; each is an xsd:boolean literal." ] .
 
 bddo:EnumValueShape a sh:NodeShape ;
     sh:targetClass bddo:EnumValue ;
-    sh:property [ sh:path bddo:enumRawValue ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:enumSymbol ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+    sh:property [ sh:path bddo:enumRawValue ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "bddo:enumRawValue takes exactly one value." ] ;
+    sh:property [ sh:path bddo:enumSymbol ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
+        sh:message "bddo:enumSymbol takes at most one value; each is an IRI." ] .
 
 bddo:ChecksumShape a sh:NodeShape ;
     sh:targetClass bddo:Checksum ;
@@ -754,11 +791,16 @@ bddo:ChecksumShape a sh:NodeShape ;
         sh:or ( [ sh:in ( bddo:crc16 bddo:crc32 bddo:adler32 bddo:md5 bddo:sha1 bddo:sha256 bddo:crc8Smbus bddo:crc16Arc bddo:crc16Xmodem bddo:crc16Modbus bddo:crc16X25 bddo:crc32c bddo:crc32Bzip2 bddo:crc32Mpeg2 bddo:crc64Ecma182 bddo:crc64Xz ) ]
                 [ sh:class bddo:CustomCrc ] ) ;
         sh:message "bddo:checksumAlgorithm is one of the named algorithms or a bddo:CustomCrc." ] ;
-    sh:property [ sh:path bddo:coversFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:coversToField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:coversExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:coversFromExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:coversToExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:coversFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
+        sh:message "bddo:coversFromField takes at most one value; each is an instance of bddo:Field." ] ;
+    sh:property [ sh:path bddo:coversToField ; sh:class bddo:Field ; sh:maxCount 1 ;
+        sh:message "bddo:coversToField takes at most one value; each is an instance of bddo:Field." ] ;
+    sh:property [ sh:path bddo:coversExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ;
+        sh:message "bddo:coversExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
+    sh:property [ sh:path bddo:coversFromExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ;
+        sh:message "bddo:coversFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
+    sh:property [ sh:path bddo:coversToExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ;
+        sh:message "bddo:coversToExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
     # One mechanism per bound. Both would leave the reader to guess which wins, and the two
     # forms do not even agree on whether the end byte is included, so the guess changes the
     # bytes hashed.
@@ -926,18 +968,27 @@ bddo:ConditionalEndiannessShape a sh:NodeShape ;
 
 bddo:DelimitedRecordsShape a sh:NodeShape ;
     sh:targetClass bddo:DelimitedRecords ;
-    sh:property [ sh:path bddo:recordDelimiter ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:fieldDelimiter ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:whitespaceSeparated ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:recordDelimiter ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ;
+        sh:message "bddo:recordDelimiter takes at most one value; each is an xsd:hexBinary literal." ] ;
+    sh:property [ sh:path bddo:fieldDelimiter ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ;
+        sh:message "bddo:fieldDelimiter takes at most one value; each is an xsd:hexBinary literal." ] ;
+    sh:property [ sh:path bddo:whitespaceSeparated ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
+        sh:message "bddo:whitespaceSeparated takes at most one value; each is an xsd:boolean literal." ] ;
     # A run of whitespace and a fixed delimiter are two different separation rules.
     sh:not [ sh:and ( [ sh:property {{constraint:pattern_130}} ]
                       [ sh:property {{constraint:pattern_172}} ] ) ] ;
-    sh:property [ sh:path bddo:keyValueSeparator ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:quoteChar ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:escapeChar ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:commentPrefix ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:skipRecords ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:trimWhitespace ; sh:datatype xsd:boolean ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:keyValueSeparator ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ;
+        sh:message "bddo:keyValueSeparator takes at most one value; each is an xsd:hexBinary literal." ] ;
+    sh:property [ sh:path bddo:quoteChar ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ;
+        sh:message "bddo:quoteChar takes at most one value; each is an xsd:hexBinary literal." ] ;
+    sh:property [ sh:path bddo:escapeChar ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ;
+        sh:message "bddo:escapeChar takes at most one value; each is an xsd:hexBinary literal." ] ;
+    sh:property [ sh:path bddo:commentPrefix ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "bddo:commentPrefix takes at most one value; each is an xsd:string literal." ] ;
+    sh:property [ sh:path bddo:skipRecords ; sh:minInclusive 0 ; sh:maxCount 1 ;
+        sh:message "bddo:skipRecords takes at most one value; each is a number at least 0." ] ;
+    sh:property [ sh:path bddo:trimWhitespace ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
+        sh:message "bddo:trimWhitespace takes at most one value; each is an xsd:boolean literal." ] ;
     sh:property [ sh:path bddo:hasField ; sh:minCount 1 ;
         sh:message "A bddo:DelimitedRecords must declare at least one field." ] .
 
@@ -958,7 +1009,8 @@ bddo:KeyValueHeaderShape a sh:NodeShape ;
               sh:property {{constraint:pattern_141}} ]
             [ sh:property {{constraint:pattern_141}} ;
               sh:property {{constraint:pattern_144}} ] ) ;
-          sh:message "Every field of a bddo:KeyValueHeader declares at most one bddo:key (flat) or one bddo:keyPath (nested), never both; a field with neither is located by its simple key." ] ] .
+          sh:message "Every field of a bddo:KeyValueHeader declares at most one bddo:key (flat) or one bddo:keyPath (nested), never both; a field with neither is located by its simple key." ] ;
+        sh:message "Every field of a bddo:KeyValueHeader declares at most one bddo:key (flat) or one bddo:keyPath (nested), never both; a field with neither is located by its simple key." ] .
 
 # ---------- Tree documents ----------
 bddo:TreeDocumentShape a sh:NodeShape ;
@@ -966,7 +1018,8 @@ bddo:TreeDocumentShape a sh:NodeShape ;
     sh:property [ sh:path bddo:treeSyntax ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:in ( bddo:xml bddo:json ) ;
         sh:message "A bddo:TreeDocument must declare exactly one bddo:treeSyntax: bddo:xml or bddo:json." ] ;
-    sh:property [ sh:path bddo:hasNamespaceBinding ; sh:class bddo:NamespaceBinding ] ;
+    sh:property [ sh:path bddo:hasNamespaceBinding ; sh:class bddo:NamespaceBinding ;
+        sh:message "Each value of bddo:hasNamespaceBinding is an instance of bddo:NamespaceBinding." ] ;
     sh:property [ sh:path bddo:hasField ; sh:minCount 1 ;
         sh:message "A bddo:TreeDocument must declare at least one field." ] ;
     # Every field is located by a path, and by nothing else. A byte offset or a record key in a
@@ -977,7 +1030,8 @@ bddo:TreeDocumentShape a sh:NodeShape ;
             sh:property {{constraint:pattern_141}} ;
             sh:property {{constraint:pattern_144}} ;
             sh:property [ sh:path bddo:atOffset ; sh:maxCount 0 ] ;
-            sh:message "Every field of a bddo:TreeDocument is located by exactly one bddo:nodePath, and not by a key, a key path or a byte offset." ] ] ;
+            sh:message "Every field of a bddo:TreeDocument is located by exactly one bddo:nodePath, and not by a key, a key path or a byte offset." ] ;
+        sh:message "Every field of a bddo:TreeDocument is located by exactly one bddo:nodePath, and not by a key, a key path or a byte offset." ] ;
     # Namespaces bind prefixes in XPath. JSON Pointer has no prefixes to bind, so a binding on a
     # JSON document is a misunderstanding worth catching rather than ignoring.
     sh:sparql [ sh:message "bddo:hasNamespaceBinding applies to an XML tree document; JSON Pointer has no namespace prefixes." ;
@@ -993,7 +1047,8 @@ bddo:NamespaceBindingShape a sh:NodeShape ;
     sh:targetSubjectsOf bddo:namespacePrefix , bddo:namespaceIRI ;
     # The prefix MAY be the empty string -- that is how a default namespace is bound -- so
     # minCount rather than a non-blank check.
-    sh:property [ sh:path bddo:namespacePrefix ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:namespacePrefix ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "bddo:namespacePrefix takes exactly one value, an xsd:string literal." ] ;
     sh:property [ sh:path bddo:namespaceIRI ; sh:datatype xsd:anyURI ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "A namespace binding needs the IRI it binds to; a prefix alone names nothing." ] ;
     # XML Namespaces: a namespace name is an absolute IRI (a relative one is deprecated and
@@ -1033,7 +1088,8 @@ bddo:TreePrefixBindingShape a sh:NodeShape ;
 bddo:NodePathShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
     sh:targetSubjectsOf bddo:nodePath ;
-    sh:property [ sh:path bddo:nodePath ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:nodePath ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "bddo:nodePath takes at most one value; each is an xsd:string literal." ] ;
     # Path syntax by the container's tree syntax: a JSON Pointer (RFC 6901), or the abbreviated
     # XPath of the Processing Model (child steps, 1-based positional predicates, one final
     # attribute step). Names are any run of characters that are not path punctuation, so every
@@ -1074,18 +1130,23 @@ bddo:RecordGroupingShape a sh:NodeShape ;
         sh:message "A bddo:RecordGrouping must name exactly one style: keyedGroup, valuedGroup or sectionHeaded." ] ;
     # Both tokens, always. A grouping that says where a group starts and not where it ends
     # cannot be read: every record after the first group would be inside it.
-    sh:property [ sh:path bddo:groupOpenToken ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:groupCloseToken ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path bddo:groupOpenToken ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "bddo:groupOpenToken takes exactly one value, an xsd:string literal." ] ;
+    sh:property [ sh:path bddo:groupCloseToken ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "bddo:groupCloseToken takes exactly one value, an xsd:string literal." ] .
 
 bddo:GroupedRecordsShape a sh:NodeShape ;
     sh:targetClass bddo:DelimitedRecords ;
-    sh:property [ sh:path bddo:hasGrouping ; sh:class bddo:RecordGrouping ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:pathSeparator ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+    sh:property [ sh:path bddo:hasGrouping ; sh:class bddo:RecordGrouping ; sh:maxCount 1 ;
+        sh:message "bddo:hasGrouping takes at most one value; each is an instance of bddo:RecordGrouping." ] ;
+    sh:property [ sh:path bddo:pathSeparator ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "bddo:pathSeparator takes at most one value; each is an xsd:string literal." ] .
 
 # A path has nothing to traverse unless its container nests.
 bddo:KeyPathShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
-    sh:property [ sh:path bddo:keyPath ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:keyPath ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "bddo:keyPath takes at most one value; each is an xsd:string literal." ] ;
     sh:sparql [ sh:message "bddo:keyPath locates a field inside nested groups, so its container must declare bddo:hasGrouping; without one the container is flat and the path addresses nothing." ;
         sh:prefixes bddo:_prefixes ;
         sh:select """SELECT $this WHERE {
@@ -1105,7 +1166,8 @@ bddo:DelimitedTableShape a sh:NodeShape ;
         sh:message "bddo:keyValueSeparator applies to a KeyValueHeader, not a DelimitedTable." ] ;
     sh:property [ sh:path ( bddo:hasField [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
         sh:node [ sh:property [ sh:path bddo:key ; sh:maxCount 0 ;
-            sh:message "bddo:key applies to a field of a KeyValueHeader; a DelimitedTable's columns are located by position." ] ] ] .
+            sh:message "bddo:key applies to a field of a KeyValueHeader; a DelimitedTable's columns are located by position." ] ] ;
+        sh:message "No field of a bddo:DelimitedTable states bddo:key: a table's columns are located by position, and bddo:key applies to a field of a KeyValueHeader." ] .
 
 # A varint's length comes from the data, so declaring a width contradicts it.
 bddo:VarintWidthShape a sh:NodeShape ;

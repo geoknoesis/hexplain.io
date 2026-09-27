@@ -116,23 +116,36 @@
     sh:targetSubjectsOf :markingSystem, :sensitivityLevel, :sensitivityLevelText, :marking,
         :markingText, :markingIdentifier, :markingAuthority, :markingDate, :releasableTo,
         :expiresOn, :levelChangesTo, :levelChangeDate ;
-    sh:property [ sh:path :markingSystem ; sh:datatype xsd:string ] ;
-    sh:property [ sh:path :sensitivityLevel ; sh:class skos:Concept ] ;
-    sh:property [ sh:path :sensitivityLevelText ; sh:datatype xsd:string ] ;
-    sh:property [ sh:path :marking ; sh:class skos:Concept ] ;
-    sh:property [ sh:path :markingText ; sh:datatype xsd:string ] ;
-    sh:property [ sh:path :markingIdentifier ; sh:datatype xsd:string ] ;
-    sh:property [ sh:path :markingAuthority ; sh:datatype xsd:string ] ;
-    sh:property [ sh:path :markingDate ; sh:datatype xsd:date ] ;
-    sh:property [ sh:path :releasableTo ; sh:datatype xsd:string ] ;
-    sh:property [ sh:path :expiresOn ; sh:datatype xsd:date ] ;
-    sh:property [ sh:path :levelChangesTo ; sh:class skos:Concept ] ;
-    sh:property [ sh:path :levelChangeDate ; sh:datatype xsd:date ] .
+    sh:property [ sh:path :markingSystem ; sh:datatype xsd:string ;
+        sh:message "Each value of asec:markingSystem is an xsd:string literal." ] ;
+    sh:property [ sh:path :sensitivityLevel ; sh:class skos:Concept ;
+        sh:message "Each value of asec:sensitivityLevel is an instance of skos:Concept." ] ;
+    sh:property [ sh:path :sensitivityLevelText ; sh:datatype xsd:string ;
+        sh:message "Each value of asec:sensitivityLevelText is an xsd:string literal." ] ;
+    sh:property [ sh:path :marking ; sh:class skos:Concept ;
+        sh:message "Each value of asec:marking is an instance of skos:Concept." ] ;
+    sh:property [ sh:path :markingText ; sh:datatype xsd:string ;
+        sh:message "Each value of asec:markingText is an xsd:string literal." ] ;
+    sh:property [ sh:path :markingIdentifier ; sh:datatype xsd:string ;
+        sh:message "Each value of asec:markingIdentifier is an xsd:string literal." ] ;
+    sh:property [ sh:path :markingAuthority ; sh:datatype xsd:string ;
+        sh:message "Each value of asec:markingAuthority is an xsd:string literal." ] ;
+    sh:property [ sh:path :markingDate ; sh:datatype xsd:date ;
+        sh:message "Each value of asec:markingDate is an xsd:date literal." ] ;
+    sh:property [ sh:path :releasableTo ; sh:datatype xsd:string ;
+        sh:message "Each value of asec:releasableTo is an xsd:string literal." ] ;
+    sh:property [ sh:path :expiresOn ; sh:datatype xsd:date ;
+        sh:message "Each value of asec:expiresOn is an xsd:date literal." ] ;
+    sh:property [ sh:path :levelChangesTo ; sh:class skos:Concept ;
+        sh:message "Each value of asec:levelChangesTo is an instance of skos:Concept." ] ;
+    sh:property [ sh:path :levelChangeDate ; sh:datatype xsd:date ;
+        sh:message "Each value of asec:levelChangeDate is an xsd:date literal." ] .
 
 :LevelChangeShape a sh:NodeShape ; rdfs:label "Level change completeness"@en ;
     skos:definition "A declared level change must say when it takes effect. asec:levelChangeDate is defined as the date asec:levelChangesTo takes effect, so a change with no date states an obligation nobody can discharge: a reader cannot tell whether the resource is still at the old level or already at the new one. The converse is not required -- a date with no change is a review date, which asec:expiresOn already expresses."@en ;
     sh:targetSubjectsOf :levelChangesTo ;
-    sh:property [ sh:path :levelChangeDate ; sh:minCount 1 ] .
+    sh:property [ sh:path :levelChangeDate ; sh:minCount 1 ;
+        sh:message "asec:levelChangeDate takes at least one value." ] .
 
 :VerbatimLevelShape a sh:NodeShape ; rdfs:label "Verbatim level text"@en ;
     skos:definition "Advisory, not an error: a resolved asec:sensitivityLevel without the asec:sensitivityLevelText it was resolved from is valid and readable, but it has dropped the bytes the file actually carried. This aspect treats a marking as a legal artefact whose written form matters independently of what it resolves to -- a register revised later must not silently rewrite what a file said -- and once the text is gone that check is no longer possible. Reported at sh:Warning because the marking is correct as far as it goes."@en ;

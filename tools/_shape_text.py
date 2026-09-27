@@ -39,6 +39,13 @@ class Unhandled(Exception):
     pass
 
 
+class Stated(Unhandled):
+    """The constraint is best described by the message a nested shape already states."""
+    def __init__(self, text):
+        super().__init__(text)
+        self.text = text
+
+
 def curie(g, node, prefixes):
     if isinstance(node, Literal):
         if node.datatype is None or str(node.datatype).endswith('#string'):
@@ -165,7 +172,7 @@ def value_phrase(g, shape, prefixes, allow_count=False):
     for lst in ins:
         items = members(g, lst)
         vals = join([c(x) for x in items])
-        phrase = f'equal to {vals}' if len(items) == 1 else f'one of {vals}'
+        phrase = f'equal to {vals}' if len(items) == 1 else f'either {vals}' if len(items) == 2 else f'one of {vals}'
         if base is None:
             base = phrase
         else:
@@ -177,8 +184,8 @@ def value_phrase(g, shape, prefixes, allow_count=False):
             base = ('either ' + alt) if ' or ' in alt else alt
         else:
             quals.append(f'and {alt}')
-    lo_ex = [str(v) for v in po.get(SH.minExclusive, [])]; hi_ex = [str(v) for v in po.get(SH.maxExclusive, [])]
-    if lo_ex == ['-INF'] and hi_ex == ['INF']:
+    lo_ex = [str(v).lower() for v in po.get(SH.minExclusive, [])]; hi_ex = [str(v).lower() for v in po.get(SH.maxExclusive, [])]
+    if lo_ex == ['-inf'] and hi_ex == ['inf']:
         po.pop(SH.minExclusive); po.pop(SH.maxExclusive)
         nots = po.get(SH['not'], [])
         po[SH['not']] = [n for n in nots if not str(g.value(n, SH.pattern) or '').startswith('^(nan')]
@@ -202,7 +209,15 @@ def value_phrase(g, shape, prefixes, allow_count=False):
         if known and base is None:
             base = known
         elif isinstance(v, BNode):
-            quals.append('conforming to ' + value_phrase(g, v, prefixes))
+            inner = value_phrase(g, v, prefixes)
+            if 'a value' in inner:
+                # A node shape built of property shapes or alternatives says nothing as a phrase;
+                # its own message, when it has one, is what the constraint means.
+                stated = g.value(v, SH.message)
+                if stated is None:
+                    raise Unhandled('nested node shape')
+                raise Stated(str(stated))
+            quals.append('conforming to ' + inner)
         else:
             quals.append(f'conforming to {c(v)}')
     for v in po.pop(SH['not'], []):
@@ -250,7 +265,10 @@ def message(g, pshape, prefixes):
         raise Unhandled('qualified')
     if any(p in (SH.equals, SH.disjoint, SH.lessThan, SH.lessThanOrEquals, SH.property, SH.sparql) for p, _ in extra):
         raise Unhandled('pair/nested')
-    value = value_phrase(g, pshape, prefixes, allow_count=True) if extra else None
+    try:
+        value = value_phrase(g, pshape, prefixes, allow_count=True) if extra else None
+    except Stated as stated:
+        return stated.text
     count = count_phrase(lo, hi)
     if listy:
         if count:

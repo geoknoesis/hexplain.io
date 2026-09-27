@@ -61,22 +61,33 @@
 
 # ---------- SHACL ----------
 gv:CrsShape a sh:NodeShape ; sh:targetSubjectsOf asref:wktString, asref:epsgCode ;
-    sh:property [ sh:path asref:wktString ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:epsgCode ; sh:minExclusive 0 ; sh:maxCount 1 ] .
+    sh:property [ sh:path asref:wktString ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "asref:wktString takes at most one value; each is an xsd:string literal." ] ;
+    sh:property [ sh:path asref:epsgCode ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "asref:epsgCode takes at most one value; each is a number greater than 0." ] .
 gv:OriginShape a sh:NodeShape ; sh:targetSubjectsOf asref:originLatitude, asref:originLongitude ;
-    sh:property [ sh:path asref:originLatitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] ;
-    sh:property [ sh:path asref:originLongitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ] .
+    sh:property [ sh:path asref:originLatitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ;
+        sh:message "asref:originLatitude takes at most one value; each is a literal." ] ;
+    sh:property [ sh:path asref:originLongitude ; sh:nodeKind sh:Literal ; sh:maxCount 1 ;
+        sh:message "asref:originLongitude takes at most one value; each is a literal." ] .
 gv:PixelRegistrationShape a sh:NodeShape ; sh:targetSubjectsOf asref:pixelRegistration ;
-    sh:property [ sh:path asref:pixelRegistration ; sh:maxCount 1 ; sh:in ( asref:PixelCorner asref:PixelCenter ) ] .
+    sh:property [ sh:path asref:pixelRegistration ; sh:maxCount 1 ; sh:in ( asref:PixelCorner asref:PixelCenter ) ;
+        sh:message "asref:pixelRegistration takes at most one value; each is either asref:PixelCorner or asref:PixelCenter." ] .
 gv:VectorShape a sh:NodeShape ; sh:targetClass gv:VectorDataset ;
-    sh:property [ sh:path ageom:geometryType ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
+    sh:property [ sh:path ageom:geometryType ; sh:class skos:Concept ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
+        sh:message "ageom:geometryType takes at most one value; each is an IRI naming an instance of skos:Concept." ] .
 gv:PointCloudShape a sh:NodeShape ; sh:targetClass gv:PointCloud ; sh:targetSubjectsOf apc:pointCount, apc:pointDataLayout ;
-    sh:property [ sh:path apc:pointCount ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path apc:pointDataLayout ; sh:class bddo:Struct ; sh:maxCount 1 ] .
+    sh:property [ sh:path apc:pointCount ; sh:minInclusive 0 ; sh:maxCount 1 ;
+        sh:message "apc:pointCount takes at most one value; each is a number at least 0." ] ;
+    sh:property [ sh:path apc:pointDataLayout ; sh:class bddo:Struct ; sh:maxCount 1 ;
+        sh:message "apc:pointDataLayout takes at most one value; each is an instance of bddo:Struct." ] .
 gv:AcquisitionShape a sh:NodeShape ; sh:targetSubjectsOf aprov:acquisitionTime, aprov:platformName, aprov:sensorType ;
-    sh:property [ sh:path aprov:acquisitionTime ; sh:datatype xsd:dateTime ; sh:maxCount 1 ] ;
-    sh:property [ sh:path aprov:platformName ; sh:datatype xsd:string ] ;
-    sh:property [ sh:path aprov:sensorType ; sh:datatype xsd:string ] .
+    sh:property [ sh:path aprov:acquisitionTime ; sh:datatype xsd:dateTime ; sh:maxCount 1 ;
+        sh:message "aprov:acquisitionTime takes at most one value; each is an xsd:dateTime literal." ] ;
+    sh:property [ sh:path aprov:platformName ; sh:datatype xsd:string ;
+        sh:message "Each value of aprov:platformName is an xsd:string literal." ] ;
+    sh:property [ sh:path aprov:sensorType ; sh:datatype xsd:string ;
+        sh:message "Each value of aprov:sensorType is an xsd:string literal." ] .
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
@@ -96,7 +107,7 @@ gv:OriginShape rdfs:label "Origin Shape"@en ;
     skos:definition "Applies to subjects using asref:originLatitude, asref:originLongitude. asref:originLatitude takes at most one value; each is a literal. asref:originLongitude takes at most one value; each is a literal."@en .
 gv:PixelRegistrationShape rdfs:label "Pixel Registration Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/geo> ;
-    skos:definition "Applies to subjects using asref:pixelRegistration. asref:pixelRegistration takes at most one value; each is one of asref:PixelCorner or asref:PixelCenter."@en .
+    skos:definition "Applies to subjects using asref:pixelRegistration. asref:pixelRegistration takes at most one value; each is either asref:PixelCorner or asref:PixelCenter."@en .
 gv:PointCloud skos:definition "A georeferenced collection of sampled points with per-point positions and optional attributes, without assuming a regular grid."@en .
 gv:PointCloudShape rdfs:label "Point Cloud Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/geo> ;

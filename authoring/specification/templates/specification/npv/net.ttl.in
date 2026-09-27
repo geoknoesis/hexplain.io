@@ -31,13 +31,20 @@
 
 # ---------- SHACL ----------
 npv:AddressShape a sh:NodeShape ; sh:targetSubjectsOf anet:sourceAddress, anet:destinationAddress ;
-    sh:property [ sh:path anet:sourceAddress ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path anet:destinationAddress ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+    sh:property [ sh:path anet:sourceAddress ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "anet:sourceAddress takes at most one value; each is an xsd:string literal." ] ;
+    sh:property [ sh:path anet:destinationAddress ; sh:datatype xsd:string ; sh:maxCount 1 ;
+        sh:message "anet:destinationAddress takes at most one value; each is an xsd:string literal." ] .
 npv:PortShape a sh:NodeShape ; sh:targetSubjectsOf anet:sourcePort, anet:destinationPort ;
-    sh:property [ sh:path anet:sourcePort ; {{constraint:pattern_234}} ; sh:minInclusive 0 ; sh:maxInclusive 65535 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path anet:destinationPort ; {{constraint:pattern_234}} ; sh:minInclusive 0 ; sh:maxInclusive 65535 ; sh:maxCount 1 ] .
+    sh:property [ sh:path anet:sourcePort ; {{constraint:pattern_234}} ; sh:minInclusive 0 ; sh:maxInclusive 65535 ; sh:maxCount 1 ;
+        sh:message "anet:sourcePort takes at most one value; each is an integer (of any XSD integer datatype) at least 0, at most 65535." ] ;
+    sh:property [ sh:path anet:destinationPort ; {{constraint:pattern_234}} ; sh:minInclusive 0 ; sh:maxInclusive 65535 ; sh:maxCount 1 ;
+        sh:message "anet:destinationPort takes at most one value; each is an integer (of any XSD integer datatype) at least 0, at most 65535." ] .
 npv:TcpShape a sh:NodeShape ; sh:targetSubjectsOf anet:sequenceNumber, anet:acknowledgmentNumber, anet:tcpFlags ;
-    sh:property [ sh:path anet:sequenceNumber ; {{constraint:pattern_234}} ; sh:minInclusive 0 ; sh:maxInclusive 4294967295 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path anet:acknowledgmentNumber ; {{constraint:pattern_234}} ; sh:minInclusive 0 ; sh:maxInclusive 4294967295 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path anet:tcpFlags ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ] .
+    sh:property [ sh:path anet:sequenceNumber ; {{constraint:pattern_234}} ; sh:minInclusive 0 ; sh:maxInclusive 4294967295 ; sh:maxCount 1 ;
+        sh:message "anet:sequenceNumber takes at most one value; each is an integer (of any XSD integer datatype) at least 0, at most 4294967295." ] ;
+    sh:property [ sh:path anet:acknowledgmentNumber ; {{constraint:pattern_234}} ; sh:minInclusive 0 ; sh:maxInclusive 4294967295 ; sh:maxCount 1 ;
+        sh:message "anet:acknowledgmentNumber takes at most one value; each is an integer (of any XSD integer datatype) at least 0, at most 4294967295." ] ;
+    sh:property [ sh:path anet:tcpFlags ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ;
+        sh:message "anet:tcpFlags takes at most one value; each is an xsd:hexBinary literal." ] .
 
