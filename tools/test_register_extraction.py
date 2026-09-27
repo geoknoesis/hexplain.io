@@ -84,12 +84,13 @@ EXPECTED_COUNTS = {
     # that only ever appear as a step (Delta, Shuffle, BitShuffle). Growth here is expected
     # -- registers are meant to gain concepts; this line is the deliberate acknowledgement
     # the docstring asks for, not a rubber stamp.
-    "media-encoding": (3, 44),  # +1 explicit RFC 1950 Zlib framing concept; +1 LZ4Block, the bare LZ4 block;
+    "media-encoding": (3, 49),  # +1 explicit RFC 1950 Zlib framing concept; +1 LZ4Block, the bare LZ4 block;
     # +1 XZ, the .xz container distinct from the menc:LZMA algorithm family; +1 scheme (menc:TransformScheme)
     # and +9 concepts (task 5) for the TIFF-family codecs, predictors and bit reversal: LZW, PackBits,
     # CCITTModifiedHuffman, CCITTGroup3, CCITTGroup4, NeXT, ThunderScan, FloatingPointPredictor, BitReverse;
     # +9 concepts (task 6) for the image codecs and colour conversions: JPEG, WebP, JPEGXL, LERC,
-    # YCbCrToRGB, CIELabToRGB, CMYKToRGB, SGILogRLE, MicrosoftRLE
+    # YCbCrToRGB, CIELabToRGB, CMYKToRGB, SGILogRLE, MicrosoftRLE;
+    # +5 concepts (task 7) for the array-family codec: BloscLZ, TypedDelta, FixedScaleOffset, Quantize, BitRound
     "color": (1, 4),
     "checksum": (1, 16),  # +CRC16 and Adler32, which bddo already identified physically; +10 CRC variants
     "part-role": (1, 12),

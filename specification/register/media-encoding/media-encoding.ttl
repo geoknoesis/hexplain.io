@@ -131,6 +131,16 @@ menc:Delta a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConce
 menc:Shuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Byte shuffle"@en ;
     skos:note "Groups the Nth byte of every value together, so the high bytes of similar numbers become runs. HDF5 and Blosc both use it."@en .
 menc:BitShuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Bit shuffle"@en .
+menc:BloscLZ a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "BloscLZ"@en ;
+    rdfs:comment "c-blosc's BloscLZ compressor (c-blosc 1.21.6 blosclz_decompress): literal runs of 1-32 bytes and matches at a 13-bit distance or, escaped, beyond 8191. Decodes at most decodedSize bytes; as in C, a match that is the stream's last instruction is not copied." .
+menc:TypedDelta a skos:Concept ; skos:inScheme menc:TransformScheme ; skos:topConceptOf menc:TransformScheme ; skos:prefLabel "Typed delta"@en ;
+    rdfs:comment "numcodecs' Delta filter: a running sum over elements of the numpy dtype dtype (i1, u1, [<>|]i2/i4/i8, u2/u4/u8, f4, f8), integers wrapping and floats in their own precision; astype, when given, must equal dtype." .
+menc:FixedScaleOffset a skos:Concept ; skos:inScheme menc:TransformScheme ; skos:topConceptOf menc:TransformScheme ; skos:prefLabel "Fixed scale and offset"@en ;
+    rdfs:comment "numcodecs' FixedScaleOffset filter decoded as GDAL does: astype values widened to dtype, then value / scale + offset in double precision (rounded to binary32 for <f4)." .
+menc:Quantize a skos:Concept ; skos:inScheme menc:TransformScheme ; skos:topConceptOf menc:TransformScheme ; skos:prefLabel "Quantize"@en ;
+    rdfs:comment "numcodecs' Quantize filter: decoding converts astype floats to dtype floats; digits is the precision the encoder kept." .
+menc:BitRound a skos:Concept ; skos:inScheme menc:TransformScheme ; skos:topConceptOf menc:TransformScheme ; skos:prefLabel "Bit round"@en ;
+    rdfs:comment "numcodecs' BitRound filter, which rounds float mantissas to keepbits bits when encoding; decoding is the identity." .
 menc:SGILogRLE a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "SGI LogL RLE"@en ;
     rdfs:comment "SGI's LogL run-length coding (TIFF compression 34676): each row stored as its high then low byte plane, each run-length coded; decodes to the 16-bit log-luminance codes, little-endian, as libtiff's SGILOGDATAFMT_16BIT returns them." .
 menc:MicrosoftRLE a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Microsoft RLE"@en ;
@@ -365,6 +375,59 @@ menc:MicrosoftRLE hexplain:codecContract [ a hexplain:CodecContract ; hexplain:c
         [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "height" ; hexplain:parameterType hexplain:IntegerParameterType ;
           hexplain:requiredParameter true ; hexplain:minimumValue 1 ] ] .
 
+# ---------- Codec contracts: array-family (Blosc, numcodecs filters) ----------
+menc:Blosc hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ;
+    hexplain:raisesCategory "Validation", "Unsupported", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "cname" ; hexplain:parameterType hexplain:StringParameterType ;
+          hexplain:allowedValue "blosclz", "lz4", "lz4hc", "snappy", "zlib", "zstd" ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "clevel" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:minimumValue 0 ; hexplain:maximumValue 9 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "shuffle" ; hexplain:parameterType hexplain:BooleanParameterType ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "typesize" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:minimumValue 1 ; hexplain:maximumValue 255 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "blocksize" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:minimumValue 0 ] ] .
+menc:BloscLZ hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "decodedSize" ;
+        hexplain:parameterType hexplain:IntegerParameterType ; hexplain:requiredParameter true ; hexplain:minimumValue 0 ] ] .
+menc:Shuffle hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "elementSize" ;
+        hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 4 ; hexplain:allowedValue 1, 2, 4, 8 ] ] .
+menc:TypedDelta hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ;
+    hexplain:raisesCategory "Validation", "Unsupported", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "dtype" ; hexplain:parameterType hexplain:StringParameterType ;
+          hexplain:requiredParameter true ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "astype" ; hexplain:parameterType hexplain:StringParameterType ] ] .
+menc:FixedScaleOffset hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "offset" ; hexplain:parameterType hexplain:FloatParameterType ;
+          hexplain:requiredParameter true ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "scale" ; hexplain:parameterType hexplain:FloatParameterType ;
+          hexplain:requiredParameter true ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "dtype" ; hexplain:parameterType hexplain:StringParameterType ;
+          hexplain:requiredParameter true ; hexplain:allowedValue "<f4", "<f8" ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "astype" ; hexplain:parameterType hexplain:StringParameterType ;
+          hexplain:requiredParameter true ; hexplain:allowedValue "|u1", "<u2", "<u4", "<f4" ] ] .
+menc:Quantize hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "digits" ; hexplain:parameterType hexplain:IntegerParameterType ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "dtype" ; hexplain:parameterType hexplain:StringParameterType ;
+          hexplain:requiredParameter true ; hexplain:allowedValue "<f4", "<f8" ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "astype" ; hexplain:parameterType hexplain:StringParameterType ;
+          hexplain:requiredParameter true ; hexplain:allowedValue "<f4", "<f8" ] ] .
+menc:BitRound hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:raisesCategory "ResourceLimit" ;
+    hexplain:declaresParameter [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "keepbits" ;
+        hexplain:parameterType hexplain:IntegerParameterType ; hexplain:minimumValue 0 ; hexplain:maximumValue 64 ] ] .
+
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
 <https://hexplain.io/ns/register/media-encoding> <http://www.w3.org/2004/02/skos/core#definition> "The vocabulary module publishing Hexplain Register — Media Encoding terms, its imports and associated validation declarations."@en .
@@ -389,6 +452,10 @@ menc:MicrosoftRLE hexplain:codecContract [ a hexplain:CodecContract ; hexplain:c
 <https://hexplain.io/ns/register/media-encoding#BitReverse> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#BitReverse> <http://www.w3.org/2000/01/rdf-schema#label> "Bit reversal"@en .
 <https://hexplain.io/ns/register/media-encoding#BitReverse> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#BitRound> <http://www.w3.org/2004/02/skos/core#definition> "numcodecs' BitRound filter, which rounds float mantissas to keepbits bits when encoding; decoding is the identity."@en .
+<https://hexplain.io/ns/register/media-encoding#BitRound> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#BitRound> <http://www.w3.org/2000/01/rdf-schema#label> "Bit round"@en .
+<https://hexplain.io/ns/register/media-encoding#BitRound> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#BitShuffle> <http://www.w3.org/2004/02/skos/core#definition> "A reversible transform grouping corresponding bits of successive values to prepare them for compression; element/block parameters belong to the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#BitShuffle> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#BitShuffle> <http://www.w3.org/2000/01/rdf-schema#label> "Bit shuffle"@en .
@@ -397,6 +464,10 @@ menc:MicrosoftRLE hexplain:codecContract [ a hexplain:CodecContract ; hexplain:c
 <https://hexplain.io/ns/register/media-encoding#Blosc> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#Blosc> <http://www.w3.org/2000/01/rdf-schema#label> "Blosc"@en .
 <https://hexplain.io/ns/register/media-encoding#Blosc> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#BloscLZ> <http://www.w3.org/2004/02/skos/core#definition> "c-blosc's BloscLZ compressor (c-blosc 1.21.6 blosclz_decompress): literal runs of 1-32 bytes and matches at a 13-bit distance or, escaped, beyond 8191. Decodes at most decodedSize bytes; as in C, a match that is the stream's last instruction is not copied."@en .
+<https://hexplain.io/ns/register/media-encoding#BloscLZ> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#BloscLZ> <http://www.w3.org/2000/01/rdf-schema#label> "BloscLZ"@en .
+<https://hexplain.io/ns/register/media-encoding#BloscLZ> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#CCITTGroup3> <http://www.w3.org/2004/02/skos/core#definition> "CCITT T.4 (Group 3) facsimile coding, one- or two-dimensional as bit 0 of options (the T4Options tag) says, each row after an EOL code unless noEol, decoded with libtiff's recovery rules; the reference line carries across strips in the session."@en .
 <https://hexplain.io/ns/register/media-encoding#CCITTGroup3> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#CCITTGroup3> <http://www.w3.org/2000/01/rdf-schema#label> "CCITT Group 3"@en .
@@ -435,6 +506,10 @@ menc:MicrosoftRLE hexplain:codecContract [ a hexplain:CodecContract ; hexplain:c
 <https://hexplain.io/ns/register/media-encoding#FLAC> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#FLAC> <http://www.w3.org/2000/01/rdf-schema#label> "FLAC"@en .
 <https://hexplain.io/ns/register/media-encoding#FLAC> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#FixedScaleOffset> <http://www.w3.org/2004/02/skos/core#definition> "numcodecs' FixedScaleOffset filter decoded as GDAL does: astype values widened to dtype, then value / scale + offset in double precision (rounded to binary32 for <f4)."@en .
+<https://hexplain.io/ns/register/media-encoding#FixedScaleOffset> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#FixedScaleOffset> <http://www.w3.org/2000/01/rdf-schema#label> "Fixed scale and offset"@en .
+<https://hexplain.io/ns/register/media-encoding#FixedScaleOffset> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#FloatingPointPredictor> <http://www.w3.org/2004/02/skos/core#definition> "Adobe TIFF Technical Note 3's floating-point predictor: each row's sample bytes regrouped by significance (every sample's most significant byte first) and differenced byte by byte, each byte predicted from the byte samplesPerPixel positions earlier. Decoding sums the differences and reassembles the samples in the byte order littleEndian names."@en .
 <https://hexplain.io/ns/register/media-encoding#FloatingPointPredictor> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#FloatingPointPredictor> <http://www.w3.org/2000/01/rdf-schema#label> "Floating-point predictor"@en .
@@ -511,6 +586,10 @@ menc:MicrosoftRLE hexplain:codecContract [ a hexplain:CodecContract ; hexplain:c
 <https://hexplain.io/ns/register/media-encoding#ProRes> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#ProRes> <http://www.w3.org/2000/01/rdf-schema#label> "Apple ProRes"@en .
 <https://hexplain.io/ns/register/media-encoding#ProRes> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#Quantize> <http://www.w3.org/2004/02/skos/core#definition> "numcodecs' Quantize filter: decoding converts astype floats to dtype floats; digits is the precision the encoder kept."@en .
+<https://hexplain.io/ns/register/media-encoding#Quantize> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#Quantize> <http://www.w3.org/2000/01/rdf-schema#label> "Quantize"@en .
+<https://hexplain.io/ns/register/media-encoding#Quantize> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#RunLength> <http://www.w3.org/2004/02/skos/core#definition> "An encoding that represents repeated values as runs; the profile must identify the actual run/count representation."@en .
 <https://hexplain.io/ns/register/media-encoding#RunLength> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#RunLength> <http://www.w3.org/2000/01/rdf-schema#label> "Run-length encoding"@en .
@@ -539,6 +618,10 @@ menc:MicrosoftRLE hexplain:codecContract [ a hexplain:CodecContract ; hexplain:c
 <https://hexplain.io/ns/register/media-encoding#TransformScheme> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#TransformScheme> <http://www.w3.org/2000/01/rdf-schema#label> "Transform Register"@en .
 <https://hexplain.io/ns/register/media-encoding#TransformScheme> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#TypedDelta> <http://www.w3.org/2004/02/skos/core#definition> "numcodecs' Delta filter: a running sum over elements of the numpy dtype dtype (i1, u1, [<>|]i2/i4/i8, u2/u4/u8, f4, f8), integers wrapping and floats in their own precision; astype, when given, must equal dtype."@en .
+<https://hexplain.io/ns/register/media-encoding#TypedDelta> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#TypedDelta> <http://www.w3.org/2000/01/rdf-schema#label> "Typed delta"@en .
+<https://hexplain.io/ns/register/media-encoding#TypedDelta> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#VP9> <http://www.w3.org/2004/02/skos/core#definition> "Identifier for the VP9 video coding format; container framing remains separate."@en .
 <https://hexplain.io/ns/register/media-encoding#VP9> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#VP9> <http://www.w3.org/2000/01/rdf-schema#label> "VP9"@en .
