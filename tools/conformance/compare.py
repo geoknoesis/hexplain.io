@@ -48,6 +48,7 @@ HEL_PROPERTIES = {URIRef(BDDO + p) for p in ("isPresentIf", "sizeFromExpression"
                                              "coversToExpression", "coversExpression")} | {
     URIRef(DLV + "dimensionStrideFromExpression"), URIRef(CORE + "condition"), URIRef(CORE + "valueExpression"),
     URIRef(CONF + "assertion")}
+HEL_EXPRESSION = URIRef(BDDO + "HelExpression")
 #: The optional physical-extent annotations a processor MAY add to a minted resource.
 EXTENTS = {URIRef(CORE + "byteOffset"), URIRef(CORE + "byteLength")}
 #: Predicates of an owl:Ontology header, ignored in an HDL Compiler graph unless the case compares the header.
@@ -115,7 +116,9 @@ def load_graph(path_or_text, base="urn:example:base"):
 def _canonical_literal(p, o):
     if not isinstance(o, Literal):
         return o
-    if p in HEL_PROPERTIES and (o.datatype in (None, XSD.string)) and not o.language:
+    # A HEL expression typed bddo:HelExpression is the same expression as the xsd:string one (HEL, expression
+    # literals), so the datatype is dropped with the canonical form.
+    if p in HEL_PROPERTIES and (o.datatype in (None, XSD.string, HEL_EXPRESSION)) and not o.language:
         c = hel.canonical(str(o))
         return Literal(c if c is not None else str(o))
     if o.datatype is None or o.language:

@@ -73,6 +73,10 @@ def graph_checks(failures):
     same = graph('ex:f bddo:size "04"^^xsd:integer ; bddo:hasFixedValue "0a0b"^^xsd:hexBinary ; bddo:sizeFromExpression "n*2" .')
     check(compare.compare_graph(base, same, cls="hdl-compiler") == [],
           "literals compare by value, and HEL literals by equivalence", failures)
+    typed = graph('ex:f bddo:size "4"^^xsd:integer ; bddo:hasFixedValue "0A0B"^^xsd:hexBinary ; '
+                  'bddo:sizeFromExpression "n*2"^^bddo:HelExpression .')
+    check(compare.compare_graph(base, typed, cls="hdl-compiler") == [],
+          "a HEL literal typed bddo:HelExpression is the same expression as the xsd:string one", failures)
     wider = graph('ex:f bddo:size "4"^^xsd:long ; bddo:hasFixedValue "0A0B"^^xsd:hexBinary ; '
                   'bddo:sizeFromExpression "instance.n * 2" .')
     check(compare.compare_graph(base, wider, cls="hdl-compiler") != [], "HDL literal datatypes must match exactly", failures)

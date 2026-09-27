@@ -179,7 +179,10 @@ rewritten.
   of a literal typed `xsd:string` or `bddo:HelExpression`; authoring tools SHOULD write the latter
   (`req-hel-expression-literals-2`, a rule on descriptions), and a processor MUST accept both and
   evaluate them alike (`req-hel-expression-literals-1`). `processing#context` points to it. New case
-  `pp-hel-expression-datatype`.
+  `pp-hel-expression-datatype`. The suite's graph comparison (`conformance#canonicalisation`,
+  `tools/conformance/compare.py`) compares a HEL-bearing literal typed `bddo:HelExpression` as the
+  same expression as an `xsd:string` one, so an HDL compiler that follows the SHOULD still matches
+  the expected graphs; `test_conformance_comparator` checks it.
 - **Security and Privacy Considerations.** New section `processing#security-privacy` gathers the
   threats a processor faces and the rules that answer them, and adds four: limits apply to the work
   a description causes as much as to the input (`req-pm-security-resources-1`); every codec stage
