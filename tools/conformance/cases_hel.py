@@ -130,17 +130,23 @@ BYTES_FIELDS = ["ex:tag a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 ."
                 "ex:pad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 ."]
 
 hel("bytes-vs-string", "Bytes compared with a String decode in the field's encoding",
-    "IHDR bytes equal 'IHDR'; C3 A9 decodes as UTF-8 by default and E9 as the field's ISO-8859-1; a malformed byte decodes to U+FFFD; "
+    "IHDR bytes equal 'IHDR'; C3 A9 decodes as UTF-8 by default and E9 as the field's ISO-8859-1; a malformed byte equals no "
+    "String, not even U+FFFD; "
     "two Bytes values compare byte for byte; len() of Bytes counts bytes; trim() and concat() accept Bytes as a String.",
-    ["req-hel-core-functions-2", "req-hel-conformance-4"], ["coercion", "core-functions"],
+    ["req-hel-core-functions-2", "req-hel-conformance-4", "req-pm-text-decoding-1"], ["coercion", "core-functions"],
     derived(BYTES_FIELDS, {
         "eq": "tag == 'IHDR'", "ne": "tag != 'IEND'", "utf8": "acc == '\\\\u00e9'", "latin": "lat == '\\\\u00e9'",
-        "malformed": "bad == '\\\\uFFFD'", "same": "tag == tag2", "n": "len(acc)", "trimmed": "trim(pad)",
+        "malformed": "bad == '\\\\uFFFD'", "malformedNe": "bad != '\\\\uFFFD'", "same": "tag == tag2", "n": "len(acc)", "trimmed": "trim(pad)",
         "joined": "concat(tag, '!')"}),
     b"IHDR" + b"IHDR" + "é".encode("utf-8") + b"\xe9" + b"\xff" + b" ab ",
     {"tag": b"IHDR", "tag2": b"IHDR", "acc": "é".encode("utf-8"), "lat": b"\xe9", "bad": b"\xff", "pad": b" ab ",
-     "eq": True, "ne": True, "utf8": True, "latin": True, "malformed": True, "same": True, "n": 2,
+     "eq": True, "ne": True, "utf8": True, "latin": True, "malformed": False, "malformedNe": True, "same": True, "n": 2,
      "trimmed": "ab", "joined": "IHDR!"})
+
+hel("bytes-malformed-argument", "Bytes that are not well-formed are an error where a String is required",
+    "trim() of the single byte FF, which is not UTF-8.",
+    ["req-pm-text-decoding-1", "req-hel-conformance-4", TYPE_ERROR], ["core-functions", "coercion"],
+    one("trim(bad)", ["ex:bad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 1 ."]), b"\xff", error="Expression")
 
 hel("bytes-ordering", "Ordering Bytes against a String is an error",
     "Only == and != compare Bytes with a String.",

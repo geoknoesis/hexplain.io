@@ -1,10 +1,10 @@
 {
  "cases": {
-  "physical-parser": 345,
+  "physical-parser": 354,
   "semantic-emitter": 32,
   "bundle-processor": 13,
   "hdl-compiler": 158,
-  "conformance-evaluator": 40
+  "conformance-evaluator": 41
  },
  "excluded": {
   "blanket": [
@@ -18,8 +18,8 @@
  },
  "processorMust": {
   "Physical Parser": {
-   "total": 191,
-   "covered": 182,
+   "total": 194,
+   "covered": 185,
    "uncovered": [
     "req-bddo-addressing-1",
     "req-bddo-bitfields-1",
@@ -65,8 +65,8 @@
  "requirements": {
   "physical-parser": {
    "MUST": {
-    "total": 142,
-    "covered": 134
+    "total": 145,
+    "covered": 137
    },
    "SHOULD": {
     "total": 5,
@@ -445,9 +445,16 @@
    "pp-kv-non-number",
    "pp-records-malformed-utf8",
    "pp-records-unterminated-quote",
+   "pp-str-ascii-high-byte",
+   "pp-str-utf16-lone-surrogate",
+   "pp-str-utf16-odd-length",
+   "pp-str-utf8-encoded-surrogate",
+   "pp-str-utf8-malformed",
+   "pp-str-utf8-overlong",
    "pp-table-column-count",
    "pp-textnum-infinite",
    "pp-textnum-invalid",
+   "pp-textnum-non-ascii-digit",
    "pp-tree-json-duplicate-member",
    "pp-tree-json-trailing-value",
    "pp-tree-xml-external-entity",
@@ -470,6 +477,7 @@
    "bp-unknown-part-key",
    "pp-hel-and-evaluates-both-operands",
    "pp-hel-asset-outside-bundle",
+   "pp-hel-bytes-malformed-argument",
    "pp-hel-bytes-ordering",
    "pp-hel-comparison-chain",
    "pp-hel-concat-number",
@@ -601,6 +609,7 @@
    "ce-recovery-check-continues",
    "ce-recovery-counted-sequence",
    "ce-recovery-encoded-elements",
+   "ce-recovery-malformed-text",
    "ce-recovery-pointer",
    "ce-recovery-sized-field",
    "ce-recovery-unknown-width"
@@ -1032,6 +1041,7 @@
    "ce-recovery-check-continues",
    "ce-recovery-counted-sequence",
    "ce-recovery-encoded-elements",
+   "ce-recovery-malformed-text",
    "ce-recovery-pointer",
    "ce-recovery-sized-field",
    "ce-recovery-unknown-width"
@@ -1163,6 +1173,29 @@
   "req-pm-terminators-6": [
    "pp-term-not-found"
   ],
+  "req-pm-text-decoding-1": [
+   "pp-hel-bytes-malformed-argument",
+   "pp-hel-bytes-vs-string",
+   "pp-str-ascii-high-byte",
+   "pp-str-latin1-every-byte",
+   "pp-str-utf16-lone-surrogate",
+   "pp-str-utf16-odd-length",
+   "pp-str-utf8-encoded-surrogate",
+   "pp-str-utf8-malformed",
+   "pp-str-utf8-overlong"
+  ],
+  "req-pm-text-decoding-2": [
+   "ce-recovery-malformed-text",
+   "pp-str-ascii-high-byte",
+   "pp-str-utf16-lone-surrogate",
+   "pp-str-utf16-odd-length",
+   "pp-str-utf8-encoded-surrogate",
+   "pp-str-utf8-malformed",
+   "pp-str-utf8-overlong"
+  ],
+  "req-pm-text-decoding-3": [
+   "pp-textnum-non-ascii-digit"
+  ],
   "req-pm-text-numbers-1": [
    "pp-separated-multibyte-encoding"
   ],
@@ -1173,7 +1206,8 @@
    "pp-textnum-decimals",
    "pp-textnum-infinite",
    "pp-textnum-integers",
-   "pp-textnum-invalid"
+   "pp-textnum-invalid",
+   "pp-textnum-non-ascii-digit"
   ],
   "req-pm-text-numbers-4": [
    "pp-varints"
@@ -1220,6 +1254,7 @@
   "req-hel-conformance-4": [
    "ce-register-in-register",
    "pp-hel-absent-optional-null",
+   "pp-hel-bytes-malformed-argument",
    "pp-hel-bytes-ordering",
    "pp-hel-bytes-vs-string",
    "pp-hel-core-functions",
@@ -2279,6 +2314,7 @@
    "ce-recovery-check-continues",
    "ce-recovery-counted-sequence",
    "ce-recovery-encoded-elements",
+   "ce-recovery-malformed-text",
    "ce-recovery-pointer",
    "ce-recovery-sized-field",
    "ce-recovery-unknown-width",
@@ -2332,6 +2368,7 @@
    "ce-recovery-check-continues",
    "ce-recovery-counted-sequence",
    "ce-recovery-encoded-elements",
+   "ce-recovery-malformed-text",
    "ce-recovery-pointer",
    "ce-recovery-sized-field",
    "ce-recovery-unknown-width",
@@ -2371,6 +2408,7 @@
    "ce-recovery-check-continues",
    "ce-recovery-counted-sequence",
    "ce-recovery-encoded-elements",
+   "ce-recovery-malformed-text",
    "ce-recovery-pointer",
    "ce-recovery-sized-field",
    "ce-recovery-unknown-width",
@@ -2557,9 +2595,9 @@
   "hdl/index.html#types": 10,
   "hdl/index.html#versioning": 3,
   "hdl/index.html#yaml": 31,
-  "hel/index.html#coercion": 8,
+  "hel/index.html#coercion": 9,
   "hel/index.html#conformance": 11,
-  "hel/index.html#core-functions": 9,
+  "hel/index.html#core-functions": 10,
   "hel/index.html#evaluation": 4,
   "hel/index.html#expression-depth": 2,
   "hel/index.html#ext-geometry": 3,
@@ -2583,7 +2621,7 @@
   "processing#computed-values": 14,
   "processing#conflicting-forms": 5,
   "processing#conformance-classes": 4,
-  "processing#conformance-evaluation": 40,
+  "processing#conformance-evaluation": 41,
   "processing#context": 5,
   "processing#data-layouts": 5,
   "processing#delimited-records": 8,
@@ -2600,7 +2638,7 @@
   "processing#optional-codecs": 17,
   "processing#optional-features": 1,
   "processing#parameter-scope": 9,
-  "processing#recovery": 7,
+  "processing#recovery": 8,
   "processing#refusal": 2,
   "processing#repeat-until-bindings": 5,
   "processing#resource-limits": 15,
@@ -2609,7 +2647,8 @@
   "processing#struct-size": 7,
   "processing#terminators": 8,
   "processing#text-containers": 2,
-  "processing#text-numbers": 11,
+  "processing#text-decoding": 9,
+  "processing#text-numbers": 12,
   "processing#tree-documents": 9,
   "processing#typed-cells": 3,
   "processing#value-mapping": 7,

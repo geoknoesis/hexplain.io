@@ -436,8 +436,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "The bytes are decoded in the bddo:encoding declared on the field through which the container is parsed, or as UTF-8 when none is declared. A malformed sequence is a validation error (recorded as a finding and skipped in a lenient mode); it is never replaced silently. A leading UTF-8 byte order mark is ignored.",
-   "sha256": "fee76b7436fe1e7c"
+   "text": "The bytes are decoded in the bddo:encoding declared on the field through which the container is parsed, or as UTF-8 when none is declared. A sequence that is not well-formed (Decoding text) is a validation error (recorded as a finding and skipped in a lenient mode); it is never replaced silently. A leading UTF-8 byte order mark is ignored.",
+   "sha256": "de70417b28eff2a7",
+   "history": [
+    "fee76b7436fe1e7c"
+   ]
   },
   "req-pm-delimited-records-3": {
    "page": "specification/processing/index.html",
@@ -1602,6 +1605,33 @@
    "audience": "processor",
    "text": "If no occurrence lies within the search bound, raise a bounds error.",
    "sha256": "3b0b8aa4e262b408"
+  },
+  "req-pm-text-decoding-1": {
+   "page": "specification/processing/index.html",
+   "section": "text-decoding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST NOT replace a sequence that is not well-formed with U+FFFD or any other character, nor drop it.",
+   "sha256": "95b28a94f2aabfaf"
+  },
+  "req-pm-text-decoding-2": {
+   "page": "specification/processing/index.html",
+   "section": "text-decoding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Text read from the input that is not well-formed — the value of a string field, a number written as text, a container’s content — MUST be raised as a validation error.",
+   "sha256": "99e9550cf0786f37"
+  },
+  "req-pm-text-decoding-3": {
+   "page": "specification/processing/index.html",
+   "section": "text-decoding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The digits, sign, point and exponent letter of a number written as text, and the whitespace around it, MUST be ASCII characters (whitespace being space, tab, line feed, vertical tab, form feed and carriage return): a non-ASCII digit or space makes the text not a number.",
+   "sha256": "1de74ac665a3efe4"
   },
   "req-pm-text-numbers-1": {
    "page": "specification/processing/index.html",

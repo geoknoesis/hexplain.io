@@ -666,3 +666,56 @@ pp("rep-count-negative", "A negative repeat count is a bounds error",
    ex:vals a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCountFromExpression "n - 3" .
    """,
    b"\x01\x05", error="Bounds")
+
+
+# ----------------------------------------------------------------- decoding text: well-formed or a validation error
+
+DECODE = ["req-pm-text-decoding-1", "req-pm-text-decoding-2", "req-pm-errors-4"]
+
+
+def one_string(encoding, size):
+    return f"""
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:s ) .
+   ex:s a bddo:Field ; bddo:dataType bddo:string ; bddo:size {size} ; bddo:encoding bddo:{encoding} .
+   """
+
+
+pp("str-utf8-malformed", "A string field that is not well-formed UTF-8 is a validation error",
+   "C3 28 is a lead byte followed by a byte that cannot continue it; the value is never U+FFFD followed by '('.",
+   DECODE, ["text-decoding"], one_string("utf8", 2), b"\xc3\x28", error="Validation")
+
+pp("str-utf8-overlong", "An overlong UTF-8 sequence is not well-formed",
+   "C0 AF would spell '/' in two bytes; RFC 3629 forbids overlong forms.",
+   DECODE, ["text-decoding"], one_string("utf8", 2), b"\xc0\xaf", error="Validation")
+
+pp("str-utf8-encoded-surrogate", "A UTF-8-encoded surrogate is not well-formed",
+   "ED A0 80 encodes U+D800, which is not a Unicode scalar value.",
+   DECODE, ["text-decoding"], one_string("utf8", 3), b"\xed\xa0\x80", error="Validation")
+
+pp("str-utf16-lone-surrogate", "A lone UTF-16 surrogate is a validation error",
+   "41 00 00 D8: 'A' and then a high surrogate with no low surrogate after it.",
+   DECODE, ["text-decoding"], one_string("utf16le", 4), b"A\x00\x00\xd8",
+   error="Validation")
+
+pp("str-utf16-odd-length", "A UTF-16 string of an odd number of bytes is a validation error",
+   "Three bytes hold one code unit and half of another.",
+   DECODE, ["text-decoding"], one_string("utf16be", 3), b"\x00A\x00",
+   error="Validation")
+
+pp("str-ascii-high-byte", "A byte above 7F in a US-ASCII string is a validation error",
+   "41 80: the second byte is not ASCII, so the value is neither 'A' followed by U+FFFD nor 'A' followed by U+0080.",
+   DECODE, ["text-decoding"], one_string("ascii", 2), b"A\x80", error="Validation")
+
+pp("str-latin1-every-byte", "Every byte is well-formed ISO-8859-1",
+   "80 and FF decode to U+0080 and U+00FF.",
+   ["req-pm-text-decoding-1"], ["text-decoding"], one_string("latin1", 2), b"\x80\xff", {"s": "\u0080\u00ff"})
+
+pp("textnum-non-ascii-digit", "A number written as text uses ASCII digits only",
+   "The UTF-8 field holds ARABIC-INDIC DIGIT ONE and TWO, well-formed text that is not a number: a validation error, "
+   "not 12.",
+   ["req-pm-text-decoding-3", "req-pm-text-numbers-3", "req-pm-errors-4"], ["text-decoding", "text-numbers"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:n ) .
+   ex:n a bddo:Field ; bddo:dataType bddo:asciiInteger ; bddo:size 4 ; bddo:encoding bddo:utf8 .
+   """,
+   "\u0661\u0662".encode("utf-8"), error="Validation")

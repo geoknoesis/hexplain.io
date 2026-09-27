@@ -78,6 +78,20 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
   (`req-pm-computed-values-2`); a processor never re-labels the datatype to fit. The HEL
   name-binding row for `hexplain:valueExpression` points to the rule. Fourteen new Semantic Emitter
   cases (`se-value-natural-*`, `se-value-datatype-*`).
+- **Decoding text.** Text containers said a malformed sequence is a validation error "never
+  replaced silently", HEL said malformed bytes decode to U+FFFD, and plain string fields had no
+  rule. New section `processing#text-decoding` gives one: what is well-formed in each
+  `bddo:encoding` (RFC 3629 UTF-8, paired UTF-16 surrogates and an even length, ASCII at most
+  7F, every Latin-1 byte), no replacement character ever (`req-pm-text-decoding-1`), a validation
+  error for text read from the input that is not well-formed, with the field left unbound in a
+  lenient mode (`req-pm-text-decoding-2`), and ASCII digits and whitespace in a number written as
+  text (`req-pm-text-decoding-3`). `req-pm-delimited-records-2` points to it. In HEL a Bytes value
+  that is not well-formed equals no String and is an error where a String is required. New cases
+  `pp-str-utf8-malformed`, `pp-str-utf8-overlong`, `pp-str-utf8-encoded-surrogate`,
+  `pp-str-utf16-lone-surrogate`, `pp-str-utf16-odd-length`, `pp-str-ascii-high-byte`,
+  `pp-str-latin1-every-byte`, `pp-textnum-non-ascii-digit`, `pp-hel-bytes-malformed-argument`,
+  `ce-recovery-malformed-text`; `pp-hel-bytes-vs-string` now expects a malformed byte to equal no
+  String.
 
 ### New language features (bddo 1.3, register/checksum 1.3, register/media-encoding 1.2)
 

@@ -407,6 +407,23 @@ ce("recovery-sized-field", "A failure inside a sized field is recovered at the f
    ex:k a bddo:Field ; bddo:dataType bddo:uint8 .
    """)
 
+ce("recovery-malformed-text", "Text that is not well-formed is recorded and the field left unbound",
+   "The UTF-8 string s holds FF FF: one Validation finding attributed to R3, s is unbound, and tail, read after s's "
+   "known extent, is 9.",
+   CE + RECOVERY + ["req-pm-text-decoding-2"], [EVAL, "recovery", "processing#text-decoding"],
+   REQS + """
+   ex:PA a conf:ParseAttribution ; conf:errorCategory "Validation" ; conf:satisfies ex:R3 .
+   ex:C1 a conf:Constraint ; conf:scope ex:Root ; conf:assertion "tail == 9" ; conf:satisfies ex:R1 .
+   """,
+   b"\xff\xff\x09",
+   {"verdict": "nonconformant", "outcomes": {"ex:R1": "Evaluated", "ex:R3": "Evaluated"},
+    "findings": [{"kind": "Parse", "severity": "Violation", "requirements": ["ex:R3"], "category": "Validation"}]},
+   description="""
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:s ex:tail ) .
+   ex:s a bddo:Field ; bddo:dataType bddo:string ; bddo:size 2 ; bddo:encoding bddo:utf8 .
+   ex:tail a bddo:Field ; bddo:dataType bddo:uint8 .
+   """)
+
 ce("parse-dispatch-category", "A dispatch error is reported under its own category, Dispatch",
    "No rule of body's conditional type matches and there is no default: the Parse finding's category is Dispatch, and the "
    "attribution for Dispatch names R3; it is not a Description error.",
