@@ -92,6 +92,15 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
   `pp-str-latin1-every-byte`, `pp-textnum-non-ascii-digit`, `pp-hel-bytes-malformed-argument`,
   `ce-recovery-malformed-text`; `pp-hel-bytes-vs-string` now expects a malformed byte to equal no
   String.
+- **HEL error conditions.** A HEL error vector passed when the evaluator's diagnostic contained a
+  fragment of the reference engine's English, so conformance depended on one engine's wording. New
+  section `hel#error-conditions` names eight conditions (`syntax`, `undefined-name`,
+  `forward-reference`, `type`, `range`, `overflow`, `division-by-zero`, `argument`), all Type / HEL
+  errors of the Processing Model, and an evaluator must be able to say which one an error is
+  (`req-hel-error-conditions-1`). `validation/test/hel-vectors.tsv` now expects a condition in the
+  fourth column of every error row and keeps the old fragment as an informative sixth column;
+  `req-hel-conformance-9` asserts the condition. New gate `test_hel_vectors` checks the file's shape
+  and that every condition a flat context can raise is exercised.
 - **HEL version marker.** HEL allowed a later 1.x version to add functions, yet an unknown
   function was always a Type / HEL error, so a description written for HEL 1.1 would fail a 1.0
   evaluator as if it were broken. A description now declares its HEL version with
