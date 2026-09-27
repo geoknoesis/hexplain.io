@@ -99,6 +99,7 @@ def coverage():
         "processorMust": processors,
         "requirements": classes,
         "citations": {i: sorted(citing.get(i, [])) for i, e in registry().items() if not e.get("withdrawn")},
+        "withdrawn": sorted(i for i, e in registry().items() if e.get("withdrawn")),
         "sections": dict(sorted(sections.items())),
     }
 

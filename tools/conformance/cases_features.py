@@ -408,7 +408,7 @@ pp("codec-zstd-truncated", "A truncated Zstandard frame is a validation error",
 DICT = zstdframes.dictionary_frame(b"abc", 7)
 pp("codec-zstd-dictionary", "A Zstandard frame that names a dictionary is Unsupported",
    "The frame header carries Dictionary_ID 7; this version defines no way to supply a dictionary.",
-   [OPTIONAL, "req-pm-optional-codecs-6", "req-pm-optional-codecs-1", "req-pm-errors-10"], ["optional-codecs"],
+   [OPTIONAL, "req-pm-optional-codecs-6", "req-pm-optional-codecs-1", "req-pm-errors-10", "req-pm-errors-17"], ["optional-codecs"],
    encoded("hexplain:isEncodedWith menc:Zstd", len(DICT)), DICT, error="Unsupported", manifest=CODECS)
 
 pp("codec-zstd-parameter-unknown", "A parameter on menc:Zstd is a description error",

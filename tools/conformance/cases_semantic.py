@@ -247,3 +247,20 @@ se("base-reported", "Without a base IRI the processor chooses one, mints against
    f"""
    <{REPORTED_BASE}#root> a ex:Image ; ex:width "7"^^xsd:unsignedByte .
    """, manifest={"base": None})
+
+se("data-layout-array-node", "A field with a data layout emits its array node, never a literal or its cells",
+   "hexplain:mapsToObjectProperty links the root to the field's array node root/pixels; hexplain:mapsToProperty on a "
+   "second layout field emits nothing; no cell of either is emitted.",
+   MINT + ["req-pm-emission-9"], ["emission", "iri-minting"],
+   """
+   ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Image ; bddo:hasField ( ex:pixels ex:mask ) .
+   ex:pixels a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 ; hexplain:hasDataLayout ex:Layout ;
+       hexplain:mapsToObjectProperty ex:samples .
+   ex:mask a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 ; hexplain:hasDataLayout ex:Layout ;
+       hexplain:mapsToProperty ex:maskBytes .
+   ex:Layout a dlv:DataLayout ; dlv:cellDataType bddo:uint8 ; dlv:hasDimension ( ex:DimY ex:DimX ) .
+   ex:DimY a dlv:Dimension ; dlv:hasAxis dlv:axisY ; dlv:dimensionSize 2 .
+   ex:DimX a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSize 2 .
+   """,
+   b"\x01\x02\x03\x04\x00\x01\x01\x00",
+   f"{ROOT} a ex:Image ; ex:samples <{BASE}#root/pixels> .")

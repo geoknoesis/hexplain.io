@@ -519,12 +519,14 @@ def conf_run_terms_declared():
 
 
 RDF_REPORT = {"reportForm": "rdf", "reportConformsToShapes": True}
+#: What every RDF report case checks besides its own rule: the run's shape, and that it validates on its own.
+REPORT_RULES = ["req-pm-conformance-evaluation-7", "req-pm-conformance-evaluation-8"]
 
 if conf_run_terms_declared():
     ce("report-rdf-conformant", "The RDF report of a conformant run",
        "A conformant run with no finding: conf:verdict conf:Conformant, not truncated, version scoping not applied, and an "
        "outcome per requirement.",
-       CE + ["req-pm-conformance-evaluation-4", "req-ce-conf-conformance-10"], [EVAL],
+       CE + REPORT_RULES + ["req-pm-conformance-evaluation-4", "req-ce-conf-conformance-10"], [EVAL],
        REQS + """
        ex:C1 a conf:Constraint ; conf:scope ex:Header ; conf:assertion "magic == 'HXPL'" ; conf:satisfies ex:R1 .
        """,
@@ -537,7 +539,7 @@ if conf_run_terms_declared():
 
     ce("report-rdf-violation", "The RDF report of a violation links the finding to its constraint and requirements",
        "One Violation finding citing R1 and R2, linked from the run by conf:finding, at sh:Violation, naming its constraint.",
-       CE + ["req-ce-conf-conformance-3", "req-ce-conf-conformance-4"], [EVAL],
+       CE + REPORT_RULES + ["req-ce-conf-conformance-3", "req-ce-conf-conformance-4"], [EVAL],
        REQS + """
        ex:C1 a conf:Constraint ; conf:scope ex:Header ; conf:assertion "magic == 'NOPE'" ; conf:satisfies ex:R1 , ex:R2 ;
            conf:message "wrong magic" .
@@ -553,7 +555,7 @@ if conf_run_terms_declared():
 
     ce("report-rdf-version", "The RDF report states the version it was scoped to",
        "The caller supplies 1.0: conf:versionScopingApplied true and conf:fileVersion \"1.0\"; R2, for 2.0 only, is NotApplicable.",
-       CE + ["req-pm-conformance-evaluation-3", "req-ce-conf-conformance-7"], [EVAL],
+       CE + REPORT_RULES + ["req-pm-conformance-evaluation-3", "req-ce-conf-conformance-7"], [EVAL],
        VERSIONED, GOOD, manifest=dict(RDF_REPORT, fileVersion="1.0"), report_ttl="""
        [] a conf:Run ; conf:verdict conf:Conformant ; conf:truncated false ;
           conf:versionScopingApplied true ; conf:fileVersion "1.0" ;
@@ -563,7 +565,7 @@ if conf_run_terms_declared():
     ce("report-rdf-truncated", "The RDF report of a run stopped by the findings limit is marked truncated and non-conformant",
        "Three elements fail under a findings limit of 1; R3, cited by nothing, is NotReached. An evaluator may instead fail "
        "with a ResourceLimit error.",
-       CE + ["req-pm-conformance-evaluation-6", "req-ce-conf-conformance-9"], [EVAL],
+       CE + REPORT_RULES + ["req-pm-conformance-evaluation-6", "req-ce-conf-conformance-9"], [EVAL],
        REQS + """
        ex:C1 a conf:Constraint ; conf:scope ex:vals ; conf:assertion "self > 5" ; conf:satisfies ex:R1 .
        """,
@@ -575,7 +577,7 @@ if conf_run_terms_declared():
     ce("report-rdf-fail-on-warning", "With failOn sh:Warning a warning makes the run non-conformant, and the report says so",
        "The only failing constraint is at sh:Warning; the caller sets the failing severity to sh:Warning, which the report "
        "states as conf:failOn.",
-       CE + ["req-ce-conf-conformance-3"], [EVAL],
+       CE + REPORT_RULES + ["req-ce-conf-conformance-3"], [EVAL],
        REQS + """
        ex:C1 a conf:Constraint ; conf:scope ex:Header ; conf:assertion "flags == 1" ; conf:satisfies ex:R1 ; conf:severity sh:Warning .
        """,
@@ -588,7 +590,7 @@ if conf_run_terms_declared():
     ce("report-rdf-provenance", "The RDF report names the profile and the input it evaluated",
        "The runner gives the evaluator the description's IRI and the input's IRI (manifest profileIri and inputIri); the run "
        "states them as conf:profile and conf:input.",
-       CE + ["req-ce-conf-conformance-10"], [EVAL],
+       CE + REPORT_RULES + ["req-ce-conf-conformance-10"], [EVAL],
        REQS + """
        ex:C1 a conf:Constraint ; conf:scope ex:Header ; conf:assertion "magic == 'HXPL'" ; conf:satisfies ex:R1 .
        """,
@@ -601,7 +603,7 @@ if conf_run_terms_declared():
     ce("report-rdf-parse-finding", "The RDF report of a Parse finding states its error category",
        "The input stops one byte into blob, the last field: one conf:Parse finding, with no constraint, attributed to R3 "
        "through the Bounds parse attribution.",
-       CE + ["req-ce-conf-conformance-5"], [EVAL],
+       CE + REPORT_RULES + ["req-ce-conf-conformance-5"], [EVAL],
        PARSE_RULES, GOOD[:-1], manifest=RDF_REPORT, report_ttl="""
        [] a conf:Run ; conf:verdict conf:NonConformant ;
           conf:finding [ a conf:Finding ; conf:findingKind conf:Parse ; conf:severity sh:Violation ;
@@ -611,7 +613,7 @@ if conf_run_terms_declared():
     ce("report-rdf-warning-conformant", "Under the default failOn a warning-only run is conformant",
        "The only failing constraint is at sh:Warning and the caller sets no failing severity (sh:Violation): the finding is "
        "reported and the verdict is conf:Conformant.",
-       CE + ["req-ce-conf-conformance-3"], [EVAL],
+       CE + REPORT_RULES + ["req-ce-conf-conformance-3"], [EVAL],
        REQS + """
        ex:C1 a conf:Constraint ; conf:scope ex:Header ; conf:assertion "flags == 1" ; conf:satisfies ex:R1 ; conf:severity sh:Warning .
        """,
@@ -625,7 +627,7 @@ if conf_run_terms_declared():
        "The requirement is a blank node of the profile, so the report cannot name it by the profile's IRI. The report "
        "carries a copy of the requirement's description, which the finding cites; the comparison binds the expected "
        "blank node to whatever node the report gives it (a skolem IRI, say) by that description.",
-       CE + ["req-ce-conf-conformance-3", "req-ce-conf-conformance-4"], [EVAL],
+       CE + REPORT_RULES + ["req-ce-conf-conformance-3", "req-ce-conf-conformance-4"], [EVAL],
        """
        ex:C1 a conf:Constraint ; conf:scope ex:Header ; conf:assertion "magic == 'NOPE'" ;
            conf:satisfies [ a req:Requirement ; req:requirementId "B1" ; req:fromStandard "Example Format 1" ;

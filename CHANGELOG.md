@@ -54,6 +54,21 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
 - **BCP 14.** Every conventions section (Processing Model, HEL, HDL, the conformance sections of
   conf and req, and the vocabulary pages that have one) now cites RFC 8174 alongside RFC 2119 and
   says the key words carry their meaning only in all capitals.
+- **Requirement register.** `req-pm-emission-9` was registered MUST while its text only permitted
+  (MAY per-cell triples); it now states what a processor must do with a field that has a data
+  layout: nothing for `hexplain:mapsToProperty`, a link to the field's array node for
+  `hexplain:mapsToObjectProperty`, and no per-cell triples, which this version gives no vocabulary
+  (the reference engine already behaves so). `req-pm-conformance-classes-9` repeated
+  `req-pm-errors-17` word for word and is withdrawn: the refusal paragraph now points to the error
+  table, and `req-pm-errors-17` names its subject ("An Unsupported feature error MUST be raised no
+  later than ..."). `req-ce-conf-conformance-11` and `req-ce-conf-conformance-12` restated
+  `req-pm-conformance-evaluation-7` and `req-pm-conformance-evaluation-8` and are withdrawn; the conf
+  page now cites the Processing Model's rules. The registry extraction
+  (`tools/_requirement_ids.py`) records, for a requirement that opens with a pronoun ("It MUST
+  ..."), the sentence before it as `context`, so an entry read on its own keeps its subject; a
+  withdrawn entry recorded before audiences existed (`req-pm-errors-15`) now has one, and its text
+  reads its cross-reference as the section title instead of "()". `coverage.json` lists the
+  withdrawn identifiers.
 
 ### New language features (bddo 1.3, register/checksum 1.3, register/media-encoding 1.2)
 
