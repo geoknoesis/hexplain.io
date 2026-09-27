@@ -153,6 +153,11 @@ rewritten.
   table (`req-pm-errors-10`) includes it. The marker is the `bddo:helVersion` annotation of BDDO
   1.3 (below), in `bddo` because `bddo` loads without `core`; the text first named it
   `hexplain:helVersion`, and `test_doc_terms` no longer allows that name.
+- **Reference engine HEL version.** HEL says every evaluator states the latest HEL version it
+  implements with its claims; `reference-engine-claims.json` now does (`"helVersion": "1.0"`), the
+  reference-implementation note of the Processing Model restates it, and `test_reference_claims`
+  checks that it is a major.minor version of HEL 1 that the HEL specification defines and that the
+  note agrees.
 - **Expression literals.** New section `hel#expression-literals`: an expression is the lexical form
   of a literal typed `xsd:string` or `bddo:HelExpression`; authoring tools SHOULD write the latter
   (`req-hel-expression-literals-2`, a rule on descriptions), and a processor MUST accept both and

@@ -12,7 +12,9 @@ This gate checks the specification side:
   * the file's optional features are exactly the Processing Model's closed list
     (#optional-features), and its classes are conformance classes the page defines;
   * the decoded codecs include the minimum codec set and are concepts of the register named;
-  * the default limits are at least the minimums the Processing Model requires.
+  * the default limits are at least the minimums the Processing Model requires;
+  * the HEL version it implements is a major.minor version of HEL 1 that the HEL specification
+    defines, and the note states the same version.
 """
 import html
 import json
@@ -79,6 +81,21 @@ def main():
         if not isinstance(value, int) or value < minimum:
             failures.append(f"default limit {key}={value} is below the Processing Model's minimum {minimum}")
 
+    hel_version = claims.get("helVersion")
+    hel_defined = re.search(r"This document defines <b>HEL (\d+)\.(\d+)</b>",
+                        (ROOT / "specification/hel/index.html").read_text(encoding="utf-8"))
+    if not isinstance(hel_version, str) or not re.fullmatch(r"(0|[1-9]\d*)\.(0|[1-9]\d*)", hel_version):
+        failures.append(f"helVersion {hel_version!r} is not a major.minor HEL version (HEL, version marker)")
+    elif not hel_defined:
+        failures.append("hel/index.html does not state the HEL version it defines")
+    else:
+        major, minor = (int(p) for p in hel_version.split("."))
+        if major != 1 or minor > int(hel_defined.group(2)):
+            failures.append(f"helVersion {hel_version} is not a HEL version the specification defines "
+                            f"(HEL {hel_defined.group(1)}.{hel_defined.group(2)})")
+    if span("helVersion") != ({hel_version} if isinstance(hel_version, str) else set()):
+        failures.append(f"the note's HEL version differs from reference-engine-claims.json ({hel_version})")
+
     groups = set(claims["helExtensionGroups"])
     hel = (ROOT / "specification/hel/index.html").read_text(encoding="utf-8")
     for g in sorted(groups):
@@ -93,7 +110,8 @@ def main():
         print("FAIL:\n  " + "\n  ".join(failures))
         sys.exit(1)
     print(f"PASS: the reference-implementation note restates reference-engine-claims.json "
-          f"({len(classes)} classes, {len(claimed)} of {len(features)} optional features, {len(decoded)} codecs)")
+          f"({len(classes)} classes, {len(claimed)} of {len(features)} optional features, HEL {hel_version}, "
+          f"{len(decoded)} codecs)")
 
 
 if __name__ == "__main__":
