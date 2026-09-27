@@ -742,8 +742,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "ResourceLimit | A configured resource limit (input bytes, nesting depth, visited nodes, materialized or decoded bytes, HEL nesting, emitted triples) or an implementation wall-clock limit or cancellation was exceeded. Fatal in every mode; never a partial result.",
-   "sha256": "408bb7eb23d586f3"
+   "text": "ResourceLimit | A configured resource limit (input bytes, nesting depth, visited nodes, materialized or decoded bytes, HEL nesting or length, quantifier evaluations, regular-expression match cost, emitted triples) or an implementation wall-clock limit or cancellation was exceeded. Fatal in every mode; never a partial result.",
+   "sha256": "1c0e3e2d9090c37a",
+   "history": [
+    "408bb7eb23d586f3"
+   ]
   },
   "req-pm-errors-13": {
    "page": "specification/processing/index.html",
@@ -1367,6 +1370,24 @@
    "text": "A member that is a bddo:LocalBinding is not a field: when its position is reached a processor MUST evaluate its bddo:localExpression with n as instance and bind the result under the binding's name in a local scope of n, which HEL reads by bare name or instance.name from the next member on; the binding consumes no bytes, is not a child of n, and a Null result binds Null.",
    "sha256": "b9fe5c0966dba4d3"
   },
+  "req-pm-privacy-1": {
+   "page": "specification/processing/index.html",
+   "section": "privacy",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor that chooses a base itself (Instance IRI Minting) MUST NOT derive it from the input’s file name or path; a fresh urn:uuid: IRI is sufficient.",
+   "sha256": "e49a50c20327e045"
+  },
+  "req-pm-privacy-2": {
+   "page": "specification/processing/index.html",
+   "section": "privacy",
+   "cls": "conformance-evaluator",
+   "level": "SHOULD",
+   "audience": "processor",
+   "text": "A Conformance Evaluator SHOULD NOT name its input by a file path in a report (conf:input) unless the caller supplied that IRI.",
+   "sha256": "b2e1e61a12588352"
+  },
   "req-pm-recovery-1": {
    "page": "specification/processing/index.html",
    "section": "recovery",
@@ -1448,6 +1469,33 @@
    "audience": "processor",
    "text": "A processor MUST NOT fall back to a cheaper interpretation of the description to finish in time.",
    "sha256": "42f010972929548d"
+  },
+  "req-pm-security-decompression-1": {
+   "page": "specification/processing/index.html",
+   "section": "security-decompression",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST count the output of every codec stage toward the decoded-byte limit as it is produced, and MUST stop and raise ResourceLimit as soon as the output would exceed what remains of the limit; it MUST NOT decode a block in full and compare its size afterwards.",
+   "sha256": "f2aae52799ce511c"
+  },
+  "req-pm-security-external-1": {
+   "page": "specification/processing/index.html",
+   "section": "security-external",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "More generally, a processor MUST NOT fetch or open any resource that an input or a description names — an external entity, DTD, schema, stylesheet, XInclude, a file path or a URL in a value — while parsing or emitting: its only inputs are those of Inputs and Outputs (and, for a Bundle Processor, the files the caller assembled into the asset).",
+   "sha256": "ff2bc912c12d822a"
+  },
+  "req-pm-security-resources-1": {
+   "page": "specification/processing/index.html",
+   "section": "security-resources",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST apply the limits to the work a description causes as well as to the bytes it reads: a limit MUST NOT be skipped because the description, rather than the input, asked for the work.",
+   "sha256": "53746325ee67f3a9"
   },
   "req-pm-size-resolution-1": {
    "page": "specification/processing/index.html",
@@ -1801,8 +1849,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "Accept, by default, expressions whose expression tree is at least 512 levels deep and at least 64 KiB long, when they are parsed and when they are evaluated; let the user configure both limits; and report an expression beyond its configured nesting or length limit, a quantifier that exceeds its evaluation budget, and a deadline or cancellation as the Processing Model's ResourceLimit error, not as a syntax or runtime error: it is fatal in every mode, including a lenient one that records other errors and continues.",
-   "sha256": "52daa8c31a06fbe6"
+   "text": "Accept, by default, expressions whose expression tree is at least 512 levels deep and at least 64 KiB long, when they are parsed and when they are evaluated, and quantifier and match-cost budgets of at least the Processing Model’s minimums; let the user configure all four limits; and report an expression beyond its configured nesting or length limit, a quantifier that exceeds its evaluation budget, a regular-expression match that exceeds its cost limit, and a deadline or cancellation as the Processing Model's ResourceLimit error, not as a syntax or runtime error: it is fatal in every mode, including a lenient one that records other errors and continues (Security and Privacy Considerations).",
+   "sha256": "95744b9fb501f2f3",
+   "history": [
+    "52daa8c31a06fbe6"
+   ]
   },
   "req-hel-conformance-9": {
    "page": "specification/hel/index.html",
@@ -1886,6 +1937,15 @@
    "text": "When the element is a struct node, param.n and a name that reaches a local binding MUST resolve against the element’s struct: param.n is the argument the element was parsed with, a bare name or instance.name may name a local binding of the element’s struct, and the parameters and bindings of the struct holding the expression are not reachable in the predicate.",
    "sha256": "029360d627ecf81c"
   },
+  "req-hel-ext-quantifiers-4": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An evaluator MUST bound the total number of predicate evaluations during one evaluation of an expression, nested quantifiers included, by its configured quantifier limit (the Processing Model’s quantifier evaluations, at least 1,000,000 by default), and MUST report exceeding it as a ResourceLimit error.",
+   "sha256": "0b5aa85e6a49fd7d"
+  },
   "req-hel-ext-temporal-1": {
    "page": "specification/hel/index.html",
    "section": "ext-temporal",
@@ -1931,6 +1991,15 @@
    "audience": "processor",
    "text": "Profiles SHOULD confine patterns to the constructs common to the major regular-expression dialects — literal characters, ., bracket classes with ranges and negation, * + ? {m,n}, |, grouping with ( ), and the escapes \\d \\s \\w — whose meaning is the same everywhere; the meaning of other constructs is implementation-defined.",
    "sha256": "f4bb4cb80f750ae8"
+  },
+  "req-hel-ext-text-3": {
+   "page": "specification/hel/index.html",
+   "section": "ext-text",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An evaluator MUST bound the cost of each match by its configured match-cost limit (the Processing Model’s regular-expression match cost, at least 2,000,000 by default), and MUST report a match that exceeds it as a ResourceLimit error, never as false and never as a Type / HEL error (Security and Privacy Considerations).",
+   "sha256": "efb76d1a00bb19d0"
   },
   "req-hel-extension-groups-1": {
    "page": "specification/hel/index.html",

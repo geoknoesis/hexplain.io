@@ -1,6 +1,6 @@
 {
  "cases": {
-  "physical-parser": 358,
+  "physical-parser": 363,
   "semantic-emitter": 33,
   "bundle-processor": 13,
   "hdl-compiler": 158,
@@ -18,8 +18,8 @@
  },
  "processorMust": {
   "Physical Parser": {
-   "total": 194,
-   "covered": 185,
+   "total": 199,
+   "covered": 189,
    "uncovered": [
     "req-bddo-addressing-1",
     "req-bddo-bitfields-1",
@@ -29,15 +29,17 @@
     "req-bddo-structural-properties-6",
     "req-core-static-mapping-properties-3",
     "req-hel-ext-temporal-1",
-    "req-pm-optional-codecs-2"
+    "req-pm-security-external-1",
+    "req-pm-security-resources-1"
    ]
   },
   "Semantic Emitter": {
-   "total": 29,
+   "total": 30,
    "covered": 21,
    "uncovered": [
     "req-core-punning-1",
     "req-geometry-document-1",
+    "req-pm-privacy-1",
     "req-raster-document-3",
     "req-spatialref-document-10",
     "req-spatialref-document-11",
@@ -65,8 +67,8 @@
  "requirements": {
   "physical-parser": {
    "MUST": {
-    "total": 145,
-    "covered": 137
+    "total": 148,
+    "covered": 139
    },
    "SHOULD": {
     "total": 5,
@@ -75,8 +77,8 @@
   },
   "hel": {
    "MUST": {
-    "total": 49,
-    "covered": 48
+    "total": 51,
+    "covered": 50
    },
    "SHOULD": {
     "total": 2,
@@ -85,7 +87,7 @@
   },
   "semantic-emitter": {
    "MUST": {
-    "total": 29,
+    "total": 30,
     "covered": 21
    },
    "SHOULD": {
@@ -109,7 +111,7 @@
     "covered": 22
    },
    "SHOULD": {
-    "total": 1,
+    "total": 2,
     "covered": 1
    }
   },
@@ -594,12 +596,17 @@
   ],
   "req-pm-errors-12": [
    "pp-codec-decoded-byte-limit",
+   "pp-codec-lz4-block-declared-size-over-limit",
+   "pp-codec-lz4-frame-declared-size-over-limit",
+   "pp-codec-zstd-declared-size-over-limit",
    "pp-limit-depth-exceeded",
    "pp-limit-hel-depth",
    "pp-limit-hel-length",
    "pp-limit-input-bytes",
    "pp-limit-materialized-bytes",
    "pp-limit-no-cheaper-interpretation",
+   "pp-limit-quantifier-evaluations",
+   "pp-limit-regex-steps",
    "pp-limit-tree-depth",
    "pp-limit-visited-nodes",
    "pp-param-recursion-depth-limit",
@@ -788,10 +795,15 @@
    "pp-codec-zstd-dictionary",
    "pp-codec-zstd-truncated"
   ],
-  "req-pm-optional-codecs-2": [],
+  "req-pm-optional-codecs-2": [
+   "pp-codec-lz4-block-declared-size-over-limit",
+   "pp-codec-lz4-frame-declared-size-over-limit",
+   "pp-codec-zstd-declared-size-over-limit"
+  ],
   "req-pm-optional-codecs-3": [
    "pp-codec-lz4-block",
    "pp-codec-lz4-block-bad-offset",
+   "pp-codec-lz4-block-declared-size-over-limit",
    "pp-codec-lz4-block-missing-size",
    "pp-codec-lz4-block-shorthand",
    "pp-codec-lz4-block-size-mismatch",
@@ -799,11 +811,13 @@
    "pp-codec-lz4-frame",
    "pp-codec-lz4-frame-block-checksums",
    "pp-codec-lz4-frame-concatenated",
+   "pp-codec-lz4-frame-declared-size-over-limit",
    "pp-codec-lz4-frame-substream",
    "pp-codec-lz4-frame-truncated",
    "pp-codec-lz4-header-checksum-mismatch",
    "pp-codec-zstd-checksum-mismatch",
    "pp-codec-zstd-concatenated",
+   "pp-codec-zstd-declared-size-over-limit",
    "pp-codec-zstd-dictionary",
    "pp-codec-zstd-frame",
    "pp-codec-zstd-parameter-unknown",
@@ -814,6 +828,7 @@
    "pp-codec-lz4-frame",
    "pp-codec-lz4-frame-block-checksums",
    "pp-codec-lz4-frame-concatenated",
+   "pp-codec-lz4-frame-declared-size-over-limit",
    "pp-codec-lz4-header-checksum-mismatch"
   ],
   "req-pm-optional-codecs-5": [
@@ -823,6 +838,7 @@
   "req-pm-optional-codecs-6": [
    "pp-codec-zstd-checksum-mismatch",
    "pp-codec-zstd-concatenated",
+   "pp-codec-zstd-declared-size-over-limit",
    "pp-codec-zstd-dictionary",
    "pp-codec-zstd-frame"
   ],
@@ -1048,6 +1064,8 @@
    "pp-let-with-parameter",
    "pp-param-quantifier-element"
   ],
+  "req-pm-privacy-1": [],
+  "req-pm-privacy-2": [],
   "req-pm-recovery-1": [
    "ce-recovery-abandon-struct",
    "ce-recovery-check-continues",
@@ -1082,6 +1100,8 @@
    "pp-limit-input-bytes",
    "pp-limit-materialized-bytes",
    "pp-limit-no-cheaper-interpretation",
+   "pp-limit-quantifier-evaluations",
+   "pp-limit-regex-steps",
    "pp-limit-tree-depth",
    "pp-limit-visited-nodes",
    "pp-param-recursion-depth-limit",
@@ -1099,6 +1119,8 @@
    "pp-limit-hel-length",
    "pp-limit-input-bytes",
    "pp-limit-materialized-bytes",
+   "pp-limit-quantifier-evaluations",
+   "pp-limit-regex-steps",
    "pp-limit-tree-depth",
    "pp-limit-visited-nodes",
    "se-triple-limit"
@@ -1106,6 +1128,13 @@
   "req-pm-resource-limits-4": [
    "pp-limit-no-cheaper-interpretation"
   ],
+  "req-pm-security-decompression-1": [
+   "pp-codec-lz4-block-declared-size-over-limit",
+   "pp-codec-lz4-frame-declared-size-over-limit",
+   "pp-codec-zstd-declared-size-over-limit"
+  ],
+  "req-pm-security-external-1": [],
+  "req-pm-security-resources-1": [],
   "req-pm-size-resolution-1": [],
   "req-pm-size-resolution-2": [
    "pp-hel-size-result-type",
@@ -1306,7 +1335,9 @@
    "pp-hel-flat-conjunction-depth",
    "pp-limit-hel-default-depth",
    "pp-limit-hel-depth",
-   "pp-limit-hel-length"
+   "pp-limit-hel-length",
+   "pp-limit-quantifier-evaluations",
+   "pp-limit-regex-steps"
   ],
   "req-hel-conformance-9": [
    "pp-hel-vector-rows"
@@ -1342,6 +1373,9 @@
    "pp-param-quantifier-element",
    "pp-param-quantifier-holding-struct"
   ],
+  "req-hel-ext-quantifiers-4": [
+   "pp-limit-quantifier-evaluations"
+  ],
   "req-hel-ext-temporal-1": [],
   "req-hel-ext-temporal-2": [
    "pp-hel-temporal-group"
@@ -1353,6 +1387,9 @@
    "pp-hel-text-pattern-not-string"
   ],
   "req-hel-ext-text-2": [],
+  "req-hel-ext-text-3": [
+   "pp-limit-regex-steps"
+  ],
   "req-hel-extension-groups-1": [
    "pp-hel-extension-group-unclaimed",
    "pp-hel-unknown-function"
@@ -2614,10 +2651,10 @@
   "hel/index.html#evaluation": 4,
   "hel/index.html#expression-depth": 2,
   "hel/index.html#ext-geometry": 3,
-  "hel/index.html#ext-quantifiers": 4,
+  "hel/index.html#ext-quantifiers": 5,
   "hel/index.html#ext-register": 1,
   "hel/index.html#ext-temporal": 2,
-  "hel/index.html#ext-text": 2,
+  "hel/index.html#ext-text": 3,
   "hel/index.html#extension-groups": 2,
   "hel/index.html#key-resolution": 6,
   "hel/index.html#local-bindings": 2,
@@ -2648,13 +2685,14 @@
   "processing#lz4-parameters": 4,
   "processing#minimum-codecs": 25,
   "processing#multi-part-assets": 15,
-  "processing#optional-codecs": 17,
+  "processing#optional-codecs": 20,
   "processing#optional-features": 1,
   "processing#parameter-scope": 9,
   "processing#recovery": 8,
   "processing#refusal": 2,
   "processing#repeat-until-bindings": 5,
-  "processing#resource-limits": 15,
+  "processing#resource-limits": 17,
+  "processing#security-decompression": 3,
   "processing#size-resolution": 21,
   "processing#stream-metadata": 8,
   "processing#struct-size": 8,

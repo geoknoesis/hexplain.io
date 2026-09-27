@@ -784,3 +784,28 @@ se("parameters-and-bindings-not-emitted", "Parameters and local bindings are nev
    {SE_ROOT} a ex:File ; ex:value "3"^^xsd:unsignedByte ; ex:item <urn:example:input#root/item> .
    <urn:example:input#root/item> a ex:ItemClass ; ex:width "5"^^xsd:unsignedByte ; ex:scaled "15"^^xsd:integer .
    """)
+
+# ----------------------------------------------------------------- decompression bombs that announce themselves
+
+BOMB = [OPTIONAL, "req-pm-optional-codecs-2", "req-pm-security-decompression-1", "req-pm-errors-12"]
+
+pp("codec-lz4-block-declared-size-over-limit", "An LZ4 block whose decodedSize exceeds the decoded-byte limit is refused before decoding",
+   "decodedSize 1000000 under maxDecodedBytes 1000. The block itself is one token that decodes to nothing, so a processor "
+   "that decoded first would report a size mismatch (Validation); the pre-check makes it ResourceLimit.",
+   BOMB, ["optional-codecs", "security-decompression"], lz4_block(1000000, 1), b"\x00", error="ResourceLimit",
+   manifest=dict(CODECS, limits={"maxDecodedBytes": 1000}))
+
+pp("codec-lz4-frame-declared-size-over-limit", "An LZ4 frame whose declared content size exceeds the limit is refused before decoding",
+   f"The frame declares {len(TEXT)} bytes of content under maxDecodedBytes 100 and is cut ten bytes short: the declared "
+   "size is checked before any block is decoded, so the result is ResourceLimit, not the Validation error of a "
+   "truncated frame.",
+   BOMB + ["req-pm-optional-codecs-4"], ["optional-codecs", "security-decompression"],
+   encoded("hexplain:isEncodedWith menc:LZ4", len(FRAME_CHECKED) - 10), FRAME_CHECKED[:-10], error="ResourceLimit",
+   manifest=dict(CODECS, limits={"maxDecodedBytes": 100}))
+
+pp("codec-zstd-declared-size-over-limit", "A Zstandard frame whose Frame_Content_Size exceeds the limit is refused before decoding",
+   f"The frame declares {len(zstdframes.CONTENT_1)} bytes under maxDecodedBytes 100 and is cut six bytes short: "
+   "ResourceLimit, raised before decoding, not the Validation error of a truncated frame.",
+   BOMB + ["req-pm-optional-codecs-6"], ["optional-codecs", "security-decompression"],
+   encoded("hexplain:isEncodedWith menc:Zstd", len(Z1) - 6), Z1[:-6], error="ResourceLimit",
+   manifest=dict(CODECS, limits={"maxDecodedBytes": 100}))

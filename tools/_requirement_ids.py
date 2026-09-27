@@ -78,6 +78,8 @@ CLASS_OVERRIDE = {
     "req-pm-multi-part-assets-3": "physical-parser",         # "a processor that is not a Bundle Processor"
     "req-hdl-layout-1": "physical-parser",                   # which processor can run the example
     "req-pm-emission-1": "physical-parser",                  # decoding a block is parsing
+    "req-pm-privacy-1": "semantic-emitter",                  # the base a processor chooses for minting
+    "req-pm-privacy-2": "conformance-evaluator",             # what a run report names its input by
 }
 #: Requirements on a description's author, not on a processor: they are registered and cited like
 #: any other, but a processor cannot fail them, so they never count as processor requirements.

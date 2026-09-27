@@ -44,7 +44,8 @@ def feature_tokens():
     return tuple(re.findall(r'<li data-feature="([^"]+)">', page))
 #: Limits a manifest may lower (Processing Model, Resource Limits), plus the evaluator's findings cap.
 LIMITS = ("maxInputBytes", "maxDepth", "maxTreeDepth", "maxVisitedNodes", "maxMaterializedBytes",
-          "maxDecodedBytes", "maxHelDepth", "maxHelLength", "maxTriples", "maxFindings")
+          "maxDecodedBytes", "maxHelDepth", "maxHelLength", "maxQuantifierEvaluations", "maxRegexSteps", "maxTriples",
+          "maxFindings")
 
 PREFIXES = """@prefix bddo: <https://hexplain.io/ns/bddo#> .
 @prefix hexplain: <https://hexplain.io/ns/core#> .

@@ -92,6 +92,26 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
   `pp-str-latin1-every-byte`, `pp-textnum-non-ascii-digit`, `pp-hel-bytes-malformed-argument`,
   `ce-recovery-malformed-text`; `pp-hel-bytes-vs-string` now expects a malformed byte to equal no
   String.
+- **Security and Privacy Considerations.** New section `processing#security-privacy` gathers the
+  threats a processor faces and the rules that answer them, and adds four: limits apply to the work
+  a description causes as much as to the input (`req-pm-security-resources-1`); every codec stage
+  counts toward the decoded-byte limit as it is produced, never checked after a full decode, and a
+  declared size beyond the limit is ResourceLimit even under a smaller per-block cap
+  (`req-pm-security-decompression-1`); nothing an input or description names is fetched
+  (`req-pm-security-external-1`); and a base IRI a processor chooses is never derived from the
+  input's file name or path (`req-pm-privacy-1`), with a report's `conf:input` likewise not a file
+  path the caller did not supply (`req-pm-privacy-2`, SHOULD). The HEL regular-expression cost
+  limit and quantifier budget, until now a MAY with no minimum, are normative: new Resource Limits
+  rows `maxQuantifierEvaluations` (1,000,000) and `maxRegexSteps` (2,000,000), the reference
+  engine's defaults; exceeding either is a ResourceLimit error (`req-hel-ext-text-3`,
+  `req-hel-ext-quantifiers-4`, and `req-hel-conformance-8`, which now lists both); the error
+  table's ResourceLimit row (`req-pm-errors-12`) names them; the suite manifest may lower both.
+  The function library gains a Security and privacy section (`fn#security`): assets resolved only
+  from registered roots, per-call byte and cell caps enforced before reading, and the byte and
+  value functions kept from parties who may not read every byte. New cases
+  `pp-limit-quantifier-evaluations`, `pp-limit-regex-steps`,
+  `pp-codec-lz4-block-declared-size-over-limit`, `pp-codec-lz4-frame-declared-size-over-limit`
+  and `pp-codec-zstd-declared-size-over-limit` (the first to cite `req-pm-optional-codecs-2`).
 - **Sync markers.** `req-pm-parsestruct-3` now bounds the `bddo:syncOnMarker` search: it starts
   at the cursor (a marker exactly there counts) and stops at the current bound, the end of the
   innermost bounded region or of the current stream, so an occurrence that runs past the bound is

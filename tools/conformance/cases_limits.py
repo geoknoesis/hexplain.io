@@ -97,3 +97,25 @@ pp("limit-tree-depth", "A tree document nested beyond maxTreeDepth is a Resource
    """,
    b'{"a": "x", "b": {"c": {"d": {"e": 1}}}}', error="ResourceLimit",
    manifest={"limits": {"maxTreeDepth": 3}, "features": {"requires": ["tree-documents"]}})
+
+pp("limit-quantifier-evaluations", "Quantifier predicate evaluations beyond maxQuantifierEvaluations is a ResourceLimit error",
+   "all() over ten elements whose predicate holds for each needs ten evaluations; the limit is 5.",
+   LIMITS + ["req-hel-ext-quantifiers-4", "req-hel-conformance-8"], ["resource-limits", "hel/index.html#ext-quantifiers"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:items ex:d ) .
+   ex:items a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount 10 .
+   ex:d a bddo:Field ; bddo:valueFromExpression "all(items, self >= 0)" .
+   """,
+   bytes(10), error="ResourceLimit",
+   manifest={"limits": {"maxQuantifierEvaluations": 5}, "features": {"requires": ["hel-ext-quantifier"]}})
+
+pp("limit-regex-steps", "A regular-expression match beyond maxRegexSteps is a ResourceLimit error, not false",
+   "Matching 100 a's against a* in full examines at least 100 characters of the subject; the limit is 10.",
+   LIMITS + ["req-hel-ext-text-3", "req-hel-conformance-8"], ["resource-limits", "hel/index.html#ext-text"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:s ex:d ) .
+   ex:s a bddo:Field ; bddo:dataType bddo:string ; bddo:size 100 ; bddo:encoding bddo:ascii .
+   ex:d a bddo:Field ; bddo:valueFromExpression "matches(s, 'a*')" .
+   """,
+   b"a" * 100, error="ResourceLimit",
+   manifest={"limits": {"maxRegexSteps": 10}, "features": {"requires": ["hel-ext-text"]}})
