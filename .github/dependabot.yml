@@ -1,0 +1,30 @@
+# Weekly dependency update PRs. Updates land as ordinary pull requests, so the specification gates
+# and the browser acceptance check gate every bump. Nothing is published anywhere by this.
+#
+# pip: requirements.in and requirements-browser.in hold the top-level pins; requirements.txt and
+# requirements-browser.txt are the hash-pinned locks CI installs with --require-hashes. A bump that
+# touches only one lock leaves the shared packages disagreeing, so regenerate both locks with the
+# `uv pip compile` command in their headers before merging (the headers say how).
+# GitHub Actions updates keep the SHA pins and their version comments current together.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      # rdflib, pyshacl and owlrl move together: pyshacl pins the rdflib and owlrl ranges it
+      # supports, so a lone rdflib bump usually cannot resolve.
+      rdf:
+        patterns: ["rdflib", "pyshacl", "owlrl", "html5rdf"]
+      playwright:
+        patterns: ["playwright", "greenlet", "pyee"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      actions:
+        patterns: ["actions/*"]

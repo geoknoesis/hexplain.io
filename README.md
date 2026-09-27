@@ -4,7 +4,7 @@ Canonical RDF vocabularies, SHACL constraints, HDL/HEL documentation, generated 
 and the public site. Format profiles live in the separate `hexplain-profiles` repository.
 
 ```
-python -m pip install -r requirements.txt
+python -m pip install --require-hashes -r requirements.txt
 python tools/run_gates.py --strict
 ```
 
@@ -20,9 +20,13 @@ The intended public origin is `https://hexplain.io`. Local routing can be tested
 `python tools/_check_local_publication.py` using Docker. This command starts a disposable
 localhost-only Nginx container; it does not deploy the site. Live deployment remains deferred.
 
-For browser acceptance, install `python -m pip install -r requirements-browser.txt`, then
-`python -m playwright install chromium` and run `python tools/_check_site_browser.py`.
+For browser acceptance, install `python -m pip install --require-hashes -r requirements-browser.txt`,
+then `python -m playwright install chromium` (the pinned Playwright fetches its own Chromium
+build) and run `python tools/_check_site_browser.py`.
 The dedicated site workflow provisions Chromium's Linux system dependencies and retains
 browser screenshots and local publication results.
+
+The `requirements*.txt` files are hash-pinned locks compiled from `requirements*.in`; edit the
+`.in` pins and regenerate the locks with the `uv pip compile` command in their headers.
 
 License declarations and unresolved artifact-class licensing are described in [LICENSING.md](LICENSING.md).

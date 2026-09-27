@@ -297,6 +297,18 @@ cites `req-pm-context-3`.
   (moved to `reference-engine-claims.json` as `codecs.parameters`); the homepage states the
   number of vocabulary modules (36, checked) and no single family version.
 
+### CI and dependencies
+
+- Every GitHub Actions `uses:` is pinned to a full commit SHA with its release in a comment
+  (`actions/checkout` v4.4.0, `actions/setup-python` v5.6.0, `actions/upload-artifact` v4.6.2);
+  checkouts set `persist-credentials: false`; workflows grant only `contents: read`.
+- New `actionlint` job in the gates workflow (actionlint 1.7.7 pinned by SHA-256, with shellcheck).
+- `requirements.txt` and `requirements-browser.txt` are now hash-pinned locks compiled with
+  `uv pip compile --generate-hashes` from `requirements.in` and `requirements-browser.in`, and CI
+  installs them with `--require-hashes`. Playwright stays pinned at 1.60.0, which fixes the
+  Chromium build the browser check installs.
+- `.github/dependabot.yml`: weekly grouped updates for pip and GitHub Actions.
+
 ### Requirement registry
 
 - **Changed text, one clause one level.** `req-pm-errors-9` was a fragment ("SHOULD be raised

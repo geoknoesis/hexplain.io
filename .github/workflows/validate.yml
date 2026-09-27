@@ -2,7 +2,33 @@ name: Specification gates
 on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
+# Every action is pinned to a full commit SHA (a tag can be moved; a SHA cannot), with the release
+# it corresponds to in a comment. Dependabot's github-actions updates keep both current.
 jobs:
+  actionlint:
+    name: Workflow lint (actionlint + shellcheck)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      # actionlint checks every workflow's syntax, expressions, action inputs and `${{ }}` injection
+      # into scripts, and runs shellcheck over each `run:` block. The release tarball is pinned by
+      # its published SHA-256; shellcheck is preinstalled on the ubuntu runner image (and the step
+      # fails if it is not, rather than silently linting without it).
+      - name: Install actionlint 1.7.7
+        env:
+          ACTIONLINT_SHA256: 023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757
+        run: |
+          set -euo pipefail
+          command -v shellcheck
+          curl -fsSL -o "$RUNNER_TEMP/actionlint.tar.gz" https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz
+          echo "$ACTIONLINT_SHA256  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+      - name: Lint the workflows
+        run: '"$RUNNER_TEMP/actionlint" -color -shellcheck "$(command -v shellcheck)"'
+
   validate:
     name: Gates (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -21,14 +47,16 @@ jobs:
       run:
         working-directory: hexplain.io
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          persist-credentials: false
           path: hexplain.io
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.12'
-      - run: pip install --no-cache-dir -r requirements.txt
+      # Hash-pinned: exactly the files in requirements.txt, or the step fails.
+      - run: python -m pip install --no-cache-dir --require-hashes -r requirements.txt
       - run: python tools/run_gates.py --strict
       # Durations and sampled peak RSS per gate, including the parallel gates' worker processes.
       # The eight-worker default exists because a concurrent run exhausted host memory, so the
@@ -36,7 +64,7 @@ jobs:
       - name: Summarise gate cost
         if: always()
         run: python tools/_gate_cost.py .gate-results/summary.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: specification-gates-${{ matrix.os }}
