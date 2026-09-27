@@ -120,11 +120,11 @@ rewritten.
   of core, the geometry and raster interpretation rules, the spatial-reference evaluation rules,
   the base-IRI privacy rule and the HEL error-condition rule the vectors test); `coverage.json`
   reports them per class as `notSuiteTestable`, and the conformance page lists them. The build
-  refuses a stale entry. The four HEL version-marker cases (`pp-hel-version-*`) are written but
-  generated only once `hexplain:helVersion` is declared, like the RDF report cases. Processor MUSTs
-  now covered: Physical Parser 199 of 203 (the two not cited are the version-marker rules waiting
-  for that term, two not testable), Semantic Emitter 21 of 30 (nine not testable), Bundle
-  Processor, HDL Compiler and Conformance Evaluator all.
+  refuses a stale entry. The four HEL version-marker cases (`pp-hel-version-newer-minor-unknown-function`,
+  `pp-hel-version-current-unknown-function`, `pp-hel-version-other-major`,
+  `pp-hel-version-malformed`) state `bddo:helVersion` and are generated. Processor MUSTs now
+  covered: Physical Parser 202 of 204 (two not testable), Semantic Emitter 21 of 30 (nine not
+  testable), Bundle Processor, HDL Compiler and Conformance Evaluator all.
 - **Function library status and conformance.** `fn/index.html` defined contracts with no RFC 2119
   keyword, no status statement and no conformance section. It now has a status statement (a
   prerelease working draft, normative for the current toolchain like the rest of the family, with
@@ -145,13 +145,19 @@ rewritten.
 - **HEL version marker.** HEL allowed a later 1.x version to add functions, yet an unknown
   function was always a Type / HEL error, so a description written for HEL 1.1 would fail a 1.0
   evaluator as if it were broken. A description now declares its HEL version with
-  `hexplain:helVersion` ("major.minor", default "1.0") on its `owl:Ontology`
+  `bddo:helVersion` ("major.minor", default "1.0") on its `owl:Ontology`
   (`hel#version-marker`): a malformed value is a Description error (`req-hel-versioning-3`),
   another major version is Unsupported feature (`req-hel-versioning-4`), and an unknown function
   is Unsupported feature when the declared version is a later 1.x than the evaluator implements and
   a Type / HEL error otherwise (`req-hel-versioning-5`). The Unsupported feature row of the error
-  table (`req-pm-errors-10`) includes it. `hexplain:helVersion` is still to be declared in the core
-  vocabulary; `test_doc_terms` allows the name until it is.
+  table (`req-pm-errors-10`) includes it. The marker is the `bddo:helVersion` annotation of BDDO
+  1.3 (below), in `bddo` because `bddo` loads without `core`; the text first named it
+  `hexplain:helVersion`, and `test_doc_terms` no longer allows that name.
+- **Expression literals.** New section `hel#expression-literals`: an expression is the lexical form
+  of a literal typed `xsd:string` or `bddo:HelExpression`; authoring tools SHOULD write the latter
+  (`req-hel-expression-literals-2`, a rule on descriptions), and a processor MUST accept both and
+  evaluate them alike (`req-hel-expression-literals-1`). `processing#context` points to it. New case
+  `pp-hel-expression-datatype`.
 - **Security and Privacy Considerations.** New section `processing#security-privacy` gathers the
   threats a processor faces and the rules that answer them, and adds four: limits apply to the work
   a description causes as much as to the input (`req-pm-security-resources-1`); every codec stage
@@ -482,7 +488,9 @@ entails the external one, `rdfs:seeAlso` otherwise (SKOS mapping properties rela
   Authoring tools SHOULD emit the new datatype; every existing description stays valid.
 - New optional annotation `bddo:helVersion` on a description's ontology: the HEL version,
   major.minor ("1.0"), its expressions are written against; absent, the specification edition's.
-  `bddo:HelVersionShape` allows one value matching `^[0-9]+\.[0-9]+$`.
+  `bddo:HelVersionShape` allows one value matching `^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`: two
+  decimal numbers without leading zeros, as HEL's version marker requires, so `"01.0"`, which HEL
+  makes a Description error, is a violation too.
 - Both are in `bddo`, not `core`: `bddo` is the lowest layer that holds expressions and loads
   without `core`, which imports it.
 

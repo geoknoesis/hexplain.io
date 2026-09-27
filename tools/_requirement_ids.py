@@ -96,6 +96,7 @@ DESCRIPTION_AUDIENCE = {
     "req-spatialref-document-9",      # a profile MUST identify the complete contract
     "req-bddo-parameterised-structs-2",  # a parameter MUST NOT share its name with another member
     "req-bddo-parameterised-structs-4",  # a text container MUST NOT declare parameters
+    "req-hel-expression-literals-2",  # authoring tools SHOULD type expressions bddo:HelExpression
 }
 _B, _D, _C = "https://hexplain.io/ns/bddo#", "https://hexplain.io/ns/dlv#", "https://hexplain.io/ns/core#"
 _SR, _R = "https://hexplain.io/ns/aspect/spatialref#", "https://hexplain.io/ns/aspect/raster#"

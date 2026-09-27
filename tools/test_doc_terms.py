@@ -58,9 +58,6 @@ PREFIXES = {
 ALLOWED = {
     # The neutrality principle needs a counter-example to name what must NOT exist.
     "bddo:nitfSecurityBlock",
-    # The HEL version marker, specified in HEL (hel/index.html#version-marker) before the core vocabulary
-    # declares it; remove this entry once hexplain:helVersion is in hexplain.ttl.
-    "hexplain:helVersion",
 }
 
 #: Documents that PROPOSE names rather than reference them. specification/review.html is a
