@@ -26,7 +26,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--engine", required=True)
     engine = pathlib.Path(parser.parse_args().engine)
-    source = json.loads((engine / "core/src/test/resources/lerc/lerc2-vectors.json").read_text(encoding="utf-8"))["vectors"]
+    source = json.loads((engine / "codecs-image/src/test/resources/lerc/lerc2-vectors.json").read_text(encoding="utf-8"))["vectors"]
     vector_list = []
     for v in source:
         expect = {"sha256": v["dataSha256"]}
