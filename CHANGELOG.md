@@ -60,18 +60,30 @@ rewritten.
 
 ### Codec contracts, claims and profile codec features
 
-- The Processing Model gains Codec contracts (kinds, typed parameters, sessions, error categories,
-  limits and normative vectors), Parameter expressions, Run-time codec selection and Codec sessions
-  (req-pm-codec-contracts-1 to -4, req-pm-parameter-expressions-1 and -2, req-pm-codec-selection-1
-  and -2, req-pm-codec-sessions-1). The short run-time selection paragraph becomes the section
-  `processing#codec-selection`: kinds are checked per candidate, and candidates may differ in kind.
+- The Processing Model gains Codec contracts (kinds, typed parameters, sessions, error categories
+  and their notation, limits, normative vectors, and the bytes a pipeline ending in samples
+  yields), Parameter expressions, Run-time codec selection and Codec sessions. New requirements:
+  `req-pm-codec-contracts-1`, `req-pm-codec-contracts-2`, `req-pm-codec-contracts-3`,
+  `req-pm-codec-contracts-4`, `req-pm-parameter-expressions-1`, `req-pm-parameter-expressions-2`,
+  `req-pm-parameter-expressions-3` (a parameter with both or neither of a literal and an
+  expression), `req-pm-codec-selection-1`, `req-pm-codec-selection-2`, `req-pm-codec-selection-3`
+  (a selecting step with parameters of its own, with both `hexplain:codec` and
+  `hexplain:codecFromExpression`, or without candidates) and `req-pm-codec-sessions-1`. The short
+  run-time selection paragraph becomes the section `processing#codec-selection`: kinds are checked
+  per candidate, and candidates may differ in kind. A pipeline whose first decoded step reads
+  samples is a Description error; `hexplain:codecSessionScope` is ignored on a field whose codecs
+  keep no session.
 - The feature token `codecs-beyond-minimum` is withdrawn: a processor lists the IRIs of the codecs
-  it decodes in the `codecs` member of its claims statement (req-pm-optional-codecs-3 reworded), and
-  conformance manifests name codecs in a `codecs` member. menc:LZ4Block's decodedSize is an integer
-  of at least 1, given as a literal or an expression (req-pm-optional-codecs-7 reworded; its errors,
-  req-pm-optional-codecs-1, say how an invalid expression value is raised). The error table names
-  the codec errors (req-pm-errors-4, req-pm-errors-8) and counts an unlisted codec as an
-  unsupported feature (req-pm-errors-10).
+  it decodes in the `codecs` member of its claims statement, an array only
+  (`req-pm-conformance-classes-5` and `req-pm-optional-codecs-3` reworded), and conformance
+  manifests name codecs in a `codecs` member. Refusal gains case (d): a parameter value or coding
+  feature of a listed codec that its contract defines but the processor does not implement may be
+  refused with Unsupported feature (`req-pm-optional-codecs-3`, `req-pm-codec-contracts-1` and
+  `req-pm-errors-10` say so). menc:LZ4Block's decodedSize is an integer of at least 1, given as a
+  literal or an expression (`req-pm-optional-codecs-7` reworded); a literal out of range is a
+  Description error when the description is loaded and an expression's value out of range a
+  Validation error when the step runs (`req-pm-optional-codecs-1`). The error table lists the codec
+  errors in its rows (`req-pm-errors-4`, `req-pm-errors-8`).
 - reference-engine-claims.json lists the 34 codecs the reference engine decodes with their modules.
 
 ### Review of the normative documents (2026-09-27)

@@ -124,8 +124,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "A processor MUST decode every codec it lists exactly as its contract and its normative vectors define it; a vector's expected output or expected error category is normative.",
-   "sha256": "2f77b0a5cb1025cf"
+   "text": "A processor MUST decode every codec it lists exactly as its contract and its normative vectors define it, except for a parameter value or coding feature it refuses with Unsupported feature under case (d) of Codecs; a vector's expected output or expected error category is normative.",
+   "sha256": "541993e0a2734970",
+   "history": [
+    "2f77b0a5cb1025cf"
+   ]
   },
   "req-pm-codec-contracts-2": {
    "page": "specification/processing/index.html",
@@ -133,8 +136,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "When the description is loaded, a processor MUST check every encoding step against the contract of its codec: a parameter name the contract does not declare, a missing required parameter, and a literal value of the wrong type or outside the declared values are a Description error, and a value the contract defines but the processor does not implement is Unsupported feature.",
-   "sha256": "670c43227d3c7da6"
+   "text": "When the description is loaded, a processor MUST check every encoding step against the contract of its codec: a parameter name the contract does not declare, a missing required parameter, and a literal value of the wrong type or outside the declared values are a Description error, and a value the contract defines but the processor does not implement is Unsupported feature (Codecs, case (d)).",
+   "sha256": "6afc44f5f8018524",
+   "history": [
+    "670c43227d3c7da6"
+   ]
   },
   "req-pm-codec-contracts-3": {
    "page": "specification/processing/index.html",
@@ -142,8 +148,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "A processor MUST raise a Description error, when the description is loaded, for a pipeline in which a step reads bytes where the step decoded before it produces samples, or samples where it produces bytes.",
-   "sha256": "3b5343a274731704"
+   "text": "A processor MUST raise a Description error, when the description is loaded, for a pipeline in which a step reads bytes where the step decoded before it produces samples, or samples where it produces bytes, or in which the first step decoded reads samples.",
+   "sha256": "7eec7c1e7a84d1cd",
+   "history": [
+    "3b5343a274731704"
+   ]
   },
   "req-pm-codec-contracts-4": {
    "page": "specification/processing/index.html",
@@ -171,6 +180,15 @@
    "audience": "processor",
    "text": "A String value that names none of the candidates MUST be raised as a Validation error; a value that is not a String is a Type / HEL error.",
    "sha256": "47ac5dc647b0faa6"
+  },
+  "req-pm-codec-selection-3": {
+   "page": "specification/processing/index.html",
+   "section": "codec-selection",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST raise a Description error, when the description is loaded, for a selecting step that carries a hexplain:codecParameter of its own, a step that carries both hexplain:codec and hexplain:codecFromExpression, and a selecting step without hexplain:codecCandidates or whose candidate list is empty.",
+   "sha256": "78a0f9aa37e2e891"
   },
   "req-pm-codec-sessions-1": {
    "page": "specification/processing/index.html",
@@ -238,8 +256,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "A processor MUST state which classes and which optional features it claims.",
-   "sha256": "cb5d10a2bebc0773"
+   "text": "A processor MUST state which classes and which optional features it claims, and the codecs it decodes (Codecs beyond the minimum set).",
+   "sha256": "b97c45676cd8bdc6",
+   "history": [
+    "cb5d10a2bebc0773"
+   ]
   },
   "req-pm-conformance-classes-6": {
    "page": "specification/processing/index.html",
@@ -607,11 +628,12 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Validation error | A run-time codec selection whose value names none of its candidates, and a codec parameter expression whose value lies outside the parameter's declared values (Run-time codec selection, Parameter expressions); bddo:hasFixedValue mismatch; for a multi-part asset, a required part with no file, a part count outside abnd:minParts..abnd:maxParts, or a file matching no part spec or several (Multi-part Assets).",
-   "sha256": "4ce8aba13c5f6109",
+   "text": "Validation error | bddo:hasFixedValue mismatch; for a multi-part asset, a required part with no file, a part count outside abnd:minParts..abnd:maxParts, or a file matching no part spec or several (Multi-part Assets); a run-time codec selection whose value names none of its candidates, and a codec parameter expression whose value lies outside the parameter's declared values (Run-time codec selection, Parameter expressions).",
+   "sha256": "0903d5c176a3df43",
    "history": [
     "464716f0e1dc3f47",
-    "be53c78394641f16"
+    "be53c78394641f16",
+    "4ce8aba13c5f6109"
    ]
   },
   "req-pm-errors-5": {
@@ -657,15 +679,16 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Description error | A codec step that its contract refuses, a pipeline whose kinds do not connect, a selection whose candidates repeat a codec or include one whose kind does not connect at the step's position, and a parameter expression for a parameter the contract does not declare (Codec contracts, Run-time codec selection). The description itself is inconsistent: two dispatch arms with one key, both dispatch mechanisms on one field, an empty terminator, a variable-length field with no extent, an unbound namespace prefix, cyclic cross-part references, two part specs described by structs sharing a local name, a malformed fixed value, a packed width on a non-integer cell type, a bddo:repeatUntil on a text container, a codec parameter that is unknown, missing or out of range, a pair of conflicting forms (a repeat count with a repeat-until condition, two count or offset forms, a dispatch table with conditional type rules, two values of a functional property), two fields of one struct sharing a local name; a parameterised struct named with a number of arguments other than its number of parameters, arguments for a struct without parameters or for a data type, a literal argument that is not of its parameter's type (an evaluated one is a Type / HEL error: ParseField, Value), a parameter or local binding sharing its name with a field, parameter or binding of its struct, param.x in an expression whose instance struct has no parameter x (inside a quantifier over struct elements, the element’s struct: Stream metadata and eof()), a root or bundle-part struct with parameters, a parameterised struct named by a bddo:dispatchDefault (which cannot state arguments), a parameter or a local binding declared by a text container (a delimited table or record sequence, a key/value header or a tree document); a CRC whose checksum field is not an integer exactly as wide as the CRC; an menc:LZ4Block step without a valid decodedSize. An invalid profile or rule set is a Description error when it is loaded: a description, conformance profile or rule set that the family’s shapes reject, including a requirement identity stated twice (by IRI, or by a blank-node pair with one req:requirementId and req:fromStandard), a requirement without a statement, and a parse attribution naming ResourceLimit. A Description error SHOULD be raised when the description is loaded.",
-   "sha256": "5726121f91229d13",
+   "text": "Description error | The description itself is inconsistent: two dispatch arms with one key, both dispatch mechanisms on one field, an empty terminator, a variable-length field with no extent, an unbound namespace prefix, cyclic cross-part references, two part specs described by structs sharing a local name, a malformed fixed value, a packed width on a non-integer cell type, a bddo:repeatUntil on a text container, a codec parameter that is unknown, missing or a literal out of range, or that carries both or neither of a literal and an expression, a parameter expression for a parameter the contract does not declare, a codec step that its contract otherwise refuses, a pipeline whose kinds do not connect or whose first decoded step reads samples (Codec contracts, Parameter expressions), a selection whose candidates repeat a codec or include one whose kind does not connect at the step's position, a selecting step that carries a hexplain:codecParameter, a step with both hexplain:codec and hexplain:codecFromExpression, a selecting step without hexplain:codecCandidates or with an empty candidate list (Run-time codec selection), a pair of conflicting forms (a repeat count with a repeat-until condition, two count or offset forms, a dispatch table with conditional type rules, two values of a functional property), two fields of one struct sharing a local name; a parameterised struct named with a number of arguments other than its number of parameters, arguments for a struct without parameters or for a data type, a literal argument that is not of its parameter's type (an evaluated one is a Type / HEL error: ParseField, Value), a parameter or local binding sharing its name with a field, parameter or binding of its struct, param.x in an expression whose instance struct has no parameter x (inside a quantifier over struct elements, the element’s struct: Stream metadata and eof()), a root or bundle-part struct with parameters, a parameterised struct named by a bddo:dispatchDefault (which cannot state arguments), a parameter or a local binding declared by a text container (a delimited table or record sequence, a key/value header or a tree document); a CRC whose checksum field is not an integer exactly as wide as the CRC; an menc:LZ4Block step without a decodedSize, or with an invalid literal one. An invalid profile or rule set is a Description error when it is loaded: a description, conformance profile or rule set that the family’s shapes reject, including a requirement identity stated twice (by IRI, or by a blank-node pair with one req:requirementId and req:fromStandard), a requirement without a statement, and a parse attribution naming ResourceLimit. A Description error SHOULD be raised when the description is loaded.",
+   "sha256": "4996455a75da033c",
    "history": [
     "0cb63e59ec525203",
     "6d63f31091bf4ed6",
     "99099e6d77370703",
     "e7406fe5e260e93c",
     "f8ffe1ebc5e7b4d8",
-    "346d0c03b0091053"
+    "346d0c03b0091053",
+    "5726121f91229d13"
    ]
   },
   "req-pm-errors-9": {
@@ -686,11 +709,12 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Unsupported feature | The description uses a construct outside the conformance classes the processor claims, or an optional feature or a codec it does not claim (for example a codec beyond the minimum set, or a chunk order other than row- or column-major). The asset root and partExtension() outside an asset are a Type / HEL error, not this (Multi-part Assets). Only those; see Refusal. An Unsupported feature error SHOULD be raised when the description is loaded. It MUST be raised no later than the first time the construct would affect the result. Distinct from a Description error: the description is valid, this processor cannot run it.",
-   "sha256": "0ecf3594f929e78a",
+   "text": "Unsupported feature | The description uses a construct outside the conformance classes the processor claims, or an optional feature or a codec it does not claim (for example a codec beyond the minimum set, or a chunk order other than row- or column-major), or a parameter value or coding feature of a listed codec that its contract defines but the processor does not implement (Codec contracts). The asset root and partExtension() outside an asset are a Type / HEL error, not this (Multi-part Assets). Only those; see Refusal. An Unsupported feature error SHOULD be raised when the description is loaded. It MUST be raised no later than the first time the construct would affect the result. Distinct from a Description error: the description is valid, this processor cannot run it.",
+   "sha256": "c07352552f2e0ec3",
    "history": [
     "67b9ad3cf8842035",
-    "c490805e3206335e"
+    "c490805e3206335e",
+    "0ecf3594f929e78a"
    ]
   },
   "req-pm-errors-11": {
@@ -957,10 +981,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "A processor MUST list, in the codecs member of its claims statement, the IRI of every codec it decodes, MUST decode each codec it lists exactly as its contract (Codec contracts) and this section define it, and MUST raise Unsupported feature for every codec it does not list.",
-   "sha256": "6fef732d390aa389",
+   "text": "A processor MUST list, in the codecs member of its claims statement, the IRI of every codec it decodes, MUST decode each codec it lists exactly as its contract (Codec contracts) and this section define it, except for a parameter value or coding feature it refuses under case (d) of Codecs, and MUST raise Unsupported feature for every codec it does not list.",
+   "sha256": "187178986288451a",
    "history": [
-    "8fac43df41a265b5"
+    "8fac43df41a265b5",
+    "6fef732d390aa389"
    ]
   },
   "req-pm-optional-codecs-4": {
@@ -1019,6 +1044,15 @@
    "audience": "processor",
    "text": "A value of the wrong HEL type for the parameter is a Type / HEL error and a value of the right type outside the parameter's declared values is a Validation error; a processor MUST raise either before the codec runs.",
    "sha256": "1675b842b7081243"
+  },
+  "req-pm-parameter-expressions-3": {
+   "page": "specification/processing/index.html",
+   "section": "parameter-expressions",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST raise a Description error, when the description is loaded, for a codec parameter that carries both, or neither.",
+   "sha256": "5791ecf5b4ebac16"
   },
   "req-pm-parsefield-1": {
    "page": "specification/processing/index.html",

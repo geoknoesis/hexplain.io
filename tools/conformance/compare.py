@@ -370,7 +370,10 @@ def compare_claims(expected, actual):
             if item not in stated:
                 out.append(f"{key}: a processor running this case claims {item!r}")
     stated_codecs = actual.get("codecs", [])
-    stated_codecs = set(stated_codecs) if isinstance(stated_codecs, list) else set(stated_codecs or {})
+    if not isinstance(stated_codecs, list):
+        out.append("codecs: the claims statement's codecs member is not an array of codec IRIs")
+        stated_codecs = []
+    stated_codecs = set(stated_codecs)
     for iri in sorted(stated_codecs):
         if not iri.startswith("https://hexplain.io/ns/register/media-encoding#"):
             out.append(f"codecs: {iri!r} is not a media-encoding register IRI")

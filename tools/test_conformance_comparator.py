@@ -154,6 +154,8 @@ def other_checks(failures):
           "a claims statement must list the minimum codecs", failures)
     check(compare.compare_claims(with_codecs, {"classes": ["Physical Parser"], "codecs": [menc + "Store", "zstd"]}) != [],
           "a codec is named by its register IRI", failures)
+    check(compare.compare_claims(with_codecs, {"classes": ["Physical Parser"], "codecs": {menc + "Store": True}}) != [],
+          "the codecs member is an array, not an object keyed by IRI", failures)
 
 
 def self_check(failures):

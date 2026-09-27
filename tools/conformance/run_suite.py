@@ -60,9 +60,9 @@ def claimed_features(claims):
 
 
 def claimed_codecs(claims):
-    """The codec IRIs a claims statement lists (an array, or an object keyed by IRI)."""
+    """The codec IRIs a claims statement lists: its "codecs" member is an array of IRIs."""
     value = claims.get("codecs", [])
-    return set(value) if isinstance(value, list) else set(value or {})
+    return set(value) if isinstance(value, list) else set()
 
 
 def fill(template, values):
