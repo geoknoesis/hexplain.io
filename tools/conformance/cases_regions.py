@@ -761,6 +761,32 @@ pp("str-latin1-every-byte", "Every byte is well-formed ISO-8859-1",
    "80 and FF decode to U+0080 and U+00FF.",
    ["req-pm-text-decoding-1"], ["text-decoding"], one_string("latin1", 2), b"\x80\xff", {"s": "\u0080\u00ff"})
 
+
+def trimmed_string(encoding, size):
+    return f"""
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:s ) .
+   ex:s a bddo:Field ; bddo:dataType bddo:string ; bddo:size {size} ; bddo:encoding bddo:{encoding} ; bddo:trimNull true .
+   """
+
+
+TRIM = ["req-pm-text-decoding-4", "req-pm-parsefield-11"]
+
+pp("str-trim-null-utf16-padding-not-decoded", "Padding after a UTF-16 NUL unit is neither decoded nor validated",
+   "41 00 00 00 00 D8 41 00: 'A', the NUL code unit, then a lone high surrogate. With bddo:trimNull only the bytes "
+   "before the NUL are the value; the lone surrogate is in the padding, so the value is 'A' and there is no error.",
+   TRIM, ["text-decoding", "algorithm"], trimmed_string("utf16le", 8), bytes.fromhex("4100000000d84100"),
+   {"s": "A"})
+
+pp("str-trim-null-utf8-padding-not-decoded", "Padding after a UTF-8 NUL byte is neither decoded nor validated",
+   "61 62 00 FF C3 28 00 00: 'ab', the NUL, then bytes that are not well-formed UTF-8, as uninitialised padding often is. "
+   "The value is 'ab'.",
+   TRIM, ["text-decoding", "algorithm"], trimmed_string("utf8", 8), bytes.fromhex("616200ffc3280000"), {"s": "ab"})
+
+pp("str-trim-null-value-malformed", "Value bytes before the NUL that are not well-formed are a validation error",
+   "C3 28 00 00: the bytes before the NUL are the value and are decoded; C3 28 is not well-formed UTF-8.",
+   TRIM + DECODE, ["text-decoding", "algorithm"], trimmed_string("utf8", 4), bytes.fromhex("c3280000"),
+   error="Validation")
+
 pp("textnum-non-ascii-digit", "A number written as text uses ASCII digits only",
    "The UTF-8 field holds ARABIC-INDIC DIGIT ONE and TWO, well-formed text that is not a number: a validation error, "
    "not 12.",

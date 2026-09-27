@@ -101,6 +101,16 @@ rewritten.
   `pp-str-latin1-every-byte`, `pp-textnum-non-ascii-digit`, `pp-hel-bytes-malformed-argument`,
   `ce-recovery-malformed-text`; `pp-hel-bytes-vs-string` now expects a malformed byte to equal no
   String.
+- **Text decoding and `bddo:trimNull`.** The rule said a string field is decoded "before
+  `bddo:trimNull` is applied", so uninitialised padding after the terminating NUL -- common in real
+  TAR and ZIP names -- made a whole field a validation error. With `bddo:trimNull true` the first
+  NUL code unit is now found in the raw bytes, only the bytes before it are the value and are
+  decoded, and the NUL and everything after it are padding, never decoded or validated
+  (`req-pm-text-decoding-4`; ParseField, Value, and the definition of `bddo:trimNull` say the
+  same). New cases
+  `pp-str-trim-null-utf16-padding-not-decoded` (a lone UTF-16 surrogate after the NUL unit reads as
+  the value before it), `pp-str-trim-null-utf8-padding-not-decoded` and
+  `pp-str-trim-null-value-malformed` (value bytes that are not well-formed are still an error).
 - **Implementation reports.** New section `conformance#implementation-reports` defines the report an
   implementation publishes for a run over the suite: one JSON file naming the implementation and
   version, its claims, the suite (a digest of its case files), the run, the counts and one result
