@@ -135,8 +135,22 @@ def coverage():
         "requirements": classes,
         "citations": {i: sorted(citing.get(i, [])) for i, e in registry().items() if not e.get("withdrawn")},
         "withdrawn": sorted(i for i, e in registry().items() if e.get("withdrawn")),
+        "reports": published_reports(),
         "sections": dict(sorted(sections.items())),
     }
+
+
+def published_reports():
+    """The implementation reports under specification/conformance/reports/, summarised for the page."""
+    out = []
+    for path in sorted((SUITE / "reports").glob("*/*.json")):
+        report = json.loads(path.read_text(encoding="utf-8"))
+        impl, counts = report.get("implementation", {}), report.get("counts", {})
+        out.append({"path": path.relative_to(SUITE).as_posix(), "name": impl.get("name", ""),
+                    "version": impl.get("version", ""), "date": report.get("run", {}).get("date", ""),
+                    "digest": report.get("suite", {}).get("digest", ""),
+                    **{s: counts.get(s, 0) for s in ("PASS", "FAIL", "SKIP")}})
+    return out
 
 
 def percent(covered, total):
@@ -186,6 +200,19 @@ def render(data):
             link = PAGE_LINKS[reqs[rid]["page"]]
             parts.append(f'<tr><td><a href="{link}#{rid}"><code>{rid}</code></a></td><td>{html.escape(why)}</td></tr>')
     parts.append("</tbody></table></div>")
+    parts.append('<h3 id="published-reports">Published implementation reports</h3>')
+    reports = data["reports"]
+    if reports:
+        parts.append('<div class="table"><table><thead><tr><th>Implementation</th><th>Version</th><th>Run</th>'
+                     "<th>Pass</th><th>Fail</th><th>Skip</th><th>Suite</th></tr></thead><tbody>")
+        for r in reports:
+            parts.append(f'<tr><td><a href="{html.escape(r["path"])}">{html.escape(r["name"])}</a></td>'
+                         f'<td>{html.escape(r["version"])}</td><td>{html.escape(r["date"])}</td><td>{r["PASS"]}</td>'
+                         f'<td>{r["FAIL"]}</td><td>{r["SKIP"]}</td><td><code>{html.escape(r["digest"][:12])}</code></td></tr>')
+        parts.append("</tbody></table></div>")
+    else:
+        parts.append("<p>None yet (<a href=\"#implementation-reports\">Implementation reports</a> says where they are "
+                     "published).</p>")
     parts.append('<h3 id="requirement-index">Requirement index</h3><p>Every anchored requirement, its level and the cases '
                  "that cite it.</p>")
     by_page = defaultdict(list)

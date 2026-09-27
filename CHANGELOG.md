@@ -92,6 +92,15 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
   `pp-str-latin1-every-byte`, `pp-textnum-non-ascii-digit`, `pp-hel-bytes-malformed-argument`,
   `ce-recovery-malformed-text`; `pp-hel-bytes-vs-string` now expects a malformed byte to equal no
   String.
+- **Implementation reports.** New section `conformance#implementation-reports` defines the report an
+  implementation publishes for a run over the suite: one JSON file naming the implementation and
+  version, its claims, the suite (a digest of its case files), the run, the counts and one result
+  per case (PASS, FAIL or SKIP, the error category it reported, and why for a FAIL or SKIP); every
+  case listed once, a SKIP only for a case that does not apply. Reports are published as
+  `specification/conformance/reports/<implementation>/<version>.json` and listed on the
+  conformance page. `tools/conformance/run_suite.py --json` now writes that format
+  (`--implementation`, `--implementation-version`), `--check-report` checks one, and the new gate
+  `test_implementation_reports` checks every published report.
 - **Coverage.** Existing cases now cite the vocabulary-page requirements they already exercise
   (`req-bddo-addressing-1`, `req-bddo-bitfields-1`, `req-bddo-field-properties-8`,
   `req-bddo-structural-properties-4`, `req-bddo-structural-properties-6`,
