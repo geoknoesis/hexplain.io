@@ -1,0 +1,299 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#LZ4",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "reference-libraries",
+      "url": "https://github.com/lz4/lz4",
+      "description": "Written by python-lz4 1.9.4 (liblz4 1.9.4), python-zstandard 0.25 (zstd 1.5) and CPython's lzma module (liblzma 5) through hexplain-tools codecs-lz/src/test/resources/codec/generate_vectors.py and codecs-xz/src/test/resources/codec/generate_xz_vectors.py; single-byte corruptions, truncations and concatenations made here.",
+      "licence": "BSD-2-Clause (liblz4), BSD-3-Clause (zstd, python-zstandard), 0BSD (liblzma); inputs CC0-1.0"
+    },
+    {
+      "id": "hand-built",
+      "url": "https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md",
+      "description": "Frames built byte by byte here from the LZ4 Frame Format Description 1.6.4 and RFC 8878 (Zstandard).",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "independent-checksums",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "file": "independent-checksums.lz4"
+          },
+          "expect": {
+            "sha256": "c683215c6542a53c691abdfb03ba9fd18b857d1803ee3c8cbc10eacb19e0e590",
+            "size": 150000
+          }
+        }
+      ],
+      "source": "reference-libraries"
+    },
+    {
+      "id": "linked",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "file": "linked.lz4"
+          },
+          "expect": {
+            "sha256": "c683215c6542a53c691abdfb03ba9fd18b857d1803ee3c8cbc10eacb19e0e590",
+            "size": 150000
+          }
+        }
+      ],
+      "source": "reference-libraries"
+    },
+    {
+      "id": "empty",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "file": "empty.lz4"
+          },
+          "expect": {
+            "hex": ""
+          }
+        }
+      ],
+      "source": "reference-libraries"
+    },
+    {
+      "id": "stored-blocks",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "file": "stored.lz4"
+          },
+          "expect": {
+            "sha256": "55b17ac29b6a0a56866e85aedb05f2db8b2e957a6a84ebe65ff3742312a0e6f6",
+            "size": 3000
+          }
+        }
+      ],
+      "source": "reference-libraries"
+    },
+    {
+      "id": "content-checksum-mismatch",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "file": "content-checksum-flip.lz4"
+          },
+          "expect": {
+            "error": "Checksum"
+          }
+        }
+      ],
+      "source": "reference-libraries"
+    },
+    {
+      "id": "block-checksum-mismatch",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "file": "block-checksum-flip.lz4"
+          },
+          "expect": {
+            "error": "Checksum"
+          }
+        }
+      ],
+      "source": "reference-libraries"
+    },
+    {
+      "id": "header-checksum-mismatch",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "file": "header-checksum-flip.lz4"
+          },
+          "expect": {
+            "error": "Checksum"
+          }
+        }
+      ],
+      "source": "reference-libraries"
+    },
+    {
+      "id": "stored-data-mismatch",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "file": "stored-data-flip.lz4"
+          },
+          "expect": {
+            "error": "Checksum"
+          }
+        }
+      ],
+      "source": "reference-libraries"
+    },
+    {
+      "id": "truncated",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "file": "truncated.lz4"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "reference-libraries"
+    },
+    {
+      "id": "trailing-byte",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "file": "trailing.lz4"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "reference-libraries"
+    },
+    {
+      "id": "skippable-and-concatenated",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "file": "concatenated.lz4"
+          },
+          "expect": {
+            "sha256": "fbb55b7300405e8161906cbb793381b5d94b3bad3398ea97c5977127cbca03ca",
+            "size": 300000
+          }
+        }
+      ],
+      "source": "reference-libraries"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "file": "linked.lz4"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 100000
+        }
+      ],
+      "source": "reference-libraries"
+    },
+    {
+      "id": "unknown-parameter",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "level": 1
+          },
+          "input": {
+            "file": "linked.lz4"
+          },
+          "expect": {
+            "error": "Description"
+          }
+        }
+      ],
+      "source": "reference-libraries"
+    },
+    {
+      "id": "dictionary",
+      "source": "hand-built",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "04224d18614007000000e300000000"
+          },
+          "expect": {
+            "error": "Unsupported"
+          }
+        }
+      ]
+    },
+    {
+      "id": "match-before-start",
+      "source": "hand-built",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "04224d1860408205000000106102000000000000"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "match-offset-zero",
+      "source": "hand-built",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "04224d1860408205000000106100000000000000"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "overlapping-match",
+      "source": "hand-built",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "04224d186040820600000010610100106200000000"
+          },
+          "expect": {
+            "hex": "616161616162"
+          }
+        }
+      ]
+    }
+  ]
+}

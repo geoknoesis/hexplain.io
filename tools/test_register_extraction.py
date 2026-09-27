@@ -84,7 +84,8 @@ EXPECTED_COUNTS = {
     # that only ever appear as a step (Delta, Shuffle, BitShuffle). Growth here is expected
     # -- registers are meant to gain concepts; this line is the deliberate acknowledgement
     # the docstring asks for, not a rubber stamp.
-    "media-encoding": (2, 25),  # +1 explicit RFC 1950 Zlib framing concept; +1 LZ4Block, the bare LZ4 block
+    "media-encoding": (2, 26),  # +1 explicit RFC 1950 Zlib framing concept; +1 LZ4Block, the bare LZ4 block;
+    # +1 XZ, the .xz container distinct from the menc:LZMA algorithm family
     "color": (1, 4),
     "checksum": (1, 16),  # +CRC16 and Adler32, which bddo already identified physically; +10 CRC variants
     "part-role": (1, 12),
