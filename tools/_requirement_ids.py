@@ -63,6 +63,7 @@ GENERATED = re.compile(r"<!-- BEGIN GENERATED ([A-Z ]+) -->.*?<!-- END GENERATED
 PM_SECTION_CLASS = {
     "iri-minting": "semantic-emitter",
     "value-mapping": "semantic-emitter",
+    "computed-values": "semantic-emitter",
     "emission": "semantic-emitter",
     "multi-part-assets": "bundle-processor",
     "conformance-evaluation": "conformance-evaluator",

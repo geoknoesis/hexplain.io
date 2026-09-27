@@ -118,6 +118,87 @@
    "text": "A processor MUST resolve a struct's conditional byte order as follows.",
    "sha256": "ea1c140c3c80e6cc"
   },
+  "req-pm-computed-values-1": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "When neither the rule nor the field gives a hexplain:valueDatatype, a Semantic Emitter MUST emit the result in its natural datatype, by this table:",
+   "sha256": "86193a976a4b42c4"
+  },
+  "req-pm-computed-values-2": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "When a hexplain:valueDatatype D is given, a Semantic Emitter MUST emit a literal typed D whose lexical form is a lexical form of the result’s value in D, and MUST raise a Type / HEL error when the result has no value in D's value space: for xsd:decimal and the integer types derived from it the result is an Integer, or for xsd:decimal a finite Float, within D’s range (a Float with a fractional part is never an integer, and 300 is not an xsd:unsignedByte); for xsd:double and xsd:float an Integer or a Float, rounded to the nearest binary32 value for xsd:float; for xsd:string a String; for xsd:boolean a Boolean; for xsd:hexBinary Bytes.",
+   "sha256": "24760d730dc2b352"
+  },
+  "req-pm-computed-values-3": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Integer | An xsd:long literal, the datatype whose value space is HEL’s signed 64-bit Integer, whatever the value’s magnitude. An unsigned value above 2^63−1, which only a uint64 field can supply (HEL, numeric semantics), is an xsd:integer literal.",
+   "sha256": "f5bb2cddda89ec7a"
+  },
+  "req-pm-computed-values-4": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Float | An xsd:double literal; NaN and the infinities are written NaN, INF and -INF, the XSD lexical forms.",
+   "sha256": "336d3915617c22de"
+  },
+  "req-pm-computed-values-5": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "String | An xsd:string literal.",
+   "sha256": "efdd1c40414a6ea0"
+  },
+  "req-pm-computed-values-6": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Boolean | An xsd:boolean literal, true or false.",
+   "sha256": "66ff5897d29eed74"
+  },
+  "req-pm-computed-values-7": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Bytes | An xsd:hexBinary literal.",
+   "sha256": "b48a6250a5396eb4"
+  },
+  "req-pm-computed-values-8": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Null | Nothing, exactly as for an unbound field.",
+   "sha256": "339883268a4a0d76"
+  },
+  "req-pm-computed-values-9": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A struct node or an array node | A Type / HEL error: a computed value is one literal, and a node has no literal form. (A struct is emitted through hexplain:mapsToObjectProperty, and a repeated field one triple per element.)",
+   "sha256": "606426ca6a127022"
+  },
   "req-pm-conformance-1": {
    "page": "specification/processing/index.html",
    "section": "conformance",
@@ -466,8 +547,11 @@
    "cls": "semantic-emitter",
    "level": "MUST",
    "audience": "processor",
-   "text": "For a Field with hexplain:mapsToProperty P, emit <IRI(parent)> P \"value\"^^xsdType. If the field also carries hexplain:valueExpression E, emit instead the value obtained by evaluating E in the field's context (e.g. fixed-point or unit scaling), typed with hexplain:valueDatatype if given, else the natural datatype of the HEL result.",
-   "sha256": "21dbcbc036363c4e"
+   "text": "For a Field with hexplain:mapsToProperty P, emit <IRI(parent)> P \"value\"^^xsdType. If the field also carries hexplain:valueExpression E, emit instead the value obtained by evaluating E in the field's context (e.g. fixed-point or unit scaling), typed with hexplain:valueDatatype if given, else in the natural datatype of the HEL result.",
+   "sha256": "bd7f097c4d8c3ccd",
+   "history": [
+    "21dbcbc036363c4e"
+   ]
   },
   "req-pm-emission-6": {
    "page": "specification/processing/index.html",

@@ -69,6 +69,15 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
   withdrawn entry recorded before audiences existed (`req-pm-errors-15`) now has one, and its text
   reads its cross-reference as the section title instead of "()". `coverage.json` lists the
   withdrawn identifiers.
+- **Natural datatype of a computed value.** "The natural datatype of the HEL result", which
+  `req-pm-emission-5` relied on, was never defined. New section `processing#computed-values`
+  defines it (`req-pm-computed-values-1`): an Integer is `xsd:long` (a uint64 value beyond it
+  `xsd:integer`), a Float `xsd:double` (`NaN`, `INF`, `-INF`), a String `xsd:string`, a Boolean
+  `xsd:boolean`, Bytes `xsd:hexBinary`, Null nothing, and a struct or array node a Type / HEL error.
+  With a `hexplain:valueDatatype`, the result must have a value in that datatype's value space
+  (`req-pm-computed-values-2`); a processor never re-labels the datatype to fit. The HEL
+  name-binding row for `hexplain:valueExpression` points to the rule. Fourteen new Semantic Emitter
+  cases (`se-value-natural-*`, `se-value-datatype-*`).
 
 ### New language features (bddo 1.3, register/checksum 1.3, register/media-encoding 1.2)
 

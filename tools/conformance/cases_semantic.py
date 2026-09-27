@@ -264,3 +264,102 @@ se("data-layout-array-node", "A field with a data layout emits its array node, n
    """,
    b"\x01\x02\x03\x04\x00\x01\x01\x00",
    f"{ROOT} a ex:Image ; ex:samples <{BASE}#root/pixels> .")
+
+
+# ----------------------------------------------------------------- computed values: the natural datatype
+
+NATURAL = MINT + ["req-pm-emission-5", "req-pm-computed-values-1"]
+TYPED = MINT + ["req-pm-emission-5", "req-pm-computed-values-2"]
+
+
+def computed(expr, fields, datatype=None, extra=""):
+    """A mapped root with the given physical fields (Turtle lines) and a field ex:out, a copy of the first physical
+    field's bytes, whose value is computed by `expr` and emitted as ex:value."""
+    typed = f" ; hexplain:valueDatatype {datatype}" if datatype else ""
+    names = " ".join(line.split()[0] for line in fields)
+    return (f"ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Rec ; bddo:hasField ( {names} ex:out ) .\n"
+            + "\n".join(fields)
+            + '\nex:out a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty ex:value ;\n'
+            + f'    hexplain:valueExpression "{expr}"{typed} .\n' + extra)
+
+
+RAW = ["ex:raw a bddo:Field ; bddo:dataType bddo:int16 ."]
+
+se("value-natural-integer", "A computed Integer with no valueDatatype is an xsd:long literal",
+   "raw + 1 is the Integer 22; its natural datatype is xsd:long whatever its magnitude, never xsd:int.",
+   NATURAL + ["req-pm-computed-values-3"], ["computed-values", "emission"], computed("raw + 1", RAW), struct.pack(">h", 21) + b"\x00",
+   f'{ROOT} a ex:Rec ; ex:value "22"^^xsd:long .')
+
+se("value-natural-unsigned-beyond-long", "A computed uint64 value above 2^63-1 is an xsd:integer literal",
+   "The expression passes through a uint64 field holding 2^64-1, a value xsd:long cannot hold.",
+   NATURAL + ["req-pm-computed-values-3"], ["computed-values"], computed("big", ["ex:big a bddo:Field ; bddo:dataType bddo:uint64 ."]),
+   b"\xff" * 8 + b"\x00", f'{ROOT} a ex:Rec ; ex:value "18446744073709551615"^^xsd:integer .')
+
+se("value-natural-float", "A computed Float with no valueDatatype is an xsd:double literal",
+   "raw * 0.5 is the Float 10.5.",
+   NATURAL + ["req-pm-computed-values-4"], ["computed-values"], computed("raw * 0.5", RAW), struct.pack(">h", 21) + b"\x00",
+   f'{ROOT} a ex:Rec ; ex:value "10.5"^^xsd:double .')
+
+se("value-natural-float-infinity", "A computed infinite Float is written INF",
+   "1e308 * 10.0 overflows binary64 to +Infinity, whose xsd:double lexical form is INF.",
+   NATURAL + ["req-pm-computed-values-4"], ["computed-values"], computed("1e308 * 10.0", RAW), struct.pack(">h", 21) + b"\x00",
+   f'{ROOT} a ex:Rec ; ex:value "INF"^^xsd:double .')
+
+se("value-natural-string", "A computed String with no valueDatatype is an xsd:string literal",
+   "trim(name) of ' hi ' is the String 'hi'.",
+   NATURAL + ["req-pm-computed-values-5"], ["computed-values"],
+   computed("trim(name)", ["ex:name a bddo:Field ; bddo:dataType bddo:string ; bddo:size 4 ; bddo:encoding bddo:ascii ."]),
+   b" hi \x00", f'{ROOT} a ex:Rec ; ex:value "hi" .')
+
+se("value-natural-boolean", "A computed Boolean with no valueDatatype is an xsd:boolean literal",
+   "raw > 1 is true.",
+   NATURAL + ["req-pm-computed-values-6"], ["computed-values"], computed("raw > 1", RAW), struct.pack(">h", 21) + b"\x00",
+   f'{ROOT} a ex:Rec ; ex:value "true"^^xsd:boolean .')
+
+se("value-natural-bytes", "Computed Bytes with no valueDatatype are an xsd:hexBinary literal",
+   "The expression passes a two-byte bytes field through.",
+   NATURAL + ["req-pm-computed-values-7"], ["computed-values"],
+   computed("tag", ["ex:tag a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 2 ."]), b"\xca\xfe\x00",
+   f'{ROOT} a ex:Rec ; ex:value "CAFE"^^xsd:hexBinary .')
+
+se("value-natural-null", "A computed Null emits nothing",
+   "The expression reads an optional field that is absent, so ex:value has no triple, exactly as for an unbound field.",
+   NATURAL + ["req-pm-computed-values-8"], ["computed-values"],
+   computed("opt", ["ex:flag a bddo:Field ; bddo:dataType bddo:uint8 .",
+                    'ex:opt a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:isPresentIf "flag == 1" .']),
+   b"\x00\x07", f"{ROOT} a ex:Rec .")
+
+se("value-natural-struct-node", "A computed struct node is a Type / HEL error",
+   "The expression names a struct field; a node has no literal form.",
+   NATURAL + ["req-pm-computed-values-9"], ["computed-values"],
+   computed("hdr", ["ex:hdr a bddo:Field ; bddo:dataType ex:Hdr ."],
+            extra="ex:Hdr a bddo:Struct ; bddo:hasField ( ex:n ) .\nex:n a bddo:Field ; bddo:dataType bddo:uint8 .\n"),
+   b"\x01\x00", error="Expression")
+
+se("value-natural-array-node", "A computed array node is a Type / HEL error",
+   "The expression names a repeated field; a repeated field is emitted one triple per element only by its own mapping.",
+   NATURAL + ["req-pm-computed-values-9"], ["computed-values"],
+   computed("items", ["ex:items a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount 2 ."]),
+   b"\x01\x02\x00", error="Expression")
+
+se("value-datatype-integer-as-double", "An Integer result typed xsd:double is emitted as that double",
+   "raw + 1 is the Integer 22 and hexplain:valueDatatype is xsd:double: the literal is 22 as an xsd:double.",
+   TYPED, ["computed-values"], computed("raw + 1", RAW, "xsd:double"), struct.pack(">h", 21) + b"\x00",
+   f'{ROOT} a ex:Rec ; ex:value "22.0E0"^^xsd:double .')
+
+se("value-datatype-string-as-integer", "A String result typed xsd:integer is a Type / HEL error",
+   "trim(name) is a String, which has no value in xsd:integer's value space; the datatype is never re-labelled.",
+   TYPED + ["req-hel-conformance-6"], ["computed-values"],
+   computed("trim(name)", ["ex:name a bddo:Field ; bddo:dataType bddo:string ; bddo:size 2 ; bddo:encoding bddo:ascii ."],
+            "xsd:integer"),
+   b"ab\x00", error="Expression")
+
+se("value-datatype-out-of-range", "An Integer outside the valueDatatype's range is a Type / HEL error",
+   "raw * 20 is 420, which is not an xsd:unsignedByte.",
+   TYPED, ["computed-values"], computed("raw * 20", RAW, "xsd:unsignedByte"), struct.pack(">h", 21) + b"\x00",
+   error="Expression")
+
+se("value-datatype-fraction-as-integer", "A fractional Float typed with an integer datatype is a Type / HEL error",
+   "raw * 0.5 is 10.5, which has no value in xsd:integer; the processor does not change the datatype to xsd:decimal.",
+   TYPED, ["computed-values"], computed("raw * 0.5", RAW, "xsd:integer"), struct.pack(">h", 21) + b"\x00",
+   error="Expression")
