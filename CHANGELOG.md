@@ -92,6 +92,14 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
   `pp-str-latin1-every-byte`, `pp-textnum-non-ascii-digit`, `pp-hel-bytes-malformed-argument`,
   `ce-recovery-malformed-text`; `pp-hel-bytes-vs-string` now expects a malformed byte to equal no
   String.
+- **Function library status and conformance.** `fn/index.html` defined contracts with no RFC 2119
+  keyword, no status statement and no conformance section. It now has a status statement (a
+  prerelease working draft, normative for the current toolchain like the rest of the family, with
+  its normative and informative parts named), the BCP 14 conventions, and a conformance section: a
+  conforming implementation states the functions it installs and, for each, accepts exactly its
+  `hxf:signature`, returns what `fn.ttl` defines (a Pure function what its SPARQL body returns),
+  is unbound exactly when `hxf:unboundWhen` or a limit says, reads and evaluates as the Processing
+  Model and HEL specify, and meets the security rules; `hxf:explain` is never unbound.
 - **HEL error conditions.** A HEL error vector passed when the evaluator's diagnostic contained a
   fragment of the reference engine's English, so conformance depended on one engine's wording. New
   section `hel#error-conditions` names eight conditions (`syntax`, `undefined-name`,
