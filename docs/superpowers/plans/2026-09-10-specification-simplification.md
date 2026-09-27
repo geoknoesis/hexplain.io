@@ -21,7 +21,7 @@ Status: the seven selected simplifications and the current generated-code follow
 - Malformed encoding declarations and unsupported `codecParameter` fail at compilation.
 - Exported `ir:encodedWith` is one RDF list. Consumers must preserve list order and repeated codec stages instead of reading an unordered property set.
 
-Latest parameterized execution evidence: [codec options](../../../review-2026-09-05/codec-options.html).
+Latest parameterized execution evidence: [codec options](../../../specification/evidence/2026-09-05/index.html#private).
 
 ## Validation
 
@@ -30,7 +30,7 @@ Latest parameterized execution evidence: [codec options](../../../review-2026-09
 - Independent JDK zlib/gzip vectors check normalized decoding order, writer bytes and nested trailers. Negative tests cover truncated streams, decoded output limits, unknown codecs, malformed lists, cycles and unsupported parameters.
 - The pending review package contains 184 files and is reproducible. Independent reviewer acceptance is still pending.
 
-See [current implementation report](../../../review-2026-09-05/simplification-implementation.html) and its linked logs for measured scope.
+See [current implementation report](../../../specification/evidence/2026-09-05/index.html#private) and its linked logs for measured scope.
 
 ## Deliberate boundaries
 
@@ -40,13 +40,13 @@ See [current implementation report](../../../review-2026-09-05/simplification-im
 - Interpreter zlib/raw-DEFLATE level parameters are now supported (-1 or 0..9). Generated Kotlin readers and writers now preserve the same settings on supported byte fields. Single and counted encoded byte/struct blocks support fixed, field-referenced and expression extents. Per-element inferred lengths must agree; declared encoded-size checks run only after layout convergence. Encoded repeat-until blocks remain rejected because this subset does not define their per-element framing. Other codec parameters and unsupported encoded dispatch/layout combinations also reject.
 - No production deployment, fresh GDAL oracle generation or independent ontology acceptance is claimed. Human browser/print acceptance and remote/hosted release acceptance remain separate. The complete local build, all specification gates, artifact staging and separate consumers now pass.
 
-Generated-runtime follow-through: [compiled codec option evidence](../../../review-2026-09-05/generated-codec-options.html).
+Generated-runtime follow-through: [compiled codec option evidence](../../../specification/evidence/2026-09-05/index.html#private).
 
 ## Generated-code adversarial follow-through
 
-Implemented a deterministic 180-combination payload corpus, every strict compressed prefix for six short-payload pipelines, trailing-byte rejection and exact cumulative budget boundaries. The 50-test generated-code verification suite passes. See [adversarial evidence](../../../review-2026-09-05/generated-codec-adversarial.html). This partially addresses the carried-forward negative/fuzz work; coverage-guided campaigns and additional format families remain open.
+Implemented a deterministic 180-combination payload corpus, every strict compressed prefix for six short-payload pipelines, trailing-byte rejection and exact cumulative budget boundaries. The 50-test generated-code verification suite passes. See [adversarial evidence](../../../specification/evidence/2026-09-05/index.html#private). This partially addresses the carried-forward negative/fuzz work; coverage-guided campaigns and additional format families remain open.
 
-Generated counted-block follow-through: [implementation and verification](../../../review-2026-09-05/counted-codec-blocks.html). Positive fixed-size counted byte blocks now decode per element. The new rejection test also fixed generated writer encoded-size enforcement. This historical boundary is superseded by the completion evidence below for dynamic extents and single/counted encoded structs. Unframed repeat-until remains an explicit unsupported contract.
+Generated counted-block follow-through: [implementation and verification](../../../specification/evidence/2026-09-05/index.html#private). Positive fixed-size counted byte blocks now decode per element. The new rejection test also fixed generated writer encoded-size enforcement. This historical boundary is superseded by the completion evidence below for dynamic extents and single/counted encoded structs. Unframed repeat-until remains an explicit unsupported contract.
 
 ## Completion evidence ? September 10, 2026
 
@@ -57,4 +57,4 @@ Generated counted-block follow-through: [implementation and verification](../../
 - Full engine build: 3,002 passed, eight existing skips, no failures/errors. All 37 specification gates pass.
 - Six local release modules staged; independent library and generated-code consumer projects pass, including RDF-to-generated parameterized counted nested frames. Generated release CI now explicitly includes standalone compilation via `:codegen-verify:check`.
 
-See [completion report and logs](../../../review-2026-09-05/simplification-complete.html). No GDAL wave-2a expansion or codec-generation phase-2 work was included, as agreed with the user. No live deployment or external reviewer acceptance is claimed.
+See [completion report and logs](../../../specification/evidence/2026-09-05/index.html#private). No GDAL wave-2a expansion or codec-generation phase-2 work was included, as agreed with the user. No live deployment or external reviewer acceptance is claimed.

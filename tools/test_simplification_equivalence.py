@@ -6,7 +6,7 @@ from rdflib import Graph, Namespace, RDF, Literal
 from rdflib.compare import isomorphic
 from _expand_specification_patterns import ROOT
 
-base = ROOT / 'review-2026-09-05/simplification'
+base = ROOT / 'specification/evidence/2026-09-05/simplification'
 manifest = json.loads((base / 'baseline.json').read_text(encoding='utf-8'))
 archive = (base / 'baseline.zip').read_bytes()
 assert hashlib.sha256(archive).hexdigest() == manifest['archive_sha256']

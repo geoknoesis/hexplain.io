@@ -41,9 +41,9 @@ def build():
                   'specification/processing/index.html',
                   'specification/hel/index.html',
                   'specification/coverage/writer-tests/index.html',
-                  'review-2026-09-05/simplification/baseline.json',
-                  'review-2026-09-05/simplification/baseline.zip',
-                  'review-2026-09-05/simplification/equivalence-matrix.json'])
+                  'specification/evidence/2026-09-05/simplification/baseline.json',
+                  'specification/evidence/2026-09-05/simplification/baseline.zip',
+                  'specification/evidence/2026-09-05/simplification/equivalence-matrix.json'])
     paths.update(['requirements.txt', 'requirements-browser.txt', 'specification/family.json', 'specification/coverage/profile-catalog.json', 'specification/reference/manifest.json',
                   'specification/validation/competency-trace.json',
                   'specification/validation/constraint-coverage.json',

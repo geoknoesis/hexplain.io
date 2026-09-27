@@ -616,6 +616,20 @@ entails the external one, `rdfs:seeAlso` otherwise (SKOS mapping properties rela
 - `releases/index.html` lists snapshots newest first, no longer says 2026-09-08.1 left the
   canonical graphs unchanged, and is in the sitemap.
 - `conf/shapes` and `req/shapes` no longer claim the `conf` and `req` namespace prefixes.
+- **Published review evidence.** The root folder `review-2026-09-05/` (300 files) was served with
+  the public site, and most of it was the proprietary engine's and hosted service's working
+  evidence (engine test logs and probes, backend, tenancy and CI logs, the review report that
+  discussed them). Only the nine files a published page links to or a tool reads remain public,
+  moved to `specification/evidence/2026-09-05/` (the simplification baseline, `vector-depth.json`,
+  `layout-competency.json`, `readiness-security-gates.log`, `live-publication.json`,
+  `specification-acceptance.html` and its `specification-depth-evidence.json`); a new historical
+  page, `specification/evidence/2026-09-05/index.html`, stands in for the review report, lists
+  them, and states that the engine-side evidence is held privately. Links that pointed at private
+  files (the vector-depth core/adapter log, the Jena security-mutation run, the simplification
+  progress reports) now point to that statement. `tools/_review_candidate.py`,
+  `tools/test_simplification_equivalence.py`, `tools/check_live_publication.py` and the
+  `live-publication` workflow use the new paths; both evidence pages are registered historical.
+  Git history is unchanged.
 
 ### Strict profile and tooling
 

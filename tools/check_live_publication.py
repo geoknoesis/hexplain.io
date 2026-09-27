@@ -10,7 +10,7 @@ from rdflib.compare import isomorphic
 root=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--base-url',default='https://hexplain.io')
-parser.add_argument('--output',default='review-2026-09-05/live-publication.json')
+parser.add_argument('--output',default='specification/evidence/2026-09-05/live-publication.json')
 args=parser.parse_args()
 base=args.base_url.rstrip('/')
 cases=[]
