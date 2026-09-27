@@ -7,7 +7,6 @@
 @prefix sh:     <http://www.w3.org/ns/shacl#> .
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix ma:     <http://www.w3.org/ns/ma-ont#> .
-@prefix qudt:   <http://qudt.org/schema/qudt/> .
 @prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .
 @prefix unit:   <http://qudt.org/vocab/unit/> .
 @prefix atime:  <https://hexplain.io/ns/aspect/time#> .
@@ -29,11 +28,14 @@
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "vdv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/video#" .
 
+# Units: qudt:hasUnit and qudt:hasQuantityKind describe a quantity, not a property, so they are
+# not asserted on the property; its unit is in its definition and linked with rdfs:seeAlso.
 :VideoContainer a owl:Class ; rdfs:label "Video Container" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:seeAlso ma:MediaResource .
 :VideoStream a owl:Class ; rdfs:label "Video Stream" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:seeAlso ma:VideoTrack .
 :VideoTrack a owl:Class ; rdfs:label "Video Track" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> .
 
-:frameRate a owl:DatatypeProperty ; rdfs:label "frame rate" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:seeAlso ma:frameRate ; rdfs:range xsd:decimal ; qudt:hasQuantityKind quantitykind:Frequency ; qudt:hasUnit unit:HZ .
+:frameRate a owl:DatatypeProperty ; rdfs:label "frame rate" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:seeAlso ma:frameRate ; rdfs:range xsd:decimal ; rdfs:seeAlso unit:HZ , quantitykind:Frequency ;
+    rdfs:comment "Nominal frames per second."@en .
 # Frame dimensions come from the raster aspect: araster:width / araster:height.
 # duration (atime), bitrate + codec (aenc), colorSpace (acolor) are imported from the aspect layer.
 :aspectRatio a owl:DatatypeProperty ; rdfs:label "aspect ratio" ; rdfs:isDefinedBy <https://hexplain.io/ns/video> ; rdfs:range xsd:string ; rdfs:comment "Display aspect ratio as a W:H string, e.g. \"16:9\"." .

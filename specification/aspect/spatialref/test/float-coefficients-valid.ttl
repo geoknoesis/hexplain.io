@@ -1,0 +1,15 @@
+# A geotransform and a control point read from float32 fields carry xsd:float literals. The
+# coefficient ranges are the union of xsd:double and xsd:float, and FiniteDoubleShape accepts
+# both, as the range datatype shape always did.
+@prefix ex:    <https://hexplain.io/test/float-coefficients-valid#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix asref: <https://hexplain.io/ns/aspect/spatialref#> .
+
+ex:Grid asref:hasGeoTransform ex:T ; asref:hasGroundControlPoint ex:P .
+ex:T a asref:GeoTransform ;
+    asref:originX "440720.0"^^xsd:float ; asref:originY "3751320.0"^^xsd:float ;
+    asref:scaleX "60.0"^^xsd:float ; asref:scaleY "-60.0"^^xsd:double ;
+    asref:skewX "0.0"^^xsd:float .
+ex:P a asref:GroundControlPoint ;
+    asref:gcpPixelX "0.5"^^xsd:float ; asref:gcpPixelY "0.5"^^xsd:float ;
+    asref:gcpX "440750.0"^^xsd:double ; asref:gcpY "3751290.0"^^xsd:float .

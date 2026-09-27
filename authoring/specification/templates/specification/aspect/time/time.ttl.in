@@ -8,7 +8,6 @@
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix ma:     <http://www.w3.org/ns/ma-ont#> .
-@prefix qudt:   <http://qudt.org/schema/qudt/> .
 @prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .
 @prefix unit:   <http://qudt.org/vocab/unit/> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
@@ -24,7 +23,9 @@
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "atime" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/time#" .
 
-:duration a owl:DatatypeProperty ; rdfs:label "duration" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/time> ; rdfs:seeAlso ma:duration ; rdfs:range xsd:decimal ; qudt:hasQuantityKind quantitykind:Time ; qudt:hasUnit unit:SEC ; rdfs:comment "Playing time in seconds." .
+# Units: qudt:hasUnit and qudt:hasQuantityKind describe a quantity, not a property, so they are
+# not asserted on the property; its unit is in its definition and linked with rdfs:seeAlso.
+:duration a owl:DatatypeProperty ; rdfs:label "duration" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/time> ; rdfs:seeAlso ma:duration ; rdfs:range xsd:decimal ; rdfs:seeAlso unit:SEC , quantitykind:Time ; rdfs:comment "Playing time in seconds." .
 
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 :DurationShape a sh:NodeShape ; sh:targetSubjectsOf :duration ;

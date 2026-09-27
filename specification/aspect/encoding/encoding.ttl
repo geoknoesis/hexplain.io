@@ -8,7 +8,6 @@
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix ma:     <http://www.w3.org/ns/ma-ont#> .
-@prefix qudt:   <http://qudt.org/schema/qudt/> .
 @prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .
 @prefix unit:   <http://qudt.org/vocab/unit/> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
@@ -25,9 +24,11 @@
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "aenc" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/encoding#" .
 
+# Units: qudt:hasUnit and qudt:hasQuantityKind describe a quantity, not a property, so they are
+# not asserted on the property; its unit is in its definition and linked with rdfs:seeAlso.
 # ---------- Properties ----------
 :codec a owl:ObjectProperty ; rdfs:label "codec" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ; rdfs:seeAlso ma:hasFormat ; rdfs:range skos:Concept ; rdfs:comment "Codec, drawn from the codec register bound by the profile." .
-:bitrate a owl:DatatypeProperty ; rdfs:label "bitrate" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ; rdfs:seeAlso ma:averageBitRate ; rdfs:range xsd:positiveInteger ; qudt:hasQuantityKind quantitykind:DataRate ; qudt:hasUnit unit:BIT-PER-SEC ; rdfs:comment "Average bitrate of the encoded stream, in bits per second." .
+:bitrate a owl:DatatypeProperty ; rdfs:label "bitrate" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ; rdfs:seeAlso ma:averageBitRate ; rdfs:range xsd:positiveInteger ; rdfs:seeAlso unit:BIT-PER-SEC , quantitykind:DataRate ; rdfs:comment "Average bitrate of the encoded stream, in bits per second." .
 :compression a owl:ObjectProperty ; rdfs:label "compression" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/encoding> ; rdfs:range skos:Concept ; rdfs:comment "Lossless compression method, from the compression register bound by the profile." .
 
 # ---------- Range datatype shapes ----------

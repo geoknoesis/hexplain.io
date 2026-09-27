@@ -29,21 +29,21 @@
 
 :wktString a owl:DatatypeProperty ; rdfs:label "WKT string" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:string ; rdfs:comment "Coordinate reference system WKT, not WKT geometry. No equivalence to GeoSPARQL geometry serialization is asserted." .
 :epsgCode a owl:DatatypeProperty ; rdfs:label "EPSG code" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:positiveInteger .
-:originLongitude a owl:DatatypeProperty ; rdfs:label "origin longitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+:originLongitude a owl:DatatypeProperty ; rdfs:label "origin longitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
     rdfs:comment "Origin easting expressed as a GEOGRAPHIC longitude. Use only when the CRS really is geographic; for an origin in projected units (metres, feet) use asref:originX, of which this is the geographic special case." .
-:originLatitude a owl:DatatypeProperty ; rdfs:label "origin latitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+:originLatitude a owl:DatatypeProperty ; rdfs:label "origin latitude" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
     rdfs:comment "Origin northing expressed as a GEOGRAPHIC latitude. See asref:originLongitude; the general form is asref:originY." .
-:originX a owl:DatatypeProperty ; rdfs:label "origin X" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+:originX a owl:DatatypeProperty ; rdfs:label "origin X" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
     rdfs:comment "Easting of the grid origin in the units of the CRS, degrees or metres alike (affine coefficient GT[0]). The general form of asref:originLongitude, which presumes a geographic CRS and is therefore wrong for the projected rasters that make up most of the corpus." .
-:originY a owl:DatatypeProperty ; rdfs:label "origin Y" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+:originY a owl:DatatypeProperty ; rdfs:label "origin Y" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
     rdfs:comment "Northing of the grid origin in the units of the CRS (affine coefficient GT[3]). The general form of asref:originLatitude." .
-:scaleX a owl:DatatypeProperty ; rdfs:label "X scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+:scaleX a owl:DatatypeProperty ; rdfs:label "X scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
     rdfs:comment "Ground distance per pixel along X (affine coefficient GT[1])." .
-:scaleY a owl:DatatypeProperty ; rdfs:label "Y scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+:scaleY a owl:DatatypeProperty ; rdfs:label "Y scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
     rdfs:comment "Ground distance per pixel along Y (affine coefficient GT[5]). Conventionally NEGATIVE for a north-up raster, whose rows run southward while northings increase." .
-:skewX a owl:DatatypeProperty ; rdfs:label "X skew" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+:skewX a owl:DatatypeProperty ; rdfs:label "X skew" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
     rdfs:comment "Rotation/shear term: ground X per pixel ROW (affine coefficient GT[2]). Zero for a north-up raster. Without this and asref:skewY a rotated or sheared grid cannot be georeferenced at all, only misplaced." .
-:skewY a owl:DatatypeProperty ; rdfs:label "Y skew" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+:skewY a owl:DatatypeProperty ; rdfs:label "Y skew" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
     rdfs:comment "Rotation/shear term: ground Y per pixel COLUMN (affine coefficient GT[4]). Zero for a north-up raster." .
 
 # ---------- Ground footprint ----------
@@ -58,13 +58,13 @@
     rdfs:comment "One correspondence between a pixel position and a ground position. A set of these georeferences an image that no single affine can, e.g. an unrectified swath." .
 :hasGroundControlPoint a owl:ObjectProperty ; rdfs:label "has ground control point" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
     rdfs:range :GroundControlPoint .
-:gcpPixelX a owl:DatatypeProperty ; rdfs:label "GCP pixel X" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+:gcpPixelX a owl:DatatypeProperty ; rdfs:label "GCP pixel X" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
     rdfs:comment "Column position of the control point in the image grid." .
-:gcpPixelY a owl:DatatypeProperty ; rdfs:label "GCP pixel Y" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+:gcpPixelY a owl:DatatypeProperty ; rdfs:label "GCP pixel Y" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
     rdfs:comment "Row position of the control point in the image grid." .
-:gcpX a owl:DatatypeProperty ; rdfs:label "GCP ground X" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
-:gcpY a owl:DatatypeProperty ; rdfs:label "GCP ground Y" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double .
-:gcpZ a owl:DatatypeProperty ; rdfs:label "GCP ground Z" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:double ;
+:gcpX a owl:DatatypeProperty ; rdfs:label "GCP ground X" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] .
+:gcpY a owl:DatatypeProperty ; rdfs:label "GCP ground Y" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] .
+:gcpZ a owl:DatatypeProperty ; rdfs:label "GCP ground Z" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
     rdfs:comment "Ground elevation of the control point. Optional: many formats give 2-D control only." .
 :gcpIdentifier a owl:DatatypeProperty ; rdfs:label "GCP identifier" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:range xsd:string .
 :pixelRegistration a owl:ObjectProperty ; rdfs:label "pixel registration" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
@@ -81,7 +81,11 @@
 
 # Validation is separate from OWL inference. No universal invertibility requirement:
 # a singular affine may be represented, but an inverse request must fail explicitly.
-:FiniteDoubleShape a sh:NodeShape ; sh:datatype xsd:double ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] .
+# xsd:float as well as xsd:double: a 32-bit coefficient lifts as xsd:float, and the range
+# datatype shape already accepted it, so an affine read from a float32 field conformed there and
+# failed here. The ranges above say the same: each is the union of the two XSD datatypes, whose
+# value spaces are disjoint, so a plain xsd:double range made every float literal inconsistent.
+:FiniteDoubleShape a sh:NodeShape ; sh:or ( [ sh:datatype xsd:double ] [ sh:datatype xsd:float ] ) ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] .
 :CRSShape a sh:NodeShape ; sh:targetClass :CoordinateReferenceSystem ; sh:targetObjectsOf :hasCRS, :groundControlPointCRS ;
     sh:nodeKind sh:BlankNodeOrIRI ;
     sh:property [ sh:path :wktString ; sh:datatype xsd:string ; sh:minLength 1 ; sh:maxCount 1 ] ;
@@ -119,16 +123,16 @@ asref:GroundControlPointShape a sh:NodeShape ;
 :lineDenominator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "line denominator coefficients" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed." .
 :sampleNumerator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "sample numerator coefficients" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed." .
 :sampleDenominator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "sample denominator coefficients" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed." .
-:lineOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "line offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:lineScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "line scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:sampleOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "sample offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:sampleScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "sample scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:latitudeOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "latitude offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:latitudeScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "latitude scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:longitudeOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "longitude offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:longitudeScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "longitude scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:heightOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "height offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:heightScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "height scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
+:lineOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "line offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
+:lineScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "line scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
+:sampleOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "sample offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
+:sampleScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "sample scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
+:latitudeOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "latitude offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
+:latitudeScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "latitude scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
+:longitudeOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "longitude offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
+:longitudeScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "longitude scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
+:heightOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "height offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization offset for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
+:heightScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "height scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ; rdfs:comment "Normalization scale for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
 
 :CubicRationalTransformShape a sh:NodeShape ; sh:targetClass :CubicRationalTransform ; sh:targetObjectsOf :hasRationalTransform ;
     sh:nodeKind sh:BlankNodeOrIRI ;
@@ -211,51 +215,51 @@ asref:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
     sh:property [ sh:path asref:gcpIdentifier ; sh:datatype xsd:string ;
         sh:message "asref:gcpIdentifier takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path asref:gcpPixelX ; sh:node asref:FloatValueShape ;
-        sh:message "asref:gcpPixelX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:gcpPixelX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:gcpPixelY ; sh:node asref:FloatValueShape ;
-        sh:message "asref:gcpPixelY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:gcpPixelY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:gcpX ; sh:node asref:FloatValueShape ;
-        sh:message "asref:gcpX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:gcpX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:gcpY ; sh:node asref:FloatValueShape ;
-        sh:message "asref:gcpY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:gcpY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:gcpZ ; sh:node asref:FloatValueShape ;
-        sh:message "asref:gcpZ takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:gcpZ takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:heightOffset ; sh:node asref:FloatValueShape ;
-        sh:message "asref:heightOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:heightOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:heightScale ; sh:node asref:FloatValueShape ;
-        sh:message "asref:heightScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:heightScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:latitudeOffset ; sh:node asref:FloatValueShape ;
-        sh:message "asref:latitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:latitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:latitudeScale ; sh:node asref:FloatValueShape ;
-        sh:message "asref:latitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:latitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:lineOffset ; sh:node asref:FloatValueShape ;
-        sh:message "asref:lineOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:lineOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:lineScale ; sh:node asref:FloatValueShape ;
-        sh:message "asref:lineScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:lineScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:longitudeOffset ; sh:node asref:FloatValueShape ;
-        sh:message "asref:longitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:longitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:longitudeScale ; sh:node asref:FloatValueShape ;
-        sh:message "asref:longitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:longitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:originLatitude ; sh:node asref:FloatValueShape ;
-        sh:message "asref:originLatitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:originLatitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:originLongitude ; sh:node asref:FloatValueShape ;
-        sh:message "asref:originLongitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:originLongitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:originX ; sh:node asref:FloatValueShape ;
-        sh:message "asref:originX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:originX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:originY ; sh:node asref:FloatValueShape ;
-        sh:message "asref:originY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:originY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:sampleOffset ; sh:node asref:FloatValueShape ;
-        sh:message "asref:sampleOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:sampleOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:sampleScale ; sh:node asref:FloatValueShape ;
-        sh:message "asref:sampleScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:sampleScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:scaleX ; sh:node asref:FloatValueShape ;
-        sh:message "asref:scaleX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:scaleX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:scaleY ; sh:node asref:FloatValueShape ;
-        sh:message "asref:scaleY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:scaleY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:skewX ; sh:node asref:FloatValueShape ;
-        sh:message "asref:skewX takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] ;
+        sh:message "asref:skewX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] ;
     sh:property [ sh:path asref:skewY ; sh:node asref:FloatValueShape ;
-        sh:message "asref:skewY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)." ] .
+        sh:message "asref:skewY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)." ] .
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
@@ -276,7 +280,7 @@ asref:CubicRationalTransformShape rdfs:label "Cubic Rational Transform Shape"@en
     skos:definition "Applies to instances of asref:CubicRationalTransform; objects of asref:hasRationalTransform. Each focus node is a resource (an IRI or a blank node). asref:heightOffset takes exactly one value, a value conforming to asref:FiniteDoubleShape. asref:heightScale takes exactly one value, a number greater than 0, conforming to asref:FiniteDoubleShape. asref:latitudeOffset takes exactly one value, a value conforming to asref:FiniteDoubleShape. asref:latitudeScale takes exactly one value, a number greater than 0, conforming to asref:FiniteDoubleShape. asref:lineDenominator takes exactly one value, a value conforming to asref:CoefficientVectorShape. asref:lineNumerator takes exactly one value, a value conforming to asref:CoefficientVectorShape. asref:lineOffset takes exactly one value, a value conforming to asref:FiniteDoubleShape. asref:lineScale takes exactly one value, a number greater than 0, conforming to asref:FiniteDoubleShape. asref:longitudeOffset takes exactly one value, a value conforming to asref:FiniteDoubleShape. asref:longitudeScale takes exactly one value, a number greater than 0, conforming to asref:FiniteDoubleShape. asref:polynomialBasis takes exactly one value, an IRI. asref:sampleDenominator takes exactly one value, a value conforming to asref:CoefficientVectorShape. asref:sampleNumerator takes exactly one value, a value conforming to asref:CoefficientVectorShape. asref:sampleOffset takes exactly one value, a value conforming to asref:FiniteDoubleShape. asref:sampleScale takes exactly one value, a number greater than 0, conforming to asref:FiniteDoubleShape."@en .
 asref:FiniteDoubleShape rdfs:label "Finite Double Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
-    skos:definition "Applied through references from other shapes. A conforming value is an xsd:double literal greater than -inf, less than inf, not a value matching the regular expression ^(nan|[+-]?inf)$ (flags \"i\")."@en .
+    skos:definition "Applied through references from other shapes. A conforming value is an xsd:double or xsd:float literal greater than -inf, less than inf, not a value matching the regular expression ^(nan|[+-]?inf)$ (flags \"i\")."@en .
 asref:FloatValueShape skos:definition "Applied through references from other shapes. A conforming value is an xsd:double or xsd:float literal."@en .
 asref:GeoTransformShape rdfs:label "Geo Transform Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
@@ -289,7 +293,7 @@ asref:PixelCenter rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
     skos:definition "Registration of a cell's value at the centre of its cell (a point sample, such as an elevation post). It does not move the grid: the normalized affine stays corner-based, and a source whose native transform is centre-based is shifted by half a cell when it is normalized, once, at lifting time."@en .
 asref:PixelCorner rdfs:isDefinedBy <https://hexplain.io/ns/aspect/spatialref> ;
     skos:definition "Registration of a cell's value at, or as an area from, the cell's upper-left corner. The normalized affine is corner-based whatever the registration: column/row (0, 0) is the outer corner of the first cell."@en .
-asref:RangeDatatypeShape skos:definition "Applies to subjects using asref:coordinateEpoch, asref:epsgCode, asref:footprintWKT, asref:gcpIdentifier, asref:gcpPixelX, asref:gcpPixelY, asref:gcpX, asref:gcpY, asref:gcpZ, asref:heightOffset, asref:heightScale, asref:latitudeOffset, asref:latitudeScale, asref:lineOffset, asref:lineScale, asref:longitudeOffset, asref:longitudeScale, asref:originLatitude, asref:originLongitude, asref:originX, asref:originY, asref:sampleOffset, asref:sampleScale, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY. asref:coordinateEpoch takes an xsd:decimal literal (rdfs:range xsd:decimal). asref:epsgCode takes a positive integer (rdfs:range xsd:positiveInteger). asref:footprintWKT takes an xsd:string literal (rdfs:range xsd:string). asref:gcpIdentifier takes an xsd:string literal (rdfs:range xsd:string). asref:gcpPixelX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:gcpPixelY takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:gcpX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:gcpY takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:gcpZ takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:heightOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:heightScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:latitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:latitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:lineOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:lineScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:longitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:longitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:originLatitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:originLongitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:originX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:originY takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:sampleOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:sampleScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:scaleX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:scaleY takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:skewX takes an xsd:double or xsd:float literal (rdfs:range xsd:double). asref:skewY takes an xsd:double or xsd:float literal (rdfs:range xsd:double)."@en .
+asref:RangeDatatypeShape skos:definition "Applies to subjects using asref:coordinateEpoch, asref:epsgCode, asref:footprintWKT, asref:gcpIdentifier, asref:gcpPixelX, asref:gcpPixelY, asref:gcpX, asref:gcpY, asref:gcpZ, asref:heightOffset, asref:heightScale, asref:latitudeOffset, asref:latitudeScale, asref:lineOffset, asref:lineScale, asref:longitudeOffset, asref:longitudeScale, asref:originLatitude, asref:originLongitude, asref:originX, asref:originY, asref:sampleOffset, asref:sampleScale, asref:scaleX, asref:scaleY, asref:skewX, asref:skewY. asref:coordinateEpoch takes an xsd:decimal literal (rdfs:range xsd:decimal). asref:epsgCode takes a positive integer (rdfs:range xsd:positiveInteger). asref:footprintWKT takes an xsd:string literal (rdfs:range xsd:string). asref:gcpIdentifier takes an xsd:string literal (rdfs:range xsd:string). asref:gcpPixelX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:gcpPixelY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:gcpX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:gcpY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:gcpZ takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:heightOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:heightScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:latitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:latitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:lineOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:lineScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:longitudeOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:longitudeScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:originLatitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:originLongitude takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:originX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:originY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:sampleOffset takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:sampleScale takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:scaleX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:scaleY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:skewX takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float). asref:skewY takes an xsd:double or xsd:float literal (rdfs:range xsd:double or xsd:float)."@en .
 asref:epsgCode skos:definition "The positive numeric code identifying a coordinate reference system in the EPSG registry; it is not a complete substitute for all CRS metadata."@en .
 asref:gcpIdentifier skos:definition "The source-local identifier distinguishing a control point within its control-point set."@en .
 asref:gcpX skos:definition "The first ground-coordinate ordinate of a control point in the declared control-point CRS."@en .

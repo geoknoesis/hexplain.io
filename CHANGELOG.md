@@ -275,6 +275,34 @@ cites `req-pm-context-3`.
 - New gate `test_ontology_licenses`: every module declares exactly the CC BY 4.0 licence and its
   creator, and `LICENSE` and `LICENSING.md` state both regimes.
 
+### Ranges, shapes and deprecations (review fixes)
+
+- `hexplain:unit` has range `rdfs:Resource` instead of `skos:Concept`, which typed every QUDT unit
+  and UCUM-based unit IRI a `skos:Concept`. The shape still requires an IRI; nothing that
+  validated stops validating.
+- `qudt:hasUnit` and `qudt:hasQuantityKind` are no longer asserted on `atime:duration`,
+  `aenc:bitrate`, `asamp:bitDepth`, `asig:sampleRate` and `vdv:frameRate`: they describe a
+  quantity, not a property. Each property links its QUDT unit and quantity kind with
+  `rdfs:seeAlso` and states the unit in its definition.
+- `asref` coefficients: `xsd:float` literals are accepted and the ranges say so. The 23 ranges
+  that were `xsd:double` are the union `[ owl:unionOf ( xsd:double xsd:float ) ]` (the two value
+  spaces are disjoint, so a float value of a double-ranged property was an inconsistency), and
+  `asref:FiniteDoubleShape` accepts a finite `xsd:float` as the range datatype shape already did:
+  a geotransform read from float32 fields conformed to one shape and failed the other. Data typed
+  `xsd:float` keeps validating; NaN and infinities are still rejected. `test_range_datatypes` no
+  longer treats `xsd:double` and `xsd:float` as interchangeable, and understands union ranges and
+  datatypes declared `rdfs:subClassOf` a range.
+- `hexplain:ClassMappingRuleShape` accepts an `rdfs:Class` for `hexplain:semanticClass`, as
+  `hexplain:MapsToClassShape` accepts it for `hexplain:mapsToClass`.
+- `bddo:condition` and `hexplain:condition` are not the same property and now say so: the first
+  guards a physical parsing rule while bytes are read, the second a semantic mapping rule after
+  parsing. Their definitions are sharpened and each links the other with `rdfs:seeAlso`; neither
+  is deprecated.
+- `bddo:coversExpression` names its replacements (`bddo:coversFromExpression`,
+  `bddo:coversToExpression`) with `dcterms:isReplacedBy`; `bddo:usesStruct` explains in a
+  `skos:historyNote` why it has none. New gate `test_deprecations`: every deprecated term names a
+  current replacement or explains why there is none.
+
 ### Documentation annotations
 
 - One definition rule: a term's `rdfs:comment` is its definition; the generator adds a

@@ -81,7 +81,7 @@
 :hasConditionalMapping a owl:ObjectProperty ; rdfs:label "has conditional mapping" ; rdfs:range rdf:List ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> .
 :condition a owl:DatatypeProperty ; rdfs:label "condition" ; rdfs:range xsd:string ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/core> .
+    rdfs:isDefinedBy <https://hexplain.io/ns/core> ; rdfs:seeAlso bddo:condition .
 :semanticProperty a owl:ObjectProperty ; rdfs:label "semantic property" ; rdfs:range rdf:Property ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> .
 :valueExpression a owl:DatatypeProperty ; rdfs:label "value expression" ; rdfs:range xsd:string ;
@@ -105,9 +105,13 @@
     rdfs:comment "The owl:Class selected by a hexplain:ClassMappingRule when its condition holds." .
 
 # Unit of measure and language tag annotations.
-:unit a owl:ObjectProperty ; rdfs:label "unit" ; rdfs:range skos:Concept ;
+:unit a owl:ObjectProperty ; rdfs:label "unit" ;
+    # rdfs:Resource, not skos:Concept: the range would type every QUDT unit (a qudt:Unit) and every
+    # UCUM-based unit IRI a skos:Concept, which they are not. Widening the range removes an
+    # inference; it invalidates nothing, and UnitShape still requires an IRI.
+    rdfs:range rdfs:Resource ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The unit of measure of the quantity a bddo:Field carries, as an IRI drawn from a unit vocabulary (e.g. QUDT or UCUM; the range is skos:Concept but any unit IRI is permitted). Annotation only: it records the physical unit of the emitted value and does not rescale it — use hexplain:valueExpression for numeric conversion." .
+    rdfs:comment "The unit of measure of the quantity a bddo:Field carries, as the IRI of a unit: a QUDT unit (unit:SEC), a UCUM-based unit IRI, or a concept of a unit register a profile binds. Nothing is inferred about the unit's type. Annotation only: it records the physical unit of the emitted value and does not rescale it — use hexplain:valueExpression for numeric conversion." .
 :language a owl:DatatypeProperty ; rdfs:label "language" ; rdfs:range xsd:language ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "A fixed BCP-47 language tag applied to the string literal emitted for a bddo:Field, producing a language-tagged literal. Mutually exclusive with hexplain:languageFromField." .
@@ -247,7 +251,10 @@ hexplain:HasConditionalClassMappingShape a sh:NodeShape ;
 hexplain:ClassMappingRuleShape a sh:NodeShape ;
     sh:targetClass hexplain:ClassMappingRule ;
     sh:property [ sh:path hexplain:condition ; sh:nodeKind sh:Literal ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path hexplain:semanticClass ; sh:nodeKind sh:IRI ; sh:class owl:Class ; sh:minCount 1 ; sh:maxCount 1 ] .
+    # As for hexplain:mapsToClass: OWL vocabularies type classes owl:Class, RDFS ones (schema.org)
+    # rdfs:Class, and a conditional class mapping may choose either.
+    sh:property [ sh:path hexplain:semanticClass ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:or ( [ sh:class owl:Class ] [ sh:class rdfs:Class ] ) ] .
 hexplain:UnitShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:unit ;
     sh:class bddo:Field ;
@@ -411,7 +418,7 @@ hexplain:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 hexplain:ClassMappingRule skos:scopeNote "Assert on each member of a hexplain:hasConditionalClassMapping list, with one hexplain:condition and one hexplain:semanticClass. Rules are tried in list order; the first whose condition holds decides the struct's class."@en .
 hexplain:ClassMappingRuleShape rdfs:label "Class Mapping Rule Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    skos:definition "Applies to instances of hexplain:ClassMappingRule. hexplain:condition takes exactly one value, an xsd:string literal. hexplain:semanticClass takes exactly one value, an IRI naming an instance of owl:Class."@en .
+    skos:definition "Applies to instances of hexplain:ClassMappingRule. hexplain:condition takes exactly one value, an xsd:string literal. hexplain:semanticClass takes exactly one value, an IRI naming an instance of owl:Class or rdfs:Class."@en .
 hexplain:CodecParameter skos:scopeNote "Assert on each object of hexplain:codecParameter, with exactly one hexplain:parameterName and one hexplain:parameterValue, spelt as the codec itself names the setting."@en .
 hexplain:CodecParameterShape rdfs:label "Codec Parameter Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
@@ -472,7 +479,7 @@ hexplain:byteOffset skos:scopeNote "Stated by a processor on the resources it li
 hexplain:codec skos:scopeNote "Use exactly once on a hexplain:EncodingStep, naming a concept of the codec or compression register the profile binds."@en .
 hexplain:codecParameter skos:definition "A named parameter value associated with one stage of an encoding pipeline."@en ;
     skos:scopeNote "Use on a hexplain:EncodingStep, once per setting the codec was applied with; omit it for a codec that takes none."@en .
-hexplain:condition skos:definition "A HEL boolean condition selecting a semantic mapping or conditional class mapping in its declared context."@en ;
+hexplain:condition skos:definition "The HEL Boolean expression guarding a semantic mapping rule (a hexplain:MappingRule or hexplain:ClassMappingRule): evaluated after the bytes are parsed, in the context of the field or struct being lifted, it decides which property or class the lifted RDF uses. It never changes how bytes are read; that is bddo:condition."@en ;
     skos:scopeNote "Use exactly once on a hexplain:MappingRule or hexplain:ClassMappingRule: a HEL Boolean expression evaluated in the context of the field or struct being mapped."@en .
 hexplain:correspondsTo skos:scopeNote "Use on a register concept to name the ontology individual that denotes the same thing in another layer (a checksum concept and its bddo:ChecksumAlgorithm). It is an annotation: never a SKOS mapping, never equivalence, and it licenses no inference."@en .
 hexplain:forProperty skos:definition "The semantic RDF predicate whose controlled-value register binding is declared by this binding resource."@en ;

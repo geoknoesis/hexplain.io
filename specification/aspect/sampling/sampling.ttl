@@ -7,7 +7,6 @@
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
-@prefix qudt:   <http://qudt.org/schema/qudt/> .
 @prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .
 @prefix unit:   <http://qudt.org/vocab/unit/> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
@@ -23,7 +22,9 @@
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "asamp" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/sampling#" .
 
-:bitDepth a owl:DatatypeProperty ; rdfs:label "bit depth" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ; rdfs:range xsd:positiveInteger ; qudt:hasQuantityKind quantitykind:InformationEntropy ; qudt:hasUnit unit:BIT ; rdfs:comment "Bits per component/sample of the quantised data (e.g. 8, 16, 24)." .
+# Units: qudt:hasUnit and qudt:hasQuantityKind describe a quantity, not a property, so they are
+# not asserted on the property; its unit is in its definition and linked with rdfs:seeAlso.
+:bitDepth a owl:DatatypeProperty ; rdfs:label "bit depth" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ; rdfs:range xsd:positiveInteger ; rdfs:seeAlso unit:BIT , quantitykind:InformationEntropy ; rdfs:comment "Bits per component/sample of the quantised data (e.g. 8, 16, 24)." .
 :componentCount a owl:DatatypeProperty ; rdfs:label "component count" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ; rdfs:range xsd:positiveInteger ; rdfs:comment "Number of components per sample — colour channels/bands for raster, channels for signal." .
 :sampleFormat a owl:ObjectProperty ; rdfs:label "sample format" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ; rdfs:comment "Numeric interpretation of each stored sample." .
 

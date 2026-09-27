@@ -10,6 +10,7 @@
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix sh:     <http://www.w3.org/ns/shacl#> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/bddo> a owl:Ontology ;
@@ -278,7 +279,11 @@
 :isSigned      a owl:DatatypeProperty ; rdfs:label "is signed" ; rdfs:range xsd:boolean .
 :xsdType       a owl:ObjectProperty ; rdfs:label "xsd type" ; rdfs:range rdfs:Datatype ;
     rdfs:comment "The RDF literal datatype produced when a value of this DataType is emitted." .
-:condition     a owl:DatatypeProperty ; rdfs:label "condition" ; rdfs:range xsd:string .
+:condition     a owl:DatatypeProperty ; rdfs:label "condition" ; rdfs:range xsd:string ;
+    # Not the same property as hexplain:condition: this one guards how BYTES are read, while
+    # parsing; that one guards which RDF a parsed node is LIFTED to. They are evaluated at
+    # different times, and a processor reads each only on its own rule classes.
+    rdfs:seeAlso <https://hexplain.io/ns/core#condition> .
 :ruleDataType  a owl:ObjectProperty ; rdfs:label "rule data type" ; rdfs:range :DataTypeOrStruct .
 :ruleEndianness a owl:ObjectProperty ; rdfs:label "rule endianness" ; rdfs:range :Endianness ;
     rdfs:comment "The byte order selected by an EndiannessRule." .
@@ -301,7 +306,7 @@
 :coversToExpression a owl:DatatypeProperty ; rdfs:label "covers to expression" ; rdfs:range xsd:string ;
     rdfs:comment "HEL expression evaluating to the covered range's END byte offset, EXCLUSIVE (one past the last covered byte). Alternative to coversToField for the same bound -- note coversToField names a field whose last byte is included, so the two forms do not take the same number." .
 :coversExpression  a owl:DatatypeProperty ; rdfs:label "covers expression" ; rdfs:range xsd:string ;
-    owl:deprecated true ;
+    owl:deprecated true ; dcterms:isReplacedBy :coversFromExpression , :coversToExpression ;
     rdfs:comment "Deprecated: a single expression yielding the whole [start,end) range. Superseded by the coversFromExpression/coversToExpression pair, which states each bound separately and so can mix field and expression ends. Retained for descriptions written against earlier BDDO." .
 # The Rocksoft CRC model. Required on a bddo:CustomCrc; also stated on the named CRC individuals,
 # where they record what the name means (tools/test_crc_catalogue.py recomputes each check value).
@@ -331,6 +336,7 @@
 :usesStruct a owl:ObjectProperty ; rdfs:label "uses struct (deprecated)" ; rdfs:range :Struct ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     owl:deprecated true ;
+    skos:historyNote "Deprecated before BDDO 1.0 without a replacement: splicing another struct's fields into this one's has no single equivalent. A description states the fields directly, or names the other struct as the bddo:dataType of a field, which nests its fields instead of splicing them."@en ;
     rdfs:comment "Deprecated pre-release template reference: the subject Struct's effective field list is the named Struct's fields followed by its own. There is no single replacement term; new descriptions state the fields directly, or compose with a Field whose bddo:dataType is the other Struct (which nests rather than splices)." .
 :integer a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Integer (deprecated)" ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;

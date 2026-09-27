@@ -7,7 +7,6 @@
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix ma:     <http://www.w3.org/ns/ma-ont#> .
-@prefix qudt:   <http://qudt.org/schema/qudt/> .
 @prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .
 @prefix unit:   <http://qudt.org/vocab/unit/> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
@@ -24,7 +23,9 @@
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "asig" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/signal#" .
 
-:sampleRate a owl:DatatypeProperty ; rdfs:label "sample rate" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/signal> ; rdfs:seeAlso ma:samplingRate ; rdfs:range xsd:decimal ; qudt:hasQuantityKind quantitykind:Frequency ; qudt:hasUnit unit:HZ ; rdfs:comment "Samples per second (Hz)." .
+# Units: qudt:hasUnit and qudt:hasQuantityKind describe a quantity, not a property, so they are
+# not asserted on the property; its unit is in its definition and linked with rdfs:seeAlso.
+:sampleRate a owl:DatatypeProperty ; rdfs:label "sample rate" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/signal> ; rdfs:seeAlso ma:samplingRate ; rdfs:range xsd:decimal ; rdfs:seeAlso unit:HZ , quantitykind:Frequency ; rdfs:comment "Samples per second (Hz)." .
 
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix asamp: <https://hexplain.io/ns/aspect/sampling#> .

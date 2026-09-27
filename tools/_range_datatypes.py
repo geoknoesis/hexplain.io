@@ -6,7 +6,7 @@ datatype property with an XSD range, whether a shape targeting the subjects of t
 constrains its values to a compatible datatype -- activation by subjects-of, so the check
 does not depend on the subject having been typed.
 """
-from rdflib import RDFS, Namespace, URIRef
+from rdflib import OWL, RDF, RDFS, BNode, Namespace, URIRef
 from rdflib.collection import Collection
 
 SH = Namespace("http://www.w3.org/ns/shacl#")
@@ -20,15 +20,32 @@ INTEGERS = frozenset(XSD[n] for n in (
     "int", "long", "short", "byte", "unsignedLong", "unsignedInt", "unsignedShort", "unsignedByte"))
 
 
-def compatible(range_):
-    """Datatypes a literal may carry and still be a value of `range_`."""
+def union_members(g, range_):
+    """The datatypes a range admits: itself, or the members of an owl:unionOf datatype."""
+    if isinstance(range_, BNode):
+        head = g.value(range_, OWL.unionOf)
+        return _members(g, head) if head is not None else []
+    return [range_]
+
+
+def compatible(range_, g=None):
+    """Datatypes a literal may carry and still be a value of `range_`.
+
+    xsd:double and xsd:float are distinct: their value spaces are disjoint, so a range that
+    admits both says so with an owl:unionOf datatype (asref's coefficients do). A datatype the
+    graph declares an rdfs:subClassOf the range (a restriction of its value space) is admitted.
+    """
+    if g is not None and isinstance(range_, BNode):
+        return frozenset().union(*(compatible(m, g) for m in union_members(g, range_)))
     if range_ in INTEGERS:
-        return INTEGERS
-    if range_ == XSD.decimal:
-        return INTEGERS | {XSD.decimal}
-    if range_ in (XSD.double, XSD.float):
-        return frozenset({XSD.double, XSD.float})
-    return frozenset({range_})
+        found = INTEGERS
+    elif range_ == XSD.decimal:
+        found = INTEGERS | {XSD.decimal}
+    else:
+        found = frozenset({range_})
+    if g is not None:
+        found = found | frozenset(d for d in g.subjects(RDFS.subClassOf, range_) if (d, RDF.type, RDFS.Datatype) in g)
+    return found
 
 
 def _members(g, node):
@@ -67,16 +84,17 @@ def allowed_datatypes(g, shape, seen=frozenset()):
 
 
 def xsd_ranged(g):
-    """(property, range) for every property whose rdfs:range is an XSD datatype."""
-    return sorted((p, r) for p, r in g.subject_objects(RDFS.range)
-                  if isinstance(r, URIRef) and str(r).startswith(str(XSD)))
+    """(property, range) for every property whose rdfs:range is an XSD datatype, or a union of them."""
+    return sorted(((p, r) for p, r in g.subject_objects(RDFS.range)
+                   if union_members(g, r) and all(isinstance(m, URIRef) and str(m).startswith(str(XSD))
+                                                  for m in union_members(g, r))), key=lambda x: (str(x[0]), str(x[1])))
 
 
 def problems(g):
     """Human-readable gaps; empty when every XSD range is enforced where the property is used."""
     out = []
     for prop, range_ in xsd_ranged(g):
-        ok = compatible(range_)
+        ok = compatible(range_, g)
         enforced = False
         for pshape in g.subjects(SH.path, prop):
             admitted = allowed_datatypes(g, pshape)

@@ -1,0 +1,14 @@
+# A conditional class mapping may choose a class its vocabulary types rdfs:Class (schema.org does),
+# as hexplain:mapsToClass may: ClassMappingRuleShape accepts owl:Class and rdfs:Class alike.
+@prefix ex:    <https://hexplain.io/test/class-mapping-rule-valid#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix bddo:  <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+
+ex:Person a rdfs:Class .
+ex:Place a owl:Class .
+ex:Record a bddo:Struct ;
+    hexplain:hasConditionalClassMapping ( ex:PersonRule ex:PlaceRule ) .
+ex:PersonRule a hexplain:ClassMappingRule ; hexplain:condition "kind == 1" ; hexplain:semanticClass ex:Person .
+ex:PlaceRule a hexplain:ClassMappingRule ; hexplain:condition "kind == 2" ; hexplain:semanticClass ex:Place .
