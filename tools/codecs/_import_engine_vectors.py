@@ -84,13 +84,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--engine", required=True)
     engine = pathlib.Path(parser.parse_args().engine)
-    codec = engine / "core/src/test/resources/codec"
-    # LZ4 and Zstandard fixtures live in the codecs-lz plugin module now (task 13); XZ's stay in
-    # core (core/src/test/resources/codec) until its own plugin extraction (task 14) moves them.
+    # LZ4 and Zstandard fixtures live in the codecs-lz plugin module (task 13); XZ's live in the
+    # codecs-xz plugin module (task 14).
     lz_codec = engine / "codecs-lz/src/test/resources/codec"
+    xz_codec = engine / "codecs-xz/src/test/resources/codec"
     numcodecs = json.loads((engine / "core/src/test/resources/zarr/numcodecs-vectors.json").read_text(encoding="utf-8"))["vectors"]
     read = lambda name: (lz_codec / name).read_bytes()  # noqa: E731
-    read_xz = lambda name: (codec / name).read_bytes()  # noqa: E731
+    read_xz = lambda name: (xz_codec / name).read_bytes()  # noqa: E731
     if read("lz4-block.lz4") and len(DATA) != 150000:
         raise SystemExit("payload rebuilt wrongly")
 
