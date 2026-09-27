@@ -199,7 +199,7 @@ struct PLTE_ChunkData {
                     <tr><td>seek scope</td><td><code>@seek stream</code> &middot; <code>@seek region</code></td><td><code>seekScope</code></td></tr>
                 </tbody>
             </table>
-            <p id="clause-multiplicity"><b>One of each.</b> <span class="req" id="req-hdl-clauses-2"></span>A field MUST NOT carry two clauses of one kind, and a compiler MUST report an <code>ERROR</code> for a second size (two <code>[&#8230;]</code>), count (two <code>repeat</code>), offset (two <code>@at</code>), fixed value (two <code>@fixed</code>), byte order (two <code>@endian</code>) or type selection (two of <code>switch</code> and <code>dispatch</code>), rather than emit both values of a property the Processing Model reads once. <span class="req" id="req-hdl-clauses-3"></span>It MUST also report an <code>ERROR</code> for a <code>derive</code> field with a <code>repeat</code> clause (a derived field reads no bytes, so it has no elements), for <code>@pipeline</code> together with <code>@encoded-with</code> on one field, and for two declarations of one struct, header, table or document name in a document. A <code>bytes</code> or string field of a binary struct with neither a size nor a terminator has no extent (Processing Model, Size resolution) and is an <code>ERROR</code>; the fields of a <code>header</code>, <code>table</code> or <code>document</code> are exempt, since their container gives their extent. A size together with <code>@terminator</code> is not two clauses of one kind: the terminator is searched for inside the declared region, as the Processing Model defines.</p>
+            <p id="clause-multiplicity"><b>One of each.</b> <span class="req" id="req-hdl-clauses-2"></span>A field MUST NOT carry two clauses of one kind, and a compiler MUST report an <code>ERROR</code> for a second size (two <code>[&#8230;]</code>), count (two <code>repeat</code>), offset (two <code>@at</code>), fixed value (two <code>@fixed</code>), byte order (two <code>@endian</code>) or type selection (two of <code>switch</code> and <code>dispatch</code>), rather than emit both values of a property the Processing Model reads once. <span class="req" id="req-hdl-clauses-3"></span>It MUST also report an <code>ERROR</code> for a <code>derive</code> field with a <code>repeat</code> clause (a derived field reads no bytes, so it has no elements), for any two of <code>@pipeline</code>, <code>@codec switch</code> and <code>@encoded-with</code> on one field, and for two declarations of one struct, header, table or document name in a document. A <code>bytes</code> or string field of a binary struct with neither a size nor a terminator has no extent (Processing Model, Size resolution) and is an <code>ERROR</code>; the fields of a <code>header</code>, <code>table</code> or <code>document</code> are exempt, since their container gives their extent. A size together with <code>@terminator</code> is not two clauses of one kind: the terminator is searched for inside the declared region, as the Processing Model defines.</p>
         <p id="literal-values"><b>Literal values.</b> <span class="req" id="req-hdl-clauses-4"></span>A compiler MUST report an <code>ERROR</code> for a literal outside the range of its position &#8212; a field size or struct <code>@size</code> below 1 (<code>bytes[0]</code>, <code>bytes[-3]</code>), a repeat count or offset below 0 (<code>repeat -2</code>, <code>@at -2</code>), a stride below 1 (<code>stride 0</code>) &#8212; and for a FLOAT literal in any of these positions (<code>bytes[2.0]</code>, <code>repeat 1.5</code>, <code>@at 1e0</code>): they take integers, and an integral float is not one. <span class="req" id="req-hdl-clauses-5"></span>The literal positions differ in what they accept, and a compiler MUST hold each to its own set. <code>@prop</code> takes an IRIREF, a CURIE, or an INT, HEX, STRING, <code>true</code> or <code>false</code> literal, never a bare NAME (write the string <code>"x"</code> or the CURIE <code>ex:x</code>). A NAME or a CURIE as the key of a <code>switch</code> arm is the string it spells: <code>IHDR =&gt; S</code> tests <code>discriminator == 'IHDR'</code>; an IRIREF there is an <code>ERROR</code>. An enumeration value is neither an IRIREF nor a bare NAME. <code>@fixed</code> takes an INT (typed with the field's XSD type), a STRING (<code>xsd:string</code>) or a HEX (<code>xsd:hexBinary</code>) only; a NAME, a CURIE or a Boolean there is an <code>ERROR</code>, and so, as the Processing Model makes them description errors, are a STRING on a numeric field and an INT on a bytes or string field.</p>
         <p><b>Fixed values.</b> <span class="req" id="req-hdl-clauses-1"></span>An integer <code>@fixed</code> on a numeric field is emitted typed with the field's XSD type (<code>@fixed 9994</code> on an <code>i32</code> becomes <code>"9994"^^xsd:int</code>) and is compared by value; a hex <code>@fixed</code> stays <code>xsd:hexBinary</code> and, on a numeric field, MUST have exactly the field's width in bytes (<a href="../processing/index.html#algorithm">Processing Model, Fixed value</a>). The widths are those of the types: three bytes for <code>u24</code> and <code>i24</code>, two for <code>f16</code>, on which an integer <code>@fixed</code> is typed <code>xsd:float</code> and compared at binary16 width (<code>@fixed 1</code> on an <code>f16</code> matches <code>3C 00</code> big-endian).</p>
         <p><code>offsetBase</code> keywords: <code>stream-start stream-end parent-start current</code>. A <code>switch</code> arm may match a literal value against the discriminator (<code>"IHDR" =&gt; S</code>) or supply a full boolean guard (<code>when expr =&gt; S</code>).</p>
@@ -465,6 +465,8 @@ struct IHDR_ChunkData means araster:RasterGrid {
                 <tr><td><code>value &lt;expr&gt; @datatype &lt;dt&gt;</code></td><td><code>hexplain:valueExpression "&#8230;HEL&#8230;"</code> [+ <code>hexplain:valueDatatype &lt;dt&gt;</code>]</td></tr>
                 <tr><td><code>@encoded-with &lt;concept&gt;</code></td><td><code>hexplain:isEncodedWith &lt;concept&gt;</code></td></tr>
                 <tr><td><code>@pipeline { &lt;codec&gt;(&lt;name&gt; &lt;value&gt;, &#8230;), &#8230; }</code></td><td><code>hexplain:hasEncodingStep</code> &#8594; an ordered list of <code>hexplain:EncodingStep</code></td></tr>
+                <tr><td><code>switch &lt;expr&gt; { &lt;key&gt; =&gt; &lt;codec&gt;(&#8230;), &#8230;, else =&gt; &lt;codec&gt;(&#8230;) }</code> (a pipeline step), <code>@codec switch &#8230;</code> (a one-step pipeline)</td><td>an <code>hexplain:EncodingStep</code> with <code>hexplain:codecFromExpression</code> and <code>hexplain:codecCandidates</code></td></tr>
+                <tr><td><code>@codec-session instance</code> / <code>layout</code></td><td><code>hexplain:codecSessionScope bddo:PerInstance</code> / <code>bddo:PerLayout</code></td></tr>
             </tbody>
         </table>
         <p>
@@ -473,8 +475,8 @@ struct IHDR_ChunkData means araster:RasterGrid {
             chains delta into a Blosc parameterised by an inner codec, a shuffle mode and a level.
             With only the single-codec shorthand a description could name the last step and lost
             both the earlier ones and every setting &#8212; enough to identify the compression, never
-            enough to undo it. Parameters are juxtaposed rather than written
-            <code>name&nbsp;=&nbsp;value</code>, as everywhere else in the DSL.
+            enough to undo it. Parameters are juxtaposed (<code>level 6</code>) or written with a colon
+            (<code>level: 6</code>), never <code>name&nbsp;=&nbsp;value</code>, as everywhere else in the DSL.
         </p>
         <pre class="nohighlight">
 use menc: &lt;https://hexplain.io/ns/register/media-encoding#&gt;
@@ -487,8 +489,14 @@ struct Tile {
 }
         </pre>
         <p>
-            A step's parameters are integer literals (the <a href="../processing/index.html">Processing Model</a>
-            rejects any other parameter value), and the codec is a concept of the media-encoding register.
+            A parameter is written <code>name value</code> or <code>name: value</code>. Its value is a literal of the
+            parameter's contract type (an integer, a decimal, a string, a boolean, a hex byte string, a CURIE or
+            <code>&lt;IRI&gt;</code>), a list of literals in brackets (<code>subsampling: [2, 1]</code>; a trailing comma
+            makes a one-item list), or anything else &#8212; a bare field name included &#8212; a HEL expression, emitted as
+            <code>hexplain:parameterExpression</code> and evaluated in the field's struct when the step runs, before the
+            field is read, so its names bind as a struct argument's do
+            (<a href="../processing/index.html#parameter-expressions">Processing Model, Parameter expressions</a>):
+            <code>menc:LZ4Block(decodedSize: width * height)</code>. The codec is a concept of the media-encoding register.
             Every processor decodes the <a href="../processing/index.html#minimum-codecs">minimum codec set</a>:
             <code>menc:Store</code>, <code>menc:Deflate</code>, <code>menc:Zlib</code>, <code>menc:Gzip</code>
             and <code>menc:Delta</code>, whose parameters are named there
@@ -509,6 +517,28 @@ struct Tile {
             round is still a plausible-looking pipeline. The two forms are mutually exclusive (a field that writes both is an <code>ERROR</code>, <a href="#clause-multiplicity">One of each</a>):
             <code>@encoded-with</code> remains the shorthand for a single unparameterised codec.
         </p>
+        <p id="codec-switch">
+            A step may choose its codec when it runs. <code>switch &lt;expr&gt; { 1 =&gt; menc:Store, 5 =&gt; menc:LZW(variant: "tiff"), else =&gt; menc:Zlib }</code>
+            compares the discriminator with each arm's key (an integer or a string) and runs the arm's codec; it compiles to one
+            <code>hexplain:EncodingStep</code> whose <code>hexplain:codecFromExpression</code> is
+            <code>(d) == k1 ? 'iri1' : ((d) == k2 ? 'iri2' : ('else-iri'))</code> (<code>''</code> without an <code>else</code> arm, which names no
+            candidate, so a key no arm names is a Validation error when the step runs) and whose <code>hexplain:codecCandidates</code> are the arms' steps, one per codec in first-arm order
+            (<a href="../processing/index.html#codec-selection">Processing Model, Run-time codec selection</a>). The value is the codec's full IRI, which
+            selects the same candidate whether a processor matches it by IRI or by local name. An arm's parameters are its candidate's: the
+            selecting step itself has none. Two arms may select one codec only with the same parameters, and keys are distinct, with at most one
+            <code>else</code>. <code>@codec switch &#8230;</code> is the pipeline of that one step; a <code>switch</code> may also be any step of a
+            <code>@pipeline</code>. <code>@codec-session instance</code> or
+            <code>layout</code> gives the field's <code>hexplain:codecSessionScope</code>
+            (<a href="../processing/index.html#codec-sessions">Codec sessions</a>); a compiler reports it as an error on a field with no encoding.
+        </p>
+        <pre class="nohighlight">
+use menc: &lt;https://hexplain.io/ns/register/media-encoding#&gt;
+
+struct Strip {
+  compression : u16
+  data : bytes[..] @codec switch compression { 1 =&gt; menc:Store, 5 =&gt; menc:LZW, 7 =&gt; menc:JPEG } @codec-session instance
+}
+        </pre>
         <p>A field's <code>value</code> expression may reference the field by its own name. <b>Conditional mapping</b> (<code>hexplain:hasConditionalMapping</code>) is written with <code>map</code>, mirroring <code>switch</code>:</p>
         <pre class="nohighlight">
 struct TextChunk {
@@ -803,7 +833,7 @@ structs:
                 <tr><td>field: documentation</td><td><code>label comment base prop</code></td><td><code>@label</code>, <code>@comment</code>, <code>@base</code>, <code>@prop</code> (<code>prop: { curie: value }</code>)</td></tr>
                 <tr><td>field: keyed dispatch and seek scope</td><td><code>dispatch seek</code></td><td><code>dispatch: { name: BoxPayload, on: type, default: Blob, cases: { ftyp: FileTypeBox, 7: Seven } }</code> is <code>dispatch BoxPayload on type default Blob { "ftyp" =&gt; FileTypeBox  7 =&gt; Seven }</code>: <code>name</code> and <code>on</code> are required, <code>on</code> is an expression scalar, <code>default</code> is optional, and a case's struct may be <code>{ struct: Row, args: [ &#8230; ] }</code>. Case keys are typed as in text: an unquoted decimal integer (<code>7:</code>) is the Integer key 7, and every other key, a quoted one (<code>"7":</code>) included, is a String key, so <code>7:</code> and <code>"7":</code> are two distinct arms. <code>seek: stream|region</code> is <code>@seek</code>, and like it is an <code>ERROR</code> on a field with no <code>at</code>.</td></tr>
                 <tr><td>field: enum, checksum, switch</td><td><code>enum checksum switch</code></td><td><code>enum: Name</code> or <code>{ flags, values }</code>; <code>checksum: { algorithm, from, to }</code> or <code>{ algorithm, covers: [a, b] }</code>, the algorithm a name (<code>crc16modbus</code>); a custom CRC replaces <code>algorithm</code> with <code>crc: { width: 16, poly: 0x8005, init: 0, refin: true, refout: true, xorout: 0 }</code>; <code>switch: { on, cases: { literal: Struct }, when: [ { cond, type } ] }</code>, where a case's or arm's struct may be <code>{ struct: Row, args: [ &#8230; ] }</code></td></tr>
-                <tr><td>field: semantics</td><td><code>means value object unit lang lang-from encoded-with pipeline map</code></td><td><code>value: { expr, datatype }</code>; <code>pipeline: [ { codec, params: { name: int } } ]</code>; <code>map: [ { when, property, value, datatype } ]</code></td></tr>
+                <tr><td>field: semantics</td><td><code>means value object unit lang lang-from encoded-with pipeline codec-switch codec-session map</code></td><td><code>value: { expr, datatype }</code>; <code>pipeline: [ { codec, params: { name: value } } | { codec-switch: &#8230; } ]</code>, a value a scalar, a list or <code>{ expr: "&#8230;" }</code>; <code>codec-switch: { on, cases: [ { when, codec, params } | { else: true, codec, params } ] }</code>; <code>codec-session: instance|layout</code>; <code>map: [ { when, property, value, datatype } ]</code></td></tr>
                 <tr><td>field: <code>layout</code> (a mapping under the field key <code>layout</code>)</td><td><code>cell dims order chunks cell-bits packing</code>, as keys of the <code>layout:</code> mapping, never of the field</td><td><code>layout: { cell: u8, dims: [ &#8230; ] }</code>; <code>cell</code> is a type name or a list of <code>{ when, type }</code> (<code>cell switch</code>); <code>dims: [ { axis, size, stride, chunk } ]</code>; <code>order: [ { when, axes: [..] } ]</code>; <code>chunks: { offsets, lengths, base, order }</code>; <code>cell-bits</code> is an integer or a field name</td></tr>
                 <tr><td><code>bundles: { Name: &#8230; }</code></td><td><code>as bound-by parts</code></td><td>each part: <code>extension</code> or <code>pattern</code> (a string, or a list of alternatives: <code>extension: [".bil", ".flt"]</code>), <code>role required primary carries described-by min max nested</code></td></tr>
                 <tr><td><code>assets: { name: &#8230; }</code></td><td><code>conforms bound-by stem primary parts</code></td><td>each part: <code>name role</code></td></tr>
@@ -985,6 +1015,7 @@ Clause         ::= SizeClause
                  | "@base" INT                    /* anum radix: 8, 10 or 16 */
                  | "@label" STRING | "@comment" STRING
                  | "@encoded-with" CURIE | PipelineClause
+                 | "@codec" CodecSwitch | "@codec-session" ( "instance" | "layout" )
                  | "@valid" Expr                  /* bddo:validIf, checked after the field is read */
                  | "@root-key" NAME
                  | "@object" CURIE                /* hexplain:mapsToObjectProperty */
@@ -1012,15 +1043,18 @@ ChecksumAlgo   ::= "crc8" | "crc16" | "crc16arc" | "crc16xmodem" | "crc16modbus"
                  | "crc" "(" CrcParam ( "," CrcParam )* ")"      /* an inline bddo:CustomCrc */
 CrcParam       ::= ( "width" | "poly" | "init" | "xorout" ) ":" ( INT | HEX )
                  | ( "refin" | "refout" ) ":" ( "true" | "false" )
-PipelineClause ::= "@pipeline" "{" ( PipelineStep ","? )* "}"
-PipelineStep   ::= CURIE ( "(" ( NAME Literal ","? )* ")" )?
+PipelineClause ::= "@pipeline" "{" ( ( PipelineStep | CodecSwitch ) ","? )* "}"
+PipelineStep   ::= CURIE ( "(" ( NAME ":"? CodecValue ","? )* ")" )?
+CodecValue     ::= Literal | FLOAT | "[" CodecItem ( "," CodecItem )* ","? "]" | Expr
+CodecItem      ::= INT | FLOAT | STRING | "true" | "false"
+CodecSwitch    ::= "switch" Expr "{" ( ( INT | STRING | "else" ) "=&gt;" PipelineStep ","? )+ "}"
             </pre>
             <ul>
                 <li>A <code>switch</code> with any literal arm needs a discriminator <code>Expr</code> (the arm tests <code>discriminator == literal</code>); a switch whose arms are all <code>when</code> guards needs none. A field has at most one <code>switch</code> or <code>dispatch</code>, not both.</li>
                 <li><code>@seek</code> requires an <code>@at</code> on the same field. <code>@base</code> is valid only on an <code>anum</code> field. An <code>EnumPair</code> without <code>=&gt;</code> declares a member of a valid-value set and binds no concept.</li>
                 <li><code>NAME ".." NAME</code> in a checksum names the first and last covered sibling; <code>covers(a, b)</code> gives the covered range as two expressions. A <code>CrcParam</code>'s name and <code>":"</code> may be one NAME token (<code>width:</code>); each of the six parameters appears exactly once (<a href="#checksums">&#167;Checksums</a>).</li>
-                <li>A <code>TypeRef</code>'s <code>Arguments</code> follow the <code>TypeName</code> directly and are allowed only when it names a struct with parameters, exactly one per parameter (<a href="#parameters">&#167;Parameters and local bindings</a>). A <code>LetDecl</code>'s <code>"="</code> is the OP token <code>=</code>; its expression is a TokenRun, which ends at the next member. <span class="req" id="req-hdl-grammar-fields-1"></span>A <code>PipelineStep</code> parameter value MUST be an integer literal (<a href="#semantic">&#167;Semantic Mapping</a>).</li>
-                <li>A <code>Literal</code> never includes a <code>FLOAT</code>: <code>@fixed</code>, <code>@prop</code>, enum values and pipeline parameters take integers, hex byte strings, strings, booleans or CURIEs, as each position allows (<a href="#literal-values">Literal values</a>).</li>
+                <li>A <code>TypeRef</code>'s <code>Arguments</code> follow the <code>TypeName</code> directly and are allowed only when it names a struct with parameters, exactly one per parameter (<a href="#parameters">&#167;Parameters and local bindings</a>). A <code>LetDecl</code>'s <code>"="</code> is the OP token <code>=</code>; its expression is a TokenRun, which ends at the next member. <span class="req" id="req-hdl-grammar-fields-1"></span>A <code>PipelineStep</code> MUST NOT name a parameter twice; a value that is a <code>Literal</code>, a <code>FLOAT</code> or a bracketed list of literals is a <code>hexplain:parameterValue</code>, and any other value is an <code>Expr</code> emitted as <code>hexplain:parameterExpression</code> (<a href="#semantic">&#167;Semantic Mapping</a>).</li>
+                <li>A <code>Literal</code> never includes a <code>FLOAT</code>: <code>@fixed</code>, <code>@prop</code> and enum values take integers, hex byte strings, strings, booleans or CURIEs, as each position allows, and a pipeline parameter may also be a <code>FLOAT</code> (<code>CodecValue</code>) (<a href="#literal-values">Literal values</a>).</li>
                 <li>A field carries at most one clause of each kind (<a href="#clause-multiplicity">One of each</a>).</li>
             </ul>
         </section>

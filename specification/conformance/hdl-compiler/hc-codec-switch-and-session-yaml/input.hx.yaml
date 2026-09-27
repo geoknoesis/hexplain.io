@@ -1,0 +1,18 @@
+format: t
+namespace: "https://example.org/hc-codec-switch-and-session-yaml#"
+use:
+  menc: "https://hexplain.io/ns/register/media-encoding#"
+structs:
+  Root:
+    fields:
+      - { name: compression, type: u16 }
+      - { name: n, type: u16 }
+      - name: strip
+        type: bytes
+        size: ".."
+        codec-switch:
+          on: compression
+          cases:
+            - { when: 1, codec: "menc:Store" }
+            - { when: 8, codec: "menc:Zlib", params: { level: { expr: n } } }
+        codec-session: layout

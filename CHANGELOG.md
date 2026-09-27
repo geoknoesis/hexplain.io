@@ -85,6 +85,12 @@ rewritten.
   Validation error when the step runs (`req-pm-optional-codecs-1`). The error table lists the codec
   errors in its rows (`req-pm-errors-4`, `req-pm-errors-8`).
 - reference-engine-claims.json lists the 34 codecs the reference engine decodes with their modules.
+- HDL: pipeline parameters take literals of every contract type, bracketed lists and HEL expressions
+  (`name value` or `name: value`); `switch <expr> { … }` steps and `@codec switch` select a codec when the
+  step runs; `@codec-session instance|layout`; YAML `codec-switch` and `codec-session`. req-hdl-grammar-fields-1
+  reworded; req-hdl-clauses-3 reworded to name `@codec switch` among the pipeline clauses a field states once;
+  the case hc-pipeline-non-integer-parameter becomes hc-pipeline-duplicate-parameter, and
+  hc-codec-switch-and-session (with its YAML mirror) is new.
 
 ### Review of the normative documents (2026-09-27)
 

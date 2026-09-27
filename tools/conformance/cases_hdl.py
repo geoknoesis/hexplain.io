@@ -465,16 +465,66 @@ err("layout-name-not-sibling", "A layout name that is not a sibling field is an 
     }
     """, line=4)
 
-err("pipeline-non-integer-parameter", "A pipeline step parameter that is not an integer literal is an ERROR",
-    "The Processing Model rejects any other parameter value.",
+err("pipeline-duplicate-parameter", "A pipeline step naming a parameter twice is an ERROR",
+    "elementSize is given twice; which value the codec would run with is undefined.",
     ["req-hdl-grammar-fields-1"], ["semantic", "grammar-fields"],
     """
     format t @namespace "{ns}"
     use menc: <https://hexplain.io/ns/register/media-encoding#>
     struct Root {
-      strip : bytes[..] @pipeline { menc:Delta(elementSize "one") }
+      strip : bytes[..] @pipeline { menc:Delta(elementSize 1, elementSize 2) }
     }
     """, line=4)
+
+CODEC_SWITCH_TTL = """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.compression ex:Root.n ex:Root.strip ) .
+   ex:Root.compression a bddo:Field ; bddo:dataType bddo:uint16 .
+   ex:Root.n a bddo:Field ; bddo:dataType bddo:uint16 .
+   ex:Root.strip a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+       hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ;
+           hexplain:codecFromExpression "(instance.compression) == 1 ? 'https://hexplain.io/ns/register/media-encoding#Store' : ((instance.compression) == 8 ? 'https://hexplain.io/ns/register/media-encoding#Zlib' : (''))" ;
+           hexplain:codecCandidates (
+               [ a hexplain:EncodingStep ; hexplain:codec <https://hexplain.io/ns/register/media-encoding#Store> ]
+               [ a hexplain:EncodingStep ; hexplain:codec <https://hexplain.io/ns/register/media-encoding#Zlib> ;
+                 hexplain:codecParameter [ a hexplain:CodecParameter ; hexplain:parameterName "level" ;
+                                           hexplain:parameterExpression "instance.n" ] ] ) ] ) ;
+       hexplain:codecSessionScope bddo:PerLayout .
+   """
+
+pair("codec-switch-and-session", "A codec switch compiles to a selection among candidates; @codec-session to the session scope",
+     "The discriminator is compared with each arm's key in turn and yields the arm's codec IRI; the candidates are the arms' "
+     "steps, one per codec; an expression argument is a hexplain:parameterExpression.",
+     OK + ["req-hdl-grammar-fields-1"], ["semantic", "grammar-fields"],
+     """
+     format t @namespace "{ns}"
+     use menc: <https://hexplain.io/ns/register/media-encoding#>
+     struct Root {
+       compression : u16
+       n : u16
+       strip : bytes[..] @codec switch compression { 1 => menc:Store, 8 => menc:Zlib(level: n) } @codec-session layout
+     }
+     """,
+     """
+     format: t
+     namespace: "{ns}"
+     use:
+       menc: "https://hexplain.io/ns/register/media-encoding#"
+     structs:
+       Root:
+         fields:
+           - { name: compression, type: u16 }
+           - { name: n, type: u16 }
+           - name: strip
+             type: bytes
+             size: ".."
+             codec-switch:
+               on: compression
+               cases:
+                 - { when: 1, codec: "menc:Store" }
+                 - { when: 8, codec: "menc:Zlib", params: { level: { expr: n } } }
+             codec-session: layout
+     """,
+     CODEC_SWITCH_TTL)
 
 err("format-without-struct", "A format that declares no struct, container, bundle or asset is an ERROR",
     "There is no root.",
