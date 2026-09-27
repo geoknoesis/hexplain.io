@@ -36,6 +36,8 @@ menc:VideoCodecs a skos:Collection ; skos:prefLabel "Video codecs"@en ;
     skos:member menc:H264 , menc:HEVC , menc:ProRes , menc:VP9 , menc:AV1 .
 menc:AudioCodecs a skos:Collection ; skos:prefLabel "Audio codecs"@en ;
     skos:member menc:AAC , menc:MP3 , menc:FLAC , menc:Opus , menc:PCM .
+menc:ImageCodecs a skos:Collection ; skos:prefLabel "Image codecs"@en ;
+    skos:member menc:JPEG, menc:WebP, menc:JPEGXL, menc:LERC .
 
 menc:H264 a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
     skos:prefLabel "H.264"@en ; skos:altLabel "AVC"@en , "MPEG-4 Part 10"@en ; rdfs:seeAlso <https://www.iso.org/standard/75400.html> .
@@ -57,6 +59,14 @@ menc:Opus a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf me
     skos:prefLabel "Opus"@en .
 menc:PCM a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ;
     skos:prefLabel "Linear PCM"@en ; skos:altLabel "PCM"@en .
+menc:JPEG a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ; skos:prefLabel "JPEG"@en ;
+    rdfs:comment "ITU-T T.81 baseline, extended (12-bit) and progressive Huffman-coded JPEG, decoded with libjpeg's integer IDCT and upsampling. tables supplies an abbreviated table-specification stream (TIFF JPEGTables) kept in the session for every later image; colorTransform ycbcr-to-rgb converts as libjpeg does; rows stops after that many rows; output raw-planes returns the component planes before upsampling and conversion." .
+menc:WebP a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ; skos:prefLabel "WebP"@en ;
+    rdfs:comment "A WebP bitstream (VP8 lossy with optional ALPH, or VP8L lossless) decoded as libwebp 1.5 decodes it to 8-bit RGB or RGBA; bands asks for 3 or 4 bands (an image without alpha reads as opaque)." .
+menc:JPEGXL a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ; skos:prefLabel "JPEG XL"@en ;
+    rdfs:comment "An ISO/IEC 18181 JPEG XL codestream in its exact-integer (modular, non-XYB) subset, 8- or 16-bit samples, colour channels then extra channels; anything outside that subset is an Unsupported feature." .
+menc:LERC a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf menc:CodecScheme ; skos:prefLabel "LERC"@en ;
+    rdfs:comment "Esri's Limited Error Raster Compression version 2 (blob versions 1-6), decoded bit for bit as Esri LERC 4.0 decodes it. layout blob returns every band's samples band after band with a validity mask per band; layout tiff assembles one TIFF strip or tile of width x height x samplesPerPixel samples as libtiff's tif_lerc.c does (masks become NaN for floats or alpha when alphaFromMask), first unwrapping the Deflate or Zstandard layer lercParameters names." .
 
 # ---------- Compression Register (SKOS) ----------
 menc:CompressionScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/media-encoding> ;
@@ -92,6 +102,12 @@ menc:FloatingPointPredictor a skos:Concept ; skos:inScheme menc:TransformScheme 
     rdfs:comment "Adobe TIFF Technical Note 3's floating-point predictor: each row's sample bytes regrouped by significance (every sample's most significant byte first) and differenced byte by byte, each byte predicted from the byte samplesPerPixel positions earlier. Decoding sums the differences and reassembles the samples in the byte order littleEndian names." .
 menc:BitReverse a skos:Concept ; skos:inScheme menc:TransformScheme ; skos:topConceptOf menc:TransformScheme ; skos:prefLabel "Bit reversal"@en ;
     rdfs:comment "Reverses the order of the bits within every byte (TIFF FillOrder 2 to FillOrder 1). Its own inverse." .
+menc:YCbCrToRGB a skos:Concept ; skos:inScheme menc:TransformScheme ; skos:topConceptOf menc:TransformScheme ; skos:prefLabel "YCbCr to RGB"@en ;
+    rdfs:comment "Converts 8-bit YCbCr samples to RGB with libtiff's integer tables (tif_color.c) for the given coefficients and reference black/white. layout pixels takes three interleaved samples per pixel; units takes TIFF YCbCr sampling units (subsampling luma samples then Cb and Cr); planes takes the three component planes of a raw JPEG decode." .
+menc:CIELabToRGB a skos:Concept ; skos:inScheme menc:TransformScheme ; skos:topConceptOf menc:TransformScheme ; skos:prefLabel "CIE L*a*b* to RGB"@en ;
+    rdfs:comment "Converts 8-bit CIE L*a*b* samples to sRGB as libtiff's TIFFCIELabToRGB does for the given white point (D50 by default); alpha appends an opaque fourth band." .
+menc:CMYKToRGB a skos:Concept ; skos:inScheme menc:TransformScheme ; skos:topConceptOf menc:TransformScheme ; skos:prefLabel "CMYK to RGB"@en ;
+    rdfs:comment "Converts 8-bit CMYK (InkSet 1) samples to RGB as libtiff's RGBA interface does: each channel is (255 - K) x (255 - C/M/Y) / 255; alpha appends an opaque fourth band." .
 
 menc:Zstd a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Zstandard"@en ;
     skos:note "Zstandard frames (RFC 8878), one or several concatenated; skippable frames are skipped. The Processing Model (Codecs beyond the minimum set) defines decoding; a frame that needs a dictionary is refused."@en .
@@ -115,6 +131,10 @@ menc:Delta a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConce
 menc:Shuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Byte shuffle"@en ;
     skos:note "Groups the Nth byte of every value together, so the high bytes of similar numbers become runs. HDF5 and Blosc both use it."@en .
 menc:BitShuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Bit shuffle"@en .
+menc:SGILogRLE a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "SGI LogL RLE"@en ;
+    rdfs:comment "SGI's LogL run-length coding (TIFF compression 34676): each row stored as its high then low byte plane, each run-length coded; decodes to the 16-bit log-luminance codes, little-endian, as libtiff's SGILOGDATAFMT_16BIT returns them." .
+menc:MicrosoftRLE a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Microsoft RLE"@en ;
+    rdfs:comment "The BMP RLE8 and RLE4 run-length codings (bitsPerPixel 8 or 4) of a bottom-up width x height image, decoded as GDAL's BMP driver reads them and returned top row first, one byte per pixel. A delta escape that skips pixels is an Unsupported feature." .
 
 # ---------- Codec contracts: the Processing Model's minimum set ----------
 menc:Store hexplain:codecContract [ a hexplain:CodecContract ;
@@ -267,6 +287,83 @@ menc:FloatingPointPredictor hexplain:codecContract [ a hexplain:CodecContract ; 
           hexplain:defaultValue 1 ; hexplain:allowedValue 0, 1 ] ] .
 menc:BitReverse hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
     hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:raisesCategory "ResourceLimit" ] .
+menc:JPEG hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToSamples ; hexplain:keepsSession true ;
+    hexplain:raisesCategory "Validation", "Unsupported", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "tables" ; hexplain:parameterType hexplain:BytesParameterType ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "precision" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:defaultValue 8 ; hexplain:allowedValue 8, 12 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "colorTransform" ; hexplain:parameterType hexplain:StringParameterType ;
+          hexplain:defaultValue "none" ; hexplain:allowedValue "none", "ycbcr-to-rgb" ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:minimumValue 0 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "output" ; hexplain:parameterType hexplain:StringParameterType ;
+          hexplain:defaultValue "pixels" ; hexplain:allowedValue "pixels", "raw-planes" ] ] .
+menc:WebP hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToSamples ; hexplain:keepsSession false ;
+    hexplain:raisesCategory "Validation", "Unsupported", "ResourceLimit" ;
+    hexplain:declaresParameter [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "bands" ;
+        hexplain:parameterType hexplain:IntegerParameterType ; hexplain:allowedValue 3, 4 ] ] .
+menc:JPEGXL hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToSamples ; hexplain:keepsSession false ;
+    hexplain:raisesCategory "Validation", "Unsupported", "ResourceLimit" ] .
+menc:LERC hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToSamples ; hexplain:keepsSession false ;
+    hexplain:raisesCategory "Validation", "Checksum", "Unsupported", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "layout" ; hexplain:parameterType hexplain:StringParameterType ;
+          hexplain:defaultValue "blob" ; hexplain:allowedValue "blob", "tiff" ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "width" ; hexplain:parameterType hexplain:IntegerParameterType ; hexplain:minimumValue 1 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "height" ; hexplain:parameterType hexplain:IntegerParameterType ; hexplain:minimumValue 1 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "samplesPerPixel" ; hexplain:parameterType hexplain:IntegerParameterType ; hexplain:minimumValue 1 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "sampleType" ; hexplain:parameterType hexplain:StringParameterType ;
+          hexplain:allowedValue "uint8", "int8", "uint16", "int16", "uint32", "int32", "float32", "float64" ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "planarSeparate" ; hexplain:parameterType hexplain:BooleanParameterType ;
+          hexplain:defaultValue false ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "alphaFromMask" ; hexplain:parameterType hexplain:BooleanParameterType ;
+          hexplain:defaultValue false ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "lercParameters" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:listValued true ; hexplain:minimumValue 0 ] ] .
+menc:YCbCrToRGB hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:SamplesToSamples ; hexplain:keepsSession false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "subsampling" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:listValued true ; hexplain:listLength 2 ; hexplain:defaultValue "1 1" ; hexplain:allowedValue 1, 2, 4 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "coefficients" ; hexplain:parameterType hexplain:FloatParameterType ;
+          hexplain:listValued true ; hexplain:listLength 3 ; hexplain:defaultValue "0.299 0.587 0.114" ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "referenceBlackWhite" ; hexplain:parameterType hexplain:FloatParameterType ;
+          hexplain:listValued true ; hexplain:listLength 6 ; hexplain:defaultValue "0 255 128 255 128 255" ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "layout" ; hexplain:parameterType hexplain:StringParameterType ;
+          hexplain:defaultValue "pixels" ; hexplain:allowedValue "pixels", "units", "planes" ] ] .
+menc:CIELabToRGB hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:SamplesToSamples ; hexplain:keepsSession false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "whitePoint" ; hexplain:parameterType hexplain:FloatParameterType ;
+          hexplain:listValued true ; hexplain:listLength 2 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "alpha" ; hexplain:parameterType hexplain:BooleanParameterType ;
+          hexplain:defaultValue false ] ] .
+menc:CMYKToRGB hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:SamplesToSamples ; hexplain:keepsSession false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "alpha" ;
+        hexplain:parameterType hexplain:BooleanParameterType ; hexplain:defaultValue false ] ] .
+menc:SGILogRLE hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 1 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 0 ] ] .
+menc:MicrosoftRLE hexplain:codecContract [ a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ;
+    hexplain:raisesCategory "Validation", "Unsupported", "ResourceLimit" ;
+    hexplain:declaresParameter
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "bitsPerPixel" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:allowedValue 4, 8 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "width" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 1 ] ,
+        [ a hexplain:CodecParameterSpec ; hexplain:parameterKey "height" ; hexplain:parameterType hexplain:IntegerParameterType ;
+          hexplain:requiredParameter true ; hexplain:minimumValue 1 ] ] .
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
@@ -312,6 +409,14 @@ menc:BitReverse hexplain:codecContract [ a hexplain:CodecContract ; hexplain:con
 <https://hexplain.io/ns/register/media-encoding#CCITTModifiedHuffman> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#CCITTModifiedHuffman> <http://www.w3.org/2000/01/rdf-schema#label> "CCITT Modified Huffman"@en .
 <https://hexplain.io/ns/register/media-encoding#CCITTModifiedHuffman> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#CIELabToRGB> <http://www.w3.org/2004/02/skos/core#definition> "Converts 8-bit CIE L*a*b* samples to sRGB as libtiff's TIFFCIELabToRGB does for the given white point (D50 by default); alpha appends an opaque fourth band."@en .
+<https://hexplain.io/ns/register/media-encoding#CIELabToRGB> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#CIELabToRGB> <http://www.w3.org/2000/01/rdf-schema#label> "CIE L*a*b* to RGB"@en .
+<https://hexplain.io/ns/register/media-encoding#CIELabToRGB> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#CMYKToRGB> <http://www.w3.org/2004/02/skos/core#definition> "Converts 8-bit CMYK (InkSet 1) samples to RGB as libtiff's RGBA interface does: each channel is (255 - K) x (255 - C/M/Y) / 255; alpha appends an opaque fourth band."@en .
+<https://hexplain.io/ns/register/media-encoding#CMYKToRGB> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#CMYKToRGB> <http://www.w3.org/2000/01/rdf-schema#label> "CMYK to RGB"@en .
+<https://hexplain.io/ns/register/media-encoding#CMYKToRGB> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#CodecScheme> <http://www.w3.org/2004/02/skos/core#definition> "The controlled concept scheme grouping codec values. Membership identifies the applicable value set; raw format codes are defined by profiles rather than by this scheme."@en .
 <https://hexplain.io/ns/register/media-encoding#CodecScheme> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#CodecScheme> <http://www.w3.org/2000/01/rdf-schema#label> "Codec Register"@en .
@@ -346,6 +451,22 @@ menc:BitReverse hexplain:codecContract [ a hexplain:CodecContract ; hexplain:con
 <https://hexplain.io/ns/register/media-encoding#HEVC> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#HEVC> <http://www.w3.org/2000/01/rdf-schema#label> "H.265"@en .
 <https://hexplain.io/ns/register/media-encoding#HEVC> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#ImageCodecs> <http://www.w3.org/2004/02/skos/core#definition> "An editorial grouping of image codecs concepts for navigation and selection. Collection membership does not assert a subclass or broader/narrower hierarchy."@en .
+<https://hexplain.io/ns/register/media-encoding#ImageCodecs> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#ImageCodecs> <http://www.w3.org/2000/01/rdf-schema#label> "Image codecs"@en .
+<https://hexplain.io/ns/register/media-encoding#ImageCodecs> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#JPEG> <http://www.w3.org/2004/02/skos/core#definition> "ITU-T T.81 baseline, extended (12-bit) and progressive Huffman-coded JPEG, decoded with libjpeg's integer IDCT and upsampling. tables supplies an abbreviated table-specification stream (TIFF JPEGTables) kept in the session for every later image; colorTransform ycbcr-to-rgb converts as libjpeg does; rows stops after that many rows; output raw-planes returns the component planes before upsampling and conversion."@en .
+<https://hexplain.io/ns/register/media-encoding#JPEG> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#JPEG> <http://www.w3.org/2000/01/rdf-schema#label> "JPEG"@en .
+<https://hexplain.io/ns/register/media-encoding#JPEG> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#JPEGXL> <http://www.w3.org/2004/02/skos/core#definition> "An ISO/IEC 18181 JPEG XL codestream in its exact-integer (modular, non-XYB) subset, 8- or 16-bit samples, colour channels then extra channels; anything outside that subset is an Unsupported feature."@en .
+<https://hexplain.io/ns/register/media-encoding#JPEGXL> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#JPEGXL> <http://www.w3.org/2000/01/rdf-schema#label> "JPEG XL"@en .
+<https://hexplain.io/ns/register/media-encoding#JPEGXL> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#LERC> <http://www.w3.org/2004/02/skos/core#definition> "Esri's Limited Error Raster Compression version 2 (blob versions 1-6), decoded bit for bit as Esri LERC 4.0 decodes it. layout blob returns every band's samples band after band with a validity mask per band; layout tiff assembles one TIFF strip or tile of width x height x samplesPerPixel samples as libtiff's tif_lerc.c does (masks become NaN for floats or alpha when alphaFromMask), first unwrapping the Deflate or Zstandard layer lercParameters names."@en .
+<https://hexplain.io/ns/register/media-encoding#LERC> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#LERC> <http://www.w3.org/2000/01/rdf-schema#label> "LERC"@en .
+<https://hexplain.io/ns/register/media-encoding#LERC> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#LZ4> <http://www.w3.org/2004/02/skos/core#definition> "Identifier for data in the LZ4 Frame format, the self-describing framed representation of LZ4 compression; the raw block representation is menc:LZ4Block."@en .
 <https://hexplain.io/ns/register/media-encoding#LZ4> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#LZ4> <http://www.w3.org/2000/01/rdf-schema#label> "LZ4"@en .
@@ -366,6 +487,10 @@ menc:BitReverse hexplain:codecContract [ a hexplain:CodecContract ; hexplain:con
 <https://hexplain.io/ns/register/media-encoding#MP3> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#MP3> <http://www.w3.org/2000/01/rdf-schema#label> "MP3"@en .
 <https://hexplain.io/ns/register/media-encoding#MP3> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#MicrosoftRLE> <http://www.w3.org/2004/02/skos/core#definition> "The BMP RLE8 and RLE4 run-length codings (bitsPerPixel 8 or 4) of a bottom-up width x height image, decoded as GDAL's BMP driver reads them and returned top row first, one byte per pixel. A delta escape that skips pixels is an Unsupported feature."@en .
+<https://hexplain.io/ns/register/media-encoding#MicrosoftRLE> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#MicrosoftRLE> <http://www.w3.org/2000/01/rdf-schema#label> "Microsoft RLE"@en .
+<https://hexplain.io/ns/register/media-encoding#MicrosoftRLE> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#NeXT> <http://www.w3.org/2004/02/skos/core#definition> "NeXT's run-length coding of 2-bit grey rows (literal rows, literal spans and runs), as libtiff's tif_next.c decodes it."@en .
 <https://hexplain.io/ns/register/media-encoding#NeXT> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#NeXT> <http://www.w3.org/2000/01/rdf-schema#label> "NeXT 2-bit RLE"@en .
@@ -390,6 +515,10 @@ menc:BitReverse hexplain:codecContract [ a hexplain:CodecContract ; hexplain:con
 <https://hexplain.io/ns/register/media-encoding#RunLength> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#RunLength> <http://www.w3.org/2000/01/rdf-schema#label> "Run-length encoding"@en .
 <https://hexplain.io/ns/register/media-encoding#RunLength> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#SGILogRLE> <http://www.w3.org/2004/02/skos/core#definition> "SGI's LogL run-length coding (TIFF compression 34676): each row stored as its high then low byte plane, each run-length coded; decodes to the 16-bit log-luminance codes, little-endian, as libtiff's SGILOGDATAFMT_16BIT returns them."@en .
+<https://hexplain.io/ns/register/media-encoding#SGILogRLE> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#SGILogRLE> <http://www.w3.org/2000/01/rdf-schema#label> "SGI LogL RLE"@en .
+<https://hexplain.io/ns/register/media-encoding#SGILogRLE> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#Shuffle> <http://www.w3.org/2004/02/skos/core#definition> "A reversible transform grouping corresponding bytes of successive fixed-width values to prepare them for compression."@en .
 <https://hexplain.io/ns/register/media-encoding#Shuffle> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#Shuffle> <http://www.w3.org/2000/01/rdf-schema#label> "Byte shuffle"@en .
@@ -418,10 +547,18 @@ menc:BitReverse hexplain:codecContract [ a hexplain:CodecContract ; hexplain:con
 <https://hexplain.io/ns/register/media-encoding#VideoCodecs> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#VideoCodecs> <http://www.w3.org/2000/01/rdf-schema#label> "Video codecs"@en .
 <https://hexplain.io/ns/register/media-encoding#VideoCodecs> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#WebP> <http://www.w3.org/2004/02/skos/core#definition> "A WebP bitstream (VP8 lossy with optional ALPH, or VP8L lossless) decoded as libwebp 1.5 decodes it to 8-bit RGB or RGBA; bands asks for 3 or 4 bands (an image without alpha reads as opaque)."@en .
+<https://hexplain.io/ns/register/media-encoding#WebP> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#WebP> <http://www.w3.org/2000/01/rdf-schema#label> "WebP"@en .
+<https://hexplain.io/ns/register/media-encoding#WebP> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#XZ> <http://www.w3.org/2004/02/skos/core#definition> "The .xz container: one or more streams of LZMA2-filtered blocks with an integrity check (CRC32, CRC64 or SHA-256). menc:LZMA names the algorithm family, not this framing."@en .
 <https://hexplain.io/ns/register/media-encoding#XZ> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#XZ> <http://www.w3.org/2000/01/rdf-schema#label> "XZ"@en .
 <https://hexplain.io/ns/register/media-encoding#XZ> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
+<https://hexplain.io/ns/register/media-encoding#YCbCrToRGB> <http://www.w3.org/2004/02/skos/core#definition> "Converts 8-bit YCbCr samples to RGB with libtiff's integer tables (tif_color.c) for the given coefficients and reference black/white. layout pixels takes three interleaved samples per pixel; units takes TIFF YCbCr sampling units (subsampling luma samples then Cb and Cr); planes takes the three component planes of a raw JPEG decode."@en .
+<https://hexplain.io/ns/register/media-encoding#YCbCrToRGB> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
+<https://hexplain.io/ns/register/media-encoding#YCbCrToRGB> <http://www.w3.org/2000/01/rdf-schema#label> "YCbCr to RGB"@en .
+<https://hexplain.io/ns/register/media-encoding#YCbCrToRGB> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <https://hexplain.io/ns/register/media-encoding> .
 <https://hexplain.io/ns/register/media-encoding#Zlib> <http://www.w3.org/2004/02/skos/core#definition> "RFC 1950 zlib framing around DEFLATE, including its header and Adler-32 checksum. Distinct from raw DEFLATE and gzip framing."@en .
 <https://hexplain.io/ns/register/media-encoding#Zlib> <http://www.w3.org/2004/02/skos/core#scopeNote> "Use as a controlled value or grouping in this register. Profiles bind the appropriate scheme and map their raw wire codes to concept IRIs; membership does not prescribe a wire code. Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile."@en .
 <https://hexplain.io/ns/register/media-encoding#Zlib> <http://www.w3.org/2000/01/rdf-schema#label> "zlib"@en .
