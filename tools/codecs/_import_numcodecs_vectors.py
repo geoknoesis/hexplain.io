@@ -1,6 +1,6 @@
 """Import the Blosc and numcodecs filter vectors written with numcodecs 0.16.5 (c-blosc 1.21).
 
-hexplain-tools codecs-array/src/test/resources/zarr/numcodecs-vectors.json (tests/gdal/zarr_codec_vectors.py)
+hexplain-tools core/src/test/resources/zarr/numcodecs-vectors.json (tests/gdal/zarr_codec_vectors.py)
 holds every Blosc inner compressor and shuffle mode and the Delta, Shuffle, BitRound, Quantize and
 FixedScaleOffset filters, each with the bytes numcodecs decodes. BloscLZ vectors are the first
 block of the unshuffled one-byte-element BloscLZ frames: one split, whose decoded bytes are the
@@ -19,7 +19,7 @@ from vectors import sha256, step, write_suite  # noqa: E402
 
 NUMCODECS = {"id": "numcodecs", "url": "https://github.com/zarr-developers/numcodecs",
              "description": "Chunks written by numcodecs 0.16.5 with c-blosc 1.21.7.dev (numpy 2.3.2, Python 3.11.4) through "
-                            "hexplain-tools tests/gdal/zarr_codec_vectors.py (codecs-array/src/test/resources/zarr/numcodecs-vectors.json).",
+                            "hexplain-tools tests/gdal/zarr_codec_vectors.py (core/src/test/resources/zarr/numcodecs-vectors.json).",
              "licence": "MIT (numcodecs), BSD-3-Clause (c-blosc); data CC0-1.0"}
 FILTERS = {"delta": "TypedDelta", "shuffle": "Shuffle", "bitround": "BitRound", "quantize": "Quantize",
            "fixedscaleoffset": "FixedScaleOffset"}
