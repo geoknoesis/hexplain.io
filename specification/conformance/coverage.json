@@ -1,10 +1,10 @@
 {
  "cases": {
-  "physical-parser": 345,
-  "semantic-emitter": 17,
+  "physical-parser": 364,
+  "semantic-emitter": 33,
   "bundle-processor": 13,
   "hdl-compiler": 158,
-  "conformance-evaluator": 40
+  "conformance-evaluator": 41
  },
  "excluded": {
   "blanket": [
@@ -18,63 +18,57 @@
  },
  "processorMust": {
   "Physical Parser": {
-   "total": 192,
-   "covered": 181,
+   "total": 203,
+   "covered": 199,
+   "notSuiteTestable": {
+    "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's shape gates (test_shapes, test_vocab_shapes) apply it.",
+    "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the condition is asserted by the HEL vectors (validation/test/hel-vectors.tsv, req-hel-conformance-9)."
+   },
    "uncovered": [
-    "req-bddo-addressing-1",
-    "req-bddo-bitfields-1",
-    "req-bddo-conformance-1",
-    "req-bddo-field-properties-8",
-    "req-bddo-structural-properties-4",
-    "req-bddo-structural-properties-6",
-    "req-core-static-mapping-properties-3",
-    "req-hel-ext-temporal-1",
-    "req-pm-conformance-classes-9",
-    "req-pm-errors-17",
-    "req-pm-optional-codecs-2"
+    "req-hel-versioning-3",
+    "req-hel-versioning-4"
    ]
   },
   "Semantic Emitter": {
-   "total": 19,
-   "covered": 10,
-   "uncovered": [
-    "req-core-punning-1",
-    "req-geometry-document-1",
-    "req-pm-emission-9",
-    "req-raster-document-3",
-    "req-spatialref-document-10",
-    "req-spatialref-document-11",
-    "req-spatialref-document-2",
-    "req-spatialref-document-3",
-    "req-spatialref-document-4"
-   ]
+   "total": 30,
+   "covered": 21,
+   "notSuiteTestable": {
+    "req-core-punning-1": "Whether a processor relies on a DL entailment is not observable from its output: a case cannot tell a processor that did not reason from one whose reasoning happened to agree.",
+    "req-geometry-document-1": "Binds a consumer that interprets lifted geometry; a Semantic Emitter emits the mapped ordinates unchanged, and the suite has no case format for interpretation.",
+    "req-pm-privacy-1": "The runner cannot tell a base IRI derived from the input's file name from any other base the processor reports; se-base-reported checks that the base is chosen and reported.",
+    "req-raster-document-3": "Binds a consumer that interprets a raster description; cell addressing is the data layout's (DLV), which the Physical Parser cases cover.",
+    "req-spatialref-document-10": "Binds a processor that evaluates rational polynomial transforms, which no processor class of the Processing Model does.",
+    "req-spatialref-document-11": "Binds a processor that evaluates rational polynomial transforms, which no processor class of the Processing Model does.",
+    "req-spatialref-document-2": "Binds a processor that evaluates spatial-reference transforms (the hxf function library's world and cell functions), which the processor suite does not exercise.",
+    "req-spatialref-document-3": "Binds a processor that evaluates spatial-reference transforms (the hxf function library's hxf:column and hxf:row), which the processor suite does not exercise.",
+    "req-spatialref-document-4": "A documentation requirement on a floating-point implementation, checked by reading its documentation."
+   },
+   "uncovered": []
   },
   "Bundle Processor": {
    "total": 4,
    "covered": 4,
+   "notSuiteTestable": {},
    "uncovered": []
   },
   "HDL Compiler": {
    "total": 48,
    "covered": 48,
+   "notSuiteTestable": {},
    "uncovered": []
   },
   "Conformance Evaluator": {
-   "total": 24,
-   "covered": 20,
-   "uncovered": [
-    "req-ce-conf-conformance-11",
-    "req-ce-conf-conformance-12",
-    "req-pm-conformance-evaluation-7",
-    "req-pm-conformance-evaluation-8"
-   ]
+   "total": 22,
+   "covered": 22,
+   "notSuiteTestable": {},
+   "uncovered": []
   }
  },
  "requirements": {
   "physical-parser": {
    "MUST": {
-    "total": 143,
-    "covered": 133
+    "total": 148,
+    "covered": 147
    },
    "SHOULD": {
     "total": 5,
@@ -83,8 +77,8 @@
   },
   "hel": {
    "MUST": {
-    "total": 49,
-    "covered": 48
+    "total": 55,
+    "covered": 52
    },
    "SHOULD": {
     "total": 2,
@@ -93,8 +87,8 @@
   },
   "semantic-emitter": {
    "MUST": {
-    "total": 19,
-    "covered": 10
+    "total": 30,
+    "covered": 21
    },
    "SHOULD": {
     "total": 2,
@@ -113,11 +107,11 @@
   },
   "conformance-evaluator": {
    "MUST": {
-    "total": 24,
-    "covered": 20
+    "total": 22,
+    "covered": 22
    },
    "SHOULD": {
-    "total": 1,
+    "total": 2,
     "covered": 1
    }
   },
@@ -187,6 +181,48 @@
    "pp-int-conditional-endianness",
    "pp-int-conditional-endianness-provisional"
   ],
+  "req-pm-computed-values-1": [
+   "se-value-natural-array-node",
+   "se-value-natural-boolean",
+   "se-value-natural-bytes",
+   "se-value-natural-float",
+   "se-value-natural-float-infinity",
+   "se-value-natural-integer",
+   "se-value-natural-null",
+   "se-value-natural-string",
+   "se-value-natural-struct-node",
+   "se-value-natural-unsigned-beyond-long"
+  ],
+  "req-pm-computed-values-2": [
+   "se-value-datatype-fraction-as-integer",
+   "se-value-datatype-integer-as-double",
+   "se-value-datatype-out-of-range",
+   "se-value-datatype-string-as-integer"
+  ],
+  "req-pm-computed-values-3": [
+   "se-value-natural-integer",
+   "se-value-natural-unsigned-beyond-long"
+  ],
+  "req-pm-computed-values-4": [
+   "se-value-natural-float",
+   "se-value-natural-float-infinity"
+  ],
+  "req-pm-computed-values-5": [
+   "se-value-natural-string"
+  ],
+  "req-pm-computed-values-6": [
+   "se-value-natural-boolean"
+  ],
+  "req-pm-computed-values-7": [
+   "se-value-natural-bytes"
+  ],
+  "req-pm-computed-values-8": [
+   "se-value-natural-null"
+  ],
+  "req-pm-computed-values-9": [
+   "se-value-natural-array-node",
+   "se-value-natural-struct-node"
+  ],
   "req-pm-conformance-1": [],
   "req-pm-conformance-classes-1": [
    "bp-nested-profile-unclaimed"
@@ -217,7 +253,6 @@
   "req-pm-conformance-classes-8": [
    "pp-layout-chunk-order-unclaimed"
   ],
-  "req-pm-conformance-classes-9": [],
   "req-pm-conformance-evaluation-1": [
    "ce-conformant"
   ],
@@ -244,8 +279,28 @@
    "ce-report-rdf-truncated",
    "ce-truncated-run"
   ],
-  "req-pm-conformance-evaluation-7": [],
-  "req-pm-conformance-evaluation-8": [],
+  "req-pm-conformance-evaluation-7": [
+   "ce-report-rdf-blank-requirement",
+   "ce-report-rdf-conformant",
+   "ce-report-rdf-fail-on-warning",
+   "ce-report-rdf-parse-finding",
+   "ce-report-rdf-provenance",
+   "ce-report-rdf-truncated",
+   "ce-report-rdf-version",
+   "ce-report-rdf-violation",
+   "ce-report-rdf-warning-conformant"
+  ],
+  "req-pm-conformance-evaluation-8": [
+   "ce-report-rdf-blank-requirement",
+   "ce-report-rdf-conformant",
+   "ce-report-rdf-fail-on-warning",
+   "ce-report-rdf-parse-finding",
+   "ce-report-rdf-provenance",
+   "ce-report-rdf-truncated",
+   "ce-report-rdf-version",
+   "ce-report-rdf-violation",
+   "ce-report-rdf-warning-conformant"
+  ],
   "req-pm-context-1": [
    "pp-hel-forward-reference-derived",
    "pp-hel-forward-reference-parent",
@@ -316,7 +371,21 @@
   "req-pm-emission-5": [
    "se-class-and-literals",
    "se-parameters-and-bindings-not-emitted",
-   "se-value-expression"
+   "se-value-datatype-fraction-as-integer",
+   "se-value-datatype-integer-as-double",
+   "se-value-datatype-out-of-range",
+   "se-value-datatype-string-as-integer",
+   "se-value-expression",
+   "se-value-natural-array-node",
+   "se-value-natural-boolean",
+   "se-value-natural-bytes",
+   "se-value-natural-float",
+   "se-value-natural-float-infinity",
+   "se-value-natural-integer",
+   "se-value-natural-null",
+   "se-value-natural-string",
+   "se-value-natural-struct-node",
+   "se-value-natural-unsigned-beyond-long"
   ],
   "req-pm-emission-6": [
    "se-enum-symbol-object",
@@ -328,7 +397,9 @@
   "req-pm-emission-8": [
    "se-root-sequence"
   ],
-  "req-pm-emission-9": [],
+  "req-pm-emission-9": [
+   "se-data-layout-array-node"
+  ],
   "req-pm-emission-10": [
    "se-parameters-and-bindings-not-emitted"
   ],
@@ -338,6 +409,8 @@
    "pp-sync-missing"
   ],
   "req-pm-errors-2": [
+   "pp-sync-bounded-by-region",
+   "pp-sync-marker-straddles-bound",
    "pp-sync-missing"
   ],
   "req-pm-errors-3": [
@@ -376,9 +449,16 @@
    "pp-kv-non-number",
    "pp-records-malformed-utf8",
    "pp-records-unterminated-quote",
+   "pp-str-ascii-high-byte",
+   "pp-str-utf16-lone-surrogate",
+   "pp-str-utf16-odd-length",
+   "pp-str-utf8-encoded-surrogate",
+   "pp-str-utf8-malformed",
+   "pp-str-utf8-overlong",
    "pp-table-column-count",
    "pp-textnum-infinite",
    "pp-textnum-invalid",
+   "pp-textnum-non-ascii-digit",
    "pp-tree-json-duplicate-member",
    "pp-tree-json-trailing-value",
    "pp-tree-xml-external-entity",
@@ -401,6 +481,7 @@
    "bp-unknown-part-key",
    "pp-hel-and-evaluates-both-operands",
    "pp-hel-asset-outside-bundle",
+   "pp-hel-bytes-malformed-argument",
    "pp-hel-bytes-ordering",
    "pp-hel-comparison-chain",
    "pp-hel-concat-number",
@@ -515,12 +596,17 @@
   ],
   "req-pm-errors-12": [
    "pp-codec-decoded-byte-limit",
+   "pp-codec-lz4-block-declared-size-over-limit",
+   "pp-codec-lz4-frame-declared-size-over-limit",
+   "pp-codec-zstd-declared-size-over-limit",
    "pp-limit-depth-exceeded",
    "pp-limit-hel-depth",
    "pp-limit-hel-length",
    "pp-limit-input-bytes",
    "pp-limit-materialized-bytes",
    "pp-limit-no-cheaper-interpretation",
+   "pp-limit-quantifier-evaluations",
+   "pp-limit-regex-steps",
    "pp-limit-tree-depth",
    "pp-limit-visited-nodes",
    "pp-param-recursion-depth-limit",
@@ -532,6 +618,7 @@
    "ce-recovery-check-continues",
    "ce-recovery-counted-sequence",
    "ce-recovery-encoded-elements",
+   "ce-recovery-malformed-text",
    "ce-recovery-pointer",
    "ce-recovery-sized-field",
    "ce-recovery-unknown-width"
@@ -546,16 +633,20 @@
    "pp-hel-reserved-word-key",
    "pp-hel-unknown-escape"
   ],
-  "req-pm-errors-17": [],
+  "req-pm-errors-17": [
+   "pp-codec-zstd-dictionary"
+  ],
   "req-pm-introduction-1": [],
   "req-pm-iri-minting-1": [
    "se-base-reported",
    "se-class-and-literals",
    "se-conditional-class-mapping",
    "se-conditional-mapping",
+   "se-data-layout-array-node",
    "se-encoded-substream",
    "se-enum-symbol-object",
    "se-key-percent-encoding",
+   "se-key-percent-sign",
    "se-language-tags",
    "se-nested-paths",
    "se-object-property",
@@ -563,7 +654,21 @@
    "se-unmapped-no-ancestor",
    "se-unmapped-root-silences-descendants",
    "se-unmapped-struct-literals",
-   "se-value-expression"
+   "se-value-datatype-fraction-as-integer",
+   "se-value-datatype-integer-as-double",
+   "se-value-datatype-out-of-range",
+   "se-value-datatype-string-as-integer",
+   "se-value-expression",
+   "se-value-natural-array-node",
+   "se-value-natural-boolean",
+   "se-value-natural-bytes",
+   "se-value-natural-float",
+   "se-value-natural-float-infinity",
+   "se-value-natural-integer",
+   "se-value-natural-null",
+   "se-value-natural-string",
+   "se-value-natural-struct-node",
+   "se-value-natural-unsigned-beyond-long"
   ],
   "req-pm-iri-minting-2": [
    "se-base-reported"
@@ -573,9 +678,11 @@
    "se-class-and-literals",
    "se-conditional-class-mapping",
    "se-conditional-mapping",
+   "se-data-layout-array-node",
    "se-encoded-substream",
    "se-enum-symbol-object",
    "se-key-percent-encoding",
+   "se-key-percent-sign",
    "se-language-tags",
    "se-nested-paths",
    "se-object-property",
@@ -583,7 +690,24 @@
    "se-unmapped-no-ancestor",
    "se-unmapped-root-silences-descendants",
    "se-unmapped-struct-literals",
-   "se-value-expression"
+   "se-value-datatype-fraction-as-integer",
+   "se-value-datatype-integer-as-double",
+   "se-value-datatype-out-of-range",
+   "se-value-datatype-string-as-integer",
+   "se-value-expression",
+   "se-value-natural-array-node",
+   "se-value-natural-boolean",
+   "se-value-natural-bytes",
+   "se-value-natural-float",
+   "se-value-natural-float-infinity",
+   "se-value-natural-integer",
+   "se-value-natural-null",
+   "se-value-natural-string",
+   "se-value-natural-struct-node",
+   "se-value-natural-unsigned-beyond-long"
+  ],
+  "req-pm-iri-minting-4": [
+   "se-key-percent-sign"
   ],
   "req-pm-key-value-1": [
    "pp-kv-grouped-unclosed",
@@ -671,10 +795,15 @@
    "pp-codec-zstd-dictionary",
    "pp-codec-zstd-truncated"
   ],
-  "req-pm-optional-codecs-2": [],
+  "req-pm-optional-codecs-2": [
+   "pp-codec-lz4-block-declared-size-over-limit",
+   "pp-codec-lz4-frame-declared-size-over-limit",
+   "pp-codec-zstd-declared-size-over-limit"
+  ],
   "req-pm-optional-codecs-3": [
    "pp-codec-lz4-block",
    "pp-codec-lz4-block-bad-offset",
+   "pp-codec-lz4-block-declared-size-over-limit",
    "pp-codec-lz4-block-missing-size",
    "pp-codec-lz4-block-shorthand",
    "pp-codec-lz4-block-size-mismatch",
@@ -682,11 +811,13 @@
    "pp-codec-lz4-frame",
    "pp-codec-lz4-frame-block-checksums",
    "pp-codec-lz4-frame-concatenated",
+   "pp-codec-lz4-frame-declared-size-over-limit",
    "pp-codec-lz4-frame-substream",
    "pp-codec-lz4-frame-truncated",
    "pp-codec-lz4-header-checksum-mismatch",
    "pp-codec-zstd-checksum-mismatch",
    "pp-codec-zstd-concatenated",
+   "pp-codec-zstd-declared-size-over-limit",
    "pp-codec-zstd-dictionary",
    "pp-codec-zstd-frame",
    "pp-codec-zstd-parameter-unknown",
@@ -697,6 +828,7 @@
    "pp-codec-lz4-frame",
    "pp-codec-lz4-frame-block-checksums",
    "pp-codec-lz4-frame-concatenated",
+   "pp-codec-lz4-frame-declared-size-over-limit",
    "pp-codec-lz4-header-checksum-mismatch"
   ],
   "req-pm-optional-codecs-5": [
@@ -706,6 +838,7 @@
   "req-pm-optional-codecs-6": [
    "pp-codec-zstd-checksum-mismatch",
    "pp-codec-zstd-concatenated",
+   "pp-codec-zstd-declared-size-over-limit",
    "pp-codec-zstd-dictionary",
    "pp-codec-zstd-frame"
   ],
@@ -886,7 +1019,11 @@
    "pp-sync-marker"
   ],
   "req-pm-parsestruct-3": [
-   "pp-sync-marker"
+   "pp-sync-bounded-by-region",
+   "pp-sync-marker",
+   "pp-sync-marker-at-cursor",
+   "pp-sync-marker-straddles-bound",
+   "pp-sync-struct-size-after-marker"
   ],
   "req-pm-parsestruct-4": [
    "pp-hel-sizeof-nodes"
@@ -906,7 +1043,8 @@
   ],
   "req-pm-parsestruct-8": [
    "pp-size-region-skips-remainder",
-   "pp-struct-size-literal"
+   "pp-struct-size-literal",
+   "pp-sync-struct-size-after-marker"
   ],
   "req-pm-parsestruct-9": [
    "pp-let-with-parameter",
@@ -926,11 +1064,14 @@
    "pp-let-with-parameter",
    "pp-param-quantifier-element"
   ],
+  "req-pm-privacy-1": [],
+  "req-pm-privacy-2": [],
   "req-pm-recovery-1": [
    "ce-recovery-abandon-struct",
    "ce-recovery-check-continues",
    "ce-recovery-counted-sequence",
    "ce-recovery-encoded-elements",
+   "ce-recovery-malformed-text",
    "ce-recovery-pointer",
    "ce-recovery-sized-field",
    "ce-recovery-unknown-width"
@@ -959,6 +1100,8 @@
    "pp-limit-input-bytes",
    "pp-limit-materialized-bytes",
    "pp-limit-no-cheaper-interpretation",
+   "pp-limit-quantifier-evaluations",
+   "pp-limit-regex-steps",
    "pp-limit-tree-depth",
    "pp-limit-visited-nodes",
    "pp-param-recursion-depth-limit",
@@ -976,12 +1119,26 @@
    "pp-limit-hel-length",
    "pp-limit-input-bytes",
    "pp-limit-materialized-bytes",
+   "pp-limit-quantifier-evaluations",
+   "pp-limit-regex-steps",
    "pp-limit-tree-depth",
    "pp-limit-visited-nodes",
    "se-triple-limit"
   ],
   "req-pm-resource-limits-4": [
    "pp-limit-no-cheaper-interpretation"
+  ],
+  "req-pm-security-decompression-1": [
+   "pp-codec-lz4-block-declared-size-over-limit",
+   "pp-codec-lz4-frame-declared-size-over-limit",
+   "pp-codec-zstd-declared-size-over-limit"
+  ],
+  "req-pm-security-external-1": [
+   "pp-tree-xml-external-dtd-not-fetched",
+   "pp-tree-xml-external-entity"
+  ],
+  "req-pm-security-resources-1": [
+   "pp-limit-visited-nodes"
   ],
   "req-pm-size-resolution-1": [],
   "req-pm-size-resolution-2": [
@@ -1039,7 +1196,8 @@
   "req-pm-struct-size-3": [
    "pp-let-struct-size",
    "pp-struct-size-from-own-field",
-   "pp-struct-size-literal"
+   "pp-struct-size-literal",
+   "pp-sync-struct-size-after-marker"
   ],
   "req-pm-terminators-1": [
    "pp-term-bytes",
@@ -1062,6 +1220,29 @@
   "req-pm-terminators-6": [
    "pp-term-not-found"
   ],
+  "req-pm-text-decoding-1": [
+   "pp-hel-bytes-malformed-argument",
+   "pp-hel-bytes-vs-string",
+   "pp-str-ascii-high-byte",
+   "pp-str-latin1-every-byte",
+   "pp-str-utf16-lone-surrogate",
+   "pp-str-utf16-odd-length",
+   "pp-str-utf8-encoded-surrogate",
+   "pp-str-utf8-malformed",
+   "pp-str-utf8-overlong"
+  ],
+  "req-pm-text-decoding-2": [
+   "ce-recovery-malformed-text",
+   "pp-str-ascii-high-byte",
+   "pp-str-utf16-lone-surrogate",
+   "pp-str-utf16-odd-length",
+   "pp-str-utf8-encoded-surrogate",
+   "pp-str-utf8-malformed",
+   "pp-str-utf8-overlong"
+  ],
+  "req-pm-text-decoding-3": [
+   "pp-textnum-non-ascii-digit"
+  ],
   "req-pm-text-numbers-1": [
    "pp-separated-multibyte-encoding"
   ],
@@ -1072,7 +1253,8 @@
    "pp-textnum-decimals",
    "pp-textnum-infinite",
    "pp-textnum-integers",
-   "pp-textnum-invalid"
+   "pp-textnum-invalid",
+   "pp-textnum-non-ascii-digit"
   ],
   "req-pm-text-numbers-4": [
    "pp-varints"
@@ -1119,6 +1301,7 @@
   "req-hel-conformance-4": [
    "ce-register-in-register",
    "pp-hel-absent-optional-null",
+   "pp-hel-bytes-malformed-argument",
    "pp-hel-bytes-ordering",
    "pp-hel-bytes-vs-string",
    "pp-hel-core-functions",
@@ -1142,7 +1325,8 @@
    "pp-hel-float-result-count",
    "pp-hel-float-result-size",
    "pp-hel-presence-result-type",
-   "pp-hel-size-result-type"
+   "pp-hel-size-result-type",
+   "se-value-datatype-string-as-integer"
   ],
   "req-hel-conformance-7": [
    "pp-hel-division-by-zero",
@@ -1156,7 +1340,9 @@
    "pp-hel-flat-conjunction-depth",
    "pp-limit-hel-default-depth",
    "pp-limit-hel-depth",
-   "pp-limit-hel-length"
+   "pp-limit-hel-length",
+   "pp-limit-quantifier-evaluations",
+   "pp-limit-regex-steps"
   ],
   "req-hel-conformance-9": [
    "pp-hel-vector-rows"
@@ -1182,6 +1368,7 @@
    "pp-hel-asset-outside-bundle",
    "pp-hel-part-extension-outside-bundle"
   ],
+  "req-hel-error-conditions-1": [],
   "req-hel-ext-quantifiers-1": [
    "pp-hel-quantifier-not-array"
   ],
@@ -1192,7 +1379,12 @@
    "pp-param-quantifier-element",
    "pp-param-quantifier-holding-struct"
   ],
-  "req-hel-ext-temporal-1": [],
+  "req-hel-ext-quantifiers-4": [
+   "pp-limit-quantifier-evaluations"
+  ],
+  "req-hel-ext-temporal-1": [
+   "pp-hel-temporal-date-only"
+  ],
   "req-hel-ext-temporal-2": [
    "pp-hel-temporal-group"
   ],
@@ -1203,6 +1395,9 @@
    "pp-hel-text-pattern-not-string"
   ],
   "req-hel-ext-text-2": [],
+  "req-hel-ext-text-3": [
+   "pp-limit-regex-steps"
+  ],
   "req-hel-extension-groups-1": [
    "pp-hel-extension-group-unclaimed",
    "pp-hel-unknown-function"
@@ -1337,6 +1532,11 @@
   ],
   "req-hel-versioning-2": [
    "pp-hel-core-functions",
+   "pp-hel-unknown-function"
+  ],
+  "req-hel-versioning-3": [],
+  "req-hel-versioning-4": [],
+  "req-hel-versioning-5": [
    "pp-hel-unknown-function"
   ],
   "req-hdl-checksums-1": [
@@ -2177,6 +2377,7 @@
    "ce-recovery-check-continues",
    "ce-recovery-counted-sequence",
    "ce-recovery-encoded-elements",
+   "ce-recovery-malformed-text",
    "ce-recovery-pointer",
    "ce-recovery-sized-field",
    "ce-recovery-unknown-width",
@@ -2230,6 +2431,7 @@
    "ce-recovery-check-continues",
    "ce-recovery-counted-sequence",
    "ce-recovery-encoded-elements",
+   "ce-recovery-malformed-text",
    "ce-recovery-pointer",
    "ce-recovery-sized-field",
    "ce-recovery-unknown-width",
@@ -2269,6 +2471,7 @@
    "ce-recovery-check-continues",
    "ce-recovery-counted-sequence",
    "ce-recovery-encoded-elements",
+   "ce-recovery-malformed-text",
    "ce-recovery-pointer",
    "ce-recovery-sized-field",
    "ce-recovery-unknown-width",
@@ -2294,8 +2497,6 @@
    "ce-violation-cites-every-requirement",
    "ce-warning-does-not-fail"
   ],
-  "req-ce-conf-conformance-11": [],
-  "req-ce-conf-conformance-12": [],
   "req-ce-req-conformance-1": [
    "ce-requirement-without-statement"
   ],
@@ -2311,8 +2512,13 @@
   "req-ce-req-conformance-4": [
    "ce-violation-cites-every-requirement"
   ],
-  "req-bddo-addressing-1": [],
-  "req-bddo-bitfields-1": [],
+  "req-bddo-addressing-1": [
+   "pp-align-from-stream-start",
+   "pp-align-region-does-not-move-origin"
+  ],
+  "req-bddo-bitfields-1": [
+   "pp-bits-realign-before-byte-field"
+  ],
   "req-bddo-checksum-algorithms-1": [
    "hc-checksum-named-crcs",
    "pp-crc-crc16arc",
@@ -2358,7 +2564,9 @@
   "req-bddo-field-properties-5": [],
   "req-bddo-field-properties-6": [],
   "req-bddo-field-properties-7": [],
-  "req-bddo-field-properties-8": [],
+  "req-bddo-field-properties-8": [
+   "pp-valid-if"
+  ],
   "req-bddo-field-properties-9": [],
   "req-bddo-field-properties-10": [],
   "req-bddo-parameterised-structs-1": [
@@ -2382,16 +2590,24 @@
   ],
   "req-bddo-structural-properties-2": [],
   "req-bddo-structural-properties-3": [],
-  "req-bddo-structural-properties-4": [],
+  "req-bddo-structural-properties-4": [
+   "pp-sync-marker"
+  ],
   "req-bddo-structural-properties-5": [],
-  "req-bddo-structural-properties-6": [],
+  "req-bddo-structural-properties-6": [
+   "pp-struct-size-literal"
+  ],
   "req-dlv-conditional-1": [],
   "req-dlv-properties-1": [],
   "req-dlv-properties-2": [],
   "req-core-punning-1": [],
   "req-core-static-mapping-properties-1": [],
   "req-core-static-mapping-properties-2": [],
-  "req-core-static-mapping-properties-3": [],
+  "req-core-static-mapping-properties-3": [
+   "pp-codec-deflate-substream",
+   "pp-codec-lz4-frame-substream",
+   "se-encoded-substream"
+  ],
   "req-geometry-document-1": [],
   "req-geometry-document-2": [],
   "req-raster-document-1": [],
@@ -2411,6 +2627,13 @@
   "req-spatialref-document-10": [],
   "req-spatialref-document-11": []
  },
+ "withdrawn": [
+  "req-ce-conf-conformance-11",
+  "req-ce-conf-conformance-12",
+  "req-pm-conformance-classes-9",
+  "req-pm-errors-15"
+ ],
+ "reports": [],
  "sections": {
   "bddo/index.html#checksum-algorithms": 14,
   "bddo/index.html#odd-widths": 7,
@@ -2451,16 +2674,16 @@
   "hdl/index.html#types": 10,
   "hdl/index.html#versioning": 3,
   "hdl/index.html#yaml": 31,
-  "hel/index.html#coercion": 8,
+  "hel/index.html#coercion": 9,
   "hel/index.html#conformance": 11,
-  "hel/index.html#core-functions": 9,
+  "hel/index.html#core-functions": 10,
   "hel/index.html#evaluation": 4,
   "hel/index.html#expression-depth": 2,
   "hel/index.html#ext-geometry": 3,
-  "hel/index.html#ext-quantifiers": 4,
+  "hel/index.html#ext-quantifiers": 5,
   "hel/index.html#ext-register": 1,
-  "hel/index.html#ext-temporal": 2,
-  "hel/index.html#ext-text": 2,
+  "hel/index.html#ext-temporal": 3,
+  "hel/index.html#ext-text": 3,
   "hel/index.html#extension-groups": 2,
   "hel/index.html#key-resolution": 6,
   "hel/index.html#local-bindings": 2,
@@ -2471,38 +2694,42 @@
   "hel/index.html#tonumber": 4,
   "hel/index.html#undefined-names": 10,
   "hel/index.html#versioning": 1,
-  "processing#algorithm": 95,
+  "processing#algorithm": 99,
   "processing#bit-cursor": 8,
   "processing#byte-order": 12,
+  "processing#computed-values": 14,
   "processing#conflicting-forms": 5,
   "processing#conformance-classes": 4,
-  "processing#conformance-evaluation": 40,
+  "processing#conformance-evaluation": 41,
   "processing#context": 5,
   "processing#data-layouts": 5,
   "processing#delimited-records": 8,
   "processing#delimited-tables": 7,
   "processing#delta-parameters": 10,
-  "processing#emission": 13,
-  "processing#errors": 45,
+  "processing#emission": 15,
+  "processing#errors": 47,
   "processing#fixed-values": 13,
-  "processing#iri-minting": 11,
+  "processing#iri-minting": 13,
   "processing#key-value": 4,
   "processing#lz4-parameters": 4,
   "processing#minimum-codecs": 25,
   "processing#multi-part-assets": 15,
-  "processing#optional-codecs": 17,
+  "processing#optional-codecs": 20,
   "processing#optional-features": 1,
   "processing#parameter-scope": 9,
-  "processing#recovery": 7,
+  "processing#recovery": 8,
   "processing#refusal": 2,
   "processing#repeat-until-bindings": 5,
-  "processing#resource-limits": 15,
+  "processing#resource-limits": 17,
+  "processing#security-decompression": 3,
+  "processing#security-resources": 1,
   "processing#size-resolution": 21,
   "processing#stream-metadata": 8,
-  "processing#struct-size": 7,
+  "processing#struct-size": 8,
   "processing#terminators": 8,
   "processing#text-containers": 2,
-  "processing#text-numbers": 11,
+  "processing#text-decoding": 9,
+  "processing#text-numbers": 12,
   "processing#tree-documents": 9,
   "processing#typed-cells": 3,
   "processing#value-mapping": 7,

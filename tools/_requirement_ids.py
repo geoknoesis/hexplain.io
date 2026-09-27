@@ -63,6 +63,7 @@ GENERATED = re.compile(r"<!-- BEGIN GENERATED ([A-Z ]+) -->.*?<!-- END GENERATED
 PM_SECTION_CLASS = {
     "iri-minting": "semantic-emitter",
     "value-mapping": "semantic-emitter",
+    "computed-values": "semantic-emitter",
     "emission": "semantic-emitter",
     "multi-part-assets": "bundle-processor",
     "conformance-evaluation": "conformance-evaluator",
@@ -77,6 +78,8 @@ CLASS_OVERRIDE = {
     "req-pm-multi-part-assets-3": "physical-parser",         # "a processor that is not a Bundle Processor"
     "req-hdl-layout-1": "physical-parser",                   # which processor can run the example
     "req-pm-emission-1": "physical-parser",                  # decoding a block is parsing
+    "req-pm-privacy-1": "semantic-emitter",                  # the base a processor chooses for minting
+    "req-pm-privacy-2": "conformance-evaluator",             # what a run report names its input by
 }
 #: Requirements on a description's author, not on a processor: they are registered and cited like
 #: any other, but a processor cannot fail them, so they never count as processor requirements.
@@ -142,6 +145,8 @@ SKIPPED = {"pre", "script", "style"}
 ABBREVIATIONS = ("e.g.", "i.e.", "etc.", "cf.", "vs.", "Fig.", "no.", "approx.")
 ANCHOR = re.compile(r'<span class="req" id="(req-[a-z0-9-]+)">')
 TAG = re.compile(r"<!--.*?-->|<(/?)([A-Za-z][A-Za-z0-9]*)\b([^>]*)>", re.S)
+#: Openings whose subject is in the previous sentence.
+ANAPHOR = re.compile(r"(It|Its|They|Their|This|These|That|Those|Each|Both|Such)\b")
 SPLIT = re.compile(r"(?<=[.!])[)\"”’]?\s+(?=[A-Za-z0-9(“\"'\[])")
 
 
@@ -153,6 +158,7 @@ class Sentence:
     start: int                      # source offset of its first character
     anchors: list = field(default_factory=list)   # IDs of anchors inside it
     inherited: str = None           # level of the "...MUST:" sentence that introduces this item
+    context: str = None             # the sentence before it, when this one opens with a pronoun
 
     @property
     def keywords(self):
@@ -402,6 +408,11 @@ def sentences(page, source):
             if s.introduces_items and not inherit:
                 pending = (s.level, block.container)
         out.extend(items)
+    # A sentence that opens with a pronoun ("It MUST be raised ...") names its subject in the sentence
+    # before it; the registry records that sentence too, so an entry read on its own keeps its subject.
+    for before, s in zip(out, out[1:], strict=False):
+        if s.is_requirement and not s.inherited and ANAPHOR.match(s.text):
+            s.context = normalise(before.text)
     return out
 
 
@@ -456,6 +467,8 @@ def entries(found):
                 entry = dict(page=page, section=s.section, cls=requirement_class(page, s.section, identifier),
                              level=s.level, audience=audience(identifier), text=normalise(s.text),
                              sha256=text_hash(s.text))
+                if s.context:
+                    entry["context"] = s.context
                 if identifier in SHAPE_BACKED:
                     entry.update(kind="shape-backed", shapes=list(SHAPE_BACKED[identifier]))
                 out[identifier] = entry
@@ -490,6 +503,17 @@ def assign(write):
 
 
 CHANGELOG = ROOT / "CHANGELOG.md"
+#: The text of a withdrawn entry as a reader saw it, where the registry recorded it before empty links
+#: were read as their target's title (its hash is of the text as recorded then).
+LEGACY_TEXT = {
+    "req-pm-errors-15": "A HEL type error, division/modulo by zero, undefined name, forward reference, or an array "
+                        "subscript out of range; asset.X read before part X is parsed or naming a part the asset does "
+                        "not have, and the asset root or partExtension() in a part parsed on its own (Multi-part "
+                        "Assets); a malformed HEL expression (one the HEL grammar does not generate, including an "
+                        "out-of-range literal, an unknown escape or a call with the wrong number of arguments), which "
+                        "SHOULD be raised when the description is loaded and is this category, not a Description "
+                        "error, even then.",
+}
 ID_PATTERN = re.compile(r"^req-(pm|hel|hdl|ce-conf|ce-req|bddo|dlv|core|bundle|geometry|raster|spatialref)"
                         r"-[a-z0-9]+(-[a-z0-9]+)*-[1-9][0-9]*$")
 
@@ -537,7 +561,12 @@ def reconcile(current, old, changelog):
             continue
         if not before.get("withdrawn") and not names(changelog, identifier):
             problems.append(f"{identifier}: its anchor disappeared; name it in CHANGELOG.md or restore it")
-        merged[identifier] = dict(before, withdrawn=True)
+        # An entry withdrawn before the registry recorded audiences, or before empty links read as their
+        # target's title, is completed here: the registry, not the page, is its only record.
+        withdrawn = dict(before, withdrawn=True)
+        withdrawn.setdefault("audience", audience(identifier))
+        withdrawn["text"] = LEGACY_TEXT.get(identifier, withdrawn["text"])
+        merged[identifier] = withdrawn
     for identifier in merged:
         if not ID_PATTERN.match(identifier):
             problems.append(f"{identifier}: not a well-formed requirement ID")

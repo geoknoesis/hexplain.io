@@ -43,6 +43,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import compare  # noqa: E402
+import report  # noqa: E402
 from suite import CLASSES, SUITE  # noqa: E402
 
 FLAGS = {"physical-parser": "pp", "semantic-emitter": "se", "bundle-processor": "bp", "hdl-compiler": "hc",
@@ -65,8 +66,9 @@ def fill(template, values):
     return [one(arg) for arg in shlex.split(template)]
 
 
-def run_case(case_dir, template, claims, timeout, keep=None):
-    """(status, detail) for one case: PASS, FAIL or SKIP."""
+def run_case(case_dir, template, claims, timeout, keep=None, observed=None):
+    """(status, detail) for one case: PASS, FAIL or SKIP. When the implementation reports an error, its category is
+    stored in `observed["category"]` for the implementation report."""
     manifest = json.loads((case_dir / "manifest.json").read_text(encoding="utf-8"))
     features = claimed_features(claims) if claims is not None else None
     if manifest.get("check") == "claims":
@@ -115,6 +117,11 @@ def run_case(case_dir, template, claims, timeout, keep=None):
                               encoding="utf-8")
         elif err.is_file():
             actual = err
+            if observed is not None:
+                try:
+                    observed["category"] = json.loads(err.read_text(encoding="utf-8")).get("category")
+                except (ValueError, AttributeError):
+                    observed["category"] = None
         elif out.is_file():
             actual = out
         else:
@@ -137,8 +144,16 @@ def main(argv):
     ap.add_argument("--claims", help="the implementation's claims statement (JSON)")
     ap.add_argument("--case", action="append", default=[], help="run only cases whose id matches this glob (repeatable)")
     ap.add_argument("--timeout", type=float, default=120)
-    ap.add_argument("--json", help="write the per-case results to this file")
+    ap.add_argument("--json", help="write the implementation report (specification/conformance/index.html"
+                                   "#implementation-reports) to this file")
+    ap.add_argument("--implementation", default="unnamed", help="the implementation's name, for the report")
+    ap.add_argument("--implementation-version", default="unknown", help="the implementation's version, for the report")
+    ap.add_argument("--check-report", metavar="FILE", help="check an implementation report against the suite and exit")
     args = ap.parse_args(argv)
+    if args.check_report:
+        problems = report.check(json.loads(Path(args.check_report).read_text(encoding="utf-8")), Path(args.suite))
+        print("\n".join(problems) if problems else "the report follows the format and covers the suite")
+        return 1 if problems else 0
     claims = json.loads(Path(args.claims).read_text(encoding="utf-8")) if args.claims else None
     results, counts = [], {"PASS": 0, "FAIL": 0, "SKIP": 0}
     for cls in CLASSES:
@@ -146,16 +161,20 @@ def main(argv):
         for case_dir in sorted(p for p in (Path(args.suite) / cls).iterdir() if (p / "manifest.json").is_file()):
             if args.case and not any(fnmatch.fnmatch(case_dir.name, g) for g in args.case):
                 continue
+            observed = {}
             if template is None:
                 status, detail = "SKIP", f"no --{FLAGS[cls]}-cmd"
             else:
-                status, detail = run_case(case_dir, template, claims, args.timeout)
+                status, detail = run_case(case_dir, template, claims, args.timeout, observed=observed)
             counts[status] += 1
-            results.append({"case": case_dir.name, "class": cls, "status": status, "detail": detail})
+            results.append({"case": case_dir.name, "class": cls, "status": status,
+                            "category": observed.get("category"), "detail": detail})
             print(f"{status} {case_dir.name}" + (f"  {detail}" if detail and status != "PASS" else ""))
     print(f"{counts['PASS']} passed, {counts['FAIL']} failed, {counts['SKIP']} skipped")
     if args.json:
-        Path(args.json).write_text(json.dumps({"counts": counts, "results": results}, indent=1) + "\n", encoding="utf-8")
+        built = report.build(results, {"name": args.implementation, "version": args.implementation_version},
+                             claims or {}, Path(args.suite))
+        Path(args.json).write_text(json.dumps(built, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     return 1 if counts["FAIL"] else 0
 
 

@@ -49,6 +49,131 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### Review of the normative documents (2026-09-27)
+
+- **BCP 14.** Every conventions section (Processing Model, HEL, HDL, the conformance sections of
+  conf and req, and the vocabulary pages that have one) now cites RFC 8174 alongside RFC 2119 and
+  says the key words carry their meaning only in all capitals.
+- **Requirement register.** `req-pm-emission-9` was registered MUST while its text only permitted
+  (MAY per-cell triples); it now states what a processor must do with a field that has a data
+  layout: nothing for `hexplain:mapsToProperty`, a link to the field's array node for
+  `hexplain:mapsToObjectProperty`, and no per-cell triples, which this version gives no vocabulary
+  (the reference engine already behaves so). `req-pm-conformance-classes-9` repeated
+  `req-pm-errors-17` word for word and is withdrawn: the refusal paragraph now points to the error
+  table, and `req-pm-errors-17` names its subject ("An Unsupported feature error MUST be raised no
+  later than ..."). `req-ce-conf-conformance-11` and `req-ce-conf-conformance-12` restated
+  `req-pm-conformance-evaluation-7` and `req-pm-conformance-evaluation-8` and are withdrawn; the conf
+  page now cites the Processing Model's rules. The registry extraction
+  (`tools/_requirement_ids.py`) records, for a requirement that opens with a pronoun ("It MUST
+  ..."), the sentence before it as `context`, so an entry read on its own keeps its subject; a
+  withdrawn entry recorded before audiences existed (`req-pm-errors-15`) now has one, and its text
+  reads its cross-reference as the section title instead of "()". `coverage.json` lists the
+  withdrawn identifiers.
+- **Natural datatype of a computed value.** "The natural datatype of the HEL result", which
+  `req-pm-emission-5` relied on, was never defined. New section `processing#computed-values`
+  defines it (`req-pm-computed-values-1`): an Integer is `xsd:long` (a uint64 value beyond it
+  `xsd:integer`), a Float `xsd:double` (`NaN`, `INF`, `-INF`), a String `xsd:string`, a Boolean
+  `xsd:boolean`, Bytes `xsd:hexBinary`, Null nothing, and a struct or array node a Type / HEL error.
+  With a `hexplain:valueDatatype`, the result must have a value in that datatype's value space
+  (`req-pm-computed-values-2`); a processor never re-labels the datatype to fit. The HEL
+  name-binding row for `hexplain:valueExpression` points to the rule. Fourteen new Semantic Emitter
+  cases (`se-value-natural-*`, `se-value-datatype-*`).
+- **Decoding text.** Text containers said a malformed sequence is a validation error "never
+  replaced silently", HEL said malformed bytes decode to U+FFFD, and plain string fields had no
+  rule. New section `processing#text-decoding` gives one: what is well-formed in each
+  `bddo:encoding` (RFC 3629 UTF-8, paired UTF-16 surrogates and an even length, ASCII at most
+  7F, every Latin-1 byte), no replacement character ever (`req-pm-text-decoding-1`), a validation
+  error for text read from the input that is not well-formed, with the field left unbound in a
+  lenient mode (`req-pm-text-decoding-2`), and ASCII digits and whitespace in a number written as
+  text (`req-pm-text-decoding-3`). `req-pm-delimited-records-2` points to it. In HEL a Bytes value
+  that is not well-formed equals no String and is an error where a String is required. New cases
+  `pp-str-utf8-malformed`, `pp-str-utf8-overlong`, `pp-str-utf8-encoded-surrogate`,
+  `pp-str-utf16-lone-surrogate`, `pp-str-utf16-odd-length`, `pp-str-ascii-high-byte`,
+  `pp-str-latin1-every-byte`, `pp-textnum-non-ascii-digit`, `pp-hel-bytes-malformed-argument`,
+  `ce-recovery-malformed-text`; `pp-hel-bytes-vs-string` now expects a malformed byte to equal no
+  String.
+- **Implementation reports.** New section `conformance#implementation-reports` defines the report an
+  implementation publishes for a run over the suite: one JSON file naming the implementation and
+  version, its claims, the suite (a digest of its case files), the run, the counts and one result
+  per case (PASS, FAIL or SKIP, the error category it reported, and why for a FAIL or SKIP); every
+  case listed once, a SKIP only for a case that does not apply. Reports are published as
+  `specification/conformance/reports/<implementation>/<version>.json` and listed on the
+  conformance page. `tools/conformance/run_suite.py --json` now writes that format
+  (`--implementation`, `--implementation-version`), `--check-report` checks one, and the new gate
+  `test_implementation_reports` checks every published report.
+- **Coverage.** Existing cases now cite the vocabulary-page requirements they already exercise
+  (`req-bddo-addressing-1`, `req-bddo-bitfields-1`, `req-bddo-field-properties-8`,
+  `req-bddo-structural-properties-4`, `req-bddo-structural-properties-6`,
+  `req-core-static-mapping-properties-3`) and the new security requirements; new case
+  `pp-hel-temporal-date-only` covers `req-hel-ext-temporal-1`. A processor MUST that no black-box
+  case can observe is now marked as such, with the reason, in `tools/_build_conformance_page.py`
+  (`NOT_SUITE_TESTABLE`, 11 requirements: the SHACL-validator rule of BDDO, the DL-entailment rule
+  of core, the geometry and raster interpretation rules, the spatial-reference evaluation rules,
+  the base-IRI privacy rule and the HEL error-condition rule the vectors test); `coverage.json`
+  reports them per class as `notSuiteTestable`, and the conformance page lists them. The build
+  refuses a stale entry. The four HEL version-marker cases (`pp-hel-version-*`) are written but
+  generated only once `hexplain:helVersion` is declared, like the RDF report cases. Processor MUSTs
+  now covered: Physical Parser 199 of 203 (the two not cited are the version-marker rules waiting
+  for that term, two not testable), Semantic Emitter 21 of 30 (nine not testable), Bundle
+  Processor, HDL Compiler and Conformance Evaluator all.
+- **Function library status and conformance.** `fn/index.html` defined contracts with no RFC 2119
+  keyword, no status statement and no conformance section. It now has a status statement (a
+  prerelease working draft, normative for the current toolchain like the rest of the family, with
+  its normative and informative parts named), the BCP 14 conventions, and a conformance section: a
+  conforming implementation states the functions it installs and, for each, accepts exactly its
+  `hxf:signature`, returns what `fn.ttl` defines (a Pure function what its SPARQL body returns),
+  is unbound exactly when `hxf:unboundWhen` or a limit says, reads and evaluates as the Processing
+  Model and HEL specify, and meets the security rules; `hxf:explain` is never unbound.
+- **HEL error conditions.** A HEL error vector passed when the evaluator's diagnostic contained a
+  fragment of the reference engine's English, so conformance depended on one engine's wording. New
+  section `hel#error-conditions` names eight conditions (`syntax`, `undefined-name`,
+  `forward-reference`, `type`, `range`, `overflow`, `division-by-zero`, `argument`), all Type / HEL
+  errors of the Processing Model, and an evaluator must be able to say which one an error is
+  (`req-hel-error-conditions-1`). `validation/test/hel-vectors.tsv` now expects a condition in the
+  fourth column of every error row and keeps the old fragment as an informative sixth column;
+  `req-hel-conformance-9` asserts the condition. New gate `test_hel_vectors` checks the file's shape
+  and that every condition a flat context can raise is exercised.
+- **HEL version marker.** HEL allowed a later 1.x version to add functions, yet an unknown
+  function was always a Type / HEL error, so a description written for HEL 1.1 would fail a 1.0
+  evaluator as if it were broken. A description now declares its HEL version with
+  `hexplain:helVersion` ("major.minor", default "1.0") on its `owl:Ontology`
+  (`hel#version-marker`): a malformed value is a Description error (`req-hel-versioning-3`),
+  another major version is Unsupported feature (`req-hel-versioning-4`), and an unknown function
+  is Unsupported feature when the declared version is a later 1.x than the evaluator implements and
+  a Type / HEL error otherwise (`req-hel-versioning-5`). The Unsupported feature row of the error
+  table (`req-pm-errors-10`) includes it. `hexplain:helVersion` is still to be declared in the core
+  vocabulary; `test_doc_terms` allows the name until it is.
+- **Security and Privacy Considerations.** New section `processing#security-privacy` gathers the
+  threats a processor faces and the rules that answer them, and adds four: limits apply to the work
+  a description causes as much as to the input (`req-pm-security-resources-1`); every codec stage
+  counts toward the decoded-byte limit as it is produced, never checked after a full decode, and a
+  declared size beyond the limit is ResourceLimit even under a smaller per-block cap
+  (`req-pm-security-decompression-1`); nothing an input or description names is fetched
+  (`req-pm-security-external-1`); and a base IRI a processor chooses is never derived from the
+  input's file name or path (`req-pm-privacy-1`), with a report's `conf:input` likewise not a file
+  path the caller did not supply (`req-pm-privacy-2`, SHOULD). The HEL regular-expression cost
+  limit and quantifier budget, until now a MAY with no minimum, are normative: new Resource Limits
+  rows `maxQuantifierEvaluations` (1,000,000) and `maxRegexSteps` (2,000,000), the reference
+  engine's defaults; exceeding either is a ResourceLimit error (`req-hel-ext-text-3`,
+  `req-hel-ext-quantifiers-4`, and `req-hel-conformance-8`, which now lists both); the error
+  table's ResourceLimit row (`req-pm-errors-12`) names them; the suite manifest may lower both.
+  The function library gains a Security and privacy section (`fn#security`): assets resolved only
+  from registered roots, per-call byte and cell caps enforced before reading, and the byte and
+  value functions kept from parties who may not read every byte. New cases
+  `pp-limit-quantifier-evaluations`, `pp-limit-regex-steps`,
+  `pp-codec-lz4-block-declared-size-over-limit`, `pp-codec-lz4-frame-declared-size-over-limit`
+  and `pp-codec-zstd-declared-size-over-limit` (the first to cite `req-pm-optional-codecs-2`).
+- **Sync markers.** `req-pm-parsestruct-3` now bounds the `bddo:syncOnMarker` search: it starts
+  at the cursor (a marker exactly there counts) and stops at the current bound, the end of the
+  innermost bounded region or of the current stream, so an occurrence that runs past the bound is
+  not found; the struct's own size, applied after the seek, is measured from after the marker.
+  The error table's Sync row (`req-pm-errors-2`) says so. New cases `pp-sync-marker-at-cursor`,
+  `pp-sync-bounded-by-region`, `pp-sync-marker-straddles-bound`,
+  `pp-sync-struct-size-after-marker`.
+- **IRI minting.** New `req-pm-iri-minting-4`: a `%` in a key is always percent-encoded as `%25`,
+  so the keys `a b` and `a%20b` cannot mint one IRI (the reference engine already does this). New
+  case `se-key-percent-sign`.
+
 ### New language features (bddo 1.3, register/checksum 1.3, register/media-encoding 1.2)
 
 All additions are to the unreleased working versions; no module needed a further version bump.

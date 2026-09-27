@@ -118,6 +118,87 @@
    "text": "A processor MUST resolve a struct's conditional byte order as follows.",
    "sha256": "ea1c140c3c80e6cc"
   },
+  "req-pm-computed-values-1": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "When neither the rule nor the field gives a hexplain:valueDatatype, a Semantic Emitter MUST emit the result in its natural datatype, by this table:",
+   "sha256": "86193a976a4b42c4"
+  },
+  "req-pm-computed-values-2": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "When a hexplain:valueDatatype D is given, a Semantic Emitter MUST emit a literal typed D whose lexical form is a lexical form of the result’s value in D, and MUST raise a Type / HEL error when the result has no value in D's value space: for xsd:decimal and the integer types derived from it the result is an Integer, or for xsd:decimal a finite Float, within D’s range (a Float with a fractional part is never an integer, and 300 is not an xsd:unsignedByte); for xsd:double and xsd:float an Integer or a Float, rounded to the nearest binary32 value for xsd:float; for xsd:string a String; for xsd:boolean a Boolean; for xsd:hexBinary Bytes.",
+   "sha256": "24760d730dc2b352"
+  },
+  "req-pm-computed-values-3": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Integer | An xsd:long literal, the datatype whose value space is HEL’s signed 64-bit Integer, whatever the value’s magnitude. An unsigned value above 2^63−1, which only a uint64 field can supply (HEL, numeric semantics), is an xsd:integer literal.",
+   "sha256": "f5bb2cddda89ec7a"
+  },
+  "req-pm-computed-values-4": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Float | An xsd:double literal; NaN and the infinities are written NaN, INF and -INF, the XSD lexical forms.",
+   "sha256": "336d3915617c22de"
+  },
+  "req-pm-computed-values-5": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "String | An xsd:string literal.",
+   "sha256": "efdd1c40414a6ea0"
+  },
+  "req-pm-computed-values-6": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Boolean | An xsd:boolean literal, true or false.",
+   "sha256": "66ff5897d29eed74"
+  },
+  "req-pm-computed-values-7": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Bytes | An xsd:hexBinary literal.",
+   "sha256": "b48a6250a5396eb4"
+  },
+  "req-pm-computed-values-8": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Null | Nothing, exactly as for an unbound field.",
+   "sha256": "339883268a4a0d76"
+  },
+  "req-pm-computed-values-9": {
+   "page": "specification/processing/index.html",
+   "section": "computed-values",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A struct node or an array node | A Type / HEL error: a computed value is one literal, and a node has no literal form. (A struct is emitted through hexplain:mapsToObjectProperty, and a repeated field one triple per element.)",
+   "sha256": "606426ca6a127022"
+  },
   "req-pm-conformance-1": {
    "page": "specification/processing/index.html",
    "section": "conformance",
@@ -126,6 +207,7 @@
    "audience": "processor",
    "text": "It MUST implement every rule of this document that the classes it claims require, and it MUST NOT silently mis-parse a description that uses a construct outside them (see Conformance Classes).",
    "sha256": "a72fa751ebb9070c",
+   "context": "A conforming processor implements one or more of the conformance classes below, and states which.",
    "history": [
     "834281cf75e48507"
    ]
@@ -146,7 +228,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "Its output MUST be a description that a Physical Parser (and, when the source declares mappings, a Semantic Emitter) processes exactly as it would the equivalent hand-written RDF.",
-   "sha256": "e7b61ee0aa213b09"
+   "sha256": "e7b61ee0aa213b09",
+   "context": "The HDL language as specified there."
   },
   "req-pm-conformance-classes-3": {
    "page": "specification/processing/index.html",
@@ -215,7 +298,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "It MUST be raised no later than the first time the construct would affect the result.",
-   "sha256": "dd0abb2158a54c53"
+   "sha256": "dd0abb2158a54c53",
+   "withdrawn": true
   },
   "req-pm-conformance-evaluation-1": {
    "page": "specification/processing/index.html",
@@ -352,8 +436,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "The bytes are decoded in the bddo:encoding declared on the field through which the container is parsed, or as UTF-8 when none is declared. A malformed sequence is a validation error (recorded as a finding and skipped in a lenient mode); it is never replaced silently. A leading UTF-8 byte order mark is ignored.",
-   "sha256": "fee76b7436fe1e7c"
+   "text": "The bytes are decoded in the bddo:encoding declared on the field through which the container is parsed, or as UTF-8 when none is declared. A sequence that is not well-formed (Decoding text) is a validation error (recorded as a finding and skipped in a lenient mode); it is never replaced silently. A leading UTF-8 byte order mark is ignored.",
+   "sha256": "de70417b28eff2a7",
+   "history": [
+    "fee76b7436fe1e7c"
+   ]
   },
   "req-pm-delimited-records-3": {
    "page": "specification/processing/index.html",
@@ -463,8 +550,11 @@
    "cls": "semantic-emitter",
    "level": "MUST",
    "audience": "processor",
-   "text": "For a Field with hexplain:mapsToProperty P, emit <IRI(parent)> P \"value\"^^xsdType. If the field also carries hexplain:valueExpression E, emit instead the value obtained by evaluating E in the field's context (e.g. fixed-point or unit scaling), typed with hexplain:valueDatatype if given, else the natural datatype of the HEL result.",
-   "sha256": "21dbcbc036363c4e"
+   "text": "For a Field with hexplain:mapsToProperty P, emit <IRI(parent)> P \"value\"^^xsdType. If the field also carries hexplain:valueExpression E, emit instead the value obtained by evaluating E in the field's context (e.g. fixed-point or unit scaling), typed with hexplain:valueDatatype if given, else in the natural datatype of the HEL result.",
+   "sha256": "bd7f097c4d8c3ccd",
+   "history": [
+    "21dbcbc036363c4e"
+   ]
   },
   "req-pm-emission-6": {
    "page": "specification/processing/index.html",
@@ -499,8 +589,11 @@
    "cls": "semantic-emitter",
    "level": "MUST",
    "audience": "processor",
-   "text": "For a Field with hexplain:hasDataLayout, the layout (DLV) governs how the multi-dimensional cells are addressed; a processor MAY additionally emit per-cell triples but is not required to materialize them.",
-   "sha256": "d5fe09562a84c271"
+   "text": "For a Field with hexplain:hasDataLayout, the layout (DLV) governs how its multi-dimensional cells are addressed, and the field’s value is its array node, never a literal: a processor MUST emit nothing for hexplain:mapsToProperty on such a field, MUST emit <IRI(parent)> P <B'#p/k> for hexplain:mapsToObjectProperty P, B'#p/k being the array node of Instance IRI Minting, and MUST NOT emit triples for its cells, which this version gives no vocabulary.",
+   "sha256": "c12777ec500b74da",
+   "history": [
+    "d5fe09562a84c271"
+   ]
   },
   "req-pm-emission-10": {
    "page": "specification/processing/index.html",
@@ -526,8 +619,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Sync error | bddo:syncOnMarker not found.",
-   "sha256": "ea057ab4e953fa2e"
+   "text": "Sync error | bddo:syncOnMarker not found before the current bound (ParseStruct, step 1).",
+   "sha256": "f662732f1e4ccde4",
+   "history": [
+    "ea057ab4e953fa2e"
+   ]
   },
   "req-pm-errors-3": {
    "page": "specification/processing/index.html",
@@ -621,10 +717,12 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Unsupported feature | The description uses a construct outside the conformance classes the processor claims, or an optional feature it does not claim (for example a codec beyond the minimum set, or a chunk order other than row- or column-major). The asset root and partExtension() outside an asset are a Type / HEL error, not this (Multi-part Assets). Only those; see Refusal. An Unsupported feature error SHOULD be raised when the description is loaded. It MUST be raised no later than the first time the construct would affect the result. Distinct from a Description error: the description is valid, this processor cannot run it.",
-   "sha256": "c490805e3206335e",
+   "text": "Unsupported feature | The description uses a construct outside the conformance classes the processor claims, or an optional feature it does not claim (for example a codec beyond the minimum set, or a chunk order other than row- or column-major), or declares a HEL version the processor does not implement: another major version, or a later 1.x version whose functions it calls (HEL, version marker). The asset root and partExtension() outside an asset are a Type / HEL error, not this (Multi-part Assets). Only those; see Refusal. An Unsupported feature error SHOULD be raised when the description is loaded. An Unsupported feature error MUST be raised no later than the first time the construct would affect the result. Distinct from a Description error: the description is valid, this processor cannot run it.",
+   "sha256": "cdc6ba2888f04934",
    "history": [
-    "67b9ad3cf8842035"
+    "67b9ad3cf8842035",
+    "c490805e3206335e",
+    "a77fac437dfbb3c9"
    ]
   },
   "req-pm-errors-11": {
@@ -645,8 +743,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "ResourceLimit | A configured resource limit (input bytes, nesting depth, visited nodes, materialized or decoded bytes, HEL nesting, emitted triples) or an implementation wall-clock limit or cancellation was exceeded. Fatal in every mode; never a partial result.",
-   "sha256": "408bb7eb23d586f3"
+   "text": "ResourceLimit | A configured resource limit (input bytes, nesting depth, visited nodes, materialized or decoded bytes, HEL nesting or length, quantifier evaluations, regular-expression match cost, emitted triples) or an implementation wall-clock limit or cancellation was exceeded. Fatal in every mode; never a partial result.",
+   "sha256": "1c0e3e2d9090c37a",
+   "history": [
+    "408bb7eb23d586f3"
+   ]
   },
   "req-pm-errors-13": {
    "page": "specification/processing/index.html",
@@ -671,9 +772,10 @@
    "section": "errors",
    "cls": "physical-parser",
    "level": "SHOULD",
-   "text": "A HEL type error, division/modulo by zero, undefined name, forward reference, or an array subscript out of range; asset.X read before part X is parsed or naming a part the asset does not have, and the asset root or partExtension() in a part parsed on its own (); a malformed HEL expression (one the HEL grammar does not generate, including an out-of-range literal, an unknown escape or a call with the wrong number of arguments), which SHOULD be raised when the description is loaded and is this category, not a Description error, even then.",
+   "text": "A HEL type error, division/modulo by zero, undefined name, forward reference, or an array subscript out of range; asset.X read before part X is parsed or naming a part the asset does not have, and the asset root or partExtension() in a part parsed on its own (Multi-part Assets); a malformed HEL expression (one the HEL grammar does not generate, including an out-of-range literal, an unknown escape or a call with the wrong number of arguments), which SHOULD be raised when the description is loaded and is this category, not a Description error, even then.",
    "sha256": "dcf730b92aacb683",
-   "withdrawn": true
+   "withdrawn": true,
+   "audience": "processor"
   },
   "req-pm-errors-16": {
    "page": "specification/processing/index.html",
@@ -690,8 +792,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "It MUST be raised no later than the first time the construct would affect the result.",
-   "sha256": "dd0abb2158a54c53"
+   "text": "An Unsupported feature error MUST be raised no later than the first time the construct would affect the result.",
+   "sha256": "e46f988f6ab6b94e",
+   "history": [
+    "dd0abb2158a54c53"
+   ]
   },
   "req-pm-introduction-1": {
    "page": "specification/processing/index.html",
@@ -728,6 +833,15 @@
    "audience": "processor",
    "text": "A processor MAY offer alternative minting policies (e.g. hash-based or field-derived keys) but MUST document them and MUST be deterministic: parsing the same bytes with the same description and base IRI MUST yield an isomorphic graph.",
    "sha256": "a0181ca973e4851a"
+  },
+  "req-pm-iri-minting-4": {
+   "page": "specification/processing/index.html",
+   "section": "iri-minting",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A % in a key MUST be percent-encoded as %25, always, even where the characters after it would read as a percent-encoded octet: the keys a b and a%20b mint the segments a%20b and a%2520b.",
+   "sha256": "ff15ae9bea21fbe2"
   },
   "req-pm-key-value-1": {
    "page": "specification/processing/index.html",
@@ -1188,8 +1302,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "If struct has bddo:syncOnMarker, advance the cursor past the next occurrence of the marker bytes: the marker is consumed, and the struct (its start offset and its first field) begins after it. If no occurrence exists, raise a sync error.",
-   "sha256": "f41a3e64bca618f0"
+   "text": "If struct has bddo:syncOnMarker, advance the cursor past the first occurrence of the marker bytes that starts at or after the cursor — one that starts exactly at the cursor counts — and lies entirely before the current bound: the end of the innermost bounded region in force, or of the current stream when none is (Stream metadata). The struct’s own size is applied after the seek, so it does not bound the search. The marker is consumed, and the struct begins after it: its start offset, from which its own size region is measured, and its first field. If no occurrence lies entirely before the bound — including one that starts before the bound and ends after it — raise a sync error; the search never continues past the bound.",
+   "sha256": "12798522c099a587",
+   "history": [
+    "f41a3e64bca618f0"
+   ]
   },
   "req-pm-parsestruct-4": {
    "page": "specification/processing/index.html",
@@ -1254,6 +1371,24 @@
    "text": "A member that is a bddo:LocalBinding is not a field: when its position is reached a processor MUST evaluate its bddo:localExpression with n as instance and bind the result under the binding's name in a local scope of n, which HEL reads by bare name or instance.name from the next member on; the binding consumes no bytes, is not a child of n, and a Null result binds Null.",
    "sha256": "b9fe5c0966dba4d3"
   },
+  "req-pm-privacy-1": {
+   "page": "specification/processing/index.html",
+   "section": "privacy",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor that chooses a base itself (Instance IRI Minting) MUST NOT derive it from the input’s file name or path; a fresh urn:uuid: IRI is sufficient.",
+   "sha256": "e49a50c20327e045"
+  },
+  "req-pm-privacy-2": {
+   "page": "specification/processing/index.html",
+   "section": "privacy",
+   "cls": "conformance-evaluator",
+   "level": "SHOULD",
+   "audience": "processor",
+   "text": "A Conformance Evaluator SHOULD NOT name its input by a file path in a report (conf:input) unless the caller supplied that IRI.",
+   "sha256": "b2e1e61a12588352"
+  },
   "req-pm-recovery-1": {
    "page": "specification/processing/index.html",
    "section": "recovery",
@@ -1315,7 +1450,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "Its default configuration MUST allow at least the values below; it MAY allow more, and MUST allow a user to configure lower limits.",
-   "sha256": "fc82127c118ed6f6"
+   "sha256": "fc82127c118ed6f6",
+   "context": "A processor MUST enforce limits on the work of one invocation, and MUST let its user configure each limit below."
   },
   "req-pm-resource-limits-3": {
    "page": "specification/processing/index.html",
@@ -1335,6 +1471,33 @@
    "text": "A processor MUST NOT fall back to a cheaper interpretation of the description to finish in time.",
    "sha256": "42f010972929548d"
   },
+  "req-pm-security-decompression-1": {
+   "page": "specification/processing/index.html",
+   "section": "security-decompression",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST count the output of every codec stage toward the decoded-byte limit as it is produced, and MUST stop and raise ResourceLimit as soon as the output would exceed what remains of the limit; it MUST NOT decode a block in full and compare its size afterwards.",
+   "sha256": "f2aae52799ce511c"
+  },
+  "req-pm-security-external-1": {
+   "page": "specification/processing/index.html",
+   "section": "security-external",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "More generally, a processor MUST NOT fetch or open any resource that an input or a description names — an external entity, DTD, schema, stylesheet, XInclude, a file path or a URL in a value — while parsing or emitting: its only inputs are those of Inputs and Outputs (and, for a Bundle Processor, the files the caller assembled into the asset).",
+   "sha256": "ff2bc912c12d822a"
+  },
+  "req-pm-security-resources-1": {
+   "page": "specification/processing/index.html",
+   "section": "security-resources",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST apply the limits to the work a description causes as well as to the bytes it reads: a limit MUST NOT be skipped because the description, rather than the input, asked for the work.",
+   "sha256": "53746325ee67f3a9"
+  },
   "req-pm-size-resolution-1": {
    "page": "specification/processing/index.html",
    "section": "size-resolution",
@@ -1351,7 +1514,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "Its value, or the value of bddo:sizeFromExpression, MUST be an integer; a number written as text is accepted by its numeric value.",
-   "sha256": "a46e43ebcb6167ee"
+   "sha256": "a46e43ebcb6167ee",
+   "context": "bddo:sizeFromField names a field that is already bound: it is looked up in the containing struct first, then in its parent."
   },
   "req-pm-size-resolution-3": {
    "page": "specification/processing/index.html",
@@ -1506,6 +1670,33 @@
    "text": "If no occurrence lies within the search bound, raise a bounds error.",
    "sha256": "3b0b8aa4e262b408"
   },
+  "req-pm-text-decoding-1": {
+   "page": "specification/processing/index.html",
+   "section": "text-decoding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST NOT replace a sequence that is not well-formed with U+FFFD or any other character, nor drop it.",
+   "sha256": "95b28a94f2aabfaf"
+  },
+  "req-pm-text-decoding-2": {
+   "page": "specification/processing/index.html",
+   "section": "text-decoding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Text read from the input that is not well-formed — the value of a string field, a number written as text, a container’s content — MUST be raised as a validation error.",
+   "sha256": "99e9550cf0786f37"
+  },
+  "req-pm-text-decoding-3": {
+   "page": "specification/processing/index.html",
+   "section": "text-decoding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The digits, sign, point and exponent letter of a number written as text, and the whitespace around it, MUST be ASCII characters (whitespace being space, tab, line feed, vertical tab, form feed and carriage return): a non-ASCII digit or space makes the text not a number.",
+   "sha256": "1de74ac665a3efe4"
+  },
   "req-pm-text-numbers-1": {
    "page": "specification/processing/index.html",
    "section": "text-numbers",
@@ -1659,8 +1850,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "Accept, by default, expressions whose expression tree is at least 512 levels deep and at least 64 KiB long, when they are parsed and when they are evaluated; let the user configure both limits; and report an expression beyond its configured nesting or length limit, a quantifier that exceeds its evaluation budget, and a deadline or cancellation as the Processing Model's ResourceLimit error, not as a syntax or runtime error: it is fatal in every mode, including a lenient one that records other errors and continues.",
-   "sha256": "52daa8c31a06fbe6"
+   "text": "Accept, by default, expressions whose expression tree is at least 512 levels deep and at least 64 KiB long, when they are parsed and when they are evaluated, and quantifier and match-cost budgets of at least the Processing Model’s minimums; let the user configure all four limits; and report an expression beyond its configured nesting or length limit, a quantifier that exceeds its evaluation budget, a regular-expression match that exceeds its cost limit, and a deadline or cancellation as the Processing Model's ResourceLimit error, not as a syntax or runtime error: it is fatal in every mode, including a lenient one that records other errors and continues (Security and Privacy Considerations).",
+   "sha256": "95744b9fb501f2f3",
+   "history": [
+    "52daa8c31a06fbe6"
+   ]
   },
   "req-hel-conformance-9": {
    "page": "specification/hel/index.html",
@@ -1668,8 +1862,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "Produce, for every row of hel-vectors.tsv whose functions it implements, the value the row gives, or an error whose diagnostic contains the row's text.",
-   "sha256": "7d6ed94652ec55e2"
+   "text": "Produce, for every row of hel-vectors.tsv whose functions it implements, the value the row gives, or an error of the condition the row names; a row's message column is informative.",
+   "sha256": "8ccb0ed89c65f176",
+   "history": [
+    "7d6ed94652ec55e2"
+   ]
   },
   "req-hel-conformance-10": {
    "page": "specification/hel/index.html",
@@ -1716,6 +1913,15 @@
    "text": "The accessor MUST be exactly asset.<Part>, naming a part (e.g. partExtension(asset.Raster)); it is a runtime error otherwise, when the part is missing or more than one file was matched to it, and — like asset itself — when the description is not being parsed as part of an asset.",
    "sha256": "423af470a39f0045"
   },
+  "req-hel-error-conditions-1": {
+   "page": "specification/hel/index.html",
+   "section": "error-conditions",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A conforming evaluator MUST be able to state, for every error it raises, which of these conditions it is; it MAY report them under names of its own and with any message.",
+   "sha256": "6c3302b3d71e2b15"
+  },
   "req-hel-ext-quantifiers-1": {
    "page": "specification/hel/index.html",
    "section": "ext-quantifiers",
@@ -1732,7 +1938,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "Each evaluation MUST yield a Boolean, else it is an error.",
-   "sha256": "91ef726bcb30e3d0"
+   "sha256": "91ef726bcb30e3d0",
+   "context": "When the element is a struct node, param.n and a name that reaches a local binding MUST resolve against the element’s struct: param.n is the argument the element was parsed with, a bare name or instance.name may name a local binding of the element’s struct, and the parameters and bindings of the struct holding the expression are not reachable in the predicate."
   },
   "req-hel-ext-quantifiers-3": {
    "page": "specification/hel/index.html",
@@ -1742,6 +1949,15 @@
    "audience": "processor",
    "text": "When the element is a struct node, param.n and a name that reaches a local binding MUST resolve against the element’s struct: param.n is the argument the element was parsed with, a bare name or instance.name may name a local binding of the element’s struct, and the parameters and bindings of the struct holding the expression are not reachable in the predicate.",
    "sha256": "029360d627ecf81c"
+  },
+  "req-hel-ext-quantifiers-4": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An evaluator MUST bound the total number of predicate evaluations during one evaluation of an expression, nested quantifiers included, by its configured quantifier limit (the Processing Model’s quantifier evaluations, at least 1,000,000 by default), and MUST report exceeding it as a ResourceLimit error.",
+   "sha256": "0b5aa85e6a49fd7d"
   },
   "req-hel-ext-temporal-1": {
    "page": "specification/hel/index.html",
@@ -1768,7 +1984,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "It is a parameter supplied to the run: an evaluator MUST take it from the run and MUST NOT read it from the wall clock, so that re-running the same evidence gives identical results.",
-   "sha256": "daae7f55ec3a1eb0"
+   "sha256": "daae7f55ec3a1eb0",
+   "context": "Integer: the reference instant of the run, in seconds since 1970-01-01T00:00:00 UTC."
   },
   "req-hel-ext-text-1": {
    "page": "specification/hel/index.html",
@@ -1787,6 +2004,15 @@
    "audience": "processor",
    "text": "Profiles SHOULD confine patterns to the constructs common to the major regular-expression dialects — literal characters, ., bracket classes with ranges and negation, * + ? {m,n}, |, grouping with ( ), and the escapes \\d \\s \\w — whose meaning is the same everywhere; the meaning of other constructs is implementation-defined.",
    "sha256": "f4bb4cb80f750ae8"
+  },
+  "req-hel-ext-text-3": {
+   "page": "specification/hel/index.html",
+   "section": "ext-text",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An evaluator MUST bound the cost of each match by its configured match-cost limit (the Processing Model’s regular-expression match cost, at least 2,000,000 by default), and MUST report a match that exceeds it as a ResourceLimit error, never as false and never as a Type / HEL error (Security and Privacy Considerations).",
+   "sha256": "efb76d1a00bb19d0"
   },
   "req-hel-extension-groups-1": {
    "page": "specification/hel/index.html",
@@ -2047,7 +2273,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "It MUST NOT evaluate to Null: a misspelt name that read as Null would silently turn a presence condition false or a comparison false.",
-   "sha256": "76e06433731f2634"
+   "sha256": "76e06433731f2634",
+   "context": "A key that names no field declared by the addressed struct (a typo, or a field of some other struct), or self where the property defines no value under test, MUST raise an undefined-name error."
   },
   "req-hel-undefined-names-4": {
    "page": "specification/hel/index.html",
@@ -2084,6 +2311,33 @@
    "audience": "processor",
    "text": "The function library is divided into a core set, which every conforming evaluator MUST implement, and named extension groups, which an evaluator MAY implement.",
    "sha256": "f3199bac0d33250b"
+  },
+  "req-hel-versioning-3": {
+   "page": "specification/hel/index.html",
+   "section": "versioning",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST read the declared HEL version when the description is loaded, and MUST raise a Description error for a hexplain:helVersion that is not of that form.",
+   "sha256": "a33f41a6b815adeb"
+  },
+  "req-hel-versioning-4": {
+   "page": "specification/hel/index.html",
+   "section": "versioning",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A declared major version other than 1 MUST be refused with an Unsupported feature error when the description is loaded: HEL 1 rules cannot be assumed to read it.",
+   "sha256": "29272189955e1027"
+  },
+  "req-hel-versioning-5": {
+   "page": "specification/hel/index.html",
+   "section": "versioning",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A call to a function name that is neither a core function nor in an extension group of the version the evaluator implements MUST be rejected when the description is loaded, as an Unsupported feature error when the declared version is a later 1.x version than the evaluator implements (the name may be one that version defines), and as a Type / HEL error otherwise (the name is simply not HEL).",
+   "sha256": "48a23bd6dfb4bd03"
   },
   "req-hdl-checksums-1": {
    "page": "specification/hdl/index.html",
@@ -2128,7 +2382,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "It MUST also report an ERROR for a derive field with a repeat clause (a derived field reads no bytes, so it has no elements), for @pipeline together with @encoded-with on one field, and for two declarations of one struct, header, table or document name in a document.",
-   "sha256": "bc73bb454654654e"
+   "sha256": "bc73bb454654654e",
+   "context": "A field MUST NOT carry two clauses of one kind, and a compiler MUST report an ERROR for a second size (two […]), count (two repeat), offset (two @at), fixed value (two @fixed), byte order (two @endian) or type selection (two of switch and dispatch), rather than emit both values of a property the Processing Model reads once."
   },
   "req-hdl-clauses-4": {
    "page": "specification/hdl/index.html",
@@ -2329,7 +2584,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "It defines the complete text surface of HDL: a conforming compiler MUST accept every document the grammar generates (subject to the static rules below and elsewhere in this document) and MUST report an ERROR diagnostic for any document it does not generate.",
-   "sha256": "bcf62f58f7cd20fa"
+   "sha256": "bcf62f58f7cd20fa",
+   "context": "This section is normative."
   },
   "req-hdl-grammar-document-1": {
    "page": "specification/hdl/index.html",
@@ -2413,7 +2669,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "This example reads values from another part of a multi-file asset (asset.Header.…) and the grid part's own extension (partExtension(asset.Grid); a part is named by the struct its part spec is described-by), so it can only be processed by a processor in the Bundle Processor conformance class (Processing Model §Conformance classes); a Physical Parser handed the raster part alone MUST fail the asset references with an error rather than read them as Null.",
-   "sha256": "22edcff8bd79e4b2"
+   "sha256": "22edcff8bd79e4b2",
+   "context": "These are two independent conditionals over one set of dimensions rather than one conditional layout, which would multiply into a case per (interleave, width) pair."
   },
   "req-hdl-lexical-1": {
    "page": "specification/hdl/index.html",
@@ -2639,7 +2896,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "A report written as RDF MUST state its conf:verdict and conf:truncated flag once each and link every finding with conf:finding.",
-   "sha256": "0f31010ce8f04771"
+   "sha256": "0f31010ce8f04771",
+   "withdrawn": true
   },
   "req-ce-conf-conformance-12": {
    "page": "specification/conf/index.html",
@@ -2648,7 +2906,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "It MUST validate on its own against conf/shapes.ttl and req/shapes.ttl, carrying copies of the requirements, constraints and parse attributions it references; a blank-node requirement is copied under a skolem IRI.",
-   "sha256": "b17b32b303d7224e"
+   "sha256": "b17b32b303d7224e",
+   "withdrawn": true
   },
   "req-ce-req-conformance-1": {
    "page": "specification/req/index.html",
@@ -2657,7 +2916,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "It MUST carry exactly one non-empty req:requirementId, req:fromStandard and req:statement, and exactly one req:discrepancyType.",
-   "sha256": "ed53508d2a484dd1"
+   "sha256": "ed53508d2a484dd1",
+   "context": "A requirement is identified by its IRI."
   },
   "req-ce-req-conformance-2": {
    "page": "specification/req/index.html",
@@ -2764,7 +3024,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "It MUST read a bddo:float16 as an IEEE 754 binary16 value — one sign bit, five exponent bits with bias 15, ten fraction bits — including subnormals (exponent field 0: the fraction times 2^−24), both zeros, both infinities and NaN, and its value is the exact binary16 value as a HEL Float, with no rounding, since every binary16 value is exactly a binary64 one: 3C 00 is 1.0, 00 01 is 2^−24, 7B FF is 65504, 7C 00 is +Infinity.",
-   "sha256": "7b083e326294d4a7"
+   "sha256": "7b083e326294d4a7",
+   "context": "A processor MUST read a bddo:uint24 as the unsigned value of its three bytes in the effective byte order (0 to 16,777,215), and a bddo:int24 as the same 24 bits read as a two's-complement integer (−8,388,608 to 8,388,607): FF FF FE big-endian is −2, never 16,777,214."
   },
   "req-bddo-data-type-rule-1": {
    "page": "specification/bddo/index.html",
@@ -2889,6 +3150,7 @@
    "audience": "description",
    "text": "Each value MUST be an xsd:hexBinary literal.",
    "sha256": "4c2a8ab0cf24018c",
+   "context": "On a bddo:DelimitedRecords (see Delimited Text Records): the byte sequence splitting the byte run into records, splitting a record into values, and (in a bddo:KeyValueHeader) splitting a key from its value.",
    "kind": "shape-backed",
    "shapes": [
     "https://hexplain.io/ns/bddo#DelimitedRecordsShape",
@@ -3038,7 +3300,8 @@
    "level": "MUST",
    "audience": "description",
    "text": "Both are first match wins, so a more specific arm MUST precede a more general one: a .flt arm has to come before a NBITS 32 arm, because a float grid is also 32 bits wide and the width arm would otherwise claim it.",
-   "sha256": "e9fd58ba33614c6c"
+   "sha256": "e9fd58ba33614c6c",
+   "context": "The same rule applies as above: no matching arm leaves the order undetermined, and an unevaluable condition does not fall through to the next arm."
   },
   "req-dlv-properties-1": {
    "page": "specification/dlv/index.html",
@@ -3229,6 +3492,7 @@
    "audience": "description",
    "text": "Each GCP MUST include both image and ground coordinate pairs; elevation is optional.",
    "sha256": "cb667f15f814fa52",
+   "context": "Ground-control-point coordinates MAY use a different CRS from an affine transform.",
    "kind": "shape-backed",
    "shapes": [
     "https://hexplain.io/ns/aspect/spatialref#GroundControlPointShape"
@@ -3242,6 +3506,7 @@
    "audience": "description",
    "text": "Each scale MUST be positive.",
    "sha256": "b73f9a0d22bba8bc",
+   "context": "A CubicRationalTransform holds four finite 20-coefficient vectors and five offset/scale pairs.",
    "kind": "shape-backed",
    "shapes": [
     "https://hexplain.io/ns/aspect/spatialref#CubicRationalTransformShape"

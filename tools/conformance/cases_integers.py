@@ -158,7 +158,7 @@ pp("bits-lsb-span", "Under LSBFirst a field spanning bytes takes its later bits 
 
 pp("bits-realign-before-byte-field", "The bit cursor realigns before a byte-oriented read",
    "After a 3-bit field the remaining five bits of the byte are skipped; the uint8 reads the next byte.",
-   ["req-pm-bit-cursor-5"], ["bit-cursor"],
+   ["req-pm-bit-cursor-5", "req-bddo-bitfields-1"], ["bit-cursor"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 3 .
@@ -202,7 +202,7 @@ pp("bits-offset-read-restores-bit-cursor", "An offset-addressed read does not di
 
 pp("align-from-stream-start", "Alignment is measured from the start of the stream",
    "A uint32 aligned to 4 after one byte starts at offset 4; the skipped bytes are not read.",
-   ["req-pm-parsefield-6"], ["algorithm"],
+   ["req-pm-parsefield-6", "req-bddo-addressing-1"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ) .
    ex:a a bddo:Field ; bddo:dataType bddo:uint8 .
@@ -212,7 +212,7 @@ pp("align-from-stream-start", "Alignment is measured from the start of the strea
 
 pp("align-region-does-not-move-origin", "A bounded region does not move the alignment origin",
    "Inside a 10-byte region starting at offset 6, a field aligned to 4 after one byte starts at offset 8, not 10.",
-   ["req-pm-parsefield-6"], ["algorithm"],
+   ["req-pm-parsefield-6", "req-bddo-addressing-1"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:pad ex:box ) .
    ex:pad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 6 .
