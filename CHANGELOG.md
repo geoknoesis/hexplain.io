@@ -254,6 +254,18 @@ cites `req-pm-context-3`.
 - The function catalogue of `fn/index.html` is generated from `fn.ttl` (`test_fn_catalogue`); it
   still said `hxf:column`/`hxf:row` round to the nearest cell centre for `asref:PixelCenter`.
 
+### Licensing
+
+- `conf`, `conf/shapes`, `req`, `req/shapes` and `fn` declare `dcterms:license
+  <https://creativecommons.org/licenses/by/4.0/>`, like the other 33 modules; every ontology
+  module is now CC BY 4.0 with `dcterms:creator <https://geoknoesis.com>` as its attribution.
+- New root `LICENSE`: everything in the repository without a notice of its own (tools and code,
+  profiles, documentation, site) is proprietary, all rights reserved (Stephane Fellah /
+  Geoknoesis). It does not override per-file or RDF licence declarations, and the ontology content
+  a page reproduces keeps its CC BY 4.0 licence. `LICENSING.md` states the two regimes.
+- New gate `test_ontology_licenses`: every module declares exactly the CC BY 4.0 licence and its
+  creator, and `LICENSE` and `LICENSING.md` state both regimes.
+
 ### Documentation annotations
 
 - Scope notes are no longer one shared template: a note says "subclass links below" only of a
