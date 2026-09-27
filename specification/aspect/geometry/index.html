@@ -21,18 +21,18 @@
     &lt;http://schema.org/creativeWorkStatus&gt; "working draft" ;
     owl:priorVersion &lt;https://hexplain.io/ns/aspect/geometry/1.3&gt; ;
     dcterms:modified "2026-09-27"^^xsd:date ;
-    rdfs:label "Hexplain Aspect — Geometry (hx-geometry)" ;
-    rdfs:comment "Aspect for explicit (vector) geometry: geometry type, dimensionality, coordinate precision. Sibling of hx-raster. Shared by vector graphics, geospatial vector, and font glyphs." ;
+    rdfs:label "Hexplain Aspect — Geometry (hx-geometry)"@en ;
+    rdfs:comment "Aspect for explicit (vector) geometry: geometry type, dimensionality, coordinate precision. Sibling of hx-raster. Shared by vector graphics, geospatial vector, and font glyphs."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
     dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
     vann:preferredNamespacePrefix "ageom" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/geometry#" .
 
-:geometryType a owl:ObjectProperty ; rdfs:label "geometry type" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/geometry&gt; ; rdfs:range skos:Concept ; rdfs:comment "Kind of geometry, from a geometry-type register bound by the profile." .
-:dimensionality a owl:DatatypeProperty ; rdfs:label "dimensionality" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/geometry&gt; ; rdfs:range xsd:positiveInteger ; rdfs:comment "Coordinate dimensionality (2 for XY, 3 for XYZ)." .
-:coordinatePrecision a owl:DatatypeProperty ; rdfs:label "coordinate precision" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/geometry&gt; ; rdfs:range xsd:integer ; rdfs:comment "Number of decimal places retained per coordinate." .
+:geometryType a owl:ObjectProperty ; rdfs:label "geometry type"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/geometry&gt; ; rdfs:range skos:Concept ; rdfs:comment "Kind of geometry, from a geometry-type register bound by the profile."@en .
+:dimensionality a owl:DatatypeProperty ; rdfs:label "dimensionality"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/geometry&gt; ; rdfs:range xsd:positiveInteger ; rdfs:comment "Coordinate dimensionality (2 for XY, 3 for XYZ)."@en .
+:coordinatePrecision a owl:DatatypeProperty ; rdfs:label "coordinate precision"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/geometry&gt; ; rdfs:range xsd:integer ; rdfs:comment "Number of decimal places retained per coordinate."@en .
 
-:hasZ a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "has elevation ordinate" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/geometry&gt; ; rdfs:comment "Whether a geometry contains a Z ordinate. Independent of a measure ordinate; missing means unknown, not false." .
-:hasM a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "has measure ordinate" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/geometry&gt; ; rdfs:comment "Whether a geometry contains an M measure ordinate. A measure is not implicitly elevation or time. XYM and XYZ are distinct despite having three ordinates." .
+:hasZ a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "has elevation ordinate"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/geometry&gt; ; rdfs:comment "Whether a geometry contains a Z ordinate. Independent of a measure ordinate; missing means unknown, not false."@en .
+:hasM a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "has measure ordinate"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/geometry&gt; ; rdfs:comment "Whether a geometry contains an M measure ordinate. A measure is not implicitly elevation or time. XYM and XYZ are distinct despite having three ordinates."@en .
 :OrdinateShape a sh:NodeShape ; sh:targetSubjectsOf :hasZ, :hasM, :dimensionality, :geometryType ;
     sh:property [ sh:path :dimensionality ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path :geometryType ; sh:nodeKind sh:IRI ; sh:class skos:Concept ] ;
@@ -43,10 +43,10 @@
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-ageom:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+ageom:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/geometry&gt; ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
-ageom:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+ageom:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/geometry&gt; ;
     sh:targetSubjectsOf ageom:coordinatePrecision ;
     sh:property [ sh:path ageom:coordinatePrecision ; sh:node ageom:IntegerValueShape ;

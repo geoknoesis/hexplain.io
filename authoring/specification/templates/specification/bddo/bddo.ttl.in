@@ -18,8 +18,8 @@
     owl:versionInfo "1.3" ;
     owl:priorVersion <https://hexplain.io/ns/bddo/1.2> ;
     dcterms:modified "2026-09-27"^^xsd:date ;
-    rdfs:label "Binary Data Description Ontology (BDDO)" ;
-    rdfs:comment "Vocabulary for declaratively describing the physical structure of binary data." ;
+    rdfs:label "Binary Data Description Ontology (BDDO)"@en ;
+    rdfs:comment "Vocabulary for declaratively describing the physical structure of binary data."@en ;
     dcterms:created "2025-08-16"^^xsd:date ;
     dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
@@ -27,54 +27,54 @@
     vann:preferredNamespaceUri "https://hexplain.io/ns/bddo#" .
 
 # ---------- Classes ----------
-:Struct       a owl:Class ; rdfs:label "Struct" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "An ordered sequence of fields; a container in a binary format." .
-:Field        a owl:Class ; rdfs:label "Field" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "A single element within a Struct: a value, a bit slice, or an array." .
-:DataType     a owl:Class ; rdfs:label "Data Type" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
-:DataTypeRule a owl:Class ; rdfs:label "Data Type Rule" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
-:Enumeration  a owl:Class ; rdfs:label "Enumeration" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
-:EnumValue    a owl:Class ; rdfs:label "Enumeration Value" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
-:Checksum     a owl:Class ; rdfs:label "Checksum" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "A checksum/hash over a byte range. Each END of the range is stated independently: a field reference (coversFromField/coversToField) or a HEL expression yielding a byte offset (coversFromExpression/coversToExpression). The two ends may use different mechanisms -- a checksum covering everything from a named header field to a length carried elsewhere needs exactly that. Note the boundary convention differs by mechanism, because each follows what its inputs naturally give: the field form runs from the FIRST byte of coversFromField to the LAST byte of coversToField (inclusive), while the expression form is the half-open [start,end) that the two offsets delimit." .
-:EndiannessRule a owl:Class ; rdfs:label "Endianness Rule" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "One arm of a hasConditionalEndianness list: a HEL condition and the byte order it selects." .
-:DispatchTable a owl:Class ; rdfs:label "Dispatch Table" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "A keyed, open selection of a Field's effective type. The value of the key (dispatchOnField or dispatchOnExpression) is matched by equality against the armKey of the table's DispatchArms; the matching arm's armDataType is the effective type, else dispatchDefault, else the Field's dataType. Arms are independent resources rather than list members, so a description that imports this one can contribute an arm without rewriting anything. Contrast hasConditionalDataType, whose ordered predicate rules are closed and may overlap." .
-:DispatchArm a owl:Class ; rdfs:label "Dispatch Arm" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "One key-to-type association of a DispatchTable: the type a field takes when the table's key equals armKey. Keys are unique within a table across every graph that contributes to it." .
-:SeekScope a owl:Class ; rdfs:label "Seek Scope" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "How far an offset-addressed read may reach: the innermost bounded region (the default, regionScope) or the whole stream (streamScope)." .
+:Struct       a owl:Class ; rdfs:label "Struct"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "An ordered sequence of fields; a container in a binary format."@en .
+:Field        a owl:Class ; rdfs:label "Field"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A single element within a Struct: a value, a bit slice, or an array."@en .
+:DataType     a owl:Class ; rdfs:label "Data Type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:DataTypeRule a owl:Class ; rdfs:label "Data Type Rule"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:Enumeration  a owl:Class ; rdfs:label "Enumeration"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:EnumValue    a owl:Class ; rdfs:label "Enumeration Value"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:Checksum     a owl:Class ; rdfs:label "Checksum"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A checksum/hash over a byte range. Each END of the range is stated independently: a field reference (coversFromField/coversToField) or a HEL expression yielding a byte offset (coversFromExpression/coversToExpression). The two ends may use different mechanisms -- a checksum covering everything from a named header field to a length carried elsewhere needs exactly that. Note the boundary convention differs by mechanism, because each follows what its inputs naturally give: the field form runs from the FIRST byte of coversFromField to the LAST byte of coversToField (inclusive), while the expression form is the half-open [start,end) that the two offsets delimit."@en .
+:EndiannessRule a owl:Class ; rdfs:label "Endianness Rule"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "One arm of a hasConditionalEndianness list: a HEL condition and the byte order it selects."@en .
+:DispatchTable a owl:Class ; rdfs:label "Dispatch Table"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A keyed, open selection of a Field's effective type. The value of the key (dispatchOnField or dispatchOnExpression) is matched by equality against the armKey of the table's DispatchArms; the matching arm's armDataType is the effective type, else dispatchDefault, else the Field's dataType. Arms are independent resources rather than list members, so a description that imports this one can contribute an arm without rewriting anything. Contrast hasConditionalDataType, whose ordered predicate rules are closed and may overlap."@en .
+:DispatchArm a owl:Class ; rdfs:label "Dispatch Arm"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "One key-to-type association of a DispatchTable: the type a field takes when the table's key equals armKey. Keys are unique within a table across every graph that contributes to it."@en .
+:SeekScope a owl:Class ; rdfs:label "Seek Scope"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "How far an offset-addressed read may reach: the innermost bounded region (the default, regionScope) or the whole stream (streamScope)."@en .
 # A struct that is instantiated with values: the same row layout used for several widths, or a
 # record whose element count is carried by the struct that holds it. Parameters are named like
 # fields (by the simple key of their IRI) and read in HEL through the root `param`.
-:Parameter a owl:Class ; rdfs:label "Parameter" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "One formal parameter of a parameterised Struct, a member of its bddo:hasParameter list. Its name is the simple key of its IRI (the local name after the last '.'), as for a Field; HEL reads the value the caller supplied as param.<name>. A parameter consumes no bytes, is not a field of the parsed tree and is never lifted." .
+:Parameter a owl:Class ; rdfs:label "Parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "One formal parameter of a parameterised Struct, a member of its bddo:hasParameter list. Its name is the simple key of its IRI (the local name after the last '.'), as for a Field; HEL reads the value the caller supplied as param.<name>. A parameter consumes no bytes, is not a field of the parsed tree and is never lifted."@en .
 # A named intermediate value, computed once where it stands in the member list. It is a member
 # of hasField (so its position, and therefore what it may read and what may read it, is the
 # list order) but not a field: it consumes no bytes and is neither in the parsed tree nor lifted.
-:ParameterType a owl:Class ; rdfs:label "Parameter Type" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The kind of HEL value a Parameter accepts: one of the five individuals below, one per HEL scalar value type." .
-:IntegerParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Integer parameter" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The parameter accepts a HEL Integer." .
-:FloatParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Float parameter" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The parameter accepts a HEL Float; an Integer argument is converted to the Float of the same value." .
-:StringParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "String parameter" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The parameter accepts a HEL String." .
-:BytesParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Bytes parameter" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The parameter accepts a HEL Bytes value." .
-:BooleanParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Boolean parameter" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The parameter accepts a HEL Boolean." .
-:LocalBinding a owl:Class ; rdfs:label "Local Binding" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "A named HEL value local to one Struct instance: a member of the struct's bddo:hasField list whose bddo:localExpression is evaluated when its position in the list is reached, in the struct's context. Later members, and the struct's own size, count, offset and presence expressions evaluated after it, read it by bare name or instance.<name>. It consumes no bytes, is not part of the parsed tree and is never lifted. Its name is the simple key of its IRI, as for a Field." .
+:ParameterType a owl:Class ; rdfs:label "Parameter Type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The kind of HEL value a Parameter accepts: one of the five individuals below, one per HEL scalar value type."@en .
+:IntegerParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Integer parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The parameter accepts a HEL Integer."@en .
+:FloatParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Float parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The parameter accepts a HEL Float; an Integer argument is converted to the Float of the same value."@en .
+:StringParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "String parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The parameter accepts a HEL String."@en .
+:BytesParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Bytes parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The parameter accepts a HEL Bytes value."@en .
+:BooleanParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Boolean parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The parameter accepts a HEL Boolean."@en .
+:LocalBinding a owl:Class ; rdfs:label "Local Binding"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A named HEL value local to one Struct instance: a member of the struct's bddo:hasField list whose bddo:localExpression is evaluated when its position in the list is reached, in the struct's context. Later members, and the struct's own size, count, offset and presence expressions evaluated after it, read it by bare name or instance.<name>. It consumes no bytes, is not part of the parsed tree and is never lifted. Its name is the simple key of its IRI, as for a Field."@en .
 # A struct, a field and a data type are different kinds of thing: a field's value may be typed
 # BY a struct, but no resource is both.
 [] a owl:AllDisjointClasses ; owl:members ( :Struct :Field :DataType ) .
 # The same disjointness as a validation rule: an OWL axiom is only a contradiction for a
 # reasoner, so a description typing one node both a Struct and a Field would otherwise load.
-:DisjointKindsShape a sh:NodeShape ; rdfs:label "Disjoint kinds shape" ;
+:DisjointKindsShape a sh:NodeShape ; rdfs:label "Disjoint kinds shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "A node is at most one of bddo:Struct, bddo:Field and bddo:DataType (subclasses included), as the owl:AllDisjointClasses axiom states." ;
+    rdfs:comment "A node is at most one of bddo:Struct, bddo:Field and bddo:DataType (subclasses included), as the owl:AllDisjointClasses axiom states."@en ;
     sh:targetClass :Struct , :Field , :DataType ;
     sh:sparql [ sh:message "A node cannot be both a {?a} and a {?b}: bddo:Struct, bddo:Field and bddo:DataType are disjoint." ;
         sh:prefixes :_prefixes ;
@@ -88,15 +88,15 @@
 # Records may nest, via bddo:hasGrouping, but only in the three token-delimited styles that
 # vocabulary describes -- this is not a general grammar. A document with real recursive
 # structure is a bddo:TreeDocument instead.
-:DelimitedRecords a owl:Class ; rdfs:subClassOf :Struct ; rdfs:label "Delimited Records" ;
+:DelimitedRecords a owl:Class ; rdfs:subClassOf :Struct ; rdfs:label "Delimited Records"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "A Struct whose children are located by delimiter position rather than byte offset: a byte run split into records by recordDelimiter, each record optionally split into values by fieldDelimiter." .
-:KeyValueHeader a owl:Class ; rdfs:subClassOf :DelimitedRecords ; rdfs:label "Key/Value Header" ;
+    rdfs:comment "A Struct whose children are located by delimiter position rather than byte offset: a byte run split into records by recordDelimiter, each record optionally split into values by fieldDelimiter."@en .
+:KeyValueHeader a owl:Class ; rdfs:subClassOf :DelimitedRecords ; rdfs:label "Key/Value Header"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "DelimitedRecords whose records are key/value pairs split by keyValueSeparator. Each expected key is a Field carrying bddo:key, or, with no bddo:key, named by its simple key (the local name of its IRI after the last '.'); record order is not significant." .
-:DelimitedTable a owl:Class ; rdfs:subClassOf :DelimitedRecords ; rdfs:label "Delimited Table" ;
+    rdfs:comment "DelimitedRecords whose records are key/value pairs split by keyValueSeparator. Each expected key is a Field carrying bddo:key, or, with no bddo:key, named by its simple key (the local name of its IRI after the last '.'); record order is not significant."@en .
+:DelimitedTable a owl:Class ; rdfs:subClassOf :DelimitedRecords ; rdfs:label "Delimited Table"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "DelimitedRecords whose records are rows with a fixed column sequence. The hasField list gives the columns in order; the row structure repeats until the byte run is exhausted." .
+    rdfs:comment "DelimitedRecords whose records are rows with a fixed column sequence. The hasField list gives the columns in order; the row structure repeats until the byte run is exhausted."@en .
 # ---------- Tree documents ----------
 # XML and JSON labels wrap a payload that is otherwise already describable: PDS4, DIMAP, SAFE,
 # SENTINEL-2, RadarSat-2, TerraSAR-X, CPHD and Zarr all pair a clean binary array with a
@@ -106,113 +106,113 @@
 # conforming parser produces. That distinction is what keeps this from becoming an XML
 # specification: the tree is someone else's output, and BDDO's job is only to say which node
 # supplies which field.
-:TreeDocument a owl:Class ; rdfs:subClassOf :Struct ; rdfs:label "Tree Document" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "A Struct whose children are located by a path into a parsed node tree rather than by byte offset or delimiter. The byte run is handed to a parser for the declared syntax; each Field names the node supplying its value." .
-:TreeSyntax a owl:Class ; rdfs:label "Tree Syntax" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "Which tree grammar a TreeDocument is written in, and therefore how its nodePath values are read." .
-:NamespaceBinding a owl:Class ; rdfs:label "Namespace Binding" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "A prefix-to-IRI binding for the paths of an XML TreeDocument." .
+:TreeDocument a owl:Class ; rdfs:subClassOf :Struct ; rdfs:label "Tree Document"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A Struct whose children are located by a path into a parsed node tree rather than by byte offset or delimiter. The byte run is handed to a parser for the declared syntax; each Field names the node supplying its value."@en .
+:TreeSyntax a owl:Class ; rdfs:label "Tree Syntax"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Which tree grammar a TreeDocument is written in, and therefore how its nodePath values are read."@en .
+:NamespaceBinding a owl:Class ; rdfs:label "Namespace Binding"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A prefix-to-IRI binding for the paths of an XML TreeDocument."@en .
 
-:RecordGrouping a owl:Class ; rdfs:label "Record Grouping" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "How a DelimitedRecords container nests: which records open a group, which close it, and where the group's name comes from. A container without one is flat, which is what every DelimitedRecords was before nesting existed." .
-:GroupingStyle a owl:Class ; rdfs:label "Grouping Style" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "Which of the three ways a text format marks a nested group." .
+:RecordGrouping a owl:Class ; rdfs:label "Record Grouping"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "How a DelimitedRecords container nests: which records open a group, which close it, and where the group's name comes from. A container without one is flat, which is what every DelimitedRecords was before nesting existed."@en .
+:GroupingStyle a owl:Class ; rdfs:label "Grouping Style"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Which of the three ways a text format marks a nested group."@en .
 
 # Controlled-vocabulary classes (typed enumerated individuals)
-:Endianness       a owl:Class ; rdfs:label "Endianness" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
-:BitOrder         a owl:Class ; rdfs:label "Bit Order" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
-:BaseType         a owl:Class ; rdfs:label "Base Type" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
-:OffsetBase       a owl:Class ; rdfs:label "Offset Base" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
-:Encoding         a owl:Class ; rdfs:label "Encoding" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
-:ChecksumAlgorithm a owl:Class ; rdfs:label "Checksum Algorithm" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:Endianness       a owl:Class ; rdfs:label "Endianness"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:BitOrder         a owl:Class ; rdfs:label "Bit Order"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:BaseType         a owl:Class ; rdfs:label "Base Type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:OffsetBase       a owl:Class ; rdfs:label "Offset Base"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:Encoding         a owl:Class ; rdfs:label "Encoding"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:ChecksumAlgorithm a owl:Class ; rdfs:label "Checksum Algorithm"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 # Any CRC is fixed by the six parameters of the Rocksoft model, so one class covers every CRC a
 # format uses without a new individual per variant. The named CRC individuals below carry the
 # same six parameters, and their catalogue check value, as statements about themselves.
-:CustomCrc a owl:Class ; rdfs:subClassOf :ChecksumAlgorithm ; rdfs:label "Custom CRC" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "A CRC stated by its Rocksoft-model parameters rather than named: bddo:crcWidth (8..64 bits), bddo:crcPolynomial, bddo:crcInit, bddo:crcReflectIn, bddo:crcReflectOut and bddo:crcXorOut, all six required. Used as the value of bddo:checksumAlgorithm for a CRC that no named algorithm identifies." .
+:CustomCrc a owl:Class ; rdfs:subClassOf :ChecksumAlgorithm ; rdfs:label "Custom CRC"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A CRC stated by its Rocksoft-model parameters rather than named: bddo:crcWidth (8..64 bits), bddo:crcPolynomial, bddo:crcInit, bddo:crcReflectIn, bddo:crcReflectOut and bddo:crcXorOut, all six required. Used as the value of bddo:checksumAlgorithm for a CRC that no named algorithm identifies."@en .
 # Union of DataType and Struct, used as the range of dataType / ruleDataType
-:DataTypeOrStruct a owl:Class ; rdfs:label "Data Type or Struct" ;
+:DataTypeOrStruct a owl:Class ; rdfs:label "Data Type or Struct"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; owl:unionOf ( :DataType :Struct ) .
 
 # ---------- Structural properties ----------
-:hasField     a owl:ObjectProperty ; rdfs:label "has field" ; rdfs:range rdf:List ;
-    rdfs:comment "Ordered rdf:List of the members of a Struct: its Fields, and any LocalBindings among them, in the order they are processed." .
-:hasParameter a owl:ObjectProperty ; rdfs:label "has parameter" ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "Ordered rdf:List of the bddo:Parameter resources of a parameterised Struct. Every place that names the struct as a type supplies exactly one argument per parameter, positionally, with bddo:hasArgument." .
-:parameterType a owl:ObjectProperty ; rdfs:label "parameter type" ; rdfs:range :ParameterType ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "Restricts the kind of value a Parameter accepts to one HEL value type: bddo:IntegerParameter, bddo:FloatParameter (an Integer argument is converted to Float), bddo:StringParameter, bddo:BytesParameter or bddo:BooleanParameter. Absent, the parameter accepts any scalar value, Null included." .
-:hasArgument a owl:ObjectProperty ; rdfs:label "has argument" ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "Ordered rdf:List of HEL expression strings, the positional arguments for the parameterised Struct this resource names as a type: on a Field, for its bddo:dataType; on a DataTypeRule, for its bddo:ruleDataType; on a DispatchArm, for its bddo:armDataType. A bddo:dispatchDefault has nowhere to state arguments, so it never names a parameterised struct. Each is evaluated in the CALLER's context -- the struct containing the field -- at the point the field is read." .
-:localExpression a owl:DatatypeProperty ; rdfs:label "local expression" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The HEL expression giving a LocalBinding's value, evaluated with the containing struct as instance when the binding's position in the hasField list is reached." .
-:endianness   a owl:ObjectProperty ; rdfs:label "endianness" ; rdfs:range :Endianness ;
-    rdfs:comment "Byte order for a Struct, Field, or DataType." .
-:hasConditionalEndianness a owl:ObjectProperty ; rdfs:label "has conditional endianness" ; rdfs:range rdf:List ;
-    rdfs:comment "Ordered rdf:List of EndiannessRule. The first rule whose condition holds selects the byte order for this Struct or Field and, as with bddo:endianness, for its descendants unless they override it. Use for formats that declare their own byte order, such as TIFF's 4949h/4D4Dh marker. Mutually exclusive with bddo:endianness." .
-:bitOrder     a owl:ObjectProperty ; rdfs:label "bit order" ; rdfs:range :BitOrder .
-:syncOnMarker a owl:DatatypeProperty ; rdfs:label "sync on marker" ; rdfs:range xsd:hexBinary .
+:hasField     a owl:ObjectProperty ; rdfs:label "has field"@en ; rdfs:range rdf:List ;
+    rdfs:comment "Ordered rdf:List of the members of a Struct: its Fields, and any LocalBindings among them, in the order they are processed."@en .
+:hasParameter a owl:ObjectProperty ; rdfs:label "has parameter"@en ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Ordered rdf:List of the bddo:Parameter resources of a parameterised Struct. Every place that names the struct as a type supplies exactly one argument per parameter, positionally, with bddo:hasArgument."@en .
+:parameterType a owl:ObjectProperty ; rdfs:label "parameter type"@en ; rdfs:range :ParameterType ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Restricts the kind of value a Parameter accepts to one HEL value type: bddo:IntegerParameter, bddo:FloatParameter (an Integer argument is converted to Float), bddo:StringParameter, bddo:BytesParameter or bddo:BooleanParameter. Absent, the parameter accepts any scalar value, Null included."@en .
+:hasArgument a owl:ObjectProperty ; rdfs:label "has argument"@en ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Ordered rdf:List of HEL expression strings, the positional arguments for the parameterised Struct this resource names as a type: on a Field, for its bddo:dataType; on a DataTypeRule, for its bddo:ruleDataType; on a DispatchArm, for its bddo:armDataType. A bddo:dispatchDefault has nowhere to state arguments, so it never names a parameterised struct. Each is evaluated in the CALLER's context -- the struct containing the field -- at the point the field is read."@en .
+:localExpression a owl:DatatypeProperty ; rdfs:label "local expression"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The HEL expression giving a LocalBinding's value, evaluated with the containing struct as instance when the binding's position in the hasField list is reached."@en .
+:endianness   a owl:ObjectProperty ; rdfs:label "endianness"@en ; rdfs:range :Endianness ;
+    rdfs:comment "Byte order for a Struct, Field, or DataType."@en .
+:hasConditionalEndianness a owl:ObjectProperty ; rdfs:label "has conditional endianness"@en ; rdfs:range rdf:List ;
+    rdfs:comment "Ordered rdf:List of EndiannessRule. The first rule whose condition holds selects the byte order for this Struct or Field and, as with bddo:endianness, for its descendants unless they override it. Use for formats that declare their own byte order, such as TIFF's 4949h/4D4Dh marker. Mutually exclusive with bddo:endianness."@en .
+:bitOrder     a owl:ObjectProperty ; rdfs:label "bit order"@en ; rdfs:range :BitOrder .
+:syncOnMarker a owl:DatatypeProperty ; rdfs:label "sync on marker"@en ; rdfs:range xsd:hexBinary .
 
 # ---------- Field properties ----------
-:dataType               a owl:ObjectProperty ; rdfs:label "data type" ; rdfs:range :DataTypeOrStruct .
-:hasConditionalDataType a owl:ObjectProperty ; rdfs:label "has conditional data type" ; rdfs:range rdf:List .
-:hasDispatchTable       a owl:ObjectProperty ; rdfs:label "has dispatch table" ; rdfs:range :DispatchTable ;
-    rdfs:comment "The keyed DispatchTable that selects this Field's effective type. Mutually exclusive with hasConditionalDataType." .
-:dispatchOnField        a owl:ObjectProperty ; rdfs:label "dispatch on field" ; rdfs:range :Field ;
-    rdfs:comment "The sibling Field whose parsed value is the dispatch key." .
-:dispatchOnExpression   a owl:DatatypeProperty ; rdfs:label "dispatch on expression" ; rdfs:range xsd:string ;
-    rdfs:comment "A HEL expression whose value is the dispatch key, evaluated as a hasConditionalDataType condition is." .
-:dispatchDefault        a owl:ObjectProperty ; rdfs:label "dispatch default" ; rdfs:range :DataTypeOrStruct ;
-    rdfs:comment "The type selected when no arm's key equals the dispatch key. Absent means the Field's own dataType applies." .
-:armTable               a owl:ObjectProperty ; rdfs:label "arm table" ; rdfs:range :DispatchTable ;
-    rdfs:comment "The DispatchTable this DispatchArm contributes to. Declared on the arm so that any graph may add arms to a table defined elsewhere." .
-:armKey                 a owl:DatatypeProperty ; rdfs:label "arm key" ;
-    rdfs:comment "The key value this arm matches: an xsd:string compared by code points, or an xsd:integer compared numerically." .
-:armDataType            a owl:ObjectProperty ; rdfs:label "arm data type" ; rdfs:range :DataTypeOrStruct ;
-    rdfs:comment "The datatype or structure selected when this arm's key matches." .
-:seekScope              a owl:ObjectProperty ; rdfs:label "seek scope" ; rdfs:range :SeekScope ;
-    rdfs:comment "For an offset-addressed Field, whether the read may leave the innermost bounded region (streamScope) or is confined to it (regionScope, the default). The region bound is suspended only for that one read. Used where a table inside one length-delimited container locates payloads stored in another." .
-:size                   a owl:DatatypeProperty ; rdfs:label "size (bytes)" ; rdfs:range xsd:positiveInteger .
-:sizeFromField          a owl:ObjectProperty ; rdfs:label "size from field" ; rdfs:range :Field .
-:sizeFromExpression     a owl:DatatypeProperty ; rdfs:label "size from expression" ; rdfs:range xsd:string .
-:sizeToEndOfStream      a owl:DatatypeProperty ; rdfs:label "size to end of stream" ; rdfs:range xsd:boolean .
-:terminator             a owl:DatatypeProperty ; rdfs:label "terminator" ; rdfs:range xsd:hexBinary .
-:trimNull               a owl:DatatypeProperty ; rdfs:label "trim null" ; rdfs:range xsd:boolean ;
-    rdfs:comment "For a fixed-size (padded) string field, the emitted value ends at the first 0x00 byte within the field's width." .
-:encoding               a owl:ObjectProperty ; rdfs:label "encoding" ; rdfs:range :Encoding .
-:recordDelimiter        a owl:DatatypeProperty ; rdfs:label "record delimiter" ; rdfs:range xsd:hexBinary ;
-    rdfs:comment "Byte sequence separating records. Default 0A (LF); a CR LF pair is also accepted when this is 0A." .
-:fieldDelimiter         a owl:DatatypeProperty ; rdfs:label "field delimiter" ; rdfs:range xsd:hexBinary ;
-    rdfs:comment "Byte sequence separating values within one record. When absent, a record is a single value." .
-:keyValueSeparator      a owl:DatatypeProperty ; rdfs:label "key/value separator" ; rdfs:range xsd:hexBinary ;
-    rdfs:comment "Byte sequence separating a key from its value within a record of a KeyValueHeader." .
-:quoteChar              a owl:DatatypeProperty ; rdfs:label "quote character" ; rdfs:range xsd:hexBinary ;
-    rdfs:comment "Byte that quotes a value, allowing it to contain the field or record delimiter. A doubled quote inside a quoted value denotes a literal quote." .
-:escapeChar             a owl:DatatypeProperty ; rdfs:label "escape character" ; rdfs:range xsd:hexBinary ;
-    rdfs:comment "Byte that escapes the following byte, suppressing its delimiter or quote meaning." .
-:commentPrefix          a owl:DatatypeProperty ; rdfs:label "comment prefix" ; rdfs:range xsd:string ;
-    rdfs:comment "A record beginning with this string (after optional whitespace) is ignored." .
-:skipRecords            a owl:DatatypeProperty ; rdfs:label "skip records" ; rdfs:range xsd:nonNegativeInteger ;
-    rdfs:comment "Number of leading records to discard before parsing, e.g. a CSV column-name row. Default 0." .
-:whitespaceSeparated    a owl:DatatypeProperty ; rdfs:label "whitespace separated" ; rdfs:range xsd:boolean ;
-    rdfs:comment "If true, values are separated by a RUN of one or more whitespace bytes (space, tab, CR, LF) rather than by a fixed bddo:fieldDelimiter. A run of any length separates exactly two values, so consecutive whitespace never yields an empty value, and leading or trailing whitespace on a record is ignored. This is what column-aligned ASCII grids need -- 'ncols        100', or a row of numbers padded to line up -- which a fixed delimiter cannot express. Mutually exclusive with bddo:fieldDelimiter. When bddo:recordDelimiter is also absent the content is one flat stream of whitespace-separated values rather than rows, which is how an ASCII grid whose rows wrap across lines is read; the grid's shape then comes from the field's dlv:DataLayout or repeat count, not from line breaks." .
-:trimWhitespace         a owl:DatatypeProperty ; rdfs:label "trim whitespace" ; rdfs:range xsd:boolean ;
-    rdfs:comment "If true, leading and trailing whitespace is removed from every key and value. Default false." .
+:dataType               a owl:ObjectProperty ; rdfs:label "data type"@en ; rdfs:range :DataTypeOrStruct .
+:hasConditionalDataType a owl:ObjectProperty ; rdfs:label "has conditional data type"@en ; rdfs:range rdf:List .
+:hasDispatchTable       a owl:ObjectProperty ; rdfs:label "has dispatch table"@en ; rdfs:range :DispatchTable ;
+    rdfs:comment "The keyed DispatchTable that selects this Field's effective type. Mutually exclusive with hasConditionalDataType."@en .
+:dispatchOnField        a owl:ObjectProperty ; rdfs:label "dispatch on field"@en ; rdfs:range :Field ;
+    rdfs:comment "The sibling Field whose parsed value is the dispatch key."@en .
+:dispatchOnExpression   a owl:DatatypeProperty ; rdfs:label "dispatch on expression"@en ; rdfs:range xsd:string ;
+    rdfs:comment "A HEL expression whose value is the dispatch key, evaluated as a hasConditionalDataType condition is."@en .
+:dispatchDefault        a owl:ObjectProperty ; rdfs:label "dispatch default"@en ; rdfs:range :DataTypeOrStruct ;
+    rdfs:comment "The type selected when no arm's key equals the dispatch key. Absent means the Field's own dataType applies."@en .
+:armTable               a owl:ObjectProperty ; rdfs:label "arm table"@en ; rdfs:range :DispatchTable ;
+    rdfs:comment "The DispatchTable this DispatchArm contributes to. Declared on the arm so that any graph may add arms to a table defined elsewhere."@en .
+:armKey                 a owl:DatatypeProperty ; rdfs:label "arm key"@en ;
+    rdfs:comment "The key value this arm matches: an xsd:string compared by code points, or an xsd:integer compared numerically."@en .
+:armDataType            a owl:ObjectProperty ; rdfs:label "arm data type"@en ; rdfs:range :DataTypeOrStruct ;
+    rdfs:comment "The datatype or structure selected when this arm's key matches."@en .
+:seekScope              a owl:ObjectProperty ; rdfs:label "seek scope"@en ; rdfs:range :SeekScope ;
+    rdfs:comment "For an offset-addressed Field, whether the read may leave the innermost bounded region (streamScope) or is confined to it (regionScope, the default). The region bound is suspended only for that one read. Used where a table inside one length-delimited container locates payloads stored in another."@en .
+:size                   a owl:DatatypeProperty ; rdfs:label "size (bytes)"@en ; rdfs:range xsd:positiveInteger .
+:sizeFromField          a owl:ObjectProperty ; rdfs:label "size from field"@en ; rdfs:range :Field .
+:sizeFromExpression     a owl:DatatypeProperty ; rdfs:label "size from expression"@en ; rdfs:range xsd:string .
+:sizeToEndOfStream      a owl:DatatypeProperty ; rdfs:label "size to end of stream"@en ; rdfs:range xsd:boolean .
+:terminator             a owl:DatatypeProperty ; rdfs:label "terminator"@en ; rdfs:range xsd:hexBinary .
+:trimNull               a owl:DatatypeProperty ; rdfs:label "trim null"@en ; rdfs:range xsd:boolean ;
+    rdfs:comment "For a fixed-size (padded) string field, the emitted value ends at the first 0x00 byte within the field's width."@en .
+:encoding               a owl:ObjectProperty ; rdfs:label "encoding"@en ; rdfs:range :Encoding .
+:recordDelimiter        a owl:DatatypeProperty ; rdfs:label "record delimiter"@en ; rdfs:range xsd:hexBinary ;
+    rdfs:comment "Byte sequence separating records. Default 0A (LF); a CR LF pair is also accepted when this is 0A."@en .
+:fieldDelimiter         a owl:DatatypeProperty ; rdfs:label "field delimiter"@en ; rdfs:range xsd:hexBinary ;
+    rdfs:comment "Byte sequence separating values within one record. When absent, a record is a single value."@en .
+:keyValueSeparator      a owl:DatatypeProperty ; rdfs:label "key/value separator"@en ; rdfs:range xsd:hexBinary ;
+    rdfs:comment "Byte sequence separating a key from its value within a record of a KeyValueHeader."@en .
+:quoteChar              a owl:DatatypeProperty ; rdfs:label "quote character"@en ; rdfs:range xsd:hexBinary ;
+    rdfs:comment "Byte that quotes a value, allowing it to contain the field or record delimiter. A doubled quote inside a quoted value denotes a literal quote."@en .
+:escapeChar             a owl:DatatypeProperty ; rdfs:label "escape character"@en ; rdfs:range xsd:hexBinary ;
+    rdfs:comment "Byte that escapes the following byte, suppressing its delimiter or quote meaning."@en .
+:commentPrefix          a owl:DatatypeProperty ; rdfs:label "comment prefix"@en ; rdfs:range xsd:string ;
+    rdfs:comment "A record beginning with this string (after optional whitespace) is ignored."@en .
+:skipRecords            a owl:DatatypeProperty ; rdfs:label "skip records"@en ; rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "Number of leading records to discard before parsing, e.g. a CSV column-name row. Default 0."@en .
+:whitespaceSeparated    a owl:DatatypeProperty ; rdfs:label "whitespace separated"@en ; rdfs:range xsd:boolean ;
+    rdfs:comment "If true, values are separated by a RUN of one or more whitespace bytes (space, tab, CR, LF) rather than by a fixed bddo:fieldDelimiter. A run of any length separates exactly two values, so consecutive whitespace never yields an empty value, and leading or trailing whitespace on a record is ignored. This is what column-aligned ASCII grids need -- 'ncols        100', or a row of numbers padded to line up -- which a fixed delimiter cannot express. Mutually exclusive with bddo:fieldDelimiter. When bddo:recordDelimiter is also absent the content is one flat stream of whitespace-separated values rather than rows, which is how an ASCII grid whose rows wrap across lines is read; the grid's shape then comes from the field's dlv:DataLayout or repeat count, not from line breaks."@en .
+:trimWhitespace         a owl:DatatypeProperty ; rdfs:label "trim whitespace"@en ; rdfs:range xsd:boolean ;
+    rdfs:comment "If true, leading and trailing whitespace is removed from every key and value. Default false."@en .
 # ---------- Tree document properties ----------
-:treeSyntax a owl:ObjectProperty ; rdfs:label "tree syntax" ; rdfs:range :TreeSyntax ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The grammar of a TreeDocument. Required, because it decides how every nodePath in the container is read." .
-:xml a owl:NamedIndividual, :TreeSyntax ; rdfs:label "XML" ;
-    rdfs:comment "Paths are ABBREVIATED XPATH: child steps, attribute steps (@name), and positional predicates ([n], 1-based). A deliberately small subset -- no axes, no functions, no comparison predicates -- because a description states where a value IS, and a path that can compute is a query engine's problem rather than a description's." .
-:json a owl:NamedIndividual, :TreeSyntax ; rdfs:label "JSON" ;
-    rdfs:comment "Paths are JSON POINTERS as defined by RFC 6901: /object/member, array indices as /list/0 (0-based). Adopted rather than invented, so its escaping rules for '/' and '~' inside a member name are already specified and already implemented." .
+:treeSyntax a owl:ObjectProperty ; rdfs:label "tree syntax"@en ; rdfs:range :TreeSyntax ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The grammar of a TreeDocument. Required, because it decides how every nodePath in the container is read."@en .
+:xml a owl:NamedIndividual, :TreeSyntax ; rdfs:label "XML"@en ;
+    rdfs:comment "Paths are ABBREVIATED XPATH: child steps, attribute steps (@name), and positional predicates ([n], 1-based). A deliberately small subset -- no axes, no functions, no comparison predicates -- because a description states where a value IS, and a path that can compute is a query engine's problem rather than a description's."@en .
+:json a owl:NamedIndividual, :TreeSyntax ; rdfs:label "JSON"@en ;
+    rdfs:comment "Paths are JSON POINTERS as defined by RFC 6901: /object/member, array indices as /list/0 (0-based). Adopted rather than invented, so its escaping rules for '/' and '~' inside a member name are already specified and already implemented."@en .
 
-:nodePath a owl:DatatypeProperty ; rdfs:label "node path" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "Locates the node supplying this field's value, read according to the container's treeSyntax. A path selecting no node leaves the field absent; a path selecting several is an error unless the field repeats, in which case the field's value is the selected nodes in document order." .
-:hasNamespaceBinding a owl:ObjectProperty ; rdfs:label "has namespace binding" ; rdfs:range :NamespaceBinding ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "Binds the prefixes used in this document's paths. XML only, and not optional in practice: PDS4, DIMAP and SAFE are all namespaced, and an unprefixed path against a namespaced document silently matches nothing rather than failing." .
-:namespacePrefix a owl:DatatypeProperty ; rdfs:label "namespace prefix" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The prefix as used in this container's nodePath values. The empty string binds the DEFAULT namespace, which an XPath subset cannot otherwise reach." .
-:namespaceIRI a owl:DatatypeProperty ; rdfs:label "namespace IRI" ; rdfs:range xsd:anyURI ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The namespace the prefix stands for, matched against the document's own declarations rather than against the prefix it happens to use -- a document may spell the same namespace with any prefix." .
+:nodePath a owl:DatatypeProperty ; rdfs:label "node path"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Locates the node supplying this field's value, read according to the container's treeSyntax. A path selecting no node leaves the field absent; a path selecting several is an error unless the field repeats, in which case the field's value is the selected nodes in document order."@en .
+:hasNamespaceBinding a owl:ObjectProperty ; rdfs:label "has namespace binding"@en ; rdfs:range :NamespaceBinding ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Binds the prefixes used in this document's paths. XML only, and not optional in practice: PDS4, DIMAP and SAFE are all namespaced, and an unprefixed path against a namespaced document silently matches nothing rather than failing."@en .
+:namespacePrefix a owl:DatatypeProperty ; rdfs:label "namespace prefix"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The prefix as used in this container's nodePath values. The empty string binds the DEFAULT namespace, which an XPath subset cannot otherwise reach."@en .
+:namespaceIRI a owl:DatatypeProperty ; rdfs:label "namespace IRI"@en ; rdfs:range xsd:anyURI ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The namespace the prefix stands for, matched against the document's own declarations rather than against the prefix it happens to use -- a document may spell the same namespace with any prefix."@en .
 
 # ---------- Nested records ----------
 # The flat key/value model reaches ESRI .hdr, ENVI and their kin, but stops at the label formats
@@ -224,106 +224,106 @@
 # Three styles rather than one general grammar. Each is fully described by two tokens plus where
 # the group's NAME comes from, and that is the whole of it -- a general nested-grammar surface
 # would be a parser generator, and this is not one.
-:hasGrouping a owl:ObjectProperty ; rdfs:label "has grouping" ; rdfs:range :RecordGrouping ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The nesting rule of a DelimitedRecords container. Absent means flat." .
-:groupingStyle a owl:ObjectProperty ; rdfs:label "grouping style" ; rdfs:range :GroupingStyle ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
-:groupOpenToken a owl:DatatypeProperty ; rdfs:label "group open token" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The literal that marks a record as opening a group: the key OBJECT, the value Begin, or the bracket [ -- read according to groupingStyle." .
-:groupCloseToken a owl:DatatypeProperty ; rdfs:label "group close token" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The literal that closes a group: END_OBJECT, End, or the bracket ]. For sectionHeaded it is the closing bracket of the header rather than a separate record, since a section is ended by the next one." .
+:hasGrouping a owl:ObjectProperty ; rdfs:label "has grouping"@en ; rdfs:range :RecordGrouping ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The nesting rule of a DelimitedRecords container. Absent means flat."@en .
+:groupingStyle a owl:ObjectProperty ; rdfs:label "grouping style"@en ; rdfs:range :GroupingStyle ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:groupOpenToken a owl:DatatypeProperty ; rdfs:label "group open token"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The literal that marks a record as opening a group: the key OBJECT, the value Begin, or the bracket [ -- read according to groupingStyle."@en .
+:groupCloseToken a owl:DatatypeProperty ; rdfs:label "group close token"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The literal that closes a group: END_OBJECT, End, or the bracket ]. For sectionHeaded it is the closing bracket of the header rather than a separate record, since a section is ended by the next one."@en .
 
-:keyedGroup a owl:NamedIndividual, :GroupingStyle ; rdfs:label "keyed group" ;
-    rdfs:comment "A record whose KEY equals groupOpenToken opens a group, and its VALUE names it; a record whose key equals groupCloseToken closes the innermost open group. PVL/ODL: OBJECT = IMAGE ... END_OBJECT = IMAGE. The closing record MAY repeat the name; a description need not say so, because the name is already known from the opening record." .
-:valuedGroup a owl:NamedIndividual, :GroupingStyle ; rdfs:label "valued group" ;
-    rdfs:comment "The mirror image: a record whose VALUE equals groupOpenToken opens a group, and its KEY names it. ERMapper: CoordinateSpace Begin ... CoordinateSpace End." .
-:sectionHeaded a owl:NamedIndividual, :GroupingStyle ; rdfs:label "section headed" ;
-    rdfs:comment "A record consisting of groupOpenToken, a name, and groupCloseToken opens a group and implicitly closes the previous one; the last runs to the end of the container. INI-style [Section] headers. Nesting is therefore FLAT ONE DEEP -- sections do not contain sections -- which is what the style actually permits, not a limitation of this model." .
+:keyedGroup a owl:NamedIndividual, :GroupingStyle ; rdfs:label "keyed group"@en ;
+    rdfs:comment "A record whose KEY equals groupOpenToken opens a group, and its VALUE names it; a record whose key equals groupCloseToken closes the innermost open group. PVL/ODL: OBJECT = IMAGE ... END_OBJECT = IMAGE. The closing record MAY repeat the name; a description need not say so, because the name is already known from the opening record."@en .
+:valuedGroup a owl:NamedIndividual, :GroupingStyle ; rdfs:label "valued group"@en ;
+    rdfs:comment "The mirror image: a record whose VALUE equals groupOpenToken opens a group, and its KEY names it. ERMapper: CoordinateSpace Begin ... CoordinateSpace End."@en .
+:sectionHeaded a owl:NamedIndividual, :GroupingStyle ; rdfs:label "section headed"@en ;
+    rdfs:comment "A record consisting of groupOpenToken, a name, and groupCloseToken opens a group and implicitly closes the previous one; the last runs to the end of the container. INI-style [Section] headers. Nesting is therefore FLAT ONE DEEP -- sections do not contain sections -- which is what the style actually permits, not a limitation of this model."@en .
 
-:keyPath a owl:DatatypeProperty ; rdfs:label "key path" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "Locates a field inside nested groups, as group names and finally the key, joined by pathSeparator: 'IMAGE/BAND/NAME'. Mutually exclusive with bddo:key, which locates a field in a flat container -- a field cannot be found two ways, and a description that said both would leave a reader to guess which wins." .
-:pathSeparator a owl:DatatypeProperty ; rdfs:label "path separator" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The separator used in this container's keyPath values. Default '/'. Declared on the container rather than repeated per field, and needed because a format whose group names may contain '/' has to choose something else." .
+:keyPath a owl:DatatypeProperty ; rdfs:label "key path"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Locates a field inside nested groups, as group names and finally the key, joined by pathSeparator: 'IMAGE/BAND/NAME'. Mutually exclusive with bddo:key, which locates a field in a flat container -- a field cannot be found two ways, and a description that said both would leave a reader to guess which wins."@en .
+:pathSeparator a owl:DatatypeProperty ; rdfs:label "path separator"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The separator used in this container's keyPath values. Default '/'. Declared on the container rather than repeated per field, and needed because a format whose group names may contain '/' has to choose something else."@en .
 
-:key                    a owl:DatatypeProperty ; rdfs:label "key" ; rdfs:range xsd:string ;
-    rdfs:comment "The key naming this Field within a KeyValueHeader. Replaces positional location: the Field takes the value of whichever record carries this key. A field of a flat KeyValueHeader that declares no bddo:key is located by its simple key instead." .
-:keyIsCaseInsensitive   a owl:DatatypeProperty ; rdfs:label "key is case insensitive" ; rdfs:range xsd:boolean ;
-    rdfs:comment "If true, bddo:key matching ignores ASCII case. Default false." .
-:numericBase            a owl:DatatypeProperty ; rdfs:label "numeric base" ; rdfs:range xsd:positiveInteger ;
-    rdfs:comment "Radix used to read an :asciiInteger field: 8, 10 or 16. Default 10." .
-:bitLength              a owl:DatatypeProperty ; rdfs:label "bit length" ; rdfs:range xsd:positiveInteger .
-:repeatCount            a owl:DatatypeProperty ; rdfs:label "repeat count" ; rdfs:range xsd:nonNegativeInteger .
-:repeatCountFromField   a owl:ObjectProperty ; rdfs:label "repeat count from field" ; rdfs:range :Field .
-:repeatCountFromExpression a owl:DatatypeProperty ; rdfs:label "repeat count from expression" ; rdfs:range xsd:string .
-:repeatUntil            a owl:DatatypeProperty ; rdfs:label "repeat until" ; rdfs:range xsd:string .
-:separatedBy            a owl:DatatypeProperty ; rdfs:label "separated by" ; rdfs:range xsd:string ;
-    rdfs:comment "The element extent of a field -- repeated or scalar -- whose value is a number written as text, separated rather than sized or terminated: each element is preceded and followed by a run of separator bytes, and the run belongs to the element that owns it so the byte sequence can be rebuilt exactly. The only defined value is \"whitespace\" (space, tab, CR, LF). A separator is a RUN and a terminator is a SEQUENCE: between two delimiters of a delimited table an empty value is meaningful, whereas an empty run is not a value at all. Permitted only on a field whose data type is a number written as text. Because the LAST element's trailing run consumes every separator byte up to the field's own extent (or end of stream), a field declaring bddo:separatedBy must either be the last field read from its enclosing region, or be immediately followed by data that does not itself begin with a separator byte (space, tab, CR, LF) -- otherwise the trailing run consumes bytes that belong to the following field." .
-:atOffset               a owl:DatatypeProperty ; rdfs:label "at offset" ; rdfs:range xsd:nonNegativeInteger .
-:atOffsetFromField      a owl:ObjectProperty ; rdfs:label "at offset from field" ; rdfs:range :Field .
-:atOffsetFromExpression a owl:DatatypeProperty ; rdfs:label "at offset from expression" ; rdfs:range xsd:string .
-:offsetBase             a owl:ObjectProperty ; rdfs:label "offset base" ; rdfs:range :OffsetBase .
-:alignment              a owl:DatatypeProperty ; rdfs:label "alignment" ; rdfs:range xsd:positiveInteger .
-:hasFixedValue          a owl:DatatypeProperty ; rdfs:label "has fixed value" .
-:isPresentIf            a owl:DatatypeProperty ; rdfs:label "is present if" ; rdfs:range xsd:string .
-:valueFromExpression    a owl:DatatypeProperty ; rdfs:label "value from expression" ; rdfs:range xsd:string ;
-    rdfs:comment "A HEL expression giving the value of a derived, zero-byte field. The field consumes no bytes; its computed value is placed in the parse context under the field's name so later sizing, offset, presence, mapping and validation expressions may reference it. A field with bddo:valueFromExpression declares no bddo:dataType and no sizing, offset or bit-length; the result's type is that of the HEL expression." .
-:validIf                a owl:DatatypeProperty ; rdfs:label "valid if" ; rdfs:range xsd:string ;
-    rdfs:comment "A HEL boolean expression that MUST hold once this field is parsed; if it evaluates false the parse fails with a validation error. Use for post-parse constraints such as a magic number or a bound on a count. Richer, graph-level constraints belong in SHACL at the semantic layer." .
-:rootKeyFromField       a owl:ObjectProperty ; rdfs:label "root key from field" ; rdfs:range :Field ;
-    rdfs:comment "After this Field is parsed, its value is also bound in the ROOT parsing context under the key given by the named sibling Field's parsed value, if that key is not already bound (first occurrence wins). Lets a later record address an earlier one through its discriminator -- `root.<key>.<field>` -- when the earlier record sits inside a repeated sequence that HEL cannot search. A neutral generalisation of the chunk-type aliasing that several chunked container formats need." .
-:enumeration            a owl:ObjectProperty ; rdfs:label "enumeration" ; rdfs:range :Enumeration .
-:checksum               a owl:ObjectProperty ; rdfs:label "checksum" ; rdfs:range :Checksum .
+:key                    a owl:DatatypeProperty ; rdfs:label "key"@en ; rdfs:range xsd:string ;
+    rdfs:comment "The key naming this Field within a KeyValueHeader. Replaces positional location: the Field takes the value of whichever record carries this key. A field of a flat KeyValueHeader that declares no bddo:key is located by its simple key instead."@en .
+:keyIsCaseInsensitive   a owl:DatatypeProperty ; rdfs:label "key is case insensitive"@en ; rdfs:range xsd:boolean ;
+    rdfs:comment "If true, bddo:key matching ignores ASCII case. Default false."@en .
+:numericBase            a owl:DatatypeProperty ; rdfs:label "numeric base"@en ; rdfs:range xsd:positiveInteger ;
+    rdfs:comment "Radix used to read an :asciiInteger field: 8, 10 or 16. Default 10."@en .
+:bitLength              a owl:DatatypeProperty ; rdfs:label "bit length"@en ; rdfs:range xsd:positiveInteger .
+:repeatCount            a owl:DatatypeProperty ; rdfs:label "repeat count"@en ; rdfs:range xsd:nonNegativeInteger .
+:repeatCountFromField   a owl:ObjectProperty ; rdfs:label "repeat count from field"@en ; rdfs:range :Field .
+:repeatCountFromExpression a owl:DatatypeProperty ; rdfs:label "repeat count from expression"@en ; rdfs:range xsd:string .
+:repeatUntil            a owl:DatatypeProperty ; rdfs:label "repeat until"@en ; rdfs:range xsd:string .
+:separatedBy            a owl:DatatypeProperty ; rdfs:label "separated by"@en ; rdfs:range xsd:string ;
+    rdfs:comment "The element extent of a field -- repeated or scalar -- whose value is a number written as text, separated rather than sized or terminated: each element is preceded and followed by a run of separator bytes, and the run belongs to the element that owns it so the byte sequence can be rebuilt exactly. The only defined value is \"whitespace\" (space, tab, CR, LF). A separator is a RUN and a terminator is a SEQUENCE: between two delimiters of a delimited table an empty value is meaningful, whereas an empty run is not a value at all. Permitted only on a field whose data type is a number written as text. Because the LAST element's trailing run consumes every separator byte up to the field's own extent (or end of stream), a field declaring bddo:separatedBy must either be the last field read from its enclosing region, or be immediately followed by data that does not itself begin with a separator byte (space, tab, CR, LF) -- otherwise the trailing run consumes bytes that belong to the following field."@en .
+:atOffset               a owl:DatatypeProperty ; rdfs:label "at offset"@en ; rdfs:range xsd:nonNegativeInteger .
+:atOffsetFromField      a owl:ObjectProperty ; rdfs:label "at offset from field"@en ; rdfs:range :Field .
+:atOffsetFromExpression a owl:DatatypeProperty ; rdfs:label "at offset from expression"@en ; rdfs:range xsd:string .
+:offsetBase             a owl:ObjectProperty ; rdfs:label "offset base"@en ; rdfs:range :OffsetBase .
+:alignment              a owl:DatatypeProperty ; rdfs:label "alignment"@en ; rdfs:range xsd:positiveInteger .
+:hasFixedValue          a owl:DatatypeProperty ; rdfs:label "has fixed value"@en .
+:isPresentIf            a owl:DatatypeProperty ; rdfs:label "is present if"@en ; rdfs:range xsd:string .
+:valueFromExpression    a owl:DatatypeProperty ; rdfs:label "value from expression"@en ; rdfs:range xsd:string ;
+    rdfs:comment "A HEL expression giving the value of a derived, zero-byte field. The field consumes no bytes; its computed value is placed in the parse context under the field's name so later sizing, offset, presence, mapping and validation expressions may reference it. A field with bddo:valueFromExpression declares no bddo:dataType and no sizing, offset or bit-length; the result's type is that of the HEL expression."@en .
+:validIf                a owl:DatatypeProperty ; rdfs:label "valid if"@en ; rdfs:range xsd:string ;
+    rdfs:comment "A HEL boolean expression that MUST hold once this field is parsed; if it evaluates false the parse fails with a validation error. Use for post-parse constraints such as a magic number or a bound on a count. Richer, graph-level constraints belong in SHACL at the semantic layer."@en .
+:rootKeyFromField       a owl:ObjectProperty ; rdfs:label "root key from field"@en ; rdfs:range :Field ;
+    rdfs:comment "After this Field is parsed, its value is also bound in the ROOT parsing context under the key given by the named sibling Field's parsed value, if that key is not already bound (first occurrence wins). Lets a later record address an earlier one through its discriminator -- `root.<key>.<field>` -- when the earlier record sits inside a repeated sequence that HEL cannot search. A neutral generalisation of the chunk-type aliasing that several chunked container formats need."@en .
+:enumeration            a owl:ObjectProperty ; rdfs:label "enumeration"@en ; rdfs:range :Enumeration .
+:checksum               a owl:ObjectProperty ; rdfs:label "checksum"@en ; rdfs:range :Checksum .
 
 # ---------- DataType / Rule / Enum / Checksum properties ----------
-:baseType      a owl:ObjectProperty ; rdfs:label "base type" ; rdfs:range :BaseType .
-:bitWidth      a owl:DatatypeProperty ; rdfs:label "bit width" ; rdfs:range xsd:positiveInteger .
-:isSigned      a owl:DatatypeProperty ; rdfs:label "is signed" ; rdfs:range xsd:boolean .
-:xsdType       a owl:ObjectProperty ; rdfs:label "xsd type" ; rdfs:range rdfs:Datatype ;
-    rdfs:comment "The RDF literal datatype produced when a value of this DataType is emitted." .
-:condition     a owl:DatatypeProperty ; rdfs:label "condition" ; rdfs:range xsd:string ;
+:baseType      a owl:ObjectProperty ; rdfs:label "base type"@en ; rdfs:range :BaseType .
+:bitWidth      a owl:DatatypeProperty ; rdfs:label "bit width"@en ; rdfs:range xsd:positiveInteger .
+:isSigned      a owl:DatatypeProperty ; rdfs:label "is signed"@en ; rdfs:range xsd:boolean .
+:xsdType       a owl:ObjectProperty ; rdfs:label "xsd type"@en ; rdfs:range rdfs:Datatype ;
+    rdfs:comment "The RDF literal datatype produced when a value of this DataType is emitted."@en .
+:condition     a owl:DatatypeProperty ; rdfs:label "condition"@en ; rdfs:range xsd:string ;
     # Not the same property as hexplain:condition: this one guards how BYTES are read, while
     # parsing; that one guards which RDF a parsed node is LIFTED to. They are evaluated at
     # different times, and a processor reads each only on its own rule classes.
     rdfs:seeAlso <https://hexplain.io/ns/core#condition> .
-:ruleDataType  a owl:ObjectProperty ; rdfs:label "rule data type" ; rdfs:range :DataTypeOrStruct .
-:ruleEndianness a owl:ObjectProperty ; rdfs:label "rule endianness" ; rdfs:range :Endianness ;
-    rdfs:comment "The byte order selected by an EndiannessRule." .
-:hasEnumValue  a owl:ObjectProperty ; rdfs:label "has enum value" ; rdfs:range :EnumValue .
-:enumRawValue  a owl:DatatypeProperty ; rdfs:label "enum raw value" .
-:enumSymbol    a owl:ObjectProperty ; rdfs:label "enum symbol" .
-:enumIsFlags   a owl:DatatypeProperty ; rdfs:label "enum is flags" ; rdfs:range xsd:boolean ;
-    rdfs:comment "If true, the Enumeration is a bit-flag set: each EnumValue's raw value is a bitmask, and every symbol whose bit(s) are set in the parsed value is emitted." .
-:checksumAlgorithm a owl:ObjectProperty ; rdfs:label "checksum algorithm" ; rdfs:range :ChecksumAlgorithm .
-:coversFromField   a owl:ObjectProperty ; rdfs:label "covers from field" ; rdfs:range :Field .
-:coversToField     a owl:ObjectProperty ; rdfs:label "covers to field" ; rdfs:range :Field .
+:ruleDataType  a owl:ObjectProperty ; rdfs:label "rule data type"@en ; rdfs:range :DataTypeOrStruct .
+:ruleEndianness a owl:ObjectProperty ; rdfs:label "rule endianness"@en ; rdfs:range :Endianness ;
+    rdfs:comment "The byte order selected by an EndiannessRule."@en .
+:hasEnumValue  a owl:ObjectProperty ; rdfs:label "has enum value"@en ; rdfs:range :EnumValue .
+:enumRawValue  a owl:DatatypeProperty ; rdfs:label "enum raw value"@en .
+:enumSymbol    a owl:ObjectProperty ; rdfs:label "enum symbol"@en .
+:enumIsFlags   a owl:DatatypeProperty ; rdfs:label "enum is flags"@en ; rdfs:range xsd:boolean ;
+    rdfs:comment "If true, the Enumeration is a bit-flag set: each EnumValue's raw value is a bitmask, and every symbol whose bit(s) are set in the parsed value is emitted."@en .
+:checksumAlgorithm a owl:ObjectProperty ; rdfs:label "checksum algorithm"@en ; rdfs:range :ChecksumAlgorithm .
+:coversFromField   a owl:ObjectProperty ; rdfs:label "covers from field"@en ; rdfs:range :Field .
+:coversToField     a owl:ObjectProperty ; rdfs:label "covers to field"@en ; rdfs:range :Field .
 # A single expression can only describe a range it computes whole, so a checksum whose start
 # is a named field and whose end is computed had no way to say so -- it had to abandon the
 # field reference and recompute that offset arithmetically too. Splitting coverage into two
 # independent bounds removes that all-or-nothing choice; either end may be a field or an
 # expression. Offsets are absolute byte positions in the same frame of reference a size or
 # offset expression on this struct would see.
-:coversFromExpression a owl:DatatypeProperty ; rdfs:label "covers from expression" ; rdfs:range xsd:string ;
-    rdfs:comment "HEL expression evaluating to the covered range's START byte offset, inclusive. Alternative to coversFromField for the same bound." .
-:coversToExpression a owl:DatatypeProperty ; rdfs:label "covers to expression" ; rdfs:range xsd:string ;
-    rdfs:comment "HEL expression evaluating to the covered range's END byte offset, EXCLUSIVE (one past the last covered byte). Alternative to coversToField for the same bound -- note coversToField names a field whose last byte is included, so the two forms do not take the same number." .
-:coversExpression  a owl:DatatypeProperty ; rdfs:label "covers expression" ; rdfs:range xsd:string ;
+:coversFromExpression a owl:DatatypeProperty ; rdfs:label "covers from expression"@en ; rdfs:range xsd:string ;
+    rdfs:comment "HEL expression evaluating to the covered range's START byte offset, inclusive. Alternative to coversFromField for the same bound."@en .
+:coversToExpression a owl:DatatypeProperty ; rdfs:label "covers to expression"@en ; rdfs:range xsd:string ;
+    rdfs:comment "HEL expression evaluating to the covered range's END byte offset, EXCLUSIVE (one past the last covered byte). Alternative to coversToField for the same bound -- note coversToField names a field whose last byte is included, so the two forms do not take the same number."@en .
+:coversExpression  a owl:DatatypeProperty ; rdfs:label "covers expression"@en ; rdfs:range xsd:string ;
     owl:deprecated true ; dcterms:isReplacedBy :coversFromExpression , :coversToExpression ;
-    rdfs:comment "Deprecated: a single expression yielding the whole [start,end) range. Superseded by the coversFromExpression/coversToExpression pair, which states each bound separately and so can mix field and expression ends. Retained for descriptions written against earlier BDDO." .
+    rdfs:comment "Deprecated: a single expression yielding the whole [start,end) range. Superseded by the coversFromExpression/coversToExpression pair, which states each bound separately and so can mix field and expression ends. Retained for descriptions written against earlier BDDO."@en .
 # The Rocksoft CRC model. Required on a bddo:CustomCrc; also stated on the named CRC individuals,
 # where they record what the name means (tools/test_crc_catalogue.py recomputes each check value).
-:crcWidth a owl:DatatypeProperty ; rdfs:label "CRC width" ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The width of a CRC in bits, 8 to 64: the degree of its generator polynomial and the width of its register and result." .
-:crcPolynomial a owl:DatatypeProperty ; rdfs:label "CRC polynomial" ; rdfs:range xsd:nonNegativeInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The generator polynomial of a CRC without its top (x^width) term, in normal (unreflected) form, as a non-negative integer below 2^width: CRC-32's is 0x04C11DB7 (79764919), not the reflected 0xEDB88320." .
-:crcInit a owl:DatatypeProperty ; rdfs:label "CRC initial value" ; rdfs:range xsd:nonNegativeInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The value the CRC register holds before the first byte is processed, unreflected, below 2^width." .
-:crcReflectIn a owl:DatatypeProperty ; rdfs:label "CRC reflect input" ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "If true, each input byte is processed least-significant bit first (reflected); if false, most-significant bit first." .
-:crcReflectOut a owl:DatatypeProperty ; rdfs:label "CRC reflect output" ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "If true, the final register is bit-reversed over its width before the final XOR." .
-:crcXorOut a owl:DatatypeProperty ; rdfs:label "CRC final XOR" ; rdfs:range xsd:nonNegativeInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The value XORed into the (possibly reflected) final register to give the CRC, below 2^width." .
-:crcCheck a owl:DatatypeProperty ; rdfs:label "CRC check value" ; rdfs:range xsd:nonNegativeInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The CRC of the nine ASCII bytes \"123456789\" under the algorithm's parameters: the catalogue check value that identifies a CRC variant. Informative on a named algorithm; never required, and never read by a processor." .
+:crcWidth a owl:DatatypeProperty ; rdfs:label "CRC width"@en ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The width of a CRC in bits, 8 to 64: the degree of its generator polynomial and the width of its register and result."@en .
+:crcPolynomial a owl:DatatypeProperty ; rdfs:label "CRC polynomial"@en ; rdfs:range xsd:nonNegativeInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The generator polynomial of a CRC without its top (x^width) term, in normal (unreflected) form, as a non-negative integer below 2^width: CRC-32's is 0x04C11DB7 (79764919), not the reflected 0xEDB88320."@en .
+:crcInit a owl:DatatypeProperty ; rdfs:label "CRC initial value"@en ; rdfs:range xsd:nonNegativeInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The value the CRC register holds before the first byte is processed, unreflected, below 2^width."@en .
+:crcReflectIn a owl:DatatypeProperty ; rdfs:label "CRC reflect input"@en ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "If true, each input byte is processed least-significant bit first (reflected); if false, most-significant bit first."@en .
+:crcReflectOut a owl:DatatypeProperty ; rdfs:label "CRC reflect output"@en ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "If true, the final register is bit-reversed over its width before the final XOR."@en .
+:crcXorOut a owl:DatatypeProperty ; rdfs:label "CRC final XOR"@en ; rdfs:range xsd:nonNegativeInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The value XORed into the (possibly reflected) final register to give the CRC, below 2^width."@en .
+:crcCheck a owl:DatatypeProperty ; rdfs:label "CRC check value"@en ; rdfs:range xsd:nonNegativeInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The CRC of the nine ASCII bytes \"123456789\" under the algorithm's parameters: the catalogue check value that identifies a CRC variant. Informative on a named algorithm; never required, and never read by a processor."@en .
 
 # ---------- HEL expressions ----------
 # An expression is RDF text. Typing it bddo:HelExpression lets a reader -- a person, an editor, a
@@ -356,88 +356,88 @@
 # Profiles written before BDDO 1.0 still use these IRIs and conforming processors still read
 # them, so they are declared rather than silently unknown. Each keeps its original meaning;
 # new descriptions MUST use the replacement. They are never emitted by current tooling.
-:hasEndianness a owl:ObjectProperty ; rdfs:label "has endianness (deprecated)" ; rdfs:range :Endianness ;
+:hasEndianness a owl:ObjectProperty ; rdfs:label "has endianness (deprecated)"@en ; rdfs:range :Endianness ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     owl:deprecated true ; dcterms:isReplacedBy :endianness ;
-    rdfs:comment "Deprecated pre-release spelling of bddo:endianness, with the same meaning. A processor reading a description that states both uses bddo:endianness." .
-:usesStruct a owl:ObjectProperty ; rdfs:label "uses struct (deprecated)" ; rdfs:range :Struct ;
+    rdfs:comment "Deprecated pre-release spelling of bddo:endianness, with the same meaning. A processor reading a description that states both uses bddo:endianness."@en .
+:usesStruct a owl:ObjectProperty ; rdfs:label "uses struct (deprecated)"@en ; rdfs:range :Struct ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     owl:deprecated true ;
     skos:historyNote "Deprecated before BDDO 1.0 without a replacement: splicing another struct's fields into this one's has no single equivalent. A description states the fields directly, or names the other struct as the bddo:dataType of a field, which nests its fields instead of splicing them."@en ;
-    rdfs:comment "Deprecated pre-release template reference: the subject Struct's effective field list is the named Struct's fields followed by its own. There is no single replacement term; new descriptions state the fields directly, or compose with a Field whose bddo:dataType is the other Struct (which nests rather than splices)." .
-:integer a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Integer (deprecated)" ;
+    rdfs:comment "Deprecated pre-release template reference: the subject Struct's effective field list is the named Struct's fields followed by its own. There is no single replacement term; new descriptions state the fields directly, or compose with a Field whose bddo:dataType is the other Struct (which nests rather than splices)."@en .
+:integer a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Integer (deprecated)"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     owl:deprecated true ; dcterms:isReplacedBy :baseInteger ;
-    rdfs:comment "Deprecated pre-release name of bddo:baseInteger, with the same meaning." .
-:float a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Float (deprecated)" ;
+    rdfs:comment "Deprecated pre-release name of bddo:baseInteger, with the same meaning."@en .
+:float a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Float (deprecated)"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     owl:deprecated true ; dcterms:isReplacedBy :baseFloat ;
-    rdfs:comment "Deprecated pre-release name of bddo:baseFloat, with the same meaning." .
+    rdfs:comment "Deprecated pre-release name of bddo:baseFloat, with the same meaning."@en .
 
 # ---------- Enumerated individuals (typed with their controlled-vocabulary class) ----------
-:BigEndian a owl:NamedIndividual, :Endianness ; rdfs:label "Big Endian" .
-:LittleEndian a owl:NamedIndividual, :Endianness ; rdfs:label "Little Endian" .
-:MSBFirst a owl:NamedIndividual, :BitOrder ; rdfs:label "MSB-first bit order" .
-:LSBFirst a owl:NamedIndividual, :BitOrder ; rdfs:label "LSB-first bit order" .
-:baseInteger a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Integer" .
-:baseFloat   a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Float" .
-:baseString  a owl:NamedIndividual, :BaseType ; rdfs:label "Base type String" .
-:baseBytes   a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Bytes" .
-:streamStart a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: stream start" .
-:streamEnd   a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: stream end" .
-:parentStart a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: parent start" .
-:currentPosition a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: current position" .
-:regionScope a owl:NamedIndividual, :SeekScope ; rdfs:label "Seek scope: bounded region" ;
-    rdfs:comment "The default: an offset-addressed read must stay within the innermost enclosing bounded region." .
-:streamScope a owl:NamedIndividual, :SeekScope ; rdfs:label "Seek scope: whole stream" ;
-    rdfs:comment "The read is resolved against the whole stream; the enclosing region bound does not apply to it." .
-:utf8 a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-8" .
-:ascii a owl:NamedIndividual, :Encoding ; rdfs:label "US-ASCII" .
-:utf16le a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 LE" .
-:utf16be a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 BE" .
-:latin1 a owl:NamedIndividual, :Encoding ; rdfs:label "ISO-8859-1" .
-:crc16 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16" ;
+:BigEndian a owl:NamedIndividual, :Endianness ; rdfs:label "Big Endian"@en .
+:LittleEndian a owl:NamedIndividual, :Endianness ; rdfs:label "Little Endian"@en .
+:MSBFirst a owl:NamedIndividual, :BitOrder ; rdfs:label "MSB-first bit order"@en .
+:LSBFirst a owl:NamedIndividual, :BitOrder ; rdfs:label "LSB-first bit order"@en .
+:baseInteger a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Integer"@en .
+:baseFloat   a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Float"@en .
+:baseString  a owl:NamedIndividual, :BaseType ; rdfs:label "Base type String"@en .
+:baseBytes   a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Bytes"@en .
+:streamStart a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: stream start"@en .
+:streamEnd   a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: stream end"@en .
+:parentStart a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: parent start"@en .
+:currentPosition a owl:NamedIndividual, :OffsetBase ; rdfs:label "Offset base: current position"@en .
+:regionScope a owl:NamedIndividual, :SeekScope ; rdfs:label "Seek scope: bounded region"@en ;
+    rdfs:comment "The default: an offset-addressed read must stay within the innermost enclosing bounded region."@en .
+:streamScope a owl:NamedIndividual, :SeekScope ; rdfs:label "Seek scope: whole stream"@en ;
+    rdfs:comment "The read is resolved against the whole stream; the enclosing region bound does not apply to it."@en .
+:utf8 a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-8"@en .
+:ascii a owl:NamedIndividual, :Encoding ; rdfs:label "US-ASCII"@en .
+:utf16le a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 LE"@en .
+:utf16be a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 BE"@en .
+:latin1 a owl:NamedIndividual, :Encoding ; rdfs:label "ISO-8859-1"@en .
+:crc16 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16"@en ;
     :crcWidth 16 ; :crcPolynomial 4129 ; :crcInit 65535 ; :crcReflectIn false ; :crcReflectOut false ; :crcXorOut 0 ; :crcCheck 10673 ;
-    rdfs:comment "CRC-16/CCITT-FALSE (the catalogue's CRC-16/IBM-3740): polynomial 0x1021, initial value 0xFFFF, no input or output reflection, final XOR 0x0000; check value 0x29B1 over the ASCII bytes \"123456789\". No other CRC-16 variant is identified by this term: CRC-16/ARC, XMODEM, MODBUS and X-25 have terms of their own, and any other is a bddo:CustomCrc. HDL: crc16." .
-:crc32 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32" ;
+    rdfs:comment "CRC-16/CCITT-FALSE (the catalogue's CRC-16/IBM-3740): polynomial 0x1021, initial value 0xFFFF, no input or output reflection, final XOR 0x0000; check value 0x29B1 over the ASCII bytes \"123456789\". No other CRC-16 variant is identified by this term: CRC-16/ARC, XMODEM, MODBUS and X-25 have terms of their own, and any other is a bddo:CustomCrc. HDL: crc16."@en .
+:crc32 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32"@en ;
     :crcWidth 32 ; :crcPolynomial 79764919 ; :crcInit 4294967295 ; :crcReflectIn true ; :crcReflectOut true ; :crcXorOut 4294967295 ; :crcCheck 3421780262 ;
-    rdfs:comment "CRC-32/ISO-HDLC (the zlib/PNG CRC): polynomial 0x04C11DB7 (0xEDB88320 reflected), initial value 0xFFFFFFFF, input and output reflected, final XOR 0xFFFFFFFF; check value 0xCBF43926 over the ASCII bytes \"123456789\". CRC-32C, BZIP2 and MPEG-2 have terms of their own. HDL: crc32." .
-:adler32 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "Adler-32" .
-:md5 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "MD5" .
-:sha1 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "SHA-1" .
-:sha256 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "SHA-256" .
+    rdfs:comment "CRC-32/ISO-HDLC (the zlib/PNG CRC): polynomial 0x04C11DB7 (0xEDB88320 reflected), initial value 0xFFFFFFFF, input and output reflected, final XOR 0xFFFFFFFF; check value 0xCBF43926 over the ASCII bytes \"123456789\". CRC-32C, BZIP2 and MPEG-2 have terms of their own. HDL: crc32."@en .
+:adler32 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "Adler-32"@en .
+:md5 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "MD5"@en .
+:sha1 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "SHA-1"@en .
+:sha256 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "SHA-256"@en .
 # Named CRC variants (Rocksoft model; parameters and check values from the CRC catalogue,
 # reveng.sourceforge.io/crc-catalogue). Integers are written in decimal; the comment gives hex.
-:crc8Smbus a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-8/SMBUS" ;
+:crc8Smbus a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-8/SMBUS"@en ;
     :crcWidth 8 ; :crcPolynomial 7 ; :crcInit 0 ; :crcReflectIn false ; :crcReflectOut false ; :crcXorOut 0 ; :crcCheck 244 ;
-    rdfs:comment "CRC-8/SMBUS: width 8, polynomial 0x07, initial value 0x00, input not reflected, output not reflected, final XOR 0x00; check value 0xF4 over the ASCII bytes \"123456789\". HDL: crc8." .
-:crc16Arc a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16/ARC" ;
+    rdfs:comment "CRC-8/SMBUS: width 8, polynomial 0x07, initial value 0x00, input not reflected, output not reflected, final XOR 0x00; check value 0xF4 over the ASCII bytes \"123456789\". HDL: crc8."@en .
+:crc16Arc a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16/ARC"@en ;
     :crcWidth 16 ; :crcPolynomial 32773 ; :crcInit 0 ; :crcReflectIn true ; :crcReflectOut true ; :crcXorOut 0 ; :crcCheck 47933 ;
-    rdfs:comment "CRC-16/ARC: width 16, polynomial 0x8005, initial value 0x0000, input reflected, output reflected, final XOR 0x0000; check value 0xBB3D over the ASCII bytes \"123456789\". HDL: crc16arc." .
-:crc16Xmodem a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16/XMODEM" ;
+    rdfs:comment "CRC-16/ARC: width 16, polynomial 0x8005, initial value 0x0000, input reflected, output reflected, final XOR 0x0000; check value 0xBB3D over the ASCII bytes \"123456789\". HDL: crc16arc."@en .
+:crc16Xmodem a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16/XMODEM"@en ;
     :crcWidth 16 ; :crcPolynomial 4129 ; :crcInit 0 ; :crcReflectIn false ; :crcReflectOut false ; :crcXorOut 0 ; :crcCheck 12739 ;
-    rdfs:comment "CRC-16/XMODEM: width 16, polynomial 0x1021, initial value 0x0000, input not reflected, output not reflected, final XOR 0x0000; check value 0x31C3 over the ASCII bytes \"123456789\". HDL: crc16xmodem." .
-:crc16Modbus a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16/MODBUS" ;
+    rdfs:comment "CRC-16/XMODEM: width 16, polynomial 0x1021, initial value 0x0000, input not reflected, output not reflected, final XOR 0x0000; check value 0x31C3 over the ASCII bytes \"123456789\". HDL: crc16xmodem."@en .
+:crc16Modbus a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16/MODBUS"@en ;
     :crcWidth 16 ; :crcPolynomial 32773 ; :crcInit 65535 ; :crcReflectIn true ; :crcReflectOut true ; :crcXorOut 0 ; :crcCheck 19255 ;
-    rdfs:comment "CRC-16/MODBUS: width 16, polynomial 0x8005, initial value 0xFFFF, input reflected, output reflected, final XOR 0x0000; check value 0x4B37 over the ASCII bytes \"123456789\". HDL: crc16modbus." .
-:crc16X25 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16/X-25" ;
+    rdfs:comment "CRC-16/MODBUS: width 16, polynomial 0x8005, initial value 0xFFFF, input reflected, output reflected, final XOR 0x0000; check value 0x4B37 over the ASCII bytes \"123456789\". HDL: crc16modbus."@en .
+:crc16X25 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16/X-25"@en ;
     :crcWidth 16 ; :crcPolynomial 4129 ; :crcInit 65535 ; :crcReflectIn true ; :crcReflectOut true ; :crcXorOut 65535 ; :crcCheck 36974 ;
-    rdfs:comment "CRC-16/IBM-SDLC (X-25): width 16, polynomial 0x1021, initial value 0xFFFF, input reflected, output reflected, final XOR 0xFFFF; check value 0x906E over the ASCII bytes \"123456789\". HDL: crc16x25." .
-:crc32c a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32C" ;
+    rdfs:comment "CRC-16/IBM-SDLC (X-25): width 16, polynomial 0x1021, initial value 0xFFFF, input reflected, output reflected, final XOR 0xFFFF; check value 0x906E over the ASCII bytes \"123456789\". HDL: crc16x25."@en .
+:crc32c a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32C"@en ;
     :crcWidth 32 ; :crcPolynomial 517762881 ; :crcInit 4294967295 ; :crcReflectIn true ; :crcReflectOut true ; :crcXorOut 4294967295 ; :crcCheck 3808858755 ;
-    rdfs:comment "CRC-32/ISCSI (CRC-32C): width 32, polynomial 0x1EDC6F41, initial value 0xFFFFFFFF, input reflected, output reflected, final XOR 0xFFFFFFFF; check value 0xE3069283 over the ASCII bytes \"123456789\". HDL: crc32c." .
-:crc32Bzip2 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32/BZIP2" ;
+    rdfs:comment "CRC-32/ISCSI (CRC-32C): width 32, polynomial 0x1EDC6F41, initial value 0xFFFFFFFF, input reflected, output reflected, final XOR 0xFFFFFFFF; check value 0xE3069283 over the ASCII bytes \"123456789\". HDL: crc32c."@en .
+:crc32Bzip2 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32/BZIP2"@en ;
     :crcWidth 32 ; :crcPolynomial 79764919 ; :crcInit 4294967295 ; :crcReflectIn false ; :crcReflectOut false ; :crcXorOut 4294967295 ; :crcCheck 4236843288 ;
-    rdfs:comment "CRC-32/BZIP2: width 32, polynomial 0x04C11DB7, initial value 0xFFFFFFFF, input not reflected, output not reflected, final XOR 0xFFFFFFFF; check value 0xFC891918 over the ASCII bytes \"123456789\". HDL: crc32bzip2." .
-:crc32Mpeg2 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32/MPEG-2" ;
+    rdfs:comment "CRC-32/BZIP2: width 32, polynomial 0x04C11DB7, initial value 0xFFFFFFFF, input not reflected, output not reflected, final XOR 0xFFFFFFFF; check value 0xFC891918 over the ASCII bytes \"123456789\". HDL: crc32bzip2."@en .
+:crc32Mpeg2 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-32/MPEG-2"@en ;
     :crcWidth 32 ; :crcPolynomial 79764919 ; :crcInit 4294967295 ; :crcReflectIn false ; :crcReflectOut false ; :crcXorOut 0 ; :crcCheck 58124007 ;
-    rdfs:comment "CRC-32/MPEG-2: width 32, polynomial 0x04C11DB7, initial value 0xFFFFFFFF, input not reflected, output not reflected, final XOR 0x00000000; check value 0x0376E6E7 over the ASCII bytes \"123456789\". HDL: crc32mpeg2." .
-:crc64Ecma182 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-64/ECMA-182" ;
+    rdfs:comment "CRC-32/MPEG-2: width 32, polynomial 0x04C11DB7, initial value 0xFFFFFFFF, input not reflected, output not reflected, final XOR 0x00000000; check value 0x0376E6E7 over the ASCII bytes \"123456789\". HDL: crc32mpeg2."@en .
+:crc64Ecma182 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-64/ECMA-182"@en ;
     :crcWidth 64 ; :crcPolynomial 4823603603198064275 ; :crcInit 0 ; :crcReflectIn false ; :crcReflectOut false ; :crcXorOut 0 ; :crcCheck 7800480153909949255 ;
-    rdfs:comment "CRC-64/ECMA-182: width 64, polynomial 0x42F0E1EBA9EA3693, initial value 0x0000000000000000, input not reflected, output not reflected, final XOR 0x0000000000000000; check value 0x6C40DF5F0B497347 over the ASCII bytes \"123456789\". HDL: crc64ecma." .
-:crc64Xz a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-64/XZ" ;
+    rdfs:comment "CRC-64/ECMA-182: width 64, polynomial 0x42F0E1EBA9EA3693, initial value 0x0000000000000000, input not reflected, output not reflected, final XOR 0x0000000000000000; check value 0x6C40DF5F0B497347 over the ASCII bytes \"123456789\". HDL: crc64ecma."@en .
+:crc64Xz a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-64/XZ"@en ;
     :crcWidth 64 ; :crcPolynomial 4823603603198064275 ; :crcInit 18446744073709551615 ; :crcReflectIn true ; :crcReflectOut true ; :crcXorOut 18446744073709551615 ; :crcCheck 11051210869376104954 ;
-    rdfs:comment "CRC-64/XZ: width 64, polynomial 0x42F0E1EBA9EA3693, initial value 0xFFFFFFFFFFFFFFFF, input reflected, output reflected, final XOR 0xFFFFFFFFFFFFFFFF; check value 0x995DC9BBDF1939FA over the ASCII bytes \"123456789\". HDL: crc64xz." .
+    rdfs:comment "CRC-64/XZ: width 64, polynomial 0x42F0E1EBA9EA3693, initial value 0xFFFFFFFFFFFFFFFF, input reflected, output reflected, final XOR 0xFFFFFFFFFFFFFFFF; check value 0x995DC9BBDF1939FA over the ASCII bytes \"123456789\". HDL: crc64xz."@en .
 
 # ---------- Core primitive DataType instances ----------
 {{datatype:uint8}}
@@ -475,17 +475,17 @@
 {{datatype:float64}}
 {{datatype:float64be}}
 {{datatype:float64le}}
-:bytes  a :DataType ; rdfs:label "bytes"  ; :baseType :baseBytes  ; :xsdType xsd:hexBinary .
-:string a :DataType ; rdfs:label "string" ; :baseType :baseString ; :xsdType xsd:string .
+:bytes  a owl:NamedIndividual , :DataType ; rdfs:label "bytes"@en  ; :baseType :baseBytes  ; :xsdType xsd:hexBinary .
+:string a owl:NamedIndividual , :DataType ; rdfs:label "string"@en ; :baseType :baseString ; :xsdType xsd:string .
 
 # ---------- ASCII-coded numeric types ----------
 # Numbers written as text in a fixed-width field (NITF BCS-N, FITS card values,
 # USGSDEM Fortran fields). The parsed HEL value is numeric, so these fields may
 # drive sizing, offset and repeat expressions — which bddo:string cannot.
-:asciiInteger a :DataType ; rdfs:label "asciiInteger" ; :baseType :baseInteger ; :encoding :ascii ; :xsdType xsd:integer ;
-    rdfs:comment "An integer written as text, occupying the field's declared width (bddo:size) or ending at its terminator. Surrounding space and a leading '+'/'-' are accepted. Radix is bddo:numericBase, default 10. Yields a HEL Integer." .
-:asciiDecimal a :DataType ; rdfs:label "asciiDecimal" ; :baseType :baseFloat ; :encoding :ascii ; :xsdType xsd:decimal ;
-    rdfs:comment "A fixed- or floating-point number written as text, occupying the field's declared width or ending at its terminator. Accepts leading sign, decimal point and an exponent introduced by E, e, D or d -- Fortran writes a double-precision exponent with D, and formats written by Fortran (USGSDEM record A) use it. A value spelled 'nan' (any case, optional leading sign) reads as a not-a-number; an infinite value is not accepted. Yields a HEL Float." .
+:asciiInteger a owl:NamedIndividual , :DataType ; rdfs:label "asciiInteger"@en ; :baseType :baseInteger ; :encoding :ascii ; :xsdType xsd:integer ;
+    rdfs:comment "An integer written as text, occupying the field's declared width (bddo:size) or ending at its terminator. Surrounding space and a leading '+'/'-' are accepted. Radix is bddo:numericBase, default 10. Yields a HEL Integer."@en .
+:asciiDecimal a owl:NamedIndividual , :DataType ; rdfs:label "asciiDecimal"@en ; :baseType :baseFloat ; :encoding :ascii ; :xsdType xsd:decimal ;
+    rdfs:comment "A fixed- or floating-point number written as text, occupying the field's declared width or ending at its terminator. Accepts leading sign, decimal point and an exponent introduced by E, e, D or d -- Fortran writes a double-precision exponent with D, and formats written by Fortran (USGSDEM record A) use it. A value spelled 'nan' (any case, optional leading sign) reads as a not-a-number; an infinite value is not accepted. Yields a HEL Float."@en .
 
 # ---------- Variable-length integers ----------
 # A varint's width is neither intrinsic (as with uint32) nor declared (as with
@@ -499,12 +499,12 @@
 # OSM PBF), the PMTiles directory, Parquet's Thrift-compact footer, FlatGeobuf and
 # OpenFileGDB geometry. Framing those was already possible byte by byte; reconstructing the
 # VALUE was not, which is what kept them out of reach.
-:varuint a :DataType ; rdfs:label "varuint" ; :baseType :baseInteger ; :isSigned false ; :xsdType xsd:nonNegativeInteger ;
-    rdfs:comment "Unsigned base-128 varint (LEB128): 7 value bits per byte, little-endian, the high bit set on every byte but the last. Protobuf's plain varint." .
-:varint a :DataType ; rdfs:label "varint" ; :baseType :baseInteger ; :isSigned true ; :xsdType xsd:integer ;
-    rdfs:comment "Signed base-128 varint: LEB128 carrying a zigzag-encoded value, so small negatives stay short -- n maps to (n << 1) XOR (n >> 63). Protobuf's sint32/sint64. Distinct from reading an unsigned varint and reinterpreting the bits, which is protobuf's int32 and sign-extends instead." .
-:sqliteVarint a :DataType ; rdfs:label "sqliteVarint" ; :baseType :baseInteger ; :isSigned true ; :xsdType xsd:integer ;
-    rdfs:comment "SQLite's variable-length integer: one to nine BIG-endian bytes, high bit as continuation for the first eight, the ninth contributing all eight bits. A different scheme from LEB128, not a dialect of it; used by SQLite-backed formats (GeoPackage, MBTiles, Rasterlite)." .
+:varuint a owl:NamedIndividual , :DataType ; rdfs:label "varuint"@en ; :baseType :baseInteger ; :isSigned false ; :xsdType xsd:nonNegativeInteger ;
+    rdfs:comment "Unsigned base-128 varint (LEB128): 7 value bits per byte, little-endian, the high bit set on every byte but the last. Protobuf's plain varint."@en .
+:varint a owl:NamedIndividual , :DataType ; rdfs:label "varint"@en ; :baseType :baseInteger ; :isSigned true ; :xsdType xsd:integer ;
+    rdfs:comment "Signed base-128 varint: LEB128 carrying a zigzag-encoded value, so small negatives stay short -- n maps to (n << 1) XOR (n >> 63). Protobuf's sint32/sint64. Distinct from reading an unsigned varint and reinterpreting the bits, which is protobuf's int32 and sign-extends instead."@en .
+:sqliteVarint a owl:NamedIndividual , :DataType ; rdfs:label "sqliteVarint"@en ; :baseType :baseInteger ; :isSigned true ; :xsdType xsd:integer ;
+    rdfs:comment "SQLite's variable-length integer: one to nine BIG-endian bytes, high bit as continuation for the first eight, the ninth contributing all eight bits. A different scheme from LEB128, not a dialect of it; used by SQLite-backed formats (GeoPackage, MBTiles, Rasterlite)."@en .
 
 # =========================================================
 # SHACL shapes (domain + cardinality; refine the declared ranges)
@@ -1124,10 +1124,10 @@ bddo:VarintWidthShape a sh:NodeShape ;
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-bddo:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+bddo:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
-bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     sh:targetSubjectsOf bddo:alignment ,
         bddo:atOffset ,

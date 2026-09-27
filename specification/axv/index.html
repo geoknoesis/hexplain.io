@@ -83,15 +83,15 @@
     owl:priorVersion &lt;https://hexplain.io/ns/archive/1.2&gt; ;
     dcterms:modified "2026-09-27"^^xsd:date ;
     owl:imports &lt;https://hexplain.io/ns/aspect/packaging&gt; , &lt;https://hexplain.io/ns/aspect/fsmeta&gt; , &lt;https://hexplain.io/ns/aspect/integrity&gt; , &lt;https://hexplain.io/ns/aspect/encoding&gt; ;
-    rdfs:label "Hexplain Archive Vocabulary (AXV)" ;
-    rdfs:comment "Semantic vocabulary for archive and container file properties." ;
+    rdfs:label "Hexplain Archive Vocabulary (AXV)"@en ;
+    rdfs:comment "Semantic vocabulary for archive and container file properties."@en ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
     dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
     vann:preferredNamespacePrefix "axv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/archive#" .
 
-:Archive a owl:Class ; rdfs:label "Archive" ; rdfs:subClassOf apkg:Container ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; .
-:ArchiveEntry a owl:Class ; rdfs:label "Archive Entry" ; rdfs:subClassOf apkg:Entry ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; .
-:CentralDirectory a owl:Class ; rdfs:label "Central Directory" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; .
+:Archive a owl:Class ; rdfs:label "Archive"@en ; rdfs:subClassOf apkg:Container ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; .
+:ArchiveEntry a owl:Class ; rdfs:label "Archive Entry"@en ; rdfs:subClassOf apkg:Entry ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; .
+:CentralDirectory a owl:Class ; rdfs:label "Central Directory"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; .
 
 # Cross-cutting properties come from the imported aspect layer:
 #   apkg:hasEntry          (hx-packaging)
@@ -102,8 +102,8 @@
 #   aintg:checksum         (hx-integrity)
 #   aenc:compression       (hx-encoding; an ObjectProperty valued by a skos:Concept such as menc:Deflate)
 # Archive-specific properties are defined below.
-:compressedSize a owl:DatatypeProperty ; rdfs:label "compressed size" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ; rdfs:range xsd:unsignedLong .
-:entryComment a owl:DatatypeProperty ; rdfs:label "entry comment" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ; rdfs:range xsd:string .
+:compressedSize a owl:DatatypeProperty ; rdfs:label "compressed size"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ; rdfs:range xsd:unsignedLong .
+:entryComment a owl:DatatypeProperty ; rdfs:label "entry comment"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ; rdfs:range xsd:string .
 
 # ---------- SHACL ----------
 axv:ArchiveShape a sh:NodeShape ; sh:targetClass axv:Archive ;
@@ -122,10 +122,10 @@ axv:EntryShape a sh:NodeShape ; sh:targetClass axv:ArchiveEntry ;
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-axv:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+axv:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
-axv:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+axv:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ;
     sh:targetSubjectsOf axv:compressedSize ,
         axv:entryComment ;

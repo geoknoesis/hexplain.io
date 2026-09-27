@@ -275,6 +275,18 @@ cites `req-pm-context-3`.
 - New gate `test_ontology_licenses`: every module declares exactly the CC BY 4.0 licence and its
   creator, and `LICENSE` and `LICENSING.md` state both regimes.
 
+### Language tags and named individuals (review fixes)
+
+- Every `rdfs:label`, `rdfs:comment` and SKOS documentation literal of a family term is tagged
+  `@en` (1,162 literals, 710 of them labels, were plain), in the Turtle and the authoring
+  templates and presets alike. New gate `test_language_tags`.
+- Every individual of a family class is declared `owl:NamedIndividual` (the `bddo:DataType`
+  primitives, the `dlv:Axis` values, the hxf functions and kinds, the conf and req closed sets,
+  the register lifecycle statuses: 104 were not). New gate `test_named_individuals`.
+- No individual is renamed. `specification/ontology-design` (Naming) states the convention for
+  new ones: UpperCamelCase, except that a value joins its set's existing case and a value with an
+  established spelling (a primitive, an encoding, a function) keeps it.
+
 ### Standards alignments (review fixes)
 
 Only true statements are asserted: `rdfs:subPropertyOf` where every use of the family term

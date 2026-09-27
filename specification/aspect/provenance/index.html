@@ -26,35 +26,35 @@
     owl:versionIRI &lt;https://hexplain.io/ns/aspect/provenance/1.3&gt; ; owl:versionInfo "1.3" ;
     owl:priorVersion &lt;https://hexplain.io/ns/aspect/provenance/1.2&gt; ;
     dcterms:modified "2026-09-27"^^xsd:date ;
-    rdfs:label "Hexplain Aspect — Provenance &amp; Acquisition (hx-provenance)" ;
-    rdfs:comment "Aspect for acquisition provenance: sensor, platform, acquisition time. Relates to PROV and SOSA/SSN by rdfs:seeAlso, with one reviewed subclass alignment (aprov:Platform is a sosa:Platform). Cross-cutting across sensed data." ;
+    rdfs:label "Hexplain Aspect — Provenance &amp; Acquisition (hx-provenance)"@en ;
+    rdfs:comment "Aspect for acquisition provenance: sensor, platform, acquisition time. Relates to PROV and SOSA/SSN by rdfs:seeAlso, with one reviewed subclass alignment (aprov:Platform is a sosa:Platform). Cross-cutting across sensed data."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
     dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
     vann:preferredNamespacePrefix "aprov" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/provenance#" .
 
-:AcquisitionInfo a owl:Class ; rdfs:label "Acquisition Info" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ; rdfs:seeAlso prov:Activity .
-:SensorModel a owl:Class ; rdfs:label "Sensor Model" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ; rdfs:seeAlso sosa:Sensor .
-:Platform a owl:Class ; rdfs:label "Platform" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ; rdfs:subClassOf sosa:Platform .
+:AcquisitionInfo a owl:Class ; rdfs:label "Acquisition Info"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ; rdfs:seeAlso prov:Activity .
+:SensorModel a owl:Class ; rdfs:label "Sensor Model"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ; rdfs:seeAlso sosa:Sensor .
+:Platform a owl:Class ; rdfs:label "Platform"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ; rdfs:subClassOf sosa:Platform .
 
-:acquisitionTime a owl:DatatypeProperty ; rdfs:label "acquisition time" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ; rdfs:seeAlso prov:endedAtTime ; rdfs:range xsd:dateTime .
-:platformName a owl:DatatypeProperty ; rdfs:label "platform name" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ; rdfs:range xsd:string .
-:sensorType a owl:DatatypeProperty ; rdfs:label "sensor type" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ; rdfs:range xsd:string .
+:acquisitionTime a owl:DatatypeProperty ; rdfs:label "acquisition time"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ; rdfs:seeAlso prov:endedAtTime ; rdfs:range xsd:dateTime .
+:platformName a owl:DatatypeProperty ; rdfs:label "platform name"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ; rdfs:range xsd:string .
+:sensorType a owl:DatatypeProperty ; rdfs:label "sensor type"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ; rdfs:range xsd:string .
 
 # The three classes were unrelated: nothing said which platform or sensor model an acquisition
 # used, so a record could only repeat their names as text (platformName, sensorType). Linked,
 # not subsumed: sosa:isHostedBy relates a sensor DEVICE to its platform and sosa:madeBySensor an
 # observation to a device, while an AcquisitionInfo is a record about an acquisition and a
 # SensorModel a kind of sensor.
-:hasPlatform a owl:ObjectProperty ; rdfs:label "has platform" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ;
+:hasPlatform a owl:ObjectProperty ; rdfs:label "has platform"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ;
     rdfs:range :Platform ; rdfs:seeAlso sosa:isHostedBy , prov:wasAssociatedWith ;
-    rdfs:comment "The platform (satellite, aircraft, vehicle, vessel, station) that carried the observing equipment during the acquisition an aprov:AcquisitionInfo describes." .
-:hasSensorModel a owl:ObjectProperty ; rdfs:label "has sensor model" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ;
+    rdfs:comment "The platform (satellite, aircraft, vehicle, vessel, station) that carried the observing equipment during the acquisition an aprov:AcquisitionInfo describes."@en .
+:hasSensorModel a owl:ObjectProperty ; rdfs:label "has sensor model"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ;
     rdfs:range :SensorModel ; rdfs:seeAlso sosa:madeBySensor , prov:used ;
-    rdfs:comment "The model of sensor or instrument that made the observations of the acquisition an aprov:AcquisitionInfo describes." .
+    rdfs:comment "The model of sensor or instrument that made the observations of the acquisition an aprov:AcquisitionInfo describes."@en .
 
 :AcquisitionInfoShape a sh:NodeShape ;
-    rdfs:label "Acquisition info shape" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ;
-    rdfs:comment "An acquisition's platform and sensor model are resources of their classes, so a record links the resources rather than repeating a name as text." ;
+    rdfs:label "Acquisition info shape"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/provenance&gt; ;
+    rdfs:comment "An acquisition's platform and sensor model are resources of their classes, so a record links the resources rather than repeating a name as text."@en ;
     sh:targetClass :AcquisitionInfo ;
     sh:targetSubjectsOf :hasPlatform , :hasSensorModel ;
     sh:property [ sh:path :hasPlatform ; sh:nodeKind sh:BlankNodeOrIRI ; sh:class :Platform ;

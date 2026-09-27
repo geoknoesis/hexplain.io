@@ -70,53 +70,53 @@ WHERE {
     owl:priorVersion &lt;https://hexplain.io/ns/aspect/bundle/1.4&gt; ;
     dcterms:modified "2026-09-27"^^xsd:date ;
     owl:imports &lt;https://hexplain.io/ns/bddo&gt; ;
-    rdfs:label "Hexplain Aspect — Bundle (hx-bundle)" ;
-    rdfs:comment "Base aspect for multi-part assets: one logical Asset realized by N physical Parts, bound by containment, naming-convention, manifest-reference, or concatenation. Part aspect facets lift onto the Asset for a unified semantic view." ;
+    rdfs:label "Hexplain Aspect — Bundle (hx-bundle)"@en ;
+    rdfs:comment "Base aspect for multi-part assets: one logical Asset realized by N physical Parts, bound by containment, naming-convention, manifest-reference, or concatenation. Part aspect facets lift onto the Asset for a unified semantic view."@en ;
     dcterms:created "2026-07-26"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
     dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
     vann:preferredNamespacePrefix "abnd" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/bundle#" .
 
 # ---------- Classes ----------
-:Asset a owl:Class ; rdfs:label "Asset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+:Asset a owl:Class ; rdfs:label "Asset"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:seeAlso dcat:Dataset ;
-    rdfs:comment "A logical resource realized by one or more physical Parts. The single unified semantic subject." .
-:Part a owl:Class ; rdfs:label "Part" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
-    rdfs:comment "One physical carrier (a byte stream / file) contributing to an Asset. Composes with hx-fsmeta and BDDO at instance level." .
-:BindingKind a owl:Class ; rdfs:label "Binding Kind" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
-    rdfs:comment "The mechanism binding an Asset's Parts. Closed enumeration." .
-:BundleProfile a owl:Class ; rdfs:label "Bundle Profile" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
-    rdfs:comment "A reusable format template: its binding kind plus the set of expected member PartSpecs." .
-:PartSpec a owl:Class ; rdfs:label "Part Spec" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
-    rdfs:comment "One expected member of a BundleProfile: role, extension, requiredness, and the aspect it carries." .
+    rdfs:comment "A logical resource realized by one or more physical Parts. The single unified semantic subject."@en .
+:Part a owl:Class ; rdfs:label "Part"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:comment "One physical carrier (a byte stream / file) contributing to an Asset. Composes with hx-fsmeta and BDDO at instance level."@en .
+:BindingKind a owl:Class ; rdfs:label "Binding Kind"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:comment "The mechanism binding an Asset's Parts. Closed enumeration."@en .
+:BundleProfile a owl:Class ; rdfs:label "Bundle Profile"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:comment "A reusable format template: its binding kind plus the set of expected member PartSpecs."@en .
+:PartSpec a owl:Class ; rdfs:label "Part Spec"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:comment "One expected member of a BundleProfile: role, extension, requiredness, and the aspect it carries."@en .
 
 # ---------- Instance-level properties ----------
 # A part is included, logically or physically, in its asset: exactly dcterms:hasPart and
 # dcterms:isPartOf, which state no domain or range, so the subproperties entail nothing false.
-:hasPart a owl:ObjectProperty ; rdfs:label "has part" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+:hasPart a owl:ObjectProperty ; rdfs:label "has part"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:range :Part ; owl:inverseOf :partOf ; rdfs:subPropertyOf dcterms:hasPart .
-:partOf a owl:ObjectProperty ; rdfs:label "part of" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+:partOf a owl:ObjectProperty ; rdfs:label "part of"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:range :Asset ; rdfs:subPropertyOf dcterms:isPartOf .
-:primaryPart a owl:ObjectProperty ; rdfs:label "primary part" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+:primaryPart a owl:ObjectProperty ; rdfs:label "primary part"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:subPropertyOf :hasPart ; rdfs:range :Part ;
-    rdfs:comment "The recognition anchor / manifest part (e.g. .shp, .gltf, .mpd)." .
-:partRole a owl:ObjectProperty ; rdfs:label "part role" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
-    rdfs:range skos:Concept ; rdfs:comment "The role a Part or PartSpec plays, from a part-role register bound by the profile." .
-:boundBy a owl:ObjectProperty ; rdfs:label "bound by" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:comment "The recognition anchor / manifest part (e.g. .shp, .gltf, .mpd)."@en .
+:partRole a owl:ObjectProperty ; rdfs:label "part role"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:range skos:Concept ; rdfs:comment "The role a Part or PartSpec plays, from a part-role register bound by the profile."@en .
+:boundBy a owl:ObjectProperty ; rdfs:label "bound by"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:range :BindingKind .
-:partIndex a owl:DatatypeProperty ; rdfs:label "part index" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
-    rdfs:range xsd:nonNegativeInteger ; rdfs:comment "Ordinal of a Part within a segmented/concatenated Asset." .
-:stem a owl:DatatypeProperty ; rdfs:label "stem" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
-    rdfs:range xsd:string ; rdfs:comment "Shared basename of a naming-convention bundle (e.g. \"roads\")." .
+:partIndex a owl:DatatypeProperty ; rdfs:label "part index"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:range xsd:nonNegativeInteger ; rdfs:comment "Ordinal of a Part within a segmented/concatenated Asset."@en .
+:stem a owl:DatatypeProperty ; rdfs:label "stem"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:range xsd:string ; rdfs:comment "Shared basename of a naming-convention bundle (e.g. \"roads\")."@en .
 
 # ---------- Profile-level properties ----------
-:partSpec a owl:ObjectProperty ; rdfs:label "part spec" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+:partSpec a owl:ObjectProperty ; rdfs:label "part spec"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:range :PartSpec .
-:carriesAspect a owl:ObjectProperty ; rdfs:label "carries aspect" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+:carriesAspect a owl:ObjectProperty ; rdfs:label "carries aspect"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:range owl:Ontology ;
-    rdfs:comment "The aspect ontology whose properties this part contributes. Drives facet lifting. An annotation-style link, NOT an owl:import — orthogonality is preserved." .
-:describedBy a owl:ObjectProperty ; rdfs:label "described by" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:comment "The aspect ontology whose properties this part contributes. Drives facet lifting. An annotation-style link, NOT an owl:import — orthogonality is preserved."@en .
+:describedBy a owl:ObjectProperty ; rdfs:label "described by"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:range &lt;https://hexplain.io/ns/bddo#Struct&gt; ;
-    rdfs:comment "The BDDO byte-layout struct describing this part's bytes (optional). The struct's local name also NAMES the part for cross-part references: HEL's `asset` root resolves `asset.&lt;StructLocalName&gt;.&lt;field&gt;` through this property, so a sidecar described by a struct named Header is reached as asset.Header. Two PartSpecs of one BundleProfile therefore MUST NOT be describedBy structs sharing a local name." .
+    rdfs:comment "The BDDO byte-layout struct describing this part's bytes (optional). The struct's local name also NAMES the part for cross-part references: HEL's `asset` root resolves `asset.&lt;StructLocalName&gt;.&lt;field&gt;` through this property, so a sidecar described by a struct named Header is reached as asset.Header. Two PartSpecs of one BundleProfile therefore MUST NOT be describedBy structs sharing a local name."@en .
 
 # ---------- Cross-part references ----------
 # A part's description may name a field of ANOTHER part of the same asset. This is not an
@@ -158,44 +158,44 @@ WHERE {
 # Requiredness. A cross-part reference SHOULD name a part whose PartSpec is abnd:required
 # true. Depending on an optional part means the referring description cannot be resolved
 # when that part is absent, which is a defect in the profile rather than in the data.
-:required a owl:DatatypeProperty ; rdfs:label "required" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+:required a owl:DatatypeProperty ; rdfs:label "required"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:range xsd:boolean .
-:extension a owl:DatatypeProperty ; rdfs:label "extension" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
-    rdfs:range xsd:string ; rdfs:comment "Filename extension identifying this member (e.g. \".dbf\"). MULTIPLE values are alternatives, not a requirement for several files: the part is whichever ONE of them is present. Some formats name a single member by its content rather than a fixed suffix -- an ESRI .hdr labelled raster carries its grid in .bil, .bip or .bsq according to the LAYOUT keyword, and .flt when floating point -- so one PartSpec with several extensions describes one part, not three. A profile that genuinely expects several files declares several PartSpecs." .
+:extension a owl:DatatypeProperty ; rdfs:label "extension"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:range xsd:string ; rdfs:comment "Filename extension identifying this member (e.g. \".dbf\"). MULTIPLE values are alternatives, not a requirement for several files: the part is whichever ONE of them is present. Some formats name a single member by its content rather than a fixed suffix -- an ESRI .hdr labelled raster carries its grid in .bil, .bip or .bsq according to the LAYOUT keyword, and .flt when floating point -- so one PartSpec with several extensions describes one part, not three. A profile that genuinely expects several files declares several PartSpecs."@en .
 # ---------- Locating a part beyond a flat sibling file ----------
 # abnd:extension names a part by suffix, which assumes every member is a sibling of the
 # others sharing one stem. That covers the two-file sidecar cases and nothing else. A
 # directory-structured asset -- Sentinel-1/2 SAFE, a GRASS mapset, a Zarr store, an Esri
 # compact cache -- puts its members at known PATHS, often several matching one description,
 # and the flat model cannot say so at all.
-:pathPattern a owl:DatatypeProperty ; rdfs:label "path pattern" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+:pathPattern a owl:DatatypeProperty ; rdfs:label "path pattern"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:range xsd:string ;
-    rdfs:comment "A glob matching this member's path relative to the asset root, e.g. \"measurement/*.tiff\". `*` matches within one path segment, `**` across segments, `?` one character. As with abnd:extension, MULTIPLE values are ALTERNATIVES. Mutually exclusive with abnd:extension, which is the flat-sibling shorthand for the pattern \"*&lt;ext&gt;\"." .
-:minParts a owl:DatatypeProperty ; rdfs:label "minimum parts" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:comment "A glob matching this member's path relative to the asset root, e.g. \"measurement/*.tiff\". `*` matches within one path segment, `**` across segments, `?` one character. As with abnd:extension, MULTIPLE values are ALTERNATIVES. Mutually exclusive with abnd:extension, which is the flat-sibling shorthand for the pattern \"*&lt;ext&gt;\"."@en .
+:minParts a owl:DatatypeProperty ; rdfs:label "minimum parts"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:range xsd:nonNegativeInteger ;
-    rdfs:comment "Fewest files that must match this spec. Defaults to 1 when abnd:required is true and 0 otherwise, so the boolean remains sufficient for a single-file member; declare a count only when a spec matches MANY files, which a pattern makes possible and an extension never did." .
-:maxParts a owl:DatatypeProperty ; rdfs:label "maximum parts" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:comment "Fewest files that must match this spec. Defaults to 1 when abnd:required is true and 0 otherwise, so the boolean remains sufficient for a single-file member; declare a count only when a spec matches MANY files, which a pattern makes possible and an extension never did."@en .
+:maxParts a owl:DatatypeProperty ; rdfs:label "maximum parts"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:range xsd:nonNegativeInteger ;
-    rdfs:comment "Most files that may match this spec. Absent means unbounded -- the normal case for a pattern like \"measurement/*.tiff\", where the count is a property of the data rather than of the format." .
-:nestedProfile a owl:ObjectProperty ; rdfs:label "nested profile" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:comment "Most files that may match this spec. Absent means unbounded -- the normal case for a pattern like \"measurement/*.tiff\", where the count is a property of the data rather than of the format."@en .
+:nestedProfile a owl:ObjectProperty ; rdfs:label "nested profile"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:range :BundleProfile ;
-    rdfs:comment "For a member that is itself a structured directory: the BundleProfile its contents conform to, rooted at that member. Lets a profile compose rather than flatten -- a SAFE product describes its annotation directory once instead of enumerating every file in it." .
+    rdfs:comment "For a member that is itself a structured directory: the BundleProfile its contents conform to, rooted at that member. Lets a profile compose rather than flatten -- a SAFE product describes its annotation directory once instead of enumerating every file in it."@en .
 
-:primary a owl:DatatypeProperty ; rdfs:label "primary" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
-    rdfs:range xsd:boolean ; rdfs:comment "Marks the PartSpec whose instance is the Asset's primaryPart." .
-:liftsProperty a owl:ObjectProperty ; rdfs:label "lifts property" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+:primary a owl:DatatypeProperty ; rdfs:label "primary"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
+    rdfs:range xsd:boolean ; rdfs:comment "Marks the PartSpec whose instance is the Asset's primaryPart."@en .
+:liftsProperty a owl:ObjectProperty ; rdfs:label "lifts property"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     rdfs:range &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#Property&gt; ;
-    rdfs:comment "A property of the part's carried aspect that the lifting rule copies from this part onto the asset. When a PartSpec states any, exactly those are lifted. When it states none, the rule falls back to every property whose rdfs:isDefinedBy is the carried aspect ontology -- a documentation annotation, which is why an explicit list is RECOMMENDED: it keeps lifting independent of how the aspect's terms happen to be annotated and of which annotation files are loaded." .
+    rdfs:comment "A property of the part's carried aspect that the lifting rule copies from this part onto the asset. When a PartSpec states any, exactly those are lifted. When it states none, the rule falls back to every property whose rdfs:isDefinedBy is the carried aspect ontology -- a documentation annotation, which is why an explicit list is RECOMMENDED: it keeps lifting independent of how the aspect's terms happen to be annotated and of which annotation files are loaded."@en .
 
 # ---------- Binding-kind enumeration (NamedIndividual + sh:in) ----------
-:Containment a owl:NamedIndividual, :BindingKind ; rdfs:label "Containment" ;
-    rdfs:comment "Parts are physically nested inside one byte stream (ZIP, TAR)." .
-:NamingConvention a owl:NamedIndividual, :BindingKind ; rdfs:label "Naming Convention" ;
-    rdfs:comment "Sibling files sharing a stem, one role per extension (Shapefile, ENVI)." .
-:ManifestReference a owl:NamedIndividual, :BindingKind ; rdfs:label "Manifest Reference" ;
-    rdfs:comment "A primary part references members by path/URI (glTF, DASH, HLS, VRT)." .
-:Concatenation a owl:NamedIndividual, :BindingKind ; rdfs:label "Concatenation" ;
-    rdfs:comment "Parts are ordered fragments of one logical byte stream (multi-volume archives)." .
+:Containment a owl:NamedIndividual, :BindingKind ; rdfs:label "Containment"@en ;
+    rdfs:comment "Parts are physically nested inside one byte stream (ZIP, TAR)."@en .
+:NamingConvention a owl:NamedIndividual, :BindingKind ; rdfs:label "Naming Convention"@en ;
+    rdfs:comment "Sibling files sharing a stem, one role per extension (Shapefile, ENVI)."@en .
+:ManifestReference a owl:NamedIndividual, :BindingKind ; rdfs:label "Manifest Reference"@en ;
+    rdfs:comment "A primary part references members by path/URI (glTF, DASH, HLS, VRT)."@en .
+:Concatenation a owl:NamedIndividual, :BindingKind ; rdfs:label "Concatenation"@en ;
+    rdfs:comment "Parts are ordered fragments of one logical byte stream (multi-volume archives)."@en .
 
 # ---------- Structural SHACL ----------
 :AssetShape a sh:NodeShape ; sh:targetClass :Asset ;
@@ -218,7 +218,7 @@ WHERE {
 # under pyshacl and standalone rdflib. Requires the referenced aspect ontologies in the graph.
 :LiftByCarriedAspectRule a sh:NodeShape ; sh:targetClass :Asset ;
     sh:rule [ a sh:SPARQLRule ;
-        rdfs:label "Lift part facets onto the Asset" ;
+        rdfs:label "Lift part facets onto the Asset"@en ;
         sh:construct """
 CONSTRUCT { $this ?p ?v }
 WHERE {
@@ -307,9 +307,9 @@ abnd:PartSpecShape a sh:NodeShape ;
 # A profile names at most one primary member, and names its described parts unambiguously:
 # HEL's asset.&lt;Name&gt; resolves a part by the local name of the struct its spec is describedBy.
 abnd:BundleProfileShape a sh:NodeShape ;
-    rdfs:label "Bundle profile shape" ;
+    rdfs:label "Bundle profile shape"@en ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
-    rdfs:comment "A bundle profile has at most one primary part spec, and no two of its part specs are described by structs sharing a local name." ;
+    rdfs:comment "A bundle profile has at most one primary part spec, and no two of its part specs are described by structs sharing a local name."@en ;
     sh:targetClass abnd:BundleProfile ;
     sh:targetSubjectsOf abnd:partSpec ;
     sh:property [ sh:path abnd:partSpec ; sh:class abnd:PartSpec ;
@@ -335,10 +335,10 @@ abnd:BundleProfileShape a sh:NodeShape ;
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-abnd:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+abnd:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
-abnd:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+abnd:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/bundle&gt; ;
     sh:targetSubjectsOf abnd:extension ,
         abnd:maxParts ,

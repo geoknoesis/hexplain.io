@@ -17,7 +17,7 @@
     owl:versionIRI <https://hexplain.io/ns/register/media-encoding/1.2> ; owl:versionInfo "1.2" ;
     owl:priorVersion <https://hexplain.io/ns/register/media-encoding/1.1> ;
     dcterms:modified "2026-09-27"^^xsd:date ;
-    rdfs:label "Hexplain Register — Media Encoding" ;
+    rdfs:label "Hexplain Register — Media Encoding"@en ;
     dcterms:created "2026-08-08"^^xsd:date ;
     dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
@@ -59,32 +59,32 @@ menc:PCM a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:topConceptOf men
 menc:CompressionScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/media-encoding> ;
     skos:prefLabel "Compression Register"@en .
 menc:Store a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Store (none)"@en .
-menc:Zlib a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "zlib"@en ; rdfs:comment "RFC 1950 zlib framing around DEFLATE, including its header and Adler-32 checksum. Distinct from raw DEFLATE and gzip framing." .
+menc:Zlib a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "zlib"@en ; rdfs:comment "RFC 1950 zlib framing around DEFLATE, including its header and Adler-32 checksum. Distinct from raw DEFLATE and gzip framing."@en .
 menc:Deflate a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Deflate"@en .
 menc:Gzip a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "gzip"@en .
 menc:BZip2 a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "bzip2"@en .
 menc:LZMA a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "LZMA"@en .
 menc:Zstd a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Zstandard"@en ;
-    skos:note "Zstandard frames (RFC 8878), one or several concatenated; skippable frames are skipped. The Processing Model (Codecs beyond the minimum set) defines decoding; a frame that needs a dictionary is refused." .
+    skos:note "Zstandard frames (RFC 8878), one or several concatenated; skippable frames are skipped. The Processing Model (Codecs beyond the minimum set) defines decoding; a frame that needs a dictionary is refused."@en .
 menc:Snappy a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Snappy"@en .
 menc:LZ4 a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "LZ4"@en ;
-    skos:note "The LZ4 Frame format: magic number 184D2204, a frame descriptor, blocks and an optional content checksum. A raw block without the frame is menc:LZ4Block." .
+    skos:note "The LZ4 Frame format: magic number 184D2204, a frame descriptor, blocks and an optional content checksum. A raw block without the frame is menc:LZ4Block."@en .
 # The raw block format carries no length and no magic, so it cannot share the frame's concept:
 # a decoder has to be told both that it is looking at a bare block and how long its output is.
 menc:LZ4Block a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "LZ4 block"@en ;
-    skos:note "One LZ4 compressed block, without the frame format's header. Its decoded length is not recorded in the data, so a pipeline step names it with the parameter decodedSize (Processing Model, Codecs beyond the minimum set)." .
+    skos:note "One LZ4 compressed block, without the frame format's header. Its decoded length is not recorded in the data, so a pipeline step names it with the parameter decodedSize (Processing Model, Codecs beyond the minimum set)."@en .
 menc:RunLength a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Run-length encoding"@en .
 menc:Blosc a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Blosc"@en ;
-    skos:note "A meta-compressor: it wraps an inner codec and its own shuffle and level settings, which travel as hexplain:codecParameter on the step." .
+    skos:note "A meta-compressor: it wraps an inner codec and its own shuffle and level settings, which travel as hexplain:codecParameter on the step."@en .
 
 # Reversible TRANSFORMS rather than compressors. They shrink nothing on their own; they
 # rearrange bytes so that the compressor after them does better, and they only ever appear
 # as a step of a pipeline. They live in this register because that is what a pipeline step
 # draws from -- the alternative, a parallel filter register, would split one list in two.
 menc:Delta a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Delta / predictor"@en ;
-    skos:note "Stores each value as its difference from the previous one. TIFF calls this a horizontal predictor and numbers its variants; the variant travels as a parameter. Its parameters are named by the Processing Model (Codecs, Delta parameters): elementSize (required: 1, 2, 4 or 8), littleEndian (0 or 1), samplesPerPixel (default 1), rowBytes (0 or a multiple of elementSize x samplesPerPixel) and predictor (2, horizontal, by default; 1, none)." .
+    skos:note "Stores each value as its difference from the previous one. TIFF calls this a horizontal predictor and numbers its variants; the variant travels as a parameter. Its parameters are named by the Processing Model (Codecs, Delta parameters): elementSize (required: 1, 2, 4 or 8), littleEndian (0 or 1), samplesPerPixel (default 1), rowBytes (0 or a multiple of elementSize x samplesPerPixel) and predictor (2, horizontal, by default; 1, none)."@en .
 menc:Shuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Byte shuffle"@en ;
-    skos:note "Groups the Nth byte of every value together, so the high bytes of similar numbers become runs. HDF5 and Blosc both use it." .
+    skos:note "Groups the Nth byte of every value together, so the high bytes of similar numbers become runs. HDF5 and Blosc both use it."@en .
 menc:BitShuffle a skos:Concept ; skos:inScheme menc:CompressionScheme ; skos:topConceptOf menc:CompressionScheme ; skos:prefLabel "Bit shuffle"@en .
 
 # BEGIN GENERATED TERM DOCUMENTATION

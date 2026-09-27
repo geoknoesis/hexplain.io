@@ -26,8 +26,8 @@
     owl:versionIRI <https://hexplain.io/ns/aspect/security/2.2> ; owl:versionInfo "2.2" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/security/2.1> ;
     dcterms:modified "2026-09-27"^^xsd:date ;
-    rdfs:label "Hexplain Aspect — Security Marking (hx-security)" ;
-    rdfs:comment "Aspect for security markings, agnostic to the marking system. Provides the spine every system shares — a sensitivity level, verbatim text, an authority, and review/expiry/downgrade dates — plus one open property, asec:marking, through which a system contributes whatever else it defines: compartments, caveats, handling controls, exemption categories, classification reasons, authority types. Each such value is a skos:Concept whose scheme identifies the kind of marking it is, so a new system is supported by publishing registers rather than by extending this aspect. Naming no register is deliberate: it is what lets one profile bind US/NATO markings and another bind something else entirely." ;
+    rdfs:label "Hexplain Aspect — Security Marking (hx-security)"@en ;
+    rdfs:comment "Aspect for security markings, agnostic to the marking system. Provides the spine every system shares — a sensitivity level, verbatim text, an authority, and review/expiry/downgrade dates — plus one open property, asec:marking, through which a system contributes whatever else it defines: compartments, caveats, handling controls, exemption categories, classification reasons, authority types. Each such value is a skos:Concept whose scheme identifies the kind of marking it is, so a new system is supported by publishing registers rather than by extending this aspect. Naming no register is deliberate: it is what lets one profile bind US/NATO markings and another bind something else entirely."@en ;
     dcterms:created "2026-07-22"^^xsd:date ;
     dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
@@ -39,62 +39,62 @@
 # Flat and composable: these apply directly to whatever bears the marking, so a format's
 # security block maps field by field with no intermediate node.
 
-:markingSystem a owl:DatatypeProperty ; rdfs:label "marking system" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+:markingSystem a owl:DatatypeProperty ; rdfs:label "marking system"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
     rdfs:range xsd:string ;
-    rdfs:comment "The system whose rules this marking is expressed in, as the format writes it — a country or organisation code, a policy name. Without it a level is ambiguous: the same word sits at different heights in different hierarchies, and two systems can use one word for different things." .
+    rdfs:comment "The system whose rules this marking is expressed in, as the format writes it — a country or organisation code, a policy name. Without it a level is ambiguous: the same word sits at different heights in different hierarchies, and two systems can use one word for different things."@en .
 
-:sensitivityLevel a owl:ObjectProperty ; rdfs:label "sensitivity level" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+:sensitivityLevel a owl:ObjectProperty ; rdfs:label "sensitivity level"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
     rdfs:range skos:Concept ;
-    skos:note "Value drawn from the level register bound by the profile." ;
-    rdfs:comment "The resource's sensitivity, as a concept from the bound register. Every marking system has an ordered set of these, whatever it calls them — classification levels, protective markings, TLP colours, confidentiality tiers. The order itself is published by the register, as a skos:OrderedCollection over its own concepts: it belongs there because it differs per system and because a register must not depend on the aspect it serves. Without one, a level is fully described but cannot be compared with its siblings." .
+    skos:note "Value drawn from the level register bound by the profile."@en ;
+    rdfs:comment "The resource's sensitivity, as a concept from the bound register. Every marking system has an ordered set of these, whatever it calls them — classification levels, protective markings, TLP colours, confidentiality tiers. The order itself is published by the register, as a skos:OrderedCollection over its own concepts: it belongs there because it differs per system and because a register must not depend on the aspect it serves. Without one, a level is fully described but cannot be compared with its siblings."@en .
 
-:sensitivityLevelText a owl:DatatypeProperty ; rdfs:label "sensitivity level text" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+:sensitivityLevelText a owl:DatatypeProperty ; rdfs:label "sensitivity level text"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
     rdfs:range xsd:string ;
-    rdfs:comment "The level exactly as the format writes it, kept alongside the resolved concept. A marking is a legal artefact: the bytes actually written matter independently of what they resolve to, and a register revised later must not silently rewrite what a file said." .
+    rdfs:comment "The level exactly as the format writes it, kept alongside the resolved concept. A marking is a legal artefact: the bytes actually written matter independently of what they resolve to, and a register revised later must not silently rewrite what a file said."@en .
 
 # ---------- The extension point ----------
 
-:marking a owl:ObjectProperty ; rdfs:label "marking" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+:marking a owl:ObjectProperty ; rdfs:label "marking"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
     rdfs:range skos:Concept ;
-    skos:note "Repeatable. Values drawn from whichever registers the profile binds to this property." ;
-    rdfs:comment "Any further marking the system defines beyond the level: a compartment, a codeword, a handling caveat, a dissemination control, a declassification instruction or exemption, a reason for classifying, a type of authority. The KIND is carried by the value's skos:inScheme rather than by a separate property, which is what stops this aspect having to enumerate the kinds any one system happens to use — a new kind means publishing a scheme, not editing this file. A profile MAY bind several registers to this property, one per kind." .
+    skos:note "Repeatable. Values drawn from whichever registers the profile binds to this property."@en ;
+    rdfs:comment "Any further marking the system defines beyond the level: a compartment, a codeword, a handling caveat, a dissemination control, a declassification instruction or exemption, a reason for classifying, a type of authority. The KIND is carried by the value's skos:inScheme rather than by a separate property, which is what stops this aspect having to enumerate the kinds any one system happens to use — a new kind means publishing a scheme, not editing this file. A profile MAY bind several registers to this property, one per kind."@en .
 
 # ---------- Who said so, and when ----------
 
-:markingText a owl:DatatypeProperty ; rdfs:label "marking text" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+:markingText a owl:DatatypeProperty ; rdfs:label "marking text"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
     rdfs:range xsd:string ;
-    rdfs:comment "Free text qualifying the marking — the human-readable remainder no code captures." .
+    rdfs:comment "Free text qualifying the marking — the human-readable remainder no code captures."@en .
 
-:markingIdentifier a owl:DatatypeProperty ; rdfs:label "marking identifier" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+:markingIdentifier a owl:DatatypeProperty ; rdfs:label "marking identifier"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
     rdfs:range xsd:string ;
-    rdfs:comment "An identifier the marking system assigns to this particular marking, for tracking or audit." .
+    rdfs:comment "An identifier the marking system assigns to this particular marking, for tracking or audit."@en .
 
-:markingAuthority a owl:DatatypeProperty ; rdfs:label "marking authority" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+:markingAuthority a owl:DatatypeProperty ; rdfs:label "marking authority"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
     rdfs:range xsd:string ;
-    rdfs:comment "Who or what decided the marking — a person, a position, a source document. The KIND of authority (original, derived, delegated) is a system-specific concept and travels as asec:marking." .
+    rdfs:comment "Who or what decided the marking — a person, a position, a source document. The KIND of authority (original, derived, delegated) is a system-specific concept and travels as asec:marking."@en .
 
-:markingDate a owl:DatatypeProperty ; rdfs:label "marking date" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+:markingDate a owl:DatatypeProperty ; rdfs:label "marking date"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
     rdfs:range xsd:date ;
-    rdfs:comment "When the marking was decided, or the date of the source it was derived from." .
+    rdfs:comment "When the marking was decided, or the date of the source it was derived from."@en .
 
-:releasableTo a owl:DatatypeProperty ; rdfs:label "releasable to" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+:releasableTo a owl:DatatypeProperty ; rdfs:label "releasable to"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
     rdfs:range xsd:string ;
-    rdfs:comment "An audience the resource may be released to, verbatim (repeatable). Kept first-class rather than folded into asec:marking for two reasons: audience restriction is universal — a system with no compartments and no declassification still says who may see the thing — and it is usually written as bare codes with no register behind them. A profile that HAS a controlled audience register may use asec:marking instead." .
+    rdfs:comment "An audience the resource may be released to, verbatim (repeatable). Kept first-class rather than folded into asec:marking for two reasons: audience restriction is universal — a system with no compartments and no declassification still says who may see the thing — and it is usually written as bare codes with no register behind them. A profile that HAS a controlled audience register may use asec:marking instead."@en .
 
 # ---------- Lifecycle ----------
 
-:expiresOn a owl:DatatypeProperty ; rdfs:label "expires on" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+:expiresOn a owl:DatatypeProperty ; rdfs:label "expires on"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
     rdfs:range xsd:date ;
-    rdfs:comment "When the marking lapses and the resource ceases to be protected at this level. Named for the event rather than for one system's word for it — declassification, release, review-and-drop." .
+    rdfs:comment "When the marking lapses and the resource ceases to be protected at this level. Named for the event rather than for one system's word for it — declassification, release, review-and-drop."@en .
 
-:levelChangesTo a owl:ObjectProperty ; rdfs:label "level changes to" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+:levelChangesTo a owl:ObjectProperty ; rdfs:label "level changes to"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
     rdfs:range skos:Concept ;
-    skos:note "Value drawn from the same level register as asec:sensitivityLevel." ;
-    rdfs:comment "The level this resource moves to on asec:levelChangeDate. Named for the CHANGE rather than for its direction: 'downgrade' is national-classification vocabulary, and a scheme that raises a level on review — or one that simply reassesses — needs the same two facts. Distinct from asec:expiresOn, which removes the marking rather than moving it." .
+    skos:note "Value drawn from the same level register as asec:sensitivityLevel."@en ;
+    rdfs:comment "The level this resource moves to on asec:levelChangeDate. Named for the CHANGE rather than for its direction: 'downgrade' is national-classification vocabulary, and a scheme that raises a level on review — or one that simply reassesses — needs the same two facts. Distinct from asec:expiresOn, which removes the marking rather than moving it."@en .
 
-:levelChangeDate a owl:DatatypeProperty ; rdfs:label "level change date" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
+:levelChangeDate a owl:DatatypeProperty ; rdfs:label "level change date"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/security> ;
     rdfs:range xsd:date ;
-    rdfs:comment "When asec:levelChangesTo takes effect." .
+    rdfs:comment "When asec:levelChangesTo takes effect."@en .
 
 # =========================================================
 # Shapes
@@ -111,7 +111,7 @@
 # cardinality bound would quietly make the multi-system case invalid, which is the exact case 2.0
 # was written for. What CAN be checked is the shape of each value, and one coherence rule.
 
-:MarkingShape a sh:NodeShape ; rdfs:label "Security marking values" ;
+:MarkingShape a sh:NodeShape ; rdfs:label "Security marking values"@en ;
     skos:definition "Shape of each marking value wherever the marking spine occurs: the verbatim parts are strings, the decision dates are calendar dates rather than instants, and the register-bound parts are concepts. Deliberately says nothing about how many values a property may carry -- a resource marked under two systems at once carries two of most of them."@en ;
     sh:targetSubjectsOf :markingSystem, :sensitivityLevel, :sensitivityLevelText, :marking,
         :markingText, :markingIdentifier, :markingAuthority, :markingDate, :releasableTo,
@@ -129,12 +129,12 @@
     sh:property [ sh:path :levelChangesTo ; sh:class skos:Concept ] ;
     sh:property [ sh:path :levelChangeDate ; sh:datatype xsd:date ] .
 
-:LevelChangeShape a sh:NodeShape ; rdfs:label "Level change completeness" ;
+:LevelChangeShape a sh:NodeShape ; rdfs:label "Level change completeness"@en ;
     skos:definition "A declared level change must say when it takes effect. asec:levelChangeDate is defined as the date asec:levelChangesTo takes effect, so a change with no date states an obligation nobody can discharge: a reader cannot tell whether the resource is still at the old level or already at the new one. The converse is not required -- a date with no change is a review date, which asec:expiresOn already expresses."@en ;
     sh:targetSubjectsOf :levelChangesTo ;
     sh:property [ sh:path :levelChangeDate ; sh:minCount 1 ] .
 
-:VerbatimLevelShape a sh:NodeShape ; rdfs:label "Verbatim level text" ;
+:VerbatimLevelShape a sh:NodeShape ; rdfs:label "Verbatim level text"@en ;
     skos:definition "Advisory, not an error: a resolved asec:sensitivityLevel without the asec:sensitivityLevelText it was resolved from is valid and readable, but it has dropped the bytes the file actually carried. This aspect treats a marking as a legal artefact whose written form matters independently of what it resolves to -- a register revised later must not silently rewrite what a file said -- and once the text is gone that check is no longer possible. Reported at sh:Warning because the marking is correct as far as it goes."@en ;
     sh:targetSubjectsOf :sensitivityLevel ;
     sh:property [ sh:path :sensitivityLevelText ; sh:minCount 1 ; sh:severity sh:Warning ;

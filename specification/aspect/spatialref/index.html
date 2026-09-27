@@ -40,75 +40,75 @@ determinant = scaleX × scaleY − skewX × skewY</pre><p><span class="req" id="
     &lt;http://schema.org/creativeWorkStatus&gt; "working draft" ;
     owl:priorVersion &lt;https://hexplain.io/ns/aspect/spatialref/1.3&gt; ;
     dcterms:modified "2026-09-27"^^xsd:date ;
-    rdfs:label "Hexplain Aspect — Spatial Reference (hx-spatialref)" ;
-    rdfs:comment "Aspect for georeferencing: coordinate reference systems, geotransforms, registration. Shared by geospatial raster and vector data." ;
+    rdfs:label "Hexplain Aspect — Spatial Reference (hx-spatialref)"@en ;
+    rdfs:comment "Aspect for georeferencing: coordinate reference systems, geotransforms, registration. Shared by geospatial raster and vector data."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
     dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
     vann:preferredNamespacePrefix "asref" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/spatialref#" .
 
-:CoordinateReferenceSystem a owl:Class ; rdfs:label "Coordinate Reference System" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; .
-:GeoTransform a owl:Class ; rdfs:label "GeoTransform" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ;
-    rdfs:comment "The affine mapping from pixel/line to ground coordinates, carrying the six coefficients asref:originX, scaleX, skewX, originY, skewY, scaleY -- GDAL's GT[0..5] in that order. It is always corner-based, as GDAL's is: grid position (0, 0) is the outer corner of the first cell, and asref:pixelRegistration never shifts it. A north-up raster has both skews zero, and an absent skew is zero; only the skews make a rotated grid expressible." .
+:CoordinateReferenceSystem a owl:Class ; rdfs:label "Coordinate Reference System"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; .
+:GeoTransform a owl:Class ; rdfs:label "GeoTransform"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ;
+    rdfs:comment "The affine mapping from pixel/line to ground coordinates, carrying the six coefficients asref:originX, scaleX, skewX, originY, skewY, scaleY -- GDAL's GT[0..5] in that order. It is always corner-based, as GDAL's is: grid position (0, 0) is the outer corner of the first cell, and asref:pixelRegistration never shifts it. A north-up raster has both skews zero, and an absent skew is zero; only the skews make a rotated grid expressible."@en .
 
-:wktString a owl:DatatypeProperty ; rdfs:label "WKT string" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range xsd:string ; rdfs:comment "Coordinate reference system WKT, not WKT geometry. No equivalence to GeoSPARQL geometry serialization is asserted." .
-:epsgCode a owl:DatatypeProperty ; rdfs:label "EPSG code" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range xsd:positiveInteger ;
+:wktString a owl:DatatypeProperty ; rdfs:label "WKT string"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range xsd:string ; rdfs:comment "Coordinate reference system WKT, not WKT geometry. No equivalence to GeoSPARQL geometry serialization is asserted."@en .
+:epsgCode a owl:DatatypeProperty ; rdfs:label "EPSG code"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range xsd:positiveInteger ;
     rdfs:seeAlso :crsIdentifier ;
-    rdfs:comment "The positive code of a coordinate reference system in the EPSG registry. EPSG code n names the CRS whose IRI is &lt;http://www.opengis.net/def/crs/EPSG/0/n&gt;, which asref:crsIdentifier states on the CRS resource; new data SHOULD give that IRI, which also reaches other authorities and compound or vertical systems. The integer remains valid, and is not a substitute for the rest of a CRS's metadata." .
-:originLongitude a owl:DatatypeProperty ; rdfs:label "origin longitude" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
-    rdfs:comment "Origin easting expressed as a GEOGRAPHIC longitude. Use only when the CRS really is geographic; for an origin in projected units (metres, feet) use asref:originX, of which this is the geographic special case." .
-:originLatitude a owl:DatatypeProperty ; rdfs:label "origin latitude" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
-    rdfs:comment "Origin northing expressed as a GEOGRAPHIC latitude. See asref:originLongitude; the general form is asref:originY." .
-:originX a owl:DatatypeProperty ; rdfs:label "origin X" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
-    rdfs:comment "Easting of the grid origin in the units of the CRS, degrees or metres alike (affine coefficient GT[0]). The general form of asref:originLongitude, which presumes a geographic CRS and is therefore wrong for the projected rasters that make up most of the corpus." .
-:originY a owl:DatatypeProperty ; rdfs:label "origin Y" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
-    rdfs:comment "Northing of the grid origin in the units of the CRS (affine coefficient GT[3]). The general form of asref:originLatitude." .
-:scaleX a owl:DatatypeProperty ; rdfs:label "X scale" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
-    rdfs:comment "Ground distance per pixel along X (affine coefficient GT[1])." .
-:scaleY a owl:DatatypeProperty ; rdfs:label "Y scale" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
-    rdfs:comment "Ground distance per pixel along Y (affine coefficient GT[5]). Conventionally NEGATIVE for a north-up raster, whose rows run southward while northings increase." .
-:skewX a owl:DatatypeProperty ; rdfs:label "X skew" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
-    rdfs:comment "Rotation/shear term: ground X per pixel ROW (affine coefficient GT[2]). Zero for a north-up raster. Without this and asref:skewY a rotated or sheared grid cannot be georeferenced at all, only misplaced." .
-:skewY a owl:DatatypeProperty ; rdfs:label "Y skew" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
-    rdfs:comment "Rotation/shear term: ground Y per pixel COLUMN (affine coefficient GT[4]). Zero for a north-up raster." .
+    rdfs:comment "The positive code of a coordinate reference system in the EPSG registry. EPSG code n names the CRS whose IRI is &lt;http://www.opengis.net/def/crs/EPSG/0/n&gt;, which asref:crsIdentifier states on the CRS resource; new data SHOULD give that IRI, which also reaches other authorities and compound or vertical systems. The integer remains valid, and is not a substitute for the rest of a CRS's metadata."@en .
+:originLongitude a owl:DatatypeProperty ; rdfs:label "origin longitude"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Origin easting expressed as a GEOGRAPHIC longitude. Use only when the CRS really is geographic; for an origin in projected units (metres, feet) use asref:originX, of which this is the geographic special case."@en .
+:originLatitude a owl:DatatypeProperty ; rdfs:label "origin latitude"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Origin northing expressed as a GEOGRAPHIC latitude. See asref:originLongitude; the general form is asref:originY."@en .
+:originX a owl:DatatypeProperty ; rdfs:label "origin X"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Easting of the grid origin in the units of the CRS, degrees or metres alike (affine coefficient GT[0]). The general form of asref:originLongitude, which presumes a geographic CRS and is therefore wrong for the projected rasters that make up most of the corpus."@en .
+:originY a owl:DatatypeProperty ; rdfs:label "origin Y"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Northing of the grid origin in the units of the CRS (affine coefficient GT[3]). The general form of asref:originLatitude."@en .
+:scaleX a owl:DatatypeProperty ; rdfs:label "X scale"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Ground distance per pixel along X (affine coefficient GT[1])."@en .
+:scaleY a owl:DatatypeProperty ; rdfs:label "Y scale"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Ground distance per pixel along Y (affine coefficient GT[5]). Conventionally NEGATIVE for a north-up raster, whose rows run southward while northings increase."@en .
+:skewX a owl:DatatypeProperty ; rdfs:label "X skew"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Rotation/shear term: ground X per pixel ROW (affine coefficient GT[2]). Zero for a north-up raster. Without this and asref:skewY a rotated or sheared grid cannot be georeferenced at all, only misplaced."@en .
+:skewY a owl:DatatypeProperty ; rdfs:label "Y skew"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Rotation/shear term: ground Y per pixel COLUMN (affine coefficient GT[4]). Zero for a north-up raster."@en .
 
 # ---------- Ground footprint ----------
-:footprintWKT a owl:DatatypeProperty ; rdfs:label "footprint WKT" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ;
+:footprintWKT a owl:DatatypeProperty ; rdfs:label "footprint WKT"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ;
     # Not rdfs:subPropertyOf geosparql:asWKT: that property's domain is geosparql:Geometry, and
     # the subject here is the georeferenced resource, not a geometry of it.
     rdfs:seeAlso geosparql:asWKT ;
     # A union range: the GeoSPARQL literal new data should use, and the plain string existing
     # data uses (still valid).
     rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:string geosparql:wktLiteral ) ] ;
-    rdfs:comment "The ground area covered, as a WKT geometry -- typically a polygon of the four image corners. Formats that state corners directly rather than an affine (NITF's IGEOLO, the BLOCKA corner strings) have no scale or origin to give, so a footprint is the only georeference they carry. New data SHOULD type the value geosparql:wktLiteral, which GeoSPARQL tools read directly; its CRS is then the CRS IRI that may prefix the text, and OGC CRS84 when none does, as GeoSPARQL specifies, so a footprint in any other CRS carries that CRS's IRI. A value typed xsd:string remains valid and is read, as before, in the resource's CRS." .
+    rdfs:comment "The ground area covered, as a WKT geometry -- typically a polygon of the four image corners. Formats that state corners directly rather than an affine (NITF's IGEOLO, the BLOCKA corner strings) have no scale or origin to give, so a footprint is the only georeference they carry. New data SHOULD type the value geosparql:wktLiteral, which GeoSPARQL tools read directly; its CRS is then the CRS IRI that may prefix the text, and OGC CRS84 when none does, as GeoSPARQL specifies, so a footprint in any other CRS carries that CRS's IRI. A value typed xsd:string remains valid and is read, as before, in the resource's CRS."@en .
 
 # ---------- Ground control points ----------
 # The other way a format georeferences without an affine: an irregular scatter of
 # pixel-to-ground correspondences, to be fitted or interpolated by the consumer.
-:GroundControlPoint a owl:Class ; rdfs:label "Ground Control Point" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ;
-    rdfs:comment "One correspondence between a pixel position and a ground position. A set of these georeferences an image that no single affine can, e.g. an unrectified swath." .
-:hasGroundControlPoint a owl:ObjectProperty ; rdfs:label "has ground control point" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ;
+:GroundControlPoint a owl:Class ; rdfs:label "Ground Control Point"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ;
+    rdfs:comment "One correspondence between a pixel position and a ground position. A set of these georeferences an image that no single affine can, e.g. an unrectified swath."@en .
+:hasGroundControlPoint a owl:ObjectProperty ; rdfs:label "has ground control point"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ;
     rdfs:range :GroundControlPoint .
-:gcpPixelX a owl:DatatypeProperty ; rdfs:label "GCP pixel X" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
-    rdfs:comment "Column position of the control point in the image grid." .
-:gcpPixelY a owl:DatatypeProperty ; rdfs:label "GCP pixel Y" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
-    rdfs:comment "Row position of the control point in the image grid." .
-:gcpX a owl:DatatypeProperty ; rdfs:label "GCP ground X" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] .
-:gcpY a owl:DatatypeProperty ; rdfs:label "GCP ground Y" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] .
-:gcpZ a owl:DatatypeProperty ; rdfs:label "GCP ground Z" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
-    rdfs:comment "Ground elevation of the control point. Optional: many formats give 2-D control only." .
-:gcpIdentifier a owl:DatatypeProperty ; rdfs:label "GCP identifier" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range xsd:string .
-:pixelRegistration a owl:ObjectProperty ; rdfs:label "pixel registration" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ;
-    rdfs:comment "Where a cell's value is located within the cell. Describes the value, never the grid: the normalized affine stays corner-based." .
+:gcpPixelX a owl:DatatypeProperty ; rdfs:label "GCP pixel X"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Column position of the control point in the image grid."@en .
+:gcpPixelY a owl:DatatypeProperty ; rdfs:label "GCP pixel Y"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Row position of the control point in the image grid."@en .
+:gcpX a owl:DatatypeProperty ; rdfs:label "GCP ground X"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] .
+:gcpY a owl:DatatypeProperty ; rdfs:label "GCP ground Y"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] .
+:gcpZ a owl:DatatypeProperty ; rdfs:label "GCP ground Z"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ;
+    rdfs:comment "Ground elevation of the control point. Optional: many formats give 2-D control only."@en .
+:gcpIdentifier a owl:DatatypeProperty ; rdfs:label "GCP identifier"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:range xsd:string .
+:pixelRegistration a owl:ObjectProperty ; rdfs:label "pixel registration"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ;
+    rdfs:comment "Where a cell's value is located within the cell. Describes the value, never the grid: the normalized affine stays corner-based."@en .
 
-:PixelCorner a owl:NamedIndividual ; rdfs:label "Pixel Corner Registration" .
-:PixelCenter a owl:NamedIndividual ; rdfs:label "Pixel Center Registration" .
+:PixelCorner a owl:NamedIndividual ; rdfs:label "Pixel Corner Registration"@en .
+:PixelCenter a owl:NamedIndividual ; rdfs:label "Pixel Center Registration"@en .
 
-:hasCRS a owl:ObjectProperty ; rdfs:range :CoordinateReferenceSystem ; rdfs:label "has coordinate reference system" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "CRS of the resource's ground coordinates. A CRS identifier is not itself a transformation or a geometry." .
-:hasGeoTransform a owl:ObjectProperty ; rdfs:range :GeoTransform ; rdfs:label "has geotransform" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; .
-:groundControlPointCRS a owl:ObjectProperty ; rdfs:range :CoordinateReferenceSystem ; rdfs:label "ground control point CRS" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "CRS of the ground-control-point set, which may differ from the raster's affine CRS. No reprojection or precedence is implied." .
-:coordinateEpoch a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "coordinate epoch" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Coordinate epoch in decimal years for coordinates in a dynamic reference frame; distinct from acquisition time and CRS reference epoch." .
-:crsIdentifier a owl:ObjectProperty ; rdfs:label "CRS identifier" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:seeAlso :epsgCode ;
-    rdfs:comment "The authoritative IRI of a coordinate reference system, such as &lt;http://www.opengis.net/def/crs/EPSG/0/4326&gt; for EPSG code 4326 (the OGC CRS register's form). Supports any authority and compound or vertical systems without assuming a single numeric code scheme; it is the form GeoSPARQL uses to prefix a geosparql:wktLiteral." .
+:hasCRS a owl:ObjectProperty ; rdfs:range :CoordinateReferenceSystem ; rdfs:label "has coordinate reference system"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "CRS of the resource's ground coordinates. A CRS identifier is not itself a transformation or a geometry."@en .
+:hasGeoTransform a owl:ObjectProperty ; rdfs:range :GeoTransform ; rdfs:label "has geotransform"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; .
+:groundControlPointCRS a owl:ObjectProperty ; rdfs:range :CoordinateReferenceSystem ; rdfs:label "ground control point CRS"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "CRS of the ground-control-point set, which may differ from the raster's affine CRS. No reprojection or precedence is implied."@en .
+:coordinateEpoch a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "coordinate epoch"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Coordinate epoch in decimal years for coordinates in a dynamic reference frame; distinct from acquisition time and CRS reference epoch."@en .
+:crsIdentifier a owl:ObjectProperty ; rdfs:label "CRS identifier"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:seeAlso :epsgCode ;
+    rdfs:comment "The authoritative IRI of a coordinate reference system, such as &lt;http://www.opengis.net/def/crs/EPSG/0/4326&gt; for EPSG code 4326 (the OGC CRS register's form). Supports any authority and compound or vertical systems without assuming a single numeric code scheme; it is the form GeoSPARQL uses to prefix a geosparql:wktLiteral."@en .
 
 # Validation is separate from OWL inference. No universal invertibility requirement:
 # a singular affine may be represented, but an inverse request must fail explicitly.
@@ -147,23 +147,23 @@ asref:GroundControlPointShape a sh:NodeShape ;
 
 @prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
 
-:CubicRationalTransform a owl:Class ; rdfs:label "Cubic rational transform" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "A three-input, two-output rational polynomial geolocation model. Four coefficient vectors each have 20 values. polynomialBasis identifies the externally specified monomial order, normalization, input CRS, units and pixel convention. No basis or datum is inferred. Unsupported bases must be reported, not evaluated using a guessed order." .
-:hasRationalTransform a owl:ObjectProperty ; rdfs:range :CubicRationalTransform ; rdfs:label "has rational transform" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; .
-:polynomialBasis a owl:ObjectProperty ; rdfs:label "polynomial basis contract" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "IRI of the complete published polynomial convention. A profile must define the ordered 20 monomials, normalized inputs, CRS/units and pixel reference. Different coefficient orderings are not interchangeable." .
-:lineNumerator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "line numerator coefficients" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed." .
-:lineDenominator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "line denominator coefficients" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed." .
-:sampleNumerator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "sample numerator coefficients" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed." .
-:sampleDenominator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "sample denominator coefficients" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed." .
-:lineOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "line offset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization offset for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:lineScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "line scale" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization scale for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:sampleOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "sample offset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization offset for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:sampleScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "sample scale" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization scale for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:latitudeOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "latitude offset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization offset for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:latitudeScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "latitude scale" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization scale for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:longitudeOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "longitude offset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization offset for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:longitudeScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "longitude scale" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization scale for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:heightOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "height offset" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization offset for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
-:heightScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "height scale" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization scale for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive." .
+:CubicRationalTransform a owl:Class ; rdfs:label "Cubic rational transform"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "A three-input, two-output rational polynomial geolocation model. Four coefficient vectors each have 20 values. polynomialBasis identifies the externally specified monomial order, normalization, input CRS, units and pixel convention. No basis or datum is inferred. Unsupported bases must be reported, not evaluated using a guessed order."@en .
+:hasRationalTransform a owl:ObjectProperty ; rdfs:range :CubicRationalTransform ; rdfs:label "has rational transform"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; .
+:polynomialBasis a owl:ObjectProperty ; rdfs:label "polynomial basis contract"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "IRI of the complete published polynomial convention. A profile must define the ordered 20 monomials, normalized inputs, CRS/units and pixel reference. Different coefficient orderings are not interchangeable."@en .
+:lineNumerator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "line numerator coefficients"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed."@en .
+:lineDenominator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "line denominator coefficients"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed."@en .
+:sampleNumerator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "sample numerator coefficients"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed."@en .
+:sampleDenominator a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "sample denominator coefficients"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Ordered vector of 20 finite coefficients; repeated coefficient values are allowed."@en .
+:lineOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "line offset"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization offset for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:lineScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "line scale"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization scale for the line coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:sampleOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "sample offset"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization offset for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:sampleScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "sample scale"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization scale for the sample coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:latitudeOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "latitude offset"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization offset for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:latitudeScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "latitude scale"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization scale for the latitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:longitudeOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "longitude offset"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization offset for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:longitudeScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "longitude scale"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization scale for the longitude coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:heightOffset a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "height offset"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization offset for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
+:heightScale a owl:DatatypeProperty ; rdfs:range [ a rdfs:Datatype ; owl:unionOf ( xsd:double xsd:float ) ] ; rdfs:label "height scale"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ; rdfs:comment "Normalization scale for the height coordinate, interpreted using polynomialBasis. Scales must be strictly positive."@en .
 
 :CubicRationalTransformShape a sh:NodeShape ; sh:targetClass :CubicRationalTransform ; sh:targetObjectsOf :hasRationalTransform ;
     sh:nodeKind sh:BlankNodeOrIRI ;
@@ -202,13 +202,13 @@ asref:GroundControlPointShape a sh:NodeShape ;
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-asref:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+asref:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
-asref:FloatValueShape a sh:NodeShape ; rdfs:label "Float value shape" ;
+asref:FloatValueShape a sh:NodeShape ; rdfs:label "Float value shape"@en ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ;
     sh:or ( [ sh:datatype xsd:double ] [ sh:datatype xsd:float ] ) .
-asref:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+asref:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/spatialref&gt; ;
     sh:targetSubjectsOf asref:coordinateEpoch ,
         asref:epsgCode ,

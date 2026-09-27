@@ -20,31 +20,31 @@
     owl:priorVersion <https://hexplain.io/ns/audio/1.1> ;
     dcterms:modified "2026-09-27"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/aspect/time> , <https://hexplain.io/ns/aspect/encoding> , <https://hexplain.io/ns/aspect/sampling> , <https://hexplain.io/ns/aspect/signal> , <https://hexplain.io/ns/dlv> ;
-    rdfs:label "Hexplain Audio Vocabulary (ADV)" ;
-    rdfs:comment "Semantic vocabulary for audio stream and tag properties." ;
+    rdfs:label "Hexplain Audio Vocabulary (ADV)"@en ;
+    rdfs:comment "Semantic vocabulary for audio stream and tag properties."@en ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "adv" ; vann:preferredNamespaceUri "https://hexplain.io/ns/audio#" .
 
-:AudioContainer a owl:Class ; rdfs:label "Audio Container" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:seeAlso ma:MediaResource .
-:AudioStream a owl:Class ; rdfs:label "Audio Stream" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:seeAlso ma:AudioTrack .
-:MetadataTag a owl:Class ; rdfs:label "Metadata Tag" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> .
+:AudioContainer a owl:Class ; rdfs:label "Audio Container"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:seeAlso ma:MediaResource .
+:AudioStream a owl:Class ; rdfs:label "Audio Stream"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:seeAlso ma:AudioTrack .
+:MetadataTag a owl:Class ; rdfs:label "Metadata Tag"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> .
 
 # sampleRate is the signal aspect (asig:sampleRate); audioChannels is the sampling aspect
 # (asamp:componentCount); bitDepth is asamp:bitDepth (shared with image) — all imported.
 # duration (atime), bitrate + codec (aenc) are imported from the aspect layer.
-:artist a owl:DatatypeProperty ; rdfs:label "artist" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:seeAlso dcterms:creator ; rdfs:range xsd:string .
-:album a owl:DatatypeProperty ; rdfs:label "album" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:range xsd:string .
-:trackTitle a owl:DatatypeProperty ; rdfs:label "track title" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:seeAlso dcterms:title ; rdfs:range xsd:string .
-:trackNumber a owl:DatatypeProperty ; rdfs:label "track number" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:range xsd:positiveInteger .
-:genre a owl:DatatypeProperty ; rdfs:label "genre" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:range xsd:string .
+:artist a owl:DatatypeProperty ; rdfs:label "artist"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:seeAlso dcterms:creator ; rdfs:range xsd:string .
+:album a owl:DatatypeProperty ; rdfs:label "album"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:range xsd:string .
+:trackTitle a owl:DatatypeProperty ; rdfs:label "track title"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:seeAlso dcterms:title ; rdfs:range xsd:string .
+:trackNumber a owl:DatatypeProperty ; rdfs:label "track number"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:range xsd:positiveInteger .
+:genre a owl:DatatypeProperty ; rdfs:label "genre"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ; rdfs:range xsd:string .
 
-:axisSample a dlv:Axis ; rdfs:label "Sample Axis (deprecated)" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ;
+:axisSample a owl:NamedIndividual , dlv:Axis ; rdfs:label "Sample Axis (deprecated)"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ;
     owl:deprecated true ; dcterms:isReplacedBy dlv:axisTime ;
-    rdfs:comment "Deprecated duplicate of dlv:axisTime. Successive audio samples are the time axis of the layout. Layouts use dlv:axisTime; this IRI is retained so existing descriptions still resolve and denotes the same axis." .
-:axisChannel a dlv:Axis ; rdfs:label "Channel Axis (deprecated)" ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ;
+    rdfs:comment "Deprecated duplicate of dlv:axisTime. Successive audio samples are the time axis of the layout. Layouts use dlv:axisTime; this IRI is retained so existing descriptions still resolve and denotes the same axis."@en .
+:axisChannel a owl:NamedIndividual , dlv:Axis ; rdfs:label "Channel Axis (deprecated)"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/audio> ;
     owl:deprecated true ; dcterms:isReplacedBy dlv:axisBand ;
-    rdfs:comment "Deprecated duplicate of dlv:axisBand. dlv:axisBand is the band/channel axis for every media type. Layouts use dlv:axisBand; this IRI is retained so existing descriptions still resolve and denotes the same axis." .
+    rdfs:comment "Deprecated duplicate of dlv:axisBand. dlv:axisBand is the band/channel axis for every media type. Layouts use dlv:axisBand; this IRI is retained so existing descriptions still resolve and denotes the same axis."@en .
 
 # ---------- SHACL ----------
 adv:StreamShape a sh:NodeShape ; sh:targetClass adv:AudioStream ; sh:targetSubjectsOf asig:sampleRate ;
@@ -65,10 +65,10 @@ adv:TagShape a sh:NodeShape ; sh:targetClass adv:MetadataTag ;
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-adv:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+adv:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/audio> ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
-adv:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+adv:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/audio> ;
     sh:targetSubjectsOf adv:genre ,
         adv:trackNumber ;

@@ -13,8 +13,8 @@
     owl:priorVersion <https://hexplain.io/ns/req/shapes/1.2> ;
     owl:versionInfo "1.3" ;
     dcterms:modified "2026-09-27"^^xsd:date ;
-    rdfs:label "Hexplain Requirements Shapes" ;
-    rdfs:comment "The SHACL shapes of the req vocabulary, published as their own document so that a consumer can load the vocabulary without its validation rules. Terms stay in the req namespace." ;
+    rdfs:label "Hexplain Requirements Shapes"@en ;
+    rdfs:comment "The SHACL shapes of the req vocabulary, published as their own document so that a consumer can load the vocabulary without its validation rules. Terms stay in the req namespace."@en ;
     owl:imports <https://hexplain.io/ns/req> ;
     # No vann:preferredNamespacePrefix: the shapes' terms are in the vocabulary's namespace, and
     # only the vocabulary claims its prefix.
@@ -25,7 +25,7 @@
     sh:targetClass req:Requirement ;
     # Activated by its own properties too, so omitting rdf:type does not bypass it.
     sh:targetSubjectsOf req:requirementId , req:fromStandard , req:statement , req:discrepancyType , req:appliesToVersion ;
-    rdfs:label "Requirement shape" ;
+    rdfs:label "Requirement shape"@en ;
     sh:property [
         sh:path req:requirementId ;
         sh:datatype xsd:string ;
@@ -74,8 +74,8 @@ req:_prefixes sh:declare
 :RequirementIdentityShape a sh:NodeShape ;
     sh:targetClass req:Requirement ;
     sh:targetSubjectsOf req:requirementId ;
-    rdfs:label "Requirement identity shape" ;
-    rdfs:comment "Within one graph, a (req:fromStandard, req:requirementId) pair names at most one requirement. The pair is compared after normalising both values (a no-break or other Unicode space counts as a space, zero-width characters and the byte-order mark are removed, and leading and trailing white space is trimmed) and ignoring case in req:fromStandard, so 'MIL-STD-2500C ' and 'mil-std-2500c' are the same standard; the identifier's case is significant. Two distinct requirement resources with the same normalised pair are a violation, reported on each of them. The same identifier under different standards is not." ;
+    rdfs:label "Requirement identity shape"@en ;
+    rdfs:comment "Within one graph, a (req:fromStandard, req:requirementId) pair names at most one requirement. The pair is compared after normalising both values (a no-break or other Unicode space counts as a space, zero-width characters and the byte-order mark are removed, and leading and trailing white space is trimmed) and ignoring case in req:fromStandard, so 'MIL-STD-2500C ' and 'mil-std-2500c' are the same standard; the identifier's case is significant. Two distinct requirement resources with the same normalised pair are a violation, reported on each of them. The same identifier under different standards is not."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/req> ;
     sh:sparql [
         sh:message "Another req:Requirement ({?other}) has the same req:fromStandard and req:requirementId (after trimming, and ignoring the standard's case); the pair must be unique." ;
@@ -93,7 +93,7 @@ req:_prefixes sh:declare
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-req:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+req:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/req> ;
     sh:targetSubjectsOf req:appliesToVersion ,
         req:fromStandard ,

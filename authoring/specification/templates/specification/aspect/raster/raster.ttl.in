@@ -19,37 +19,37 @@
     <http://schema.org/creativeWorkStatus> "working draft" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/raster/1.2> ;
     dcterms:modified "2026-09-27"^^xsd:date ;
-    rdfs:label "Hexplain Aspect — Raster (hx-raster)" ;
-    rdfs:comment "Content-representation aspect for a regular N-dimensional sample grid (width, height). Colour (hx-color) and per-sample precision (hx-sampling) compose with it at the vocabulary that describes the medium; neither is imported. Shared by image, video frames, and geospatial rasters." ;
+    rdfs:label "Hexplain Aspect — Raster (hx-raster)"@en ;
+    rdfs:comment "Content-representation aspect for a regular N-dimensional sample grid (width, height). Colour (hx-color) and per-sample precision (hx-sampling) compose with it at the vocabulary that describes the medium; neither is imported. Shared by image, video frames, and geospatial rasters."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "araster" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/raster#" .
 
-:width a owl:DatatypeProperty ; rdfs:label "width" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:seeAlso ma:frameWidth ; rdfs:range xsd:positiveInteger ; rdfs:comment "Grid extent along the horizontal axis, in samples (pixels)." .
-:height a owl:DatatypeProperty ; rdfs:label "height" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:seeAlso ma:frameHeight ; rdfs:range xsd:positiveInteger ; rdfs:comment "Grid extent along the vertical axis, in samples (pixels)." .
-:noDataValue a owl:DatatypeProperty ; rdfs:label "no-data value" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Sample value denoting absence of data, on a band or on the grid (inherited by bands that state none). A numeric literal: xsd:double or xsd:float (including NaN, which matches NaN samples), xsd:decimal, or an integer-family datatype. At most one per band or grid. No rdfs:range is asserted because the admissible datatypes are a union; RasterBandShape enforces it." .
+:width a owl:DatatypeProperty ; rdfs:label "width"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:seeAlso ma:frameWidth ; rdfs:range xsd:positiveInteger ; rdfs:comment "Grid extent along the horizontal axis, in samples (pixels)."@en .
+:height a owl:DatatypeProperty ; rdfs:label "height"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:seeAlso ma:frameHeight ; rdfs:range xsd:positiveInteger ; rdfs:comment "Grid extent along the vertical axis, in samples (pixels)."@en .
+:noDataValue a owl:DatatypeProperty ; rdfs:label "no-data value"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Sample value denoting absence of data, on a band or on the grid (inherited by bands that state none). A numeric literal: xsd:double or xsd:float (including NaN, which matches NaN samples), xsd:decimal, or an integer-family datatype. At most one per band or grid. No rdfs:range is asserted because the admissible datatypes are a union; RasterBandShape enforces it."@en .
 
 # 1.1 working draft: logical samples, independent of physical storage layout.
-:RasterGrid a owl:Class ; rdfs:label "Raster grid" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A two-dimensional grid with one or more co-registered bands. Higher-dimensional arrays use SampleArray; physical byte addressing remains in DLV." .
-:RasterBand a owl:Class ; rdfs:label "Raster band" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "One sample plane of a raster grid, with its own sample interpretation, no-data, calibration and optional mask." .
-:SampleArray a owl:Class ; rdfs:label "Sample array" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A logical array of arbitrary rank, including rank-zero scalars and zero-length dimensions. Logical dimension order is independent of physical byte strides and chunk order." .
-:ArrayDimension a owl:Class ; rdfs:label "Array dimension" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A reusable named axis with an extent. Its position belongs to each array's ordered dimension list, not to the shared dimension." .
-:ArrayGroup a owl:Class ; rdfs:label "Array group" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A logical hierarchy of groups and arrays. It does not imply filesystem directory layout." .
-:hasBand a owl:ObjectProperty ; rdfs:range :RasterBand ; rdfs:label "has band" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
-:bandCount a owl:DatatypeProperty ; rdfs:range xsd:positiveInteger ; rdfs:label "band count" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Total band count. A partial RDF projection may describe fewer bands, but never more than this count." .
-:bandIndex a owl:DatatypeProperty ; rdfs:range xsd:positiveInteger ; rdfs:label "band index" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "One-based band index within its owning grid." .
-:sampleScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "sample scale" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Calibration multiplier: physical = raw * sampleScale + sampleOffset. Absence means unspecified, not a stored default. Apply no-data detection to raw samples first." .
-:sampleOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "sample offset" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Calibration additive term, in the unit of the physical value. Independent of byte offsets and georeferencing origins." .
-:sampleUnit a owl:ObjectProperty ; rdfs:label "sample unit" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Unit IRI for calibrated sample values; profiles may reuse established unit vocabularies." .
-:hasMask a owl:ObjectProperty ; rdfs:range :RasterBand ; rdfs:label "has validity mask" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Validity mask band: zero is invalid; nonzero is valid. This relation does not imply alpha/transparency semantics." .
-:hasOverview a owl:ObjectProperty ; rdfs:label "has overview" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A lower-resolution representation covering the same logical domain. Does not assert a resampling algorithm or an integer reduction factor." .
-:dimensions a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "dimensions" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Complete ordered RDF list of ArrayDimension resources in logical indexing order. rdf:nil denotes a scalar. The list must be finite, well formed and permit repeated dimension resources at distinct positions." .
-:dimensionName a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "dimension name" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
-:dimensionExtent a owl:DatatypeProperty ; rdfs:range xsd:nonNegativeInteger ; rdfs:label "dimension extent" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Current number of indexable values along this logical axis. Zero is permitted. An unlimited dimension has a finite current extent, not infinity." .
-:dimensionKind a owl:ObjectProperty ; rdfs:range skos:Concept ; rdfs:label "dimension kind" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Axis nature from a profile-bound concept scheme; no fixed list limits scientific or non-spatial axes." .
-:coordinateArray a owl:ObjectProperty ; rdfs:range :SampleArray ; rdfs:label "coordinate array" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Array of coordinate values associated with a dimension. Its shape and alignment are asserted by the profile; coordinates need not be regularly spaced." .
-:hasArray a owl:ObjectProperty ; rdfs:range :SampleArray ; rdfs:label "has array" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
-:hasGroup a owl:ObjectProperty ; rdfs:range :ArrayGroup ; rdfs:label "has group" ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:RasterGrid a owl:Class ; rdfs:label "Raster grid"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A two-dimensional grid with one or more co-registered bands. Higher-dimensional arrays use SampleArray; physical byte addressing remains in DLV."@en .
+:RasterBand a owl:Class ; rdfs:label "Raster band"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "One sample plane of a raster grid, with its own sample interpretation, no-data, calibration and optional mask."@en .
+:SampleArray a owl:Class ; rdfs:label "Sample array"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A logical array of arbitrary rank, including rank-zero scalars and zero-length dimensions. Logical dimension order is independent of physical byte strides and chunk order."@en .
+:ArrayDimension a owl:Class ; rdfs:label "Array dimension"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A reusable named axis with an extent. Its position belongs to each array's ordered dimension list, not to the shared dimension."@en .
+:ArrayGroup a owl:Class ; rdfs:label "Array group"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A logical hierarchy of groups and arrays. It does not imply filesystem directory layout."@en .
+:hasBand a owl:ObjectProperty ; rdfs:range :RasterBand ; rdfs:label "has band"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:bandCount a owl:DatatypeProperty ; rdfs:range xsd:positiveInteger ; rdfs:label "band count"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Total band count. A partial RDF projection may describe fewer bands, but never more than this count."@en .
+:bandIndex a owl:DatatypeProperty ; rdfs:range xsd:positiveInteger ; rdfs:label "band index"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "One-based band index within its owning grid."@en .
+:sampleScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "sample scale"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Calibration multiplier: physical = raw * sampleScale + sampleOffset. Absence means unspecified, not a stored default. Apply no-data detection to raw samples first."@en .
+:sampleOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "sample offset"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Calibration additive term, in the unit of the physical value. Independent of byte offsets and georeferencing origins."@en .
+:sampleUnit a owl:ObjectProperty ; rdfs:label "sample unit"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Unit IRI for calibrated sample values; profiles may reuse established unit vocabularies."@en .
+:hasMask a owl:ObjectProperty ; rdfs:range :RasterBand ; rdfs:label "has validity mask"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Validity mask band: zero is invalid; nonzero is valid. This relation does not imply alpha/transparency semantics."@en .
+:hasOverview a owl:ObjectProperty ; rdfs:label "has overview"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A lower-resolution representation covering the same logical domain. Does not assert a resampling algorithm or an integer reduction factor."@en .
+:dimensions a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "dimensions"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Complete ordered RDF list of ArrayDimension resources in logical indexing order. rdf:nil denotes a scalar. The list must be finite, well formed and permit repeated dimension resources at distinct positions."@en .
+:dimensionName a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "dimension name"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:dimensionExtent a owl:DatatypeProperty ; rdfs:range xsd:nonNegativeInteger ; rdfs:label "dimension extent"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Current number of indexable values along this logical axis. Zero is permitted. An unlimited dimension has a finite current extent, not infinity."@en .
+:dimensionKind a owl:ObjectProperty ; rdfs:range skos:Concept ; rdfs:label "dimension kind"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Axis nature from a profile-bound concept scheme; no fixed list limits scientific or non-spatial axes."@en .
+:coordinateArray a owl:ObjectProperty ; rdfs:range :SampleArray ; rdfs:label "coordinate array"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Array of coordinate values associated with a dimension. Its shape and alignment are asserted by the profile; coordinates need not be regularly spaced."@en .
+:hasArray a owl:ObjectProperty ; rdfs:range :SampleArray ; rdfs:label "has array"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:hasGroup a owl:ObjectProperty ; rdfs:range :ArrayGroup ; rdfs:label "has group"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
 
 # RDF datatypes retain the wire value's precision; SHACL accepts the integer family.
 # Kept local rather than referencing asamp:PositiveIntegerShape: shapes are validated module by
@@ -120,7 +120,7 @@
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-araster:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+araster:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
     sh:targetSubjectsOf araster:dimensionExtent ,
         araster:dimensionName ;

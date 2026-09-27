@@ -18,41 +18,41 @@
     owl:priorVersion <https://hexplain.io/ns/core/1.2> ;
     dcterms:modified "2026-09-27"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/bddo> , <https://hexplain.io/ns/dlv> ;
-    rdfs:label "Hexplain Core Ontology" ;
-    rdfs:comment "Properties linking the physical, layout, and semantic layers of the Hexplain framework." ;
+    rdfs:label "Hexplain Core Ontology"@en ;
+    rdfs:comment "Properties linking the physical, layout, and semantic layers of the Hexplain framework."@en ;
     dcterms:created "2025-08-16"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "hexplain" ; vann:preferredNamespaceUri "https://hexplain.io/ns/core#" .
 
-:MappingRule a owl:Class ; rdfs:label "Mapping Rule" ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "A rule for conditionally mapping a physical field to a semantic property." .
-:ClassMappingRule a owl:Class ; rdfs:label "Class Mapping Rule" ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "A rule selecting the owl:Class a bddo:Struct represents based on a discriminator condition; used in a hexplain:hasConditionalClassMapping list to model tagged unions / variant records." .
+:MappingRule a owl:Class ; rdfs:label "Mapping Rule"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "A rule for conditionally mapping a physical field to a semantic property."@en .
+:ClassMappingRule a owl:Class ; rdfs:label "Class Mapping Rule"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "A rule selecting the owl:Class a bddo:Struct represents based on a discriminator condition; used in a hexplain:hasConditionalClassMapping list to model tagged unions / variant records."@en .
 
 # Mapping properties (values are class/property IRIs: RDFS + SHACL, OWL 2 Full; domain in SHACL). rdfs:range declared.
-:mapsToClass a owl:ObjectProperty ; rdfs:label "maps to class" ; rdfs:range owl:Class ;
+:mapsToClass a owl:ObjectProperty ; rdfs:label "maps to class"@en ; rdfs:range owl:Class ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "Relates a bddo:Struct to the owl:Class it physically represents." .
-:mapsToProperty a owl:ObjectProperty ; rdfs:label "maps to property" ; rdfs:range rdf:Property ;
+    rdfs:comment "Relates a bddo:Struct to the owl:Class it physically represents."@en .
+:mapsToProperty a owl:ObjectProperty ; rdfs:label "maps to property"@en ; rdfs:range rdf:Property ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "Relates a bddo:Field to the rdf:Property it supplies a value for." .
-:hasDataLayout a owl:ObjectProperty ; rdfs:label "has data layout" ; rdfs:range dlv:DataLayout ;
+    rdfs:comment "Relates a bddo:Field to the rdf:Property it supplies a value for."@en .
+:hasDataLayout a owl:ObjectProperty ; rdfs:label "has data layout"@en ; rdfs:range dlv:DataLayout ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "Relates a bddo:Field to a dlv:DataLayout describing its multi-dimensional interpretation." .
-:isEncodedWith a owl:ObjectProperty ; rdfs:label "is encoded with" ; rdfs:range skos:Concept ;
+    rdfs:comment "Relates a bddo:Field to a dlv:DataLayout describing its multi-dimensional interpretation."@en .
+:isEncodedWith a owl:ObjectProperty ; rdfs:label "is encoded with"@en ; rdfs:range skos:Concept ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The algorithm needed to interpret a data block, drawn from whichever codec or compression register the profile binds. A processor decodes the block, then re-parses the decoded bytes against the field's data type when it is a bddo:Struct." .
+    rdfs:comment "The algorithm needed to interpret a data block, drawn from whichever codec or compression register the profile binds. A processor decodes the block, then re-parses the decoded bytes against the field's data type when it is a bddo:Struct."@en .
 # ---------- Instance byte range ----------
 # Asserted on a LIFTED RESOURCE by the Semantic Lifter's Processing Model, not declared by a
 # profile: every instance the lifter mints carries the byte range it was read from whenever
 # ExtractOptions.includeByteRange is enabled (the default), giving query-time functions a
 # cheap path to a node's bytes without re-resolving the profile or re-parsing the asset.
-:byteOffset a owl:DatatypeProperty ; rdfs:label "byte offset" ; rdfs:range xsd:nonNegativeInteger ;
+:byteOffset a owl:DatatypeProperty ; rdfs:label "byte offset"@en ; rdfs:range xsd:nonNegativeInteger ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The zero-based byte offset, within its asset, of a lifted resource's physical extent." .
-:byteLength a owl:DatatypeProperty ; rdfs:label "byte length" ; rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "The zero-based byte offset, within its asset, of a lifted resource's physical extent."@en .
+:byteLength a owl:DatatypeProperty ; rdfs:label "byte length"@en ; rdfs:range xsd:nonNegativeInteger ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The length in bytes, from hexplain:byteOffset, of a lifted resource's physical extent." .
+    rdfs:comment "The length in bytes, from hexplain:byteOffset, of a lifted resource's physical extent."@en .
 # ---------- Encoding pipelines ----------
 # One codec is the exception, not the rule. A TIFF strip is horizontally differenced and
 # then deflated; an HDF5 dataset runs a filter pipeline (shuffle, then deflate); a Zarr
@@ -64,102 +64,102 @@
 # ORDER IS ENCODE ORDER: the steps as the writer applied them, so a reader inverts them in
 # REVERSE. Stating this matters, because a pipeline read the wrong way round is still a
 # plausible-looking pipeline; TIFF's difference-then-deflate inverts to inflate-then-undifference.
-:EncodingStep a owl:Class ; rdfs:label "Encoding Step" ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "One stage of an encoding pipeline: a codec, plus the parameters it was applied with." .
-:CodecParameter a owl:Class ; rdfs:label "Codec Parameter" ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "A named setting of a codec. Deliberately a name/value pair rather than a fixed vocabulary: codec options are open-ended and vendor-specific, and enumerating them would date immediately." .
-:hasEncodingStep a owl:ObjectProperty ; rdfs:label "has encoding step" ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "Ordered rdf:List of EncodingStep, in the order the ENCODER applied them; a decoder inverts them in reverse. Mutually exclusive with hexplain:isEncodedWith, which remains the shorthand for a single unparameterised codec." .
-:codec a owl:ObjectProperty ; rdfs:label "codec" ; rdfs:range skos:Concept ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The algorithm this step applies, drawn from whichever codec or compression register the profile binds -- the same registers hexplain:isEncodedWith draws on." .
-:codecParameter a owl:ObjectProperty ; rdfs:label "codec parameter" ; rdfs:range :CodecParameter ; rdfs:isDefinedBy <https://hexplain.io/ns/core> .
-:parameterName a owl:DatatypeProperty ; rdfs:label "parameter name" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The setting's name as the codec itself names it: \"clevel\", \"shuffle\", \"predictor\"." .
-:parameterValue a owl:DatatypeProperty ; rdfs:label "parameter value" ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The setting's value, as the literal the format carries. Left untyped: a level is an integer, a Blosc inner codec a string, a flag a boolean." .
+:EncodingStep a owl:Class ; rdfs:label "Encoding Step"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "One stage of an encoding pipeline: a codec, plus the parameters it was applied with."@en .
+:CodecParameter a owl:Class ; rdfs:label "Codec Parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "A named setting of a codec. Deliberately a name/value pair rather than a fixed vocabulary: codec options are open-ended and vendor-specific, and enumerating them would date immediately."@en .
+:hasEncodingStep a owl:ObjectProperty ; rdfs:label "has encoding step"@en ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "Ordered rdf:List of EncodingStep, in the order the ENCODER applied them; a decoder inverts them in reverse. Mutually exclusive with hexplain:isEncodedWith, which remains the shorthand for a single unparameterised codec."@en .
+:codec a owl:ObjectProperty ; rdfs:label "codec"@en ; rdfs:range skos:Concept ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "The algorithm this step applies, drawn from whichever codec or compression register the profile binds -- the same registers hexplain:isEncodedWith draws on."@en .
+:codecParameter a owl:ObjectProperty ; rdfs:label "codec parameter"@en ; rdfs:range :CodecParameter ; rdfs:isDefinedBy <https://hexplain.io/ns/core> .
+:parameterName a owl:DatatypeProperty ; rdfs:label "parameter name"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "The setting's name as the codec itself names it: \"clevel\", \"shuffle\", \"predictor\"."@en .
+:parameterValue a owl:DatatypeProperty ; rdfs:label "parameter value"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "The setting's value, as the literal the format carries. Left untyped: a level is an integer, a Blosc inner codec a string, a flag a boolean."@en .
 
-:hasConditionalMapping a owl:ObjectProperty ; rdfs:label "has conditional mapping" ; rdfs:range rdf:List ;
+:hasConditionalMapping a owl:ObjectProperty ; rdfs:label "has conditional mapping"@en ; rdfs:range rdf:List ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> .
-:condition a owl:DatatypeProperty ; rdfs:label "condition" ; rdfs:range xsd:string ;
+:condition a owl:DatatypeProperty ; rdfs:label "condition"@en ; rdfs:range xsd:string ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ; rdfs:seeAlso bddo:condition .
-:semanticProperty a owl:ObjectProperty ; rdfs:label "semantic property" ; rdfs:range rdf:Property ;
+:semanticProperty a owl:ObjectProperty ; rdfs:label "semantic property"@en ; rdfs:range rdf:Property ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> .
-:valueExpression a owl:DatatypeProperty ; rdfs:label "value expression" ; rdfs:range xsd:string ;
+:valueExpression a owl:DatatypeProperty ; rdfs:label "value expression"@en ; rdfs:range xsd:string ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "A HEL expression computing the value to emit for the mapped property instead of the field's raw parsed value (e.g. fixed-point or unit scaling). Evaluated in the field's context." .
-:valueDatatype a owl:ObjectProperty ; rdfs:label "value datatype" ; rdfs:range rdfs:Datatype ;
+    rdfs:comment "A HEL expression computing the value to emit for the mapped property instead of the field's raw parsed value (e.g. fixed-point or unit scaling). Evaluated in the field's context."@en .
+:valueDatatype a owl:ObjectProperty ; rdfs:label "value datatype"@en ; rdfs:range rdfs:Datatype ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The xsd datatype of a computed hexplain:valueExpression result; defaults to the natural datatype of the HEL result type." .
+    rdfs:comment "The xsd datatype of a computed hexplain:valueExpression result; defaults to the natural datatype of the HEL result type."@en .
 
 # Object-valued edges: the mapped triple's object is an IRI, not a literal.
-:mapsToObjectProperty a owl:ObjectProperty ; rdfs:label "maps to object property" ; rdfs:range owl:ObjectProperty ;
+:mapsToObjectProperty a owl:ObjectProperty ; rdfs:label "maps to object property"@en ; rdfs:range owl:ObjectProperty ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "Relates a bddo:Field to the owl:ObjectProperty whose object is an IRI rather than a literal: the resource minted for a nested Struct instance (when the field's bddo:dataType is a bddo:Struct) or the field's enumeration symbol IRI (when it carries a bddo:enumeration whose bddo:enumSymbol values are IRIs). Use hexplain:mapsToProperty for literal-valued fields and this property for IRI-valued edges, so that a described format yields a connected RDF graph rather than isolated literals." .
+    rdfs:comment "Relates a bddo:Field to the owl:ObjectProperty whose object is an IRI rather than a literal: the resource minted for a nested Struct instance (when the field's bddo:dataType is a bddo:Struct) or the field's enumeration symbol IRI (when it carries a bddo:enumeration whose bddo:enumSymbol values are IRIs). Use hexplain:mapsToProperty for literal-valued fields and this property for IRI-valued edges, so that a described format yields a connected RDF graph rather than isolated literals."@en .
 
 # Conditional class mapping (tagged unions / variant records).
-:hasConditionalClassMapping a owl:ObjectProperty ; rdfs:label "has conditional class mapping" ; rdfs:range rdf:List ;
+:hasConditionalClassMapping a owl:ObjectProperty ; rdfs:label "has conditional class mapping"@en ; rdfs:range rdf:List ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "Ordered rdf:List of hexplain:ClassMappingRule on a bddo:Struct. The class the Struct maps to is the hexplain:semanticClass of the first rule whose hexplain:condition holds — modelling tagged unions and variant records, where a record's type depends on a discriminator field. Mutually exclusive with hexplain:mapsToClass." .
-:semanticClass a owl:ObjectProperty ; rdfs:label "semantic class" ; rdfs:range owl:Class ;
+    rdfs:comment "Ordered rdf:List of hexplain:ClassMappingRule on a bddo:Struct. The class the Struct maps to is the hexplain:semanticClass of the first rule whose hexplain:condition holds — modelling tagged unions and variant records, where a record's type depends on a discriminator field. Mutually exclusive with hexplain:mapsToClass."@en .
+:semanticClass a owl:ObjectProperty ; rdfs:label "semantic class"@en ; rdfs:range owl:Class ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The owl:Class selected by a hexplain:ClassMappingRule when its condition holds." .
+    rdfs:comment "The owl:Class selected by a hexplain:ClassMappingRule when its condition holds."@en .
 
 # Unit of measure and language tag annotations.
-:unit a owl:ObjectProperty ; rdfs:label "unit" ;
+:unit a owl:ObjectProperty ; rdfs:label "unit"@en ;
     # rdfs:Resource, not skos:Concept: the range would type every QUDT unit (a qudt:Unit) and every
     # UCUM-based unit IRI a skos:Concept, which they are not. Widening the range removes an
     # inference; it invalidates nothing, and UnitShape still requires an IRI.
     rdfs:range rdfs:Resource ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The unit of measure of the quantity a bddo:Field carries, as the IRI of a unit: a QUDT unit (unit:SEC), a UCUM-based unit IRI, or a concept of a unit register a profile binds. Nothing is inferred about the unit's type. Annotation only: it records the physical unit of the emitted value and does not rescale it — use hexplain:valueExpression for numeric conversion." .
-:language a owl:DatatypeProperty ; rdfs:label "language" ; rdfs:range xsd:language ;
+    rdfs:comment "The unit of measure of the quantity a bddo:Field carries, as the IRI of a unit: a QUDT unit (unit:SEC), a UCUM-based unit IRI, or a concept of a unit register a profile binds. Nothing is inferred about the unit's type. Annotation only: it records the physical unit of the emitted value and does not rescale it — use hexplain:valueExpression for numeric conversion."@en .
+:language a owl:DatatypeProperty ; rdfs:label "language"@en ; rdfs:range xsd:language ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "A fixed BCP-47 language tag applied to the string literal emitted for a bddo:Field, producing a language-tagged literal. Mutually exclusive with hexplain:languageFromField." .
-:languageFromField a owl:ObjectProperty ; rdfs:label "language from field" ; rdfs:range bddo:Field ;
+    rdfs:comment "A fixed BCP-47 language tag applied to the string literal emitted for a bddo:Field, producing a language-tagged literal. Mutually exclusive with hexplain:languageFromField."@en .
+:languageFromField a owl:ObjectProperty ; rdfs:label "language from field"@en ; rdfs:range bddo:Field ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The bddo:Field whose parsed string value supplies the BCP-47 language tag for this field's emitted string literal, for formats that carry a text run's language in a sibling field. Mutually exclusive with hexplain:language." .
+    rdfs:comment "The bddo:Field whose parsed string value supplies the BCP-47 language tag for this field's emitted string literal, for formats that carry a text run's language in a sibling field. Mutually exclusive with hexplain:language."@en .
 
 #################### Register bindings ####################
 # A profile states which controlled register supplies the values of a property whose range is
 # skos:Concept. Aspects deliberately do NOT import registers -- that absence is what makes a
 # register swappable -- so the binding is declared here, per profile, and enforced by
 # hexplain:RegisterBindingShape.
-hexplain:RegisterBinding a owl:Class ; rdfs:label "register binding" ;
+hexplain:RegisterBinding a owl:Class ; rdfs:label "register binding"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "A statement that one property draws its values from one controlled register." .
-hexplain:usesRegister a owl:ObjectProperty ; rdfs:label "uses register" ;
+    rdfs:comment "A statement that one property draws its values from one controlled register."@en .
+hexplain:usesRegister a owl:ObjectProperty ; rdfs:label "uses register"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ; rdfs:range hexplain:RegisterBinding ;
-    rdfs:comment "Binds a property used by this profile to the register supplying its values." .
-hexplain:forProperty a owl:ObjectProperty ; rdfs:label "for property" ; rdfs:range rdf:Property ;
+    rdfs:comment "Binds a property used by this profile to the register supplying its values."@en .
+hexplain:forProperty a owl:ObjectProperty ; rdfs:label "for property"@en ; rdfs:range rdf:Property ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The property being bound." .
-hexplain:register a owl:ObjectProperty ; rdfs:label "register" ;
+    rdfs:comment "The property being bound."@en .
+hexplain:register a owl:ObjectProperty ; rdfs:label "register"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:range skos:ConceptScheme ;
-    rdfs:comment "The skos:ConceptScheme whose members are the permitted values." .
+    rdfs:comment "The skos:ConceptScheme whose members are the permitted values."@en .
 
 #################### Register lifecycle and cross-layer correspondence ####################
 # A register concept is never deleted or reused: when policy retires or replaces it, the IRI
 # stays resolvable with owl:deprecated true, a hexplain:status saying why, a skos:historyNote
 # and, when a successor exists, dcterms:isReplacedBy (tools/test_register_lifecycle.py).
-hexplain:RegisterStatus a owl:Class ; rdfs:label "Register Status" ;
+hexplain:RegisterStatus a owl:Class ; rdfs:label "Register Status"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The lifecycle state of a register entry (a concept, collection or scheme). Closed set: hexplain:statusValid, hexplain:statusDeprecated, hexplain:statusSuperseded." .
-hexplain:statusValid a hexplain:RegisterStatus ; rdfs:label "Valid" ;
+    rdfs:comment "The lifecycle state of a register entry (a concept, collection or scheme). Closed set: hexplain:statusValid, hexplain:statusDeprecated, hexplain:statusSuperseded."@en .
+hexplain:statusValid a owl:NamedIndividual , hexplain:RegisterStatus ; rdfs:label "Valid"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The entry is current. An entry with no hexplain:status is valid unless it is owl:deprecated." .
-hexplain:statusDeprecated a hexplain:RegisterStatus ; rdfs:label "Deprecated" ;
+    rdfs:comment "The entry is current. An entry with no hexplain:status is valid unless it is owl:deprecated."@en .
+hexplain:statusDeprecated a owl:NamedIndividual , hexplain:RegisterStatus ; rdfs:label "Deprecated"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The entry is retained for existing data but SHOULD NOT be used in new data; there is no single successor. It carries owl:deprecated true and a skos:historyNote." .
-hexplain:statusSuperseded a hexplain:RegisterStatus ; rdfs:label "Superseded" ;
+    rdfs:comment "The entry is retained for existing data but SHOULD NOT be used in new data; there is no single successor. It carries owl:deprecated true and a skos:historyNote."@en .
+hexplain:statusSuperseded a owl:NamedIndividual , hexplain:RegisterStatus ; rdfs:label "Superseded"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The entry is retained for existing data and replaced by the entry or entries named with dcterms:isReplacedBy, which new data SHOULD use. It carries owl:deprecated true and a skos:historyNote." .
-hexplain:status a owl:ObjectProperty ; rdfs:label "status" ; rdfs:range hexplain:RegisterStatus ;
+    rdfs:comment "The entry is retained for existing data and replaced by the entry or entries named with dcterms:isReplacedBy, which new data SHOULD use. It carries owl:deprecated true and a skos:historyNote."@en .
+hexplain:status a owl:ObjectProperty ; rdfs:label "status"@en ; rdfs:range hexplain:RegisterStatus ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The lifecycle state of a register entry. Absent means valid for an entry that is not owl:deprecated." .
-hexplain:correspondsTo a owl:AnnotationProperty ; rdfs:label "corresponds to" ;
+    rdfs:comment "The lifecycle state of a register entry. Absent means valid for an entry that is not owl:deprecated."@en .
+hexplain:correspondsTo a owl:AnnotationProperty ; rdfs:label "corresponds to"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "Links a register concept to the ontology individual that names the same thing in another layer (for example a checksum-register concept to the bddo:ChecksumAlgorithm individual a physical description uses). An annotation, not a SKOS mapping and not owl:sameAs: it asserts no equivalence between a concept and an individual and licenses no inference; tools use it to keep the two identifiers aligned." .
+    rdfs:comment "Links a register concept to the ontology individual that names the same thing in another layer (for example a checksum-register concept to the bddo:ChecksumAlgorithm individual a physical description uses). An annotation, not a SKOS mapping and not owl:sameAs: it asserts no equivalence between a concept and an individual and licenses no inference; tools use it to keep the two identifiers aligned."@en .
 
 # ---------- SHACL ----------
 hexplain:MapsToClassShape a sh:NodeShape ;
@@ -282,9 +282,9 @@ hexplain:_prefixes sh:declare
 # each binding on its own rejected every valid value once a graph held a US and a NATO binding
 # for one marking property.
 hexplain:RegisterBindingShape a sh:NodeShape ;
-    rdfs:label "Register binding shape" ;
+    rdfs:label "Register binding shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "A value of a property that a hexplain:RegisterBinding binds is skos:inScheme at least one of the registers bound to that property." ;
+    rdfs:comment "A value of a property that a hexplain:RegisterBinding binds is skos:inScheme at least one of the registers bound to that property."@en ;
     sh:target [ a sh:SPARQLTarget ;
         sh:prefixes hexplain:_prefixes ;
         sh:select """SELECT DISTINCT ?this WHERE {
@@ -306,9 +306,9 @@ hexplain:RegisterBindingShape a sh:NodeShape ;
 # A retired register value stays legal -- data written before the policy changed keeps its
 # meaning -- but new data should not use it, so its use is reported, as a warning.
 hexplain:RegisterDeprecatedValueShape a sh:NodeShape ;
-    rdfs:label "Register deprecated value shape" ;
+    rdfs:label "Register deprecated value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "A value of a bound property that is an owl:deprecated register entry is reported at sh:Warning, naming its replacement when it has one." ;
+    rdfs:comment "A value of a bound property that is an owl:deprecated register entry is reported at sh:Warning, naming its replacement when it has one."@en ;
     sh:severity sh:Warning ;
     sh:target [ a sh:SPARQLTarget ;
         sh:prefixes hexplain:_prefixes ;
@@ -326,9 +326,9 @@ hexplain:RegisterDeprecatedValueShape a sh:NodeShape ;
             OPTIONAL { ?value <http://purl.org/dc/terms/isReplacedBy> ?next }
         }""" ] .
 
-hexplain:RegisterStatusShape a sh:NodeShape ; rdfs:label "Register status shape" ;
+hexplain:RegisterStatusShape a sh:NodeShape ; rdfs:label "Register status shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "A register entry states at most one lifecycle status from the closed set; a deprecated or superseded entry is owl:deprecated true, a valid one is not, and a superseded entry names its successor." ;
+    rdfs:comment "A register entry states at most one lifecycle status from the closed set; a deprecated or superseded entry is owl:deprecated true, a valid one is not, and a superseded entry names its successor."@en ;
     sh:targetSubjectsOf hexplain:status ;
     sh:property [ sh:path hexplain:status ; sh:maxCount 1 ;
         sh:in ( hexplain:statusValid hexplain:statusDeprecated hexplain:statusSuperseded ) ;
@@ -357,9 +357,9 @@ hexplain:RegisterStatusShape a sh:NodeShape ; rdfs:label "Register status shape"
 # owl:deprecated, so an entry that states no status at all is checked too; plain SHACL, with no
 # SPARQL-based target, so every SHACL Core validator applies it. An ontology term that is
 # owl:deprecated (a class or property) is not a register entry and passes the first alternative.
-hexplain:RegisterLifecycleShape a sh:NodeShape ; rdfs:label "Register lifecycle shape" ;
+hexplain:RegisterLifecycleShape a sh:NodeShape ; rdfs:label "Register lifecycle shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "A deprecated register entry states hexplain:statusDeprecated or hexplain:statusSuperseded, a skos:historyNote or skos:changeNote, and replacements that are neither itself nor deprecated." ;
+    rdfs:comment "A deprecated register entry states hexplain:statusDeprecated or hexplain:statusSuperseded, a skos:historyNote or skos:changeNote, and replacements that are neither itself nor deprecated."@en ;
     sh:targetSubjectsOf owl:deprecated ;
     sh:or (
         [ sh:not [ sh:property [ sh:path owl:deprecated ; sh:hasValue true ] ] ]
@@ -390,10 +390,10 @@ hexplain:RegisterLifecycleShape a sh:NodeShape ; rdfs:label "Register lifecycle 
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-hexplain:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+hexplain:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
-hexplain:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+hexplain:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     sh:targetSubjectsOf hexplain:byteLength ,
         hexplain:byteOffset ,

@@ -10,7 +10,7 @@
 <https://hexplain.io/ns/req> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/req/1.3> ;
     owl:priorVersion <https://hexplain.io/ns/req/1.2> ;
-    rdfs:label "Hexplain Requirements Vocabulary" ;
+    rdfs:label "Hexplain Requirements Vocabulary"@en ;
     owl:versionInfo "1.3" ;
     dcterms:modified "2026-09-27"^^xsd:date ;
     dcterms:created "2026-08-01"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -18,52 +18,52 @@
     vann:preferredNamespacePrefix "req" ; vann:preferredNamespaceUri "https://hexplain.io/ns/req#" ;
     rdfs:comment """Identifies requirements stated by an external standards document, so that
 executable conformance constraints can cite them. Format-agnostic: it describes what documents
-demand, independent of any binary format description.""" .
+demand, independent of any binary format description."""@en .
 
 # --- Classes ---
-:Requirement a owl:Class ; rdfs:label "Requirement" ;
-    rdfs:comment "A single normative requirement drawn from a standards document. A requirement is identified by its IRI. Its (req:fromStandard, req:requirementId) pair describes where it comes from; two different standards may use the same requirement identifier, so the identifier alone identifies nothing, and within one graph the pair (compared after removing surrounding whitespace, with req:fromStandard compared ignoring case) names at most one requirement." ;
+:Requirement a owl:Class ; rdfs:label "Requirement"@en ;
+    rdfs:comment "A single normative requirement drawn from a standards document. A requirement is identified by its IRI. Its (req:fromStandard, req:requirementId) pair describes where it comes from; two different standards may use the same requirement identifier, so the identifier alone identifies nothing, and within one graph the pair (compared after removing surrounding whitespace, with req:fromStandard compared ignoring case) names at most one requirement."@en ;
     skos:scopeNote "Assert on each requirement a conformance profile cites or declares. Mint one IRI per requirement of the source edition; a later edition's requirement is a different requirement even when its identifier is unchanged."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/req> .
 
-:DiscrepancyType a owl:Class ; rdfs:label "Discrepancy Type" ;
-    rdfs:comment "The class of defect that violating a requirement produces." ;
+:DiscrepancyType a owl:Class ; rdfs:label "Discrepancy Type"@en ;
+    rdfs:comment "The class of defect that violating a requirement produces."@en ;
     skos:scopeNote "The class of the three controlled values of req:discrepancyType; do not mint further types."@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/req> .
 
 # --- Controlled individuals ---
 # Definitions track the discrepancy types used by conformance test reporting: a violation
 # impairs interpretability (syntactic), understandability (semantic), or usability (functional).
-:Syntactic a :DiscrepancyType ; skos:scopeNote "Use as a req:discrepancyType value. It classifies the defect and never sets the severity of a finding."@en ; rdfs:label "Syntactic" ;
-    rdfs:comment "Impacts interpretability of the data: violates format or compression specifications." .
-:Semantic a :DiscrepancyType ; skos:scopeNote "Use as a req:discrepancyType value. It classifies the defect and never sets the severity of a finding."@en ; rdfs:label "Semantic" ;
-    rdfs:comment "Impacts understandability of the data: violates data dictionaries or content specifications." .
-:Functional a :DiscrepancyType ; skos:scopeNote "Use as a req:discrepancyType value. It classifies the defect and never sets the severity of a finding."@en ; rdfs:label "Functional" ;
-    rdfs:comment "Impacts usability of the data: violates community or system documentation and data models." .
+:Syntactic a owl:NamedIndividual , :DiscrepancyType ; skos:scopeNote "Use as a req:discrepancyType value. It classifies the defect and never sets the severity of a finding."@en ; rdfs:label "Syntactic"@en ;
+    rdfs:comment "Impacts interpretability of the data: violates format or compression specifications."@en .
+:Semantic a owl:NamedIndividual , :DiscrepancyType ; skos:scopeNote "Use as a req:discrepancyType value. It classifies the defect and never sets the severity of a finding."@en ; rdfs:label "Semantic"@en ;
+    rdfs:comment "Impacts understandability of the data: violates data dictionaries or content specifications."@en .
+:Functional a owl:NamedIndividual , :DiscrepancyType ; skos:scopeNote "Use as a req:discrepancyType value. It classifies the defect and never sets the severity of a finding."@en ; rdfs:label "Functional"@en ;
+    rdfs:comment "Impacts usability of the data: violates community or system documentation and data models."@en .
 
 # --- Properties ---
-:requirementId a owl:DatatypeProperty ; rdfs:label "requirement id" ;
-    rdfs:comment "The identifier the source standard uses, verbatim (e.g. 'JBP-2021.2-002'). It is unique only within its standard: two standards may use the same identifier, and the requirement itself is identified by its IRI. Within one graph no two distinct requirements share the same (fromStandard, requirementId) pair after normalisation (see req:Requirement)." ;
+:requirementId a owl:DatatypeProperty ; rdfs:label "requirement id"@en ;
+    rdfs:comment "The identifier the source standard uses, verbatim (e.g. 'JBP-2021.2-002'). It is unique only within its standard: two standards may use the same identifier, and the requirement itself is identified by its IRI. Within one graph no two distinct requirements share the same (fromStandard, requirementId) pair after normalisation (see req:Requirement)."@en ;
     skos:scopeNote "Use exactly once on a req:Requirement; a string with at least one visible character (white space, no-break and zero-width spaces alone are blank)."@en ;
     rdfs:range xsd:string .
 
-:fromStandard a owl:DatatypeProperty ; rdfs:label "from standard" ;
-    rdfs:comment "Source document and edition (e.g. 'MIL-STD-2500C, 01 May 2006')." ;
+:fromStandard a owl:DatatypeProperty ; rdfs:label "from standard"@en ;
+    rdfs:comment "Source document and edition (e.g. 'MIL-STD-2500C, 01 May 2006')."@en ;
     skos:scopeNote "Use exactly once on a req:Requirement; a non-empty string naming the document and its edition. It is compared ignoring case and surrounding whitespace when requirement identity is checked."@en ;
     rdfs:range xsd:string .
 
-:statement a owl:DatatypeProperty ; rdfs:label "statement" ;
-    rdfs:comment "The requirement text, quoted verbatim from the source: a plain string, or a language-tagged string stating the source's language." ;
+:statement a owl:DatatypeProperty ; rdfs:label "statement"@en ;
+    rdfs:comment "The requirement text, quoted verbatim from the source: a plain string, or a language-tagged string stating the source's language."@en ;
     skos:scopeNote "Use exactly once on a req:Requirement; a non-blank xsd:string or rdf:langString."@en ;
     rdfs:range rdfs:Literal .
 
-:discrepancyType a owl:ObjectProperty ; rdfs:label "discrepancy type" ;
-    rdfs:comment "The class of defect a violation produces." ;
+:discrepancyType a owl:ObjectProperty ; rdfs:label "discrepancy type"@en ;
+    rdfs:comment "The class of defect a violation produces."@en ;
     skos:scopeNote "Use exactly once on a req:Requirement, with one of req:Syntactic, req:Semantic or req:Functional."@en ;
     rdfs:range :DiscrepancyType .
 
-:appliesToVersion a owl:DatatypeProperty ; rdfs:label "applies to version" ;
-    rdfs:comment "A format version the requirement governs (e.g. 'NITF 2.1'). Absence means the requirement applies to every version of the format. Multiple values are a union: the requirement applies to an input whose format version equals any one of them. The input's version is supplied to the conformance run by its caller and compared with each value by exact string equality; when the caller supplies none, every requirement is evaluated and the run reports that version scoping was not applied." ;
+:appliesToVersion a owl:DatatypeProperty ; rdfs:label "applies to version"@en ;
+    rdfs:comment "A format version the requirement governs (e.g. 'NITF 2.1'). Absence means the requirement applies to every version of the format. Multiple values are a union: the requirement applies to an input whose format version equals any one of them. The input's version is supplied to the conformance run by its caller and compared with each value by exact string equality; when the caller supplies none, every requirement is evaluated and the run reports that version scoping was not applied."@en ;
     skos:scopeNote "Use zero or more times on a req:Requirement; each value is a non-empty string spelt exactly as callers will supply the version."@en ;
     rdfs:range xsd:string .
 

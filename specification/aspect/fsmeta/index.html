@@ -20,8 +20,8 @@
     owl:versionIRI &lt;https://hexplain.io/ns/aspect/fsmeta/1.2&gt; ; owl:versionInfo "1.2" ;
     owl:priorVersion &lt;https://hexplain.io/ns/aspect/fsmeta/1.1&gt; ;
     dcterms:modified "2026-09-27"^^xsd:date ;
-    rdfs:label "Hexplain Aspect — Filesystem Metadata (hx-fsmeta)" ;
-    rdfs:comment "Aspect for filesystem attributes: name, size, timestamps, directory flag (permissions/owner to follow). Shared by archives and disk images." ;
+    rdfs:label "Hexplain Aspect — Filesystem Metadata (hx-fsmeta)"@en ;
+    rdfs:comment "Aspect for filesystem attributes: name, size, timestamps, directory flag (permissions/owner to follow). Shared by archives and disk images."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
     dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
     vann:preferredNamespacePrefix "afs" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/fsmeta#" .
@@ -30,20 +30,20 @@
 # created (dcterms:modified, dcterms:created; no domain, range rdfs:Literal), so these are
 # subproperties. dcat:byteSize is not a superproperty of afs:fileSize: its domain is
 # dcat:Distribution, which an archive entry need not be.
-:fileName a owl:DatatypeProperty ; rdfs:label "file name" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/fsmeta&gt; ; rdfs:range xsd:string .
-:fileSize a owl:DatatypeProperty ; rdfs:label "file size" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/fsmeta&gt; ; rdfs:seeAlso dcterms:extent , dcat:byteSize ; rdfs:range xsd:unsignedLong ; rdfs:comment "Logical (uncompressed) size in bytes." .
-:modificationTime a owl:DatatypeProperty ; rdfs:label "modification time" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/fsmeta&gt; ; rdfs:subPropertyOf dcterms:modified ; rdfs:range xsd:dateTime .
-:creationTime a owl:DatatypeProperty ; rdfs:label "creation time" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/fsmeta&gt; ; rdfs:subPropertyOf dcterms:created ; rdfs:range xsd:dateTime .
-:isDirectory a owl:DatatypeProperty ; rdfs:label "is directory" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/fsmeta&gt; ; rdfs:range xsd:boolean .
+:fileName a owl:DatatypeProperty ; rdfs:label "file name"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/fsmeta&gt; ; rdfs:range xsd:string .
+:fileSize a owl:DatatypeProperty ; rdfs:label "file size"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/fsmeta&gt; ; rdfs:seeAlso dcterms:extent , dcat:byteSize ; rdfs:range xsd:unsignedLong ; rdfs:comment "Logical (uncompressed) size in bytes."@en .
+:modificationTime a owl:DatatypeProperty ; rdfs:label "modification time"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/fsmeta&gt; ; rdfs:subPropertyOf dcterms:modified ; rdfs:range xsd:dateTime .
+:creationTime a owl:DatatypeProperty ; rdfs:label "creation time"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/fsmeta&gt; ; rdfs:subPropertyOf dcterms:created ; rdfs:range xsd:dateTime .
+:isDirectory a owl:DatatypeProperty ; rdfs:label "is directory"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/fsmeta&gt; ; rdfs:range xsd:boolean .
 
 # ---------- Range datatype shapes ----------
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
-afs:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape" ;
+afs:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/fsmeta&gt; ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
-afs:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
+afs:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/fsmeta&gt; ;
     sh:targetSubjectsOf afs:creationTime ,
         afs:fileName ,

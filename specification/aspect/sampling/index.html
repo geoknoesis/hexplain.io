@@ -21,28 +21,28 @@
     owl:versionIRI &lt;https://hexplain.io/ns/aspect/sampling/1.2&gt; ; owl:versionInfo "1.2" ;
     dcterms:modified "2026-09-27"^^xsd:date ;
     owl:priorVersion &lt;https://hexplain.io/ns/aspect/sampling/1.1&gt; ;
-    rdfs:label "Hexplain Aspect — Sampling (hx-sampling)" ;
-    rdfs:comment "Base aspect for quantised sample values (bit depth, component count, sample format). Shared by raster, signal, and point-cloud representations." ;
+    rdfs:label "Hexplain Aspect — Sampling (hx-sampling)"@en ;
+    rdfs:comment "Base aspect for quantised sample values (bit depth, component count, sample format). Shared by raster, signal, and point-cloud representations."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator &lt;https://geoknoesis.com&gt; ;
     dcterms:license &lt;https://creativecommons.org/licenses/by/4.0/&gt; ;
     vann:preferredNamespacePrefix "asamp" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/sampling#" .
 
 # Units: qudt:hasUnit and qudt:hasQuantityKind describe a quantity, not a property, so they are
 # not asserted on the property; its unit is in its definition and linked with rdfs:seeAlso.
-:bitDepth a owl:DatatypeProperty ; rdfs:label "bit depth" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/sampling&gt; ; rdfs:range xsd:positiveInteger ; rdfs:seeAlso unit:BIT , quantitykind:InformationEntropy ; rdfs:comment "Bits per component/sample of the quantised data (e.g. 8, 16, 24)." .
-:componentCount a owl:DatatypeProperty ; rdfs:label "component count" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/sampling&gt; ; rdfs:range xsd:positiveInteger ; rdfs:comment "Number of components per sample — colour channels/bands for raster, channels for signal." .
-:sampleFormat a owl:ObjectProperty ; rdfs:label "sample format" ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/sampling&gt; ; rdfs:comment "Numeric interpretation of each stored sample." .
+:bitDepth a owl:DatatypeProperty ; rdfs:label "bit depth"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/sampling&gt; ; rdfs:range xsd:positiveInteger ; rdfs:seeAlso unit:BIT , quantitykind:InformationEntropy ; rdfs:comment "Bits per component/sample of the quantised data (e.g. 8, 16, 24)."@en .
+:componentCount a owl:DatatypeProperty ; rdfs:label "component count"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/sampling&gt; ; rdfs:range xsd:positiveInteger ; rdfs:comment "Number of components per sample — colour channels/bands for raster, channels for signal."@en .
+:sampleFormat a owl:ObjectProperty ; rdfs:label "sample format"@en ; rdfs:isDefinedBy &lt;https://hexplain.io/ns/aspect/sampling&gt; ; rdfs:comment "Numeric interpretation of each stored sample."@en .
 
-:SignedInteger a owl:NamedIndividual ; rdfs:label "Signed integer" .
-:UnsignedInteger a owl:NamedIndividual ; rdfs:label "Unsigned integer" .
-:Float a owl:NamedIndividual ; rdfs:label "Floating point" .
+:SignedInteger a owl:NamedIndividual ; rdfs:label "Signed integer"@en .
+:UnsignedInteger a owl:NamedIndividual ; rdfs:label "Unsigned integer"@en .
+:Float a owl:NamedIndividual ; rdfs:label "Floating point"@en .
 
 @prefix sh: &lt;http://www.w3.org/ns/shacl#&gt; .
 # Optional properties: declaring one activates value checks, not a completeness requirement.
-:PositiveIntegerShape a sh:NodeShape ; rdfs:label "Positive sample count" ;
+:PositiveIntegerShape a sh:NodeShape ; rdfs:label "Positive sample count"@en ;
     skos:definition "A positive integral quantity using an XML Schema integer-family datatype. Fractional values and numeric strings are not counts."@en ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 .
-:SamplingShape a sh:NodeShape ; rdfs:label "Sampling values" ;
+:SamplingShape a sh:NodeShape ; rdfs:label "Sampling values"@en ;
     skos:definition "Validates optional sample precision, component count and numeric interpretation wherever those sampling properties occur."@en ;
     sh:targetSubjectsOf :bitDepth, :componentCount, :sampleFormat ;
     sh:property [ sh:path :bitDepth ; sh:node :PositiveIntegerShape ; sh:maxCount 1 ] ;
