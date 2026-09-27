@@ -35,7 +35,11 @@ def payload(n):
 
 
 DATA = payload(150000)
-RANDOM = bytes(random.Random(5).getrandbits(8) for _ in range(3000))
+# generate_vectors.py creates ONE Random(5) and draws 3000 bytes from it. Calling random.Random(5)
+# inside the generator expression instead re-seeds on every draw, so every byte comes out the same
+# (0x9f) -- which is where the wrong stored-blocks digest 55b17ac2... came from.
+_stored_rng = random.Random(5)
+RANDOM = bytes(_stored_rng.getrandbits(8) for _ in range(3000))
 LIBRARIES = {"id": "reference-libraries", "url": "https://github.com/lz4/lz4",
              "description": "Written by python-lz4 1.9.4 (liblz4 1.9.4), python-zstandard 0.25 (zstd 1.5) and CPython's "
                             "lzma module (liblzma 5) through hexplain-tools codecs-lz/src/test/resources/codec/generate_vectors.py "
@@ -81,8 +85,12 @@ def main():
     parser.add_argument("--engine", required=True)
     engine = pathlib.Path(parser.parse_args().engine)
     codec = engine / "core/src/test/resources/codec"
+    # LZ4 and Zstandard fixtures live in the codecs-lz plugin module now (task 13); XZ's stay in
+    # core (core/src/test/resources/codec) until its own plugin extraction (task 14) moves them.
+    lz_codec = engine / "codecs-lz/src/test/resources/codec"
     numcodecs = json.loads((engine / "core/src/test/resources/zarr/numcodecs-vectors.json").read_text(encoding="utf-8"))["vectors"]
-    read = lambda name: (codec / name).read_bytes()  # noqa: E731
+    read = lambda name: (lz_codec / name).read_bytes()  # noqa: E731
+    read_xz = lambda name: (codec / name).read_bytes()  # noqa: E731
     if read("lz4-block.lz4") and len(DATA) != 150000:
         raise SystemExit("payload rebuilt wrongly")
 
@@ -172,7 +180,7 @@ def main():
         for v in numcodecs if v["group"] == "zstd"
     ], files=zstd_files)
 
-    crc64, concatenated = read("xz-crc64.xz"), read("xz-concatenated.xz")
+    crc64, concatenated = read_xz("xz-crc64.xz"), read_xz("xz-concatenated.xz")
     single = {"concatenated": 0, "memoryLimitKiB": 102400}
     write_suite("XZ", [LIBRARIES, NUMCODECS], [
         {"id": "crc64", "steps": [step(b"", ok(DATA), file="crc64.xz")]},
@@ -187,7 +195,7 @@ def main():
         {"id": "numcodecs-" + v["name"].replace(" ", "-").replace("+", "-"), "source": "numcodecs",
          "steps": [step(bytes.fromhex(v["encoded"]), {"hex": v["decoded"]} if v["group"] == "lzma" else {"error": "Validation"}, single)]}
         for v in numcodecs if v["group"] in ("lzma", "lzma-alone")
-    ], files={"crc64.xz": crc64, "sha256.xz": read("xz-sha256.xz"), "concatenated.xz": concatenated,
+    ], files={"crc64.xz": crc64, "sha256.xz": read_xz("xz-sha256.xz"), "concatenated.xz": concatenated,
               "truncated.xz": crc64[:-20]})
     print("PASS: wrote LZ4, LZ4Block, Zstd and XZ suites")
 
