@@ -275,6 +275,24 @@ cites `req-pm-context-3`.
 - New gate `test_ontology_licenses`: every module declares exactly the CC BY 4.0 licence and its
   creator, and `LICENSE` and `LICENSING.md` state both regimes.
 
+### HEL expressions as a datatype (bddo 1.3)
+
+- New datatype `bddo:HelExpression` (`rdfs:subClassOf xsd:string`): its lexical space is HEL
+  expression text and a literal's value is that string, so every expression-valued property
+  keeps its `xsd:string` range. The shapes of all 17 expression-valued properties
+  (`bddo:sizeFromExpression`, `bddo:condition`, `bddo:validIf`, `bddo:isPresentIf`,
+  `bddo:repeatUntil`, `bddo:valueFromExpression`, `bddo:localExpression`,
+  `bddo:dispatchOnExpression`, `bddo:atOffsetFromExpression`, `bddo:repeatCountFromExpression`,
+  the three `bddo:covers…Expression`, `hexplain:condition`, `hexplain:valueExpression`,
+  `dlv:dimensionStrideFromExpression`, `conf:assertion`) and the members of `bddo:hasArgument`
+  accept `xsd:string` or `bddo:HelExpression` through the new `bddo:HelExpressionValueShape`.
+  Authoring tools SHOULD emit the new datatype; every existing description stays valid.
+- New optional annotation `bddo:helVersion` on a description's ontology: the HEL version,
+  major.minor ("1.0"), its expressions are written against; absent, the specification edition's.
+  `bddo:HelVersionShape` allows one value matching `^[0-9]+\.[0-9]+$`.
+- Both are in `bddo`, not `core`: `bddo` is the lowest layer that holds expressions and loads
+  without `core`, which imports it.
+
 ### Ranges, shapes and deprecations (review fixes)
 
 - `hexplain:unit` has range `rdfs:Resource` instead of `skos:Concept`, which typed every QUDT unit

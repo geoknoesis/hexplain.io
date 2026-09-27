@@ -44,7 +44,7 @@ conf:_prefixes sh:declare
     ] ;
     sh:property [
         sh:path conf:assertion ;
-        sh:datatype xsd:string ;
+        sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ;
         sh:minCount 1 ; sh:maxCount 1 ;
         sh:minLength 1 ;
         sh:message "A Constraint needs exactly one non-empty conf:assertion HEL expression." ;
@@ -491,8 +491,8 @@ conf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         conf:truncated ,
         conf:truncationReason ,
         conf:versionScopingApplied ;
-    sh:property [ sh:path conf:assertion ; sh:datatype xsd:string ;
-        sh:message "conf:assertion takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path conf:assertion ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ;
+        sh:message "conf:assertion takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path conf:fileVersion ; sh:datatype xsd:string ;
         sh:message "conf:fileVersion takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path conf:findingMessage ; sh:datatype xsd:string ;
@@ -514,7 +514,7 @@ conf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 
 conf:ConstraintShape rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     skos:definition "Applies to instances of conf:Constraint; subjects using conf:assertion, conf:message, conf:scope; objects of conf:findingConstraint. A Constraint needs exactly one non-empty conf:assertion HEL expression. A Constraint needs exactly one non-empty conf:message finding template. A Constraint must cite at least one req:Requirement; an unattributed rule cannot be reported. A Constraint needs exactly one conf:scope IRI naming the bddo:Struct or bddo:Field it applies to. A Constraint states at most one conf:severity: sh:Violation, sh:Warning or sh:Info (absent means sh:Violation)."@en .
-conf:RangeDatatypeShape skos:definition "Applies to subjects using conf:assertion, conf:fileVersion, conf:findingMessage, conf:message, conf:truncated, conf:truncationReason, conf:versionScopingApplied. conf:assertion takes an xsd:string literal (rdfs:range xsd:string). conf:fileVersion takes an xsd:string literal (rdfs:range xsd:string). conf:findingMessage takes an xsd:string literal (rdfs:range xsd:string). conf:message takes an xsd:string literal (rdfs:range xsd:string). conf:truncated takes an xsd:boolean literal (rdfs:range xsd:boolean). conf:truncationReason takes an xsd:string literal (rdfs:range xsd:string). conf:versionScopingApplied takes an xsd:boolean literal (rdfs:range xsd:boolean)."@en .
+conf:RangeDatatypeShape skos:definition "Applies to subjects using conf:assertion, conf:fileVersion, conf:findingMessage, conf:message, conf:truncated, conf:truncationReason, conf:versionScopingApplied. conf:assertion takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). conf:fileVersion takes an xsd:string literal (rdfs:range xsd:string). conf:findingMessage takes an xsd:string literal (rdfs:range xsd:string). conf:message takes an xsd:string literal (rdfs:range xsd:string). conf:truncated takes an xsd:boolean literal (rdfs:range xsd:boolean). conf:truncationReason takes an xsd:string literal (rdfs:range xsd:string). conf:versionScopingApplied takes an xsd:boolean literal (rdfs:range xsd:boolean)."@en .
 conf:_prefixes rdfs:label "prefixes"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
     skos:definition "Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data."@en .

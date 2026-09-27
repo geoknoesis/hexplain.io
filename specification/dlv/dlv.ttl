@@ -150,12 +150,12 @@ dlv:DataLayoutShape a sh:NodeShape ;
 
 dlv:CellDataTypeRuleShape a sh:NodeShape ;
     sh:targetClass dlv:CellDataTypeRule ;
-    sh:property [ sh:path bddo:condition ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:condition ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:minCount 1 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:ruleCellDataType ; sh:class bddo:DataType ; sh:minCount 1 ; sh:maxCount 1 ] .
 
 dlv:DimensionOrderRuleShape a sh:NodeShape ;
     sh:targetClass dlv:DimensionOrderRule ;
-    sh:property [ sh:path bddo:condition ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:condition ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:minCount 1 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:ruleDimensionOrder ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ] ;
     sh:property [ sh:path ( dlv:ruleDimensionOrder [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
         sh:class dlv:Dimension ;
@@ -190,7 +190,7 @@ dlv:DimensionShape a sh:NodeShape ;
     sh:property [ sh:path dlv:dimensionSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:dimensionStride ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:dimensionStrideFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
-    sh:property [ sh:path dlv:dimensionStrideFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path dlv:dimensionStrideFromExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:hasAxis ; sh:nodeKind sh:IRI ; sh:class dlv:Axis ; sh:minCount 1 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:chunkSize ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path dlv:chunkSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ] .
@@ -237,8 +237,8 @@ dlv:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         sh:message "dlv:dimensionSize takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
     sh:property [ sh:path dlv:dimensionStride ; sh:node dlv:IntegerValueShape ; sh:minInclusive 1 ;
         sh:message "dlv:dimensionStride takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
-    sh:property [ sh:path dlv:dimensionStrideFromExpression ; sh:datatype xsd:string ;
-        sh:message "dlv:dimensionStrideFromExpression takes an xsd:string literal (rdfs:range xsd:string)." ] .
+    sh:property [ sh:path dlv:dimensionStrideFromExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ;
+        sh:message "dlv:dimensionStrideFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] .
 
 # BEGIN GENERATED TERM DOCUMENTATION
 # Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
@@ -250,7 +250,7 @@ dlv:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 dlv:Axis skos:definition "The logical meaning of a dimension, independent of the dimension's extent or storage stride."@en .
 dlv:CellDataTypeRuleShape rdfs:label "Cell Data Type Rule Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "Applies to instances of dlv:CellDataTypeRule. bddo:condition takes exactly one value, an xsd:string literal. dlv:ruleCellDataType takes exactly one value, an instance of bddo:DataType."@en .
+    skos:definition "Applies to instances of dlv:CellDataTypeRule. bddo:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). dlv:ruleCellDataType takes exactly one value, an instance of bddo:DataType."@en .
 dlv:ChunkedLayoutShape rdfs:label "Chunked Layout Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
     skos:definition "Applies to instances of dlv:DataLayout. dlv:chunkLengthsFromField takes at most one value; each is an instance of bddo:Field. dlv:chunkOffsetBase takes at most one value; each is one of bddo:streamStart, bddo:streamEnd, bddo:parentStart or bddo:currentPosition. dlv:chunkOffsetsFromField takes at most one value; each is an instance of bddo:Field. dlv:chunkOrder takes at most one value; each is an instance of dlv:ChunkOrder. A chunked dlv:DataLayout (any Dimension declaring dlv:chunkSize or dlv:chunkSizeFromField) must declare dlv:chunkOffsetsFromField."@en .
@@ -261,12 +261,12 @@ dlv:DataLayoutShape rdfs:label "Data Layout Shape"@en ;
 dlv:Dimension skos:definition "One position in a data layout's ordered dimensions, with an extent, optional stride or chunk size, and optional axis meaning."@en .
 dlv:DimensionOrderRuleShape rdfs:label "Dimension Order Rule Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "Applies to instances of dlv:DimensionOrderRule. bddo:condition takes exactly one value, an xsd:string literal. dlv:ruleDimensionOrder takes exactly one value, a resource (an IRI or a blank node). Every member of a ruleDimensionOrder list must be a dlv:Dimension."@en .
+    skos:definition "Applies to instances of dlv:DimensionOrderRule. bddo:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). dlv:ruleDimensionOrder takes exactly one value, a resource (an IRI or a blank node). Every member of a ruleDimensionOrder list must be a dlv:Dimension."@en .
 dlv:DimensionShape rdfs:label "Dimension Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "Applies to instances of dlv:Dimension. Each focus node is either a value or a value, and a value, a value or a value. dlv:chunkSize takes at most one value; each is an integer (of any XSD integer datatype) greater than 0. dlv:chunkSizeFromField takes at most one value; each is an instance of bddo:Field. dlv:dimensionSize takes at most one value; each is an integer (of any XSD integer datatype) greater than 0. dlv:dimensionSizeFromField takes at most one value; each is an instance of bddo:Field. dlv:dimensionStride takes at most one value; each is an integer (of any XSD integer datatype) greater than 0. dlv:dimensionStrideFromExpression takes at most one value; each is an xsd:string literal. dlv:dimensionStrideFromField takes at most one value; each is an instance of bddo:Field. dlv:hasAxis takes exactly one value, an IRI naming an instance of dlv:Axis. A dlv:Dimension must use at most one stride mechanism (dimensionStride / dimensionStrideFromField / dimensionStrideFromExpression)."@en .
+    skos:definition "Applies to instances of dlv:Dimension. Each focus node is either a value or a value, and a value, a value or a value. dlv:chunkSize takes at most one value; each is an integer (of any XSD integer datatype) greater than 0. dlv:chunkSizeFromField takes at most one value; each is an instance of bddo:Field. dlv:dimensionSize takes at most one value; each is an integer (of any XSD integer datatype) greater than 0. dlv:dimensionSizeFromField takes at most one value; each is an instance of bddo:Field. dlv:dimensionStride takes at most one value; each is an integer (of any XSD integer datatype) greater than 0. dlv:dimensionStrideFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal). dlv:dimensionStrideFromField takes at most one value; each is an instance of bddo:Field. dlv:hasAxis takes exactly one value, an IRI naming an instance of dlv:Axis. A dlv:Dimension must use at most one stride mechanism (dimensionStride / dimensionStrideFromField / dimensionStrideFromExpression)."@en .
 dlv:IntegerValueShape skos:definition "Applied through references from other shapes. A conforming value is an integer (of any XSD integer datatype)."@en .
-dlv:RangeDatatypeShape skos:definition "Applies to subjects using dlv:cellBitWidth, dlv:chunkSize, dlv:dimensionSize, dlv:dimensionStride, dlv:dimensionStrideFromExpression. dlv:cellBitWidth takes a positive integer (rdfs:range xsd:positiveInteger). dlv:chunkSize takes a positive integer (rdfs:range xsd:positiveInteger). dlv:dimensionSize takes a positive integer (rdfs:range xsd:positiveInteger). dlv:dimensionStride takes a positive integer (rdfs:range xsd:positiveInteger). dlv:dimensionStrideFromExpression takes an xsd:string literal (rdfs:range xsd:string)."@en .
+dlv:RangeDatatypeShape skos:definition "Applies to subjects using dlv:cellBitWidth, dlv:chunkSize, dlv:dimensionSize, dlv:dimensionStride, dlv:dimensionStrideFromExpression. dlv:cellBitWidth takes a positive integer (rdfs:range xsd:positiveInteger). dlv:chunkSize takes a positive integer (rdfs:range xsd:positiveInteger). dlv:dimensionSize takes a positive integer (rdfs:range xsd:positiveInteger). dlv:dimensionStride takes a positive integer (rdfs:range xsd:positiveInteger). dlv:dimensionStrideFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)."@en .
 dlv:_prefixes rdfs:label "prefixes"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
     skos:definition "Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data."@en .

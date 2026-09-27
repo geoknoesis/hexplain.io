@@ -218,7 +218,7 @@ hexplain:ValueExpressionShape a sh:NodeShape ;
     # seconds, UTM or MGRS depending on ICORDS, and only the first two are even the same
     # quantity.
     sh:or ( [ sh:class bddo:Field ] [ sh:class hexplain:MappingRule ] ) ;
-    sh:property [ sh:path hexplain:valueExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:valueExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:maxCount 1 ] ;
     sh:property [ sh:path hexplain:valueDatatype ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
 hexplain:HasConditionalMappingShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:hasConditionalMapping ;
@@ -228,12 +228,12 @@ hexplain:HasConditionalMappingShape a sh:NodeShape ;
         sh:message "Every member of a hasConditionalMapping list must be a hexplain:MappingRule." ] .
 hexplain:MappingRuleShape a sh:NodeShape ;
     sh:targetClass hexplain:MappingRule ;
-    sh:property [ sh:path hexplain:condition ; sh:nodeKind sh:Literal ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:condition ; sh:nodeKind sh:Literal ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:minCount 1 ; sh:maxCount 1 ] ;
     sh:property [ sh:path hexplain:semanticProperty ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:or ( [ sh:class rdf:Property ] [ sh:class owl:DatatypeProperty ]
                 [ sh:class owl:ObjectProperty ] [ sh:class owl:AnnotationProperty ] ) ] ;
     # Optional: absent means the arm emits the field's parsed value unchanged.
-    sh:property [ sh:path hexplain:valueExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:valueExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:maxCount 1 ] ;
     sh:property [ sh:path hexplain:valueDatatype ; sh:nodeKind sh:IRI ; sh:maxCount 1 ] .
 hexplain:MapsToObjectPropertyShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToObjectProperty ;
@@ -250,7 +250,7 @@ hexplain:HasConditionalClassMappingShape a sh:NodeShape ;
         sh:message "Every member of a hasConditionalClassMapping list must be a hexplain:ClassMappingRule." ] .
 hexplain:ClassMappingRuleShape a sh:NodeShape ;
     sh:targetClass hexplain:ClassMappingRule ;
-    sh:property [ sh:path hexplain:condition ; sh:nodeKind sh:Literal ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:condition ; sh:nodeKind sh:Literal ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:minCount 1 ; sh:maxCount 1 ] ;
     # As for hexplain:mapsToClass: OWL vocabularies type classes owl:Class, RDFS ones (schema.org)
     # rdfs:Class, and a conditional class mapping may choose either.
     sh:property [ sh:path hexplain:semanticClass ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
@@ -403,8 +403,8 @@ hexplain:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         sh:message "hexplain:byteLength takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
     sh:property [ sh:path hexplain:byteOffset ; sh:node hexplain:IntegerValueShape ; sh:minInclusive 0 ;
         sh:message "hexplain:byteOffset takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
-    sh:property [ sh:path hexplain:condition ; sh:datatype xsd:string ;
-        sh:message "hexplain:condition takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path hexplain:condition ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ;
+        sh:message "hexplain:condition takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path hexplain:parameterName ; sh:datatype xsd:string ;
         sh:message "hexplain:parameterName takes an xsd:string literal (rdfs:range xsd:string)." ] .
 
@@ -418,7 +418,7 @@ hexplain:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
 hexplain:ClassMappingRule skos:scopeNote "Assert on each member of a hexplain:hasConditionalClassMapping list, with one hexplain:condition and one hexplain:semanticClass. Rules are tried in list order; the first whose condition holds decides the struct's class."@en .
 hexplain:ClassMappingRuleShape rdfs:label "Class Mapping Rule Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    skos:definition "Applies to instances of hexplain:ClassMappingRule. hexplain:condition takes exactly one value, an xsd:string literal. hexplain:semanticClass takes exactly one value, an IRI naming an instance of owl:Class or rdfs:Class."@en .
+    skos:definition "Applies to instances of hexplain:ClassMappingRule. hexplain:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). hexplain:semanticClass takes exactly one value, an IRI naming an instance of owl:Class or rdfs:Class."@en .
 hexplain:CodecParameter skos:scopeNote "Assert on each object of hexplain:codecParameter, with exactly one hexplain:parameterName and one hexplain:parameterValue, spelt as the codec itself names the setting."@en .
 hexplain:CodecParameterShape rdfs:label "Codec Parameter Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
@@ -452,7 +452,7 @@ hexplain:LanguageShape rdfs:label "Language Shape"@en ;
 hexplain:MappingRule skos:scopeNote "Assert on each member of a hexplain:hasConditionalMapping list, with one hexplain:condition and one hexplain:semanticProperty, and optionally a hexplain:valueExpression computing the value that arm emits."@en .
 hexplain:MappingRuleShape rdfs:label "Mapping Rule Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    skos:definition "Applies to instances of hexplain:MappingRule. hexplain:condition takes exactly one value, an xsd:string literal. hexplain:semanticProperty takes exactly one value, an IRI naming an instance of rdf:Property, owl:DatatypeProperty, owl:ObjectProperty or owl:AnnotationProperty. hexplain:valueDatatype takes at most one value; each is an IRI. hexplain:valueExpression takes at most one value; each is an xsd:string literal."@en .
+    skos:definition "Applies to instances of hexplain:MappingRule. hexplain:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). hexplain:semanticProperty takes exactly one value, an IRI naming an instance of rdf:Property, owl:DatatypeProperty, owl:ObjectProperty or owl:AnnotationProperty. hexplain:valueDatatype takes at most one value; each is an IRI. hexplain:valueExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)."@en .
 hexplain:MapsToClassShape rdfs:label "Maps To Class Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     skos:definition "Applies to subjects using hexplain:mapsToClass. Each focus node is an instance of bddo:Struct. Each value of hexplain:mapsToClass is an IRI naming an instance of owl:Class or rdfs:Class."@en .
@@ -462,7 +462,7 @@ hexplain:MapsToObjectPropertyShape rdfs:label "Maps To Object Property Shape"@en
 hexplain:MapsToPropertyShape rdfs:label "Maps To Property Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     skos:definition "Applies to subjects using hexplain:mapsToProperty. Each focus node is an instance of bddo:Field. Each value of hexplain:mapsToProperty is an IRI naming an instance of rdf:Property, owl:DatatypeProperty, owl:ObjectProperty or owl:AnnotationProperty."@en .
-hexplain:RangeDatatypeShape skos:definition "Applies to subjects using hexplain:byteLength, hexplain:byteOffset, hexplain:condition, hexplain:parameterName. hexplain:byteLength takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). hexplain:byteOffset takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). hexplain:condition takes an xsd:string literal (rdfs:range xsd:string). hexplain:parameterName takes an xsd:string literal (rdfs:range xsd:string)."@en .
+hexplain:RangeDatatypeShape skos:definition "Applies to subjects using hexplain:byteLength, hexplain:byteOffset, hexplain:condition, hexplain:parameterName. hexplain:byteLength takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). hexplain:byteOffset takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). hexplain:condition takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). hexplain:parameterName takes an xsd:string literal (rdfs:range xsd:string)."@en .
 hexplain:RegisterBinding skos:scopeNote "Assert on the object of each hexplain:usesRegister, with exactly one hexplain:forProperty and one hexplain:register. Several bindings for one property are read together: a value in any of their schemes is accepted."@en .
 hexplain:RegisterStatus skos:scopeNote "The class of the three controlled values of hexplain:status; do not mint further statuses. A register publishes the status of its entries; data never states it."@en .
 hexplain:UnitShape rdfs:label "Unit Shape"@en ;
@@ -470,7 +470,7 @@ hexplain:UnitShape rdfs:label "Unit Shape"@en ;
     skos:definition "Applies to subjects using hexplain:unit. Each focus node is an instance of bddo:Field. hexplain:unit takes at most one value; each is an IRI."@en .
 hexplain:ValueExpressionShape rdfs:label "Value Expression Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    skos:definition "Applies to subjects using hexplain:valueDatatype, hexplain:valueExpression. Each focus node is an instance of bddo:Field or hexplain:MappingRule. hexplain:valueDatatype takes at most one value; each is an IRI. hexplain:valueExpression takes at most one value; each is an xsd:string literal."@en .
+    skos:definition "Applies to subjects using hexplain:valueDatatype, hexplain:valueExpression. Each focus node is an instance of bddo:Field or hexplain:MappingRule. hexplain:valueDatatype takes at most one value; each is an IRI. hexplain:valueExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)."@en .
 hexplain:_prefixes rdfs:label "prefixes"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     skos:definition "Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data."@en .

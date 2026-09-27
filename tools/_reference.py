@@ -48,7 +48,7 @@ def compact(g,term):
 
 def kind(g,t):
     types=set(g.objects(t,RDF.type))
-    for typ,title in [(OWL.Ontology,'Ontology'),(SH.NodeShape,'Node shape'),(SH.PropertyShape,'Property shape'),(SKOS.ConceptScheme,'Concept scheme'),(SKOS.Collection,'Collection'),(SKOS.Concept,'Concept'),(OWL.Class,'Class'),(OWL.ObjectProperty,'Object property'),(OWL.DatatypeProperty,'Datatype property'),(OWL.AnnotationProperty,'Annotation property')]:
+    for typ,title in [(OWL.Ontology,'Ontology'),(SH.NodeShape,'Node shape'),(SH.PropertyShape,'Property shape'),(SKOS.ConceptScheme,'Concept scheme'),(SKOS.Collection,'Collection'),(SKOS.Concept,'Concept'),(OWL.Class,'Class'),(OWL.ObjectProperty,'Object property'),(OWL.DatatypeProperty,'Datatype property'),(OWL.AnnotationProperty,'Annotation property'),(RDFS.Datatype,'Datatype')]:
         if typ in types:return title
     if (t,SH.declare,None) in g:return 'SHACL prefix declarations'
     return 'Named individual'

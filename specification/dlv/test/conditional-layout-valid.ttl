@@ -22,13 +22,13 @@ ex:Grid.pixels a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream 
 
 ex:Layout a dlv:DataLayout ; rdfs:label "Interleave- and depth-dependent grid" ;
     dlv:hasConditionalCellDataType (
-        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Hdr.nbits == 8"  ; dlv:ruleCellDataType bddo:uint8 ]
+        [ a dlv:CellDataTypeRule ; bddo:condition "asset.Hdr.nbits == 8"^^bddo:HelExpression ; dlv:ruleCellDataType bddo:uint8 ]
         [ a dlv:CellDataTypeRule ; bddo:condition "asset.Hdr.nbits == 16" ; dlv:ruleCellDataType bddo:uint16 ]
         [ a dlv:CellDataTypeRule ; bddo:condition "asset.Hdr.nbits == 32" ; dlv:ruleCellDataType bddo:float32 ]
     ) ;
     # The same three dimensions, permuted. BIL is (Y, Band, X); BIP (Y, X, Band); BSQ (Band, Y, X).
     dlv:hasConditionalDimensionOrder (
-        [ a dlv:DimensionOrderRule ; bddo:condition "asset.Hdr.layout == 'BIL'" ;
+        [ a dlv:DimensionOrderRule ; bddo:condition "asset.Hdr.layout == 'BIL'"^^bddo:HelExpression ;
           dlv:ruleDimensionOrder ( ex:DimY ex:DimBand ex:DimX ) ]
         [ a dlv:DimensionOrderRule ; bddo:condition "asset.Hdr.layout == 'BIP'" ;
           dlv:ruleDimensionOrder ( ex:DimY ex:DimX ex:DimBand ) ]

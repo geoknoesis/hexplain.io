@@ -325,6 +325,33 @@
 :crcCheck a owl:DatatypeProperty ; rdfs:label "CRC check value" ; rdfs:range xsd:nonNegativeInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "The CRC of the nine ASCII bytes \"123456789\" under the algorithm's parameters: the catalogue check value that identifies a CRC variant. Informative on a named algorithm; never required, and never read by a processor." .
 
+# ---------- HEL expressions ----------
+# An expression is RDF text. Typing it bddo:HelExpression lets a reader -- a person, an editor, a
+# linter -- tell an expression from a name or a label without knowing which property holds it.
+# The literal's value is still the string, so every expression-valued property keeps its
+# xsd:string range and an untyped expression stays valid: the shapes accept either datatype.
+# It is declared here rather than in core because bddo is the lowest layer that holds
+# expressions and must load without core.
+:HelExpression a rdfs:Datatype ; rdfs:subClassOf xsd:string ;
+    rdfs:label "HEL expression"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The datatype of a literal whose text is a HEL expression. Its lexical space is the text of HEL expressions as the HEL specification defines it, and a literal's value is that text as a string: the value space is a subset of xsd:string's, so a bddo:HelExpression literal is a value of every property whose range is xsd:string. Authoring tools SHOULD type expressions with it; an expression typed xsd:string remains valid. The datatype does not check the text: whether it parses is for the HEL evaluator to say."@en .
+:HelExpressionValueShape a sh:NodeShape ;
+    rdfs:label "HEL expression value shape"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A HEL expression literal: typed xsd:string, as existing descriptions write it, or bddo:HelExpression. Every expression-valued property's shapes use it in place of sh:datatype xsd:string."@en ;
+    sh:or ( [ sh:datatype xsd:string ] [ sh:datatype :HelExpression ] ) .
+
+# The HEL version a description's expressions are written against. HEL 1.x adds functions but
+# never changes what a 1.0 expression means, so a marker lets an evaluator that implements 1.0
+# notice a description written for 1.1 -- which may call a 1.1 function -- and say so.
+:helVersion a owl:AnnotationProperty ; rdfs:range xsd:string ;
+    rdfs:label "HEL version"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The HEL version, as major.minor (\"1.0\"), that the expressions of a format description are written against, stated at most once on the description's owl:Ontology. Optional: absent, it is the HEL version of the specification edition the description conforms to. An evaluator implementing an earlier minor version of the same major version can still evaluate every expression that calls no function it lacks; a description declaring a later version tells it why a function may be unknown."@en .
+:HelVersionShape a sh:NodeShape ;
+    rdfs:label "HEL version shape"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    sh:targetSubjectsOf :helVersion ;
+    sh:property [ sh:path :helVersion ; sh:datatype xsd:string ; sh:maxCount 1 ; sh:pattern "^[0-9]+\\.[0-9]+$" ;
+        sh:message "bddo:helVersion is stated at most once, as an xsd:string major.minor version such as \"1.0\"." ] .
+
 # ---------- Deprecated pre-release terms ----------
 # Profiles written before BDDO 1.0 still use these IRIs and conforming processors still read
 # them, so they are declared rather than silently unknown. Each keeps its original meaning;
@@ -560,15 +587,15 @@ bddo:FieldShape a sh:NodeShape ;
     sh:property [ sh:path bddo:alignment ; sh:minExclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:atOffset ; sh:minInclusive 0 ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:atOffsetFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:atOffsetFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:atOffsetFromExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:offsetBase ; sh:maxCount 1 ;
         sh:in ( bddo:streamStart bddo:streamEnd bddo:parentStart bddo:currentPosition ) ] ;
     sh:property [ sh:path bddo:enumeration ; sh:class bddo:Enumeration ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:checksum ; sh:class bddo:Checksum ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:valueFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:validIf ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:valueFromExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:validIf ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:rootKeyFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:isPresentIf ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+    sh:property [ sh:path bddo:isPresentIf ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] .
 
 # At most one sizing mechanism per field.
 bddo:FieldSizingShape a sh:NodeShape ;
@@ -666,7 +693,7 @@ bddo:DispatchTableShape a sh:NodeShape ;
         [ sh:property [ sh:path bddo:dispatchOnExpression ; sh:minCount 1 ] ]
     ) ;
     sh:property [ sh:path bddo:dispatchOnField ; sh:maxCount 1 ; sh:class bddo:Field ] ;
-    sh:property [ sh:path bddo:dispatchOnExpression ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path bddo:dispatchOnExpression ; sh:maxCount 1 ; sh:node bddo:HelExpressionValueShape ] ;
     sh:property [ sh:path bddo:dispatchDefault ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
         sh:or ( [ sh:class bddo:DataType ] [ sh:class bddo:Struct ] ) ] .
 
@@ -729,9 +756,9 @@ bddo:ChecksumShape a sh:NodeShape ;
         sh:message "bddo:checksumAlgorithm is one of the named algorithms or a bddo:CustomCrc." ] ;
     sh:property [ sh:path bddo:coversFromField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
     sh:property [ sh:path bddo:coversToField ; sh:class bddo:Field ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:coversExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:coversFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
-    sh:property [ sh:path bddo:coversToExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:coversExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:coversFromExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] ;
+    sh:property [ sh:path bddo:coversToExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ] ;
     # One mechanism per bound. Both would leave the reader to guess which wins, and the two
     # forms do not even agree on whether the end byte is included, so the guess changes the
     # bytes hashed.
@@ -806,8 +833,8 @@ bddo:ArgumentListShape a sh:NodeShape ;
     sh:property [ sh:path bddo:hasArgument ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
         sh:message "bddo:hasArgument must point to a single rdf:List." ] ;
     sh:property [ sh:path ( bddo:hasArgument [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
-        sh:datatype xsd:string ;
-        sh:message "Every member of a hasArgument list is a HEL expression, an xsd:string literal." ] .
+        sh:node bddo:HelExpressionValueShape ;
+        sh:message "Every member of a hasArgument list is a HEL expression, an xsd:string or bddo:HelExpression literal." ] .
 
 # Arity: every place that names a struct as a type supplies one argument per parameter. List
 # NODES are counted, not members, so two equal argument strings still count twice.
@@ -829,7 +856,7 @@ bddo:LocalBindingShape a sh:NodeShape ;
     sh:targetClass bddo:LocalBinding ;
     sh:targetSubjectsOf bddo:localExpression ;
     sh:nodeKind sh:IRI ;
-    sh:property [ sh:path bddo:localExpression ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+    sh:property [ sh:path bddo:localExpression ; sh:minCount 1 ; sh:maxCount 1 ; sh:node bddo:HelExpressionValueShape ;
         sh:message "A bddo:LocalBinding states exactly one bddo:localExpression." ] ;
     sh:not [ sh:class bddo:Field ] ;
     # A text container locates its fields by delimiter, key or path rather than by list order,
@@ -1158,22 +1185,22 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         sh:message "bddo:alignment takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
     sh:property [ sh:path bddo:atOffset ; sh:node bddo:IntegerValueShape ; sh:minInclusive 0 ;
         sh:message "bddo:atOffset takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
-    sh:property [ sh:path bddo:atOffsetFromExpression ; sh:datatype xsd:string ;
-        sh:message "bddo:atOffsetFromExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:atOffsetFromExpression ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:atOffsetFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:bitLength ; sh:node bddo:IntegerValueShape ; sh:minInclusive 1 ;
         sh:message "bddo:bitLength takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
     sh:property [ sh:path bddo:bitWidth ; sh:node bddo:IntegerValueShape ; sh:minInclusive 1 ;
         sh:message "bddo:bitWidth takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
     sh:property [ sh:path bddo:commentPrefix ; sh:datatype xsd:string ;
         sh:message "bddo:commentPrefix takes an xsd:string literal (rdfs:range xsd:string)." ] ;
-    sh:property [ sh:path bddo:condition ; sh:datatype xsd:string ;
-        sh:message "bddo:condition takes an xsd:string literal (rdfs:range xsd:string)." ] ;
-    sh:property [ sh:path bddo:coversExpression ; sh:datatype xsd:string ;
-        sh:message "bddo:coversExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
-    sh:property [ sh:path bddo:coversFromExpression ; sh:datatype xsd:string ;
-        sh:message "bddo:coversFromExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
-    sh:property [ sh:path bddo:coversToExpression ; sh:datatype xsd:string ;
-        sh:message "bddo:coversToExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:condition ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:condition takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:coversExpression ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:coversExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:coversFromExpression ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:coversFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:coversToExpression ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:coversToExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:crcCheck ; sh:node bddo:IntegerValueShape ; sh:minInclusive 0 ;
         sh:message "bddo:crcCheck takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
     sh:property [ sh:path bddo:crcInit ; sh:node bddo:IntegerValueShape ; sh:minInclusive 0 ;
@@ -1188,8 +1215,8 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         sh:message "bddo:crcWidth takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
     sh:property [ sh:path bddo:crcXorOut ; sh:node bddo:IntegerValueShape ; sh:minInclusive 0 ;
         sh:message "bddo:crcXorOut takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
-    sh:property [ sh:path bddo:dispatchOnExpression ; sh:datatype xsd:string ;
-        sh:message "bddo:dispatchOnExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:dispatchOnExpression ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:dispatchOnExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:enumIsFlags ; sh:datatype xsd:boolean ;
         sh:message "bddo:enumIsFlags takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
     sh:property [ sh:path bddo:escapeChar ; sh:datatype xsd:hexBinary ;
@@ -1200,8 +1227,8 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         sh:message "bddo:groupCloseToken takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:groupOpenToken ; sh:datatype xsd:string ;
         sh:message "bddo:groupOpenToken takes an xsd:string literal (rdfs:range xsd:string)." ] ;
-    sh:property [ sh:path bddo:isPresentIf ; sh:datatype xsd:string ;
-        sh:message "bddo:isPresentIf takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:isPresentIf ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:isPresentIf takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:isSigned ; sh:datatype xsd:boolean ;
         sh:message "bddo:isSigned takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
     sh:property [ sh:path bddo:key ; sh:datatype xsd:string ;
@@ -1212,8 +1239,8 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         sh:message "bddo:keyPath takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:keyValueSeparator ; sh:datatype xsd:hexBinary ;
         sh:message "bddo:keyValueSeparator takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
-    sh:property [ sh:path bddo:localExpression ; sh:datatype xsd:string ;
-        sh:message "bddo:localExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:localExpression ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:localExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:namespaceIRI ; sh:datatype xsd:anyURI ;
         sh:message "bddo:namespaceIRI takes an xsd:anyURI literal (rdfs:range xsd:anyURI)." ] ;
     sh:property [ sh:path bddo:namespacePrefix ; sh:datatype xsd:string ;
@@ -1230,16 +1257,16 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         sh:message "bddo:recordDelimiter takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
     sh:property [ sh:path bddo:repeatCount ; sh:node bddo:IntegerValueShape ; sh:minInclusive 0 ;
         sh:message "bddo:repeatCount takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
-    sh:property [ sh:path bddo:repeatCountFromExpression ; sh:datatype xsd:string ;
-        sh:message "bddo:repeatCountFromExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
-    sh:property [ sh:path bddo:repeatUntil ; sh:datatype xsd:string ;
-        sh:message "bddo:repeatUntil takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:repeatCountFromExpression ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:repeatCountFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:repeatUntil ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:repeatUntil takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:separatedBy ; sh:datatype xsd:string ;
         sh:message "bddo:separatedBy takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:size ; sh:node bddo:IntegerValueShape ; sh:minInclusive 1 ;
         sh:message "bddo:size takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
-    sh:property [ sh:path bddo:sizeFromExpression ; sh:datatype xsd:string ;
-        sh:message "bddo:sizeFromExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:sizeFromExpression ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:sizeFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:sizeToEndOfStream ; sh:datatype xsd:boolean ;
         sh:message "bddo:sizeToEndOfStream takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
     sh:property [ sh:path bddo:skipRecords ; sh:node bddo:IntegerValueShape ; sh:minInclusive 0 ;
@@ -1252,10 +1279,10 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape" ;
         sh:message "bddo:trimNull takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
     sh:property [ sh:path bddo:trimWhitespace ; sh:datatype xsd:boolean ;
         sh:message "bddo:trimWhitespace takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
-    sh:property [ sh:path bddo:validIf ; sh:datatype xsd:string ;
-        sh:message "bddo:validIf takes an xsd:string literal (rdfs:range xsd:string)." ] ;
-    sh:property [ sh:path bddo:valueFromExpression ; sh:datatype xsd:string ;
-        sh:message "bddo:valueFromExpression takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:validIf ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:validIf takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:valueFromExpression ; sh:node bddo:HelExpressionValueShape ;
+        sh:message "bddo:valueFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:whitespaceSeparated ; sh:datatype xsd:boolean ;
         sh:message "bddo:whitespaceSeparated takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] .
 

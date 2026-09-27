@@ -26,6 +26,15 @@ NODE_LEVEL = {SH.targetClass, SH.targetSubjectsOf, SH.targetObjectsOf, SH.target
 INTS = {'int', 'long', 'short', 'byte', 'unsignedInt', 'unsignedLong', 'unsignedShort', 'unsignedByte'}
 
 
+#: Shared value shapes whose meaning is better said than named.
+NODE_PHRASES = {
+    'HelExpressionValueShape': 'a HEL expression (an xsd:string or bddo:HelExpression literal)',
+    'FiniteDoubleShape': 'a finite number (an xsd:double or xsd:float literal, not NaN or infinite)',
+    'IntegerValueShape': 'an integer (of any XSD integer datatype)',
+    'FloatValueShape': 'an xsd:double or xsd:float literal',
+}
+
+
 class Unhandled(Exception):
     pass
 
@@ -127,7 +136,9 @@ def value_phrase(g, shape, prefixes, allow_count=False):
         if len(datatypes) > 1:
             raise Unhandled('several datatypes')
         names = [x.strip() for x in datatypes[0].replace(' or ', ', ').split(',')]
-        if len(names) >= 5 and all(n.startswith('xsd:') and ('nteger' in n or n[4:] in INTS) for n in names):
+        if sorted(names) == ['bddo:HelExpression', 'xsd:string']:
+            base = NODE_PHRASES['HelExpressionValueShape']
+        elif len(names) >= 5 and all(n.startswith('xsd:') and ('nteger' in n or n[4:] in INTS) for n in names):
             base = 'an integer (of any XSD integer datatype)'
         else:
             base = f'{article(datatypes[0])} {datatypes[0]} literal'
@@ -187,7 +198,10 @@ def value_phrase(g, shape, prefixes, allow_count=False):
     for v in po.pop(SH.pattern, []):
         quals.append(f'matching the regular expression {v}' + (f' (flags "{flags[0]}")' if flags else ''))
     for v in po.pop(SH.node, []):
-        if isinstance(v, BNode):
+        known = NODE_PHRASES.get(str(v).rsplit('#', 1)[-1]) if isinstance(v, URIRef) else None
+        if known and base is None:
+            base = known
+        elif isinstance(v, BNode):
             quals.append('conforming to ' + value_phrase(g, v, prefixes))
         else:
             quals.append(f'conforming to {c(v)}')
