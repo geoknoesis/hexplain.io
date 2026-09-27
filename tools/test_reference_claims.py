@@ -11,7 +11,9 @@ This gate checks the specification side:
     claimed classes, the claimed optional features and the unclaimed ones of the file;
   * the file's optional features are exactly the Processing Model's closed list
     (#optional-features), and its classes are conformance classes the page defines;
-  * the decoded codecs include the minimum codec set and are concepts of the register named;
+  * the decoded codecs include the minimum codec set, each carries a hexplain:codecContract in the
+    register named, codecs.modules names exactly them, and the note lists those beyond the minimum
+    set (codecs are claimed by IRI; the feature token codecs-beyond-minimum is withdrawn);
   * the default limits are at least the minimums the Processing Model requires;
   * the HEL version it implements is a major.minor version of HEL 1 that the HEL specification
     defines, and the note states the same version.
@@ -72,9 +74,18 @@ def main():
         failures.append(f"the minimum codec {c} is not decoded")
     register = Graph().parse(data=(ROOT / "specification/register/media-encoding/media-encoding.ttl")
                              .read_text(encoding="utf-8"), format="turtle")
+    contract = URIRef("https://hexplain.io/ns/core#codecContract")
     for c in sorted(decoded):
-        if not list(register.predicate_objects(URIRef(codecs["register"] + c))):
-            failures.append(f"decoded codec {c} is not a concept of {codecs['register']}")
+        if (URIRef(codecs["register"] + c), contract, None) not in register:
+            failures.append(f"decoded codec {c} has no hexplain:codecContract in {codecs['register']}")
+    modules = codecs.get("modules", {})
+    if set(modules) != decoded:
+        failures.append(f"codecs.modules names {sorted(modules)}, not exactly the decoded codecs {sorted(decoded)}")
+    if "codecs-beyond-minimum" in claims["optionalFeatures"]:
+        failures.append("codecs-beyond-minimum is no longer a feature token: codecs are claimed one IRI at a time")
+    stated_codecs = span("codecs")
+    if stated_codecs != {f"menc:{c}" for c in decoded - MINIMUM_CODECS}:
+        failures.append(f"the note's codecs {sorted(stated_codecs)} differ from the decoded codecs beyond the minimum set")
 
     for key, minimum in MINIMUM_LIMITS.items():
         value = claims["limits"].get(key)

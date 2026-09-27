@@ -108,6 +108,12 @@ def main():
                 for name in names:
                     if name not in features:
                         problems.append(f"{where}: {name!r} is not a feature token of the Processing Model's optional features")
+            for kind, iris in man.get("codecs", {}).items():
+                if kind not in ("requires", "unclaimed"):
+                    problems.append(f"{where}: unknown codecs member {kind}")
+                for iri in iris:
+                    if not iri.startswith("https://hexplain.io/ns/register/media-encoding#"):
+                        problems.append(f"{where}: codecs names {iri!r}, which is not a media-encoding register IRI")
             for kind, names in man.get("claims", {}).items():
                 if kind != "withdraw":
                     problems.append(f"{where}: unknown claims member {kind}")

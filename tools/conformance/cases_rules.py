@@ -356,16 +356,19 @@ pp("limit-no-cheaper-interpretation", "A limit reached while reading a sequence 
 
 CASES.append(Case(
     id="pp-claims-statement", cls="physical-parser",
-    title="A processor states the classes and the optional features it claims",
-    intent="The runner asks the implementation for its claims statement (a JSON object listing its conformance classes and "
-           "its optional features by feature token). Every conforming processor makes one; its classes and features come "
-           "from the closed lists of the Processing Model.",
-    requirements=["req-pm-conformance-classes-5"],
-    sections=["processing#conformance-classes", "processing#optional-features"],
+    title="A processor states the classes, the optional features and the codecs it claims",
+    intent="The runner asks the implementation for its claims statement (a JSON object listing its conformance classes, its "
+           "optional features by feature token and the IRIs of the codecs it decodes). Every conforming processor makes one; "
+           "its classes and features come from the closed lists of the Processing Model, and its codecs include the minimum "
+           "codec set.",
+    requirements=["req-pm-conformance-classes-5", "req-pm-optional-codecs-3"],
+    sections=["processing#conformance-classes", "processing#optional-features", "processing#optional-codecs"],
     root=None, manifest={"check": "claims"},
-    claims={"required": ["classes", "optionalFeatures"],
+    claims={"required": ["classes", "optionalFeatures", "codecs"],
             "classes": ["Physical Parser", "Semantic Emitter", "Bundle Processor", "HDL Compiler", "Conformance Evaluator"],
             "optionalFeatures": ["tree-documents", "grouped-headers", "nested-profiles", "chunked-cell-access",
                                  "chunk-order-other", "hel-ext-text", "hel-ext-temporal", "hel-ext-quantifier",
-                                 "hel-ext-geometry", "hel-ext-register", "codecs-beyond-minimum"],
-            "mustInclude": {"classes": ["Physical Parser"]}}))
+                                 "hel-ext-geometry", "hel-ext-register"],
+            "mustInclude": {"classes": ["Physical Parser"],
+                            "codecs": ["https://hexplain.io/ns/register/media-encoding#" + c
+                                       for c in ("Store", "Deflate", "Zlib", "Gzip", "Delta")]}}))

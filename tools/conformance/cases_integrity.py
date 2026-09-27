@@ -333,11 +333,11 @@ pp("codec-pipeline-reverse-order", "Encoding steps are decoded in reverse list o
 
 pp("codec-beyond-minimum-set", "A codec beyond the minimum set that the processor does not claim is Unsupported",
    "menc:Zstd is not in the minimum codec set; a processor that does not decode it must refuse, not return the encoded bytes.",
-   ["req-pm-minimum-codecs-1", "req-pm-conformance-classes-3", "req-pm-conformance-classes-4", "req-pm-errors-10",
-    "req-pm-errors-11"],
-   ["minimum-codecs", "refusal"],
+   ["req-pm-minimum-codecs-1", "req-pm-optional-codecs-3", "req-pm-conformance-classes-3",
+    "req-pm-conformance-classes-4", "req-pm-errors-10", "req-pm-errors-11"],
+   ["minimum-codecs", "optional-codecs", "refusal"],
    codec_field("hexplain:isEncodedWith menc:Zstd", 3), b"\x28\xb5\x2f", error="Unsupported",
-   manifest={"features": {"unclaimed": ["codecs-beyond-minimum"]}})
+   manifest={"codecs": {"unclaimed": ["https://hexplain.io/ns/register/media-encoding#Zstd"]}})
 
 pp("codec-decoded-byte-limit", "Decoded output counts toward the decoded-byte limit",
    "Inflating to 17 bytes under a 10-byte maxDecodedBytes is a ResourceLimit error.",

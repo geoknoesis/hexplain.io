@@ -145,6 +145,15 @@ def other_checks(failures):
           "a claims statement within the closed lists", failures)
     check(compare.compare_claims(claims, {"classes": ["Physical Parser"], "optionalFeatures": ["tree documents"]}) != [],
           "a feature is named by its token", failures)
+    menc = "https://hexplain.io/ns/register/media-encoding#"
+    with_codecs = {"required": ["classes", "codecs"], "classes": ["Physical Parser"], "optionalFeatures": [],
+                   "mustInclude": {"classes": ["Physical Parser"], "codecs": [menc + "Store"]}}
+    check(compare.compare_claims(with_codecs, {"classes": ["Physical Parser"], "codecs": [menc + "Store", menc + "Zstd"]}) == [],
+          "a claims statement listing codec IRIs", failures)
+    check(compare.compare_claims(with_codecs, {"classes": ["Physical Parser"], "codecs": [menc + "Zstd"]}) != [],
+          "a claims statement must list the minimum codecs", failures)
+    check(compare.compare_claims(with_codecs, {"classes": ["Physical Parser"], "codecs": [menc + "Store", "zstd"]}) != [],
+          "a codec is named by its register IRI", failures)
 
 
 def self_check(failures):
@@ -161,7 +170,8 @@ def self_check(failures):
                 content = json.dumps({"diagnostics": [expected], "output": False}).encode()
             if name == "expected-claims.json":
                 expected = json.loads(content)
-                content = json.dumps({"classes": expected["mustInclude"]["classes"], "optionalFeatures": []}).encode()
+                content = json.dumps({"classes": expected["mustInclude"]["classes"], "optionalFeatures": [],
+                                      "codecs": expected["mustInclude"].get("codecs", [])}).encode()
             actual.write_bytes(content)
             if name == "expected-report.ttl":
                 # An expected run report is a pattern (blank nodes are variables, and the copies of the requirements

@@ -58,6 +58,22 @@ rewritten.
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### Codec contracts, claims and profile codec features
+
+- The Processing Model gains Codec contracts (kinds, typed parameters, sessions, error categories,
+  limits and normative vectors), Parameter expressions, Run-time codec selection and Codec sessions
+  (req-pm-codec-contracts-1 to -4, req-pm-parameter-expressions-1 and -2, req-pm-codec-selection-1
+  and -2, req-pm-codec-sessions-1). The short run-time selection paragraph becomes the section
+  `processing#codec-selection`: kinds are checked per candidate, and candidates may differ in kind.
+- The feature token `codecs-beyond-minimum` is withdrawn: a processor lists the IRIs of the codecs
+  it decodes in the `codecs` member of its claims statement (req-pm-optional-codecs-3 reworded), and
+  conformance manifests name codecs in a `codecs` member. menc:LZ4Block's decodedSize is an integer
+  of at least 1, given as a literal or an expression (req-pm-optional-codecs-7 reworded; its errors,
+  req-pm-optional-codecs-1, say how an invalid expression value is raised). The error table names
+  the codec errors (req-pm-errors-4, req-pm-errors-8) and counts an unlisted codec as an
+  unsupported feature (req-pm-errors-10).
+- reference-engine-claims.json lists the 34 codecs the reference engine decodes with their modules.
+
 ### Review of the normative documents (2026-09-27)
 
 - **BCP 14.** Every conventions section (Processing Model, HEL, HDL, the conformance sections of

@@ -16,7 +16,10 @@ from cases_physical import pp
 from cases_semantic import ROOT as SE_ROOT
 from cases_semantic import se
 
-CODECS = {"features": {"requires": ["codecs-beyond-minimum"]}}
+MENC = "https://hexplain.io/ns/register/media-encoding#"
+LZ4 = {"codecs": {"requires": [MENC + "LZ4"]}}
+LZ4_BLOCK = {"codecs": {"requires": [MENC + "LZ4Block"]}}
+ZSTD = {"codecs": {"requires": [MENC + "Zstd"]}}
 WIDTHS = ["req-bddo-core-datatypes-1", "req-pm-size-resolution-7"]
 
 # ----------------------------------------------------------------- 24-bit integers and half floats
@@ -313,18 +316,18 @@ def lz4_block(size_param, length):
 pp("codec-lz4-frame", "menc:LZ4 decodes the LZ4 frame format",
    "A frame with one compressed block and a content checksum, written by tools/conformance/lz4frames.py.",
    [OPTIONAL, "req-pm-optional-codecs-4", "req-pm-minimum-codecs-1"], ["optional-codecs"],
-   encoded("hexplain:isEncodedWith menc:LZ4", len(FRAME)), FRAME, {"data": TEXT}, manifest=CODECS)
+   encoded("hexplain:isEncodedWith menc:LZ4", len(FRAME)), FRAME, {"data": TEXT}, manifest=LZ4)
 
 pp("codec-lz4-frame-block-checksums", "LZ4 block checksums and content size are verified and decode",
    "The frame declares its content size and a checksum after every block, all correct.",
    [OPTIONAL, "req-pm-optional-codecs-4"], ["optional-codecs"],
-   encoded("hexplain:isEncodedWith menc:LZ4", len(FRAME_CHECKED)), FRAME_CHECKED, {"data": TEXT}, manifest=CODECS)
+   encoded("hexplain:isEncodedWith menc:LZ4", len(FRAME_CHECKED)), FRAME_CHECKED, {"data": TEXT}, manifest=LZ4)
 
 pp("codec-lz4-frame-concatenated", "Concatenated LZ4 frames decode in order",
    "Two frames, 'first ' and 'second', decode to 'first second'.",
    [OPTIONAL, "req-pm-optional-codecs-4"], ["optional-codecs"],
    encoded("hexplain:isEncodedWith menc:LZ4", len(lz4frames.frame(b"first ")) + len(lz4frames.frame(b"second"))),
-   lz4frames.frame(b"first ") + lz4frames.frame(b"second"), {"data": b"first second"}, manifest=CODECS)
+   lz4frames.frame(b"first ") + lz4frames.frame(b"second"), {"data": b"first second"}, manifest=LZ4)
 
 pp("codec-lz4-frame-substream", "An LZ4 frame decoded and re-parsed as a struct",
    "The decoded bytes 00 03 'abc' are re-parsed as a fresh sub-stream against the field's struct type.",
@@ -337,68 +340,68 @@ pp("codec-lz4-frame-substream", "An LZ4 frame decoded and re-parsed as a struct"
    ex:n a bddo:Field ; bddo:dataType bddo:uint16 .
    ex:s a bddo:Field ; bddo:dataType bddo:string ; bddo:sizeFromField ex:n ; bddo:encoding bddo:ascii .
    """,
-   lz4frames.frame(bytes.fromhex("0003") + b"abc"), {"block": {"n": 3, "s": "abc"}}, manifest=CODECS)
+   lz4frames.frame(bytes.fromhex("0003") + b"abc"), {"block": {"n": 3, "s": "abc"}}, manifest=LZ4)
 
 pp("codec-lz4-content-checksum-mismatch", "An LZ4 content checksum mismatch is a checksum error",
    "The last byte of the content checksum is changed.",
    [OPTIONAL, "req-pm-optional-codecs-4", "req-pm-optional-codecs-1", "req-pm-errors-5"], ["optional-codecs", "errors"],
    encoded("hexplain:isEncodedWith menc:LZ4", len(FRAME)), FRAME[:-1] + bytes([FRAME[-1] ^ 0xFF]),
-   error="Checksum", manifest=CODECS)
+   error="Checksum", manifest=LZ4)
 
 pp("codec-lz4-header-checksum-mismatch", "An LZ4 frame header checksum mismatch is a checksum error",
    "The header checksum byte after the frame descriptor is changed.",
    [OPTIONAL, "req-pm-optional-codecs-4", "req-pm-optional-codecs-1"], ["optional-codecs"],
    encoded("hexplain:isEncodedWith menc:LZ4", len(FRAME)), FRAME[:6] + bytes([FRAME[6] ^ 0xFF]) + FRAME[7:],
-   error="Checksum", manifest=CODECS)
+   error="Checksum", manifest=LZ4)
 
 pp("codec-lz4-frame-truncated", "A truncated LZ4 frame is a validation error",
    "The frame is cut ten bytes short, inside its last block.",
    [OPTIONAL, "req-pm-optional-codecs-1", "req-pm-minimum-codecs-10"], ["optional-codecs", "minimum-codecs"],
-   encoded("hexplain:isEncodedWith menc:LZ4", len(FRAME) - 10), FRAME[:-10], error="Validation", manifest=CODECS)
+   encoded("hexplain:isEncodedWith menc:LZ4", len(FRAME) - 10), FRAME[:-10], error="Validation", manifest=LZ4)
 
 pp("codec-lz4-block", "menc:LZ4Block decodes one raw block to its decodedSize",
    f"A {len(BLOCK)}-byte block with match copies decodes to the {len(TEXT)} bytes decodedSize names.",
    [OPTIONAL, "req-pm-optional-codecs-5", "req-pm-optional-codecs-7"], ["optional-codecs", "lz4-parameters"],
-   lz4_block(len(TEXT), len(BLOCK)), BLOCK, {"data": TEXT}, manifest=CODECS)
+   lz4_block(len(TEXT), len(BLOCK)), BLOCK, {"data": TEXT}, manifest=LZ4_BLOCK)
 
 pp("codec-lz4-block-missing-size", "menc:LZ4Block without decodedSize is a description error",
    "decodedSize is REQUIRED: the block format records no length.",
    [OPTIONAL, "req-pm-optional-codecs-7", "req-pm-optional-codecs-1", "req-pm-errors-8"], ["optional-codecs", "lz4-parameters"],
-   lz4_block(None, len(BLOCK)), BLOCK, error="Description", manifest=CODECS)
+   lz4_block(None, len(BLOCK)), BLOCK, error="Description", manifest=LZ4_BLOCK)
 
 pp("codec-lz4-block-shorthand", "hexplain:isEncodedWith menc:LZ4Block is a description error",
    "The shorthand cannot carry the required decodedSize parameter.",
    [OPTIONAL, "req-pm-optional-codecs-7", "req-pm-errors-8"], ["optional-codecs", "lz4-parameters"],
-   encoded("hexplain:isEncodedWith menc:LZ4Block", len(BLOCK)), BLOCK, error="Description", manifest=CODECS)
+   encoded("hexplain:isEncodedWith menc:LZ4Block", len(BLOCK)), BLOCK, error="Description", manifest=LZ4_BLOCK)
 
 pp("codec-lz4-block-size-mismatch", "An LZ4 block that decodes to another length than decodedSize is a validation error",
    "decodedSize is one byte short of what the block decodes to.",
    [OPTIONAL, "req-pm-optional-codecs-5", "req-pm-optional-codecs-1"], ["optional-codecs"],
-   lz4_block(len(TEXT) - 1, len(BLOCK)), BLOCK, error="Validation", manifest=CODECS)
+   lz4_block(len(TEXT) - 1, len(BLOCK)), BLOCK, error="Validation", manifest=LZ4_BLOCK)
 
 BAD_OFFSET = bytes([0x20]) + b"ab" + struct.pack("<H", 5) + bytes([0x10]) + b"c"
 pp("codec-lz4-block-bad-offset", "An LZ4 match reaching before the start of the output is a validation error",
    "After two literals a match with offset 5 would copy from before the first byte.",
    [OPTIONAL, "req-pm-optional-codecs-1"], ["optional-codecs"],
-   lz4_block(7, len(BAD_OFFSET)), BAD_OFFSET, error="Validation", manifest=CODECS)
+   lz4_block(7, len(BAD_OFFSET)), BAD_OFFSET, error="Validation", manifest=LZ4_BLOCK)
 
 Z1, Z2 = zstdframes.frame(zstdframes.CONTENT_1), zstdframes.frame(zstdframes.CONTENT_2)
 pp("codec-zstd-frame", "menc:Zstd decodes a Zstandard frame",
    "A frame with a compressed block, a declared content size and a content checksum.",
    [OPTIONAL, "req-pm-optional-codecs-6"], ["optional-codecs"],
-   encoded("hexplain:isEncodedWith menc:Zstd", len(Z1)), Z1, {"data": zstdframes.CONTENT_1}, manifest=CODECS)
+   encoded("hexplain:isEncodedWith menc:Zstd", len(Z1)), Z1, {"data": zstdframes.CONTENT_1}, manifest=ZSTD)
 
 pp("codec-zstd-concatenated", "Concatenated Zstandard frames decode in order",
    "Two frames decode to the concatenation of their contents.",
    [OPTIONAL, "req-pm-optional-codecs-6"], ["optional-codecs"],
    encoded("hexplain:isEncodedWith menc:Zstd", len(Z1) + len(Z2)), Z1 + Z2,
-   {"data": zstdframes.CONTENT_1 + zstdframes.CONTENT_2}, manifest=CODECS)
+   {"data": zstdframes.CONTENT_1 + zstdframes.CONTENT_2}, manifest=ZSTD)
 
 pp("codec-zstd-checksum-mismatch", "A Zstandard content checksum mismatch is a checksum error",
    "The last byte of the content checksum is changed.",
    [OPTIONAL, "req-pm-optional-codecs-6", "req-pm-optional-codecs-1", "req-pm-errors-5"], ["optional-codecs", "errors"],
    encoded("hexplain:isEncodedWith menc:Zstd", len(Z1)), Z1[:-1] + bytes([Z1[-1] ^ 0xFF]),
-   error="Checksum", manifest=CODECS)
+   error="Checksum", manifest=ZSTD)
 
 ZSIZE = zstdframes.content_size_mismatch_frame(zstdframes.CONTENT_1)
 pp("codec-zstd-content-size-mismatch", "A Zstandard frame that decodes to fewer bytes than its Frame_Content_Size is a checksum error",
@@ -406,25 +409,25 @@ pp("codec-zstd-content-size-mismatch", "A Zstandard frame that decodes to fewer 
    f"block and content checksum are those of the {len(zstdframes.CONTENT_1)} bytes it decodes to). A declared content "
    "size that the decoded content does not match is a Checksum error, like a content checksum mismatch.",
    [OPTIONAL, "req-pm-optional-codecs-6", "req-pm-optional-codecs-1", "req-pm-errors-5"], ["optional-codecs", "errors"],
-   encoded("hexplain:isEncodedWith menc:Zstd", len(ZSIZE)), ZSIZE, error="Checksum", manifest=CODECS)
+   encoded("hexplain:isEncodedWith menc:Zstd", len(ZSIZE)), ZSIZE, error="Checksum", manifest=ZSTD)
 
 pp("codec-zstd-truncated", "A truncated Zstandard frame is a validation error",
    "The frame is cut six bytes short, inside its compressed block.",
    [OPTIONAL, "req-pm-optional-codecs-1", "req-pm-minimum-codecs-10"], ["optional-codecs", "minimum-codecs"],
-   encoded("hexplain:isEncodedWith menc:Zstd", len(Z1) - 6), Z1[:-6], error="Validation", manifest=CODECS)
+   encoded("hexplain:isEncodedWith menc:Zstd", len(Z1) - 6), Z1[:-6], error="Validation", manifest=ZSTD)
 
 DICT = zstdframes.dictionary_frame(b"abc", 7)
 pp("codec-zstd-dictionary", "A Zstandard frame that names a dictionary is Unsupported",
    "The frame header carries Dictionary_ID 7; this version defines no way to supply a dictionary.",
    [OPTIONAL, "req-pm-optional-codecs-6", "req-pm-optional-codecs-1", "req-pm-errors-10", "req-pm-errors-17"], ["optional-codecs"],
-   encoded("hexplain:isEncodedWith menc:Zstd", len(DICT)), DICT, error="Unsupported", manifest=CODECS)
+   encoded("hexplain:isEncodedWith menc:Zstd", len(DICT)), DICT, error="Unsupported", manifest=ZSTD)
 
 pp("codec-zstd-parameter-unknown", "A parameter on menc:Zstd is a description error",
    "menc:LZ4 and menc:Zstd take no parameters.",
    [OPTIONAL, "req-pm-errors-8"], ["lz4-parameters"],
    encoded("hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:Zstd ; hexplain:codecParameter "
            "[ a hexplain:CodecParameter ; hexplain:parameterName \"level\" ; hexplain:parameterValue 3 ] ] )", len(Z1)),
-   Z1, error="Description", manifest=CODECS)
+   Z1, error="Description", manifest=ZSTD)
 
 # ----------------------------------------------------------------- parameterised structs
 
@@ -801,7 +804,7 @@ pp("codec-lz4-block-declared-size-over-limit", "An LZ4 block whose decodedSize e
    "decodedSize 1000000 under maxDecodedBytes 1000. The block itself is one token that decodes to nothing, so a processor "
    "that decoded first would report a size mismatch (Validation); the pre-check makes it ResourceLimit.",
    BOMB, ["optional-codecs", "security-decompression"], lz4_block(1000000, 1), b"\x00", error="ResourceLimit",
-   manifest=dict(CODECS, limits={"maxDecodedBytes": 1000}))
+   manifest=dict(LZ4_BLOCK, limits={"maxDecodedBytes": 1000}))
 
 pp("codec-lz4-frame-declared-size-over-limit", "An LZ4 frame whose declared content size exceeds the limit is refused before decoding",
    f"The frame declares {len(TEXT)} bytes of content under maxDecodedBytes 100 and is cut ten bytes short: the declared "
@@ -809,11 +812,11 @@ pp("codec-lz4-frame-declared-size-over-limit", "An LZ4 frame whose declared cont
    "truncated frame.",
    BOMB + ["req-pm-optional-codecs-4"], ["optional-codecs", "security-decompression"],
    encoded("hexplain:isEncodedWith menc:LZ4", len(FRAME_CHECKED) - 10), FRAME_CHECKED[:-10], error="ResourceLimit",
-   manifest=dict(CODECS, limits={"maxDecodedBytes": 100}))
+   manifest=dict(LZ4, limits={"maxDecodedBytes": 100}))
 
 pp("codec-zstd-declared-size-over-limit", "A Zstandard frame whose Frame_Content_Size exceeds the limit is refused before decoding",
    f"The frame declares {len(zstdframes.CONTENT_1)} bytes under maxDecodedBytes 100 and is cut six bytes short: "
    "ResourceLimit, raised before decoding, not the Validation error of a truncated frame.",
    BOMB + ["req-pm-optional-codecs-6"], ["optional-codecs", "security-decompression"],
    encoded("hexplain:isEncodedWith menc:Zstd", len(Z1) - 6), Z1[:-6], error="ResourceLimit",
-   manifest=dict(CODECS, limits={"maxDecodedBytes": 100}))
+   manifest=dict(ZSTD, limits={"maxDecodedBytes": 100}))

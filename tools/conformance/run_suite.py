@@ -23,8 +23,9 @@ N-Triples; a conformance run as the JSON summary or, for a case with "reportForm
 error as {"category": "<Processing Model category>"} written to {err}, the command exiting non-zero. For the HDL
 Compiler the runner also reads diagnostics from standard error in the form file:line:column: SEVERITY: message.
 
-A case applies when every optional feature it requires is claimed and none it expects unclaimed is; the claims come
-from --claims (a JSON claims statement: {"classes": [...], "optionalFeatures": [tokens]} or {token: {"claimed": bool}}).
+A case applies when every optional feature and codec it requires is claimed and none it expects unclaimed is; the claims come
+from --claims (a JSON claims statement: {"classes": [...], "optionalFeatures": [tokens]} or {token: {"claimed": bool}},
+and "codecs": [codec IRIs]).
 The template is split into arguments as a POSIX shell would split it, and run without a shell. A case that withdraws
 features ("claims": {"withdraw": [...]}) runs only when the template has a {withdraw} placeholder.
 Every case that does not apply is reported as SKIP with its reason. The exit status is 1 when any case fails.
@@ -58,6 +59,12 @@ def claimed_features(claims):
     return set(value)
 
 
+def claimed_codecs(claims):
+    """The codec IRIs a claims statement lists (an array, or an object keyed by IRI)."""
+    value = claims.get("codecs", [])
+    return set(value) if isinstance(value, list) else set(value or {})
+
+
 def fill(template, values):
     """The command as an argument list: the template is split like a POSIX shell line first, then each placeholder is
     replaced inside its argument, so a path with a space stays one argument and nothing is interpreted by a shell."""
@@ -89,6 +96,17 @@ def run_case(case_dir, template, claims, timeout, keep=None, observed=None):
         present = [f for f in wanted["unclaimed"] if f in features]
         if present:
             return "SKIP", f"checks the refusal of {present}, which the implementation claims"
+    codecs = manifest.get("codecs", {})
+    if codecs:
+        if claims is None:
+            return "SKIP", "names codecs, and no --claims statement says which codecs are claimed"
+        listed = claimed_codecs(claims)
+        missing = [c for c in codecs.get("requires", []) if c not in listed]
+        if missing:
+            return "SKIP", f"requires codec(s) {missing} the implementation does not list"
+        present = [c for c in codecs.get("unclaimed", []) if c in listed]
+        if present:
+            return "SKIP", f"checks the refusal of codec(s) {present}, which the implementation lists"
     withdraw = manifest.get("claims", {}).get("withdraw", [])
     if withdraw and "{withdraw}" not in template:
         return "SKIP", f"runs without {withdraw}; the command template has no {{withdraw}} placeholder"

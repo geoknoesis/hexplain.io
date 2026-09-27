@@ -11,10 +11,13 @@ A register concept is executable when it carries hexplain:codecContract. For eac
     every input file exists, and every step's parameters obey the contract unless the step
     expects a Description error;
   * the suite has at least one decoding vector that succeeds.
-No suite may exist for a concept without a contract. Finally the runner is proven end to end:
+No suite may exist for a concept without a contract, and every codec the reference engine claims
+(specification/reference-engine-claims.json: codecs.register + each codecs.decoded local name) must
+be one of these executable codecs. Finally the runner is proven end to end:
 tools/codecs/_python_reference.py (Store, Deflate, Zlib, Gzip in plain Python) passes those four
 suites through tools/codecs/run_vectors.py.
 """
+import json
 import pathlib
 import subprocess
 import sys
@@ -73,6 +76,13 @@ def main():
             continue
         manifest = vectors.load(path)
         failures += [f"{path.relative_to(ROOT)}: {p}" for p in vectors.problems(manifest, contract, path.parent)]
+    claims = json.loads((ROOT / "specification/reference-engine-claims.json").read_text(encoding="utf-8"))
+    claimed = claims.get("codecs", {})
+    for name in claimed.get("decoded", []):
+        iri = claimed["register"] + name
+        if iri not in contracts:
+            failures.append(f"reference-engine-claims.json claims {iri}, which has no hexplain:codecContract "
+                            f"(and so no vector suite)")
     suites = {p.parent.parent.name for p in (ROOT / "specification/codecs").glob("*/vectors/manifest.json")}
     for name in sorted(suites - {vectors.local_name(iri) for iri in contracts}):
         failures.append(f"specification/codecs/{name} has a vector suite but no register concept with a contract")
