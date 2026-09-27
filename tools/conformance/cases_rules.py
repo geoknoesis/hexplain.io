@@ -220,9 +220,10 @@ hel("duplicate-local-name", "Two fields of one struct sharing a local name are a
     b"\x01\x02", error="Description")
 
 hel("unknown-function", "A call to a function in neither the core set nor any group is an error when the description is loaded",
-    "frobnicate() names no HEL 1.0 function. An expression carries no version marker, and a later 1.x version may only add "
-    "functions without changing what a 1.0 expression yields, so the name is an error now, not a deferred Null.",
-    ["req-hel-versioning-1", "req-hel-versioning-2", "req-hel-extension-groups-1", "req-pm-errors-6"],
+    "frobnicate() names no HEL 1.0 function. The description declares no HEL version, so it declares 1.0, which the "
+    "evaluator implements; a later 1.x version may only add functions without changing what a 1.0 expression yields, so "
+    "the name is a Type / HEL error now, not a deferred Null.",
+    ["req-hel-versioning-1", "req-hel-versioning-2", "req-hel-versioning-5", "req-hel-extension-groups-1", "req-pm-errors-6"],
     ["versioning", "extension-groups"],
     one("frobnicate(1)"), b"", error="Expression")
 

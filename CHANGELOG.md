@@ -92,6 +92,16 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
   `pp-str-latin1-every-byte`, `pp-textnum-non-ascii-digit`, `pp-hel-bytes-malformed-argument`,
   `ce-recovery-malformed-text`; `pp-hel-bytes-vs-string` now expects a malformed byte to equal no
   String.
+- **HEL version marker.** HEL allowed a later 1.x version to add functions, yet an unknown
+  function was always a Type / HEL error, so a description written for HEL 1.1 would fail a 1.0
+  evaluator as if it were broken. A description now declares its HEL version with
+  `hexplain:helVersion` ("major.minor", default "1.0") on its `owl:Ontology`
+  (`hel#version-marker`): a malformed value is a Description error (`req-hel-versioning-3`),
+  another major version is Unsupported feature (`req-hel-versioning-4`), and an unknown function
+  is Unsupported feature when the declared version is a later 1.x than the evaluator implements and
+  a Type / HEL error otherwise (`req-hel-versioning-5`). The Unsupported feature row of the error
+  table (`req-pm-errors-10`) includes it. `hexplain:helVersion` is still to be declared in the core
+  vocabulary; `test_doc_terms` allows the name until it is.
 - **Security and Privacy Considerations.** New section `processing#security-privacy` gathers the
   threats a processor faces and the rules that answer them, and adds four: limits apply to the work
   a description causes as much as to the input (`req-pm-security-resources-1`); every codec stage

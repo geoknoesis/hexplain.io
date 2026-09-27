@@ -717,11 +717,12 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Unsupported feature | The description uses a construct outside the conformance classes the processor claims, or an optional feature it does not claim (for example a codec beyond the minimum set, or a chunk order other than row- or column-major). The asset root and partExtension() outside an asset are a Type / HEL error, not this (Multi-part Assets). Only those; see Refusal. An Unsupported feature error SHOULD be raised when the description is loaded. An Unsupported feature error MUST be raised no later than the first time the construct would affect the result. Distinct from a Description error: the description is valid, this processor cannot run it.",
-   "sha256": "a77fac437dfbb3c9",
+   "text": "Unsupported feature | The description uses a construct outside the conformance classes the processor claims, or an optional feature it does not claim (for example a codec beyond the minimum set, or a chunk order other than row- or column-major), or declares a HEL version the processor does not implement: another major version, or a later 1.x version whose functions it calls (HEL, version marker). The asset root and partExtension() outside an asset are a Type / HEL error, not this (Multi-part Assets). Only those; see Refusal. An Unsupported feature error SHOULD be raised when the description is loaded. An Unsupported feature error MUST be raised no later than the first time the construct would affect the result. Distinct from a Description error: the description is valid, this processor cannot run it.",
+   "sha256": "cdc6ba2888f04934",
    "history": [
     "67b9ad3cf8842035",
-    "c490805e3206335e"
+    "c490805e3206335e",
+    "a77fac437dfbb3c9"
    ]
   },
   "req-pm-errors-11": {
@@ -2298,6 +2299,33 @@
    "audience": "processor",
    "text": "The function library is divided into a core set, which every conforming evaluator MUST implement, and named extension groups, which an evaluator MAY implement.",
    "sha256": "f3199bac0d33250b"
+  },
+  "req-hel-versioning-3": {
+   "page": "specification/hel/index.html",
+   "section": "versioning",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST read the declared HEL version when the description is loaded, and MUST raise a Description error for a hexplain:helVersion that is not of that form.",
+   "sha256": "a33f41a6b815adeb"
+  },
+  "req-hel-versioning-4": {
+   "page": "specification/hel/index.html",
+   "section": "versioning",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A declared major version other than 1 MUST be refused with an Unsupported feature error when the description is loaded: HEL 1 rules cannot be assumed to read it.",
+   "sha256": "29272189955e1027"
+  },
+  "req-hel-versioning-5": {
+   "page": "specification/hel/index.html",
+   "section": "versioning",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A call to a function name that is neither a core function nor in an extension group of the version the evaluator implements MUST be rejected when the description is loaded, as an Unsupported feature error when the declared version is a later 1.x version than the evaluator implements (the name may be one that version defines), and as a Type / HEL error otherwise (the name is simply not HEL).",
+   "sha256": "48a23bd6dfb4bd03"
   },
   "req-hdl-checksums-1": {
    "page": "specification/hdl/index.html",
