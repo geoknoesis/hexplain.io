@@ -92,6 +92,9 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
   `pp-str-latin1-every-byte`, `pp-textnum-non-ascii-digit`, `pp-hel-bytes-malformed-argument`,
   `ce-recovery-malformed-text`; `pp-hel-bytes-vs-string` now expects a malformed byte to equal no
   String.
+- **IRI minting.** New `req-pm-iri-minting-4`: a `%` in a key is always percent-encoded as `%25`,
+  so the keys `a b` and `a%20b` cannot mint one IRI (the reference engine already does this). New
+  case `se-key-percent-sign`.
 
 ### New language features (bddo 1.3, register/checksum 1.3, register/media-encoding 1.2)
 

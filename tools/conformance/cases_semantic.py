@@ -363,3 +363,20 @@ se("value-datatype-fraction-as-integer", "A fractional Float typed with an integ
    "raw * 0.5 is 10.5, which has no value in xsd:integer; the processor does not change the datatype to xsd:decimal.",
    TYPED, ["computed-values"], computed("raw * 0.5", RAW, "xsd:integer"), struct.pack(">h", 21) + b"\x00",
    error="Expression")
+
+
+se("key-percent-sign", "A '%' in a key is always percent-encoded as %25",
+   "The nested document's key is the JSON pointer /a%20b, naming the member \"a%20b\". Its '%' is encoded as %25 even "
+   "though '%20' looks like an encoded space, so the segment is %2Fa%2520b and cannot collide with the key '/a b'.",
+   MINT + ["req-pm-iri-minting-4"], ["iri-minting"],
+   """
+   ex:Root a bddo:TreeDocument ; bddo:treeSyntax bddo:json ; hexplain:mapsToClass ex:Doc ; bddo:hasField ( <https://example.org/se-key-percent-sign#Root./a%20b> ) .
+   <https://example.org/se-key-percent-sign#Root./a%20b> a bddo:Field ; bddo:dataType ex:Meta ; bddo:nodePath "/a%20b" .
+   ex:Meta a bddo:TreeDocument ; bddo:treeSyntax bddo:json ; hexplain:mapsToClass ex:MetaClass ; bddo:hasField ( ex:Meta.name ) .
+   ex:Meta.name a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath "/name" ; hexplain:mapsToProperty ex:name .
+   """,
+   b'{"a%20b": {"name": "x"}}',
+   f"""
+   {ROOT} a ex:Doc .
+   <{BASE}#root/%2Fa%2520b> a ex:MetaClass ; ex:name "x" .
+   """, manifest={"features": {"requires": ["tree-documents"]}})
