@@ -1,6 +1,6 @@
 {
  "cases": {
-  "physical-parser": 363,
+  "physical-parser": 364,
   "semantic-emitter": 33,
   "bundle-processor": 13,
   "hdl-compiler": 158,
@@ -19,51 +19,48 @@
  "processorMust": {
   "Physical Parser": {
    "total": 203,
-   "covered": 190,
+   "covered": 199,
+   "notSuiteTestable": {
+    "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's shape gates (test_shapes, test_vocab_shapes) apply it.",
+    "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the condition is asserted by the HEL vectors (validation/test/hel-vectors.tsv, req-hel-conformance-9)."
+   },
    "uncovered": [
-    "req-bddo-addressing-1",
-    "req-bddo-bitfields-1",
-    "req-bddo-conformance-1",
-    "req-bddo-field-properties-8",
-    "req-bddo-structural-properties-4",
-    "req-bddo-structural-properties-6",
-    "req-core-static-mapping-properties-3",
-    "req-hel-error-conditions-1",
-    "req-hel-ext-temporal-1",
     "req-hel-versioning-3",
-    "req-hel-versioning-4",
-    "req-pm-security-external-1",
-    "req-pm-security-resources-1"
+    "req-hel-versioning-4"
    ]
   },
   "Semantic Emitter": {
    "total": 30,
    "covered": 21,
-   "uncovered": [
-    "req-core-punning-1",
-    "req-geometry-document-1",
-    "req-pm-privacy-1",
-    "req-raster-document-3",
-    "req-spatialref-document-10",
-    "req-spatialref-document-11",
-    "req-spatialref-document-2",
-    "req-spatialref-document-3",
-    "req-spatialref-document-4"
-   ]
+   "notSuiteTestable": {
+    "req-core-punning-1": "Whether a processor relies on a DL entailment is not observable from its output: a case cannot tell a processor that did not reason from one whose reasoning happened to agree.",
+    "req-geometry-document-1": "Binds a consumer that interprets lifted geometry; a Semantic Emitter emits the mapped ordinates unchanged, and the suite has no case format for interpretation.",
+    "req-pm-privacy-1": "The runner cannot tell a base IRI derived from the input's file name from any other base the processor reports; se-base-reported checks that the base is chosen and reported.",
+    "req-raster-document-3": "Binds a consumer that interprets a raster description; cell addressing is the data layout's (DLV), which the Physical Parser cases cover.",
+    "req-spatialref-document-10": "Binds a processor that evaluates rational polynomial transforms, which no processor class of the Processing Model does.",
+    "req-spatialref-document-11": "Binds a processor that evaluates rational polynomial transforms, which no processor class of the Processing Model does.",
+    "req-spatialref-document-2": "Binds a processor that evaluates spatial-reference transforms (the hxf function library's world and cell functions), which the processor suite does not exercise.",
+    "req-spatialref-document-3": "Binds a processor that evaluates spatial-reference transforms (the hxf function library's hxf:column and hxf:row), which the processor suite does not exercise.",
+    "req-spatialref-document-4": "A documentation requirement on a floating-point implementation, checked by reading its documentation."
+   },
+   "uncovered": []
   },
   "Bundle Processor": {
    "total": 4,
    "covered": 4,
+   "notSuiteTestable": {},
    "uncovered": []
   },
   "HDL Compiler": {
    "total": 48,
    "covered": 48,
+   "notSuiteTestable": {},
    "uncovered": []
   },
   "Conformance Evaluator": {
    "total": 22,
    "covered": 22,
+   "notSuiteTestable": {},
    "uncovered": []
   }
  },
@@ -71,7 +68,7 @@
   "physical-parser": {
    "MUST": {
     "total": 148,
-    "covered": 139
+    "covered": 147
    },
    "SHOULD": {
     "total": 5,
@@ -81,7 +78,7 @@
   "hel": {
    "MUST": {
     "total": 55,
-    "covered": 51
+    "covered": 52
    },
    "SHOULD": {
     "total": 2,
@@ -1136,8 +1133,13 @@
    "pp-codec-lz4-frame-declared-size-over-limit",
    "pp-codec-zstd-declared-size-over-limit"
   ],
-  "req-pm-security-external-1": [],
-  "req-pm-security-resources-1": [],
+  "req-pm-security-external-1": [
+   "pp-tree-xml-external-dtd-not-fetched",
+   "pp-tree-xml-external-entity"
+  ],
+  "req-pm-security-resources-1": [
+   "pp-limit-visited-nodes"
+  ],
   "req-pm-size-resolution-1": [],
   "req-pm-size-resolution-2": [
    "pp-hel-size-result-type",
@@ -1380,7 +1382,9 @@
   "req-hel-ext-quantifiers-4": [
    "pp-limit-quantifier-evaluations"
   ],
-  "req-hel-ext-temporal-1": [],
+  "req-hel-ext-temporal-1": [
+   "pp-hel-temporal-date-only"
+  ],
   "req-hel-ext-temporal-2": [
    "pp-hel-temporal-group"
   ],
@@ -2508,8 +2512,13 @@
   "req-ce-req-conformance-4": [
    "ce-violation-cites-every-requirement"
   ],
-  "req-bddo-addressing-1": [],
-  "req-bddo-bitfields-1": [],
+  "req-bddo-addressing-1": [
+   "pp-align-from-stream-start",
+   "pp-align-region-does-not-move-origin"
+  ],
+  "req-bddo-bitfields-1": [
+   "pp-bits-realign-before-byte-field"
+  ],
   "req-bddo-checksum-algorithms-1": [
    "hc-checksum-named-crcs",
    "pp-crc-crc16arc",
@@ -2555,7 +2564,9 @@
   "req-bddo-field-properties-5": [],
   "req-bddo-field-properties-6": [],
   "req-bddo-field-properties-7": [],
-  "req-bddo-field-properties-8": [],
+  "req-bddo-field-properties-8": [
+   "pp-valid-if"
+  ],
   "req-bddo-field-properties-9": [],
   "req-bddo-field-properties-10": [],
   "req-bddo-parameterised-structs-1": [
@@ -2579,16 +2590,24 @@
   ],
   "req-bddo-structural-properties-2": [],
   "req-bddo-structural-properties-3": [],
-  "req-bddo-structural-properties-4": [],
+  "req-bddo-structural-properties-4": [
+   "pp-sync-marker"
+  ],
   "req-bddo-structural-properties-5": [],
-  "req-bddo-structural-properties-6": [],
+  "req-bddo-structural-properties-6": [
+   "pp-struct-size-literal"
+  ],
   "req-dlv-conditional-1": [],
   "req-dlv-properties-1": [],
   "req-dlv-properties-2": [],
   "req-core-punning-1": [],
   "req-core-static-mapping-properties-1": [],
   "req-core-static-mapping-properties-2": [],
-  "req-core-static-mapping-properties-3": [],
+  "req-core-static-mapping-properties-3": [
+   "pp-codec-deflate-substream",
+   "pp-codec-lz4-frame-substream",
+   "se-encoded-substream"
+  ],
   "req-geometry-document-1": [],
   "req-geometry-document-2": [],
   "req-raster-document-1": [],
@@ -2662,7 +2681,7 @@
   "hel/index.html#ext-geometry": 3,
   "hel/index.html#ext-quantifiers": 5,
   "hel/index.html#ext-register": 1,
-  "hel/index.html#ext-temporal": 2,
+  "hel/index.html#ext-temporal": 3,
   "hel/index.html#ext-text": 3,
   "hel/index.html#extension-groups": 2,
   "hel/index.html#key-resolution": 6,
@@ -2702,6 +2721,7 @@
   "processing#repeat-until-bindings": 5,
   "processing#resource-limits": 17,
   "processing#security-decompression": 3,
+  "processing#security-resources": 1,
   "processing#size-resolution": 21,
   "processing#stream-metadata": 8,
   "processing#struct-size": 8,

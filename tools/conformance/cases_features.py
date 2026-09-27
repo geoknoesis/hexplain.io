@@ -328,7 +328,7 @@ pp("codec-lz4-frame-concatenated", "Concatenated LZ4 frames decode in order",
 
 pp("codec-lz4-frame-substream", "An LZ4 frame decoded and re-parsed as a struct",
    "The decoded bytes 00 03 'abc' are re-parsed as a fresh sub-stream against the field's struct type.",
-   [OPTIONAL, "req-pm-emission-1"], ["optional-codecs", "emission"],
+   [OPTIONAL, "req-pm-emission-1", "req-core-static-mapping-properties-3"], ["optional-codecs", "emission"],
    f"""
    ex:Root a bddo:Struct ; bddo:hasField ( ex:block ) .
    ex:block a bddo:Field ; bddo:dataType ex:Payload ; bddo:size {len(lz4frames.frame(bytes.fromhex('0003') + b'abc'))} ;

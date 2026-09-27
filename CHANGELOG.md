@@ -92,6 +92,21 @@ aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security, aspect/ti
   `pp-str-latin1-every-byte`, `pp-textnum-non-ascii-digit`, `pp-hel-bytes-malformed-argument`,
   `ce-recovery-malformed-text`; `pp-hel-bytes-vs-string` now expects a malformed byte to equal no
   String.
+- **Coverage.** Existing cases now cite the vocabulary-page requirements they already exercise
+  (`req-bddo-addressing-1`, `req-bddo-bitfields-1`, `req-bddo-field-properties-8`,
+  `req-bddo-structural-properties-4`, `req-bddo-structural-properties-6`,
+  `req-core-static-mapping-properties-3`) and the new security requirements; new case
+  `pp-hel-temporal-date-only` covers `req-hel-ext-temporal-1`. A processor MUST that no black-box
+  case can observe is now marked as such, with the reason, in `tools/_build_conformance_page.py`
+  (`NOT_SUITE_TESTABLE`, 11 requirements: the SHACL-validator rule of BDDO, the DL-entailment rule
+  of core, the geometry and raster interpretation rules, the spatial-reference evaluation rules,
+  the base-IRI privacy rule and the HEL error-condition rule the vectors test); `coverage.json`
+  reports them per class as `notSuiteTestable`, and the conformance page lists them. The build
+  refuses a stale entry. The four HEL version-marker cases (`pp-hel-version-*`) are written but
+  generated only once `hexplain:helVersion` is declared, like the RDF report cases. Processor MUSTs
+  now covered: Physical Parser 199 of 203 (the two not cited are the version-marker rules waiting
+  for that term, two not testable), Semantic Emitter 21 of 30 (nine not testable), Bundle
+  Processor, HDL Compiler and Conformance Evaluator all.
 - **Function library status and conformance.** `fn/index.html` defined contracts with no RFC 2119
   keyword, no status statement and no conformance section. It now has a status statement (a
   prerelease working draft, normative for the current toolchain like the rest of the family, with

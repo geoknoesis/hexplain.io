@@ -424,6 +424,13 @@ hel("temporal-group", "datetime is strict: an impossible date is Null, never rol
                  "bad": "datetime('2024-02-30 12:00:00', 'yyyy-MM-dd HH:mm:ss')"}),
     b"", {"leap": 1709208000, "bad": None}, manifest={"features": {"requires": ["hel-ext-temporal"]}})
 
+hel("temporal-date-only", "datetime of a date with no time of day is Null",
+    "The pattern yyyy-MM-dd reads the text in full but supplies no time, so the text is not a full date and time and the "
+    "result is Null, not midnight.",
+    ["req-hel-ext-temporal-1"], ["ext-temporal"],
+    derived([], {"d": "datetime('2024-02-29', 'yyyy-MM-dd')"}),
+    b"", {"d": None}, manifest={"features": {"requires": ["hel-ext-temporal"]}})
+
 # ----------------------------------------------------------------- the asset root outside a bundle
 
 hel("asset-outside-bundle", "asset in a description parsed on its own is an error, never Null",

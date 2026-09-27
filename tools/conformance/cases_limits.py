@@ -34,7 +34,7 @@ pp("limit-depth-default", "The default configuration allows a nesting depth of 6
 
 pp("limit-visited-nodes", "Visited nodes beyond maxVisitedNodes is a ResourceLimit error",
    "A hundred array elements under maxVisitedNodes 50.",
-   LIMITS, ["resource-limits"],
+   LIMITS + ["req-pm-security-resources-1"], ["resource-limits", "security-resources"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:vals ) .
    ex:vals a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount 100 .

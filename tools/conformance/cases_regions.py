@@ -271,7 +271,7 @@ pp("size-no-extent", "A variable-length field with no extent is a description er
 
 pp("struct-size-literal", "A literal struct size skips the struct's trailing padding",
    "A 4-byte struct holding one byte: the next field reads after the padding.",
-   ["req-pm-parsestruct-8", "req-pm-struct-size-3", "req-pm-parsestruct-5"], ["struct-size"],
+   ["req-pm-parsestruct-8", "req-pm-struct-size-3", "req-pm-parsestruct-5", "req-bddo-structural-properties-6"], ["struct-size"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:rec ex:b ) .
    ex:rec a bddo:Field ; bddo:dataType ex:Rec .
@@ -545,7 +545,7 @@ pp("offset-past-end", "An offset past the end of the stream is a bounds error",
 
 pp("sync-marker", "bddo:syncOnMarker advances the cursor past the marker",
    "The bytes before the next FF D8 are skipped and the marker is consumed: the struct's first field follows it.",
-   ["req-pm-parsestruct-2", "req-pm-parsestruct-3"], ["algorithm"],
+   ["req-pm-parsestruct-2", "req-pm-parsestruct-3", "req-bddo-structural-properties-4"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:seg ex:tail ) .
    ex:seg a bddo:Field ; bddo:dataType ex:Seg .
@@ -655,7 +655,7 @@ pp("derived-null", "A derived field whose value is Null is unbound",
 
 pp("valid-if", "bddo:validIf false is a validation error",
    "self <= 10 fails for 11.",
-   ["req-pm-parsefield-17", "req-pm-errors-4"], ["algorithm"],
+   ["req-pm-parsefield-17", "req-pm-errors-4", "req-bddo-field-properties-8"], ["algorithm"],
    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:v ) .
    ex:v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self <= 10" .

@@ -190,7 +190,7 @@ pp("codec-store", "menc:Store is the identity",
 
 pp("codec-deflate-substream", "Raw DEFLATE decoded and re-parsed as a struct",
    "The inflated bytes 05 00 07 00 09 00 are re-parsed as a fresh sub-stream against the field's struct type.",
-   ["req-pm-minimum-codecs-2", "req-pm-minimum-codecs-4", "req-pm-emission-1"], ["minimum-codecs", "emission"],
+   ["req-pm-minimum-codecs-2", "req-pm-minimum-codecs-4", "req-pm-emission-1", "req-core-static-mapping-properties-3"], ["minimum-codecs", "emission"],
    f"""
    ex:Root a bddo:Struct ; bddo:hasField ( ex:block ex:tail ) .
    ex:block a bddo:Field ; bddo:dataType ex:Payload ; bddo:size {len(RAW_DEFLATE)} ; hexplain:isEncodedWith menc:Deflate .

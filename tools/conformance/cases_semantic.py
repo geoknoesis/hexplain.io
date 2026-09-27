@@ -203,7 +203,7 @@ se("enum-symbol-object", "An enumeration's symbol IRI is emitted through hexplai
 
 se("encoded-substream", "A decoded block re-parsed as a struct is lifted like any other struct",
    "The inflated bytes are re-parsed against the mapped struct and minted under the field's key.",
-   MINT + ["req-pm-emission-1"], ["emission", "iri-minting"],
+   MINT + ["req-pm-emission-1", "req-core-static-mapping-properties-3"], ["emission", "iri-minting"],
    """
    ex:Root a bddo:Struct ; hexplain:mapsToClass ex:File ; bddo:hasField ( ex:n ex:block ) .
    ex:n a bddo:Field ; bddo:dataType bddo:uint8 .

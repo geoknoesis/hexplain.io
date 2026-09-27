@@ -227,6 +227,45 @@ hel("unknown-function", "A call to a function in neither the core set nor any gr
     ["versioning", "extension-groups"],
     one("frobnicate(1)"), b"", error="Expression")
 
+# ----------------------------------------------------------------- the HEL version marker
+#
+# These cases state hexplain:helVersion on the description's owl:Ontology. Until the core vocabulary declares the
+# property the generator leaves them out, so that the suite never holds data with an undefined term (the same rule as
+# the RDF report cases of cases_evaluator.py).
+
+
+def core_term_declared(term):
+    from suite import ROOT
+    return f":{term} a owl:" in (ROOT / "specification/hexplain/core.ttl").read_text(encoding="utf-8")
+
+
+def versioned(case_id, version, expr):
+    return one(expr, preamble=f'<https://example.org/pp-hel-{case_id}> a <http://www.w3.org/2002/07/owl#Ontology> ; '
+                              f'hexplain:helVersion "{version}" .')
+
+
+if core_term_declared("helVersion"):
+    hel("version-newer-minor-unknown-function", "An unknown function under a later declared 1.x version is Unsupported",
+        "The description declares HEL 1.9, later than the 1.0 this specification defines; frobnicate() may be a 1.9 "
+        "function, so the evaluator refuses the description as an Unsupported feature, when it is loaded.",
+        ["req-hel-versioning-3", "req-hel-versioning-5", "req-pm-errors-10"], ["versioning", "version-marker"],
+        versioned("version-newer-minor-unknown-function", "1.9", "frobnicate(1)"), b"", error="Unsupported")
+
+    hel("version-current-unknown-function", "An unknown function under a declared version the evaluator implements is a Type / HEL error",
+        "The description declares HEL 1.0 explicitly; frobnicate() is not HEL 1.0, so the name is simply an error.",
+        ["req-hel-versioning-3", "req-hel-versioning-5", "req-pm-errors-6"], ["versioning", "version-marker"],
+        versioned("version-current-unknown-function", "1.0", "frobnicate(1)"), b"", error="Expression")
+
+    hel("version-other-major", "A declared HEL major version other than 1 is refused",
+        "The description declares HEL 2.0; even an expression that reads as HEL 1 is not evaluated by HEL 1 rules.",
+        ["req-hel-versioning-4", "req-pm-errors-10"], ["versioning", "version-marker"],
+        versioned("version-other-major", "2.0", "1 + 1"), b"", error="Unsupported")
+
+    hel("version-malformed", "A malformed HEL version is a description error",
+        "01.0 has a leading zero; a version is two decimal numbers without leading zeros.",
+        ["req-hel-versioning-3", "req-pm-errors-8"], ["versioning", "version-marker"],
+        versioned("version-malformed", "01.0", "1 + 1"), b"", error="Description")
+
 VECTOR_CONTEXT = ["ex:a a bddo:Field ; bddo:dataType bddo:uint8 .", "ex:b a bddo:Field ; bddo:dataType bddo:uint8 .",
                   "ex:big a bddo:Field ; bddo:dataType bddo:uint32 .", "ex:f a bddo:Field ; bddo:dataType bddo:float64 .",
                   "ex:neg a bddo:Field ; bddo:dataType bddo:int8 ."]
@@ -285,14 +324,14 @@ XML_A = """
 pp("tree-xml-external-entity", "A reference to an external XML entity is a validation error; its text is never fetched",
    "The internal subset declares ext as a SYSTEM entity naming a local file; whether or not the processor reads the "
    "declaration, &ext; is refused, not replaced with the file's content.",
-   ["req-pm-tree-documents-1", "req-pm-tree-documents-2", "req-pm-errors-4"], ["tree-documents"], XML_A,
+   ["req-pm-tree-documents-1", "req-pm-tree-documents-2", "req-pm-errors-4", "req-pm-security-external-1"], ["tree-documents"], XML_A,
    b'<?xml version="1.0"?>\n<!DOCTYPE r [ <!ENTITY ext SYSTEM "file:///etc/hostname"> ]>\n<r><a>&ext;</a></r>',
    error="Validation", manifest=TREES)
 
 pp("tree-xml-external-dtd-not-fetched", "An external DTD is never fetched, and a document that needs nothing from it parses",
    "The declaration names a DTD at an address nothing listens on; a processor that fetched it would fail, one that "
    "declines the declaration reads a as 1.",
-   ["req-pm-tree-documents-1"], ["tree-documents"], XML_A,
+   ["req-pm-tree-documents-1", "req-pm-security-external-1"], ["tree-documents"], XML_A,
    b'<?xml version="1.0"?>\n<!DOCTYPE r SYSTEM "http://127.0.0.1:9/never.dtd">\n<r><a>1</a></r>',
    {"a": "1"}, manifest=TREES)
 
