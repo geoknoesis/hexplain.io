@@ -1,6 +1,6 @@
 # Contributing to the specification
 
-Use Python 3.12 with `python -m pip install -r requirements.txt`. Run checks from the repository
+Use Python 3.12 with `python -m pip install --require-hashes -r requirements.txt`. Run checks from the repository
 root: `python tools/run_gates.py --strict`. Full git history is required by the register
 extraction check. Filters such as `python tools/run_gates.py --strict numeric shapes` are
 useful during development but are not complete release acceptance.
