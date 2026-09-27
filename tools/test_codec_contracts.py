@@ -1,7 +1,10 @@
 """Every executable codec has a well-formed contract and a normative vector suite of the same version.
 
 A register concept is executable when it carries hexplain:codecContract. For each one:
-  * the media-encoding register conforms to the family's contract shapes;
+  * the media-encoding register conforms to the family's contract shapes, and still does when it is
+    loaded twice (a processor's bundled copy beside the published one): a contract or parameter spec
+    that is a blank node is minted afresh by every parse, so the second copy would state a second
+    contract for every concept;
   * specification/codecs/<LocalName>/vectors/manifest.json exists, names the concept, and its
     suiteVersion equals the contract's hexplain:vectorSuiteVersion;
   * every source records its provenance (description) and licence, every vector names a source,
@@ -17,7 +20,7 @@ import subprocess
 import sys
 
 from pyshacl import validate
-from rdflib import Graph
+from rdflib import BNode, Graph, Namespace
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools" / "codecs"))
@@ -27,15 +30,39 @@ import specgraph  # noqa: E402
 import vectors  # noqa: E402
 
 REGISTER = ROOT / "specification/register/media-encoding/media-encoding.ttl"
+HX = Namespace("https://hexplain.io/ns/core#")
+
+
+def repeat_load_problems(text):
+    """Why [text] does not survive being parsed twice into one graph, if it does not."""
+    graph = Graph().parse(data=text, format="turtle")
+    once = len(graph)
+    graph.parse(data=text, format="turtle")
+    problems = [f"{len(set(graph.subjects(p, None)) & set(owners))} subjects state a blank-node {p.fragment}"
+                for p in (HX.codecContract, HX.declaresParameter)
+                for owners in [[s for s, o in graph.subject_objects(p) if isinstance(o, BNode)]] if owners]
+    if len(graph) != once:
+        problems.append(f"a second parse added {len(graph) - once} triples")
+    return problems
 
 
 def main():
     failures = []
-    register = Graph().parse(data=REGISTER.read_text(encoding="utf-8"), format="turtle")
-    conforms, _, report = validate(specgraph.ontologies(), shacl_graph=specgraph.shapes(), inference="none",
+    text = REGISTER.read_text(encoding="utf-8")
+    register = Graph().parse(data=text, format="turtle")
+    probe = ("@prefix hexplain: <https://hexplain.io/ns/core#> . <urn:c> hexplain:codecContract "
+             "[ a hexplain:CodecContract ] .")
+    assert repeat_load_problems(probe), "the repeated-load check no longer notices a blank-node contract"
+    failures += [f"{REGISTER.relative_to(ROOT).as_posix()} loaded twice: {p}" for p in repeat_load_problems(text)]
+    # The family with the register merged in a second time -- the union a processor validates when
+    # it holds its bundled copy beside the published one -- must conform as the family alone does.
+    family = specgraph.ontologies()
+    family.parse(data=text, format="turtle")
+    conforms, _, report = validate(family, shacl_graph=specgraph.shapes(), inference="none",
                                    allow_warnings=True)
     if not conforms:
-        failures.append("the specification family, media-encoding register included, does not conform:\n" + report)
+        failures.append("the specification family, with the media-encoding register loaded twice, does not "
+                        "conform:\n" + report)
     contracts = vectors.contracts(register)
     if not contracts:
         failures.append("no register concept carries hexplain:codecContract")

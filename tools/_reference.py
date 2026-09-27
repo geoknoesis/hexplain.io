@@ -13,6 +13,7 @@ SKOS=Namespace('http://www.w3.org/2004/02/skos/core#')
 SH=Namespace('http://www.w3.org/ns/shacl#')
 VANN=Namespace('http://purl.org/vocab/vann/')
 BDDO=Namespace('https://hexplain.io/ns/bddo#')
+HX=Namespace('https://hexplain.io/ns/core#')
 ANNOTATION_MARKER='\n# BEGIN GENERATED TERM DOCUMENTATION\n'
 ANNOTATIONS={RDFS.label,RDFS.isDefinedBy,SKOS.definition,SKOS.scopeNote}
 TARGETS={SH.targetClass:'instances of',SH.targetSubjectsOf:'subjects using',SH.targetObjectsOf:'objects of',SH.targetNode:'the specific node'}
@@ -37,6 +38,10 @@ def local(term):return str(term).rsplit('#',1)[-1].rsplit('/',1)[-1]
 def owner(term):return URIRef(str(term).split('#')[0])
 def label(g,term):
     labels=list(g.objects(term,SKOS.prefLabel))+list(g.objects(term,RDFS.label))
+    if not labels and (term,RDF.type,HX.CodecContract) in g:
+        return label(g,g.value(None,HX.codecContract,term))+' codec contract'
+    if not labels and (term,RDF.type,HX.CodecParameterSpec) in g:
+        return label(g,g.value(None,HX.declaresParameter,term))+' parameter '+str(g.value(term,HX.parameterKey))
     return str(sorted(labels,key=lambda x:(x.language!='en',str(x)))[0]) if labels else re.sub(r'(?<=[a-z0-9])(?=[A-Z])',' ',local(term)).replace('_',' ').strip()
 
 def compact(g,term):
@@ -126,6 +131,26 @@ def shape_definition(g,t):
     opening='Applied through references from other shapes.' if targets.startswith('No automatic target') else 'Applies to '+targets+'.'
     return opening+' '+' '.join(sentences)
 
+def codec_contract_definition(g,t):
+    """The definition of a register concept's named codec contract or one of its parameter specs."""
+    if (t,RDF.type,HX.CodecContract) in g:
+        concept=g.value(None,HX.codecContract,t)
+        return (f'The codec contract of {compact(g,concept)}, version {g.value(t,HX.contractVersion)}: the decode kind, '
+                f'the parameters a processor accepts and the error categories it may raise for that concept, verified '
+                f'by vector suite version {g.value(t,HX.vectorSuiteVersion)}.')
+    if (t,RDF.type,HX.CodecParameterSpec) in g:
+        contract=g.value(None,HX.declaresParameter,t);concept=g.value(None,HX.codecContract,contract)
+        return (f'The {g.value(t,HX.parameterKey)} parameter declared by the codec contract of {compact(g,concept)}: '
+                f'its type, whether it is required, and any default, bounds or allowed values.')
+    return None
+
+def codec_contract_scope(g,t):
+    if (t,RDF.type,HX.CodecContract) in g or (t,RDF.type,HX.CodecParameterSpec) in g:
+        return ('Read by processors and conformance tools to bind and check the hexplain:codecParameter values of an '
+                'encoding step that names the concept. It is not a controlled value: profiles name the concept, never '
+                'its contract.')
+    return None
+
 def definition(g,t):
     """The skos:definition to generate for [t], or None when the source already defines it."""
     key=compact(g,t);name=label(g,t);k=kind(g,t)
@@ -133,6 +158,8 @@ def definition(g,t):
     if key in DEFINITIONS:
         return None if stated is not None and str(stated).strip()==DEFINITIONS[key].strip() else DEFINITIONS[key]
     if stated is not None:return None
+    contract=codec_contract_definition(g,t)
+    if contract:return contract
     if k in ['Node shape','Property shape']:return shape_definition(g,t)
     if k=='SHACL prefix declarations':return 'Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data.'
     if (t,RDF.type,BDDO.DataType) in g and g.value(t,BDDO.bitWidth):
@@ -230,6 +257,8 @@ def scope(g,t):
     if module=='hexplain':module='core'
     for key in (str(t),compact(g,t)):
         if key in SCOPE_NOTES:return SCOPE_NOTES[key]
+    contract=codec_contract_scope(g,t)
+    if contract:return contract
     if k!='Ontology':return None
     if '/register/' in ns:
         return 'Load to obtain the concepts of this register. A profile binds its schemes to the properties they supply with hexplain:usesRegister; the aspect the values serve does not import it.'+(
