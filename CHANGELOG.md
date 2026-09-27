@@ -87,8 +87,10 @@ rewritten.
 - reference-engine-claims.json lists the 34 codecs the reference engine decodes with their modules.
 - HDL: pipeline parameters take literals of every contract type, bracketed lists and HEL expressions
   (`name value` or `name: value`); `switch <expr> { … }` steps and `@codec switch` select a codec when the
-  step runs; `@codec-session instance|layout`; YAML `codec-switch` and `codec-session`. req-hdl-grammar-fields-1
-  reworded; req-hdl-clauses-3 reworded to name `@codec switch` among the pipeline clauses a field states once;
+  step runs, its keys all integers or all strings (and, on a bare sibling of known type, of that type);
+  `@codec-session instance|layout`; YAML `codec-switch` and `codec-session`. The grammar gains `CodecLiteral`
+  and `CodecList`. req-hdl-grammar-fields-1 reworded (a `Literal` other than a `NAME`, a `FLOAT` or a
+  `CodecList` is a parameter value; anything else an expression); req-hdl-clauses-3 reworded to name `@codec switch` among the pipeline clauses a field states once;
   the case hc-pipeline-non-integer-parameter becomes hc-pipeline-duplicate-parameter, and
   hc-codec-switch-and-session (with its YAML mirror) is new.
 

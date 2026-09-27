@@ -525,8 +525,12 @@ struct Tile {
             candidate, so a key no arm names is a Validation error when the step runs) and whose <code>hexplain:codecCandidates</code> are the arms' steps, one per codec in first-arm order
             (<a href="../processing/index.html#codec-selection">Processing Model, Run-time codec selection</a>). The value is the codec's full IRI, which
             selects the same candidate whether a processor matches it by IRI or by local name. An arm's parameters are its candidate's: the
-            selecting step itself has none. Two arms may select one codec only with the same parameters, and keys are distinct, with at most one
-            <code>else</code>. <code>@codec switch &#8230;</code> is the pipeline of that one step; a <code>switch</code> may also be any step of a
+            selecting step itself has none. Two arms may select one codec (compared by IRI) only with the same parameters, and keys are distinct, with at most one
+            <code>else</code>. The keys of one switch are all integers or all strings: HEL's <code>==</code> between an integer and a string is a
+            Type error rather than <code>false</code>, so a switch mixing the two is an <code>ERROR</code>. For the same reason, where the discriminator
+            is a bare sibling whose type is known, a compiler reports as an <code>ERROR</code> keys that can never equal it: string keys on a numeric field
+            (an integer, float, <code>bits</code> or <code>anum</code>/<code>adec</code> field), integer keys on a string field. A <code>bytes</code>
+            discriminator compares with strings, so string keys stay valid on it. <code>@codec switch &#8230;</code> is the pipeline of that one step; a <code>switch</code> may also be any step of a
             <code>@pipeline</code>. <code>@codec-session instance</code> or
             <code>layout</code> gives the field's <code>hexplain:codecSessionScope</code>
             (<a href="../processing/index.html#codec-sessions">Codec sessions</a>); a compiler reports it as an error on a field with no encoding.
@@ -1045,7 +1049,9 @@ CrcParam       ::= ( "width" | "poly" | "init" | "xorout" ) ":" ( INT | HEX )
                  | ( "refin" | "refout" ) ":" ( "true" | "false" )
 PipelineClause ::= "@pipeline" "{" ( ( PipelineStep | CodecSwitch ) ","? )* "}"
 PipelineStep   ::= CURIE ( "(" ( NAME ":"? CodecValue ","? )* ")" )?
-CodecValue     ::= Literal | FLOAT | "[" CodecItem ( "," CodecItem )* ","? "]" | Expr
+CodecValue     ::= CodecLiteral | FLOAT | CodecList | Expr
+CodecLiteral   ::= INT | HEX | STRING | "true" | "false" | CURIE | IRIREF
+CodecList      ::= "[" CodecItem "," ( CodecItem ( "," CodecItem )* ","? )? "]"
 CodecItem      ::= INT | FLOAT | STRING | "true" | "false"
 CodecSwitch    ::= "switch" Expr "{" ( ( INT | STRING | "else" ) "=&gt;" PipelineStep ","? )+ "}"
             </pre>
@@ -1053,7 +1059,8 @@ CodecSwitch    ::= "switch" Expr "{" ( ( INT | STRING | "else" ) "=&gt;" Pipelin
                 <li>A <code>switch</code> with any literal arm needs a discriminator <code>Expr</code> (the arm tests <code>discriminator == literal</code>); a switch whose arms are all <code>when</code> guards needs none. A field has at most one <code>switch</code> or <code>dispatch</code>, not both.</li>
                 <li><code>@seek</code> requires an <code>@at</code> on the same field. <code>@base</code> is valid only on an <code>anum</code> field. An <code>EnumPair</code> without <code>=&gt;</code> declares a member of a valid-value set and binds no concept.</li>
                 <li><code>NAME ".." NAME</code> in a checksum names the first and last covered sibling; <code>covers(a, b)</code> gives the covered range as two expressions. A <code>CrcParam</code>'s name and <code>":"</code> may be one NAME token (<code>width:</code>); each of the six parameters appears exactly once (<a href="#checksums">&#167;Checksums</a>).</li>
-                <li>A <code>TypeRef</code>'s <code>Arguments</code> follow the <code>TypeName</code> directly and are allowed only when it names a struct with parameters, exactly one per parameter (<a href="#parameters">&#167;Parameters and local bindings</a>). A <code>LetDecl</code>'s <code>"="</code> is the OP token <code>=</code>; its expression is a TokenRun, which ends at the next member. <span class="req" id="req-hdl-grammar-fields-1"></span>A <code>PipelineStep</code> MUST NOT name a parameter twice; a value that is a <code>Literal</code>, a <code>FLOAT</code> or a bracketed list of literals is a <code>hexplain:parameterValue</code>, and any other value is an <code>Expr</code> emitted as <code>hexplain:parameterExpression</code> (<a href="#semantic">&#167;Semantic Mapping</a>).</li>
+                <li>A <code>TypeRef</code>'s <code>Arguments</code> follow the <code>TypeName</code> directly and are allowed only when it names a struct with parameters, exactly one per parameter (<a href="#parameters">&#167;Parameters and local bindings</a>). A <code>LetDecl</code>'s <code>"="</code> is the OP token <code>=</code>; its expression is a TokenRun, which ends at the next member. <span class="req" id="req-hdl-grammar-fields-1"></span>A <code>PipelineStep</code> MUST NOT name a parameter twice; a value that is a <code>CodecLiteral</code> (a <code>Literal</code> other than a <code>NAME</code>, or an IRIREF), a <code>FLOAT</code> or a <code>CodecList</code> is a <code>hexplain:parameterValue</code>, and any other value is an <code>Expr</code> emitted as <code>hexplain:parameterExpression</code> (<a href="#semantic">&#167;Semantic Mapping</a>).</li>
+                <li>The <code>CodecLiteral</code>, <code>FLOAT</code> and <code>CodecList</code> forms apply only when the token is the whole argument, up to the next <code>,</code> or <code>)</code>: <code>level 6</code> is a literal, <code>level 6 + n</code> an <code>Expr</code>. A bare NAME is an <code>Expr</code> (<code>decodedSize n</code> reads the field <code>n</code>), and so is a bracketed group without a comma (<code>[n * 2]</code>); a one-item list needs its trailing comma (<code>[2,]</code>). A <code>CodecSwitch</code>'s keys are all INT or all STRING (<a href="#codec-switch">the codec switch</a>).</li>
                 <li>A <code>Literal</code> never includes a <code>FLOAT</code>: <code>@fixed</code>, <code>@prop</code> and enum values take integers, hex byte strings, strings, booleans or CURIEs, as each position allows, and a pipeline parameter may also be a <code>FLOAT</code> (<code>CodecValue</code>) (<a href="#literal-values">Literal values</a>).</li>
                 <li>A field carries at most one clause of each kind (<a href="#clause-multiplicity">One of each</a>).</li>
             </ul>
