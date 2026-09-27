@@ -1,0 +1,33 @@
+# A register concept with a complete codec contract: every contract and parameter-spec property
+# with a valid value, so each constraint of the contract shapes has a passing witness.
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://hexplain.io/test/codec-contract#> .
+
+ex:Scheme a skos:ConceptScheme .
+ex:Codec a skos:Concept ; skos:inScheme ex:Scheme ; skos:prefLabel "Example codec"@en ;
+    hexplain:codecContract ex:Contract .
+ex:Contract a hexplain:CodecContract ;
+    rdfs:comment "Version 2 of a bytes-to-bytes contract with an integer and a list parameter." ;
+    hexplain:contractVersion 2 ;
+    hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ;
+    hexplain:keepsSession false ;
+    hexplain:raisesCategory "Validation", "ResourceLimit" ;
+    hexplain:declaresParameter ex:Contract.level, ex:Contract.coefficients .
+ex:Contract.level a hexplain:CodecParameterSpec ;
+    hexplain:parameterKey "level" ;
+    hexplain:parameterType hexplain:IntegerParameterType ;
+    hexplain:requiredParameter false ;
+    hexplain:listValued false ;
+    hexplain:defaultValue -1 ;
+    hexplain:minimumValue -1 ;
+    hexplain:maximumValue 9 ;
+    hexplain:allowedValue -1, 0, 9 .
+ex:Contract.coefficients a hexplain:CodecParameterSpec ;
+    hexplain:parameterKey "coefficients" ;
+    hexplain:parameterType hexplain:FloatParameterType ;
+    hexplain:listValued true ;
+    hexplain:listLength 3 ;
+    hexplain:defaultValue "0.299 0.587 0.114" .

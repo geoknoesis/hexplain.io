@@ -1,0 +1,64 @@
+# Every contract and parameter-spec constraint violated at least once: missing, duplicated and
+# mistyped values, a contract on a non-concept, and a parameter that is not a spec.
+# expect: ex:NotAConcept hexplain:CodecContractBindingShape sh:ClassConstraintComponent
+# expect: ex:Twice hexplain:CodecContractBindingShape sh:MaxCountConstraintComponent
+# expect: ex:WrongType hexplain:CodecContractBindingShape sh:ClassConstraintComponent
+# expect: ex:Empty hexplain:CodecContractShape sh:MinCountConstraintComponent
+# expect: ex:Doubled hexplain:CodecContractShape sh:MaxCountConstraintComponent
+# expect: ex:Wrong hexplain:CodecContractShape sh:DatatypeConstraintComponent
+# expect: ex:Wrong hexplain:CodecContractShape sh:MinInclusiveConstraintComponent
+# expect: ex:Wrong hexplain:CodecContractShape sh:InConstraintComponent
+# expect: ex:Wrong hexplain:CodecContractShape sh:ClassConstraintComponent
+# expect: ex:Wrong2 hexplain:CodecContractShape sh:DatatypeConstraintComponent
+# expect: ex:Wrong2 hexplain:CodecContractShape sh:MinInclusiveConstraintComponent
+# expect: ex:Wrong2 hexplain:CodecContractShape sh:InConstraintComponent
+# expect: ex:SpecEmpty hexplain:CodecParameterSpecShape sh:MinCountConstraintComponent
+# expect: ex:SpecDoubled hexplain:CodecParameterSpecShape sh:MaxCountConstraintComponent
+# expect: ex:SpecWrong hexplain:CodecParameterSpecShape sh:DatatypeConstraintComponent
+# expect: ex:SpecWrong hexplain:CodecParameterSpecShape sh:InConstraintComponent
+# expect: ex:SpecWrong hexplain:CodecParameterSpecShape sh:NodeKindConstraintComponent
+# expect: ex:SpecWrong hexplain:CodecParameterSpecShape sh:MinInclusiveConstraintComponent
+# expect: ex:SpecWrong2 hexplain:CodecParameterSpecShape sh:DatatypeConstraintComponent
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://hexplain.io/test/codec-contract-invalid#> .
+
+ex:Scheme a skos:ConceptScheme .
+ex:Good a hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
+    hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false .
+ex:NotAConcept rdfs:label "a contract on something that is not a register concept" ;
+    hexplain:codecContract ex:Good .
+ex:Twice a skos:Concept ; skos:inScheme ex:Scheme ; hexplain:codecContract ex:Good, ex:Empty .
+ex:WrongType a skos:Concept ; skos:inScheme ex:Scheme ; hexplain:codecContract ex:Untyped .
+ex:Untyped rdfs:label "not a hexplain:CodecContract" .
+
+ex:Empty a hexplain:CodecContract .
+ex:Doubled a hexplain:CodecContract ;
+    hexplain:contractVersion 1, 2 ; hexplain:vectorSuiteVersion 1, 2 ;
+    hexplain:codecKind hexplain:BytesToBytes, hexplain:BytesToSamples ; hexplain:keepsSession true, false .
+ex:Wrong a hexplain:CodecContract ;
+    hexplain:contractVersion "1" ; hexplain:vectorSuiteVersion 0 ;
+    hexplain:codecKind ex:Other ; hexplain:keepsSession "yes" ;
+    hexplain:raisesCategory "Fatal" ; hexplain:declaresParameter ex:NotASpec .
+ex:Wrong2 a hexplain:CodecContract ;
+    hexplain:contractVersion 0 ; hexplain:vectorSuiteVersion "one" ;
+    hexplain:codecKind hexplain:SamplesToSamples ; hexplain:keepsSession true ;
+    hexplain:raisesCategory 5 .
+ex:Other rdfs:label "not a codec kind" .
+ex:NotASpec rdfs:label "not a hexplain:CodecParameterSpec" .
+
+ex:SpecEmpty a hexplain:CodecParameterSpec .
+ex:SpecDoubled a hexplain:CodecParameterSpec ;
+    hexplain:parameterKey "a", "b" ;
+    hexplain:parameterType hexplain:IntegerParameterType, hexplain:StringParameterType ;
+    hexplain:requiredParameter true, false ; hexplain:listValued true, false ; hexplain:listLength 2, 3 ;
+    hexplain:defaultValue 1, 2 ; hexplain:minimumValue 0, 1 ; hexplain:maximumValue 5, 6 .
+ex:SpecWrong a hexplain:CodecParameterSpec ;
+    hexplain:parameterKey 5 ; hexplain:parameterType bddo:IntegerParameter ;
+    hexplain:requiredParameter "no" ; hexplain:listValued "no" ; hexplain:listLength 0 ;
+    hexplain:defaultValue ex:Other ; hexplain:minimumValue ex:Other ; hexplain:maximumValue ex:Other ;
+    hexplain:allowedValue ex:Other .
+ex:SpecWrong2 a hexplain:CodecParameterSpec ; hexplain:parameterKey "x" ;
+    hexplain:parameterType hexplain:IriParameterType ; hexplain:listLength "two" .
