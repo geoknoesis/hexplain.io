@@ -275,6 +275,19 @@ cites `req-pm-context-3`.
 - New gate `test_ontology_licenses`: every module declares exactly the CC BY 4.0 licence and its
   creator, and `LICENSE` and `LICENSING.md` state both regimes.
 
+### Namespace prefixes and shape packaging (review fixes)
+
+- `specification/family.json` gains a `namespaces` list: for each vocabulary, its prefix,
+  namespace IRI, ontology IRI, directory and file. It is the authoritative table for the prefixes
+  that do not match their namespace or directory (`adv` for /ns/audio#, `img` in directory `idv`,
+  `gv` for /ns/geo#, `hexplain` for /ns/core#, `hxf` for /ns/fn#, `menc` and `usnato` among the
+  `r…` register prefixes); nothing is renamed. `specification/ontology-design` shows the table.
+  New gate `test_namespace_prefixes`: every module declares exactly its row, no prefix or
+  namespace repeats, and the page lists every row. The `files` list is unchanged.
+- `specification/ontology-design` states where shapes live: in the module, except `conf` and
+  `req`, whose shapes are separate ontologies because the conformance shapes need `core` and
+  `bddo`, which report readers should not have to load (`req` follows `conf`'s layout).
+
 ### Language tags and named individuals (review fixes)
 
 - Every `rdfs:label`, `rdfs:comment` and SKOS documentation literal of a family term is tagged
