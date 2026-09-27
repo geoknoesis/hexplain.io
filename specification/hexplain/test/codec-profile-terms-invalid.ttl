@@ -1,0 +1,75 @@
+# A step naming both a codec and a selection, a selection without candidates, a parameter with
+# both a value and an expression, a non-string expression, and a session scope that is not one.
+# expect: ex:Both.step hexplain:EncodingStepShape sh:XoneConstraintComponent
+# expect: ex:NoCandidates.step hexplain:CodecSelectionShape sh:MinCountConstraintComponent
+# expect: ex:Both.param hexplain:CodecParameterShape sh:XoneConstraintComponent
+# expect: ex:BadTypes.step hexplain:CodecSelectionShape sh:DatatypeConstraintComponent
+# expect: ex:BadTypes.param hexplain:CodecParameterShape sh:DatatypeConstraintComponent
+# expect: ex:BadScope hexplain:CodecSessionScopeShape sh:InConstraintComponent
+# expect: ex:TwoScopes hexplain:CodecSessionScopeShape sh:MaxCountConstraintComponent
+# expect: ex:NotAField hexplain:CodecSessionScopeShape sh:ClassConstraintComponent
+# expect: ex:TwoLists.step hexplain:CodecSelectionShape sh:MaxCountConstraintComponent
+# expect: ex:BadMember.step hexplain:CodecSelectionShape sh:ClassConstraintComponent
+# expect: ex:LiteralList.step hexplain:CodecSelectionShape sh:NodeKindConstraintComponent
+# expect: ex:SelectingWithParam.step hexplain:CodecSelectionShape sh:MaxCountConstraintComponent
+# expect: ex:TwoExpressions.param hexplain:CodecParameterShape sh:MaxCountConstraintComponent
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://hexplain.io/test/codec-profile-terms-invalid#> .
+
+ex:Both a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep ( ex:Both.step ) .
+ex:Both.step a hexplain:EncodingStep ; hexplain:codec menc:Deflate ;
+    hexplain:codecFromExpression "'Deflate'" ;
+    hexplain:codecCandidates ( [ a hexplain:EncodingStep ; hexplain:codec menc:Deflate ] ) ;
+    hexplain:codecParameter ex:Both.param .
+ex:Both.param a hexplain:CodecParameter ; hexplain:parameterName "level" ;
+    hexplain:parameterValue 1 ; hexplain:parameterExpression "1" .
+
+ex:NoCandidates a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep ( ex:NoCandidates.step ) .
+ex:NoCandidates.step a hexplain:EncodingStep ; hexplain:codecFromExpression "'Store'" .
+
+ex:BadTypes a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep ( ex:BadTypes.step ) .
+ex:BadTypes.step a hexplain:EncodingStep ; hexplain:codecFromExpression 7 ;
+    hexplain:codecCandidates ( [ a hexplain:EncodingStep ; hexplain:codec menc:Store ] ) ;
+    hexplain:codecParameter ex:BadTypes.param .
+ex:BadTypes.param a hexplain:CodecParameter ; hexplain:parameterName "level" ; hexplain:parameterExpression 3 .
+
+ex:TwoLists a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep ( ex:TwoLists.step ) .
+ex:TwoLists.step a hexplain:EncodingStep ; hexplain:codecFromExpression "'Store'", "'Deflate'" ;
+    hexplain:codecCandidates ( [ a hexplain:EncodingStep ; hexplain:codec menc:Store ] ),
+                             ( [ a hexplain:EncodingStep ; hexplain:codec menc:Deflate ] ) .
+
+ex:BadMember a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep ( ex:BadMember.step ) .
+ex:BadMember.step a hexplain:EncodingStep ; hexplain:codecFromExpression "'Store'" ;
+    hexplain:codecCandidates ( menc:Store ) .
+
+ex:LiteralList a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep ( ex:LiteralList.step ) .
+ex:LiteralList.step a hexplain:EncodingStep ; hexplain:codecFromExpression "'Store'" ;
+    hexplain:codecCandidates "menc:Store" .
+
+ex:BadScope a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 ;
+    hexplain:isEncodedWith menc:Deflate ; hexplain:codecSessionScope bddo:bytes .
+ex:TwoScopes a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 ;
+    hexplain:isEncodedWith menc:Deflate ; hexplain:codecSessionScope bddo:PerInstance, bddo:PerLayout .
+ex:NotAField a bddo:Struct ; hexplain:codecSessionScope bddo:PerInstance .
+
+ex:SelectingWithParam a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep ( ex:SelectingWithParam.step ) .
+ex:SelectingWithParam.step a hexplain:EncodingStep ; hexplain:codecFromExpression "'Store'" ;
+    hexplain:codecCandidates ( [ a hexplain:EncodingStep ; hexplain:codec menc:Store ] ) ;
+    hexplain:codecParameter [ a hexplain:CodecParameter ; hexplain:parameterName "level" ; hexplain:parameterValue 1 ] .
+
+ex:TwoExpressions a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep ( ex:TwoExpressions.step ) .
+ex:TwoExpressions.step a hexplain:EncodingStep ; hexplain:codec menc:Deflate ;
+    hexplain:codecParameter ex:TwoExpressions.param .
+ex:TwoExpressions.param a hexplain:CodecParameter ; hexplain:parameterName "level" ;
+    hexplain:parameterExpression "1", "2" .

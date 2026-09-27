@@ -366,15 +366,15 @@ def notes(prefix, text):
 
 notes('hexplain', '''
 ClassMappingRule|Assert on each member of a hexplain:hasConditionalClassMapping list, with one hexplain:condition and one hexplain:semanticClass. Rules are tried in list order; the first whose condition holds decides the struct's class.
-CodecParameter|Assert on each object of hexplain:codecParameter, with exactly one hexplain:parameterName and one hexplain:parameterValue, spelt as the codec itself names the setting.
-EncodingStep|Assert on each member of a hexplain:hasEncodingStep list, naming exactly one hexplain:codec and any hexplain:codecParameter settings it was applied with. List the steps in the order the encoder applied them.
+CodecParameter|Assert on each object of hexplain:codecParameter, with exactly one hexplain:parameterName, spelt as the codec itself names the setting, and exactly one of hexplain:parameterValue or hexplain:parameterExpression as its value.
+EncodingStep|Assert on each member of a hexplain:hasEncodingStep list, naming its codec with exactly one hexplain:codec, or selecting it at run time with hexplain:codecFromExpression and hexplain:codecCandidates instead, plus any hexplain:codecParameter settings a codec-naming step was applied with (a selecting step carries none of its own). List the steps in the order the encoder applied them.
 MappingRule|Assert on each member of a hexplain:hasConditionalMapping list, with one hexplain:condition and one hexplain:semanticProperty, and optionally a hexplain:valueExpression computing the value that arm emits.
 RegisterBinding|Assert on the object of each hexplain:usesRegister, with exactly one hexplain:forProperty and one hexplain:register. Several bindings for one property are read together: a value in any of their schemes is accepted.
 RegisterStatus|The class of the three controlled values of hexplain:status; do not mint further statuses. A register publishes the status of its entries; data never states it.
 byteLength|Stated by a processor on the resources it lifts, with hexplain:byteOffset, when it records byte ranges; a profile does not declare it. Also locates a conf:Finding's evidence.
 byteOffset|Stated by a processor on the resources it lifts, with hexplain:byteLength, when it records byte ranges; a profile does not declare it. Also locates a conf:Finding's evidence.
-codec|Use exactly once on a hexplain:EncodingStep, naming a concept of the codec or compression register the profile binds.
-codecParameter|Use on a hexplain:EncodingStep, once per setting the codec was applied with; omit it for a codec that takes none.
+codec|Use at most once on a hexplain:EncodingStep, naming a concept of the codec or compression register the profile binds; mutually exclusive with hexplain:codecFromExpression, which selects the codec at run time instead.
+codecParameter|Use on a hexplain:EncodingStep, once per setting the codec was applied with; omit it for a codec that takes none, and for a step that selects its codec at run time with hexplain:codecFromExpression (its hexplain:codecCandidates carry the parameters instead).
 condition|Use exactly once on a hexplain:MappingRule or hexplain:ClassMappingRule: a HEL Boolean expression evaluated in the context of the field or struct being mapped.
 correspondsTo|Use on a register concept to name the ontology individual that denotes the same thing in another layer (a checksum concept and its bddo:ChecksumAlgorithm). It is an annotation: never a SKOS mapping, never equivalence, and it licenses no inference.
 forProperty|Use exactly once on a hexplain:RegisterBinding, naming the property whose values the binding constrains.
@@ -389,7 +389,7 @@ mapsToClass|Use at most once on a bddo:Struct, naming the owl:Class every parsed
 mapsToObjectProperty|Use at most once on a bddo:Field whose emitted object is an IRI: a nested struct's resource or an enumeration symbol. Use hexplain:mapsToProperty for a literal value.
 mapsToProperty|Use on a bddo:Field that emits a literal, naming the property the literal is the value of.
 parameterName|Use exactly once on a hexplain:CodecParameter.
-parameterValue|Use exactly once on a hexplain:CodecParameter, as the literal the format carries, with the datatype that literal naturally has.
+parameterValue|Use on a hexplain:CodecParameter that is not given a hexplain:parameterExpression instead, as the literal the format carries, with the datatype that literal naturally has.
 register|Use exactly once on a hexplain:RegisterBinding, naming the skos:ConceptScheme whose members are permitted values of the bound property.
 semanticClass|Use exactly once on a hexplain:ClassMappingRule, naming the class chosen when its condition holds.
 semanticProperty|Use exactly once on a hexplain:MappingRule, naming the property emitted when its condition holds.

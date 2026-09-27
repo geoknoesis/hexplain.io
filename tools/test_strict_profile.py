@@ -68,6 +68,9 @@ EXTRA = {
     BDDO + "DispatchArm": ["hasArgument"],
     BDDO + "KeyValueHeader": ["keyIsCaseInsensitive"],
     CORE + "RegisterBinding": [CORE + "forProperty", CORE + "register"],
+    # hexplain:CodecSelectionShape targets the subjects of hexplain:codecFromExpression and
+    # hexplain:codecCandidates, not a class; both are properties of hexplain:EncodingStep.
+    CORE + "EncodingStep": [CORE + "codecCandidates"],
 }
 
 

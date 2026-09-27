@@ -77,6 +77,14 @@
     rdfs:comment "The setting's name as the codec itself names it: \"clevel\", \"shuffle\", \"predictor\"."@en .
 :parameterValue a owl:DatatypeProperty ; rdfs:label "parameter value"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "The setting's value, as the literal the format carries. Left untyped: a level is an integer, a Blosc inner codec a string, a flag a boolean."@en .
+:parameterExpression a owl:DatatypeProperty ; rdfs:label "parameter expression" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "A HEL expression giving the parameter's value, evaluated in the field's struct context each time the step runs. Its result must be a value of the parameter's contract type and within its declared values, or the parse raises a Validation error (a result of the wrong HEL type is a Type / HEL error). Mutually exclusive with hexplain:parameterValue." .
+:codecFromExpression a owl:DatatypeProperty ; rdfs:label "codec from expression" ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "Selects the step's codec at run time: a HEL expression, evaluated in the field's struct context, whose String result is the IRI of one of the step's hexplain:codecCandidates or that IRI's local name (a profile typically maps a wire code to it with a SKOS map). A result naming no candidate is a Validation error. Replaces hexplain:codec on the step and requires hexplain:codecCandidates." .
+:codecCandidates a owl:ObjectProperty ; rdfs:label "codec candidates" ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "Ordered rdf:List of hexplain:EncodingStep, one per codec the step's hexplain:codecFromExpression may select, each naming its codec with hexplain:codec and carrying its own parameters. Kind connectivity is checked per candidate: each candidate's kind must connect with the step before it and the step after it in the pipeline; candidates may be of different kinds. Load-time checks and code generation use exactly this set." .
+:codecSessionScope a owl:ObjectProperty ; rdfs:label "codec session scope" ; rdfs:range bddo:SessionScope ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "Where the sessions of the field's session-keeping codecs live: bddo:PerInstance keeps one session per step for every decode of the field within one instance of its struct; bddo:PerLayout keeps one for the field across the whole parse. Absent, every decode starts a new session. A session never outlives the parse." .
 
 # ---------- Codec contracts ----------
 # A register concept names an algorithm; its contract says how every implementation, in every
@@ -262,22 +270,44 @@ hexplain:EncodingPipelineShape a sh:NodeShape ;
 
 hexplain:EncodingStepShape a sh:NodeShape ;
     sh:targetClass hexplain:EncodingStep ;
-    sh:targetSubjectsOf hexplain:codec , hexplain:codecParameter ;
-    sh:property [ sh:path hexplain:codec ; sh:nodeKind sh:IRI ; sh:class skos:Concept ;
-        sh:minCount 1 ; sh:maxCount 1 ;
-        sh:message "An encoding step must name exactly one codec." ] ;
+    sh:targetSubjectsOf hexplain:codec , hexplain:codecParameter , hexplain:codecFromExpression ;
+    # A step names its codec, or selects it at run time -- never both, never neither.
+    sh:xone ( [ sh:property [ sh:path hexplain:codec ; sh:minCount 1 ] ]
+              [ sh:property [ sh:path hexplain:codecFromExpression ; sh:minCount 1 ] ] ) ;
+    sh:property [ sh:path hexplain:codec ; sh:nodeKind sh:IRI ; sh:class skos:Concept ; sh:maxCount 1 ;
+        sh:message "An encoding step names at most one codec." ] ;
     sh:property [ sh:path hexplain:codecParameter ; sh:class hexplain:CodecParameter ;
         sh:message "Each value of hexplain:codecParameter is an instance of hexplain:CodecParameter." ] .
 
-# A parameter without both halves says nothing.
+hexplain:CodecSelectionShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:codecFromExpression , hexplain:codecCandidates ;
+    sh:property [ sh:path hexplain:codecFromExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:codecCandidates ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:message "A step that selects its codec at run time lists its candidates in one hexplain:codecCandidates list." ] ;
+    sh:property [ sh:path ( hexplain:codecCandidates [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+        sh:class hexplain:EncodingStep ;
+        sh:message "Every candidate is a hexplain:EncodingStep." ] ;
+    # A selecting step carries no parameters of its own; parameters belong to the candidate steps.
+    sh:property [ sh:path hexplain:codecParameter ; sh:maxCount 0 ;
+        sh:message "A step that selects its codec at run time carries no hexplain:codecParameter; parameters belong to the candidate steps." ] .
+
+# A parameter without both halves says nothing; its value is a literal or an expression.
 hexplain:CodecParameterShape a sh:NodeShape ;
     sh:targetClass hexplain:CodecParameter ;
     sh:targetObjectsOf hexplain:codecParameter ;
-    sh:targetSubjectsOf hexplain:parameterName , hexplain:parameterValue ;
+    sh:targetSubjectsOf hexplain:parameterName , hexplain:parameterValue , hexplain:parameterExpression ;
     sh:property [ sh:path hexplain:parameterName ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "hexplain:parameterName takes exactly one value, an xsd:string literal." ] ;
-    sh:property [ sh:path hexplain:parameterValue ; sh:minCount 1 ; sh:maxCount 1 ;
-        sh:message "hexplain:parameterValue takes exactly one value." ] .
+    sh:xone ( [ sh:property [ sh:path hexplain:parameterValue ; sh:minCount 1 ] ]
+              [ sh:property [ sh:path hexplain:parameterExpression ; sh:minCount 1 ] ] ) ;
+    sh:property [ sh:path hexplain:parameterValue ; sh:maxCount 1 ] ;
+    sh:property [ sh:path hexplain:parameterExpression ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+
+hexplain:CodecSessionScopeShape a sh:NodeShape ;
+    sh:targetSubjectsOf hexplain:codecSessionScope ;
+    sh:class bddo:Field ;
+    sh:property [ sh:path hexplain:codecSessionScope ; sh:maxCount 1 ; sh:in ( bddo:PerInstance bddo:PerLayout ) ;
+        sh:message "hexplain:codecSessionScope is bddo:PerInstance or bddo:PerLayout, at most once." ] .
 
 # ---------- Codec contract shapes ----------
 hexplain:CodecContractBindingShape a sh:NodeShape ;

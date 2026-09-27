@@ -65,6 +65,13 @@
     rdfs:comment "The parameter accepts a HEL Bytes value."@en .
 :BooleanParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Boolean parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "The parameter accepts a HEL Boolean."@en .
+# Where a session-keeping codec's state lives (hexplain:codecSessionScope).
+:SessionScope a owl:Class ; rdfs:label "Session Scope" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Where a field's session-keeping codecs keep their state across decodes: one of the two individuals below. The individuals are closed by hexplain:CodecSessionScopeShape." .
+:PerInstance a owl:NamedIndividual, :SessionScope ; rdfs:label "per instance" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "One session per encoding step, shared by every decode of the field within one instance of the struct that declares it (the strips of one TIFF image); the next instance starts a new one." .
+:PerLayout a owl:NamedIndividual, :SessionScope ; rdfs:label "per layout" ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "One session per encoding step for the field across the whole parse, shared by every instance of its struct and, for a field laid out as a data layout, by all of the layout's chunks." .
 :LocalBinding a owl:Class ; rdfs:label "Local Binding"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "A named HEL value local to one Struct instance: a member of the struct's bddo:hasField list whose bddo:localExpression is evaluated when its position in the list is reached, in the struct's context. Later members, and the struct's own size, count, offset and presence expressions evaluated after it, read it by bare name or instance.<name>. It consumes no bytes, is not part of the parsed tree and is never lifted. Its name is the simple key of its IRI, as for a Field."@en .
 # A struct, a field and a data type are different kinds of thing: a field's value may be typed

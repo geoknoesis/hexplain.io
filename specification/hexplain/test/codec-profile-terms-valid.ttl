@@ -1,0 +1,25 @@
+# A TIFF-like strip whose codec is chosen at run time from its Compression tag, with a JPEG
+# candidate whose tables come from a sibling field, and a CCITT field that keeps one session
+# for every strip of an image.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://hexplain.io/test/codec-profile-terms#> .
+
+ex:S a bddo:Struct ; bddo:hasField ( ex:S.compression ex:S.tables ex:S.strip ex:S.fax ) .
+ex:S.compression a bddo:Field ; bddo:dataType bddo:uint16 .
+ex:S.tables a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 .
+ex:S.strip a bddo:Field ; rdfs:label "strip whose codec the Compression tag selects" ;
+    bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ;
+        hexplain:codecFromExpression "compression == 1 ? 'Store' : 'Deflate'" ;
+        hexplain:codecCandidates (
+            [ a hexplain:EncodingStep ; hexplain:codec menc:Store ]
+            [ a hexplain:EncodingStep ; hexplain:codec menc:Deflate ;
+              hexplain:codecParameter [ a hexplain:CodecParameter ;
+                  hexplain:parameterName "level" ; hexplain:parameterExpression "compression - 2" ] ] ) ] ) ;
+    hexplain:codecSessionScope bddo:PerInstance .
+ex:S.fax a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 8 ;
+    hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:Deflate ] ) ;
+    hexplain:codecSessionScope bddo:PerLayout .

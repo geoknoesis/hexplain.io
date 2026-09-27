@@ -23,8 +23,15 @@ def cases():
         if bad:variants.append(('bad',bad,False))
         if required:variants.append(('missing',None,False))
         if prop in ['codec','isEncodedWith']:variants.append(('literal','"codec"',False))
+        # hexplain:codec and hexplain:parameterValue each moved into an sh:xone alternative
+        # (run-time codec selection; a parameter's expression form) alongside a sibling
+        # property, each branch checking presence (sh:minCount) only. Absence of both
+        # alternatives reports the xone violation itself, which carries no sh:resultPath;
+        # a duplicate value still trips the sibling maxCount clause outside the xone, which does.
+        NO_PATH={('codec','missing'),('parameterValue','missing')}
         for label,value,ok in variants:
-            add(prop+' '+label,base+(' ex:f c:'+prop+' '+value+'.' if value is not None else ''),ok,'' if ok else prop)
+            path='' if ok or (prop,label) in NO_PATH else prop
+            add(prop+' '+label,base+(' ex:f c:'+prop+' '+value+'.' if value is not None else ''),ok,path)
     add('untyped layout owner','ex:f c:hasDataLayout ex:layout.',False)
     add('invalid pipeline member','ex:f c:hasEncodingStep (ex:untyped).',False)
     add('invalid codec parameter','ex:f a c:EncodingStep; c:codec ex:codec; c:codecParameter ex:untyped.',False,'codecParameter')
