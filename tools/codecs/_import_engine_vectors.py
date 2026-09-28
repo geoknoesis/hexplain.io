@@ -88,7 +88,7 @@ def main():
     # codecs-xz plugin module (task 14).
     lz_codec = engine / "codecs-lz/src/test/resources/codec"
     xz_codec = engine / "codecs-xz/src/test/resources/codec"
-    numcodecs = json.loads((engine / "core/src/test/resources/zarr/numcodecs-vectors.json").read_text(encoding="utf-8"))["vectors"]
+    numcodecs = json.loads((engine / "adapters/src/test/resources/zarr/numcodecs-vectors.json").read_text(encoding="utf-8"))["vectors"]
     read = lambda name: (lz_codec / name).read_bytes()  # noqa: E731
     read_xz = lambda name: (xz_codec / name).read_bytes()  # noqa: E731
     if read("lz4-block.lz4") and len(DATA) != 150000:
@@ -168,9 +168,9 @@ def main():
          "steps": [step(le32(0x184D2A50) + le32(100) + bytes(3), {"error": "Validation"})]},
         {"id": "raw-block", "source": "hand-built", "steps": [step(raw_zstd(0x20, b"\x03", b"abc"), {"hex": b"abc".hex()})]},
         {"id": "reserved-bit", "source": "hand-built", "steps": [step(raw_zstd(0x28, b"\x03", b"abc"), {"error": "Validation"})]},
-        {"id": "content-size-mismatch", "source": "hand-built", "steps": [step(raw_zstd(0x20, b"\x04", b"abc"), {"error": "Validation"})]},
+        {"id": "content-size-mismatch", "source": "hand-built", "steps": [step(raw_zstd(0x20, b"\x04", b"abc"), {"error": "Checksum"})]},
         {"id": "content-size-beyond-blocks", "source": "hand-built",
-         "steps": [step(raw_zstd(0xA0, le32(1_000_000), b"abc"), {"error": "Validation"}, max_output=100)]},
+         "steps": [step(raw_zstd(0xA0, le32(1_000_000), b"abc"), {"error": "ResourceLimit"}, max_output=100)]},
         {"id": "dictionary", "source": "hand-built", "steps": [step(raw_zstd(0x21, b"\x05\x03", b"abc"), {"error": "Unsupported"})]},
         {"id": "dictionary-zero", "source": "hand-built", "steps": [step(raw_zstd(0x21, b"\x00\x03", b"abc"), {"hex": b"abc".hex()})]},
         {"id": "window-too-large", "source": "hand-built", "steps": [step(raw_zstd(0x00, b"\x88", b"abc"), {"error": "Unsupported"})]},
