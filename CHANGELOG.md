@@ -84,7 +84,10 @@ rewritten.
   Description error when the description is loaded and an expression's value out of range a
   Validation error when the step runs (`req-pm-optional-codecs-1`). The error table lists the codec
   errors in its rows (`req-pm-errors-4`, `req-pm-errors-8`).
-- reference-engine-claims.json lists the 34 codecs the reference engine decodes with their modules.
+- Run-time codec selection: a local name that more than one candidate shares names none of them,
+  a Validation error (`req-pm-codec-selection-2` reworded to say so).
+- reference-engine-claims.json lists the 34 codecs the reference engine decodes with their modules,
+  and says generated Kotlin code supports parameter expressions, run-time selection and sessions.
 - HDL: pipeline parameters take literals of every contract type, bracketed lists and HEL expressions
   (`name value` or `name: value`); `switch <expr> { … }` steps and `@codec switch` select a codec when the
   step runs, its keys all integers or all strings (and, on a bare sibling of known type, of that type);
