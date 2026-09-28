@@ -45,10 +45,12 @@ SH = "http://www.w3.org/ns/shacl#"
 HEL_PROPERTIES = {URIRef(BDDO + p) for p in ("isPresentIf", "sizeFromExpression", "repeatCountFromExpression",
                                              "atOffsetFromExpression", "repeatUntil", "validIf", "valueFromExpression",
                                              "dispatchOnExpression", "condition", "coversFromExpression",
-                                             "coversToExpression", "coversExpression")} | {
+                                             "coversToExpression", "coversExpression", "localExpression")} | {
     URIRef(DLV + "dimensionStrideFromExpression"), URIRef(CORE + "condition"), URIRef(CORE + "valueExpression"),
     URIRef(CONF + "assertion")}
 HEL_EXPRESSION = URIRef(BDDO + "HelExpression")
+#: bddo:hasArgument's value is an rdf:List whose members are HEL expressions (HEL, name binding).
+HAS_ARGUMENT = URIRef(BDDO + "hasArgument")
 #: The optional physical-extent annotations a processor MAY add to a minted resource.
 EXTENTS = {URIRef(CORE + "byteOffset"), URIRef(CORE + "byteLength")}
 #: Predicates of an owl:Ontology header, ignored in an HDL Compiler graph unless the case compares the header.
@@ -113,12 +115,24 @@ def load_graph(path_or_text, base="urn:example:base"):
     return g
 
 
-def _canonical_literal(p, o):
+def _argument_cells(g):
+    """The rdf:List cells of every bddo:hasArgument list: their rdf:first members are HEL expressions."""
+    cells, pending = set(), list(g.objects(None, HAS_ARGUMENT))
+    while pending:
+        cell = pending.pop()
+        if cell in cells or cell == RDF.nil:
+            continue
+        cells.add(cell)
+        pending += list(g.objects(cell, RDF.rest))
+    return cells
+
+
+def _canonical_literal(p, o, hel_bearing=False):
     if not isinstance(o, Literal):
         return o
     # A HEL expression typed bddo:HelExpression is the same expression as the xsd:string one (HEL, expression
     # literals), so the datatype is dropped with the canonical form.
-    if p in HEL_PROPERTIES and (o.datatype in (None, XSD.string, HEL_EXPRESSION)) and not o.language:
+    if (hel_bearing or p in HEL_PROPERTIES) and (o.datatype in (None, XSD.string, HEL_EXPRESSION)) and not o.language:
         c = hel.canonical(str(o))
         return Literal(c if c is not None else str(o))
     if o.datatype is None or o.language:
@@ -150,13 +164,15 @@ def normalise_graph(g, *, cls=None, manifest=None, reported_base=None, header=No
             for p, o in g.predicate_objects(s):
                 if p in HEADER_PREDICATES or str(p).startswith(HEADER_NAMESPACES):
                     drop.add((s, p, o))
+    arguments = _argument_cells(g)
     out = rdflib.Graph()
     for s, p, o in g:
         if p in EXTENTS or (s, p, o) in drop:
             continue
+        argument = p == RDF.first and s in arguments
         if reported_base:
             s, o = (_rebase(t, reported_base) for t in (s, o))
-        out.add((s, p, _canonical_literal(p, o)))
+        out.add((s, p, _canonical_literal(p, o, argument)))
     return out
 
 

@@ -77,6 +77,18 @@ def graph_checks(failures):
                   'bddo:sizeFromExpression "n*2"^^bddo:HelExpression .')
     check(compare.compare_graph(base, typed, cls="hdl-compiler") == [],
           "a HEL literal typed bddo:HelExpression is the same expression as the xsd:string one", failures)
+    local = graph('ex:f bddo:localExpression "n*2" .')
+    local_typed = graph('ex:f bddo:localExpression "instance.n * 2"^^bddo:HelExpression .')
+    check(compare.compare_graph(local, local_typed, cls="hdl-compiler") == [],
+          "bddo:localExpression is HEL-bearing, whatever its expression literal is typed", failures)
+    args = graph('ex:f bddo:hasArgument ( "n*2" "m" ) .')
+    args_typed = graph('ex:f bddo:hasArgument ( "instance.n * 2"^^bddo:HelExpression "instance.m"^^bddo:HelExpression ) .')
+    check(compare.compare_graph(args, args_typed, cls="hdl-compiler") == [],
+          "the members of a bddo:hasArgument list are HEL expressions", failures)
+    other = graph('ex:f ex:values ( "n*2" ) .')
+    other_typed = graph('ex:f ex:values ( "instance.n * 2"^^bddo:HelExpression ) .')
+    check(compare.compare_graph(other, other_typed, cls="hdl-compiler") != [],
+          "an rdf:List that is not an argument list is not read as HEL", failures)
     wider = graph('ex:f bddo:size "4"^^xsd:long ; bddo:hasFixedValue "0A0B"^^xsd:hexBinary ; '
                   'bddo:sizeFromExpression "instance.n * 2" .')
     check(compare.compare_graph(base, wider, cls="hdl-compiler") != [], "HDL literal datatypes must match exactly", failures)
