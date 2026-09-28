@@ -82,6 +82,26 @@ def shape_targets(g,t):
 def shape_properties(g,shape):
     return sorted({o for s in closure(g,shape) for o in g.objects(s,SH.path) if isinstance(o,URIRef)},key=str)
 
+def codec_contract_definition(g,t):
+    """The definition of a register concept's named codec contract or one of its parameter specs."""
+    if (t,RDF.type,HX.CodecContract) in g:
+        concept=g.value(None,HX.codecContract,t)
+        return (f'The codec contract of {compact(g,concept)}, version {g.value(t,HX.contractVersion)}: the decode kind, '
+                f'the parameters a processor accepts and the error categories it may raise for that concept, verified '
+                f'by vector suite version {g.value(t,HX.vectorSuiteVersion)}.')
+    if (t,RDF.type,HX.CodecParameterSpec) in g:
+        contract=g.value(None,HX.declaresParameter,t);concept=g.value(None,HX.codecContract,contract)
+        return (f'The {g.value(t,HX.parameterKey)} parameter declared by the codec contract of {compact(g,concept)}: '
+                f'its type, whether it is required, and any default, bounds or allowed values.')
+    return None
+
+def codec_contract_scope(g,t):
+    if (t,RDF.type,HX.CodecContract) in g or (t,RDF.type,HX.CodecParameterSpec) in g:
+        return ('Read by processors and conformance tools to bind and check the hexplain:codecParameter values of an '
+                'encoding step that names the concept. It is not a controlled value: profiles name the concept, never '
+                'its contract.')
+    return None
+
 def stated_definition(g,t):
     """The definition a term's documentation gives: its skos:definition, else its rdfs:comment.
 
@@ -130,26 +150,6 @@ def shape_definition(g,t):
     targets=shape_targets(g,t)
     opening='Applied through references from other shapes.' if targets.startswith('No automatic target') else 'Applies to '+targets+'.'
     return opening+' '+' '.join(sentences)
-
-def codec_contract_definition(g,t):
-    """The definition of a register concept's named codec contract or one of its parameter specs."""
-    if (t,RDF.type,HX.CodecContract) in g:
-        concept=g.value(None,HX.codecContract,t)
-        return (f'The codec contract of {compact(g,concept)}, version {g.value(t,HX.contractVersion)}: the decode kind, '
-                f'the parameters a processor accepts and the error categories it may raise for that concept, verified '
-                f'by vector suite version {g.value(t,HX.vectorSuiteVersion)}.')
-    if (t,RDF.type,HX.CodecParameterSpec) in g:
-        contract=g.value(None,HX.declaresParameter,t);concept=g.value(None,HX.codecContract,contract)
-        return (f'The {g.value(t,HX.parameterKey)} parameter declared by the codec contract of {compact(g,concept)}: '
-                f'its type, whether it is required, and any default, bounds or allowed values.')
-    return None
-
-def codec_contract_scope(g,t):
-    if (t,RDF.type,HX.CodecContract) in g or (t,RDF.type,HX.CodecParameterSpec) in g:
-        return ('Read by processors and conformance tools to bind and check the hexplain:codecParameter values of an '
-                'encoding step that names the concept. It is not a controlled value: profiles name the concept, never '
-                'its contract.')
-    return None
 
 def definition(g,t):
     """The skos:definition to generate for [t], or None when the source already defines it."""

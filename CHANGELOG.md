@@ -96,6 +96,11 @@ rewritten.
   `CodecList` is a parameter value; anything else an expression); req-hdl-clauses-3 reworded to name `@codec switch` among the pipeline clauses a field states once;
   the case hc-pipeline-non-integer-parameter becomes hc-pipeline-duplicate-parameter, and
   hc-codec-switch-and-session (with its YAML mirror) is new.
+- The codec vocabulary follows the conventions of the 2026-09-27 review: its labels and comments
+  are tagged @en, every codec contract and parameter spec is an owl:NamedIndividual, every
+  reported property shape of the codec shapes carries an sh:message, and
+  `hexplain:parameterExpression` and `hexplain:codecFromExpression` accept an `xsd:string` or a
+  `bddo:HelExpression` literal like every other expression-valued property.
 
 ### Review of the normative documents (2026-09-27)
 

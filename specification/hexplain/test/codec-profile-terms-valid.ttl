@@ -23,3 +23,17 @@ ex:S.strip a bddo:Field ; rdfs:label "strip whose codec the Compression tag sele
 ex:S.fax a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 8 ;
     hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:Deflate ] ) ;
     hexplain:codecSessionScope bddo:PerLayout .
+
+# The same selection and parameter expression typed bddo:HelExpression, which the shapes accept
+# beside xsd:string.
+ex:T a bddo:Struct ; bddo:hasField ( ex:T.compression ex:T.strip ) .
+ex:T.compression a bddo:Field ; bddo:dataType bddo:uint16 .
+ex:T.strip a bddo:Field ; rdfs:label "strip whose codec a typed expression selects" ;
+    bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ;
+        hexplain:codecFromExpression "compression == 1 ? 'Store' : 'Deflate'"^^bddo:HelExpression ;
+        hexplain:codecCandidates (
+            [ a hexplain:EncodingStep ; hexplain:codec menc:Store ]
+            [ a hexplain:EncodingStep ; hexplain:codec menc:Deflate ;
+              hexplain:codecParameter [ a hexplain:CodecParameter ;
+                  hexplain:parameterName "level" ; hexplain:parameterExpression "compression - 2"^^bddo:HelExpression ] ] ) ] ) .
