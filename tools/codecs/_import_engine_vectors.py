@@ -2,8 +2,8 @@
 
 Sources recorded in the manifests:
   * reference libraries: python-lz4 1.9.4 (liblz4 1.9.4), python-zstandard 0.25 and CPython's lzma
-    module (liblzma), through hexplain-tools codecs-lz/src/test/resources/codec/generate_vectors.py and
-    codecs-xz/src/test/resources/codec/generate_xz_vectors.py, over the deterministic 150000-byte payload
+    module (liblzma), through hexplain-tools codecs/lz/src/test/resources/codec/generate_vectors.py and
+    codecs/xz/src/test/resources/codec/generate_xz_vectors.py, over the deterministic 150000-byte payload
     rebuilt below;
   * numcodecs 0.16.5 chunks (lz4, zstd, lzma, lzma-alone groups of
     core/src/test/resources/zarr/numcodecs-vectors.json, written by tests/gdal/zarr_codec_vectors.py);
@@ -42,8 +42,8 @@ _stored_rng = random.Random(5)
 RANDOM = bytes(_stored_rng.getrandbits(8) for _ in range(3000))
 LIBRARIES = {"id": "reference-libraries", "url": "https://github.com/lz4/lz4",
              "description": "Written by python-lz4 1.9.4 (liblz4 1.9.4), python-zstandard 0.25 (zstd 1.5) and CPython's "
-                            "lzma module (liblzma 5) through hexplain-tools codecs-lz/src/test/resources/codec/generate_vectors.py "
-                            "and codecs-xz/src/test/resources/codec/generate_xz_vectors.py; single-byte corruptions, "
+                            "lzma module (liblzma 5) through hexplain-tools codecs/lz/src/test/resources/codec/generate_vectors.py "
+                            "and codecs/xz/src/test/resources/codec/generate_xz_vectors.py; single-byte corruptions, "
                             "truncations and concatenations made here.",
              "licence": "BSD-2-Clause (liblz4), BSD-3-Clause (zstd, python-zstandard), 0BSD (liblzma); inputs CC0-1.0"}
 NUMCODECS = {"id": "numcodecs", "url": "https://github.com/zarr-developers/numcodecs",
@@ -84,10 +84,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--engine", required=True)
     engine = pathlib.Path(parser.parse_args().engine)
-    # LZ4 and Zstandard fixtures live in the codecs-lz plugin module (task 13); XZ's live in the
-    # codecs-xz plugin module (task 14).
-    lz_codec = engine / "codecs-lz/src/test/resources/codec"
-    xz_codec = engine / "codecs-xz/src/test/resources/codec"
+    # LZ4 and Zstandard fixtures live in the codecs/lz plugin module (task 13); XZ's live in the
+    # codecs/xz plugin module (task 14).
+    lz_codec = engine / "codecs/lz/src/test/resources/codec"
+    xz_codec = engine / "codecs/xz/src/test/resources/codec"
     numcodecs = json.loads((engine / "adapters/src/test/resources/zarr/numcodecs-vectors.json").read_text(encoding="utf-8"))["vectors"]
     read = lambda name: (lz_codec / name).read_bytes()  # noqa: E731
     read_xz = lambda name: (xz_codec / name).read_bytes()  # noqa: E731

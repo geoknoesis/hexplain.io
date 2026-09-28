@@ -1,6 +1,6 @@
 """Import the LERC2 vectors written with Esri's reference implementation.
 
-hexplain-tools codecs-image/src/test/resources/lerc/lerc2-vectors.json holds 238 blobs encoded by Esri
+hexplain-tools codecs/image/src/test/resources/lerc/lerc2-vectors.json holds 238 blobs encoded by Esri
 lerc 4.0.1 (PyPI, tests/lerc/generate_vectors.py) with the SHA-256 of lerc_decode_4D's samples
 (little-endian, band after band) and the masks it returns. Each becomes a blob-layout decoding
 vector; a truncation and a checksum corruption of the first version-3-or-later blob are added.
@@ -18,7 +18,7 @@ from vectors import step, write_suite  # noqa: E402
 
 ESRI = {"id": "esri-lerc-4.0.1", "url": "https://github.com/Esri/lerc/tree/v4.0.1",
         "description": "Blobs encoded and decoded by Esri lerc 4.0.1 (PyPI) through hexplain-tools tests/lerc/generate_vectors.py "
-                       "(codecs-image/src/test/resources/lerc/lerc2-vectors.json); the corruptions are made here.",
+                       "(codecs/image/src/test/resources/lerc/lerc2-vectors.json); the corruptions are made here.",
         "licence": "Apache-2.0 (Esri LERC); data CC0-1.0"}
 
 
@@ -26,7 +26,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--engine", required=True)
     engine = pathlib.Path(parser.parse_args().engine)
-    source = json.loads((engine / "codecs-image/src/test/resources/lerc/lerc2-vectors.json").read_text(encoding="utf-8"))["vectors"]
+    source = json.loads((engine / "codecs/image/src/test/resources/lerc/lerc2-vectors.json").read_text(encoding="utf-8"))["vectors"]
     vector_list = []
     for v in source:
         expect = {"sha256": v["dataSha256"]}
