@@ -1,5 +1,11 @@
 """Physical-description property contracts with independent wrong-value vectors."""
 
+from __future__ import annotations
+
+from typing import Any
+
+from _cases import row, term
+
 PREFIX = """@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .
 @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .
 b:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .
@@ -25,23 +31,24 @@ VALUES = {
     "base": ("b:baseInteger", "b:baseFloat", "ex:unknown"),
     "iri": ("xsd:integer", "xsd:string", '"integer"'),
 }
+MODULE = "bddo/bddo.ttl"
 
 
-def cases():
-    rows = []
+def cases() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
 
-    def group(kind, base, properties):
+    def group(kind: str, base: str, properties: list[tuple[str, str]]) -> None:
         for prop, contract in properties:
             a, b, bad = VALUES[contract]
             context = base + (" ex:f b:atOffset 0." if prop == "seekScope" else "")
             for label, value, ok in [("valid", a, True), ("invalid", bad, False), ("duplicate", a + "," + b, False)]:
                 rows.append(
-                    dict(
-                        name=kind + " " + prop + " " + label,
-                        module="specification/bddo/bddo.ttl",
-                        expected=ok,
-                        path="" if ok else "https://hexplain.io/ns/bddo#" + prop,
-                        data=PREFIX + context + f" ex:f b:{prop} {value}.",
+                    row(
+                        kind + " " + prop + " " + label,
+                        MODULE,
+                        PREFIX + context + f" ex:f b:{prop} {value}.",
+                        ok,
+                        "" if ok else term("bddo", prop),
                     )
                 )
 
@@ -127,15 +134,15 @@ def cases():
     # shape graph.
     base = PREFIX + "b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:asciiInteger. "
 
-    def separated(name, body, ok, path="", shape=""):
+    def separated(name: str, body: str, ok: bool, path: str = "", shape: str = "") -> None:
         rows.append(
-            dict(
-                name="separated " + name,
-                module="specification/bddo/bddo.ttl",
-                expected=ok,
-                path="https://hexplain.io/ns/bddo#" + path if path else "",
-                expectedShape="https://hexplain.io/ns/bddo#" + shape if shape else "",
-                data=base + body,
+            row(
+                "separated " + name,
+                MODULE,
+                base + body,
+                ok,
+                term("bddo", path) if path else "",
+                expected_shape=term("bddo", shape) if shape else "",
             )
         )
 

@@ -8,14 +8,30 @@ Each case is a single triple on an otherwise empty subject, so it also proves th
 does not depend on the subject's type.
 """
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
+from typing import Any
 
+from _cases import row
 from rdflib import RDFS, Graph, URIRef
 
 ROOT = Path(__file__).resolve().parents[1]
 XSD = "http://www.w3.org/2001/XMLSchema#"
-FAMILY = ["integer", "positiveInteger", "nonNegativeInteger", "int", "long", "unsignedInt", "unsignedLong", "short", "unsignedShort", "byte", "unsignedByte"]
+FAMILY = [
+    "integer",
+    "positiveInteger",
+    "nonNegativeInteger",
+    "int",
+    "long",
+    "unsignedInt",
+    "unsignedLong",
+    "short",
+    "unsignedShort",
+    "byte",
+    "unsignedByte",
+]
 INTEGER_RANGES = set(FAMILY) | {"negativeInteger", "nonPositiveInteger"}
 BOUNDS = {
     "positiveInteger": (1, None),
@@ -51,7 +67,7 @@ UNION_LITERALS = {
 }
 
 
-def _routes():
+def _routes() -> tuple[dict[URIRef, str], set[tuple[object, str]]]:
     """property -> module file whose subjects-of shape states its datatype."""
     from _range_datatypes import SH, allowed_datatypes
 
@@ -82,24 +98,18 @@ def _routes():
     return routes, narrowed
 
 
-def cases():
+def cases() -> list[dict[str, Any]]:
     import specgraph
 
     g = specgraph.ontologies()
     routes, narrowed = _routes()
     rows = []
 
-    def add(name, module, prop, value, expected):
+    def add(name: str, module: str, prop: URIRef, value: object, expected: bool) -> None:
         if expected and (prop, module) in narrowed:
             return
         rows.append(
-            dict(
-                name="range " + name,
-                module=module,
-                expected=expected,
-                path="" if expected else str(prop),
-                data=f"{SUBJECT} <{prop}> {value} .",
-            )
+            row("range " + name, module, f"{SUBJECT} <{prop}> {value} .", expected, "" if expected else str(prop))
         )
 
     witnessed = set()
@@ -118,7 +128,8 @@ def cases():
             for name in names:
                 good = LITERALS[name][0] if name in LITERALS else UNION_LITERALS[name]
                 add(
-                    f"{label} accepts {g.namespace_manager.normalizeUri(URIRef(XSD + name) if name in LITERALS else URIRef(name))}",
+                    f"{label} accepts "
+                    f"{g.namespace_manager.normalizeUri(URIRef(XSD + name) if name in LITERALS else URIRef(name))}",
                     module,
                     prop,
                     good,

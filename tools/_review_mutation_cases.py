@@ -7,6 +7,12 @@ review's findings, not read off the shapes; tools/test_review_mutations.py runs 
 --root runs them against another checkout to show which defects that checkout lets through.
 """
 
+from __future__ import annotations
+
+from typing import Any
+
+from _cases import probe
+
 P = """@prefix conf: <https://hexplain.io/ns/conf#> .
 @prefix req: <https://hexplain.io/ns/req#> .
 @prefix bddo: <https://hexplain.io/ns/bddo#> .
@@ -31,22 +37,28 @@ STRICT_SHAPES = ["specification/validation/test/strict-profile-shapes.ttl"]
 
 # A conforming run report: a Warning-level constraint finding, an attributed Parse finding, a
 # rule set with one constraint and one parse attribution, and one outcome per requirement.
-REPORT = """
-ex:req1 a req:Requirement ; req:requirementId "R1" ; req:fromStandard "Example 1.0" ; req:statement "One." ; req:discrepancyType req:Syntactic .
-ex:req2 a req:Requirement ; req:requirementId "R2" ; req:fromStandard "Example 1.0" ; req:statement "Two." ; req:discrepancyType req:Semantic .
-ex:field a bddo:Field .
-ex:con a conf:Constraint ; conf:scope ex:field ; conf:assertion "self > 0" ; conf:satisfies ex:req1 ; conf:message "m" ; conf:severity sh:Warning .
-ex:pa a conf:ParseAttribution ; conf:errorCategory conf:BoundsError ; conf:satisfies ex:req2 .
-ex:run a conf:Run ; conf:verdict conf:NonConformant ; conf:truncated false ; conf:versionScopingApplied false ;
-    conf:profile ex:profile ; conf:ruleSet ex:rules ; conf:input "input.bin" ; conf:failOn sh:Violation ;
-    conf:outcome [ conf:outcomeRequirement ex:req1 ; conf:outcomeValue conf:Evaluated ] ,
-                 [ conf:outcomeRequirement ex:req2 ; conf:outcomeValue conf:Evaluated ] ;
-    conf:finding ex:f1 , ex:f2 .
-ex:f1 a conf:Finding ; conf:findingKind conf:Violation ; conf:findingConstraint ex:con ; conf:findingRequirement ex:req1 ;
-    conf:severity sh:Warning ; conf:findingMessage "m" .
-ex:f2 a conf:Finding ; conf:findingKind conf:Parse ; conf:errorCategory conf:BoundsError ; conf:findingRequirement ex:req2 ;
-    conf:severity sh:Violation ; conf:findingMessage "p" .
-"""
+REPORT = (
+    "\n"
+    'ex:req1 a req:Requirement ; req:requirementId "R1" ; req:fromStandard "Example 1.0" ; req:statement "One." ; '
+    "req:discrepancyType req:Syntactic .\n"
+    'ex:req2 a req:Requirement ; req:requirementId "R2" ; req:fromStandard "Example 1.0" ; req:statement "Two." ; '
+    "req:discrepancyType req:Semantic .\n"
+    "ex:field a bddo:Field .\n"
+    'ex:con a conf:Constraint ; conf:scope ex:field ; conf:assertion "self > 0" ; conf:satisfies ex:req1 ; '
+    'conf:message "m" ; conf:severity sh:Warning .\n'
+    "ex:pa a conf:ParseAttribution ; conf:errorCategory conf:BoundsError ; conf:satisfies ex:req2 .\n"
+    "ex:run a conf:Run ; conf:verdict conf:NonConformant ; conf:truncated false ; conf:versionScopingApplied false ;\n"
+    '    conf:profile ex:profile ; conf:ruleSet ex:rules ; conf:input "input.bin" ; conf:failOn sh:Violation ;\n'
+    "    conf:outcome [ conf:outcomeRequirement ex:req1 ; conf:outcomeValue conf:Evaluated ] ,\n"
+    "                 [ conf:outcomeRequirement ex:req2 ; conf:outcomeValue conf:Evaluated ] ;\n"
+    "    conf:finding ex:f1 , ex:f2 .\n"
+    "ex:f1 a conf:Finding ; conf:findingKind conf:Violation ; conf:findingConstraint ex:con ; "
+    "conf:findingRequirement ex:req1 ;\n"
+    '    conf:severity sh:Warning ; conf:findingMessage "m" .\n'
+    "ex:f2 a conf:Finding ; conf:findingKind conf:Parse ; conf:errorCategory conf:BoundsError ; "
+    "conf:findingRequirement ex:req2 ;\n"
+    '    conf:severity sh:Violation ; conf:findingMessage "p" .\n'
+)
 # The same report with no Violation-level finding: conformant.
 CLEAN = (
     REPORT.replace("conf:verdict conf:NonConformant", "conf:verdict conf:Conformant")
@@ -55,18 +67,18 @@ CLEAN = (
 )
 
 
-def _sub(text, *pairs):
+def _sub(text: str, *pairs: tuple[str, str]) -> str:
     for old, new in pairs:
         assert old in text, old
         text = text.replace(old, new)
     return text
 
 
-def conf_cases():
+def conf_cases() -> list[dict[str, Any]]:
     c = []
 
-    def add(name, data, ok):
-        c.append(dict(group="conf report", name=name, shapes=CONF_SHAPES, data=P + data, conforms=ok))
+    def add(name: str, data: str, ok: bool) -> None:
+        c.append(probe("conf report", name, CONF_SHAPES, P + data, ok))
 
     add("valid report", REPORT, True)
     add("valid conformant report", CLEAN, True)
@@ -163,7 +175,8 @@ def conf_cases():
     add(
         "finding linked by two runs",
         REPORT + "ex:run2 a conf:Run ; conf:verdict conf:NonConformant ; conf:truncated false ; conf:finding ex:f2 ; "
-        "conf:outcome [ conf:outcomeRequirement ex:req1 ; conf:outcomeValue conf:Evaluated ] , [ conf:outcomeRequirement ex:req2 ; conf:outcomeValue conf:Evaluated ] .",
+        "conf:outcome [ conf:outcomeRequirement ex:req1 ; conf:outcomeValue conf:Evaluated ] , [ "
+        "conf:outcomeRequirement ex:req2 ; conf:outcomeValue conf:Evaluated ] .",
         False,
     )
     add(
@@ -173,8 +186,8 @@ def conf_cases():
     )
     add(
         "requirement in the graph without an outcome",
-        REPORT
-        + 'ex:req3 a req:Requirement ; req:requirementId "R3" ; req:fromStandard "Example 1.0" ; req:statement "Three." ; req:discrepancyType req:Functional .',
+        REPORT + 'ex:req3 a req:Requirement ; req:requirementId "R3" ; req:fromStandard "Example 1.0" ; req:statement '
+        '"Three." ; req:discrepancyType req:Functional .',
         False,
     )
     add(
@@ -183,7 +196,8 @@ def conf_cases():
             REPORT,
             (
                 "[ conf:outcomeRequirement ex:req2 ; conf:outcomeValue conf:Evaluated ]",
-                "[ conf:outcomeRequirement ex:req2 ; conf:outcomeValue conf:Evaluated ] , [ conf:outcomeRequirement ex:req2 ; conf:outcomeValue conf:Errored ]",
+                "[ conf:outcomeRequirement ex:req2 ; conf:outcomeValue conf:Evaluated ] , [ "
+                "conf:outcomeRequirement ex:req2 ; conf:outcomeValue conf:Errored ]",
             ),
         ),
         False,
@@ -462,11 +476,11 @@ REQUIREMENT = (
 )
 
 
-def req_cases():
+def req_cases() -> list[dict[str, Any]]:
     c = []
 
-    def add(name, data, ok):
-        c.append(dict(group="req", name=name, shapes=REQ_SHAPES, data=P + data, conforms=ok))
+    def add(name: str, data: str, ok: bool) -> None:
+        c.append(probe("req", name, REQ_SHAPES, P + data, ok))
 
     add("valid requirement", REQUIREMENT, True)
     add("identifier of spaces", _sub(REQUIREMENT, ('"R1"', '"   "')), False)
@@ -514,20 +528,11 @@ ex:next a skos:Concept ; skos:inScheme ex:Scheme .
 """
 
 
-def register_cases():
+def register_cases() -> list[dict[str, Any]]:
     c = []
 
-    def add(name, data, ok, **extra):
-        c.append(
-            dict(
-                group="register lifecycle",
-                name=name,
-                shapes=CORE_SHAPES,
-                data=P + REGISTER + data,
-                conforms=ok,
-                **extra,
-            )
-        )
+    def add(name: str, data: str, ok: bool, **extra: Any) -> None:
+        c.append(probe("register lifecycle", name, CORE_SHAPES, P + REGISTER + data, ok, **extra))
 
     add("valid entry", "ex:current hexplain:status hexplain:statusValid .", True)
     add(
@@ -553,23 +558,27 @@ def register_cases():
     )
     add(
         "superseded entry replaced by itself",
-        'ex:current owl:deprecated true ; hexplain:status hexplain:statusSuperseded ; dcterms:isReplacedBy ex:current ; skos:historyNote "Replaced."@en .',
+        "ex:current owl:deprecated true ; hexplain:status hexplain:statusSuperseded ; dcterms:isReplacedBy "
+        'ex:current ; skos:historyNote "Replaced."@en .',
         False,
     )
     add(
         "superseded entry replaced by a deprecated entry",
-        'ex:current owl:deprecated true ; hexplain:status hexplain:statusSuperseded ; dcterms:isReplacedBy ex:next ; skos:historyNote "Replaced."@en .\n'
+        "ex:current owl:deprecated true ; hexplain:status hexplain:statusSuperseded ; dcterms:isReplacedBy "
+        'ex:next ; skos:historyNote "Replaced."@en .\n'
         'ex:next owl:deprecated true ; hexplain:status hexplain:statusDeprecated ; skos:historyNote "Retired."@en .',
         False,
     )
     add(
         "superseded entry replaced by a current entry",
-        'ex:current owl:deprecated true ; hexplain:status hexplain:statusSuperseded ; dcterms:isReplacedBy ex:next ; skos:historyNote "Replaced."@en .',
+        "ex:current owl:deprecated true ; hexplain:status hexplain:statusSuperseded ; dcterms:isReplacedBy "
+        'ex:next ; skos:historyNote "Replaced."@en .',
         True,
     )
     add(
         "superseded entry naming no successor",
-        'ex:current owl:deprecated true ; hexplain:status hexplain:statusSuperseded ; skos:historyNote "Replaced."@en .',
+        "ex:current owl:deprecated true ; hexplain:status hexplain:statusSuperseded ; skos:historyNote "
+        '"Replaced."@en .',
         False,
     )
     add(
@@ -594,7 +603,8 @@ def register_cases():
     add(
         "deprecated value of a bound property",
         "ex:profile hexplain:usesRegister [ hexplain:forProperty ex:level ; hexplain:register ex:Scheme ] .\n"
-        'ex:current owl:deprecated true ; hexplain:status hexplain:statusDeprecated ; skos:historyNote "Retired."@en .\n'
+        "ex:current owl:deprecated true ; hexplain:status hexplain:statusDeprecated ; skos:historyNote "
+        '"Retired."@en .\n'
         "ex:doc ex:level ex:current .",
         False,
         severity="http://www.w3.org/ns/shacl#Warning",
@@ -612,11 +622,11 @@ ex:usProfile hexplain:usesRegister [ hexplain:forProperty ex:level ; hexplain:re
 NATO = "ex:natoProfile hexplain:usesRegister [ hexplain:forProperty ex:level ; hexplain:register ex:Nato ] .\n"
 
 
-def binding_cases():
+def binding_cases() -> list[dict[str, Any]]:
     c = []
 
-    def add(name, data, ok):
-        c.append(dict(group="register binding", name=name, shapes=CORE_SHAPES, data=P + BINDINGS + data, conforms=ok))
+    def add(name: str, data: str, ok: bool) -> None:
+        c.append(probe("register binding", name, CORE_SHAPES, P + BINDINGS + data, ok))
 
     add("value in the one bound scheme", "ex:doc ex:level ex:secret .", True)
     add("value outside the one bound scheme", "ex:doc ex:level ex:elsewhere .", False)
@@ -633,11 +643,11 @@ ex:spec a abnd:PartSpec ; abnd:partRole ex:role ; abnd:extension ".dbf" .
 """
 
 
-def bundle_cases():
+def bundle_cases() -> list[dict[str, Any]]:
     c = []
 
-    def add(name, data, ok):
-        c.append(dict(group="bundle paths", name=name, shapes=BUNDLE_SHAPES, data=P + data, conforms=ok))
+    def add(name: str, data: str, ok: bool) -> None:
+        c.append(probe("bundle paths", name, BUNDLE_SHAPES, P + data, ok))
 
     add("extension with a dot", BUNDLE, True)
     for label, value, ok in [
@@ -697,7 +707,8 @@ def bundle_cases():
     add(
         "nested profiles forming a cycle",
         _sub(BUNDLE, ('abnd:extension ".dbf"', 'abnd:extension ".dbf" ; abnd:nestedProfile ex:inner'))
-        + 'ex:inner a abnd:BundleProfile ; abnd:partSpec ex:innerSpec . ex:innerSpec a abnd:PartSpec ; abnd:extension ".shp" ; abnd:nestedProfile ex:profile .',
+        + "ex:inner a abnd:BundleProfile ; abnd:partSpec ex:innerSpec . ex:innerSpec a abnd:PartSpec ; "
+        'abnd:extension ".shp" ; abnd:nestedProfile ex:profile .',
         False,
     )
     add(
@@ -719,20 +730,22 @@ def bundle_cases():
     return c
 
 
-TREE = """
-bddo:string a bddo:DataType .
-ex:doc a bddo:TreeDocument ; bddo:treeSyntax bddo:xml ;
-    bddo:hasNamespaceBinding [ a bddo:NamespaceBinding ; bddo:namespacePrefix "a.b" ; bddo:namespaceIRI "urn:x"^^xsd:anyURI ] ;
-    bddo:hasField ( ex:f ) .
-ex:f a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath "/a.b:item" .
-"""
+TREE = (
+    "\n"
+    "bddo:string a bddo:DataType .\n"
+    "ex:doc a bddo:TreeDocument ; bddo:treeSyntax bddo:xml ;\n"
+    '    bddo:hasNamespaceBinding [ a bddo:NamespaceBinding ; bddo:namespacePrefix "a.b" ; bddo:namespaceIRI '
+    '"urn:x"^^xsd:anyURI ] ;\n'
+    "    bddo:hasField ( ex:f ) .\n"
+    'ex:f a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath "/a.b:item" .\n'
+)
 
 
-def tree_cases():
+def tree_cases() -> list[dict[str, Any]]:
     c = []
 
-    def add(name, data, ok):
-        c.append(dict(group="tree documents", name=name, shapes=BDDO_SHAPES, data=P + data, conforms=ok))
+    def add(name: str, data: str, ok: bool) -> None:
+        c.append(probe("tree documents", name, BDDO_SHAPES, P + data, ok))
 
     add("path using a bound dotted prefix", TREE, True)
     add(
@@ -756,11 +769,11 @@ ex:magic a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:size 1 .
 """
 
 
-def strict_cases():
+def strict_cases() -> list[dict[str, Any]]:
     c = []
 
-    def add(name, data, ok):
-        c.append(dict(group="strict profile", name=name, shapes=STRICT_SHAPES, data=P + data, conforms=ok))
+    def add(name: str, data: str, ok: bool) -> None:
+        c.append(probe("strict profile", name, STRICT_SHAPES, P + data, ok))
 
     add("plain struct and field", STRICT, True)
     add(
@@ -803,7 +816,7 @@ def strict_cases():
     return c
 
 
-def cases():
+def cases() -> list[dict[str, Any]]:
     rows = (
         conf_cases() + req_cases() + register_cases() + binding_cases() + bundle_cases() + tree_cases() + strict_cases()
     )

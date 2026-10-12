@@ -1,29 +1,52 @@
 """Integer-family alternatives and semantic cardinality/value boundaries."""
 
+from __future__ import annotations
 
-def cases():
-    rows = []
+from typing import Any
 
-    def add(name, module, ns, body, ok, path=""):
-        prefix = f"@prefix p:<https://hexplain.io/ns/{ns}#> . @prefix ex:<urn:semantic-boundary:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . "
+from _cases import row
+
+TYPES = [
+    "integer",
+    "positiveInteger",
+    "nonNegativeInteger",
+    "int",
+    "long",
+    "unsignedInt",
+    "unsignedLong",
+    "short",
+    "unsignedShort",
+    "byte",
+    "unsignedByte",
+]
+SPATIALREF = "aspect/spatialref/spatialref.ttl"
+
+
+def cases() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+
+    def add(name: str, module: str, ns: str, body: str, ok: bool, path: str = "") -> None:
+        prefix = (
+            f"@prefix p:<https://hexplain.io/ns/{ns}#> . @prefix ex:<urn:semantic-boundary:> . "
+            "@prefix xsd:<http://www.w3.org/2001/XMLSchema#> . "
+        )
         rows.append(
-            dict(
-                name="semantic " + name,
-                module="specification/" + module,
-                expected=ok,
-                path="https://hexplain.io/ns/" + ns + "#" + path if path else "",
-                data=prefix + body,
+            row(
+                "semantic " + name,
+                module,
+                prefix + body,
+                ok,
+                "https://hexplain.io/ns/" + ns + "#" + path if path else "",
             )
         )
 
-    types = ["integer", "positiveInteger", "nonNegativeInteger", "int", "long", "unsignedInt", "unsignedLong", "short", "unsignedShort", "byte", "unsignedByte"]
     for aspect, prop, base in [
         ("sampling", "componentCount", ""),
         ("raster", "width", ""),
         ("raster", "dimensionExtent", "ex:f a p:ArrayDimension."),
         ("geometry", "dimensionality", ""),
     ]:
-        for datatype in types:
+        for datatype in TYPES:
             if prop == "dimensionExtent" and datatype in ["short", "unsignedShort", "byte", "unsignedByte"]:
                 continue
             add(
@@ -100,18 +123,12 @@ def cases():
     ]:
         add(
             "crs " + prop + " " + values,
-            "aspect/spatialref/spatialref.ttl",
+            SPATIALREF,
             "aspect/spatialref",
             "ex:f a p:CoordinateReferenceSystem; p:" + prop + " " + values + ".",
             False,
             prop,
         )
     for prop in ["hasCRS", "hasGeoTransform", "hasRationalTransform"]:
-        add(
-            "literal " + prop,
-            "aspect/spatialref/spatialref.ttl",
-            "aspect/spatialref",
-            "ex:f p:" + prop + ' "value".',
-            False,
-        )
+        add("literal " + prop, SPATIALREF, "aspect/spatialref", "ex:f p:" + prop + ' "value".', False)
     return rows

@@ -23,15 +23,19 @@ reporting something else on that fixture (a new target, a broken message) fails 
 instead of hiding behind the expected result.
 """
 
+from __future__ import annotations
+
 import functools
 import glob
-import os
 import pathlib
 import re
 import sys
 from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
+from typing import Any
 
 import specgraph
+from _gate_runner import gate_workers
 from pyshacl import validate
 from rdflib import Graph, Namespace, URIRef
 
@@ -44,7 +48,7 @@ CORE = specgraph.ontology_paths()
 load = specgraph.load
 
 
-def ontologies_for(fixture_path):
+def ontologies_for(fixture_path: Any) -> Any:
     """Core vocabularies plus the owning module's own vocabulary and shapes.
 
     A fixture lives in a `test/` directory beside the module it exercises, at either
@@ -75,7 +79,7 @@ if not fixtures:
 
 
 @functools.cache
-def shapes_for(ont):
+def shapes_for(ont: Any) -> Any:
     """One shapes graph per distinct ontology set, reused by every fixture of that module."""
     return load(list(ont))
 
@@ -84,7 +88,7 @@ SH = Namespace("http://www.w3.org/ns/shacl#")
 EXPECT = re.compile(r"^#\s*expect:\s*(\S+)\s+(\S+)(?:\s+(\S+))?\s*$", re.M)
 
 
-def expectations(path):
+def expectations(path: Path) -> list[Any]:
     """The (focus, shape, component) triples an -invalid fixture declares, as IRIs."""
     text = pathlib.Path(path).read_text(encoding="utf-8")
     prefixes = Graph().parse(data=text, format="turtle").namespace_manager
@@ -114,7 +118,7 @@ def _nested(shapes, node, seen=None):
     return seen
 
 
-def unmet(report, shapes, expected):
+def unmet(report: Graph, shapes: Graph, expected: bool) -> Any:
     """Expect lines no result satisfies."""
     results = [
         (report.value(r, SH.focusNode), report.value(r, SH.sourceShape), report.value(r, SH.sourceConstraintComponent))
@@ -131,7 +135,7 @@ def unmet(report, shapes, expected):
 EXPECT_ONLY = re.compile(r"^#\s*expect-only\s*$", re.M)
 
 
-def unexpected(report, shapes, expected):
+def unexpected(report: Graph, shapes: Graph, expected: bool) -> Any:
     """Results that no expect line accounts for (only checked under # expect-only)."""
     out = []
     for r in report.subjects(SH.resultSeverity, None):
@@ -148,7 +152,7 @@ def unexpected(report, shapes, expected):
     return out
 
 
-def check(path):
+def check(path: str) -> Any:
     """Validate one fixture, returning a failure description or None."""
     should_conform = path.endswith("-valid.ttl")
     ont = ontologies_for(path)
@@ -176,19 +180,8 @@ def check(path):
     return None
 
 
-def workers():
-    """Bounded by default: an earlier concurrent run exhausted host memory."""
-    requested = os.environ.get("HEXPLAIN_GATE_WORKERS")
-    if requested:
-        count = int(requested)
-        if count < 1:
-            raise ValueError("HEXPLAIN_GATE_WORKERS must be at least 1")
-        return count
-    return max(1, min(os.cpu_count() or 1, 8))
-
-
-def main():
-    parallel = workers()
+def main() -> None:
+    parallel = gate_workers()
     print(f"Validating {len(fixtures)} vocabulary fixtures across {parallel} worker(s)", flush=True)
     # Fixtures sharing an ontology set are adjacent, so each worker reuses its cached shapes.
     if parallel == 1:

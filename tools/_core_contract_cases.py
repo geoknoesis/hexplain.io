@@ -1,5 +1,11 @@
 """Encoding, mapping and layout-link contracts with independent fixtures."""
 
+from __future__ import annotations
+
+from typing import Any
+
+from _cases import row, term
+
 PREFIX = """@prefix c:<https://hexplain.io/ns/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .
 @prefix d:<https://hexplain.io/ns/dlv#> . @prefix ex:<urn:core-contract:> .
 @prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix owl:<http://www.w3.org/2002/07/owl#> .
@@ -8,21 +14,14 @@ ex:codec a skos:Concept . ex:codec2 a skos:Concept . ex:layout a d:DataLayout . 
 ex:step a c:EncodingStep; c:codec ex:codec . ex:step2 a c:EncodingStep; c:codec ex:codec2 .
 ex:param a c:CodecParameter; c:parameterName "level"; c:parameterValue 1 .
 """
+MODULE = "hexplain/core.ttl"
 
 
-def cases():
-    rows = []
+def cases() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
 
-    def add(name, body, ok, path=""):
-        rows.append(
-            dict(
-                name="core " + name,
-                module="specification/hexplain/core.ttl",
-                expected=ok,
-                path="https://hexplain.io/ns/core#" + path if path else "",
-                data=PREFIX + body,
-            )
-        )
+    def add(name: str, body: str, ok: bool, path: str = "") -> None:
+        rows.append(row("core " + name, MODULE, PREFIX + body, ok, term("hexplain", path) if path else ""))
 
     for prop, base, good, second, bad, required in [
         ("isEncodedWith", "", "ex:codec", "ex:codec2", "ex:untyped", False),
@@ -40,7 +39,10 @@ def cases():
             False,
         ),
     ]:
-        variants = [("valid", good, True), ("duplicate", good + "," + second, False)]
+        variants: list[tuple[str, str | None, bool]] = [
+            ("valid", good, True),
+            ("duplicate", good + "," + second, False),
+        ]
         if bad:
             variants.append(("bad", bad, False))
         if required:

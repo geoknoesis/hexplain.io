@@ -1,25 +1,24 @@
 """Required rule, dispatch and grouping declarations, independently authored."""
 
+from __future__ import annotations
+
+from typing import Any
+
+from _cases import row, term
 from _physical_property_cases import PREFIX
 
+MODULE = "bddo/bddo.ttl"
 
-def cases():
-    rows = []
+
+def cases() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
     pre = (
-        PREFIX
-        + 'ex:struct a b:Struct. ex:table a b:DispatchTable; b:dispatchOnField ex:count. ex:table2 a b:DispatchTable; b:dispatchOnExpression "key". '
+        PREFIX + "ex:struct a b:Struct. ex:table a b:DispatchTable; b:dispatchOnField ex:count. "
+        'ex:table2 a b:DispatchTable; b:dispatchOnExpression "key". '
     )
 
-    def add(name, body, ok, path=""):
-        rows.append(
-            dict(
-                name="structural " + name,
-                module="specification/bddo/bddo.ttl",
-                data=pre + body,
-                expected=ok,
-                path="https://hexplain.io/ns/bddo#" + path if path else "",
-            )
-        )
+    def add(name: str, body: str, ok: bool, path: str = "") -> None:
+        rows.append(row("structural " + name, MODULE, pre + body, ok, term("bddo", path) if path else ""))
 
     for cls, values, alternatives, invalid in [
         (
@@ -60,7 +59,7 @@ def cases():
         ),
     ]:
 
-        def body(v):
+        def body(v: dict[str, str], cls: str = cls) -> str:
             return "ex:f a b:" + cls + ". " + "".join("ex:f b:" + p + " " + value + ". " for p, value in v.items())
 
         add(cls + " valid", body(values), True)

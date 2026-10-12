@@ -8,22 +8,27 @@ the ones it gets wrong instead of failing, which is how the review's before/afte
 measured; `--list` prints every probe.
 """
 
+from __future__ import annotations
+
 import argparse
 import sys
 from collections import Counter
+from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 from pyshacl import validate
 from rdflib import Graph, Namespace, URIRef
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _gate_runner import gate_workers  # noqa: E402
 from _review_mutation_cases import cases  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
 
-def load(root, paths):
+def load(root: Path, paths: Iterable[Any]) -> Any:
     g = Graph()
     for p in paths:
         path = root / p
@@ -52,21 +57,20 @@ def _check(task):
     return wrong
 
 
-def run(root, chunk=8):
+def run(root: Path, chunk: int = 8) -> tuple[Any, ...]:
     """Every probe, across worker processes (SPARQL-based shapes are slow in pySHACL)."""
-    import os
     from concurrent.futures import ProcessPoolExecutor
 
     rows = cases()
     indexed = list(enumerate(rows))
     tasks = [(root, indexed[i : i + chunk]) for i in range(0, len(indexed), chunk)]
-    workers = max(1, min(os.cpu_count() or 1, int(os.environ.get("HEXPLAIN_GATE_WORKERS", "8"))))
+    workers = gate_workers()
     with ProcessPoolExecutor(max_workers=workers) as pool:
         wrong = sorted(w for result in pool.map(_check, tasks) for w in result)
     return rows, [(rows[i], text) for i, text in wrong]
 
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", help="measure another checkout's shapes instead of this one's")
     parser.add_argument("--list", action="store_true")

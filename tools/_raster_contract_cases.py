@@ -1,20 +1,23 @@
 """Raster calibration and array-dimension value/cardinality witnesses."""
 
+from __future__ import annotations
 
-def cases():
-    rows = []
-    prefix = "@prefix r:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:raster-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . "
+from typing import Any
 
-    def add(name, body, ok, path=""):
-        rows.append(
-            dict(
-                name="raster " + name,
-                module="specification/aspect/raster/raster.ttl",
-                expected=ok,
-                path="https://hexplain.io/ns/aspect/raster#" + path if path else "",
-                data=prefix + body,
-            )
-        )
+from _cases import row, term
+
+PREFIX = (
+    "@prefix r:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:raster-contract:> . "
+    "@prefix xsd:<http://www.w3.org/2001/XMLSchema#> . "
+)
+MODULE = "aspect/raster/raster.ttl"
+
+
+def cases() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+
+    def add(name: str, body: str, ok: bool, path: str = "") -> None:
+        rows.append(row("raster " + name, MODULE, PREFIX + body, ok, term("raster", path) if path else ""))
 
     for prop in ["sampleScale", "sampleOffset"]:
         for label, value, ok in [

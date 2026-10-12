@@ -6,13 +6,17 @@ and source shapes are collected and reported in authored order, which keeps a fa
 message identical to the sequential form regardless of completion order.
 """
 
+from __future__ import annotations
+
+import argparse
 import json
-import os
-import sys
+from collections.abc import Iterator
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
+from typing import Any
 
 from _family_contract_cases import cases
+from _gate_runner import gate_workers
 from pyshacl import validate
 from rdflib import Graph, Namespace, URIRef
 
@@ -24,18 +28,7 @@ SH = Namespace("http://www.w3.org/ns/shacl#")
 CHUNK = 24
 
 
-def workers():
-    """Bounded by default: an earlier concurrent run exhausted host memory."""
-    requested = os.environ.get("HEXPLAIN_GATE_WORKERS")
-    if requested:
-        count = int(requested)
-        if count < 1:
-            raise ValueError("HEXPLAIN_GATE_WORKERS must be at least 1")
-        return count
-    return max(1, min(os.cpu_count() or 1, 8))
-
-
-def check(task):
+def check(task: Any) -> Any:
     """Validate one module's chunk, returning (index, name, reason) for each failure."""
     module, items = task
     shapes = Graph().parse(ROOT / module)
@@ -68,7 +61,7 @@ def check(task):
     return failures
 
 
-def tasks(rows):
+def tasks(rows: list[dict[str, Any]]) -> Iterator[Any]:
     grouped = {}
     for index, row in enumerate(rows):
         grouped.setdefault(row["module"], []).append((index, row))
@@ -77,12 +70,20 @@ def tasks(rows):
             yield module, items[start : start + CHUNK]
 
 
-def main():
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "--write",
+        action="store_true",
+        help="Regenerate specification/validation/test/family-contracts.json from the authored cases (then rerun "
+        "tools/_constraint_coverage.py, which hashes it)",
+    )
+    args = parser.parse_args()
     rows = cases()
     assert len({row["name"] for row in rows}) == len(rows), "Case names must be unique evidence identifiers"
 
     queue = list(tasks(rows))
-    parallel = workers()
+    parallel = gate_workers()
     failures = []
     completed = 0
     print(f"Validating {len(rows)} family contracts in {len(queue)} tasks across {parallel} worker(s)", flush=True)
@@ -99,20 +100,27 @@ def main():
 
     p = ROOT / "specification/validation/test/family-contracts.json"
     # RDF blank-node identifiers are immaterial; compare graphs when checking retained cases.
-    if "--write" in sys.argv:
+    if args.write:
         p.write_text(json.dumps(rows, indent=2) + "\n", encoding="utf-8", newline="\n")
+        print(f"Wrote {len(rows)} cases to {p.relative_to(ROOT).as_posix()}; rerun tools/_constraint_coverage.py")
+        return 0
     else:
         from rdflib.compare import isomorphic
 
         retained = json.loads(p.read_text(encoding="utf-8"))
-        assert len(rows) == len(retained)
+        stale = (
+            f"{p.relative_to(ROOT).as_posix()} differs from the authored cases; review the change, then run "
+            "`python tools/test_family_contract.py --write` and `python tools/_constraint_coverage.py`"
+        )
+        assert len(rows) == len(retained), stale
         for a, b in zip(rows, retained, strict=True):
-            assert {k: v for k, v in a.items() if k != "data"} == {k: v for k, v in b.items() if k != "data"}
+            assert {k: v for k, v in a.items() if k != "data"} == {k: v for k, v in b.items() if k != "data"}, stale
             assert isomorphic(
                 Graph().parse(data=a["data"], format="turtle"), Graph().parse(data=b["data"], format="turtle")
             )
     print(f"PASS: {len(rows)} authored module contracts with result-path assertions")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

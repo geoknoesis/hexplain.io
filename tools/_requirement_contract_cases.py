@@ -1,8 +1,19 @@
 """Attribution, expression and requirement identity contracts."""
 
+from __future__ import annotations
 
-def cases():
-    rows = []
+from typing import Any
+
+from _cases import row, term
+
+CONF = "conf/shapes.ttl"
+CONF_NS = "https://hexplain.io/ns/conf#"
+CORE_NS = "https://hexplain.io/ns/core#"
+
+
+def class_cases() -> list[dict[str, Any]]:
+    """Requirement and constraint classes: every property valid, missing, wrong, duplicate."""
+    rows: list[dict[str, Any]] = []
     for module, cls, values, invalid in [
         (
             "req",
@@ -22,22 +33,25 @@ def cases():
             {"scope": '"field"', "assertion": "1", "satisfies": "ex:untyped", "message": "1"},
         ),
     ]:
-        prefix = f"@prefix p:<https://hexplain.io/ns/{module}#> . @prefix ex:<urn:requirement-case:> . ex:requirement a <https://hexplain.io/ns/req#Requirement> ."
+        prefix = (
+            f"@prefix p:<https://hexplain.io/ns/{module}#> . @prefix ex:<urn:requirement-case:> . "
+            "ex:requirement a <https://hexplain.io/ns/req#Requirement> ."
+        )
         if module == "req":
             prefix = prefix.split("ex:requirement a")[0]
         # A constraint's scope is a bddo:Struct or bddo:Field; the valid scope is typed as one.
         if module == "conf":
             prefix += " ex:field a <https://hexplain.io/ns/bddo#Field> ."
 
-        def add(name, changed, expected, path=""):
+        def add(name: str, changed: dict[str, str], expected: bool, path: str = "") -> None:
             body = " ex:f a p:" + cls + ". " + "".join("ex:f p:" + p + " " + v + ". " for p, v in changed.items())
             rows.append(
-                dict(
-                    name=module + " " + name,
-                    module="specification/" + module + "/shapes.ttl",
-                    data=prefix + body,
-                    expected=expected,
-                    path="https://hexplain.io/ns/" + module + "#" + path if path else "",
+                row(
+                    module + " " + name,
+                    module + "/shapes.ttl",
+                    prefix + body,
+                    expected,
+                    "https://hexplain.io/ns/" + module + "#" + path if path else "",
                 )
             )
 
@@ -66,7 +80,12 @@ def cases():
                 changed = dict(values)
                 changed["appliesToVersion"] = val
                 add("version " + str(ok), changed, ok, "" if ok else "appliesToVersion")
-    # Findings: what an evaluation reports, and each way a malformed one is caught.
+    return rows
+
+
+def finding_cases() -> list[dict[str, Any]]:
+    """Findings: what an evaluation reports, and each way a malformed one is caught."""
+    rows: list[dict[str, Any]] = []
     conf = (
         "@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . "
         "@prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . "
@@ -83,28 +102,17 @@ def cases():
         "findingMessage": '"Header missing"',
     }
     located = {"h:byteOffset": "0", "h:byteLength": "4"}
-    core = "https://hexplain.io/ns/core#"
 
-    def finding_case(name, changed, expected, path="", extra=""):
+    def finding_case(
+        name: str, changed: dict[str, str | None], expected: bool, path: str = "", extra: str = ""
+    ) -> None:
         body = (
             "ex:fd a c:Finding . "
             + "".join(f"ex:fd {k if ':' in k else 'c:' + k} {v} . " for k, v in changed.items() if v is not None)
             + extra
         )
-        full = (
-            core + path
-            if path in ("byteOffset", "byteLength")
-            else ("https://hexplain.io/ns/conf#" + path if path else "")
-        )
-        rows.append(
-            dict(
-                name="conf finding " + name,
-                module="specification/conf/shapes.ttl",
-                data=conf + body,
-                expected=expected,
-                path=full,
-            )
-        )
+        full = CORE_NS + path if path in ("byteOffset", "byteLength") else (CONF_NS + path if path else "")
+        rows.append(row("conf finding " + name, CONF, conf + body, expected, full))
 
     finding_case("valid", {**finding, **located}, True)
     for prop, bad in [
@@ -164,15 +172,7 @@ def cases():
             "severity",
         ),
     ]:
-        rows.append(
-            dict(
-                name="conf constraint " + name,
-                module="specification/conf/shapes.ttl",
-                data=body,
-                expected=ok,
-                path="https://hexplain.io/ns/conf#" + path if path else "",
-            )
-        )
+        rows.append(row("conf constraint " + name, CONF, body, ok, CONF_NS + path if path else ""))
     # Parse attributions and run outcomes.
     for name, body, ok, path in [
         (
@@ -203,8 +203,9 @@ def cases():
         ),
         (
             "run valid",
-            "ex:run a c:Run ; c:verdict c:NonConformant ; c:truncated false ; c:outcome [ c:outcomeRequirement ex:req ; c:outcomeValue c:NotReached ] , "
-            "[ c:outcomeRequirement ex:req2 ; c:outcomeValue c:NotReached ] . ",
+            "ex:run a c:Run ; c:verdict c:NonConformant ; c:truncated false ; c:outcome [ c:outcomeRequirement "
+            "ex:req ; "
+            "c:outcomeValue c:NotReached ] , [ c:outcomeRequirement ex:req2 ; c:outcomeValue c:NotReached ] . ",
             True,
             "",
         ),
@@ -265,27 +266,15 @@ def cases():
             "",
         ),
     ]:
-        rows.append(
-            dict(
-                name="conf " + name,
-                module="specification/conf/shapes.ttl",
-                data=conf + body,
-                expected=ok,
-                path="https://hexplain.io/ns/conf#" + path if path else "",
-            )
-        )
+        rows.append(row("conf " + name, CONF, conf + body, ok, CONF_NS + path if path else ""))
     rq = (
         "@prefix r:<https://hexplain.io/ns/req#> . @prefix ex:<urn:requirement-case:> . "
         'ex:f a r:Requirement ; r:requirementId "R01" ; r:fromStandard "format specification" ; '
         'r:statement "Must have a header" ; r:discrepancyType r:Syntactic ; r:appliesToVersion '
     )
-    rows.append(
-        dict(
-            name="req version empty",
-            module="specification/req/shapes.ttl",
-            data=rq + '"" .',
-            expected=False,
-            path="https://hexplain.io/ns/req#appliesToVersion",
-        )
-    )
+    rows.append(row("req version empty", "req/shapes.ttl", rq + '"" .', False, term("req", "appliesToVersion")))
     return rows
+
+
+def cases() -> list[dict[str, Any]]:
+    return class_cases() + finding_cases()

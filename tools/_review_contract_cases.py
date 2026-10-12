@@ -10,23 +10,22 @@ the family's SHACL-AF gates run, and the strict-profile probes validate an optio
 is not a family module.
 """
 
+from __future__ import annotations
+
+from typing import Any
+
+from _cases import row
 from _review_mutation_cases import cases as probes
 
 SPARQL_TARGETED = {"register binding"}
 
 
-def cases():
-    rows = []
+def cases() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
     for probe in probes():
         if probe["group"] in SPARQL_TARGETED or probe["group"] == "strict profile" or probe.get("severity"):
             continue
         rows.append(
-            dict(
-                name=f"review {probe['group']}: {probe['name']}",
-                module=probe["shapes"][0],
-                data=probe["data"],
-                expected=probe["conforms"],
-                path="",
-            )
+            row(f"review {probe['group']}: {probe['name']}", probe["shapes"][0], probe["data"], probe["conforms"])
         )
     return rows

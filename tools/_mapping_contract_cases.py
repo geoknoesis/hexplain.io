@@ -1,25 +1,29 @@
 """Mapping, language, unit and enumeration contracts with explicit expectations."""
 
+from __future__ import annotations
+
+from itertools import combinations
+from typing import Any
+
+from _cases import row, term
+
 PREFIX = """@prefix ex:<urn:mapping-contract:> . @prefix h:<https://hexplain.io/ns/core#> .
 @prefix b:<https://hexplain.io/ns/bddo#> . @prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix owl:<http://www.w3.org/2002/07/owl#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .
 ex:f a b:Field . ex:other a b:Field . ex:struct a b:Struct . ex:Class a owl:Class . ex:OtherClass a owl:Class .
 ex:p a rdf:Property . ex:op a owl:ObjectProperty . ex:dp a owl:DatatypeProperty . ex:ap a owl:AnnotationProperty .
 """
+#: The prefixes alone: BDDO-scoped cases avoid unrelated bare Field/Struct targets.
+PREFIXES_ONLY = PREFIX[: PREFIX.index("ex:f a b:Field")]
+BDDO = "bddo/bddo.ttl"
 
 
-def cases():
-    rows = []
+def cases() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
 
-    def add(name, data, expected, path="", module="hexplain/core.ttl"):
+    def add(name: str, data: str, expected: bool, path: str = "", module: str = "hexplain/core.ttl") -> None:
         rows.append(
-            dict(
-                name=name,
-                module="specification/" + module,
-                expected=expected,
-                path=("https://hexplain.io/ns/core#" + path) if path else "",
-                data=PREFIX + data.replace(".ex:", ". ex:"),
-            )
+            row(name, module, PREFIX + data.replace(".ex:", ". ex:"), expected, term("hexplain", path) if path else "")
         )
 
     for name, predicate, valid, invalid in [
@@ -72,12 +76,8 @@ def cases():
         add(kind + " missing target", f'ex:r a h:{kind}; h:condition "true".', False, property_)
         add(kind + " untyped target", base.replace(target, "ex:unknown"), False, property_)
         add(kind + " literal target", base.replace(target, '"target"'), False, property_)
-        add(
-            kind + " two targets",
-            base + f"ex:r h:{property_} " + ("ex:op" if kind == "MappingRule" else "ex:OtherClass") + ".",
-            False,
-            property_,
-        )
+        second = "ex:op" if kind == "MappingRule" else "ex:OtherClass"
+        add(kind + " two targets", base + f"ex:r h:{property_} " + second + ".", False, property_)
         if kind == "MappingRule":
             for typ in ["ex:op", "ex:dp", "ex:ap"]:
                 add("mapping " + typ, base.replace("ex:p", typ), True)
@@ -87,15 +87,8 @@ def cases():
             ]:
                 add("rule " + prop, base + f"ex:r h:{prop} {good}.", True)
                 add("rule bad " + prop, base + f"ex:r h:{prop} {bad}.", False, prop)
-                add(
-                    "rule duplicate " + prop,
-                    base
-                    + f"ex:r h:{prop} {good},"
-                    + ('"value * 3"' if prop == "valueExpression" else "xsd:string")
-                    + ".",
-                    False,
-                    prop,
-                )
+                other = '"value * 3"' if prop == "valueExpression" else "xsd:string"
+                add("rule duplicate " + prop, base + f"ex:r h:{prop} {good}," + other + ".", False, prop)
     for prop, owner, _kind, rule in [
         (
             "hasConditionalMapping",
@@ -115,7 +108,8 @@ def cases():
         add(prop + " wrong owner", rule + f"ex:untyped h:{prop} (ex:r).", False)
     add(
         "fixed conditional class conflict",
-        'ex:r a h:ClassMappingRule; h:condition "true"; h:semanticClass ex:Class. ex:struct h:mapsToClass ex:Class; h:hasConditionalClassMapping (ex:r).',
+        'ex:r a h:ClassMappingRule; h:condition "true"; h:semanticClass ex:Class. '
+        "ex:struct h:mapsToClass ex:Class; h:hasConditionalClassMapping (ex:r).",
         False,
         "mapsToClass",
     )
@@ -134,17 +128,7 @@ def cases():
         ("literal symbol", 'ex:v a b:EnumValue; b:enumRawValue 1; b:enumSymbol "name".', False, "enumSymbol"),
         ("two symbols", "ex:v a b:EnumValue; b:enumRawValue 1; b:enumSymbol ex:a,ex:b.", False, "enumSymbol"),
     ]:
-        # Avoid unrelated bare Field/Struct targets in the module-scoped BDDO data.
-        prefix = PREFIX[: PREFIX.index("ex:f a b:Field")]
-        rows.append(
-            dict(
-                name=name,
-                module="specification/bddo/bddo.ttl",
-                expected=ok,
-                path="https://hexplain.io/ns/bddo#" + path if path else "",
-                data=prefix + body,
-            )
-        )
+        rows.append(row(name, BDDO, PREFIXES_ONLY + body, ok, term("bddo", path) if path else ""))
     for label, flags, ok in [
         ("true", "true", True),
         ("false", "false", True),
@@ -152,34 +136,20 @@ def cases():
         ("duplicate", "true,false", False),
     ]:
         rows.append(
-            dict(
-                name="enumeration flags " + label,
-                module="specification/bddo/bddo.ttl",
-                expected=ok,
-                path="" if ok else "https://hexplain.io/ns/bddo#enumIsFlags",
-                data=PREFIX[: PREFIX.index("ex:f a b:Field")]
-                + f"ex:e a b:Enumeration; b:hasEnumValue ex:v; b:enumIsFlags {flags}. ex:v a b:EnumValue; b:enumRawValue 1.",
+            row(
+                "enumeration flags " + label,
+                BDDO,
+                PREFIXES_ONLY
+                + f"ex:e a b:Enumeration; b:hasEnumValue ex:v; b:enumIsFlags {flags}. ex:v a b:EnumValue; "
+                "b:enumRawValue 1.",
+                ok,
+                "" if ok else term("bddo", "enumIsFlags"),
             )
         )
-    from itertools import combinations
+    physical = PREFIXES_ONLY + "b:uint8 a b:DataType . b:bytes a b:DataType .\nex:count a b:Field; b:dataType b:uint8 ."
 
-    physical = (
-        PREFIX[: PREFIX.index("ex:f a b:Field")]
-        + """b:uint8 a b:DataType . b:bytes a b:DataType .
-ex:count a b:Field; b:dataType b:uint8 ."""
-    )
-
-    def physical_case(name, body, ok, shape):
-        rows.append(
-            dict(
-                name=name,
-                module="specification/bddo/bddo.ttl",
-                expected=ok,
-                path="",
-                expectedShape="" if ok else "https://hexplain.io/ns/bddo#" + shape,
-                data=physical + body,
-            )
-        )
+    def physical_case(name: str, body: str, ok: bool, shape: str) -> None:
+        rows.append(row(name, BDDO, physical + body, ok, expected_shape="" if ok else term("bddo", shape)))
 
     groups = [
         (
@@ -248,7 +218,8 @@ ex:count a b:Field; b:dataType b:uint8 ."""
     physical_case("bytes without extent", "ex:f a b:Field; b:dataType b:bytes.", False, "VariableLengthFieldShape")
     physical_case(
         "node path in tree",
-        'ex:t a b:TreeDocument; b:treeSyntax b:json; b:hasField (ex:f). ex:f a b:Field; b:dataType b:uint8; b:nodePath "/value".',
+        "ex:t a b:TreeDocument; b:treeSyntax b:json; b:hasField (ex:f). ex:f a b:Field; b:dataType b:uint8; "
+        'b:nodePath "/value".',
         True,
         "NodePathShape",
     )

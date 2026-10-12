@@ -1,20 +1,23 @@
 """Final branch, nested-member and explicitly reused-shape witnesses."""
 
+from __future__ import annotations
+
+from typing import Any
+
+from _cases import row, term
+from _layout_property_cases import LAYOUT
+from _layout_property_cases import PREFIX as LP
 from _physical_property_cases import PREFIX as PHYSICAL
-from test_layout_competency import PREFIX as LP
-from test_layout_competency import layout
 
 
-def cases():
-    rows = []
+def cases() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
 
-    def add(name, module, data, ok=False, path="", **extra):
-        rows.append(
-            dict(name="closure " + name, module="specification/" + module, data=data, expected=ok, path=path, **extra)
-        )
+    def add(name: str, module: str, data: str, ok: bool = False, path: str = "", **extra: Any) -> None:
+        rows.append(row("closure " + name, module, data, ok, path, **extra))
 
-    def physical(name, body, path=""):
-        add(name, "bddo/bddo.ttl", PHYSICAL + body, path="https://hexplain.io/ns/bddo#" + path if path else "")
+    def physical(name: str, body: str, path: str = "") -> None:
+        add(name, "bddo/bddo.ttl", PHYSICAL + body, path=term("bddo", path) if path else "")
 
     physical("literal field type", 'ex:f a b:Field; b:dataType "uint8".', "dataType")
     physical(
@@ -35,19 +38,26 @@ def cases():
         physical(
             "numeric base " + value, "ex:f a b:Field; b:dataType b:uint8; b:numericBase " + value + ".", "numericBase"
         )
-    group = 'ex:g a b:RecordGrouping; b:groupingStyle b:keyedGroup; b:groupOpenToken "BEGIN"; b:groupCloseToken "END". ex:g2 a b:RecordGrouping; b:groupingStyle b:keyedGroup; b:groupOpenToken "BEGIN"; b:groupCloseToken "END". '
+    group = (
+        'ex:g a b:RecordGrouping; b:groupingStyle b:keyedGroup; b:groupOpenToken "BEGIN"; b:groupCloseToken "END". '
+        'ex:g2 a b:RecordGrouping; b:groupingStyle b:keyedGroup; b:groupOpenToken "BEGIN"; b:groupCloseToken "END". '
+    )
     for value in ["ex:unknown", "ex:g,ex:g2"]:
         physical(
             "group membership " + value,
             group + "ex:f a b:DelimitedRecords; b:hasField (ex:count); b:hasGrouping " + value + ".",
             "hasGrouping",
         )
-    tree = 'ex:t a b:TreeDocument; b:treeSyntax b:xml; b:hasField (ex:f). ex:f a b:Field; b:dataType b:uint8; b:nodePath "/x". '
+    tree = (
+        "ex:t a b:TreeDocument; b:treeSyntax b:xml; b:hasField (ex:f). ex:f a b:Field; b:dataType b:uint8; "
+        'b:nodePath "/x". '
+    )
     for prop, value in [("key", '"x"'), ("keyPath", '"x/y"'), ("atOffset", "1")]:
         physical("tree forbidden " + prop, tree + "ex:f b:" + prop + " " + value + ".")
     physical(
         "table key value separator",
-        'ex:f a b:DelimitedTable; b:hasField (ex:count); b:fieldDelimiter "2C"^^xsd:hexBinary; b:keyValueSeparator "3D"^^xsd:hexBinary.',
+        'ex:f a b:DelimitedTable; b:hasField (ex:count); b:fieldDelimiter "2C"^^xsd:hexBinary; '
+        'b:keyValueSeparator "3D"^^xsd:hexBinary.',
         "keyValueSeparator",
     )
     for end in ["From", "To"]:
@@ -72,7 +82,7 @@ def cases():
             'ex:r a dlv:DimensionOrderRule; b:condition "true"; dlv:ruleDimensionOrder (ex:d).',
         ),
     ]:
-        base = LP + layout.replace(anchor, "") + rule + " "
+        base = LP + LAYOUT.replace(anchor, "") + rule + " "
         member = "ex:d" if prop == "hasDimension" else "ex:r"
         for label, value in [
             ("literal", '"list"'),
@@ -83,7 +93,7 @@ def cases():
                 prop + " " + label,
                 "dlv/dlv.ttl",
                 base + "ex:l dlv:" + prop + " " + value + ".",
-                path="" if label == "untyped member" else "https://hexplain.io/ns/dlv#" + prop,
+                path="" if label == "untyped member" else term("dlv", prop),
             )
     add(
         "dimension rule untyped member",
@@ -101,32 +111,28 @@ def cases():
             "dimensions",
         ),
     ]:
-        add(
-            name,
-            "aspect/raster/raster.ttl",
-            rp + body,
-            path="https://hexplain.io/ns/aspect/raster#" + path if path else "",
-        )
+        add(name, "aspect/raster/raster.ttl", rp + body, path=term("raster", path) if path else "")
     add(
         "unknown bundle binding",
         "aspect/bundle/bundle.ttl",
         "@prefix a:<https://hexplain.io/ns/aspect/bundle#> . <urn:f> a a:Asset; a:boundBy <urn:unknown>.",
-        path="https://hexplain.io/ns/aspect/bundle#boundBy",
+        path=term("bundle", "boundBy"),
     )
     add(
         "video string duration",
         "vdv/video.ttl",
         '<urn:f> a <https://hexplain.io/ns/video#VideoStream>; <https://hexplain.io/ns/aspect/time#duration> "1".',
-        path="https://hexplain.io/ns/aspect/time#duration",
+        path=term("time", "duration"),
     )
     add(
         "reused encoding shape without shorthand",
         "hexplain/core.ttl",
-        """@prefix c:<https://hexplain.io/ns/core#> . @prefix ex:<urn:closure:> . @prefix skos:<http://www.w3.org/2004/02/skos/core#> .
-ex:f c:hasEncodingStep (ex:step). ex:step a c:EncodingStep; c:codec ex:codec. ex:codec a skos:Concept.""",
+        "@prefix c:<https://hexplain.io/ns/core#> . @prefix ex:<urn:closure:> . @prefix "
+        "skos:<http://www.w3.org/2004/02/skos/core#> .\n"
+        "ex:f c:hasEncodingStep (ex:step). ex:step a c:EncodingStep; c:codec ex:codec. ex:codec a skos:Concept.",
         True,
-        targetShape="https://hexplain.io/ns/core#IsEncodedWithShape",
-        targetNode="urn:closure:f",
+        target_shape=term("hexplain", "IsEncodedWithShape"),
+        target_node="urn:closure:f",
     )
     physical(
         "checksum whole range conflicts with endpoint",

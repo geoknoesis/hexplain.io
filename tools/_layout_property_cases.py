@@ -1,26 +1,42 @@
-"""Layout selectors, dynamic dimensions and rule property contracts."""
+"""Layout fixtures and the layout selector, dynamic dimension and rule property contracts.
 
-from test_layout_competency import PREFIX, layout
+PREFIX and LAYOUT are the shared layout/compound-dataset fixture: the competency gate
+(tools/test_layout_competency.py) and the closure and integer-family libraries build on them.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from _cases import row
+
+PREFIX = """@prefix ex:<urn:hexplain:competency:> .
+@prefix dlv:<https://hexplain.io/ns/dlv#> .
+@prefix b:<https://hexplain.io/ns/bddo#> .
+@prefix a:<https://hexplain.io/ns/aspect/bundle#> .
+@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:<http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:<http://purl.org/dc/terms/> .
+b:uint8 a b:DataType . ex:axis a dlv:Axis . ex:f a b:Field .
+ex:role a skos:Concept .
+"""
+#: One layout with one dimension; the base most layout cases mutate.
+LAYOUT = (
+    "ex:l a dlv:DataLayout; dlv:cellDataType b:uint8; dlv:hasDimension (ex:d). ex:d a dlv:Dimension; dlv:hasAxis "
+    "ex:axis; dlv:dimensionSize 8. "
+)
+DLV = "https://hexplain.io/ns/dlv#"
+MODULE = "dlv/dlv.ttl"
 
 
-def cases():
+def cases() -> list[dict[str, Any]]:
     rows = []
     prefix = PREFIX + "ex:f2 a b:Field. ex:order a dlv:ChunkOrder. ex:order2 a dlv:ChunkOrder. b:uint16 a b:DataType. "
 
-    def add(name, base, owner, prop, value, ok):
-        rows.append(
-            dict(
-                name="layout property " + name,
-                module="specification/dlv/dlv.ttl",
-                expected=ok,
-                path=""
-                if ok
-                else "https://hexplain.io/ns/" + ("bddo#condition" if prop == "b:condition" else "dlv#" + prop),
-                data=prefix
-                + base
-                + (f" {owner} " + (prop if ":" in prop else "dlv:" + prop) + f" {value}." if value is not None else ""),
-            )
-        )
+    def add(name: str, base: str, owner: str, prop: str, value: str | None, ok: bool) -> None:
+        statement = f" {owner} " + (prop if ":" in prop else "dlv:" + prop) + f" {value}." if value is not None else ""
+        path = "" if ok else "https://hexplain.io/ns/" + ("bddo#condition" if prop == "b:condition" else "dlv#" + prop)
+        rows.append(row("layout property " + name, MODULE, prefix + base + statement, ok, path))
 
     for prop, owner, good, second, bad in [
         ("cellDataType", "ex:l", "b:uint8", "b:uint16", "ex:unknown"),
@@ -34,7 +50,7 @@ def cases():
         ("chunkOrder", "ex:l", "ex:order", "ex:order2", "ex:unknown"),
         ("chunkOffsetBase", "ex:l", "b:streamStart", "b:parentStart", "ex:unknown"),
     ]:
-        base = layout
+        base = LAYOUT
         if prop == "cellDataType":
             base = base.replace("; dlv:cellDataType b:uint8", "")
         if prop == "dimensionSizeFromField":
@@ -47,7 +63,7 @@ def cases():
         ("CellDataTypeRule", "ruleCellDataType", "b:uint8", "b:uint16", "ex:unknown"),
         ("DimensionOrderRule", "ruleDimensionOrder", "(ex:d)", "(ex:d)", '"dimension"'),
     ]:
-        base = layout + "ex:r a dlv:" + cls + ". "
+        base = LAYOUT + "ex:r a dlv:" + cls + ". "
         for label, value, ok in [
             ("valid", good, True),
             ("duplicate", good + "," + second, False),
@@ -64,5 +80,5 @@ def cases():
                 value,
                 ok,
             )
-    add("missing axis", layout.replace("; dlv:hasAxis ex:axis", ""), "ex:d", "hasAxis", None, False)
+    add("missing axis", LAYOUT.replace("; dlv:hasAxis ex:axis", ""), "ex:d", "hasAxis", None, False)
     return rows
