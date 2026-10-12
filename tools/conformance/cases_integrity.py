@@ -345,3 +345,63 @@ pp("codec-decoded-byte-limit", "Decoded output counts toward the decoded-byte li
    codec_field("hexplain:isEncodedWith menc:Zlib", 16),
    bytes.fromhex("78dacb48cdc9c957c84090003a2e067d"), error="ResourceLimit",
    manifest={"limits": {"maxDecodedBytes": 10}})
+
+pp("checksum-digest-field-width", "A digest whose checksum field is not bytes of the digest's length is a description error",
+   "A SHA-256 is 32 bytes, compared byte for byte; a bddo:uint32 checksum field cannot hold it.",
+   ["req-pm-parsefield-16", "req-pm-errors-8"], ["algorithm", "errors"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:text ex:sum ) .
+   ex:text a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 8 .
+   ex:sum a bddo:Field ; bddo:dataType bddo:uint32 ;
+       bddo:checksum [ a bddo:Checksum ; bddo:checksumAlgorithm bddo:sha256 ;
+                       bddo:coversFromField ex:text ; bddo:coversToField ex:text ] .
+   """,
+   b"hexplain" + hashlib.sha256(b"hexplain").digest()[:4], error="Description")
+
+pp("checksum-digest-field-short", "A digest whose bytes field is shorter than the digest is a description error",
+   "An MD5 is 16 bytes; a 15-byte bddo:bytes checksum field is not exactly the digest's length.",
+   ["req-pm-parsefield-16", "req-pm-errors-8"], ["algorithm", "errors"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:text ex:sum ) .
+   ex:text a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 8 .
+   ex:sum a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 15 ;
+       bddo:checksum [ a bddo:Checksum ; bddo:checksumAlgorithm bddo:md5 ;
+                       bddo:coversFromField ex:text ; bddo:coversToField ex:text ] .
+   """,
+   b"hexplain" + hashlib.md5(b"hexplain").digest()[:15], error="Description")
+
+
+# ----------------------------------------------------------------- the trailing parameter of Zlib and Gzip
+
+
+def trailing(codec, value="ignore"):
+    return (f'hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:{codec} ; '
+            f'hexplain:codecParameter [ a hexplain:CodecParameter ; hexplain:parameterName "trailing" ; '
+            f'hexplain:parameterValue "{value}" ] ] )')
+
+
+pp("codec-zlib-trailing-ignore", "trailing=ignore leaves the bytes after a zlib stream undecoded and unreported",
+   "Two stray bytes follow the zlib trailer within the block; the output is the stream's three bytes alone.",
+   ["req-pm-minimum-codecs-11", "req-pm-minimum-codecs-10"], ["minimum-codecs", "framing-parameters"],
+   codec_field(trailing("Zlib"), len(ZLIB_123) + 2), ZLIB_123 + b"\xde\xad", {"data": b"\x01\x02\x03"})
+
+pp("codec-zlib-trailing-refuse", "trailing=refuse, the default written out, keeps the validation error",
+   "The same block with the parameter at its default value.",
+   ["req-pm-minimum-codecs-10", "req-pm-minimum-codecs-5"], ["minimum-codecs", "framing-parameters"],
+   codec_field(trailing("Zlib", "refuse"), len(ZLIB_123) + 2), ZLIB_123 + b"\xde\xad", error="Validation")
+
+pp("codec-zlib-trailing-ignore-adler-mismatch", "trailing=ignore still verifies the stream's Adler-32",
+   "The last byte of the zlib trailer is changed and two stray bytes follow: the check fails before the rest is ignored.",
+   ["req-pm-minimum-codecs-11", "req-pm-errors-5"], ["minimum-codecs", "framing-parameters"],
+   codec_field(trailing("Zlib"), len(ZLIB_123) + 2),
+   ZLIB_123[:-1] + bytes([ZLIB_123[-1] ^ 0xFF]) + b"\xde\xad", error="Checksum")
+
+pp("codec-gzip-trailing-ignore", "trailing=ignore leaves the bytes after the last gzip member undecoded and unreported",
+   "Two bytes that begin no member follow the only member; the output is the member's content.",
+   ["req-pm-minimum-codecs-11", "req-pm-minimum-codecs-6"], ["minimum-codecs", "framing-parameters"],
+   codec_field(trailing("Gzip"), len(GZIP_ABC) + 2), GZIP_ABC + b"xx", {"data": b"abc"})
+
+pp("codec-gzip-trailing-ignore-truncated-member", "Under trailing=ignore a member that begins and does not end is truncated data",
+   "A second member is cut at the end of its ten-byte header: it began, so it is not ignorable trailing data.",
+   ["req-pm-minimum-codecs-11", "req-pm-minimum-codecs-6"], ["minimum-codecs", "framing-parameters"],
+   codec_field(trailing("Gzip"), len(GZIP_ABC) + 10), GZIP_ABC + GZIP_ABC[:10], error="Validation")

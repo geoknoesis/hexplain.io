@@ -635,3 +635,152 @@ err("let-where-field-required", "A let binding named where a field is required i
       sum : u32 @checksum crc32(start .. data)
     }
     """, line=5)
+
+# ----------------------------------------------------------------- field-level bit order
+
+hc("bit-order-field", "A field-level @bit-order compiles to bddo:bitOrder on the field, the struct's on the struct",
+   "Root declares msb and its field a lsb: the struct gets bddo:MSBFirst and a its own bddo:LSBFirst, which the "
+   "Processing Model reads first; b carries no order of its own.",
+   OK + ["req-hdl-clauses-6"], ["clauses", "field-bit-order", "types"],
+   """
+   format t @namespace "{ns}"
+   struct Root @bit-order msb {
+     a : bits[3] @bit-order lsb
+     b : bits[5]
+   }
+   """,
+   """
+   ex:Root a bddo:Struct ; bddo:bitOrder bddo:MSBFirst ; bddo:hasField ( ex:Root.a ex:Root.b ) .
+   ex:Root.a a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 3 ; bddo:bitOrder bddo:LSBFirst .
+   ex:Root.b a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 5 .
+   """)
+
+
+# ----------------------------------------------------------------- dispatch arm IRIs, YAML byte strings
+
+pair("dispatch-arm-iris", "The arms of a keyed dispatch are IRIs minted from the table and the key",
+     "T's arms are <base>T.arm.ftyp, <base>T.arm.7 for the integer key and <base>T.arm.7.str for the string \"7\", "
+     "never blank nodes; the lone sibling in on is bddo:dispatchOnField.",
+     OK + ["req-hdl-modules-4"], ["modules", "iri-minting"],
+     """
+     format t @namespace "{ns}"
+     struct Root {
+       kind : ascii[4]
+       body : bytes[..] dispatch T on kind default Blob { "ftyp" => A  7 => B  "7" => A }
+     }
+     struct A { a : u8 }
+     struct B { b : u8 }
+     struct Blob { raw : bytes[..] }
+     """,
+     """
+     format: t
+     namespace: "{ns}"
+     structs:
+       Root:
+         fields:
+           - { name: kind, type: ascii, size: 4 }
+           - name: body
+             type: bytes
+             size: ".."
+             dispatch: { name: T, on: kind, default: Blob, cases: { ftyp: A, 7: B, "7": A } }
+       A:
+         fields:
+           - { name: a, type: u8 }
+       B:
+         fields:
+           - { name: b, type: u8 }
+       Blob:
+         fields:
+           - { name: raw, type: bytes, size: ".." }
+     """,
+     """
+     ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.kind ex:Root.body ) .
+     ex:Root.kind a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:ascii ; bddo:size 4 .
+     ex:Root.body a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ; bddo:hasDispatchTable ex:T .
+     ex:T a bddo:DispatchTable ; bddo:dispatchOnField ex:Root.kind ; bddo:dispatchDefault ex:Blob .
+     ex:T.arm.ftyp a bddo:DispatchArm ; bddo:armTable ex:T ; bddo:armKey "ftyp" ; bddo:armDataType ex:A .
+     ex:T.arm.7 a bddo:DispatchArm ; bddo:armTable ex:T ; bddo:armKey 7 ; bddo:armDataType ex:B .
+     ex:T.arm.7.str a bddo:DispatchArm ; bddo:armTable ex:T ; bddo:armKey "7" ; bddo:armDataType ex:A .
+     ex:A a bddo:Struct ; bddo:hasField ( ex:A.a ) .
+     ex:A.a a bddo:Field ; bddo:dataType bddo:uint8 .
+     ex:B a bddo:Struct ; bddo:hasField ( ex:B.b ) .
+     ex:B.b a bddo:Field ; bddo:dataType bddo:uint8 .
+     ex:Blob a bddo:Struct ; bddo:hasField ( ex:Blob.raw ) .
+     ex:Blob.raw a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true .
+     """)
+
+YAML_HEX = ["req-hdl-yaml-3"]
+
+hc("yaml-hex-mapping", "The YAML mapping { hex: \"0x...\" } is a hex byte string",
+   "fixed: { hex: \"0x89504E47\" } and terminator: { hex: \"0x00\" } are the byte strings the unquoted scalars spell.",
+   OK + YAML_HEX + ["req-hdl-conformance-section-2"], ["yaml", "clauses"],
+   """
+   format: t
+   namespace: "{ns}"
+   structs:
+     Root:
+       fields:
+         - { name: magic, type: bytes, size: 4, fixed: { hex: "0x89504E47" } }
+         - { name: name, type: ascii, terminator: { hex: "0x00" } }
+   """,
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.magic ex:Root.name ) .
+   ex:Root.magic a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 ; bddo:hasFixedValue "89504E47"^^xsd:hexBinary .
+   ex:Root.name a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:ascii ; bddo:terminator "00"^^xsd:hexBinary .
+   """, yaml=True)
+
+err("yaml-quoted-hex-terminator", "A quoted \"0x...\" YAML scalar as terminator: is an ERROR",
+    "terminator: takes bytes; the quoted scalar is a string, so it is refused rather than read as the bytes it spells.",
+    ["req-hdl-yaml-5"], ["yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        fields:
+          - { name: name, type: ascii, terminator: "0x00" }
+    """, yaml=True)
+
+err("yaml-quoted-hex-sync", "A quoted \"0x...\" YAML scalar as sync: is an ERROR",
+    "sync: takes bytes; the quoted scalar is a string, so it is refused rather than read as the bytes it spells.",
+    ["req-hdl-yaml-5"], ["yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        sync: "0x47"
+        fields:
+          - { name: a, type: u8 }
+    """, yaml=True)
+
+err("yaml-quoted-hex-separator", "A quoted \"0x...\" YAML scalar as a container delimiter is an ERROR",
+    "separator: \"0x3D\" would be the four characters 0x3D, not the byte 3D; a delimiter that begins 0x is refused.",
+    ["req-hdl-yaml-5"], ["yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      H:
+        kind: header
+        record-separator: 0x0A
+        separator: "0x3D"
+        fields:
+          - { key: "bands", type: anum }
+    """, yaml=True)
+
+
+hc("encoded-with-catalogue-codec", "A catalogue-only codec compiles: a warning at most, never an ERROR",
+   "menc:BZip2 is in the register with no contract, so no processor decodes it; the description still records the "
+   "encoding, and the compiler emits it.",
+   OK + ["req-hdl-semantic-1", "req-pm-codec-contracts-5"], ["semantic", "processing#codec-status"],
+   """
+   format t @namespace "{ns}"
+   struct Root {
+     data : bytes[..] @encoded-with menc:BZip2
+   }
+   """,
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.data ) .
+   ex:Root.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ; hexplain:isEncodedWith menc:BZip2 .
+   """)

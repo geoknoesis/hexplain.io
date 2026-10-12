@@ -1,0 +1,27 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/pp-hel-parent-non-leading#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:count ex:hdr ex:holder ex:value ex:element ex:above ) .
+ex:count a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:hdr a bddo:Field ; bddo:dataType ex:Hdr .
+ex:holder a bddo:Field ; bddo:valueFromExpression "hdr.parent.count" .
+ex:value a bddo:Field ; bddo:valueFromExpression "hdr.n.parent.n" .
+ex:element a bddo:Field ; bddo:valueFromExpression "hdr.items[0].parent.n" .
+ex:above a bddo:Field ; bddo:valueFromExpression "hdr.parent.parent == root.parent" .
+ex:Hdr a bddo:Struct ; bddo:hasField ( ex:n ex:items ) .
+ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCountFromField ex:n .
+ex:Item a bddo:Struct ; bddo:hasField ( ex:v ex:climb ) .
+ex:v a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:climb a bddo:Field ; bddo:valueFromExpression "v.parent.parent.n" .

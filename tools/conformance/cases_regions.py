@@ -796,3 +796,54 @@ pp("textnum-non-ascii-digit", "A number written as text uses ASCII digits only",
    ex:n a bddo:Field ; bddo:dataType bddo:asciiInteger ; bddo:size 4 ; bddo:encoding bddo:utf8 .
    """,
    "\u0661\u0662".encode("utf-8"), error="Validation")
+
+# ----------------------------------------------------------------- offsets from the containing struct
+
+PARENT_START = """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:skip ex:rec ex:tail ) .
+   ex:skip a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:rec a bddo:Field ; bddo:dataType ex:Rec .
+   ex:Rec a bddo:Struct ; bddo:hasField ( ex:a ex:b ex:p ) .
+   ex:a a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:b a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:p a bddo:Field ; bddo:dataType bddo:uint8 ; {offset} ; bddo:offsetBase bddo:parentStart .
+   ex:tail a bddo:Field ; bddo:dataType bddo:uint8 .
+   """
+
+pp("offset-parent-start", "bddo:parentStart counts from the start of the containing struct",
+   "Rec starts at offset 1 (after skip); its field p at offset 1 from parentStart is Rec's second byte, b, and the "
+   "read restores the cursor so tail follows b.",
+   ["req-pm-parsefield-7", "req-pm-parsefield-27", "req-pm-parsefield-28"], ["algorithm", "parent-start"],
+   PARENT_START.format(offset="bddo:atOffset 1"),
+   b"\x00" + b"\x0a\x0b" + b"\x0c", {"skip": 0, "rec": {"a": 10, "b": 11, "p": 11}, "tail": 12})
+
+pp("offset-parent-start-after-sync", "bddo:parentStart starts after the struct's sync marker",
+   "Rec syncs on the marker AA: its start offset is the byte after the marker, from which p's offset 0 is a.",
+   ["req-pm-parsefield-27", "req-pm-parsestruct-3"], ["algorithm", "parent-start"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:rec ) .
+   ex:rec a bddo:Field ; bddo:dataType ex:Rec .
+   ex:Rec a bddo:Struct ; bddo:syncOnMarker "AA"^^xsd:hexBinary ; bddo:hasField ( ex:a ex:p ) .
+   ex:a a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:p a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 0 ; bddo:offsetBase bddo:parentStart .
+   """,
+   b"\x00\x00\xaa\x07", {"rec": {"a": 7, "p": 7}})
+
+pp("offset-parent-start-negative", "A negative offset from parentStart is a bounds error",
+   "The expression yields -1: a target before the containing struct's start is unreachable through parentStart.",
+   ["req-pm-parsefield-29", "req-pm-errors-3"], ["algorithm", "parent-start", "errors"],
+   PARENT_START.format(offset='bddo:atOffsetFromExpression "0 - 1"'),
+   b"\x00" + b"\x0a\x0b" + b"\x0c", error="Bounds")
+
+pp("offset-parent-start-outside-region", "A parentStart target past the struct's bounded region is a bounds error",
+   "Rec is bounded to 2 bytes; offset 5 from its start lies outside that region.",
+   ["req-pm-parsefield-29", "req-pm-parsestruct-5"], ["algorithm", "parent-start"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:rec ex:tail ) .
+   ex:rec a bddo:Field ; bddo:dataType ex:Rec ; bddo:size 2 .
+   ex:Rec a bddo:Struct ; bddo:hasField ( ex:a ex:p ) .
+   ex:a a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:p a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 5 ; bddo:offsetBase bddo:parentStart .
+   ex:tail a bddo:Field ; bddo:dataType bddo:uint8 .
+   """,
+   b"\x01\x02\x03\x04\x05\x06\x07\x08", error="Bounds")

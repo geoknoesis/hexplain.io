@@ -223,3 +223,26 @@ pp("align-region-does-not-move-origin", "A bounded region does not move the alig
    """,
    b"\x00" * 6 + b"\x07" + b"\xee" + b"\x12\x34" + b"\x00" * 6,
    {"pad": b"\x00" * 6, "box": {"a": 7, "b": 0x1234}})
+
+pp("bits-field-order-overrides-struct", "A field's own bddo:bitOrder takes precedence over the struct's",
+   "The struct declares LSBFirst; field a declares MSBFirst and takes the top three bits of 0xB4 (101 = 5). Field b, "
+   "back under the struct's LSBFirst, differs in order from a, so it begins on the next byte and takes the low five "
+   "bits of 0x16 (10110 = 22).",
+   ["req-pm-byte-order-8", "req-pm-byte-order-9", "req-pm-bit-cursor-3"], ["byte-order", "bit-cursor"],
+   """
+   ex:Root a bddo:Struct ; bddo:bitOrder bddo:LSBFirst ; bddo:hasField ( ex:a ex:b ) .
+   ex:a a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 3 ; bddo:bitOrder bddo:MSBFirst .
+   ex:b a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 5 .
+   """,
+   b"\xb4\x16", {"a": 5, "b": 22})
+
+pp("bits-field-order-without-struct-order", "A field-level bddo:bitOrder applies where the struct declares none",
+   "Without a struct order the default is MSBFirst; field a declares LSBFirst and takes the low three bits of 0xB4 "
+   "(100 = 4); field b, MSBFirst by default, begins on the next byte and takes the top five bits of 0xB0 (10110 = 22).",
+   ["req-pm-byte-order-8", "req-pm-byte-order-9"], ["byte-order", "bit-cursor"],
+   """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ) .
+   ex:a a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 3 ; bddo:bitOrder bddo:LSBFirst .
+   ex:b a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 5 .
+   """,
+   b"\xb4\xb0", {"a": 4, "b": 22})

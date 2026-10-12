@@ -8,6 +8,7 @@ the binary16 values of their bit patterns, the CRCs are computed by the Rocksoft
 lz4frames.py and Zstandard ones are pinned in zstdframes.py.
 """
 import struct
+import zlib
 
 import crc
 import lz4frames
@@ -820,3 +821,178 @@ pp("codec-zstd-declared-size-over-limit", "A Zstandard frame whose Frame_Content
    BOMB + ["req-pm-optional-codecs-6"], ["optional-codecs", "security-decompression"],
    encoded("hexplain:isEncodedWith menc:Zstd", len(Z1) - 6), Z1[:-6], error="ResourceLimit",
    manifest=dict(ZSTD, limits={"maxDecodedBytes": 100}))
+
+# ----------------------------------------------------------------- codec contracts, parameter expressions, selection, sessions
+
+CONTRACT = "req-pm-codec-contracts-1"
+
+
+def delta_expression(expression, size):
+    """A Root with a uint8 n and a Delta-encoded block whose elementSize is given by [expression]."""
+    return f"""
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:data ) .
+   ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size {size} ;
+       hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:Delta ;
+           hexplain:codecParameter [ a hexplain:CodecParameter ; hexplain:parameterName "elementSize" ;
+                                     hexplain:parameterExpression "{expression}" ] ] ) .
+   """
+
+
+pp("codec-parameter-expression-value", "A parameter expression is evaluated in the field's struct when the step runs",
+   "elementSize comes from the sibling n (1): the block is decoded as one-byte Delta samples.",
+   [CONTRACT, "req-pm-parameter-expressions-2"], ["parameter-expressions", "codec-contracts"],
+   delta_expression("n", 3), b"\x01" + bytes([5, 1, 1]), {"n": 1, "data": bytes([5, 6, 7])})
+
+pp("codec-parameter-expression-out-of-range", "A parameter expression's value outside the declared values is a validation error",
+   "n is 3, and elementSize allows 1, 2, 4 or 8: the value is of the right type but not an allowed one.",
+   ["req-pm-parameter-expressions-2", "req-pm-errors-4"], ["parameter-expressions", "errors"],
+   delta_expression("n", 3), b"\x03" + bytes([5, 1, 1]), error="Validation")
+
+pp("codec-parameter-expression-wrong-type", "A parameter expression of the wrong HEL type is a Type / HEL error",
+   "elementSize is an integer parameter; the expression yields the String 'two'.",
+   ["req-pm-parameter-expressions-2", "req-pm-errors-6"], ["parameter-expressions", "errors"],
+   delta_expression("'two'", 3), b"\x01" + bytes([5, 1, 1]), error="Expression")
+
+pp("codec-parameter-expression-unknown-name", "A parameter expression for a parameter the contract does not declare is a description error",
+   "menc:Zlib declares level and trailing; an expression for stride names neither.",
+   ["req-pm-parameter-expressions-1", "req-pm-codec-contracts-2", "req-pm-errors-8"], ["parameter-expressions", "codec-contracts"],
+   encoded('hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:Zlib ; hexplain:codecParameter '
+           '[ a hexplain:CodecParameter ; hexplain:parameterName "stride" ; hexplain:parameterExpression "1" ] ] )', 3),
+   b"\x00\x00\x00", error="Description")
+
+pp("codec-parameter-both-literal-and-expression", "A parameter with both a literal and an expression is a description error",
+   "elementSize carries hexplain:parameterValue 1 and hexplain:parameterExpression \"1\".",
+   ["req-pm-parameter-expressions-3", "req-pm-errors-8"], ["parameter-expressions", "errors"],
+   encoded('hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:Delta ; hexplain:codecParameter '
+           '[ a hexplain:CodecParameter ; hexplain:parameterName "elementSize" ; hexplain:parameterValue 1 ; '
+           'hexplain:parameterExpression "1" ] ] )', 3),
+   bytes([5, 1, 1]), error="Description")
+
+pp("codec-parameter-neither-literal-nor-expression", "A parameter with neither a literal nor an expression is a description error",
+   "elementSize is named and given no value.",
+   ["req-pm-parameter-expressions-3", "req-pm-errors-8"], ["parameter-expressions", "errors"],
+   encoded('hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:Delta ; hexplain:codecParameter '
+           '[ a hexplain:CodecParameter ; hexplain:parameterName "elementSize" ] ] )', 3),
+   bytes([5, 1, 1]), error="Description")
+
+pp("codec-parameter-literal-wrong-type", "A literal parameter of the wrong type is a description error",
+   "elementSize is an integer parameter of the Delta contract; the literal is the string \"one\".",
+   ["req-pm-codec-contracts-2", "req-pm-errors-8"], ["codec-contracts", "errors"],
+   encoded('hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:Delta ; hexplain:codecParameter '
+           '[ a hexplain:CodecParameter ; hexplain:parameterName "elementSize" ; hexplain:parameterValue "one" ] ] )', 3),
+   bytes([5, 1, 1]), error="Description")
+
+pp("codec-pipeline-kinds-disconnected", "A pipeline whose kinds do not connect is a description error",
+   "Listed Zlib then CMYKToRGB, the first step decoded is CMYKToRGB, which reads samples from the field's bytes, and "
+   "Zlib would then read bytes where it produced samples; the description is refused when it is loaded.",
+   ["req-pm-codec-contracts-3", "req-pm-errors-8"], ["codec-contracts", "errors"],
+   encoded("hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:Zlib ] "
+           "[ a hexplain:EncodingStep ; hexplain:codec menc:CMYKToRGB ] )", 4),
+   b"\x00\x00\x00\x00", error="Description", manifest={"codecs": {"requires": [MENC + "CMYKToRGB"]}})
+
+pp("codec-contract-decoded-byte-limit", "A codec stops at the decoded-byte limit as its output is produced",
+   "Three one-byte Delta samples under maxDecodedBytes 2: the codec must not allocate or produce past the limit.",
+   ["req-pm-codec-contracts-4", "req-pm-security-decompression-1", "req-pm-errors-12"], ["codec-contracts", "security-decompression"],
+   delta_expression("n", 3), b"\x01" + bytes([5, 1, 1]), error="ResourceLimit", manifest={"limits": {"maxDecodedBytes": 2}})
+
+
+def selecting(expression, candidates, size, extra=""):
+    """A Root with a uint8 k and a block whose codec [expression] selects among [candidates] (Turtle steps)."""
+    return f"""
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:k ex:data ) .
+   ex:k a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size {size} ;
+       hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codecFromExpression "{expression}" {extra};
+           hexplain:codecCandidates ( {candidates} ) ] ) .
+   """
+
+
+STORE_STEP = "[ a hexplain:EncodingStep ; hexplain:codec menc:Store ]"
+ZLIB_STEP = "[ a hexplain:EncodingStep ; hexplain:codec menc:Zlib ]"
+ZLIB_XYZ = zlib.compress(b"xyz")
+
+pp("codec-selection-by-local-name", "A run-time selection names its candidate by local name",
+   "k is 1, so the expression yields 'Store' and the block is the stored bytes.",
+   ["req-pm-codec-selection-2", CONTRACT], ["codec-selection"],
+   selecting("k == 1 ? 'Store' : 'Zlib'", f"{STORE_STEP} {ZLIB_STEP}", 3),
+   b"\x01xyz", {"k": 1, "data": b"xyz"})
+
+pp("codec-selection-by-iri", "A run-time selection names its candidate by IRI",
+   "k is 2, so the expression yields the Zlib IRI and the block is inflated.",
+   ["req-pm-codec-selection-2", CONTRACT], ["codec-selection"],
+   selecting(f"k == 1 ? 'Store' : '{MENC}Zlib'", f"{STORE_STEP} {ZLIB_STEP}", len(ZLIB_XYZ)),
+   b"\x02" + ZLIB_XYZ, {"k": 2, "data": b"xyz"})
+
+pp("codec-selection-names-no-candidate", "A selection value that names none of the candidates is a validation error",
+   "'Deflate' is a codec, but not one of the step's candidates.",
+   ["req-pm-codec-selection-2", "req-pm-errors-4"], ["codec-selection", "errors"],
+   selecting("'Deflate'", f"{STORE_STEP} {ZLIB_STEP}", 3), b"\x01xyz", error="Validation")
+
+pp("codec-selection-not-a-string", "A selection value that is not a String is a Type / HEL error",
+   "The expression yields the Integer 1.",
+   ["req-pm-codec-selection-2", "req-pm-errors-6"], ["codec-selection", "errors"],
+   selecting("k", f"{STORE_STEP} {ZLIB_STEP}", 3), b"\x01xyz", error="Expression")
+
+pp("codec-selection-parameter-on-selecting-step", "A selecting step with a parameter of its own is a description error",
+   "Parameters belong to the candidates; the selecting step carries a level.",
+   ["req-pm-codec-selection-3", "req-pm-errors-8"], ["codec-selection", "errors"],
+   selecting("'Store'", f"{STORE_STEP} {ZLIB_STEP}", 3,
+             '; hexplain:codecParameter [ a hexplain:CodecParameter ; hexplain:parameterName "level" ; hexplain:parameterValue 6 ] '),
+   b"\x01xyz", error="Description")
+
+pp("codec-selection-with-codec", "A step with both hexplain:codec and hexplain:codecFromExpression is a description error",
+   "The step names Store and also selects.",
+   ["req-pm-codec-selection-3", "req-pm-errors-8"], ["codec-selection", "errors"],
+   selecting("'Store'", f"{STORE_STEP} {ZLIB_STEP}", 3, "; hexplain:codec menc:Store "), b"\x01xyz", error="Description")
+
+pp("codec-selection-without-candidates", "A selecting step without candidates is a description error",
+   "hexplain:codecFromExpression with no hexplain:codecCandidates list.",
+   ["req-pm-codec-selection-3", "req-pm-errors-8"], ["codec-selection", "errors"],
+   encoded("hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codecFromExpression \"'Store'\" ] )", 3),
+   b"xyz", error="Description")
+
+pp("codec-selection-duplicate-candidates", "Candidates that repeat a codec are a description error",
+   "Store is listed twice.",
+   ["req-pm-codec-selection-1", "req-pm-errors-8"], ["codec-selection", "errors"],
+   selecting("'Store'", f"{STORE_STEP} {STORE_STEP}", 3), b"\x01xyz", error="Description")
+
+pp("codec-selection-unclaimed-candidate", "A candidate the processor does not decode is Unsupported even when never selected",
+   "The expression always selects Store, but a candidate names Zstd, which this processor does not list: every "
+   "candidate is checked when the description is loaded.",
+   ["req-pm-codec-selection-1", "req-pm-errors-10", "req-pm-errors-11"], ["codec-selection", "errors"],
+   selecting("'Store'", f"{STORE_STEP} [ a hexplain:EncodingStep ; hexplain:codec menc:Zstd ]", 3), b"\x01xyz",
+   error="Unsupported", manifest={"codecs": {"unclaimed": [MENC + "Zstd"]}})
+
+
+def g4_strips(scope):
+    """Two Items, each a length-prefixed CCITT Group 4 strip of one 8-column row, with the given session scope."""
+    return f"""
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:items ) .
+   ex:items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 2 .
+   ex:Item a bddo:Struct ; bddo:hasField ( ex:n ex:strip ) .
+   ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:strip a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromField ex:n ; hexplain:codecSessionScope {scope} ;
+       hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:CCITTGroup4 ;
+           hexplain:codecParameter [ a hexplain:CodecParameter ; hexplain:parameterName "columns" ; hexplain:parameterValue 8 ] ,
+                                   [ a hexplain:CodecParameter ; hexplain:parameterName "rows" ; hexplain:parameterValue 1 ] ] ) .
+   """
+
+
+# T.6: strip 1 codes its row in horizontal mode, 001, white run 0 (00110101), black run 8 (000101): 26 A2 80, an
+# all-black row. Strip 2 is two V0 codes, 11, then padding: C0: against the all-white imaginary reference line that
+# every strip of a fresh session starts from, the first V0 alone fills the row white. (A strip never continues the
+# previous strip's reference line, in any session: T.6 resets it at a strip start, so a shared session is not
+# observable through G4 output and no case asserts one.)
+G4_BLACK = bytes.fromhex("26a280")
+G4_V0V0 = bytes.fromhex("c0")
+G4_INPUT = bytes([len(G4_BLACK)]) + G4_BLACK + bytes([len(G4_V0V0)]) + G4_V0V0
+G4 = {"codecs": {"requires": [MENC + "CCITTGroup4"]}}
+
+pp("codec-session-per-instance", "Under bddo:PerInstance a session is not shared between two instances of the struct",
+   "The second Item's strip is decoded with a fresh reference line (all white), so its two V0 codes yield a white row; "
+   "shared with the first Item's session it would have yielded the first strip's black row.",
+   ["req-pm-codec-sessions-1"], ["codec-sessions"],
+   g4_strips("bddo:PerInstance"), G4_INPUT,
+   {"items": [{"n": 3, "strip": b"\xff"}, {"n": 1, "strip": b"\x00"}]}, manifest=G4)
+
