@@ -7,6 +7,12 @@
       "url": "https://zlib.net/",
       "description": "Compressed with zlib 1.2.13 through CPython 3.11.4 (tools/codecs/_generate_minimum_vectors.py); corruptions are single-byte edits of those streams.",
       "licence": "zlib licence (library); inputs CC0-1.0"
+    },
+    {
+      "id": "round-trip",
+      "url": "https://hexplain.io/specification/processing/#round-trip",
+      "description": "Round trips worked by hand from the codec's definition (a transform) or fed through the previous step's output (a compressor, encoded with zlib for the expectation-free encode step).",
+      "licence": "CC0-1.0"
     }
   ],
   "vectors": [
@@ -178,6 +184,32 @@
         }
       ],
       "source": "zlib"
+    },
+    {
+      "id": "round-trip",
+      "source": "round-trip",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {},
+          "input": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220"
+          }
+        }
+      ]
     }
   ]
 }

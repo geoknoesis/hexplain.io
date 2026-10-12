@@ -7,6 +7,12 @@
       "url": "https://github.com/zarr-developers/numcodecs",
       "description": "Chunks written by numcodecs 0.16.5 with c-blosc 1.21.7.dev (numpy 2.3.2, Python 3.11.4) through hexplain-tools tests/gdal/zarr_codec_vectors.py (core/src/test/resources/zarr/numcodecs-vectors.json).",
       "licence": "MIT (numcodecs), BSD-3-Clause (c-blosc); data CC0-1.0"
+    },
+    {
+      "id": "reference-engine",
+      "url": "https://github.com/geoknoesis/hexplain-tools",
+      "description": "Inputs derived here (tools/codecs/_complete_vectors.py) from this suite's own vectors: truncations, single-byte corruptions, lowered output limits and parameter settings; the category or output of each was confirmed with hexplain-tools 97c952f24508 (hexplain-codec vector) before it was recorded, since no independent implementation of this codec was at hand.",
+      "licence": "inputs as the vectors they derive from; expectations CC0-1.0"
     }
   ],
   "vectors": [
@@ -3085,6 +3091,117 @@
         }
       ],
       "source": "numcodecs"
+    },
+    {
+      "id": "truncated",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "expect": {
+            "error": "Validation"
+          },
+          "input": {
+            "hex": "02010001b80b0000b80b00002b01000014000000130100003f00468cd21d63a9ef3a80c611579de32e74ba054b91d72268aef43f85cb165ca21fe83379bf0a5096dc276db3f9448ad01b61a7ed387ec40f559be12c72b803498f1fd52066acf23d83c9145aa0e63177bd084e94da256bb1f74288ce195fa5eb367c1fc20d5399df2a70b601478dd31e64aaf03b81c712589ee42f75"
+          }
+        }
+      ],
+      "source": "reference-engine"
+    },
+    {
+      "id": "parameter-blocksize",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "blocksize": 0
+          },
+          "expect": {
+            "sha256": "7c9025b902c3b94c1b5da41dcf76e5736eed69e9c81f6eed12b35b5bab99fd8b",
+            "size": 3000
+          },
+          "input": {
+            "hex": "02010001b80b0000b80b00002b01000014000000130100003f00468cd21d63a9ef3a80c611579de32e74ba054b91d72268aef43f85cb165ca21fe83379bf0a5096dc276db3f9448ad01b61a7ed387ec40f559be12c72b803498f1fd52066acf23d83c9145aa0e63177bd084e94da256bb1f74288ce195fa5eb367c1fc20d5399df2a70b601478dd31e64aaf03b81c712589ee42f75bb064c92d823691faff54086cc175da3e9347ac00b5197dd286eb4fa458bd11c62a8ee397fc510561f9ce22d73b9044a90d62167adf33e84ca155ba1e73278be094f95db266cb2f8431f89cf1a60a6ec377dc30e549ae02b71b702488ed41f65abf13c82c813599fe5301a76bc074d93d9246ab0f64187cd185ea4ea357bc10c5298de296fb5e0ffffffffffffffffffffbcfa01185e"
+          }
+        }
+      ],
+      "source": "reference-engine"
+    },
+    {
+      "id": "parameter-clevel",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "clevel": 5
+          },
+          "expect": {
+            "sha256": "7c9025b902c3b94c1b5da41dcf76e5736eed69e9c81f6eed12b35b5bab99fd8b",
+            "size": 3000
+          },
+          "input": {
+            "hex": "02010001b80b0000b80b00002b01000014000000130100003f00468cd21d63a9ef3a80c611579de32e74ba054b91d72268aef43f85cb165ca21fe83379bf0a5096dc276db3f9448ad01b61a7ed387ec40f559be12c72b803498f1fd52066acf23d83c9145aa0e63177bd084e94da256bb1f74288ce195fa5eb367c1fc20d5399df2a70b601478dd31e64aaf03b81c712589ee42f75bb064c92d823691faff54086cc175da3e9347ac00b5197dd286eb4fa458bd11c62a8ee397fc510561f9ce22d73b9044a90d62167adf33e84ca155ba1e73278be094f95db266cb2f8431f89cf1a60a6ec377dc30e549ae02b71b702488ed41f65abf13c82c813599fe5301a76bc074d93d9246ab0f64187cd185ea4ea357bc10c5298de296fb5e0ffffffffffffffffffffbcfa01185e"
+          }
+        }
+      ],
+      "source": "reference-engine"
+    },
+    {
+      "id": "parameter-cname",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "cname": "blosclz"
+          },
+          "expect": {
+            "sha256": "7c9025b902c3b94c1b5da41dcf76e5736eed69e9c81f6eed12b35b5bab99fd8b",
+            "size": 3000
+          },
+          "input": {
+            "hex": "02010001b80b0000b80b00002b01000014000000130100003f00468cd21d63a9ef3a80c611579de32e74ba054b91d72268aef43f85cb165ca21fe83379bf0a5096dc276db3f9448ad01b61a7ed387ec40f559be12c72b803498f1fd52066acf23d83c9145aa0e63177bd084e94da256bb1f74288ce195fa5eb367c1fc20d5399df2a70b601478dd31e64aaf03b81c712589ee42f75bb064c92d823691faff54086cc175da3e9347ac00b5197dd286eb4fa458bd11c62a8ee397fc510561f9ce22d73b9044a90d62167adf33e84ca155ba1e73278be094f95db266cb2f8431f89cf1a60a6ec377dc30e549ae02b71b702488ed41f65abf13c82c813599fe5301a76bc074d93d9246ab0f64187cd185ea4ea357bc10c5298de296fb5e0ffffffffffffffffffffbcfa01185e"
+          }
+        }
+      ],
+      "source": "reference-engine"
+    },
+    {
+      "id": "parameter-shuffle",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "shuffle": false
+          },
+          "expect": {
+            "sha256": "7c9025b902c3b94c1b5da41dcf76e5736eed69e9c81f6eed12b35b5bab99fd8b",
+            "size": 3000
+          },
+          "input": {
+            "hex": "02010001b80b0000b80b00002b01000014000000130100003f00468cd21d63a9ef3a80c611579de32e74ba054b91d72268aef43f85cb165ca21fe83379bf0a5096dc276db3f9448ad01b61a7ed387ec40f559be12c72b803498f1fd52066acf23d83c9145aa0e63177bd084e94da256bb1f74288ce195fa5eb367c1fc20d5399df2a70b601478dd31e64aaf03b81c712589ee42f75bb064c92d823691faff54086cc175da3e9347ac00b5197dd286eb4fa458bd11c62a8ee397fc510561f9ce22d73b9044a90d62167adf33e84ca155ba1e73278be094f95db266cb2f8431f89cf1a60a6ec377dc30e549ae02b71b702488ed41f65abf13c82c813599fe5301a76bc074d93d9246ab0f64187cd185ea4ea357bc10c5298de296fb5e0ffffffffffffffffffffbcfa01185e"
+          }
+        }
+      ],
+      "source": "reference-engine"
+    },
+    {
+      "id": "parameter-typesize",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "typesize": 1
+          },
+          "expect": {
+            "sha256": "7c9025b902c3b94c1b5da41dcf76e5736eed69e9c81f6eed12b35b5bab99fd8b",
+            "size": 3000
+          },
+          "input": {
+            "hex": "02010001b80b0000b80b00002b01000014000000130100003f00468cd21d63a9ef3a80c611579de32e74ba054b91d72268aef43f85cb165ca21fe83379bf0a5096dc276db3f9448ad01b61a7ed387ec40f559be12c72b803498f1fd52066acf23d83c9145aa0e63177bd084e94da256bb1f74288ce195fa5eb367c1fc20d5399df2a70b601478dd31e64aaf03b81c712589ee42f75bb064c92d823691faff54086cc175da3e9347ac00b5197dd286eb4fa458bd11c62a8ee397fc510561f9ce22d73b9044a90d62167adf33e84ca155ba1e73278be094f95db266cb2f8431f89cf1a60a6ec377dc30e549ae02b71b702488ed41f65abf13c82c813599fe5301a76bc074d93d9246ab0f64187cd185ea4ea357bc10c5298de296fb5e0ffffffffffffffffffffbcfa01185e"
+          }
+        }
+      ],
+      "source": "reference-engine"
     }
   ]
 }

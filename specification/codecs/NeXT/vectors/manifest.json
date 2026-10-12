@@ -7,6 +7,12 @@
       "url": "https://github.com/OSGeo/gdal/tree/v3.13.3",
       "description": "Pixels decoded by GDAL 3.13.3 (container ghcr.io/osgeo/gdal@sha256:2dd0f81ef927ff4c3d4dbe4f73c029dc86d4073974c0564f8e196f6e1412e2e0) from GDAL autotest files at commit c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc and from synthetic files written by hexplain-tools tests/gdal/codec_vectors.py; imported by tools/codecs/_import_gdal_vectors.py from core/src/test/resources/gdal-codec-vectors.tsv, gdal-codec-refusals.tsv and gdal-color-*.tsv.",
       "licence": "GDAL autotest data: MIT/X (GDAL LICENSE.TXT and per-file notices); synthetic files CC0-1.0"
+    },
+    {
+      "id": "reference-engine",
+      "url": "https://github.com/geoknoesis/hexplain-tools",
+      "description": "Inputs derived here (tools/codecs/_complete_vectors.py) from this suite's own vectors: truncations, single-byte corruptions, lowered output limits and parameter settings; the category or output of each was confirmed with hexplain-tools 97c952f24508 (hexplain-codec vector) before it was recorded, since no independent implementation of this codec was at hand.",
+      "licence": "inputs as the vectors they derive from; expectations CC0-1.0"
     }
   ],
   "vectors": [
@@ -233,6 +239,28 @@
         }
       ],
       "source": "gdal-3.13.3"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 4,
+            "rowBytes": 1,
+            "rows": 1
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "input": {
+            "hex": "73"
+          },
+          "maxOutputBytes": 0
+        }
+      ],
+      "source": "reference-engine",
+      "session": true
     }
   ]
 }

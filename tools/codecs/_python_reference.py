@@ -50,6 +50,28 @@ def _inflate(data, wbits, limit, trailing):
     return out, d.unused_data
 
 
+def _encode(name, params, data, limit):
+    """The encode direction of the four codecs, through zlib: raw DEFLATE, a zlib stream or one gzip member."""
+    level = params.get("level", -1)
+    if name == "Deflate":
+        _level(params, {"level"})
+        c = zlib.compressobj(level, zlib.DEFLATED, -15)
+    elif name == "Zlib":
+        _level(params, {"level", "trailing"})
+        c = zlib.compressobj(level, zlib.DEFLATED, 15)
+    elif name == "Gzip":
+        for p in params:
+            if p != "trailing":
+                raise CodecError("Description", f"unknown parameter {p}")
+        c = zlib.compressobj(-1, zlib.DEFLATED, 31)
+    else:
+        raise CodecError("Unsupported", f"{name} does not encode here")
+    out = c.compress(data) + c.flush()
+    if len(out) > limit:
+        raise CodecError("ResourceLimit", f"more than {limit} bytes")
+    return out
+
+
 def apply(codec, direction, params, data, limit):
     name = codec[len(MENC):]
     if name == "Store":
@@ -58,6 +80,8 @@ def apply(codec, direction, params, data, limit):
         if len(data) > limit:
             raise CodecError("ResourceLimit", f"more than {limit} bytes")
         return data
+    if direction == "encode":
+        return _encode(name, params, data, limit)
     if direction != "decode":
         raise CodecError("Unsupported", f"{direction} is not implemented here")
     if name == "Deflate":
@@ -107,7 +131,8 @@ def main():
     for step in vector["steps"]:
         try:
             data = apply(manifest["codec"], step["direction"], step.get("params", {}),
-                         vectors.input_bytes(step["input"], path.parent), step.get("maxOutputBytes", 67108864))
+                         vectors.input_bytes(step["input"], path.parent, outputs[-1] if outputs else None),
+                         step.get("maxOutputBytes", 67108864))
         except CodecError as e:
             steps.append({"ok": False, "category": e.category, "message": str(e)})
             break

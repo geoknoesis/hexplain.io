@@ -14,7 +14,8 @@ specification/codecs/<LocalName>/vectors/manifest.json:
               "params": {name: value},   # JSON by the contract's type: integer/float numbers,
                                          # booleans, strings, bytes {"hex": ..}, IRIs {"iri": ..}, lists
               "input": {"hex": ..} | {"base64": ..} | {"file": <path beside the manifest>}
-                       | {"samples": {"width", "height", "bands", "sampleType", "hex" | "base64"}},
+                       | {"samples": {"width", "height", "bands", "sampleType", "hex" | "base64"}}
+                       | {"previous": true},     # the previous step's output (a round trip through a compressor)
               "maxOutputBytes": int (optional, default 67108864),
               "expect": {"hex" | "base64": ..} | {"sha256": .., "size": int (optional)} | {"ok": true}
                         | {"error": "Validation" | "Checksum" | "Unsupported" | "ResourceLimit" | "Description"}
@@ -116,12 +117,17 @@ def _decode_bytes(spec):
     raise ValueError(f"no hex or base64 in {spec}")
 
 
-def input_bytes(spec, base):
-    """The bytes of a step's input (for samples, their data)."""
+def input_bytes(spec, base, previous=None):
+    """The bytes of a step's input (for samples, their data; for {"previous": true}, [previous], the output of the
+    step before it, which a static reader passes as None)."""
     if "file" in spec:
         return (pathlib.Path(base) / spec["file"]).read_bytes()
     if "samples" in spec:
         return _decode_bytes(spec["samples"])
+    if spec.get("previous") is True:
+        if previous is None:
+            raise ValueError("no previous step output")
+        return previous
     return _decode_bytes(spec)
 
 
@@ -209,10 +215,15 @@ def problems(manifest, contract, base):
                 out.append(f"{where}: unknown error category {expect['error']!r}")
             if expect.get("error") != "Description":
                 out += [f"{where}: {p}" for p in parameter_problems(step.get("params", {}), contract)]
-            try:
-                input_bytes(step.get("input", {}), base)
-            except (OSError, ValueError, KeyError) as e:
-                out.append(f"{where}: unreadable input: {e}")
+            spec = step.get("input", {})
+            if spec.get("previous") is True:
+                if i == 0 or "error" in (steps[i - 1].get("expect") or {}):
+                    out.append(f"{where}: reads the previous step's output, and no previous step succeeds")
+            else:
+                try:
+                    input_bytes(spec, base)
+                except (OSError, ValueError, KeyError) as e:
+                    out.append(f"{where}: unreadable input: {e}")
             samples = expect.get("samples")
             if samples and samples.get("sampleType") not in SAMPLE_TYPES:
                 out.append(f"{where}: unknown sampleType {samples.get('sampleType')!r}")

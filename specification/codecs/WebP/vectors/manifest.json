@@ -7,6 +7,12 @@
       "url": "https://github.com/OSGeo/gdal/tree/v3.13.3",
       "description": "Pixels decoded by GDAL 3.13.3 (container ghcr.io/osgeo/gdal@sha256:2dd0f81ef927ff4c3d4dbe4f73c029dc86d4073974c0564f8e196f6e1412e2e0) from GDAL autotest files at commit c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc and from synthetic files written by hexplain-tools tests/gdal/codec_vectors.py; imported by tools/codecs/_import_gdal_vectors.py from core/src/test/resources/gdal-codec-vectors.tsv, gdal-codec-refusals.tsv and gdal-color-*.tsv.",
       "licence": "GDAL autotest data: MIT/X (GDAL LICENSE.TXT and per-file notices); synthetic files CC0-1.0"
+    },
+    {
+      "id": "reference-engine",
+      "url": "https://github.com/geoknoesis/hexplain-tools",
+      "description": "Inputs derived here (tools/codecs/_complete_vectors.py) from this suite's own vectors: truncations, single-byte corruptions, lowered output limits and parameter settings; the category or output of each was confirmed with hexplain-tools 97c952f24508 (hexplain-codec vector) before it was recorded, since no independent implementation of this codec was at hand.",
+      "licence": "inputs as the vectors they derive from; expectations CC0-1.0"
     }
   ],
   "vectors": [
@@ -233,6 +239,61 @@
         }
       ],
       "source": "gdal-3.13.3"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "bands": 3
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "input": {
+            "hex": "52494646640100005745425056503820580100009007009d012a250010003ea5409949a623a2a1354800c014896c009d32847500816a039f034c0378ddf0118076035816f659807eb30efaa1487ac13ab4d571159868263e0000fef17928c86a4491daa39798da87b64cc0f74c3ecb869bbcd9c4c271a58f0d8424bc90b5bf41c70cb7d04787aff68524ab93d91e9a4c7ea11c722703c3bd56c3ce3646458c3eede37dccf3299b7e060855382eda8ace3929892a1716838bdaee3fbfd0f08d9bd377db39f7d511dff585f5113617cd1b1d59c60596d500fa0e7984a5042148880c3e9ebbfdc84ba5036825e6a6a648f5d8a6279c7ef19e014142543f9ef3390b9624b06029cec63c88f64f0ebe1757a3afc53b8cdfc72bc33e3ad6e980506d03be1875a77e3404ba0c3284f7ac5d0bf05c3868b477315a583f6627034f31d29eb2e172657df61a1ecd1601be6292a4c6d6ae64987f040fe3e9f6a6d3fc7fcffcf3ff25dffe3b7fda287f0000"
+          },
+          "maxOutputBytes": 0
+        }
+      ],
+      "source": "reference-engine"
+    },
+    {
+      "id": "truncated",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "bands": 3
+          },
+          "expect": {
+            "error": "Validation"
+          },
+          "input": {
+            "hex": "52494646640100005745425056503820580100009007009d012a250010003ea5409949a623a2a1354800c014896c009d32847500816a039f034c0378ddf0118076035816f659807eb30efaa1487ac13ab4d571159868263e0000fef17928c86a4491daa39798da87b64cc0f74c3ecb869bbcd9c4c271a58f0d8424bc90b5bf41c70cb7d04787aff68524ab93d91e9a4c7ea11c722703c3bd56c3ce3646458c3eede37dccf3299b7e060855382eda8ace3929892a1716"
+          }
+        }
+      ],
+      "source": "reference-engine"
+    },
+    {
+      "id": "animation",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "bands": 3
+          },
+          "expect": {
+            "error": "Unsupported"
+          },
+          "input": {
+            "hex": "524946462400000057454250565038580a00000002000000000000000000414e494d06000000000000000000"
+          }
+        }
+      ],
+      "source": "reference-engine"
     }
   ]
 }

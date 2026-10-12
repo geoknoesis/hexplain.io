@@ -7,6 +7,12 @@
       "url": "https://github.com/zarr-developers/numcodecs",
       "description": "Chunks written by numcodecs 0.16.5 with c-blosc 1.21.7.dev (numpy 2.3.2, Python 3.11.4) through hexplain-tools tests/gdal/zarr_codec_vectors.py (core/src/test/resources/zarr/numcodecs-vectors.json).",
       "licence": "MIT (numcodecs), BSD-3-Clause (c-blosc); data CC0-1.0"
+    },
+    {
+      "id": "reference-engine",
+      "url": "https://github.com/geoknoesis/hexplain-tools",
+      "description": "Inputs derived here (tools/codecs/_complete_vectors.py) from this suite's own vectors: truncations, single-byte corruptions, lowered output limits and parameter settings; the category or output of each was confirmed with hexplain-tools 97c952f24508 (hexplain-codec vector) before it was recorded, since no independent implementation of this codec was at hand.",
+      "licence": "inputs as the vectors they derive from; expectations CC0-1.0"
     }
   ],
   "vectors": [
@@ -69,6 +75,47 @@
         }
       ],
       "source": "numcodecs"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "digits": 2,
+            "dtype": "<f8",
+            "astype": "<f4"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "input": {
+            "hex": "000053c000003bc0008022c000800ac00000e4bf0000b4bf000083bf000026bf000088be0000f03d0000fc3e0000603f0000a03f0000d13f008000400000194000003140008049400000624000007a4000408940004095400080a1400080ad4000c0b94000c0c5400000d2400000de400040ea400080f640"
+          },
+          "maxOutputBytes": 239
+        }
+      ],
+      "source": "reference-engine"
+    },
+    {
+      "id": "truncated",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "digits": 2,
+            "dtype": "<f8",
+            "astype": "<f4"
+          },
+          "expect": {
+            "error": "Validation"
+          },
+          "input": {
+            "hex": "000053c000003bc0008022c000800ac00000e4bf0000b4bf000083bf000026bf000088be0000f03d0000fc3e0000603f0000a03f0000d13f008000400000194000003140008049400000624000007a4000408940004095400080a1400080ad4000c0b94000c0c5400000d2400000de400040ea400080f6"
+          }
+        }
+      ],
+      "source": "reference-engine"
     }
   ]
 }
