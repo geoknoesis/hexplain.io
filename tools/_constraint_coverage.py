@@ -267,7 +267,13 @@ def measure() -> dict[str, Any]:
                     return original_validate(*args, **kwargs)
 
                 pyshacl.validate = tracked_validate
-                runpy.run_path(str(ROOT / source), run_name="__main__")
+                # A gate ends by raising SystemExit(main()); a clean exit must not end this measurement
+                # with it (it once did, silently, leaving the ledger unwritten), and a failure must.
+                try:
+                    runpy.run_path(str(ROOT / source), run_name="__main__")
+                except SystemExit as finished:
+                    if finished.code not in (0, None):
+                        raise RuntimeError(f"{source} failed while being traced: exit {finished.code}") from finished
         finally:
             pyshacl.validate = original_validate
             specgraph.ontologies, specgraph.shapes = original_ontologies, original_shapes
