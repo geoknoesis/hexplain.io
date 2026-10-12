@@ -1,7 +1,15 @@
 """Capability claims must be regenerated from evidence, never asserted by hand."""
+import hashlib
 import json
 
-from _capabilities import COVERAGE, EVIDENCE, ROOT, TARGET, build, digest
+from _capabilities import COVERAGE, EVIDENCE, ROOT, TARGET, build
+
+
+def digest(path):
+    """SHA-256 of the evidence with its line endings normalised to LF first, so a CRLF checkout of a text file
+    (autocrlf, an editor that rewrote it) hashes as the LF file the matrix recorded."""
+    return hashlib.sha256(path.read_bytes().replace(b'\r\n', b'\n').replace(b'\r', b'\n')).hexdigest()
+
 
 published = TARGET.read_text(encoding='utf-8')
 assert published == build(), 'Regenerate specification/capabilities.json from current evidence'
