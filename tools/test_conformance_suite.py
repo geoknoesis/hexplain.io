@@ -6,10 +6,13 @@ sections the pages define, and has exactly one expected artifact; that every des
 rule set and expected graph parses; and that the coverage section of the suite's page is current.
 """
 
+from __future__ import annotations
+
 import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 import rdflib
 
@@ -26,7 +29,7 @@ REQUIRED = ("id", "class", "title", "description", "requirements", "sections")
 MINIMUM_CASES = 150
 
 
-def section_ids(document):
+def section_ids(document: Any) -> Any:
     """The element ids of a page named as a case's section document (`processing`, `hel/index.html`)."""
     path = ROOT / "specification" / (document if "/" in document else f"{document}/index.html")
     if not path.is_file():
@@ -34,7 +37,7 @@ def section_ids(document):
     return set(re.findall(r'\bid="([^"]+)"', path.read_text(encoding="utf-8")))
 
 
-def main():
+def main() -> int:
     problems = []
     wanted = generate_inputs.expected_tree()
     present = generate_inputs.on_disk()

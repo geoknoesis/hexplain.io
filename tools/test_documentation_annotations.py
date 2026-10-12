@@ -18,10 +18,13 @@ annotations):
   * the generated block of every module is Turtle written with prefixed names, not N-Triples.
 """
 
+from __future__ import annotations
+
 import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 from rdflib import RDFS, Graph, Namespace, URIRef
 
@@ -41,7 +44,7 @@ TEMPLATE_NOTES = (
 NTRIPLE = re.compile(r"^<[^>\s]+>\s+<[^>\s]+>\s", re.M)
 
 
-def problems(g):
+def problems(g: Graph) -> Any:
     found = []
     for predicate in PROSE:
         for term, text in g.subject_objects(predicate):
@@ -62,7 +65,7 @@ def problems(g):
     return found
 
 
-def self_test():
+def self_test() -> None:
     g = Graph().parse(
         format="turtle",
         data="""
@@ -76,7 +79,7 @@ def self_test():
     assert NTRIPLE.search('<https://hexplain.io/ns/x#a> <http://www.w3.org/2000/01/rdf-schema#label> "a" .')
 
 
-def main():
+def main() -> int:
     self_test()
     files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
     whole, found = Graph(), []

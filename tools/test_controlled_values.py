@@ -21,6 +21,8 @@ that every skos:Concept lives in a register (idiom C). Values that predate the p
 fit are listed in LEGACY with the reason they are kept; the list may shrink but must not grow.
 """
 
+from __future__ import annotations
+
 import json
 import sys
 from pathlib import Path
@@ -50,7 +52,7 @@ LEGACY = {
 }
 
 
-def main():
+def main() -> None:
     files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
     graphs = {
         f: Graph().parse(data=(ROOT / "specification" / f).read_text(encoding="utf-8"), format="turtle") for f in files

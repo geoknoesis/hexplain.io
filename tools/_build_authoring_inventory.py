@@ -1,6 +1,9 @@
 """Trace private fragments to consumers without creating runtime helper shapes."""
 
+from __future__ import annotations
+
 import json
+from typing import Any
 
 from _expand_specification_patterns import AUTHORING, ROOT, TOKEN, load_catalogs
 from rdflib import Graph, Namespace
@@ -8,7 +11,7 @@ from rdflib import Graph, Namespace
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
 
-def build(check=False):
+def build(check: bool = False) -> Any:
     manifest, patterns, types = load_catalogs()
     consumers = {name: [] for name in patterns}
     modules = []
@@ -42,7 +45,9 @@ def build(check=False):
         for name, row in patterns.items()
     ]
     result = dict(
-        policy="Lexical authoring reuse only. Prefixes resolve in each consumer. Reuse does not assert ontology equivalence or transfer shape targets. Expanded modules retain local activation and need no helper imports.",
+        policy="Lexical authoring reuse only. Prefixes resolve in each consumer. Reuse does not assert ontology "
+        "equivalence or transfer shape targets. Expanded modules retain local activation and need no helper "
+        "imports.",
         patterns=rows,
         modules=modules,
     )

@@ -9,6 +9,8 @@ bddo:ChecksumAlgorithm individual is hexplain:correspondsTo of exactly one regis
 vice versa, and bddo:ChecksumShape accepts exactly those individuals.
 """
 
+from __future__ import annotations
+
 import sys
 from collections import defaultdict
 
@@ -23,7 +25,7 @@ HEX = Namespace("https://hexplain.io/ns/core#")
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
 
-def main():
+def main() -> None:
     g = specgraph.ontologies()
     algorithms = set(g.subjects(RDF.type, BDDO.ChecksumAlgorithm))
     concepts = set(g.subjects(SKOS.inScheme, RCK.ChecksumAlgorithmScheme))

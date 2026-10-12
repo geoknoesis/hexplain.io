@@ -16,7 +16,10 @@ reason property activation is not used. The list is a ratchet: a new class-only 
 the gate until it gains a property target or a stated reason.
 """
 
+from __future__ import annotations
+
 import sys
+from typing import Any
 
 import specgraph
 from rdflib import Graph, Namespace, URIRef
@@ -51,19 +54,34 @@ _BDDO_TYPED = (
     "properties (bddo:hasField, bddo:dataType, sizes, offsets) are shared by several of these "
     "classes, so property activation would apply the wrong shape"
 )
-_LAYOUT_TYPED = "DLV layout nodes and rules are selected by rdf:type through their owning list; the list members carry no distinguishing property"
+_LAYOUT_TYPED = (
+    "DLV layout nodes and rules are selected by rdf:type through their owning list; the list members carry no "
+    "distinguishing property"
+)
 CLASS_ONLY = {
     "https://hexplain.io/ns/archive#ArchiveShape": "an archive's properties are shared with generic packaging metadata",
-    "https://hexplain.io/ns/aspect/bundle#LiftByCarriedAspectRule": "a SHACL rule, not a constraint: it derives facets only for typed assets",
-    "https://hexplain.io/ns/aspect/bundle#RequiredPartsShape": "joins through dcterms:conformsTo, which non-asset resources also use",
+    "https://hexplain.io/ns/aspect/bundle#LiftByCarriedAspectRule": "a SHACL rule, not a constraint: it derives "
+    "facets only for typed assets",
+    "https://hexplain.io/ns/aspect/bundle#RequiredPartsShape": "joins through dcterms:conformsTo, which "
+    "non-asset resources also use",
     "https://hexplain.io/ns/aspect/raster#ArrayDimensionShape": "dimension properties are shared with DLV dimensions",
-    "https://hexplain.io/ns/bddo#CustomCrcShape": "the CRC parameters are also stated, alone, on the named algorithm individuals and in range contracts; an untyped custom CRC already fails bddo:ChecksumShape, whose sh:or admits only the named algorithms or a node typed bddo:CustomCrc",
-    "https://hexplain.io/ns/bddo#DisjointKindsShape": "it checks the types themselves: an untyped node has nothing to contradict",
-    "https://hexplain.io/ns/conf#ParseAttributionTargetShape": "conf:errorCategory and conf:satisfies are shared with conf:Parse findings and constraints; an untyped attribution is checked by conf:UntypedParseAttributionShape, which is activated by conf:errorCategory",
-    "https://hexplain.io/ns/conf#DisjointKindsShape": "it checks the types themselves: an untyped node has nothing to contradict",
-    "https://hexplain.io/ns/core#ClassMappingRuleShape": "hexplain:condition and hexplain:semanticClass are shared with mapping rules",
+    "https://hexplain.io/ns/bddo#CustomCrcShape": "the CRC parameters are also stated, alone, on the named "
+    "algorithm individuals and in range contracts; an "
+    "untyped custom CRC already fails bddo:ChecksumShape, whose sh:or admits only the named algorithms or a node "
+    "typed bddo:CustomCrc",
+    "https://hexplain.io/ns/bddo#DisjointKindsShape": "it checks the types themselves: an untyped node has "
+    "nothing to contradict",
+    "https://hexplain.io/ns/conf#ParseAttributionTargetShape": "conf:errorCategory and conf:satisfies are shared "
+    "with conf:Parse findings and constraints; an "
+    "untyped "
+    "attribution is checked by conf:UntypedParseAttributionShape, which is activated by conf:errorCategory",
+    "https://hexplain.io/ns/conf#DisjointKindsShape": "it checks the types themselves: an untyped node has "
+    "nothing to contradict",
+    "https://hexplain.io/ns/core#ClassMappingRuleShape": "hexplain:condition and hexplain:semanticClass are "
+    "shared with mapping rules",
     "https://hexplain.io/ns/core#MappingRuleShape": "hexplain:condition is shared with class mapping rules",
-    "https://hexplain.io/ns/fn#NativeFunctionShape": "function descriptions are published by this family only, always typed hxf:Function",
+    "https://hexplain.io/ns/fn#NativeFunctionShape": "function descriptions are published by this family only, "
+    "always typed hxf:Function",
     "https://hexplain.io/ns/geo#VectorShape": "vector-dataset properties are shared with the geometry aspect",
     "https://hexplain.io/ns/image#ImageShape": "image-header properties are shared with the raster aspect",
 }
@@ -122,7 +140,7 @@ def _module(term):
     return str(term).rsplit("#", 1)[0]
 
 
-def gaps(g):
+def gaps(g: Graph) -> Any:
     out = []
     for shape in sorted(set(g.subjects(SH.targetSubjectsOf, None))):
         targets = set(g.objects(shape, SH.targetSubjectsOf))
@@ -138,7 +156,7 @@ def gaps(g):
     return out
 
 
-def class_only(g):
+def class_only(g: Graph) -> Any:
     """Class-targeted shapes with no property activation and no stated reason, and stale reasons."""
     out = []
     only = {s for s in set(g.subjects(SH.targetClass, None)) if not any((s, p, None) in g for p in PROPERTY_TARGETS)}
@@ -150,7 +168,7 @@ def class_only(g):
     return out
 
 
-def main():
+def main() -> None:
     self_test = Graph().parse(
         format="turtle",
         data="""

@@ -56,10 +56,13 @@ try:
             page.close()
         page = browser.new_page(viewport={"width": 1440, "height": 1000})
         page.goto(f"http://127.0.0.1:{server.server_port}/", wait_until="networkidle")
-        colors = page.evaluate("""() => {
-            const s=getComputedStyle(document.documentElement);
-            return Object.fromEntries(['--text','--muted','--muted-2','--bg','--bg-2','--surface'].map(k=>[k,s.getPropertyValue(k).trim()]));
-        }""")
+        colors = page.evaluate(
+            "() => {\n"
+            "            const s=getComputedStyle(document.documentElement);\n"
+            "            return "
+            "Object.fromEntries(['--text','--muted','--muted-2','--bg','--bg-2','--surface'].map(k=>[k,s.getPropertyValue(k).trim()]));\n"
+            "        }"
+        )
 
         def luminance(hexcolor):
             values = [int(hexcolor[i : i + 2], 16) / 255 for i in (1, 3, 5)]

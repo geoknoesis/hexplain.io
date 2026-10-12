@@ -7,7 +7,11 @@ constrains its values to a compatible datatype -- activation by subjects-of, so 
 does not depend on the subject having been typed.
 """
 
-from rdflib import OWL, RDF, RDFS, BNode, Namespace, URIRef
+from __future__ import annotations
+
+from typing import Any
+
+from rdflib import OWL, RDF, RDFS, BNode, Graph, Namespace, URIRef
 from rdflib.collection import Collection
 
 SH = Namespace("http://www.w3.org/ns/shacl#")
@@ -36,7 +40,7 @@ INTEGERS = frozenset(
 )
 
 
-def union_members(g, range_):
+def union_members(g: Graph, range_: Any) -> Any:
     """The datatypes a range admits: itself, or the members of an owl:unionOf datatype."""
     if isinstance(range_, BNode):
         head = g.value(range_, OWL.unionOf)
@@ -44,7 +48,7 @@ def union_members(g, range_):
     return [range_]
 
 
-def compatible(range_, g=None):
+def compatible(range_: Any, g: Graph | None = None) -> Any:
     """Datatypes a literal may carry and still be a value of `range_`.
 
     xsd:double and xsd:float are distinct: their value spaces are disjoint, so a range that
@@ -68,7 +72,7 @@ def _members(g, node):
     return list(Collection(g, node)) if node is not None else []
 
 
-def allowed_datatypes(g, shape, seen=frozenset()):
+def allowed_datatypes(g: Graph, shape: URIRef, seen: set[str] = frozenset()) -> Any:
     """The datatypes a shape admits, or None when it does not constrain the datatype."""
     if shape in seen:
         return None
@@ -99,7 +103,7 @@ def allowed_datatypes(g, shape, seen=frozenset()):
     return result
 
 
-def xsd_ranged(g):
+def xsd_ranged(g: Graph) -> list[Any]:
     """(property, range) for every property whose rdfs:range is an XSD datatype, or a union of
     datatypes at least one of which is XSD (asref:footprintWKT: xsd:string or geosparql:wktLiteral)."""
 
@@ -116,7 +120,7 @@ def xsd_ranged(g):
     return sorted(((p, r) for p, r in g.subject_objects(RDFS.range) if ranged(r)), key=lambda x: (str(x[0]), str(x[1])))
 
 
-def problems(g):
+def problems(g: Graph) -> Any:
     """Human-readable gaps; empty when every XSD range is enforced where the property is used."""
     out = []
     for prop, range_ in xsd_ranged(g):

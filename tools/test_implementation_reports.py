@@ -7,6 +7,8 @@ checks the checker on a report built from the suite on disk, then every report p
 specification/conformance/reports/.
 """
 
+from __future__ import annotations
+
 import copy
 import sys
 from pathlib import Path
@@ -16,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "conformance"))
 import report  # noqa: E402
 
 
-def self_test():
+def self_test() -> int:
     cases = report.suite_cases()
     results = [
         {"case": c, "class": cls, "status": "SKIP", "category": None, "detail": "not run"} for c, cls in cases.items()
@@ -39,7 +41,7 @@ def self_test():
     return len(cases)
 
 
-def main():
+def main() -> int:
     n = self_test()
     problems = []
     published = report.published()

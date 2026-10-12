@@ -16,10 +16,13 @@ SPARQL-based constraint binds such variables, so on a property shape the placeho
 literally.
 """
 
+from __future__ import annotations
+
 import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 from rdflib import Graph, Namespace, URIRef
 
@@ -29,7 +32,7 @@ TARGETS = (SH.targetClass, SH.targetSubjectsOf, SH.targetObjectsOf, SH.targetNod
 PLACEHOLDER = re.compile(r"\{[?$][A-Za-z_]\w*\}")
 
 
-def reported(g, pshape, seen=frozenset()):
+def reported(g: Graph, pshape: Any, seen: set[str] = frozenset()) -> bool:
     """True when a validator reports [pshape]'s results with [pshape] as their source shape."""
     if pshape in seen:
         return False
@@ -41,7 +44,7 @@ def reported(g, pshape, seen=frozenset()):
     return False
 
 
-def problems(g, where):
+def problems(g: Graph, where: Any) -> Any:
     found = []
     for pshape in sorted(set(g.objects(None, SH.property)), key=str):
         if not reported(g, pshape):
@@ -60,7 +63,7 @@ def problems(g, where):
     return found
 
 
-def self_test():
+def self_test() -> None:
     g = Graph().parse(
         format="turtle",
         data="""
@@ -75,7 +78,7 @@ def self_test():
     assert len(found) == 2 and "ex:a" in found[0] + found[1] and "placeholder" in found[0] + found[1], found
 
 
-def main():
+def main() -> int:
     self_test()
     files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
     found, total = [], 0

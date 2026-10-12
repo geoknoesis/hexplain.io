@@ -9,9 +9,12 @@ validates each against the conf, req and fn shapes and checks the stored corpus 
 run it with --write after changing a case.
 """
 
+from __future__ import annotations
+
 import base64
 import sys
 from pathlib import Path
+from typing import Any
 
 import specgraph
 from pyshacl import validate
@@ -48,7 +51,7 @@ ex:c2 a conf:Constraint ; conf:scope ex:count ; conf:assertion "self > 0" ;
 NS = {"conf": "https://hexplain.io/ns/conf#", "req": "https://hexplain.io/ns/req#", "hxf": "https://hexplain.io/ns/fn#"}
 
 
-def cases():
+def cases() -> Any:
     rows = []
 
     def add(name, body, ok, path=""):
@@ -90,8 +93,10 @@ def cases():
     # What did a run find, and how did each requirement fare? (findings and run coverage)
     run = (
         REQ + CON + "ex:f1 a conf:Finding ; conf:findingKind conf:Violation ; conf:findingConstraint ex:c1 ; "
-        'conf:findingRequirement ex:r1 ; conf:severity sh:Violation ; conf:findingMessage "Magic is XX." ; conf:focusNode ex:h0 .\n'
-        'ex:f2 a conf:Finding ; conf:findingKind conf:Parse ; conf:errorCategory "Bounds" ; conf:severity sh:Violation ; '
+        'conf:findingRequirement ex:r1 ; conf:severity sh:Violation ; conf:findingMessage "Magic is XX." ; '
+        "conf:focusNode ex:h0 .\n"
+        'ex:f2 a conf:Finding ; conf:findingKind conf:Parse ; conf:errorCategory "Bounds" ; conf:severity '
+        "sh:Violation ; "
         'conf:findingMessage "Truncated at byte 12." .\n'
         "ex:run a conf:Run ; conf:verdict conf:NonConformant ; conf:truncated false ; conf:finding ex:f1 , ex:f2 ; "
         "conf:outcome [ conf:outcomeRequirement ex:r1 ; conf:outcomeValue conf:Evaluated ] , "
@@ -181,7 +186,7 @@ def cases():
     return rows
 
 
-def render(rows):
+def render(rows: list[dict[str, Any]]) -> str:
     lines = [
         "# Conformance, requirement and function competency cases (tools/test_conformance_competency.py --write).",
         "# name\tconforms\texpected-path\tbase64 Turtle",
@@ -191,7 +196,7 @@ def render(rows):
     return "\n".join(lines) + "\n"
 
 
-def main():
+def main() -> None:
     shapes = specgraph.load([str(ROOT / p) for p in SHAPES])
     family = specgraph.ontologies()
     rows = cases()

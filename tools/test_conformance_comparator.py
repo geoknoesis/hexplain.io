@@ -7,10 +7,13 @@ and diagnostic comparison, the report summary, the RDF report embedding, and the
 self-check: every expected artifact of the suite, offered as the actual output, passes its own case.
 """
 
+from __future__ import annotations
+
 import json
 import sys
 import tempfile
 from pathlib import Path
+from typing import Any
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "conformance"))
@@ -25,16 +28,16 @@ PREFIXES = """@prefix bddo: <https://hexplain.io/ns/bddo#> . @prefix hexplain: <
 """
 
 
-def graph(body):
+def graph(body: str) -> Any:
     return compare.load_graph(PREFIXES + body)
 
 
-def check(condition, message, failures):
+def check(condition: Any, message: str, failures: list[Any]) -> None:
     if not condition:
         failures.append(message)
 
 
-def hel_checks(failures):
+def hel_checks(failures: Any) -> None:
     check(
         hel.canonical("Flags&0x01==1 and not(done)") == "((instance.Flags & 1) == 1) and not instance.done",
         "the HEL page's canonical-form example",
@@ -69,7 +72,7 @@ def hel_checks(failures):
     )
 
 
-def tree_checks(failures):
+def tree_checks(failures: Any) -> None:
     check(
         compare.compare_tree({"a": 1, "b": [2.5]}, {"b": [2.5], "a": 1}) == [], "member order does not matter", failures
     )
@@ -84,7 +87,7 @@ def tree_checks(failures):
     )
 
 
-def graph_checks(failures):
+def graph_checks(failures: Any) -> None:
     base = graph(
         'ex:f bddo:size "4"^^xsd:integer ; bddo:hasFixedValue "0A0B"^^xsd:hexBinary ; '
         'bddo:sizeFromExpression "instance.n * 2" .'
@@ -181,7 +184,7 @@ def graph_checks(failures):
     )
 
 
-def other_checks(failures):
+def other_checks(failures: Any) -> None:
     check(
         compare.compare_error({"category": "Bounds"}, {"category": "Bounds"}) == [],
         "an error category matches",
@@ -233,7 +236,8 @@ def other_checks(failures):
     )
     check(compare.compare_report_ttl(expected, actual) == [], "the expected report maps into the actual one", failures)
     two = graph(
-        "<urn:run> a conf:Run ; conf:verdict conf:NonConformant ; conf:truncated false ; conf:finding <urn:f1> , <urn:f2> . "
+        "<urn:run> a conf:Run ; conf:verdict conf:NonConformant ; conf:truncated false ; conf:finding <urn:f1> , "
+        "<urn:f2> . "
         "<urn:f1> conf:findingKind conf:Parse ; conf:errorCategory conf:BoundsError ; conf:findingRequirement ex:R3 . "
         "<urn:f2> conf:findingKind conf:Violation ."
     )
@@ -288,7 +292,7 @@ def other_checks(failures):
     )
 
 
-def self_check(failures):
+def self_check(failures: list[Any]) -> Any:
     """Every expected artifact, offered as the output, passes its own case."""
     n = 0
     with tempfile.TemporaryDirectory() as tmp:
@@ -324,7 +328,7 @@ def self_check(failures):
     return n
 
 
-def main():
+def main() -> int:
     failures = []
     hel_checks(failures)
     tree_checks(failures)

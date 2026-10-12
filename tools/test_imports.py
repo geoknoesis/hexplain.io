@@ -13,11 +13,15 @@ its definition. A file without its own owl:Ontology (a module's separate shapes.
 counted as part of the ontology of the module directory it sits in.
 """
 
+from __future__ import annotations
+
 import json
 import pathlib
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Iterable
+from typing import Any
 
 from rdflib import OWL, RDF, Graph, Literal, URIRef
 
@@ -39,7 +43,7 @@ def _parse(path):
     return text, Graph().parse(data=text, format="turtle")
 
 
-def modules():
+def modules() -> dict[str, Any]:
     """ontology IRI -> (files, graph of those files)."""
     files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
     # A file with its own owl:Ontology is its own module (a separate shapes document such as
@@ -59,7 +63,7 @@ def modules():
     return dict(out)
 
 
-def referenced(entries, namespaces, prefixes):
+def referenced(entries: Iterable[Any], namespaces: Iterable[Any], prefixes: Any) -> Any:
     used = set()
 
     def note(iri):
@@ -86,7 +90,7 @@ def referenced(entries, namespaces, prefixes):
     return used
 
 
-def main():
+def main() -> None:
     mods = modules()
     whole = Graph()
     for entries in mods.values():

@@ -8,21 +8,27 @@ python -m pip install --require-hashes -r requirements.txt
 python tools/run_gates.py --strict
 ```
 
-The runner streams progress, limits each gate, and records `.gate-results/summary.json`.
-`specification/family.json` is the complete ontology/shape inventory. Missing and unlisted
-modules are errors, including for profile consumers. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Python 3.12 is the target (3.11 is the floor). The runner takes its gate list from
+`tools/gates.json`, schedules independent gates concurrently within a memory budget
+(`--jobs`, default the smaller of the CPU count and four), limits each gate, and records
+`.gate-results/summary.json`. A gate reports PASS, SKIP or FAIL by its exit status (0, 77,
+other). `specification/family.json` is the complete ontology/shape inventory. Missing and
+unlisted modules are errors, including for profile consumers. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 This is a prerelease specification. The independent review package is reproducible, but
 independent reviewer acceptance remains distinct from automated tests. Historical archive
-hashes are checked; backwards compatibility with every draft is not promised.
+hashes are checked; backwards compatibility with every draft is not promised. The review
+archive is rebuilt from the tree (`python tools/_review_candidate.py --archive-only`) and
+pinned by the tracked `review-manifest.json` rather than tracked itself.
 
 The intended public origin is `https://hexplain.io`. Local routing can be tested with
-`python tools/_check_local_publication.py` using Docker. This command starts a disposable
-localhost-only Nginx container; it does not deploy the site. Live deployment remains deferred.
+`python tools/run_gates.py --strict --class docker` using Docker. This starts a disposable
+localhost-only Nginx container serving only `specification/`, `releases/` and the root pages;
+it does not deploy the site. Live deployment remains deferred.
 
 For browser acceptance, install `python -m pip install --require-hashes -r requirements-browser.txt`,
 then `python -m playwright install chromium` (the pinned Playwright fetches its own Chromium
-build) and run `python tools/_check_site_browser.py`.
+build) and run `python tools/run_gates.py --strict --class browser`.
 The dedicated site workflow provisions Chromium's Linux system dependencies and retains
 browser screenshots and local publication results.
 

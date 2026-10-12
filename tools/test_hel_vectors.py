@@ -9,11 +9,14 @@ JSON, every context is base64 JSON, every error names a condition the HEL page d
 defines is exercised by at least one row.
 """
 
+from __future__ import annotations
+
 import base64
 import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 VECTORS = ROOT / "specification/validation/test/hel-vectors.tsv"
@@ -22,11 +25,11 @@ HEL = ROOT / "specification/hel/index.html"
 NOT_EXPRESSIBLE = {"forward-reference"}
 
 
-def conditions():
+def conditions() -> Any:
     return re.findall(r'<tr data-condition="([a-z-]+)">', HEL.read_text(encoding="utf-8"))
 
 
-def check(text, defined):
+def check(text: str, defined: Any) -> tuple[Any, ...]:
     problems, used, rows = [], set(), 0
     for number, line in enumerate(text.split("\n"), 1):
         if not line.strip() or line.startswith("#"):
@@ -58,7 +61,7 @@ def check(text, defined):
     return rows, problems
 
 
-def main():
+def main() -> int:
     defined = conditions()
     if len(defined) < 5:
         print(f"FAIL: only {len(defined)} error conditions found in {HEL.relative_to(ROOT).as_posix()}")

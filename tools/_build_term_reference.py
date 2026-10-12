@@ -4,14 +4,19 @@ Run with --enrich once after editorial changes; ordinary regeneration reads cano
 --check verifies the generated sections without modifying files.
 """
 
+from __future__ import annotations
+
 import argparse
 import hashlib
 import json
 import os
 import re
 from collections import defaultdict
+from collections.abc import Iterable
 from functools import cache
 from html import escape as e
+from pathlib import Path
+from typing import Any
 
 from _reference import (
     ANNOTATION_MARKER,
@@ -38,20 +43,68 @@ from rdflib import OWL, RDF, RDFS, BNode, Graph, Literal, URIRef
 
 START = "<!-- BEGIN GENERATED TERM REFERENCE -->"
 END = "<!-- END GENERATED TERM REFERENCE -->"
-GUIDE = """<section id="reading-guide"><h2>How to read a term or shape</h2>
-<dl><dt><b>Identity, label and definition</b></dt><dd>The IRI is the persistent identifier; a label is a human-readable name, not a lookup key. The definition states the meaning. A scope note explains appropriate use without adding a logical axiom. Labels and documentation literals retain their language tags in the RDF.</dd>
-<dt><b>Domain and range are inference axioms</b></dt><dd>An RDFS domain can infer the subject's type; a range can infer the object's type or constrain its datatype interpretation. They do not require a value to be present. Multiple asserted domains or ranges apply together, rather than offering alternatives. An explicit union expression denotes alternatives. Missing axioms are reported as missing, rather than filled in from examples.</dd>
-<dt><b>Shape activation is local</b></dt><dd>Targets select focus nodes for a validation run. A shape without a target may still be applied through another shape or by a caller. Following a property path changes the value nodes being constrained; a nested shape's constraints must be read in that context. Loading the required shapes and vocabulary graph, and choosing an entailment regime, are part of the validation setup.</dd>
-<dt><b>Allowed values and presence are separate</b></dt><dd>A datatype, class or allowed-value list checks values that exist. It does not make the property required. A minimum count of one requires a value; a maximum count of one permits at most one distinct RDF value. RDF graphs do not count duplicate copies of the same triple. Missing count constraints must not be read as zero or one. A non-closed shape does not reject unrelated extra properties merely because they are undocumented.</dd>
-<dt><b>Alternatives and nested cardinalities</b></dt><dd>OR requires at least one conforming branch, XONE exactly one, AND all branches, and NOT rejects conformance to its operand. A count inside a branch applies within that branch, not universally to the property. Qualified counts count values conforming to the qualified shape. Read the whole owning shape before extracting a requirement from one nested clause.</dd>
-<dt><b>Property paths and ordered data</b></dt><dd>An ordered list used as a SHACL path is a sequence of path steps. A list under an allowed-values constraint enumerates permitted values; a list under OR enumerates alternative shapes. RDF list order is meaningful, whereas the order of unrelated triples is not. The expanded reference preserves these distinctions and links reusable named shapes.</dd>
-<dt><b>Constraints and rules</b></dt><dd>SHACL SELECT constraints identify violations. CONSTRUCT rules derive triples and require a processor supporting the applicable SHACL rule extension; their presence is not evidence that a validator runs them. A result's severity belongs to its source shape. Nested property shapes do not inherit a parent shape's severity.</dd>
-<dt><b>Classes, properties and controlled concepts</b></dt><dd>Classes type resources; properties relate subjects to values; SKOS concepts are controlled values. Concept-scheme membership, collection membership, subclassing and logical equivalence are different relations. A related-resource link does not assert equivalence. A format profile maps raw codes to the selected register's concepts.</dd>
-<dt><b>Validation versus implementation support</b></dt><dd>A documented term or passing RDF shape does not establish binary decoder support, mathematical proof, or conformance to every format using that concept. Source files, declared versions and the separate coverage inventory identify the evidence and boundaries.</dd></dl>
-<p>Reference standards: <a href="https://www.w3.org/TR/rdf-schema/">RDF Schema</a>, <a href="https://www.w3.org/TR/shacl/">SHACL</a>, <a href="https://www.w3.org/TR/shacl-af/">SHACL Advanced Features</a>, <a href="https://www.w3.org/TR/skos-reference/">SKOS</a>, and <a href="https://www.w3.org/TR/swbp-vocab-pub/">W3C vocabulary publication guidance</a>.</p></section>"""
-STYLE = """
-.term-reference{max-width:1100px;margin:3rem auto;line-height:1.65}.term-reference .term-toc{display:flex;gap:.5rem 1rem;flex-wrap:wrap}.term-reference article{border:1px solid #c8d9d4;border-radius:8px;padding:1.4rem;margin:1.4rem 0;background:#fff;color:#17333d;scroll-margin-top:2rem}.term-reference h3{margin-top:0}.term-reference .term-iri{overflow-wrap:anywhere;font:13px/1.6 ui-monospace,Consolas,monospace}.term-reference dt{font-weight:700;margin-top:.9rem}.term-reference dd{margin:.2rem 0 .8rem}.term-reference .constraint{border-left:3px solid #dce9e4;padding-left:1rem;margin:.6rem 0}.term-reference .constraint>li{margin:.35rem 0}.term-reference pre{white-space:pre;overflow:auto;font:12px/1.6 ui-monospace,Consolas,monospace;background:#eff4f2;color:#17333d;padding:1rem}.term-reference summary{cursor:pointer;font-weight:650}.term-reference a{color:#006b60}.term-reference .term-kind{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:#47665f}.term-reference .term-note{font-size:.9rem;color:#496259}.term-reference table{width:100%;border-collapse:collapse}.term-reference th,.term-reference td{padding:.5rem;border-bottom:1px solid #dce9e4;text-align:left}.term-reference :focus-visible{outline:3px solid #078779;outline-offset:3px}@media(max-width:650px){.term-reference article{padding:1rem}}@media print{.term-reference article{break-inside:avoid}.term-reference details{display:block}}
-"""
+GUIDE = (
+    '<section id="reading-guide"><h2>How to read a term or shape</h2>\n'
+    "<dl><dt><b>Identity, label and definition</b></dt><dd>The IRI is the persistent identifier; a label is a "
+    "human-readable name, not a lookup key. The definition states the meaning. A scope note explains appropriate use "
+    "without adding a logical axiom. Labels and documentation literals retain their language tags in the RDF.</dd>\n"
+    "<dt><b>Domain and range are inference axioms</b></dt><dd>An RDFS domain can infer the subject's type; a range "
+    "can infer the object's type or constrain its datatype interpretation. They do not require a value to be "
+    "present. Multiple asserted domains or ranges apply together, rather than offering alternatives. An explicit "
+    "union expression denotes alternatives. Missing axioms are reported as missing, rather than filled in from "
+    "examples.</dd>\n"
+    "<dt><b>Shape activation is local</b></dt><dd>Targets select focus nodes for a validation run. A shape without a "
+    "target may still be applied through another shape or by a caller. Following a property path changes the value "
+    "nodes being constrained; a nested shape's constraints must be read in that context. Loading the required shapes "
+    "and vocabulary graph, and choosing an entailment regime, are part of the validation setup.</dd>\n"
+    "<dt><b>Allowed values and presence are separate</b></dt><dd>A datatype, class or allowed-value list checks "
+    "values that exist. It does not make the property required. A minimum count of one requires a value; a maximum "
+    "count of one permits at most one distinct RDF value. RDF graphs do not count duplicate copies of the same "
+    "triple. Missing count constraints must not be read as zero or one. A non-closed shape does not reject unrelated "
+    "extra properties merely because they are undocumented.</dd>\n"
+    "<dt><b>Alternatives and nested cardinalities</b></dt><dd>OR requires at least one conforming branch, XONE "
+    "exactly one, AND all branches, and NOT rejects conformance to its operand. A count inside a branch applies "
+    "within that branch, not universally to the property. Qualified counts count values conforming to the qualified "
+    "shape. Read the whole owning shape before extracting a requirement from one nested clause.</dd>\n"
+    "<dt><b>Property paths and ordered data</b></dt><dd>An ordered list used as a SHACL path is a sequence of path "
+    "steps. A list under an allowed-values constraint enumerates permitted values; a list under OR enumerates "
+    "alternative shapes. RDF list order is meaningful, whereas the order of unrelated triples is not. The expanded "
+    "reference preserves these distinctions and links reusable named shapes.</dd>\n"
+    "<dt><b>Constraints and rules</b></dt><dd>SHACL SELECT constraints identify violations. CONSTRUCT rules derive "
+    "triples and require a processor supporting the applicable SHACL rule extension; their presence is not evidence "
+    "that a validator runs them. A result's severity belongs to its source shape. Nested property shapes do not "
+    "inherit a parent shape's severity.</dd>\n"
+    "<dt><b>Classes, properties and controlled concepts</b></dt><dd>Classes type resources; properties relate "
+    "subjects to values; SKOS concepts are controlled values. Concept-scheme membership, collection membership, "
+    "subclassing and logical equivalence are different relations. A related-resource link does not assert "
+    "equivalence. A format profile maps raw codes to the selected register's concepts.</dd>\n"
+    "<dt><b>Validation versus implementation support</b></dt><dd>A documented term or passing RDF shape does not "
+    "establish binary decoder support, mathematical proof, or conformance to every format using that concept. Source "
+    "files, declared versions and the separate coverage inventory identify the evidence and boundaries.</dd></dl>\n"
+    '<p>Reference standards: <a href="https://www.w3.org/TR/rdf-schema/">RDF Schema</a>, <a '
+    'href="https://www.w3.org/TR/shacl/">SHACL</a>, <a href="https://www.w3.org/TR/shacl-af/">SHACL Advanced '
+    'Features</a>, <a href="https://www.w3.org/TR/skos-reference/">SKOS</a>, and <a '
+    'href="https://www.w3.org/TR/swbp-vocab-pub/">W3C vocabulary publication guidance</a>.</p></section>'
+)
+STYLE = (
+    "\n"
+    ".term-reference{max-width:1100px;margin:3rem auto;line-height:1.65}.term-reference "
+    ".term-toc{display:flex;gap:.5rem 1rem;flex-wrap:wrap}.term-reference article{border:1px solid "
+    "#c8d9d4;border-radius:8px;padding:1.4rem;margin:1.4rem "
+    "0;background:#fff;color:#17333d;scroll-margin-top:2rem}.term-reference h3{margin-top:0}.term-reference "
+    ".term-iri{overflow-wrap:anywhere;font:13px/1.6 ui-monospace,Consolas,monospace}.term-reference "
+    "dt{font-weight:700;margin-top:.9rem}.term-reference dd{margin:.2rem 0 .8rem}.term-reference "
+    ".constraint{border-left:3px solid #dce9e4;padding-left:1rem;margin:.6rem 0}.term-reference "
+    ".constraint>li{margin:.35rem 0}.term-reference pre{white-space:pre;overflow:auto;font:12px/1.6 "
+    "ui-monospace,Consolas,monospace;background:#eff4f2;color:#17333d;padding:1rem}.term-reference "
+    "summary{cursor:pointer;font-weight:650}.term-reference a{color:#006b60}.term-reference "
+    ".term-kind{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:#47665f}.term-reference "
+    ".term-note{font-size:.9rem;color:#496259}.term-reference "
+    "table{width:100%;border-collapse:collapse}.term-reference th,.term-reference td{padding:.5rem;border-bottom:1px "
+    "solid #dce9e4;text-align:left}.term-reference :focus-visible{outline:3px solid "
+    "#078779;outline-offset:3px}@media(max-width:650px){.term-reference article{padding:1rem}}@media "
+    "print{.term-reference article{break-inside:avoid}.term-reference details{display:block}}\n"
+)
 PREDICATES = {
     SH.property: "Property constraint",
     SH.path: "Value path",
@@ -111,7 +164,7 @@ PREDICATES = {
 
 
 @cache
-def file_subjects(path):
+def file_subjects(path: Path) -> set[Any]:
     return set(load([path]).subjects())
 
 
@@ -119,7 +172,7 @@ LOCAL = re.compile(r"[A-Za-z_][A-Za-z0-9_-]*")
 BLOCK_PREFIXES = {"rdfs": str(RDFS), "skos": str(SKOS)}
 
 
-def block_turtle(rows, namespaces):
+def block_turtle(rows: list[dict[str, Any]], namespaces: Any) -> Any:
     """The generated annotations as readable Turtle: prefixed names, one subject per statement.
 
     The block carries its own @prefix lines, so it also parses on its own (the documentation gate
@@ -150,7 +203,7 @@ def block_turtle(rows, namespaces):
     return head + ("\n" if head else "") + "\n".join(statements) + ("\n" if statements else "")
 
 
-def enrich():
+def enrich() -> None:
     edits = []
     for _directory, paths in modules().items():
         g = load(paths, base=True)
@@ -192,7 +245,7 @@ def enrich():
         p.write_text(text, encoding="utf-8", newline="\n")
 
 
-def sortkey(g, node, seen=frozenset()):
+def sortkey(g: Graph, node: URIRef, seen: set[str] = frozenset()) -> str:
     if not isinstance(node, BNode):
         return str(node)
     if node in seen:
@@ -261,7 +314,7 @@ class Renderer:
         return '<ul class="constraint">' + "".join(rows) + "</ul>"
 
 
-def related_shapes(g):
+def related_shapes(g: Graph) -> Any:
     use = defaultdict(set)
     for shape in sorted(set(g.subjects(RDF.type, SH.NodeShape)) | set(g.subjects(RDF.type, SH.PropertyShape)), key=str):
         if not isinstance(shape, URIRef):
@@ -278,7 +331,9 @@ def related_shapes(g):
     return use
 
 
-def reference_section(g, terms, doc, registry, used, existing=""):
+def reference_section(
+    g: Graph, terms: Iterable[Any], doc: Path, registry: Any, used: dict[str, Any], existing: str = ""
+) -> Any:
     render = Renderer(g, registry, doc)
     toc = (
         '<nav class="term-toc" aria-label="Term reference">'
@@ -345,9 +400,11 @@ def reference_section(g, terms, doc, registry, used, existing=""):
                 "RDFS range",
                 render.values(g.objects(t, RDFS.range))
                 or (
-                    "No narrower literal datatype declared; this datatype property carries literal values. Consult the applicable shapes and profile."
+                    "No narrower literal datatype declared; this datatype property carries literal values. "
+                    "Consult the applicable shapes and profile."
                     if k == "Datatype property"
-                    else "No global range declared. Consult the applicable shapes and profile for permitted resources/values."
+                    else "No global range declared. Consult the applicable shapes and profile for permitted "
+                    "resources/values."
                 ),
             )
         else:
@@ -355,7 +412,8 @@ def reference_section(g, terms, doc, registry, used, existing=""):
                 "Domain / range",
                 "Not applicable to this "
                 + e(k.lower())
-                + ". Domain and range describe predicates; the types, relationships and constraints below describe this resource.",
+                + ". Domain and range describe predicates; the types, relationships and constraints below describe "
+                "this resource.",
             )
         for pred, title in [
             (RDFS.subClassOf, "Superclass / class expression"),
@@ -388,25 +446,29 @@ def reference_section(g, terms, doc, registry, used, existing=""):
                 "Shape usage / validation context",
                 render.values(matches)
                 if matches
-                else "No direct named family-shape reference found. This is not a claim that a profile cannot add constraints or reference this term indirectly.",
+                else "No direct named family-shape reference found. This is not a claim that a profile cannot add "
+                "constraints or reference this term indirectly.",
             )
             metadata += row(
                 "Cardinality",
-                "Context-dependent. The linked shapes state minimum/maximum counts at their value paths; no universal cardinality is inferred."
+                "Context-dependent. The linked shapes state minimum/maximum counts at their value paths; no "
+                "universal cardinality is inferred."
                 if matches
                 else "No universal cardinality declared for this term.",
             )
         elif k == "SHACL prefix declarations":
             metadata += row(
                 "Activation / severity",
-                "Not applicable. Prefix declarations supply query namespace bindings; they do not select focus nodes or produce validation results.",
+                "Not applicable. Prefix declarations supply query namespace bindings; they do not select focus "
+                "nodes or produce validation results.",
             )
         else:
             metadata += row("Activation", e(shape_targets(g, t)))
             metadata += row(
                 "Severity",
                 (render.values(g.objects(t, SH.severity)) or "SHACL default: sh:Violation.")
-                + " This applies to results of this shape; nested property shapes have their own severity (default sh:Violation), rather than inheriting it. Rules generate triples instead of validation results.",
+                + " This applies to results of this shape; nested property shapes have their own severity (default "
+                "sh:Violation), rather than inheriting it. Rules generate triples instead of validation results.",
             )
         other = [str(x) for x in g.objects(t, RDFS.comment) if str(x) != str(definition_text)]
         if other:
@@ -425,11 +487,21 @@ def reference_section(g, terms, doc, registry, used, existing=""):
             + "</details>"
         )
         cards.append(
-            f'<article id="term-{e(local(t))}" data-term-iri="{e(str(t))}">{aliases}<div class="term-kind">{e(k)}</div><h3>{e(compact(g, t))} — {e(name)}</h3><p class="term-iri">IRI: <a href="{e(str(t))}">{e(str(t))}</a></p><dl>{metadata}</dl>{declaration}</article>'
+            f'<article id="term-{e(local(t))}" data-term-iri="{e(str(t))}">{aliases}<div '
+            f'class="term-kind">{e(k)}</div><h3>{e(compact(g, t))} — {e(name)}</h3><p class="term-iri">IRI: <a '
+            f'href="{e(str(t))}">{e(str(t))}</a></p><dl>{metadata}</dl>{declaration}</article>'
         )
     return (
         START
-        + f'<style>{STYLE}</style><section class="term-reference" id="term-reference"><h2>Complete term and shape reference</h2><p>{len(terms)} named resources are documented below. Definitions and usage notes come from the canonical RDF; range and validation facts are rendered from its axioms and shapes. RDFS/OWL inference, SHACL validation, and editorial usage guidance are shown separately. Blank-node property shapes and logical alternatives are expanded under their owning named shapes.</p><p>Constraint language follows <a href="https://www.w3.org/TR/shacl/">W3C SHACL</a>; publication and persistent term identifiers follow the <a href="https://www.w3.org/TR/swbp-vocab-pub/">W3C vocabulary publication guidance</a>. Concept definitions and scope notes use <a href="https://www.w3.org/TR/skos-reference/">SKOS documentation properties</a>.</p>'
+        + f'<style>{STYLE}</style><section class="term-reference" id="term-reference"><h2>Complete term and shape '
+        f"reference</h2><p>{len(terms)} named resources are documented below. Definitions and usage notes come "
+        "from the canonical RDF; range and validation facts are rendered from its axioms and shapes. RDFS/OWL "
+        "inference, SHACL validation, and editorial usage guidance are shown separately. Blank-node property "
+        "shapes and logical alternatives are expanded under their owning named shapes.</p><p>Constraint language "
+        'follows <a href="https://www.w3.org/TR/shacl/">W3C SHACL</a>; publication and persistent term '
+        'identifiers follow the <a href="https://www.w3.org/TR/swbp-vocab-pub/">W3C vocabulary publication '
+        "guidance</a>. Concept definitions and scope notes use <a "
+        'href="https://www.w3.org/TR/skos-reference/">SKOS documentation properties</a>.</p>'
         + toc
         + conventions
         + "".join(cards)
@@ -438,7 +510,7 @@ def reference_section(g, terms, doc, registry, used, existing=""):
     )
 
 
-def replace_normative(text, paths):
+def replace_normative(text: str, paths: Any) -> Any:
     source = "\n".join((ROOT / p).read_text(encoding="utf-8").rstrip() for p in paths) + "\n"
     section = (
         '<section id="normative-owl"><h2>Canonical vocabulary and shapes</h2><pre class="nohighlight">'
@@ -452,12 +524,13 @@ def replace_normative(text, paths):
 
 
 LEAD = re.compile(
-    r'(<header><a href="[^"]*">Specification family</a><h1>)(.*?)(</h1><p>)(.*?)(</p><p>Unofficial working specification\.)',
+    '(<header><a href="[^"]*">Specification family</a><h1>)(.*?)(</h1><p>)(.*?)(</p><p>Unofficial working '
+    "specification\\.)",
     re.S,
 )
 
 
-def lead_text(module_graph):
+def lead_text(module_graph: Graph) -> tuple[Any, ...]:
     """The page lead: the first paragraph of the module ontology's rdfs:comment."""
     ontology = next(iter(sorted(module_graph.subjects(RDF.type, OWL.Ontology), key=lambda o: len(str(o)))), None)
     comment = (
@@ -468,7 +541,7 @@ def lead_text(module_graph):
     return label(module_graph, ontology) if ontology else "", comment.replace("\r\n", "\n").split("\n\n")[0].strip()
 
 
-def refresh_lead(text, module_graph):
+def refresh_lead(text: str, module_graph: Any) -> Any:
     """Generated module pages restate the ontology's label and comment; keep them equal."""
     title, lead = lead_text(module_graph)
     if not title:
@@ -476,7 +549,7 @@ def refresh_lead(text, module_graph):
     return LEAD.sub(lambda m: m[1] + e(title) + m[3] + e(lead) + m[5], text, count=1)
 
 
-def build(check=False):
+def build(check: bool = False) -> Any:
     file_subjects.cache_clear()
     mods = modules()
     g = load([p for paths in mods.values() for p in paths])
@@ -503,12 +576,25 @@ def build(check=False):
                 module_graph.value(ontology, RDFS.comment) or module_graph.value(ontology, SKOS.definition) or ""
             )
             rootlink = os.path.relpath(ROOT / "specification/index.html", doc.parent).replace("\\", "/")
-            text = f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(title)} — Hexplain specification</title><style>body{{font:16px/1.65 system-ui,sans-serif;margin:2rem auto;padding:0 1.5rem;max-width:1120px;color:#17333d}}pre{{overflow:auto}}a{{color:#006b60}}</style></head><body><header><a href="{rootlink}">Specification family</a><h1>{e(title)}</h1><p>{e(intro)}</p><p>Unofficial working specification. The namespace and version metadata below identify the vocabulary; documentation does not certify an implementation.</p></header></body></html>'
+            text = (
+                '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" '
+                f'content="width=device-width,initial-scale=1"><title>{e(title)} — Hexplain '
+                f"specification</title><style>body{{font:16px/1.65 system-ui,sans-serif;margin:2rem auto;padding:0 "
+                "1.5rem;max-width:1120px;color:#17333d}pre{overflow:auto}a{color:#006b60}</style></head><body>"
+                "<header><a "
+                f'href="{rootlink}">Specification family</a><h1>{e(title)}</h1><p>{e(intro)}</p><p>Unofficial working '
+                "specification. The namespace and version metadata below identify the vocabulary; documentation does "
+                "not certify an implementation.</p></header></body></html>"
+            )
         without = re.sub(re.escape(START) + ".*?" + re.escape(END), "", text, flags=re.S)
         without = refresh_lead(without, module_graph)
         without = re.sub(r'<nav id="ontology-reference-navigation".*?</nav>', "", without, flags=re.S)
         catalog = os.path.relpath(ROOT / "specification/reference/index.html", doc.parent).replace("\\", "/")
-        navigation = f'<nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a href="#term-reference">Complete reference: {len(terms)} terms and shapes</a> · <a href="{catalog}">All vocabularies and reading guide</a></p></nav>'
+        navigation = (
+            '<nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a '
+            f'href="#term-reference">Complete reference: {len(terms)} terms and shapes</a> · <a href="{catalog}">All '
+            "vocabularies and reading guide</a></p></nav>"
+        )
         without = re.sub(r"(<body\b[^>]*>)", lambda m: m[0] + navigation, without, count=1)
         if not re.search(r'<meta\s+name=["\']viewport["\']', without, re.I):
             without = without.replace(
@@ -546,11 +632,27 @@ def build(check=False):
         out.mkdir(exist_ok=True)
         (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
         links = "".join(
-            f'<li><a href="{os.path.relpath(ROOT / m["page"], out).replace(chr(92), "/")}">{e(m["module"].removeprefix("specification/"))}</a> — {m["terms"]} terms, {m["shapes"]} named shapes</li>'
+            f'<li><a href="{os.path.relpath(ROOT / m["page"], out).replace(chr(92), "/")}">'
+            f"{e(m['module'].removeprefix('specification/'))}</a> — {m['terms']} terms, {m['shapes']} named shapes</li>"
             for m in manifest
         )
         (out / "index.html").write_text(
-            f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hexplain complete ontology reference</title><style>body{{font:17px/1.7 system-ui;margin:3rem auto;max-width:1000px;padding:0 24px;color:#17333d}}a{{color:#006b60}}li{{margin:8px 0}}dt{{margin-top:1rem}}dd{{margin:.2rem 0 1rem}}:focus-visible{{outline:3px solid #078779;outline-offset:3px}}</style></head><body><a href="../index.html">Specification family</a><h1>Complete ontology and shape reference</h1><p>{sum(m["terms"] for m in manifest)} named resources across {len(manifest)} modules, including {sum(m["shapes"] for m in manifest)} named shapes. Each entry includes its label, IRI, definition, usage scope, type, declared range or an explicit explanation of its absence, relationships, and validation context. Shape entries expand their value paths, alternatives, cardinalities, messages and executable queries.</p><p><a href="../validation/index.html">Validation and pinned snapshots</a> | <a href="#reading-guide">How to read terms and constraints</a> · <a href="manifest.json">Machine-readable documentation manifest</a></p><ul>{links}</ul>{GUIDE}<p>Definitions and scope notes are canonical RDF annotations. Human-readable pages are generated from that RDF. Imported terms link to their owning module; namespace reuse does not imply ownership.</p></body></html>',
+            '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" '
+            'content="width=device-width,initial-scale=1"><title>Hexplain complete ontology '
+            f"reference</title><style>body{{font:17px/1.7 system-ui;margin:3rem auto;max-width:1000px;padding:0 "
+            f"24px;color:#17333d}}a{{color:#006b60}}li{{margin:8px 0}}dt{{margin-top:1rem}}dd{{margin:.2rem 0 "
+            f"1rem}}:focus-visible{{outline:3px solid #078779;outline-offset:3px}}</style></head><body><a "
+            'href="../index.html">Specification family</a><h1>Complete ontology and shape '
+            f"reference</h1><p>{sum(m['terms'] for m in manifest)} named resources across {len(manifest)} "
+            f"modules, including {sum(m['shapes'] for m in manifest)} named shapes. Each entry includes its "
+            "label, IRI, definition, usage scope, type, declared range or an explicit explanation of its "
+            "absence, relationships, and validation context. Shape entries expand their value paths, "
+            "alternatives, cardinalities, messages and executable queries.</p><p><a "
+            'href="../validation/index.html">Validation and pinned snapshots</a> | <a href="#reading-guide">How '
+            'to read terms and constraints</a> · <a href="manifest.json">Machine-readable documentation '
+            f"manifest</a></p><ul>{links}</ul>{GUIDE}<p>Definitions and scope notes are canonical RDF "
+            "annotations. Human-readable pages are generated from that RDF. Imported terms link to their owning "
+            "module; namespace reuse does not imply ownership.</p></body></html>",
             encoding="utf-8",
             newline="\n",
         )

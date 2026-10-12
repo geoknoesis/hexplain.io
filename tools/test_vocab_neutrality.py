@@ -32,12 +32,16 @@ convenience at the time and as coupling a year later, so each is checked here:
 Profiles are deliberately NOT checked: a profile describing NITF is supposed to say NITF.
 """
 
+from __future__ import annotations
+
 import glob
 import pathlib
 import re
 import sys
+from typing import Any
 
 import rdflib
+from rdflib import Graph
 
 SKOS = rdflib.Namespace("http://www.w3.org/2004/02/skos/core#")
 REGISTER_NS = "https://hexplain.io/ns/register/"
@@ -45,7 +49,7 @@ ASPECT_NS = "https://hexplain.io/ns/aspect/"
 
 
 #: Vocabularies that must be format-neutral: the three foundations plus every aspect.
-def normative_files():
+def normative_files() -> Any:
     return ["specification/bddo/bddo.ttl", "specification/dlv/dlv.ttl", "specification/hexplain/core.ttl"] + sorted(
         glob.glob("specification/aspect/*/*.ttl")
     )
@@ -170,12 +174,12 @@ EXEMPT = {
 }
 
 
-def words(local_name):
+def words(local_name: Any) -> set[Any]:
     """camelCase / PascalCase / kebab split, lowercased."""
     return {w.lower() for w in re.findall(r"[A-Z]+(?![a-z])|[A-Z][a-z]*|[a-z]+|\d+", local_name)}
 
 
-def local_names(graph, ontology_iri):
+def local_names(graph: Graph, ontology_iri: Any) -> Any:
     out = set()
     for node in set(graph.subjects()):
         if isinstance(node, rdflib.URIRef) and str(node).startswith(ontology_iri + "#"):
@@ -183,7 +187,7 @@ def local_names(graph, ontology_iri):
     return out
 
 
-def main():
+def main() -> int:
     problems = []
     checked_terms = 0
 

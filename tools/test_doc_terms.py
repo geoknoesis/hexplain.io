@@ -16,10 +16,13 @@ Only the Hexplain namespaces are checked. External CURIEs (dcterms:, skos:, prov
 someone else's vocabulary and not ours to verify.
 """
 
+from __future__ import annotations
+
 import glob
 import pathlib
 import re
 import sys
+from typing import Any
 
 import rdflib
 
@@ -71,7 +74,7 @@ SKIP_DOCS = {"specification/review.html"}
 PRE = re.compile(r'<pre class="nohighlight">.*?</pre>', re.S)
 
 
-def defined_terms():
+def defined_terms() -> Any:
     """Every subject IRI declared anywhere in the specification, excluding fixtures."""
     out = set()
     for path in glob.glob("specification/**/*.ttl", recursive=True):
@@ -87,7 +90,7 @@ def defined_terms():
     return out
 
 
-def main():
+def main() -> int:
     # A CURIE inside a longer absolute IRI is not a prose vocabulary reference.
     # In particular, urn:hexplain:security-example:Marked is not hexplain:security.
     def names(text, prefix):

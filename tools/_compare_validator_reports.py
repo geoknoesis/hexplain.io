@@ -1,5 +1,7 @@
 """Compare normalized Jena/pySHACL diagnostics for the frozen layout/security corpus."""
 
+from __future__ import annotations
+
 import argparse
 import base64
 import hashlib
@@ -8,6 +10,7 @@ from collections import Counter
 from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
+from typing import Any
 
 from pyshacl import validate
 from rdflib import BNode, Graph, Namespace
@@ -20,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 COMPARED = (SH.focusNode, SH.resultPath, SH.sourceConstraintComponent, SH.resultSeverity, SH.value)
 
 
-def normalize(graph):
+def normalize(graph: Graph) -> tuple[Any, ...]:
     """Multiset of comparable diagnostic fields, plus the unresolvable source-shape count.
 
     sh:sourceShape is usually a blank node in the shapes graph, and the exported Jena
@@ -50,7 +53,7 @@ def normalize(graph):
     return Counter(rows), anonymous_shapes
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("reports", type=Path)
     parser.add_argument("--output", type=Path, required=True)
@@ -62,7 +65,9 @@ def main():
         versions={name: version(name) for name in ("rdflib", "pyshacl")},
         inputs={},
         cases=[],
-        scope="Top-level diagnostic multiset over focus node, result path, constraint component, severity, value term and named source shape; counts blank-node source shapes and nested detail asymmetry without comparing nested structure or engine-authored messages",
+        scope="Top-level diagnostic multiset over focus node, result path, constraint component, severity, value term "
+        "and named source shape; counts blank-node source shapes and nested detail asymmetry without comparing "
+        "nested structure or engine-authored messages",
     )
 
     def save():
@@ -84,7 +89,7 @@ def main():
     print(f"PASS: {len(evidence['cases'])} cross-validator diagnostic comparisons")
 
 
-def compare(args, evidence):
+def compare(args: argparse.Namespace, evidence: dict[str, Any]) -> None:
     cases = evidence["cases"]
     for suite, shapes in {
         "layout": [

@@ -9,9 +9,12 @@ the dcterms:creator its attribution names, and it requires the two repository no
 and to say that per-file and RDF declarations are not overridden.
 """
 
+from __future__ import annotations
+
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 from rdflib import OWL, RDF, Graph, Namespace, URIRef
 
@@ -21,7 +24,7 @@ CC_BY = URIRef("https://creativecommons.org/licenses/by/4.0/")
 CREATOR = URIRef("https://geoknoesis.com")
 
 
-def problems(g, where):
+def problems(g: Graph, where: Any) -> Any:
     found = []
     ontologies = list(g.subjects(RDF.type, OWL.Ontology))
     if not ontologies:
@@ -40,7 +43,7 @@ def problems(g, where):
     return found
 
 
-def self_test():
+def self_test() -> None:
     bare = Graph().parse(format="turtle", data="<urn:o> a <http://www.w3.org/2002/07/owl#Ontology> .")
     assert len(problems(bare, "probe")) == 2, problems(bare, "probe")
     good = Graph().parse(
@@ -51,7 +54,7 @@ def self_test():
     assert not problems(good, "probe")
 
 
-def main():
+def main() -> int:
     self_test()
     files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
     found = []

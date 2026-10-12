@@ -5,6 +5,8 @@ silently change meaning: a registered requirement whose text changes, or whose a
 disappears, must be named in CHANGELOG.md (see tools/_requirement_ids.py).
 """
 
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -13,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _requirement_ids as ids  # noqa: E402
 
 
-def self_test():
+def self_test() -> None:
     entry = {
         "page": "specification/processing/index.html",
         "section": "x",

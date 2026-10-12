@@ -10,6 +10,8 @@ The negative fixtures under specification/*/test/range-*-invalid.ttl prove the c
 reject the values that used to pass.
 """
 
+from __future__ import annotations
+
 import sys
 
 import specgraph
@@ -35,7 +37,7 @@ def _self_test():
     assert any(p.startswith("https://example.org/wrong") and "incompatible" in p for p in found), found
 
 
-def main():
+def main() -> None:
     _self_test()
     g = specgraph.ontologies()
     found = problems(g)

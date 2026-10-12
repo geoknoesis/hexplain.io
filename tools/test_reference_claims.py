@@ -19,11 +19,14 @@ This gate checks the specification side:
     defines, and the note states the same version.
 """
 
+from __future__ import annotations
+
 import html
 import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 from rdflib import Graph, URIRef
 
@@ -41,13 +44,13 @@ MINIMUM_LIMITS = {
 MINIMUM_CODECS = {"Store", "Deflate", "Zlib", "Gzip", "Delta"}
 
 
-def split_list(text):
+def split_list(text: str) -> set[Any]:
     text = html.unescape(re.sub(r"<[^>]+>", "", text))
     parts = re.split(r",\s*|\s+and\s+", text)
     return {p.strip() for p in parts if p.strip()}
 
 
-def main():
+def main() -> None:
     claims = json.loads((ROOT / "specification/reference-engine-claims.json").read_text(encoding="utf-8"))
     page = (ROOT / "specification/processing/index.html").read_text(encoding="utf-8")
     failures = []

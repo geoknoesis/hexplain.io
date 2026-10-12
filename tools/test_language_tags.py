@@ -8,10 +8,13 @@ skos:historyNote, skos:changeNote and skos:example of every family term are now 
 skos:notation and sh:message are not prose annotations and are not checked.
 """
 
+from __future__ import annotations
+
 import sys
+from typing import Any
 
 import specgraph
-from rdflib import RDFS, Literal, Namespace, URIRef
+from rdflib import RDFS, Graph, Literal, Namespace, URIRef
 
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 PROSE = (
@@ -29,7 +32,7 @@ PROSE = (
 HX = "https://hexplain.io/ns/"
 
 
-def problems(g):
+def problems(g: Graph) -> list[Any]:
     found = []
     for predicate in PROSE:
         for term, value in g.subject_objects(predicate):
@@ -43,7 +46,7 @@ def problems(g):
     return sorted(found)
 
 
-def self_test():
+def self_test() -> None:
     from rdflib import Graph
 
     g = Graph().parse(
@@ -55,7 +58,7 @@ def self_test():
     assert len(problems(g)) == 2, problems(g)
 
 
-def main():
+def main() -> int:
     self_test()
     g = specgraph.ontologies()
     found = problems(g)

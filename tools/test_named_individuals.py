@@ -11,16 +11,19 @@ Names are not checked: existing individuals keep their published IRIs whatever t
 specification/ontology-design (Naming) states the convention for new ones.
 """
 
+from __future__ import annotations
+
 import sys
+from typing import Any
 
 import specgraph
-from rdflib import OWL, RDF, Namespace, URIRef
+from rdflib import OWL, RDF, Graph, Namespace, URIRef
 
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 HX = "https://hexplain.io/ns/"
 
 
-def problems(g):
+def problems(g: Graph) -> list[Any]:
     classes = {c for c in g.subjects(RDF.type, OWL.Class) if str(c).startswith(HX)}
     found = set()
     for term, cls in g.subject_objects(RDF.type):
@@ -35,7 +38,7 @@ def problems(g):
     return sorted(found)
 
 
-def self_test():
+def self_test() -> None:
     from rdflib import Graph
 
     g = Graph().parse(
@@ -48,7 +51,7 @@ def self_test():
     assert problems(g) == [f"{HX}x#i is typed {HX}x#C but not declared owl:NamedIndividual"], problems(g)
 
 
-def main():
+def main() -> int:
     self_test()
     g = specgraph.ontologies()
     found = problems(g)

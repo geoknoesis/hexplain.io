@@ -6,12 +6,15 @@ the one nobody measured. `_gate_runner` samples it; this turns the raw record in
 reviewer reads, and refuses to summarise a run that did not finish.
 """
 
+from __future__ import annotations
+
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 
-def summarise(path):
+def summarise(path: Path) -> dict[str, Any]:
     path = Path(path)
     try:
         record = json.loads(path.read_text(encoding="utf-8"))
@@ -36,7 +39,7 @@ def summarise(path):
     )
 
 
-def render(summary, top=10):
+def render(summary: dict[str, Any], top: int = 10) -> str:
     mib = 1024 * 1024
     lines = [
         f"{summary['gates']} gates, {summary['status']}, {summary['counts']}",

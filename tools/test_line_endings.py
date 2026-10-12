@@ -10,6 +10,8 @@ committed with CRLF. Fix a stale checkout with `git rm --cached -r -q . && git r
 (after committing your work) or by deleting and re-checking out the listed files.
 """
 
+from __future__ import annotations
+
 import subprocess
 import sys
 from pathlib import Path
@@ -17,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def main():
+def main() -> None:
     out = subprocess.run(
         ["git", "ls-files", "--eol"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True
     ).stdout

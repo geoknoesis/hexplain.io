@@ -1,12 +1,16 @@
 """Load the complete, versioned specification family; missing files fail closed."""
 
+from __future__ import annotations
+
 import json
+from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 from rdflib import Graph
 
 
-def family_paths(root, manifest=None):
+def family_paths(root: Path, manifest: Path | None = None) -> list[Any]:
     root = Path(root).resolve()
     manifest = Path(manifest) if manifest else root / "family.json"
     contract = json.loads(manifest.read_text(encoding="utf-8"))
@@ -20,12 +24,13 @@ def family_paths(root, manifest=None):
     )
     if files != sorted(set(files)) or files != discovered:
         raise ValueError(
-            f"Specification family inventory differs: missing={set(files) - set(discovered)}, unlisted={set(discovered) - set(files)}"
+            f"Specification family inventory differs: missing={set(files) - set(discovered)}, "
+            f"unlisted={set(discovered) - set(files)}"
         )
     return [str(root / name) for name in files]
 
 
-def load(paths):
+def load(paths: Iterable[Any]) -> Any:
     graph = Graph()
     for path in paths:
         graph.parse(data=Path(path).read_text(encoding="utf-8"), format="turtle")

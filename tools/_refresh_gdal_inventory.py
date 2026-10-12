@@ -1,32 +1,38 @@
 """Explicit online refresh; ordinary CI validates the saved inventory offline."""
 
+from __future__ import annotations
+
+import concurrent.futures
 import hashlib
 import json
+import re
 import urllib.parse
 import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 families = {
-    "grid": "GTiff COG BMP ENVI EHdr ISCE PNM PAux MFF MFF2 SAGA ERS EIR ROI RRASTER KRO LAN BYN BT ACE2 GSB GTX NTv2 NWT_GRD GSC IDA IGNFHeightASCIIGrid SNODAS GenBin DOQ1 DOQ2 DTED DIPEx USGSDEM LCP",
+    "grid": "GTiff COG BMP ENVI EHdr ISCE PNM PAux MFF MFF2 SAGA ERS EIR ROI RRASTER KRO LAN BYN BT ACE2 GSB GTX NTv2 "
+    "NWT_GRD GSC IDA IGNFHeightASCIIGrid SNODAS GenBin DOQ1 DOQ2 DTED DIPEx USGSDEM LCP",
     "hierarchical-array": "HDF4 HDF5 netCDF Zarr BAG KEA TileDB HFA",
     "segmented-imagery": "NITF RPFTOC ADRG ECRGTOC CEOS SAR_CEOS AIRSAR COASP COSAR CPG CPHD",
     "manifest-bundle": "PDS PDS4 ISIS2 ISIS3 VICAR DIMAP SAFE SENTINEL2 RS2 RCM TSX TIL STACIT STACTA",
-    "encoded-image": "PNG JPEG GIF BIGGIF WEBP JP2OpenJPEG JP2KAK JP2ECW JP2MrSID JPEG2000 JXL AVIF HEIF GTiff COG BASISU KTX2 DDS EXR GRIB",
+    "encoded-image": "PNG JPEG GIF BIGGIF WEBP JP2OpenJPEG JP2KAK JP2ECW JP2MrSID JPEG2000 JXL AVIF HEIF GTiff "
+    "COG BASISU KTX2 "
+    "DDS EXR GRIB",
     "indexed-container": "GPKG SQLite MBTiles Rasterlite Rasterlite2 OpenFileGDB FileGDB PGeo PMTiles",
-    "vector-records": "ESRI Shapefile|FlatGeobuf|Arrow|Parquet|MVT|OSM|S57|DGN|DXF|CAD|DWG|MapInfo File|AVCBin|GPSBabel|Selafin",
+    "vector-records": "ESRI Shapefile|FlatGeobuf|Arrow|Parquet|MVT|OSM|S57|DGN|DXF|CAD|DWG|MapInfo "
+    "File|AVCBin|GPSBabel|Selafin",
     "tree-document": "GeoJSON GeoJSONSeq ESRIJSON TopoJSON JSONFG GML GMLAS KML LIBKML GPX GeoRSS ODS XLSX",
 }
 
 
-def family_names(v):
+def family_names(v: str) -> Any:
     return v.split("|") if "|" in v else v.split()
 
 
 # Pin a released documentation version; never silently mix a moving stable index with master.
-import concurrent.futures
-import re
-
 revision = "v3.13.3"
 base = f"https://raw.githubusercontent.com/OSGeo/gdal/{revision}/doc/source/drivers/"
 sources = []
@@ -40,7 +46,7 @@ for kind in ["raster", "vector"]:
     jobs.extend((kind, page) for page in pages)
 
 
-def read_page(job):
+def read_page(job: Any) -> dict[str, Any]:
     kind, page = job
     url = base + kind + "/" + page + ".rst"
     raw = urllib.request.urlopen(url, timeout=60).read()
@@ -74,7 +80,9 @@ out.write_text(
         {
             "gdal_release": revision,
             "retrieved_utc": datetime.now(UTC).isoformat(),
-            "scope": "Released documentation pages, not unique binary formats or certified support. Multiple drivers may share a page. Family tags are planning inferences; an empty list means unassessed.",
+            "scope": "Released documentation pages, not unique binary formats or certified support. Multiple "
+            "drivers may "
+            "share a page. Family tags are planning inferences; an empty list means unassessed.",
             "sources": sources,
             "drivers": drivers,
         },

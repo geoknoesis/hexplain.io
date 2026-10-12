@@ -2,32 +2,40 @@
 
 from _build_simplification_guide import build
 
-assert build(check=True) == 35
-print("PASS: shared processing overview and all 35 preset rows match their catalogs")
 
-import hashlib
-from html import escape
+def main() -> int:
+    assert build(check=True) == 35
+    print("PASS: shared processing overview and all 35 preset rows match their catalogs")
 
-from _reference import ROOT, SKOS, load, local, modules, owned
+    import hashlib
+    from html import escape
 
-links = 0
-for directory, paths in modules().items():
-    g = load(paths)
-    page = (ROOT / directory / "index.html").read_text(encoding="utf-8")
-    for term in owned(g):
-        if g.value(term, SKOS.scopeNote) is None:
-            continue  # only terms with a note of their own carry one
-        scope = str(g.value(term, SKOS.scopeNote))
-        anchor = "scope-" + hashlib.sha256(scope.encode()).hexdigest()[:16]
-        start = page.index('id="term-' + escape(local(term)) + '"')
-        card = page[start : page.index("</article>", start)]
-        if 'href="#' + anchor + '"' in card:
-            assert page.count('id="' + anchor + '"') == 1
-            target = page.index('id="' + anchor + '"')
-            assert escape(scope) in page[target : page.index("</dd>", target)]
-            links += 1
-        else:
-            assert escape(scope) in card, term
-print(
-    f"PASS: {links} shared scope links resolve to exact visible canonical notes; every other note is shown on its card"
-)
+    from _reference import ROOT, SKOS, load, local, modules, owned
+
+    links = 0
+    for directory, paths in modules().items():
+        g = load(paths)
+        page = (ROOT / directory / "index.html").read_text(encoding="utf-8")
+        for term in owned(g):
+            if g.value(term, SKOS.scopeNote) is None:
+                continue  # only terms with a note of their own carry one
+            scope = str(g.value(term, SKOS.scopeNote))
+            anchor = "scope-" + hashlib.sha256(scope.encode()).hexdigest()[:16]
+            start = page.index('id="term-' + escape(local(term)) + '"')
+            card = page[start : page.index("</article>", start)]
+            if 'href="#' + anchor + '"' in card:
+                assert page.count('id="' + anchor + '"') == 1
+                target = page.index('id="' + anchor + '"')
+                assert escape(scope) in page[target : page.index("</dd>", target)]
+                links += 1
+            else:
+                assert escape(scope) in card, term
+    print(
+        f"PASS: {links} shared scope links resolve to exact visible canonical notes; every other note is shown on "
+        "its card"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -14,11 +14,15 @@ violation fails, and so does a listed one that no longer occurs or that spreads 
 not listed.
 """
 
+from __future__ import annotations
+
 import json
 import sys
 import zipfile
 from collections import defaultdict
+from collections.abc import Iterable, Iterator
 from pathlib import Path
+from typing import Any
 
 import specgraph
 from rdflib import OWL, RDF, Graph, URIRef
@@ -34,7 +38,7 @@ KNOWN_VIOLATIONS = {
 }
 
 
-def snapshot_graphs():
+def snapshot_graphs() -> Iterator[Any]:
     """(release, path, graph) for every Turtle file of every snapshot."""
     for manifest_path in sorted(RELEASES.glob("*/manifest.json")):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -45,12 +49,12 @@ def snapshot_graphs():
                     yield manifest["releaseId"], item["path"], Graph().parse(data=data, format="turtle")
 
 
-def working_graphs():
+def working_graphs() -> Iterator[Any]:
     for path in specgraph.ontology_paths():
         yield "working tree", path, Graph().parse(data=(ROOT / path).read_text(encoding="utf-8"), format="turtle")
 
 
-def versions(sources):
+def versions(sources: Iterable[Any]) -> Any:
     """version IRI -> [(where, path, graph)]"""
     out = defaultdict(list)
     for where, path, g in sources:
@@ -61,13 +65,13 @@ def versions(sources):
     return out
 
 
-def differing(entries):
+def differing(entries: Any) -> set[Any]:
     """The places whose graph differs from the first place's (the earliest snapshot)."""
     first = to_isomorphic(entries[0][2])
     return {where for where, _, g in entries[1:] if not isomorphic(first, g)}
 
 
-def check(by_version, known):
+def check(by_version: dict[str, Any], known: dict[str, Any]) -> Any:
     problems, seen = [], set()
     for version, entries in sorted(by_version.items()):
         diff = differing(entries)
@@ -93,7 +97,7 @@ def check(by_version, known):
     return problems
 
 
-def self_test():
+def self_test() -> None:
     a = Graph().parse(
         format="turtle",
         data="<urn:o> a <http://www.w3.org/2002/07/owl#Ontology> ; "
@@ -140,13 +144,13 @@ def _git(*args):
         return None
 
 
-def snapshot_commit(release):
+def snapshot_commit(release: Any) -> Any:
     """The commit that added the snapshot's manifest, or None without git history."""
     out = _git("log", "--diff-filter=A", "--format=%H", "--", f"releases/{release}/manifest.json")
     return out.decode().split()[-1] if out and out.split() else None
 
 
-def lineage():
+def lineage() -> dict[str, Any]:
     """Snapshots with their commits, and every module's versions in the order they were frozen."""
     snapshots, modules = [], defaultdict(dict)
     for manifest_path in sorted(RELEASES.glob("*/manifest.json")):
@@ -191,13 +195,16 @@ def lineage():
         out[ontology] = chain
     return {
         "schemaVersion": 1,
-        "description": "Snapshots with the commit that added each, and every module version in the order the snapshots froze it; priorVersion is the stated owl:priorVersion, corrected where releases/ERRATA.md says so. Versions with unreleased true are in the working tree only.",
+        "description": "Snapshots with the commit that added each, and every module version in the order the "
+        "snapshots froze "
+        "it; priorVersion is the stated owl:priorVersion, corrected where releases/ERRATA.md says so. Versions "
+        "with unreleased true are in the working tree only.",
         "snapshots": snapshots,
         "modules": out,
     }
 
 
-def check_lineage(write):
+def check_lineage(write: Any) -> Any:
     computed = lineage()
     expected = json.dumps(computed, indent=1, ensure_ascii=False) + "\n"
     if write:
@@ -236,7 +243,7 @@ def check_lineage(write):
     return problems
 
 
-def main():
+def main() -> int:
     self_test()
     if not (ROOT / ERRATA).is_file():
         print(f"FAIL: {ERRATA} is missing; it records the known violations")

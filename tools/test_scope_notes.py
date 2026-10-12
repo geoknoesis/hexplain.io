@@ -10,12 +10,15 @@ This gate checks each claim a template can make against the family graph, and th
 whose terms have notes of their own (core, conf, req, bundle) carry no module sentence on a term.
 """
 
+from __future__ import annotations
+
 import sys
 from collections import Counter
+from typing import Any
 
 import specgraph
 from _reference import PATH_NOTE, SCOPE, SH, SKOS, SUBCLASS_NOTE, TERM_SCOPED, kind
-from rdflib import OWL, RDF, RDFS, URIRef
+from rdflib import OWL, RDF, RDFS, Graph, URIRef
 
 CLAIMS = {
     "subclass links below": lambda g, t: (t, RDFS.subClassOf, None) in g or (None, RDFS.subClassOf, t) in g,
@@ -37,7 +40,7 @@ CLAIMS = {
 }
 
 
-def problems(g):
+def problems(g: Graph) -> Any:
     found = []
     for t, note in g.subject_objects(SKOS.scopeNote):
         if not isinstance(t, URIRef) or not str(t).startswith("https://hexplain.io/ns/"):
@@ -52,22 +55,22 @@ def problems(g):
     return found
 
 
-def self_test():
+def self_test() -> None:
     from rdflib import Graph
 
     g = Graph().parse(
         format="turtle",
-        data=f"""
-        @prefix owl: <http://www.w3.org/2002/07/owl#> . @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-        @prefix sh: <http://www.w3.org/ns/shacl#> .
-        <https://hexplain.io/ns/x#C> a owl:Class ; skos:scopeNote "Assert this class on a resource.{SUBCLASS_NOTE}" .
-        <https://hexplain.io/ns/x#p> a owl:ObjectProperty ; skos:scopeNote "Use it as a predicate.{PATH_NOTE}" .
-        <https://hexplain.io/ns/x#S> a sh:NodeShape ; sh:target [ ] ; skos:scopeNote "Validation activation: No automatic target." .""",
+        data="\n        @prefix owl: <http://www.w3.org/2002/07/owl#> . @prefix skos: "
+        "<http://www.w3.org/2004/02/skos/core#> .\n        @prefix sh: <http://www.w3.org/ns/shacl#> .\n        "
+        '<https://hexplain.io/ns/x#C> a owl:Class ; skos:scopeNote "Assert this class on a '
+        f'resource.{SUBCLASS_NOTE}" .\n        <https://hexplain.io/ns/x#p> a owl:ObjectProperty ; '
+        f'skos:scopeNote "Use it as a predicate.{PATH_NOTE}" .\n        <https://hexplain.io/ns/x#S> a '
+        'sh:NodeShape ; sh:target [ ] ; skos:scopeNote "Validation activation: No automatic target." .',
     )
     assert len(problems(g)) == 3, problems(g)
 
 
-def main():
+def main() -> int:
     self_test()
     g = specgraph.ontologies()
     found = problems(g)

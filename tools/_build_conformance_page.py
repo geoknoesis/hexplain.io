@@ -8,11 +8,14 @@ covered when at least one case cites its ID. Run after regenerating the suite:
     python tools/_build_conformance_page.py --check    # exit 1 when it is stale
 """
 
+from __future__ import annotations
+
 import html
 import json
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SUITE = ROOT / "specification/conformance"
@@ -44,7 +47,7 @@ PAGE_LINKS = {
 }
 
 
-def manifests():
+def manifests() -> Any:
     out = []
     for cls in CASE_CLASSES:
         for path in sorted((SUITE / cls).glob("*/manifest.json")):
@@ -52,7 +55,7 @@ def manifests():
     return out
 
 
-def registry():
+def registry() -> Any:
     return json.loads((SUITE / "requirements.json").read_text(encoding="utf-8"))["requirements"]
 
 
@@ -102,18 +105,19 @@ NOT_SUITE_TESTABLE = {
     "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the "
     "condition is asserted by the HEL vectors (validation/test/hel-vectors.tsv, "
     "req-hel-conformance-9).",
-    "req-hdl-modules-3": "The import bounds are the compiler's own; a case would need an imported file larger than every "
+    "req-hdl-modules-3": "The import bounds are the compiler's own; a case would need an imported file larger "
+    "than every "
     "conforming compiler's bound, and no size is.",
 }
 
 
-def counted(entry, rid):
+def counted(entry: dict[str, Any], rid: Any) -> bool:
     """Whether a requirement counts toward coverage: live, not blanket, and binding a processor (a requirement whose
     registry audience is description binds only the author of a description, which no processor case can observe)."""
     return not entry.get("withdrawn") and rid not in BLANKET and entry.get("audience", "processor") != "description"
 
 
-def coverage():
+def coverage() -> dict[str, Any]:
     reqs = {i: e for i, e in registry().items() if counted(e, i)}
     cases = manifests()
     citing = defaultdict(list)
@@ -162,7 +166,7 @@ def coverage():
     }
 
 
-def published_reports():
+def published_reports() -> Any:
     """The implementation reports under specification/conformance/reports/, summarised for the page."""
     out = []
     for path in sorted((SUITE / "reports").glob("*/*.json")):
@@ -181,11 +185,11 @@ def published_reports():
     return out
 
 
-def percent(covered, total):
+def percent(covered: Any, total: Any) -> Any:
     return f"{100 * covered / total:.0f}%" if total else "&ndash;"
 
 
-def render(data):
+def render(data: dict[str, Any]) -> str:
     reqs = {i: e for i, e in registry().items() if not e.get("withdrawn")}
     total_cases = sum(data["cases"].values())
     rows = "".join(f"<tr><td>{c}</td><td>{n}</td></tr>" for c, n in data["cases"].items())
@@ -288,12 +292,12 @@ def render(data):
     return "\n".join(parts)
 
 
-def expected_page(source):
+def expected_page(source: str) -> Any:
     start, end = source.index(BEGIN), source.index(END) + len(END)
     return source[:start] + render(coverage()) + source[end:]
 
 
-def main(argv):
+def main(argv: list[str] | None) -> int:
     source = PAGE.read_text(encoding="utf-8")
     page = expected_page(source)
     data = json.dumps(coverage(), indent=1, ensure_ascii=False) + "\n"

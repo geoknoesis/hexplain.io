@@ -15,10 +15,14 @@ requires, for every vocabulary module (a shapes document claims no prefix of its
   * the ontology-design page listing every row.
 """
 
+from __future__ import annotations
+
 import json
 import sys
+from collections.abc import Iterable
 from html import escape
 from pathlib import Path
+from typing import Any
 
 from rdflib import OWL, RDF, Graph, Namespace
 
@@ -27,7 +31,7 @@ VANN = Namespace("http://purl.org/vocab/vann/")
 PAGE = ROOT / "specification/ontology-design/index.html"
 
 
-def declared(files):
+def declared(files: Iterable[Any]) -> Any:
     """(file, ontology, prefix, namespace) for every module that claims a prefix."""
     out = []
     for rel in files:
@@ -42,7 +46,7 @@ def declared(files):
     return out
 
 
-def problems(rows, modules, page):
+def problems(rows: list[dict[str, Any]], modules: Iterable[Any], page: Path) -> Any:
     found = []
     for key in ("prefix", "namespace", "ontology"):
         values = [r[key] for r in rows]
@@ -70,7 +74,7 @@ def problems(rows, modules, page):
     return found
 
 
-def self_test():
+def self_test() -> None:
     rows = [
         dict(prefix="x", namespace="urn:x#", ontology="urn:x", directory="x", file="x/x.ttl"),
         dict(prefix="x", namespace="urn:y#", ontology="urn:y", directory="y", file="y/y.ttl"),
@@ -80,7 +84,7 @@ def self_test():
     assert any("prefix x appears" in f for f in found) and any("y/y.ttl: declares" in f for f in found), found
 
 
-def main():
+def main() -> int:
     self_test()
     family = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))
     rows = family.get("namespaces")

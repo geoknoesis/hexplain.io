@@ -8,6 +8,8 @@ transposed polynomial or a flipped reflection flag cannot stand in the ontology 
 checks the model itself against zlib's CRC-32 and that every named CRC is listed.
 """
 
+from __future__ import annotations
+
 import sys
 import zlib
 from pathlib import Path
@@ -22,7 +24,7 @@ BDDO = Namespace("https://hexplain.io/ns/bddo#")
 PARAMETERS = ("crcWidth", "crcPolynomial", "crcInit", "crcReflectIn", "crcReflectOut", "crcXorOut", "crcCheck")
 
 
-def main():
+def main() -> int:
     failures = []
     # The model is the one zlib implements for CRC-32/ISO-HDLC.
     for sample in (b"", b"123456789", bytes(range(256))):

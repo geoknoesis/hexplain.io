@@ -14,10 +14,14 @@ The same rules are shapes of the core vocabulary (hexplain:RegisterStatusShape,
 hexplain:RegisterLifecycleShape), so a register published elsewhere is checked by SHACL alone.
 """
 
+from __future__ import annotations
+
 import json
 import sys
 import zipfile
+from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 from rdflib import OWL, RDF, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection
@@ -30,16 +34,16 @@ RETIRED = {HEX.statusDeprecated, HEX.statusSuperseded}
 STATUSES = RETIRED | {HEX.statusValid}
 
 
-def register_files():
+def register_files() -> list[Any]:
     files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
     return [f"specification/{f}" for f in files if f.startswith("register/")]
 
 
-def is_true(value):
+def is_true(value: str) -> bool:
     return isinstance(value, Literal) and value.toPython() is True
 
 
-def check(path, g, failures):
+def check(path: Path, g: Graph, failures: list[Any]) -> Any:
     ontologies = set(g.subjects(RDF.type, OWL.Ontology))
     for s in set(g.subjects(OWL.versionInfo)) - ontologies:
         failures.append(f"{path}: {s} carries its own owl:versionInfo; only the register ontology is versioned")
@@ -87,7 +91,7 @@ def check(path, g, failures):
     return defined
 
 
-def snapshot_terms(paths):
+def snapshot_terms(paths: Iterable[Any]) -> tuple[Any, ...]:
     """Register IRIs defined by the newest pinned snapshot that contains these files."""
     manifests = sorted((ROOT / "releases").glob("*/manifest.json"))
     if not manifests:
@@ -122,7 +126,7 @@ def _self_test():
         assert any(needle in f for f in found), (needle, found)
 
 
-def main():
+def main() -> None:
     _self_test()
     failures = []
     paths = register_files()

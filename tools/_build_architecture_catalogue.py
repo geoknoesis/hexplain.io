@@ -11,9 +11,12 @@ Rows for aspects without a module (hx-style, hx-descriptive, ...) are left as wr
     python tools/_build_architecture_catalogue.py --check  # fail if the page is stale
 """
 
+from __future__ import annotations
+
 import argparse
 import re
 import sys
+from typing import Any
 
 from _reference import ROOT, kind, load, local
 from rdflib import OWL, Literal, URIRef
@@ -23,7 +26,7 @@ ROW = re.compile(r"<tr><td><code>hx-([a-z]+)</code> ✓</td>(.*?)</tr>")
 TABLE = re.compile(r'<table class="simple">\s*<thead><tr>(.*?)</tr></thead>(.*?)</table>', re.S)
 
 
-def module_terms(name):
+def module_terms(name: str) -> Any:
     path = ROOT / f"specification/aspect/{name}/{name}.ttl"
     if not path.exists():
         return None
@@ -45,7 +48,7 @@ def module_terms(name):
     return [local(t) for t in terms], imports
 
 
-def render(text):
+def render(text: str) -> Any:
     def table(m):
         headers = re.findall(r"<th>(.*?)</th>", m.group(1))
         body = m.group(2)
@@ -70,7 +73,7 @@ def render(text):
     return TABLE.sub(table, text)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()

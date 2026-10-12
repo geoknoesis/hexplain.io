@@ -4,12 +4,16 @@ pySHACL evaluation tracing is diagnostic evidence; conformance and report paths
 are still checked against the independently retained corpus expectations.
 """
 
+from __future__ import annotations
+
 import base64
 import hashlib
 import json
 import runpy
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
 import pyshacl
 import specgraph
@@ -24,14 +28,14 @@ SH = Namespace("http://www.w3.org/ns/shacl#")
 TARGETS = [SH.targetClass, SH.targetNode, SH.targetSubjectsOf, SH.targetObjectsOf]
 
 
-def two_sided(row):
+def two_sided(row: dict[str, Any]) -> bool:
     # Zero is an actual cardinality input: maxCount 0 cannot pass on nonempty values.
     # Empty datatype/class/node checks still provide no positive value witness.
     cardinality = row["component"] in {str(SH.MinCountConstraintComponent), str(SH.MaxCountConstraintComponent)}
     return bool(row["failed"] and (row["passed"] or (cardinality and row["empty_value_passes"])))
 
 
-def canonical(path):
+def canonical(path: str) -> Any:
     # Read as text and give every file the same repo-relative base: a CRLF working
     # copy otherwise alters multi-line literal content, and a filesystem base URI
     # would vary by checkout location. Both make measured evidence machine-bound.
@@ -47,7 +51,7 @@ def canonical(path):
     return g
 
 
-def stable_value(g, value, depth=0):
+def stable_value(g: Graph, value: str, depth: int = 0) -> str:
     """Identify a parameter value by content.
 
     Canonical blank-node labels are rdflib run identities, not content: recording
@@ -63,7 +67,7 @@ def stable_value(g, value, depth=0):
     return "bnode:" + hashlib.sha256(json.dumps(parts).encode()).hexdigest()
 
 
-def inventory():
+def inventory() -> tuple[Any, ...]:
     graphs = {p: canonical(p) for p in specgraph.ontology_paths()}
     p = "specification/validation/test/security-profile.ttl"
     graphs[p] = canonical(p)
@@ -109,7 +113,7 @@ def inventory():
 
 
 @contextmanager
-def trace(rows, current):
+def trace(rows: list[dict[str, Any]], current: Any) -> Iterator[Any]:
     originals = []
     for cls in ALL_CONSTRAINT_COMPONENTS:
         original = cls.evaluate
@@ -135,7 +139,7 @@ def trace(rows, current):
             cls.evaluate = original
 
 
-def measure():
+def measure() -> dict[str, Any]:
     graphs, rows = inventory()
     family = Graph()
     for p, g in graphs.items():
@@ -245,9 +249,13 @@ def measure():
         procedural = ["tools/test_geospatial_model.py", "tools/test_video_math.py", "tools/test_numeric_boundaries.py"]
         original_validate = pyshacl.validate
         original_ontologies, original_shapes = specgraph.ontologies, specgraph.shapes
+        original_shapes_of = specgraph.shapes_of
         try:
             specgraph.ontologies = lambda extra=(): Graph() + family + specgraph.load(extra)
             specgraph.shapes = lambda: Graph() + family
+            # A gate that selects modules gets their canonical graphs, so traced shape identities match
+            # the inventory's (a fresh parse would give property shapes other blank-node labels).
+            specgraph.shapes_of = lambda files: sum((graphs[f] for f in files), Graph())
             for source in procedural:
                 invocation = [0]
 
@@ -263,6 +271,7 @@ def measure():
         finally:
             pyshacl.validate = original_validate
             specgraph.ontologies, specgraph.shapes = original_ontologies, original_shapes
+            specgraph.shapes_of = original_shapes_of
     result = []
     for row in rows.values():
         for field in ["passed", "failed", "empty_value_passes"]:
@@ -277,7 +286,11 @@ def measure():
         | {"specification/validation/test/family-contracts.json"}
     )
     return dict(
-        scope="Integrated pySHACL component evaluations in current shared corpora, vocabulary fixtures and procedural geospatial/video/numeric gates. Nested branch failures may occur within conforming graphs; two-sided evaluation is not independent semantic review or proof that each parameter is necessary. Empty-value passes are recorded separately and count as positive evidence only for cardinality components, where zero is a meaningful input. Rules and custom targets are not constraint components.",
+        scope="Integrated pySHACL component evaluations in current shared corpora, vocabulary fixtures and procedural "
+        "geospatial/video/numeric gates. Nested branch failures may occur within conforming graphs; two-sided "
+        "evaluation is not independent semantic review or proof that each parameter is necessary. Empty-value "
+        "passes are recorded separately and count as positive evidence only for cardinality components, where "
+        "zero is a meaningful input. Rules and custom targets are not constraint components.",
         validator=pyshacl.__version__,
         corpus_hashes={
             p: hashlib.sha256((ROOT / p).read_text(encoding="utf-8").encode()).hexdigest() for p in corpus_paths
@@ -294,7 +307,7 @@ def measure():
     )
 
 
-def extend_family():
+def extend_family() -> Any:
     """Reuse evidence only for byte-identical inputs and append-only authored cases."""
     from _family_contract_cases import cases as authored_cases
     from rdflib.compare import isomorphic

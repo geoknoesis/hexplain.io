@@ -23,11 +23,19 @@ good = [
     "v:frameCount 0",
     "v:frameRateNumerator 30000 ; v:frameRateDenominator 1001",
 ]
-for expected, cases in [(False, bad), (True, good)]:
-    for case in cases:
-        data = specgraph.ontologies()
-        data.parse(data=prefix + "<urn:video> " + case + " .", format="turtle")
-        result = validate(data, shacl_graph=specgraph.shapes(), advanced=True)
-        assert result[0] == expected, (case, result[2])
-assert "specification/vdv/video.ttl" in specgraph.ontology_paths()
-print("PASS: 15 video numeric/rational cases through the family validator")
+
+
+def main() -> int:
+    for expected, cases in [(False, bad), (True, good)]:
+        for case in cases:
+            data = specgraph.ontologies()
+            data.parse(data=prefix + "<urn:video> " + case + " .", format="turtle")
+            result = validate(data, shacl_graph=specgraph.shapes(), advanced=True)
+            assert result[0] == expected, (case, result[2])
+    assert "specification/vdv/video.ttl" in specgraph.ontology_paths()
+    print("PASS: 15 video numeric/rational cases through the family validator")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

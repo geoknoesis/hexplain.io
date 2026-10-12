@@ -7,9 +7,13 @@ rather than an oversight, and the quantity contracts below pin the few numbers
 that several pages restate about one shared source.
 """
 
+from __future__ import annotations
+
 import html
 import json
 import re
+from pathlib import Path
+from typing import Any
 
 from _site_inventory import ROOT, pages
 
@@ -22,24 +26,24 @@ LAYOUT_CORPUS = ROOT / "specification/validation/test/layout-competency.tsv"
 HISTORICAL_MARKERS = ("historical", "superseded")
 
 
-def visible_text(page):
+def visible_text(page: Path) -> Any:
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", page.read_text(encoding="utf-8"))))
 
 
-def review_resources():
+def review_resources() -> Any:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))["resources"]
 
 
-def review_modules():
+def review_modules() -> Any:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))["modules"]
 
 
-def layout_cases():
+def layout_cases() -> Any:
     lines = LAYOUT_CORPUS.read_text(encoding="utf-8").splitlines()
     return sum(1 for line in lines if line.strip() and not line.startswith("#"))
 
 
-def vocabulary_modules():
+def vocabulary_modules() -> Any:
     """Family modules other than the shapes documents of conf and req (the homepage said "16+")."""
     files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
     return sum(1 for f in files if not f.endswith("/shapes.ttl"))
@@ -54,15 +58,15 @@ QUANTITIES = {
 }
 
 
-def registry():
+def registry() -> Any:
     return json.loads(REGISTRY.read_text(encoding="utf-8"))
 
 
-def registered_pages():
+def registered_pages() -> dict[str, Any]:
     return {p: entry for p, entry in registry()["pages"].items()}
 
 
-def problems():
+def problems() -> Any:
     """Every registration and quantity mismatch, as reportable strings."""
     found = []
     declared = registered_pages()

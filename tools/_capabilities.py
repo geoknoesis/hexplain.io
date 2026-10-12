@@ -11,6 +11,8 @@ are never referenced by a competency case is described and constrained but not e
 and that distinction is the point of the matrix.
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 from collections import defaultdict
@@ -26,16 +28,16 @@ COMPETENCY = ROOT / "specification/validation/competency-trace.json"
 EVIDENCE = (REFERENCE, COVERAGE, COMPETENCY)
 
 
-def digest(path):
+def digest(path: Path) -> str:
     return hashlib.sha256(path.read_text(encoding="utf-8").encode("utf-8")).hexdigest()
 
 
-def module_of(source):
+def module_of(source: str) -> str:
     """Owning module directory of a specification source path."""
     return str(Path(source).parent).replace("\\", "/")
 
 
-def build():
+def build() -> str:
     reference = json.loads(REFERENCE.read_text(encoding="utf-8"))
     coverage = json.loads(COVERAGE.read_text(encoding="utf-8"))
     competency = json.loads(COMPETENCY.read_text(encoding="utf-8"))

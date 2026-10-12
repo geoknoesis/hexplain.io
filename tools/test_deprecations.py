@@ -7,16 +7,19 @@ deprecated -- or, where no single term replaces it, explain in a skos:historyNot
 and what a description should do.
 """
 
+from __future__ import annotations
+
 import sys
+from typing import Any
 
 import specgraph
-from rdflib import OWL, Literal, Namespace, URIRef
+from rdflib import OWL, Graph, Literal, Namespace, URIRef
 
 DCTERMS = Namespace("http://purl.org/dc/terms/")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 
 
-def problems(g):
+def problems(g: Graph) -> Any:
     found = []
     for term in sorted(set(g.subjects(OWL.deprecated, Literal(True))), key=str):
         if not isinstance(term, URIRef) or not str(term).startswith("https://hexplain.io/ns/"):
@@ -37,7 +40,7 @@ def problems(g):
     return found
 
 
-def self_test():
+def self_test() -> None:
     from rdflib import Graph
 
     g = Graph().parse(
@@ -54,7 +57,7 @@ def self_test():
     assert len(found) == 2 and any("x#a" in f for f in found) and any("x#e" in f for f in found), found
 
 
-def main():
+def main() -> int:
     self_test()
     g = specgraph.ontologies()
     found = problems(g)

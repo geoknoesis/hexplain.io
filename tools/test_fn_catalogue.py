@@ -6,10 +6,13 @@ asref:PixelCenter. The table is now rendered from each hxf:Function's kind, sign
 and rdfs:comment, and this gate fails when the page differs. Run with --write to regenerate.
 """
 
+from __future__ import annotations
+
 import html
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 from rdflib import RDF, RDFS, Graph, Namespace, URIRef
 
@@ -19,11 +22,11 @@ HXF = Namespace("https://hexplain.io/ns/fn#")
 SECTION = re.compile(r'<section id="catalogue">.*?</section>', re.S)
 
 
-def curie(g, term):
+def curie(g: Graph, term: URIRef) -> Any:
     return g.namespace_manager.normalizeUri(term) if isinstance(term, URIRef) else str(term)
 
 
-def render():
+def render() -> str:
     g = Graph().parse(data=(ROOT / "specification/fn/fn.ttl").read_text(encoding="utf-8"), format="turtle")
     functions = [f for f in g.subjects(RDF.type, HXF.Function)]
     # Catalogue order: by layer, then as the vocabulary declares them (source order is not kept
@@ -35,7 +38,8 @@ def render():
         kind = str(g.value(f, HXF.kind)).split("#")[-1]
         reads = ", ".join(sorted(curie(g, r) for r in g.objects(f, HXF.reads))) or "&#8212;"
         rows.append(
-            f"<tr><td><code>{curie(g, f)}</code></td><td>{kind}</td><td><code>{html.escape(str(g.value(f, HXF.signature)))}</code></td>"
+            f"<tr><td><code>{curie(g, f)}</code></td><td>{kind}</td>"
+            f"<td><code>{html.escape(str(g.value(f, HXF.signature)))}</code></td>"
             f"<td>{reads}</td><td>{html.escape(str(g.value(f, RDFS.comment)), quote=False)}</td></tr>"
         )
     return (
@@ -50,7 +54,7 @@ def render():
     )
 
 
-def main():
+def main() -> int:
     text = PAGE.read_text(encoding="utf-8")
     expected = SECTION.sub(lambda m: render(), text, count=1)
     if "--write" in sys.argv:

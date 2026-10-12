@@ -4,31 +4,34 @@ The normative prefix comes from a template; the editorial annotation suffix stay
 owned by the existing term-documentation generator. Default mode checks only.
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import re
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 AUTHORING = ROOT / "authoring/specification"
 TOKEN = re.compile(r"\{\{(constraint|datatype):([a-zA-Z0-9_]+)\}\}")
 
 
-def load_catalogs():
+def load_catalogs() -> tuple[Any, ...]:
     return tuple(
         json.loads((AUTHORING / p).read_text(encoding="utf-8"))
         for p in ["manifest.json", "constraint-patterns.json", "primitive-types.json"]
     )
 
 
-def within(root, relative):
+def within(root: Path, relative: Any) -> Any:
     path = (root / relative).resolve()
     if not path.is_relative_to(root.resolve()):
         raise ValueError(f"Path outside authoring workspace: {relative}")
     return path
 
 
-def render(template, constraints, datatypes):
+def render(template: Any, constraints: Any, datatypes: dict[str, Any]) -> Any:
     def expand(match):
         kind, name = match.groups()
         if kind == "constraint":
@@ -52,7 +55,7 @@ def render(template, constraints, datatypes):
     return expanded
 
 
-def outputs():
+def outputs() -> Any:
     manifest, constraints, datatypes = load_catalogs()
     result = {}
     for target, source in manifest["templates"].items():
@@ -73,7 +76,7 @@ def outputs():
     return result
 
 
-def run(write=False):
+def run(write: bool = False) -> tuple[Any, ...]:
     rendered = outputs()  # Resolve every input before writing any output.
     changed = [p for p, text in rendered.items() if p.read_text(encoding="utf-8") != text]
     if changed and not write:
