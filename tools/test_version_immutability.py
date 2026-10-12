@@ -13,16 +13,16 @@ and the erratum that records them (releases/ERRATA.md). The list may only shrink
 violation fails, and so does a listed one that no longer occurs or that spreads to a snapshot
 not listed.
 """
+
 import json
 import sys
 import zipfile
 from collections import defaultdict
 from pathlib import Path
 
+import specgraph
 from rdflib import OWL, RDF, Graph, URIRef
 from rdflib.compare import isomorphic, to_isomorphic
-
-import specgraph
 
 ROOT = Path(__file__).resolve().parents[1]
 RELEASES = ROOT / "releases"
@@ -75,13 +75,17 @@ def check(by_version, known):
             continue
         snapshots = {w for w in diff if w != "working tree"}
         if "working tree" in diff:
-            problems.append(f"{version}: the working tree changes the content of a version a snapshot froze "
-                            f"({entries[0][0]}); give the module a new owl:versionIRI and owl:priorVersion")
+            problems.append(
+                f"{version}: the working tree changes the content of a version a snapshot froze "
+                f"({entries[0][0]}); give the module a new owl:versionIRI and owl:priorVersion"
+            )
         if snapshots:
             allowed, erratum = known.get(version, (set(), None))
             if snapshots != allowed:
-                problems.append(f"{version}: snapshots {sorted(snapshots)} freeze content different from "
-                                f"{entries[0][0]}" + (f" (the erratum lists {sorted(allowed)})" if erratum else ""))
+                problems.append(
+                    f"{version}: snapshots {sorted(snapshots)} freeze content different from "
+                    f"{entries[0][0]}" + (f" (the erratum lists {sorted(allowed)})" if erratum else "")
+                )
             seen.add(version)
     for version in known:
         if version not in seen:
@@ -90,12 +94,21 @@ def check(by_version, known):
 
 
 def self_test():
-    a = Graph().parse(format="turtle", data="<urn:o> a <http://www.w3.org/2002/07/owl#Ontology> ; "
-                      "<http://www.w3.org/2002/07/owl#versionIRI> <urn:o/1> . <urn:t> <urn:p> 1 .")
-    b = Graph().parse(format="turtle", data="# another comment\n<urn:o> a <http://www.w3.org/2002/07/owl#Ontology> ;\n"
-                      "   <http://www.w3.org/2002/07/owl#versionIRI> <urn:o/1> .\n<urn:t> <urn:p> 1 .")
-    c = Graph().parse(format="turtle", data="<urn:o> a <http://www.w3.org/2002/07/owl#Ontology> ; "
-                      "<http://www.w3.org/2002/07/owl#versionIRI> <urn:o/1> . <urn:t> <urn:p> 2 .")
+    a = Graph().parse(
+        format="turtle",
+        data="<urn:o> a <http://www.w3.org/2002/07/owl#Ontology> ; "
+        "<http://www.w3.org/2002/07/owl#versionIRI> <urn:o/1> . <urn:t> <urn:p> 1 .",
+    )
+    b = Graph().parse(
+        format="turtle",
+        data="# another comment\n<urn:o> a <http://www.w3.org/2002/07/owl#Ontology> ;\n"
+        "   <http://www.w3.org/2002/07/owl#versionIRI> <urn:o/1> .\n<urn:t> <urn:p> 1 .",
+    )
+    c = Graph().parse(
+        format="turtle",
+        data="<urn:o> a <http://www.w3.org/2002/07/owl#Ontology> ; "
+        "<http://www.w3.org/2002/07/owl#versionIRI> <urn:o/1> . <urn:t> <urn:p> 2 .",
+    )
     assert not check(versions([("s1", "x", a), ("s2", "x", b)]), {}), "comments and layout changed the verdict"
     assert check(versions([("s1", "x", a), ("s2", "x", c)]), {}), "changed content under one version IRI passed"
     assert check(versions([("s1", "x", a), ("working tree", "x", c)]), {}), "an unversioned working-tree change passed"
@@ -120,6 +133,7 @@ CORRECTED_PRIORS = {
 
 def _git(*args):
     import subprocess
+
     try:
         return subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, check=True).stdout
     except (OSError, subprocess.CalledProcessError):
@@ -144,16 +158,27 @@ def lineage():
             version = g.value(ontology, OWL.versionIRI)
             if not isinstance(version, URIRef):
                 continue
-            entry = modules[str(ontology)].setdefault(str(version), {
-                "versionIri": str(version), "versionInfo": str(g.value(ontology, OWL.versionInfo) or ""),
-                "statedPriorVersion": str(g.value(ontology, OWL.priorVersion) or "") or None, "snapshots": []})
+            entry = modules[str(ontology)].setdefault(
+                str(version),
+                {
+                    "versionIri": str(version),
+                    "versionInfo": str(g.value(ontology, OWL.versionInfo) or ""),
+                    "statedPriorVersion": str(g.value(ontology, OWL.priorVersion) or "") or None,
+                    "snapshots": [],
+                },
+            )
             if where != "working tree" and where not in entry["snapshots"]:
                 entry["snapshots"].append(where)
     out = {}
     for ontology, versions_ in sorted(modules.items()):
         chain, previous = [], None
-        for version in sorted(versions_.values(), key=lambda v: (v["snapshots"][0] if v["snapshots"] else "~",
-                                                                  [int(n) for n in v["versionIri"].rsplit("/", 1)[-1].split(".") if n.isdigit()])):
+        for version in sorted(
+            versions_.values(),
+            key=lambda v: (
+                v["snapshots"][0] if v["snapshots"] else "~",
+                [int(n) for n in v["versionIri"].rsplit("/", 1)[-1].split(".") if n.isdigit()],
+            ),
+        ):
             erratum, corrected = CORRECTED_PRIORS.get(version["versionIri"], (None, version["statedPriorVersion"]))
             version["priorVersion"] = corrected
             if erratum:
@@ -164,9 +189,12 @@ def lineage():
             chain.append(version)
             previous = version["versionIri"]
         out[ontology] = chain
-    return {"schemaVersion": 1,
-            "description": "Snapshots with the commit that added each, and every module version in the order the snapshots froze it; priorVersion is the stated owl:priorVersion, corrected where releases/ERRATA.md says so. Versions with unreleased true are in the working tree only.",
-            "snapshots": snapshots, "modules": out}
+    return {
+        "schemaVersion": 1,
+        "description": "Snapshots with the commit that added each, and every module version in the order the snapshots froze it; priorVersion is the stated owl:priorVersion, corrected where releases/ERRATA.md says so. Versions with unreleased true are in the working tree only.",
+        "snapshots": snapshots,
+        "modules": out,
+    }
 
 
 def check_lineage(write):
@@ -187,7 +215,7 @@ def check_lineage(write):
     problems = []
     for snapshot in json.loads(expected)["snapshots"]:
         if snapshot["commit"] is None:
-            continue    # no git history: the commit cannot be checked, and lineage() recorded none
+            continue  # no git history: the commit cannot be checked, and lineage() recorded none
         recorded = _git("show", f"{snapshot['commit']}:releases/{snapshot['id']}/manifest.json")
         if recorded is None or json.loads(recorded)["sha256"] != snapshot["archiveSha256"]:
             problems.append(f"snapshot {snapshot['id']}: commit {snapshot['commit']} does not hold its manifest")
@@ -195,12 +223,16 @@ def check_lineage(write):
         released = [v for v in chain if not v["unreleased"]]
         for earlier, later in zip(released, released[1:], strict=False):
             if later["priorVersion"] != earlier["versionIri"]:
-                problems.append(f"{later['versionIri']}: its prior version is {later['priorVersion']}, but the version "
-                                f"frozen before it is {earlier['versionIri']}; record the correction in {ERRATA}")
+                problems.append(
+                    f"{later['versionIri']}: its prior version is {later['priorVersion']}, but the version "
+                    f"frozen before it is {earlier['versionIri']}; record the correction in {ERRATA}"
+                )
         pending = [v for v in chain if v["unreleased"]]
         if pending and released and pending[0]["priorVersion"] != released[-1]["versionIri"]:
-            problems.append(f"{pending[0]['versionIri']}: names {pending[0]['priorVersion']} as its prior version; "
-                            f"the latest frozen version is {released[-1]['versionIri']}")
+            problems.append(
+                f"{pending[0]['versionIri']}: names {pending[0]['priorVersion']} as its prior version; "
+                f"the latest frozen version is {released[-1]['versionIri']}"
+            )
     return problems
 
 
@@ -220,8 +252,10 @@ def main():
         print("FAIL:\n  " + "\n  ".join(problems))
         return 1
     snapshots = len(list(RELEASES.glob("*/manifest.json")))
-    print(f"PASS: {len(by_version)} version IRIs across {snapshots} snapshots and the working tree each name one "
-          f"graph ({len(KNOWN_VIOLATIONS)} frozen violations recorded in {ERRATA})")
+    print(
+        f"PASS: {len(by_version)} version IRIs across {snapshots} snapshots and the working tree each name one "
+        f"graph ({len(KNOWN_VIOLATIONS)} frozen violations recorded in {ERRATA})"
+    )
     return 0
 
 

@@ -15,6 +15,7 @@ It also rejects a message that names a SPARQL result variable ({?x}) on a proper
 SPARQL-based constraint binds such variables, so on a property shape the placeholder is printed
 literally.
 """
+
 import json
 import re
 import sys
@@ -53,18 +54,23 @@ def problems(g, where):
             found.append(f"{where}: the property shape on {label} of {owners} has no sh:message")
         for message in messages:
             if PLACEHOLDER.search(str(message)):
-                found.append(f"{where}: the property shape on {label} of {owners} prints a SPARQL placeholder: {message}")
+                found.append(
+                    f"{where}: the property shape on {label} of {owners} prints a SPARQL placeholder: {message}"
+                )
     return found
 
 
 def self_test():
-    g = Graph().parse(format="turtle", data="""
+    g = Graph().parse(
+        format="turtle",
+        data="""
         @prefix sh: <http://www.w3.org/ns/shacl#> . @prefix ex: <urn:ex:> .
         ex:S a sh:NodeShape ; sh:targetClass ex:C ;
             sh:property [ sh:path ex:a ; sh:minCount 1 ] ;
             sh:property [ sh:path ex:b ; sh:minCount 1 ; sh:message "ex:b is required." ] ;
             sh:property [ sh:path ex:c ; sh:maxCount 1 ; sh:message "{?value} is one too many." ] ;
-            sh:not [ sh:property [ sh:path ex:d ; sh:minCount 1 ] ] .""")
+            sh:not [ sh:property [ sh:path ex:d ; sh:minCount 1 ] ] .""",
+    )
     found = problems(g, "probe")
     assert len(found) == 2 and "ex:a" in found[0] + found[1] and "placeholder" in found[0] + found[1], found
 

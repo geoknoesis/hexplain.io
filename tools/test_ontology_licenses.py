@@ -8,6 +8,7 @@ specification/family.json to state exactly one dcterms:license, the CC BY 4.0 IR
 the dcterms:creator its attribution names, and it requires the two repository notices to exist
 and to say that per-file and RDF declarations are not overridden.
 """
+
 import json
 import sys
 from pathlib import Path
@@ -28,18 +29,25 @@ def problems(g, where):
     for ontology in ontologies:
         licences = set(g.objects(ontology, DCTERMS.license))
         if licences != {CC_BY}:
-            found.append(f"{where}: {ontology} declares dcterms:license {sorted(map(str, licences)) or 'nothing'}; "
-                         f"the ontology modules are licensed {CC_BY}")
+            found.append(
+                f"{where}: {ontology} declares dcterms:license {sorted(map(str, licences)) or 'nothing'}; "
+                f"the ontology modules are licensed {CC_BY}"
+            )
         if (ontology, DCTERMS.creator, CREATOR) not in g:
-            found.append(f"{where}: {ontology} does not name dcterms:creator <{CREATOR}>, the attribution CC BY requires")
+            found.append(
+                f"{where}: {ontology} does not name dcterms:creator <{CREATOR}>, the attribution CC BY requires"
+            )
     return found
 
 
 def self_test():
     bare = Graph().parse(format="turtle", data="<urn:o> a <http://www.w3.org/2002/07/owl#Ontology> .")
     assert len(problems(bare, "probe")) == 2, problems(bare, "probe")
-    good = Graph().parse(format="turtle", data=f"""<urn:o> a <http://www.w3.org/2002/07/owl#Ontology> ;
-        <http://purl.org/dc/terms/license> <{CC_BY}> ; <http://purl.org/dc/terms/creator> <{CREATOR}> .""")
+    good = Graph().parse(
+        format="turtle",
+        data=f"""<urn:o> a <http://www.w3.org/2002/07/owl#Ontology> ;
+        <http://purl.org/dc/terms/license> <{CC_BY}> ; <http://purl.org/dc/terms/creator> <{CREATOR}> .""",
+    )
     assert not problems(good, "probe")
 
 
@@ -59,8 +67,10 @@ def main():
     if found:
         print("FAIL:\n  " + "\n  ".join(found))
         return 1
-    print(f"PASS: all {len(files)} ontology modules declare dcterms:license CC BY 4.0 with their creator; "
-          "LICENSE and LICENSING.md state the two regimes")
+    print(
+        f"PASS: all {len(files)} ontology modules declare dcterms:license CC BY 4.0 with their creator; "
+        "LICENSE and LICENSING.md state the two regimes"
+    )
     return 0
 
 

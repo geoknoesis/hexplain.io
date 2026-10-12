@@ -7,13 +7,13 @@ file under specification/ (fixtures, examples, validation data) must be defined 
 be the subject of a statement -- in the family's canonical graph. Deprecated terms count as
 defined; they are declared precisely so that older data still resolves.
 """
+
 import json
 import pathlib
 import sys
 
-from rdflib import Graph, Literal, URIRef
-
 import specgraph
+from rdflib import Graph, Literal, URIRef
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 VANN_URI = URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
@@ -36,8 +36,10 @@ def unknown_terms(data, known, namespaces):
 
 
 def data_files():
-    family = {(ROOT / "specification" / f).resolve()
-              for f in json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]}
+    family = {
+        (ROOT / "specification" / f).resolve()
+        for f in json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
+    }
     return sorted(p for p in (ROOT / "specification").rglob("*.ttl") if p.resolve() not in family)
 
 
@@ -45,10 +47,14 @@ def main():
     vocabulary = specgraph.ontologies()
     known = set(vocabulary.subjects())
     namespaces = owned_namespaces(vocabulary)
-    probe = Graph().parse(format="turtle", data="""@prefix bddo: <https://hexplain.io/ns/bddo#> .
-        <urn:x> bddo:sizeFromFeild <urn:y> ; bddo:size 1 .""")
-    assert unknown_terms(probe, known, namespaces) == ["https://hexplain.io/ns/bddo#sizeFromFeild"], \
+    probe = Graph().parse(
+        format="turtle",
+        data="""@prefix bddo: <https://hexplain.io/ns/bddo#> .
+        <urn:x> bddo:sizeFromFeild <urn:y> ; bddo:size 1 .""",
+    )
+    assert unknown_terms(probe, known, namespaces) == ["https://hexplain.io/ns/bddo#sizeFromFeild"], (
         "the lint no longer notices a misspelled BDDO predicate"
+    )
     failures = []
     files = data_files()
     for path in files:

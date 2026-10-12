@@ -4,7 +4,9 @@ installed, SKIP (exit 0) so the rdflib-only suite stays green; where pyshacl is
 present this genuinely runs AssetShape, PartShape (incl. register membership),
 and RequiredPartsShape.
 """
+
 import sys
+
 try:
     from pyshacl import validate
 except ImportError:
@@ -31,6 +33,7 @@ BASE = [
     "specification/register/geometry-type/geometry-type.ttl",
 ]
 
+
 def conforms(instance):
     data = rdflib.Graph()
     for f in BASE + [instance]:
@@ -40,6 +43,7 @@ def conforms(instance):
         shapes.parse(f, format="turtle")
     ok, _, text = validate(data, shacl_graph=shapes, advanced=True)
     return ok, text
+
 
 valid_ok, valid_text = conforms("specification/aspect/bundle/example/bundle-example.ttl")
 invalid_ok, _ = conforms("specification/aspect/bundle/example/bundle-example-invalid.ttl")

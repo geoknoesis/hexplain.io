@@ -2,6 +2,7 @@
 embedded (HTML-escaped) in <mod>/index.html. This gate parses both and compares
 them as RDF graphs, so formatting differs freely but triples may not.
 """
+
 import html
 import pathlib
 import re
@@ -9,6 +10,7 @@ import sys
 
 import rdflib
 from rdflib.compare import graph_diff, to_isomorphic
+
 
 # Discovered, not listed. This gate covered two modules by name for as long as it existed,
 # so the other eight shipped a second copy of their vocabulary that nothing compared -- and
@@ -21,13 +23,16 @@ from rdflib.compare import graph_diff, to_isomorphic
 # the gate on its own.
 def _modules():
     found = {}
-    for ttl in sorted(pathlib.Path("specification").glob("*/*.ttl")) + \
-               sorted(pathlib.Path("specification").glob("*/*/*.ttl")):
+    for ttl in sorted(pathlib.Path("specification").glob("*/*.ttl")) + sorted(
+        pathlib.Path("specification").glob("*/*/*.ttl")
+    ):
         doc = ttl.parent / "index.html"
         if doc.exists():
             key = ttl.parent.relative_to("specification").as_posix()
             found.setdefault(key, ([], doc))[0].append(ttl)
     return [(key, paths, doc) for key, (paths, doc) in sorted(found.items())]
+
+
 # Only the normative sections are the vocabulary's second copy. Non-normative
 # example blocks are valid Turtle too, but they are meant to differ from the
 # .ttl, so comparing them would be measuring the wrong thing.
@@ -127,8 +132,7 @@ for rel in family:
     if number and page.exists():
         subtitle = re.search(r'subtitle:\s*"Version ([0-9.]+)"', page.read_text(encoding="utf-8"))
         if subtitle and subtitle.group(1) != number:
-            version_failures.append(f"{page.as_posix()}: subtitle says Version {subtitle.group(1)}, "
-                                    f"{rel} is {info}")
+            version_failures.append(f"{page.as_posix()}: subtitle says Version {subtitle.group(1)}, {rel} is {info}")
     prefix, uri = g.value(ontology, VANN.preferredNamespacePrefix), g.value(ontology, VANN.preferredNamespaceUri)
     if str(ontology).endswith("/shapes"):
         # A shapes document's terms are in its vocabulary's namespace; only the vocabulary
@@ -142,18 +146,24 @@ for rel in family:
         version_failures.append(f"specification/index.html#namespaces: {prefix} -> {uri} ({rel}) is not registered")
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from _build_architecture_catalogue import PAGE as _CATALOGUE, render as _catalogue  # noqa: E402
+from _build_architecture_catalogue import PAGE as _CATALOGUE  # noqa: E402
+from _build_architecture_catalogue import render as _catalogue
 
 if _catalogue(_CATALOGUE.read_text(encoding="utf-8")) != _CATALOGUE.read_text(encoding="utf-8"):
-    version_failures.append("specification/architecture/index.html: aspect catalogue is stale; "
-                            "run python tools/_build_architecture_catalogue.py")
+    version_failures.append(
+        "specification/architecture/index.html: aspect catalogue is stale; "
+        "run python tools/_build_architecture_catalogue.py"
+    )
 # ---- Page leads ----------------------------------------------------------------------------
 # A generated module page opens with the ontology's label and a lead paragraph. The conf page's
 # lead said "Severity is deliberately absent" long after conf.ttl gained conf:severity: the
 # lead is a restatement of rdfs:comment, so it is compared with it (its first paragraph).
-from _build_term_reference import LEAD as _LEAD, lead_text as _lead_text  # noqa: E402
-from _reference import load as _load_module, modules as _modules_of  # noqa: E402
 from html import escape as _escape  # noqa: E402
+
+from _build_term_reference import LEAD as _LEAD  # noqa: E402
+from _build_term_reference import lead_text as _lead_text
+from _reference import load as _load_module  # noqa: E402
+from _reference import modules as _modules_of
 
 leads = 0
 for directory, paths in _modules_of().items():
@@ -166,12 +176,16 @@ for directory, paths in _modules_of().items():
     leads += 1
     title, lead = _lead_text(_load_module(paths))
     if match[2] != _escape(title) or match[4] != _escape(lead):
-        version_failures.append(f"{page.relative_to(pathlib.Path.cwd().resolve()).as_posix() if page.is_absolute() else page}: "
-                                "title or lead differs from the ontology's rdfs:label / rdfs:comment; "
-                                "run python tools/_build_term_reference.py")
+        version_failures.append(
+            f"{page.relative_to(pathlib.Path.cwd().resolve()).as_posix() if page.is_absolute() else page}: "
+            "title or lead differs from the ontology's rdfs:label / rdfs:comment; "
+            "run python tools/_build_term_reference.py"
+        )
 
 if version_failures:
     print("FAIL:\n  " + "\n  ".join(version_failures))
     sys.exit(1)
-print(f"PASS: versions, header comments, namespace registry and aspect catalogue agree with {len(family)} modules; "
-      f"{leads} generated page leads restate their ontology's comment")
+print(
+    f"PASS: versions, header comments, namespace registry and aspect catalogue agree with {len(family)} modules; "
+    f"{leads} generated page leads restate their ontology's comment"
+)

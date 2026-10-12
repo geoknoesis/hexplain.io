@@ -7,15 +7,25 @@ rdfs:comment, skos:prefLabel, skos:altLabel, skos:definition, skos:scopeNote, sk
 skos:historyNote, skos:changeNote and skos:example of every family term are now tagged @en.
 skos:notation and sh:message are not prose annotations and are not checked.
 """
+
 import sys
 
+import specgraph
 from rdflib import RDFS, Literal, Namespace, URIRef
 
-import specgraph
-
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
-PROSE = (RDFS.label, RDFS.comment, SKOS.prefLabel, SKOS.altLabel, SKOS.definition, SKOS.scopeNote,
-         SKOS.note, SKOS.historyNote, SKOS.changeNote, SKOS.example)
+PROSE = (
+    RDFS.label,
+    RDFS.comment,
+    SKOS.prefLabel,
+    SKOS.altLabel,
+    SKOS.definition,
+    SKOS.scopeNote,
+    SKOS.note,
+    SKOS.historyNote,
+    SKOS.changeNote,
+    SKOS.example,
+)
 HX = "https://hexplain.io/ns/"
 
 
@@ -23,16 +33,25 @@ def problems(g):
     found = []
     for predicate in PROSE:
         for term, value in g.subject_objects(predicate):
-            if isinstance(term, URIRef) and str(term).startswith(HX) and isinstance(value, Literal) and value.language != "en":
+            if (
+                isinstance(term, URIRef)
+                and str(term).startswith(HX)
+                and isinstance(value, Literal)
+                and value.language != "en"
+            ):
                 found.append(f"{term} {predicate.n3(g.namespace_manager)} {value.n3()[:60]} is not tagged @en")
     return sorted(found)
 
 
 def self_test():
     from rdflib import Graph
-    g = Graph().parse(format="turtle", data="""
+
+    g = Graph().parse(
+        format="turtle",
+        data="""
         @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . @prefix x: <https://hexplain.io/ns/x#> .
-        x:i rdfs:label "i"@en ; rdfs:comment "plain" . x:j rdfs:label "j"@de . <urn:other> rdfs:label "not ours" .""")
+        x:i rdfs:label "i"@en ; rdfs:comment "plain" . x:j rdfs:label "j"@de . <urn:other> rdfs:label "not ours" .""",
+    )
     assert len(problems(g)) == 2, problems(g)
 
 

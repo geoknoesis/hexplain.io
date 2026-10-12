@@ -1,40 +1,53 @@
 """Validate the published evidence denominator, provenance and non-inflated outcome counts."""
-from pathlib import Path
+
+import hashlib
+import json
 from collections import Counter
-import hashlib,json
+from pathlib import Path
 
-root=Path('specification/coverage/gdal-tests')
-evidence=json.loads((root/'evidence.json').read_text())
-manifest=json.loads((root/'corpus-manifest.json').read_text())
-inventory=json.loads(Path('specification/coverage/gdal-drivers.json').read_text())
-assert hashlib.sha256((root/'corpus-manifest.json').read_text(encoding='utf-8').encode('utf-8')).hexdigest()==evidence['manifest_sha256']
-assert evidence['corpus_commit']==manifest['commit']==evidence['runtime']['fixture_commit']
-assert len(manifest['files'])==evidence['corpus_files']
-assert sum(f['bytes'] for f in manifest['files'])==evidence['corpus_bytes']
-assert len({f['path'] for f in manifest['files']})==len(manifest['files'])
-assert {r['key'] for r in evidence['inventory']}=={r['key'] for r in inventory['drivers']}
-assert dict(Counter(r['status'] for r in evidence['all_results']))==evidence['counts']
-assert evidence['counts'].get('mismatch',0)==0
-assert evidence['counts'].get('documented-type-difference',0)==1
-assert all(x['status']=='equal' for x in evidence['encoder_checks']) and len(evidence['encoder_checks'])==3
-paths={f['path']:f for f in manifest['files']}
-for row in evidence['inventory']:
-    assert dict(Counter(r['status'] for r in row['samples']))==row['counts']
-    for sample in row['samples']:
-        assert sample['gdal_driver'] in row['runtime_drivers']
-        if sample['source']: assert sample['source']==paths[sample['path']]
-print(f"PASS: {len(evidence['inventory'])} GDAL documentation entries, {len(evidence['all_results'])} probes, {evidence['counts']['equal']} full-pixel matches; non-passes remain explicit")
+root = Path("specification/coverage/gdal-tests")
+evidence = json.loads((root / "evidence.json").read_text())
+manifest = json.loads((root / "corpus-manifest.json").read_text())
+inventory = json.loads(Path("specification/coverage/gdal-drivers.json").read_text())
+assert (
+    hashlib.sha256((root / "corpus-manifest.json").read_text(encoding="utf-8").encode("utf-8")).hexdigest()
+    == evidence["manifest_sha256"]
+)
+assert evidence["corpus_commit"] == manifest["commit"] == evidence["runtime"]["fixture_commit"]
+assert len(manifest["files"]) == evidence["corpus_files"]
+assert sum(f["bytes"] for f in manifest["files"]) == evidence["corpus_bytes"]
+assert len({f["path"] for f in manifest["files"]}) == len(manifest["files"])
+assert {r["key"] for r in evidence["inventory"]} == {r["key"] for r in inventory["drivers"]}
+assert dict(Counter(r["status"] for r in evidence["all_results"])) == evidence["counts"]
+assert evidence["counts"].get("mismatch", 0) == 0
+assert evidence["counts"].get("documented-type-difference", 0) == 1
+assert all(x["status"] == "equal" for x in evidence["encoder_checks"]) and len(evidence["encoder_checks"]) == 3
+paths = {f["path"]: f for f in manifest["files"]}
+for row in evidence["inventory"]:
+    assert dict(Counter(r["status"] for r in row["samples"])) == row["counts"]
+    for sample in row["samples"]:
+        assert sample["gdal_driver"] in row["runtime_drivers"]
+        if sample["source"]:
+            assert sample["source"] == paths[sample["path"]]
+print(
+    f"PASS: {len(evidence['inventory'])} GDAL documentation entries, {len(evidence['all_results'])} probes, {evidence['counts']['equal']} full-pixel matches; non-passes remain explicit"
+)
 
-extended=json.loads((root/'extended-evidence.json').read_text(encoding='utf-8'))
-assert extended['counts']==evidence['counts']
-assert sum(t['tests'] for t in extended['tests'])==39
-assert len(extended['contracts'])==8
+extended = json.loads((root / "extended-evidence.json").read_text(encoding="utf-8"))
+assert extended["counts"] == evidence["counts"]
+assert sum(t["tests"] for t in extended["tests"]) == 39
+assert len(extended["contracts"]) == 8
 # Every GTiff rejection of the comparison is listed and assessed, no more and no fewer.
-assert sorted(r['path'] for r in extended['retained_tiff_rejections'])==sorted(
-    r['path'] for r in evidence['all_results'] if r['status']=='hexplain-rejected' and r['gdal_driver']=='GTiff')
-assert all(c[k] for c in extended['contracts'] for k in ['name','implementation','scope','range','evidence','limits'])
+assert sorted(r["path"] for r in extended["retained_tiff_rejections"]) == sorted(
+    r["path"] for r in evidence["all_results"] if r["status"] == "hexplain-rejected" and r["gdal_driver"] == "GTiff"
+)
+assert all(
+    c[k] for c in extended["contracts"] for k in ["name", "implementation", "scope", "range", "evidence", "limits"]
+)
 # Public evidence integrity does not require access to proprietary implementation bytes.
 # The private engine release workflow separately verifies these hashes against its checkout.
-for name,digest in extended['sources'].items():
-    assert name and len(digest)==64 and all(c in '0123456789abcdef' for c in digest)
-print('PASS: 8 scoped adapter contracts, 39 retained tests and well-formed source hashes; implementation-byte verification belongs to private engine CI')
+for name, digest in extended["sources"].items():
+    assert name and len(digest) == 64 and all(c in "0123456789abcdef" for c in digest)
+print(
+    "PASS: 8 scoped adapter contracts, 39 retained tests and well-formed source hashes; implementation-byte verification belongs to private engine CI"
+)

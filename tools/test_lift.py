@@ -3,8 +3,9 @@ Extracts the authored sh:construct query from bundle.ttl and runs it over the
 composed graph (bundle + referenced aspects + shapefile profile + instance),
 so the test exercises the real normative query. rdflib only; no pyshacl needed.
 """
-import sys
+
 import glob
+import sys
 
 import rdflib
 
@@ -46,6 +47,7 @@ ASREF = rdflib.Namespace("https://hexplain.io/ns/aspect/spatialref#")
 ARASTER = rdflib.Namespace("https://hexplain.io/ns/aspect/raster#")
 # The geometry-type register (see FILES above): ageom:geometryType is still the aspect
 
+
 # Compare by value, not by exact typed literal: the fixtures use bare integer
 # literals (rdflib types them xsd:integer) while the source properties declare
 # narrower ranges, so an exact-datatype match would give a false FAIL. Numeric
@@ -53,6 +55,7 @@ ARASTER = rdflib.Namespace("https://hexplain.io/ns/aspect/raster#")
 def lifted_int(pred):
     v = g.value(asset, pred)
     return None if v is None else int(v.toPython())
+
 
 problems = []
 if lifted_int(ARASTER.width) != 256:

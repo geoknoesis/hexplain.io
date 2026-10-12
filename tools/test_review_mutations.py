@@ -7,6 +7,7 @@ rejected). `--root DIR` runs the probes against the shapes of another checkout a
 the ones it gets wrong instead of failing, which is how the review's before/after counts were
 measured; `--list` prints every probe.
 """
+
 import argparse
 import sys
 from collections import Counter
@@ -55,9 +56,10 @@ def run(root, chunk=8):
     """Every probe, across worker processes (SPARQL-based shapes are slow in pySHACL)."""
     import os
     from concurrent.futures import ProcessPoolExecutor
+
     rows = cases()
     indexed = list(enumerate(rows))
-    tasks = [(root, indexed[i:i + chunk]) for i in range(0, len(indexed), chunk)]
+    tasks = [(root, indexed[i : i + chunk]) for i in range(0, len(indexed), chunk)]
     workers = max(1, min(os.cpu_count() or 1, int(os.environ.get("HEXPLAIN_GATE_WORKERS", "8"))))
     with ProcessPoolExecutor(max_workers=workers) as pool:
         wrong = sorted(w for result in pool.map(_check, tasks) for w in result)
@@ -81,11 +83,18 @@ def main():
         print(f"{len(rows) - len(wrong)}/{len(rows)} probes correct against {root}")
         return 0
     if wrong:
-        print("FAIL:\n  " + "\n  ".join(f"[{r['group']}] {r['name']}: expected "
-                                        f"{'conforms' if r['conforms'] else 'rejected'}\n{t[:1200]}" for r, t in wrong))
+        print(
+            "FAIL:\n  "
+            + "\n  ".join(
+                f"[{r['group']}] {r['name']}: expected {'conforms' if r['conforms'] else 'rejected'}\n{t[:1200]}"
+                for r, t in wrong
+            )
+        )
         return 1
-    print(f"PASS: {len(rows)} review mutation probes ({', '.join(f'{g} {n}' for g, n in groups.items())}) "
-          "reach the expected verdict")
+    print(
+        f"PASS: {len(rows)} review mutation probes ({', '.join(f'{g} {n}' for g, n in groups.items())}) "
+        "reach the expected verdict"
+    )
     return 0
 
 

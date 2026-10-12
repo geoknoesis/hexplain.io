@@ -6,6 +6,7 @@ error category the implementation reported. tools/conformance/report.py builds o
 checks the checker on a report built from the suite on disk, then every report published under
 specification/conformance/reports/.
 """
+
 import copy
 import sys
 from pathlib import Path
@@ -17,17 +18,21 @@ import report  # noqa: E402
 
 def self_test():
     cases = report.suite_cases()
-    results = [{"case": c, "class": cls, "status": "SKIP", "category": None, "detail": "not run"}
-               for c, cls in cases.items()]
-    good = report.build(results, {"name": "probe", "version": "0"}, {"classes": [], "optionalFeatures": []},
-                        date="2026-01-01T00:00:00Z")
+    results = [
+        {"case": c, "class": cls, "status": "SKIP", "category": None, "detail": "not run"} for c, cls in cases.items()
+    ]
+    good = report.build(
+        results, {"name": "probe", "version": "0"}, {"classes": [], "optionalFeatures": []}, date="2026-01-01T00:00:00Z"
+    )
     assert report.check(good) == [], report.check(good)
-    for mutate, what in ((lambda r: r["results"].pop(), "a missing case"),
-                         (lambda r: r["results"][0].update(category="Parse"), "an unknown category"),
-                         (lambda r: r["results"][0].update(status="PASSED"), "an unknown status"),
-                         (lambda r: r["results"][0].update(detail=""), "a skip without a reason"),
-                         (lambda r: r.update(format="x"), "a wrong format"),
-                         (lambda r: r["implementation"].pop("version"), "an unversioned implementation")):
+    for mutate, what in (
+        (lambda r: r["results"].pop(), "a missing case"),
+        (lambda r: r["results"][0].update(category="Parse"), "an unknown category"),
+        (lambda r: r["results"][0].update(status="PASSED"), "an unknown status"),
+        (lambda r: r["results"][0].update(detail=""), "a skip without a reason"),
+        (lambda r: r.update(format="x"), "a wrong format"),
+        (lambda r: r["implementation"].pop("version"), "an unversioned implementation"),
+    ):
         bad = copy.deepcopy(good)
         mutate(bad)
         assert report.check(bad), f"the report check no longer notices {what}"

@@ -1,13 +1,15 @@
 # Shared lint contract. The identical file governs the profile library, so one
 # convention applies to both repositories.
 #
-# The selected rules catch defects rather than enforce formatting: undefined and
-# unused names, syntax errors, and the bugbear checks for mutable defaults,
-# unbound loop variables and silent zip truncation.
-line-length = 200
+# Defect rules (undefined and unused names, syntax errors, the bugbear checks) and the style
+# rules the specification tooling is written to: 120-column lines, no statement chaining
+# (E701/E702), modern syntax (UP), simplifications (SIM) and sorted imports (I). `ruff format`
+# is the formatter; `ruff check --fix` applies the mechanical fixes.
+line-length = 120
+target-version = "py311"
 
 [lint]
-select = ["F", "E9", "B"]
+select = ["E", "W", "F", "B", "UP", "SIM", "I"]
 
 # Every flagged closure here is defined and called inside one loop iteration, a
 # per-iteration helper rather than a deferred callback. The rule's true positives
@@ -16,6 +18,20 @@ select = ["F", "E9", "B"]
 ignore = ["B023"]
 
 [lint.per-file-ignores]
-# Generated-document builders assemble long HTML strings whose line breaks would
-# change published bytes.
-"tools/_build_ontology_docs.py" = ["E501"]
+# Modules owned by work in flight (ontology documentation, requirement identifiers, the
+# conformance suite): the defect rules apply, the style rules wait for that work to land so
+# that a reformat does not collide with it. Remove an entry when its module is reformatted.
+"tools/_shape_text.py" = ["E1", "E2", "E3", "E4", "E5", "E7", "W", "UP", "SIM", "I"]
+"tools/_build_ontology_docs.py" = ["E1", "E2", "E3", "E4", "E5", "E7", "W", "UP", "SIM", "I"]
+"tools/_requirement_ids.py" = ["E1", "E2", "E3", "E4", "E5", "E7", "W", "UP", "SIM", "I"]
+"tools/test_capabilities.py" = ["E1", "E2", "E3", "E4", "E5", "E7", "W", "UP", "SIM", "I"]
+"tools/conformance/*.py" = ["E1", "E2", "E3", "E4", "E5", "E7", "W", "UP", "SIM", "I"]
+
+[format]
+exclude = [
+  "tools/_shape_text.py",
+  "tools/_build_ontology_docs.py",
+  "tools/_requirement_ids.py",
+  "tools/test_capabilities.py",
+  "tools/conformance/*.py",
+]

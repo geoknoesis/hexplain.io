@@ -8,6 +8,7 @@ This gate keeps the file in that shape: every row has the columns its kind needs
 JSON, every context is base64 JSON, every error names a condition the HEL page defines, and every condition the page
 defines is exercised by at least one row.
 """
+
 import base64
 import json
 import re

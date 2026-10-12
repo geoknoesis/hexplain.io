@@ -1,7 +1,10 @@
 """Load the complete, versioned specification family; missing files fail closed."""
+
 import json
 from pathlib import Path
+
 from rdflib import Graph
+
 
 def family_paths(root, manifest=None):
     root = Path(root).resolve()
@@ -10,10 +13,17 @@ def family_paths(root, manifest=None):
     if contract["schema_version"] != 1:
         raise ValueError("Unsupported specification family schema")
     files = contract["files"]
-    discovered = sorted(p.relative_to(root).as_posix() for pattern in ("*/*.ttl", "aspect/*/*.ttl", "register/*/*.ttl") for p in root.glob(pattern))
+    discovered = sorted(
+        p.relative_to(root).as_posix()
+        for pattern in ("*/*.ttl", "aspect/*/*.ttl", "register/*/*.ttl")
+        for p in root.glob(pattern)
+    )
     if files != sorted(set(files)) or files != discovered:
-        raise ValueError(f"Specification family inventory differs: missing={set(files)-set(discovered)}, unlisted={set(discovered)-set(files)}")
+        raise ValueError(
+            f"Specification family inventory differs: missing={set(files) - set(discovered)}, unlisted={set(discovered) - set(files)}"
+        )
     return [str(root / name) for name in files]
+
 
 def load(paths):
     graph = Graph()

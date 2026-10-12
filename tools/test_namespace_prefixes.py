@@ -14,6 +14,7 @@ requires, for every vocabulary module (a shapes document claims no prefix of its
   * no two rows sharing a prefix or a namespace, and no row without a module;
   * the ontology-design page listing every row.
 """
+
 import json
 import sys
 from html import escape
@@ -32,7 +33,10 @@ def declared(files):
     for rel in files:
         g = Graph().parse(data=(ROOT / "specification" / rel).read_text(encoding="utf-8"), format="turtle")
         for ontology in g.subjects(RDF.type, OWL.Ontology):
-            prefix, uri = g.value(ontology, VANN.preferredNamespacePrefix), g.value(ontology, VANN.preferredNamespaceUri)
+            prefix, uri = (
+                g.value(ontology, VANN.preferredNamespacePrefix),
+                g.value(ontology, VANN.preferredNamespaceUri),
+            )
             if prefix is not None or uri is not None:
                 out.append((rel, str(ontology), str(prefix), str(uri)))
     return out
@@ -47,7 +51,9 @@ def problems(rows, modules, page):
     by_file = {r["file"]: r for r in rows}
     for rel, ontology, prefix, uri in modules:
         row = by_file.get(rel)
-        expected = dict(prefix=prefix, namespace=uri, ontology=ontology, directory=str(Path(rel).parent.as_posix()), file=rel)
+        expected = dict(
+            prefix=prefix, namespace=uri, ontology=ontology, directory=str(Path(rel).parent.as_posix()), file=rel
+        )
         if row is None:
             found.append(f"{rel}: declares {prefix} -> {uri}, but family.json has no namespaces row for it")
         elif {k: row.get(k) for k in expected} != expected:
@@ -57,14 +63,18 @@ def problems(rows, modules, page):
     for r in rows:
         cell = f"<td><code>{escape(r['prefix'])}</code></td><td><code>{escape(r['namespace'])}</code></td>"
         if cell not in page:
-            found.append(f"{PAGE.relative_to(ROOT).as_posix()}: the namespace table lacks {r['prefix']} -> {r['namespace']}; "
-                         "run python tools/_build_ontology_docs.py")
+            found.append(
+                f"{PAGE.relative_to(ROOT).as_posix()}: the namespace table lacks {r['prefix']} -> {r['namespace']}; "
+                "run python tools/_build_ontology_docs.py"
+            )
     return found
 
 
 def self_test():
-    rows = [dict(prefix="x", namespace="urn:x#", ontology="urn:x", directory="x", file="x/x.ttl"),
-            dict(prefix="x", namespace="urn:y#", ontology="urn:y", directory="y", file="y/y.ttl")]
+    rows = [
+        dict(prefix="x", namespace="urn:x#", ontology="urn:x", directory="x", file="x/x.ttl"),
+        dict(prefix="x", namespace="urn:y#", ontology="urn:y", directory="y", file="y/y.ttl"),
+    ]
     modules = [("x/x.ttl", "urn:x", "x", "urn:x#"), ("y/y.ttl", "urn:y", "y", "urn:y#")]
     found = problems(rows, modules, "")
     assert any("prefix x appears" in f for f in found) and any("y/y.ttl: declares" in f for f in found), found
@@ -81,8 +91,10 @@ def main():
     if found:
         print("FAIL:\n  " + "\n  ".join(found))
         return 1
-    print(f"PASS: {len(rows)} prefix/namespace/ontology/directory rows in family.json match every module's "
-          "declaration and the ontology-design table")
+    print(
+        f"PASS: {len(rows)} prefix/namespace/ontology/directory rows in family.json match every module's "
+        "declaration and the ontology-design table"
+    )
     return 0
 
 

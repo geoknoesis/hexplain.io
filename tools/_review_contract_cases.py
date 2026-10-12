@@ -9,6 +9,7 @@ values) are vocabulary fixtures instead (specification/hexplain/test/register-*.
 the family's SHACL-AF gates run, and the strict-profile probes validate an optional profile that
 is not a family module.
 """
+
 from _review_mutation_cases import cases as probes
 
 SPARQL_TARGETED = {"register binding"}
@@ -19,6 +20,13 @@ def cases():
     for probe in probes():
         if probe["group"] in SPARQL_TARGETED or probe["group"] == "strict profile" or probe.get("severity"):
             continue
-        rows.append(dict(name=f"review {probe['group']}: {probe['name']}", module=probe["shapes"][0],
-                         data=probe["data"], expected=probe["conforms"], path=""))
+        rows.append(
+            dict(
+                name=f"review {probe['group']}: {probe['name']}",
+                module=probe["shapes"][0],
+                data=probe["data"],
+                expected=probe["conforms"],
+                path="",
+            )
+        )
     return rows

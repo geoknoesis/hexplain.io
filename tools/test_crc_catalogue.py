@@ -7,13 +7,13 @@ catalogue values the conformance suite is generated from (tools/conformance/crc.
 transposed polynomial or a flipped reflection flag cannot stand in the ontology unnoticed. It also
 checks the model itself against zlib's CRC-32 and that every named CRC is listed.
 """
+
 import sys
 import zlib
 from pathlib import Path
 
-from rdflib import RDF, Literal, Namespace
-
 import specgraph
+from rdflib import RDF, Literal, Namespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "conformance"))
 import crc  # noqa: E402
@@ -61,8 +61,10 @@ def main():
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures))
         return 1
-    print(f"PASS: {len(stated)} named CRCs: every stated check value follows from the stated parameters "
-          "and matches the CRC catalogue")
+    print(
+        f"PASS: {len(stated)} named CRCs: every stated check value follows from the stated parameters "
+        "and matches the CRC catalogue"
+    )
     return 0
 
 

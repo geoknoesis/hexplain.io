@@ -1,6 +1,8 @@
 """Parse every .ttl under specification/ — the family-wide regression gate."""
+
 import glob
 import sys
+
 import rdflib
 
 failures = []

@@ -15,11 +15,11 @@ a property (sh:targetSubjectsOf / sh:targetObjectsOf) or appear in CLASS_ONLY be
 reason property activation is not used. The list is a ratchet: a new class-only shape fails
 the gate until it gains a property target or a stated reason.
 """
+
 import sys
 
-from rdflib import Graph, Namespace, URIRef
-
 import specgraph
+from rdflib import Graph, Namespace, URIRef
 
 SH = Namespace("http://www.w3.org/ns/shacl#")
 NEUTRAL = {SH.path, SH.message, SH.severity, SH.name, SH.description, SH.order, SH.group}
@@ -27,20 +27,30 @@ NEUTRAL = {SH.path, SH.message, SH.severity, SH.name, SH.description, SH.order, 
 # (shape, property) pairs a subjects-of shape constrains without being activated by, because
 # another class uses the same property and activating on it would apply this shape there.
 SHARED = {
-    ("https://hexplain.io/ns/conf#ConstraintShape", "https://hexplain.io/ns/conf#satisfies"):
-        "conf:ParseAttribution also cites requirements with conf:satisfies",
-    ("https://hexplain.io/ns/conf#ConstraintShape", "https://hexplain.io/ns/conf#severity"):
-        "a conf:Finding also states the severity it was reported at",
-    ("https://hexplain.io/ns/conf#FindingShape", "https://hexplain.io/ns/conf#severity"):
-        "a conf:Constraint also states the severity it reports at",
-    ("https://hexplain.io/ns/aspect/bundle#AssetShape", "https://hexplain.io/ns/aspect/bundle#hasPart"):
-        "abnd:hasPart is also used outside assets (layout competency: unrelated hasPart stays out of scope)",
+    (
+        "https://hexplain.io/ns/conf#ConstraintShape",
+        "https://hexplain.io/ns/conf#satisfies",
+    ): "conf:ParseAttribution also cites requirements with conf:satisfies",
+    (
+        "https://hexplain.io/ns/conf#ConstraintShape",
+        "https://hexplain.io/ns/conf#severity",
+    ): "a conf:Finding also states the severity it was reported at",
+    (
+        "https://hexplain.io/ns/conf#FindingShape",
+        "https://hexplain.io/ns/conf#severity",
+    ): "a conf:Constraint also states the severity it reports at",
+    (
+        "https://hexplain.io/ns/aspect/bundle#AssetShape",
+        "https://hexplain.io/ns/aspect/bundle#hasPart",
+    ): "abnd:hasPart is also used outside assets (layout competency: unrelated hasPart stays out of scope)",
 }
 
-_BDDO_TYPED = ("a bddo description is read by a loader that selects structs, fields, data types and rules "
-               "by their rdf:type, so an untyped node is not part of the description at all; the shape's "
-               "properties (bddo:hasField, bddo:dataType, sizes, offsets) are shared by several of these "
-               "classes, so property activation would apply the wrong shape")
+_BDDO_TYPED = (
+    "a bddo description is read by a loader that selects structs, fields, data types and rules "
+    "by their rdf:type, so an untyped node is not part of the description at all; the shape's "
+    "properties (bddo:hasField, bddo:dataType, sizes, offsets) are shared by several of these "
+    "classes, so property activation would apply the wrong shape"
+)
 _LAYOUT_TYPED = "DLV layout nodes and rules are selected by rdf:type through their owning list; the list members carry no distinguishing property"
 CLASS_ONLY = {
     "https://hexplain.io/ns/archive#ArchiveShape": "an archive's properties are shared with generic packaging metadata",
@@ -57,15 +67,42 @@ CLASS_ONLY = {
     "https://hexplain.io/ns/geo#VectorShape": "vector-dataset properties are shared with the geometry aspect",
     "https://hexplain.io/ns/image#ImageShape": "image-header properties are shared with the raster aspect",
 }
-for _local in ["AsciiNumericWidthShape", "DataTypeRuleShape", "DataTypeShape", "DelimitedRecordsShape",
-               "DelimitedTableShape", "DerivedFieldShape", "DispatchKeyUniquenessShape", "DispatchTableShape",
-               "EndiannessRuleShape", "EnumValueShape", "EnumerationShape", "FieldOffsetShape",
-               "FieldRepetitionShape", "FieldShape", "FieldSizingShape", "GroupedRecordsShape", "KeyPathShape",
-               "KeyValueHeaderShape", "RecordGroupingShape", "SeekScopeShape", "StructShape", "StructSizingShape",
-               "TreeDocumentShape", "TypeSelectionExclusivityShape", "VariableLengthFieldShape", "VarintWidthShape"]:
+for _local in [
+    "AsciiNumericWidthShape",
+    "DataTypeRuleShape",
+    "DataTypeShape",
+    "DelimitedRecordsShape",
+    "DelimitedTableShape",
+    "DerivedFieldShape",
+    "DispatchKeyUniquenessShape",
+    "DispatchTableShape",
+    "EndiannessRuleShape",
+    "EnumValueShape",
+    "EnumerationShape",
+    "FieldOffsetShape",
+    "FieldRepetitionShape",
+    "FieldShape",
+    "FieldSizingShape",
+    "GroupedRecordsShape",
+    "KeyPathShape",
+    "KeyValueHeaderShape",
+    "RecordGroupingShape",
+    "SeekScopeShape",
+    "StructShape",
+    "StructSizingShape",
+    "TreeDocumentShape",
+    "TypeSelectionExclusivityShape",
+    "VariableLengthFieldShape",
+    "VarintWidthShape",
+]:
     CLASS_ONLY["https://hexplain.io/ns/bddo#" + _local] = _BDDO_TYPED
-for _local in ["CellDataTypeRuleShape", "ChunkedLayoutShape", "DataLayoutShape", "DimensionOrderRuleShape",
-               "DimensionShape"]:
+for _local in [
+    "CellDataTypeRuleShape",
+    "ChunkedLayoutShape",
+    "DataLayoutShape",
+    "DimensionOrderRuleShape",
+    "DimensionShape",
+]:
     CLASS_ONLY["https://hexplain.io/ns/dlv#" + _local] = _LAYOUT_TYPED
 PROPERTY_TARGETS = (SH.targetSubjectsOf, SH.targetObjectsOf, SH.target, SH.targetNode)
 
@@ -104,8 +141,7 @@ def gaps(g):
 def class_only(g):
     """Class-targeted shapes with no property activation and no stated reason, and stale reasons."""
     out = []
-    only = {s for s in set(g.subjects(SH.targetClass, None))
-            if not any((s, p, None) in g for p in PROPERTY_TARGETS)}
+    only = {s for s in set(g.subjects(SH.targetClass, None)) if not any((s, p, None) in g for p in PROPERTY_TARGETS)}
     for shape in sorted(only):
         if str(shape) not in CLASS_ONLY:
             out.append(f"{shape} is activated only by sh:targetClass; omitting rdf:type bypasses it")
@@ -115,20 +151,27 @@ def class_only(g):
 
 
 def main():
-    self_test = Graph().parse(format="turtle", data="""
+    self_test = Graph().parse(
+        format="turtle",
+        data="""
         @prefix ex: <https://example.org/m#> . @prefix sh: <http://www.w3.org/ns/shacl#> .
         ex:S sh:targetSubjectsOf ex:a ; sh:property [ sh:path ex:a ] , [ sh:path ex:b ; sh:maxCount 1 ] ,
-             [ sh:path ex:c ; sh:minCount 1 ] , [ sh:path ex:d ; sh:maxCount 0 ] .""")
+             [ sh:path ex:c ; sh:minCount 1 ] , [ sh:path ex:d ; sh:maxCount 0 ] .""",
+    )
     found = gaps(self_test)
     assert found == ["https://example.org/m#S constrains https://example.org/m#b but is not activated by it"], found
     family = specgraph.ontologies()
     found = gaps(family) + class_only(family)
     if found:
-        print("FAIL: shapes whose constraints are bypassed when the triggering property is absent:\n  "
-              + "\n  ".join(found))
+        print(
+            "FAIL: shapes whose constraints are bypassed when the triggering property is absent:\n  "
+            + "\n  ".join(found)
+        )
         sys.exit(1)
-    print(f"PASS: every subjects-of shape is activated by each same-module property it constrains; "
-          f"{len(CLASS_ONLY)} class-only shapes state why property activation is not used")
+    print(
+        f"PASS: every subjects-of shape is activated by each same-module property it constrains; "
+        f"{len(CLASS_ONLY)} class-only shapes state why property activation is not used"
+    )
 
 
 if __name__ == "__main__":

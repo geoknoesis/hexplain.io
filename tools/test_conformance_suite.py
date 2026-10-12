@@ -5,6 +5,7 @@ that every case has a complete manifest, cites only registered requirement ident
 sections the pages define, and has exactly one expected artifact; that every description,
 rule set and expected graph parses; and that the coverage section of the suite's page is current.
 """
+
 import json
 import re
 import sys
@@ -39,8 +40,10 @@ def main():
     present = generate_inputs.on_disk()
     stale = sorted(p for p in wanted.keys() | present.keys() if wanted.get(p) != present.get(p))
     if stale:
-        problems.append(f"{len(stale)} suite file(s) differ from tools/conformance/ (run python "
-                        f"tools/conformance/generate_inputs.py): {stale[:5]}")
+        problems.append(
+            f"{len(stale)} suite file(s) differ from tools/conformance/ (run python "
+            f"tools/conformance/generate_inputs.py): {stale[:5]}"
+        )
 
     registry = json.loads((SUITE / "requirements.json").read_text(encoding="utf-8"))["requirements"]
     live = {i for i, e in registry.items() if not e.get("withdrawn")}
@@ -59,13 +62,19 @@ def main():
             for key in REQUIRED:
                 if not man.get(key):
                     problems.append(f"{where}: manifest lacks {key}")
-            if man.get("id") != case_dir.name or man.get("class") != cls or not case_dir.name.startswith(PREFIX[cls] + "-"):
+            if (
+                man.get("id") != case_dir.name
+                or man.get("class") != cls
+                or not case_dir.name.startswith(PREFIX[cls] + "-")
+            ):
                 problems.append(f"{where}: id, class and directory disagree")
             for rid in man.get("requirements", []):
                 if rid not in live:
                     problems.append(f"{where}: cites {rid}, which the requirement registry does not list")
             if man.get("requirements") and not set(man["requirements"]) - set(BLANKET):
-                problems.append(f"{where}: cites only blanket requirements {man['requirements']}; cite the specific rule")
+                problems.append(
+                    f"{where}: cites only blanket requirements {man['requirements']}; cite the specific rule"
+                )
             for section in man.get("sections", []):
                 document, _, anchor = section.partition("#")
                 if document not in pages:
@@ -82,7 +91,9 @@ def main():
             for name in filter(None, files):
                 if not (case_dir / name).is_file():
                     problems.append(f"{where}: manifest names {name}, which does not exist")
-            for name in ["description.ttl", "rules.ttl", "expected.ttl", "expected-report.ttl"] + list(man.get("registers", [])):
+            for name in ["description.ttl", "rules.ttl", "expected.ttl", "expected-report.ttl"] + list(
+                man.get("registers", [])
+            ):
                 if (case_dir / name).is_file():
                     try:
                         rdflib.Graph().parse(case_dir / name, format="turtle")
@@ -95,7 +106,11 @@ def main():
                     except ValueError as exc:
                         problems.append(f"{where}: {name} is not JSON: {exc}")
                         continue
-                    if name == "expected-error.json" and cls != "hdl-compiler" and value.get("category") not in CATEGORIES:
+                    if (
+                        name == "expected-error.json"
+                        and cls != "hdl-compiler"
+                        and value.get("category") not in CATEGORIES
+                    ):
                         problems.append(f"{where}: unknown error category {value.get('category')!r}")
                     if name == "expected-error.json" and cls == "hdl-compiler" and value.get("severity") != "ERROR":
                         problems.append(f"{where}: an HDL Compiler error names severity ERROR")
@@ -107,7 +122,9 @@ def main():
                     problems.append(f"{where}: unknown features member {kind}")
                 for name in names:
                     if name not in features:
-                        problems.append(f"{where}: {name!r} is not a feature token of the Processing Model's optional features")
+                        problems.append(
+                            f"{where}: {name!r} is not a feature token of the Processing Model's optional features"
+                        )
             for kind, iris in man.get("codecs", {}).items():
                 if kind not in ("requires", "unclaimed"):
                     problems.append(f"{where}: unknown codecs member {kind}")
@@ -120,7 +137,9 @@ def main():
                 for name in names:
                     if name not in features:
                         problems.append(f"{where}: claims withdraws {name!r}, which is not a feature token")
-            if "compareOntologyHeader" in man and (cls != "hdl-compiler" or not isinstance(man["compareOntologyHeader"], bool)):
+            if "compareOntologyHeader" in man and (
+                cls != "hdl-compiler" or not isinstance(man["compareOntologyHeader"], bool)
+            ):
                 problems.append(f"{where}: compareOntologyHeader is a Boolean of an HDL Compiler case")
             if "base" in man and man["base"] is None and cls != "semantic-emitter":
                 problems.append(f"{where}: only a Semantic Emitter case may leave the base to the processor")
@@ -145,8 +164,10 @@ def main():
     if problems:
         print("FAIL:\n  " + "\n  ".join(problems[:60]))
         return 1
-    print(f"PASS: {sum(counts.values())} conformance cases ({', '.join(f'{c} {n}' for c, n in counts.items())}) "
-          f"cite {len(live)} registered requirements consistently")
+    print(
+        f"PASS: {sum(counts.values())} conformance cases ({', '.join(f'{c} {n}' for c, n in counts.items())}) "
+        f"cite {len(live)} registered requirements consistently"
+    )
     return 0
 
 

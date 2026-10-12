@@ -2,7 +2,9 @@
 
 Mirrors tools/test_shapes.py's optional-pyshacl skip so the rdflib-only suite stays green.
 """
+
 import sys
+
 try:
     from pyshacl import validate
 except ImportError:
@@ -14,11 +16,13 @@ import rdflib
 shapes = rdflib.Graph()
 shapes.parse("specification/hexplain/core.ttl", format="turtle")
 
+
 def conforms(path):
     data = rdflib.Graph()
     data.parse(path, format="turtle")
     ok, _, text = validate(data, shacl_graph=shapes, advanced=True)
     return ok, text
+
 
 valid_ok, valid_text = conforms("specification/hexplain/test/register-binding-valid.ttl")
 invalid_ok, _ = conforms("specification/hexplain/test/register-binding-invalid.ttl")

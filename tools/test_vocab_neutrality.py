@@ -39,15 +39,16 @@ import sys
 
 import rdflib
 
-
 SKOS = rdflib.Namespace("http://www.w3.org/2004/02/skos/core#")
 REGISTER_NS = "https://hexplain.io/ns/register/"
 ASPECT_NS = "https://hexplain.io/ns/aspect/"
 
+
 #: Vocabularies that must be format-neutral: the three foundations plus every aspect.
 def normative_files():
-    return ["specification/bddo/bddo.ttl", "specification/dlv/dlv.ttl",
-            "specification/hexplain/core.ttl"] + sorted(glob.glob("specification/aspect/*/*.ttl"))
+    return ["specification/bddo/bddo.ttl", "specification/dlv/dlv.ttl", "specification/hexplain/core.ttl"] + sorted(
+        glob.glob("specification/aspect/*/*.ttl")
+    )
 
 
 #: Names that would betray a bias in a term. Matched against camelCase WORDS rather than as
@@ -60,29 +61,112 @@ def normative_files():
 #: list cannot be the whole defence, and the aspects themselves have to be designed so that a
 #: system's own categories arrive through a register rather than as properties.
 FORMAT_WORDS = {
-    "nitf", "tiff", "geotiff", "png", "jpeg", "jpg", "gif", "bmp", "webp", "exr", "dds",
-    "ktx", "avif", "heif", "jp2", "envi", "ehdr", "esri", "shapefile", "geopackage", "gpkg",
-    "mbtiles", "hdf", "hdf4", "hdf5", "netcdf", "grib", "zarr", "pds", "isis", "vicar",
-    "dted", "fits", "zip", "pdf", "dwg", "dxf", "gml", "kml", "csv", "geojson", "parquet",
-    "arrow", "protobuf", "mvt", "las", "laz", "e57", "sentinel", "landsat", "erdas",
-    "idrisi", "saga", "ilwis", "pcidsk", "s57", "bag", "mrsid", "ecw", "shp", "dbf",
+    "nitf",
+    "tiff",
+    "geotiff",
+    "png",
+    "jpeg",
+    "jpg",
+    "gif",
+    "bmp",
+    "webp",
+    "exr",
+    "dds",
+    "ktx",
+    "avif",
+    "heif",
+    "jp2",
+    "envi",
+    "ehdr",
+    "esri",
+    "shapefile",
+    "geopackage",
+    "gpkg",
+    "mbtiles",
+    "hdf",
+    "hdf4",
+    "hdf5",
+    "netcdf",
+    "grib",
+    "zarr",
+    "pds",
+    "isis",
+    "vicar",
+    "dted",
+    "fits",
+    "zip",
+    "pdf",
+    "dwg",
+    "dxf",
+    "gml",
+    "kml",
+    "csv",
+    "geojson",
+    "parquet",
+    "arrow",
+    "protobuf",
+    "mvt",
+    "las",
+    "laz",
+    "e57",
+    "sentinel",
+    "landsat",
+    "erdas",
+    "idrisi",
+    "saga",
+    "ilwis",
+    "pcidsk",
+    "s57",
+    "bag",
+    "mrsid",
+    "ecw",
+    "shp",
+    "dbf",
     # Jurisdictions, standards bodies and national policy identifiers.
-    "ism", "nato", "capco", "fips", "dod", "dni", "nga", "nist", "iso", "ogc", "w3c", "ieee",
-    "itu", "gsc", "tlp", "eo", "usa", "us", "uk", "eu", "nsa", "cia", "fbi", "ansi", "din",
-    "jis", "milstd", "stanag", "ccitt", "etsi", "oasis", "niso",
+    "ism",
+    "nato",
+    "capco",
+    "fips",
+    "dod",
+    "dni",
+    "nga",
+    "nist",
+    "iso",
+    "ogc",
+    "w3c",
+    "ieee",
+    "itu",
+    "gsc",
+    "tlp",
+    "eo",
+    "usa",
+    "us",
+    "uk",
+    "eu",
+    "nsa",
+    "cia",
+    "fbi",
+    "ansi",
+    "din",
+    "jis",
+    "milstd",
+    "stanag",
+    "ccitt",
+    "etsi",
+    "oasis",
+    "niso",
 }
 
 #: Exempt terms, each with the reason it is not a bias. An ALGORITHM named after its
 #: specifying document is not a format leaking in -- bddo already carries crc32, adler32, md5
 #: and sha256 on exactly that basis.
 EXEMPT = {
-    "sqliteVarint":
-        "An integer ENCODING, not a format. SQLite specifies it the way DWARF specifies "
-        "LEB128, and it is used across GeoPackage, MBTiles and Rasterlite rather than by one "
-        "format. Same category as bddo:crc32 / bddo:md5, which are also named for their "
-        "specifying documents. A descriptive rename (bigEndianVarint) would be LESS precise: "
-        "it would not distinguish this scheme's nine-byte rule from any other big-endian "
-        "varint.",
+    "sqliteVarint": "An integer ENCODING, not a format. SQLite specifies it the way DWARF specifies "
+    "LEB128, and it is used across GeoPackage, MBTiles and Rasterlite rather than by one "
+    "format. Same category as bddo:crc32 / bddo:md5, which are also named for their "
+    "specifying documents. A descriptive rename (bigEndianVarint) would be LESS precise: "
+    "it would not distinguish this scheme's nine-byte rule from any other big-endian "
+    "varint.",
 }
 
 
@@ -159,15 +243,15 @@ def main():
                     )
 
     if checked_terms < 150:
-        problems.append(
-            f"only {checked_terms} terms checked -- the scan is not reaching the vocabularies"
-        )
+        problems.append(f"only {checked_terms} terms checked -- the scan is not reaching the vocabularies")
 
     if problems:
         print("FAIL:\n  " + "\n  ".join(problems))
         return 1
-    print(f"PASS: {checked_terms} normative terms name no format or jurisdiction; "
-          f"{len(EXEMPT)} reasoned exemption(s); register boundary holds both ways")
+    print(
+        f"PASS: {checked_terms} normative terms name no format or jurisdiction; "
+        f"{len(EXEMPT)} reasoned exemption(s); register boundary holds both ways"
+    )
     return 0
 
 

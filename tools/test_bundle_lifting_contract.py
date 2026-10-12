@@ -1,6 +1,8 @@
 """Executable competency cases for the published bundle lifting query (no inference)."""
+
 from pathlib import Path
-from rdflib import Graph, Namespace, URIRef, Literal
+
+from rdflib import Graph, Literal, Namespace, URIRef
 
 ROOT = Path(__file__).resolve().parents[1]
 B = Namespace("https://hexplain.io/ns/aspect/bundle#")
@@ -19,13 +21,25 @@ e:spec b:partRole e:role ; b:carriesAspect e:aspect .
 e:value r:isDefinedBy e:aspect .
 """
 cases = [
-    ("matching role", 'e:asset b:hasPart e:a. e:a b:partRole e:role; e:value 2.', {2}),
-    ("wrong role", 'e:asset b:hasPart e:a. e:a b:partRole e:other; e:value 2.', set()),
-    ("conflicts preserved", 'e:asset b:hasPart e:a,e:b. e:a b:partRole e:role; e:value 2. e:b b:partRole e:role; e:value 3.', {2,3}),
-    ("duplicates coalesce", 'e:asset b:hasPart e:a,e:b. e:a b:partRole e:role; e:value 2. e:b b:partRole e:role; e:value 2.', {2}),
-    ("inverse alone is not materialized", 'e:a b:partOf e:asset; b:partRole e:role; e:value 2.', set()),
-    ("primary alone is not materialized", 'e:asset b:primaryPart e:a. e:a b:partRole e:role; e:value 2.', set()),
-    ("nested properties not copied", 'e:asset b:hasPart e:a. e:a b:partRole e:role; e:child e:c. e:c e:value 2.', set()),
+    ("matching role", "e:asset b:hasPart e:a. e:a b:partRole e:role; e:value 2.", {2}),
+    ("wrong role", "e:asset b:hasPart e:a. e:a b:partRole e:other; e:value 2.", set()),
+    (
+        "conflicts preserved",
+        "e:asset b:hasPart e:a,e:b. e:a b:partRole e:role; e:value 2. e:b b:partRole e:role; e:value 3.",
+        {2, 3},
+    ),
+    (
+        "duplicates coalesce",
+        "e:asset b:hasPart e:a,e:b. e:a b:partRole e:role; e:value 2. e:b b:partRole e:role; e:value 2.",
+        {2},
+    ),
+    ("inverse alone is not materialized", "e:a b:partOf e:asset; b:partRole e:role; e:value 2.", set()),
+    ("primary alone is not materialized", "e:asset b:primaryPart e:a. e:a b:partRole e:role; e:value 2.", set()),
+    (
+        "nested properties not copied",
+        "e:asset b:hasPart e:a. e:a b:partRole e:role; e:child e:c. e:c e:value 2.",
+        set(),
+    ),
 ]
 for name, extra, expected in cases:
     data = Graph().parse(data=prefix + base + extra, format="turtle")

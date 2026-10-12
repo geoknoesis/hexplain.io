@@ -22,18 +22,18 @@ allows none: every result must satisfy one of its expect lines, so a shape that 
 reporting something else on that fixture (a new target, a broken message) fails the gate
 instead of hiding behind the expected result.
 """
+
 import functools
-import re
 import glob
 import os
 import pathlib
+import re
 import sys
 from concurrent.futures import ProcessPoolExecutor
 
+import specgraph
 from pyshacl import validate
 from rdflib import Graph, Namespace, URIRef
-
-import specgraph
 
 # Every vocabulary, aspect and register in the family. A fixture targets aspect properties
 # with hexplain:mapsToProperty and names register concepts (a codec in an encoding pipeline,
@@ -68,13 +68,13 @@ def ontologies_for(fixture_path):
 # committed and never run.
 _PATTERNS = ("specification/*/test/", "specification/*/*/test/")
 fixtures = sorted(
-    f for pat in _PATTERNS for suffix in ("*-valid.ttl", "*-invalid.ttl")
-    for f in glob.glob(pat + suffix)
+    f for pat in _PATTERNS for suffix in ("*-valid.ttl", "*-invalid.ttl") for f in glob.glob(pat + suffix)
 )
 if not fixtures:
     sys.exit("FAIL: no fixtures found (wrong working directory?)")
 
-@functools.lru_cache(maxsize=None)
+
+@functools.cache
 def shapes_for(ont):
     """One shapes graph per distinct ontology set, reused by every fixture of that module."""
     return load(list(ont))
@@ -98,6 +98,7 @@ def expectations(path):
         if prefix not in bound:
             raise ValueError(f"{path}: expect line uses unbound prefix '{prefix}:'")
         return URIRef(str(bound[prefix]) + local)
+
     return [(iri(f), iri(s), iri(c) if c else None) for f, s, c in EXPECT.findall(text)]
 
 
@@ -115,14 +116,14 @@ def _nested(shapes, node, seen=None):
 
 def unmet(report, shapes, expected):
     """Expect lines no result satisfies."""
-    results = [(report.value(r, SH.focusNode), report.value(r, SH.sourceShape),
-                report.value(r, SH.sourceConstraintComponent))
-               for r in report.subjects(SH.resultSeverity, None)]
+    results = [
+        (report.value(r, SH.focusNode), report.value(r, SH.sourceShape), report.value(r, SH.sourceConstraintComponent))
+        for r in report.subjects(SH.resultSeverity, None)
+    ]
     missing = []
     for focus, shape, component in expected:
         family = _nested(shapes, shape)
-        if not any(f == focus and s in family and (component is None or c == component)
-                   for f, s, c in results):
+        if not any(f == focus and s in family and (component is None or c == component) for f, s, c in results):
             missing.append((focus, shape, component))
     return missing
 
@@ -134,10 +135,15 @@ def unexpected(report, shapes, expected):
     """Results that no expect line accounts for (only checked under # expect-only)."""
     out = []
     for r in report.subjects(SH.resultSeverity, None):
-        f, s, c = (report.value(r, SH.focusNode), report.value(r, SH.sourceShape),
-                   report.value(r, SH.sourceConstraintComponent))
-        if not any(f == focus and s in _nested(shapes, shape) and (component is None or c == component)
-                   for focus, shape, component in expected):
+        f, s, c = (
+            report.value(r, SH.focusNode),
+            report.value(r, SH.sourceShape),
+            report.value(r, SH.sourceConstraintComponent),
+        )
+        if not any(
+            f == focus and s in _nested(shapes, shape) and (component is None or c == component)
+            for focus, shape, component in expected
+        ):
             out.append((f, s, c, report.value(r, SH.resultMessage)))
     return out
 

@@ -9,23 +9,26 @@ datatype compatible with the range, or when any shape admits an incompatible dat
 The negative fixtures under specification/*/test/range-*-invalid.ttl prove the constraints
 reject the values that used to pass.
 """
-import sys
 
-from rdflib import Graph
+import sys
 
 import specgraph
 from _range_datatypes import problems
+from rdflib import Graph
 
 
 def _self_test():
     """The detector must notice a missing and an incompatible datatype, or it proves nothing."""
-    g = Graph().parse(format="turtle", data="""
+    g = Graph().parse(
+        format="turtle",
+        data="""
         @prefix ex: <https://example.org/> . @prefix sh: <http://www.w3.org/ns/shacl#> .
         @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
         ex:good rdfs:range xsd:positiveInteger . ex:none rdfs:range xsd:string . ex:wrong rdfs:range xsd:integer .
         ex:S a sh:NodeShape ; sh:targetSubjectsOf ex:good, ex:wrong ;
           sh:property [ sh:path ex:good ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:long ] ) ] ;
-          sh:property [ sh:path ex:wrong ; sh:datatype xsd:decimal ] .""")
+          sh:property [ sh:path ex:wrong ; sh:datatype xsd:decimal ] .""",
+    )
     found = problems(g)
     assert not any(p.startswith("https://example.org/good") for p in found), found
     assert any(p.startswith("https://example.org/none") for p in found), found
@@ -40,6 +43,7 @@ def main():
         print("FAIL: XSD ranges without an enforcing SHACL datatype:\n  " + "\n  ".join(found))
         sys.exit(1)
     from _range_datatypes import xsd_ranged
+
     print(f"PASS: {len(xsd_ranged(g))} XSD-ranged properties are datatype-checked wherever they are used")
 
 

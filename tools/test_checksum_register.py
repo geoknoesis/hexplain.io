@@ -8,13 +8,13 @@ check physically but not report it semantically. This gate keeps the sets aligne
 bddo:ChecksumAlgorithm individual is hexplain:correspondsTo of exactly one register concept and
 vice versa, and bddo:ChecksumShape accepts exactly those individuals.
 """
+
 import sys
 from collections import defaultdict
 
+import specgraph
 from rdflib import RDF, Namespace
 from rdflib.collection import Collection
-
-import specgraph
 
 BDDO = Namespace("https://hexplain.io/ns/bddo#")
 RCK = Namespace("https://hexplain.io/ns/register/checksum#")
@@ -31,8 +31,11 @@ def main():
     for a, b in g.subject_objects(HEX.correspondsTo):
         matches[a].add(b)
         matches[b].add(a)
-    failures = [f"{a} skos:exactMatch {b}: a SKOS mapping to an OWL individual; use hexplain:correspondsTo"
-                for a, b in g.subject_objects(SKOS.exactMatch) if b in algorithms or a in algorithms]
+    failures = [
+        f"{a} skos:exactMatch {b}: a SKOS mapping to an OWL individual; use hexplain:correspondsTo"
+        for a, b in g.subject_objects(SKOS.exactMatch)
+        if b in algorithms or a in algorithms
+    ]
     for alg in sorted(algorithms):
         linked = matches[alg] & concepts
         if len(linked) != 1:
@@ -51,8 +54,10 @@ def main():
                 for lst in g.objects(branch, SH["in"]):
                     accepted |= set(Collection(g, lst))
     if accepted != algorithms:
-        failures.append(f"bddo:ChecksumShape accepts {sorted(map(str, accepted))} but the individuals are "
-                        f"{sorted(map(str, algorithms))}")
+        failures.append(
+            f"bddo:ChecksumShape accepts {sorted(map(str, accepted))} but the individuals are "
+            f"{sorted(map(str, algorithms))}"
+        )
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures))
         sys.exit(1)

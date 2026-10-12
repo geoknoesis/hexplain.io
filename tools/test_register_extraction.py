@@ -53,15 +53,23 @@ calls" for the full evidence trail):
    fully-enumerated exceptions (DELIBERATELY_CHANGED, below), not a blanket predicate exclusion,
    so the test stays strict about anything else moving.
 """
-import subprocess, sys
+
+import subprocess
+import sys
+
 import rdflib
 
 SKOS = rdflib.Namespace("http://www.w3.org/2004/02/skos/core#")
 RDFS = rdflib.Namespace("http://www.w3.org/2000/01/rdf-schema#")
 OWL = rdflib.Namespace("http://www.w3.org/2002/07/owl#")
-PAIRS = [("security", "us-nato-security"), ("encoding", "media-encoding"),
-         ("color", "color"), ("integrity", "checksum"),
-         ("bundle", "part-role"), ("geometry", "geometry-type")]
+PAIRS = [
+    ("security", "us-nato-security"),
+    ("encoding", "media-encoding"),
+    ("color", "color"),
+    ("integrity", "checksum"),
+    ("bundle", "part-role"),
+    ("geometry", "geometry-type"),
+]
 
 # The commit immediately BEFORE the six-registers extraction (2596596) landed. Fixed on
 # purpose -- see the module docstring. Do not change this to HEAD/HEAD~1/a branch name.
@@ -111,16 +119,26 @@ DELIBERATELY_CHANGED = {
     (rdflib.URIRef(_UNS + "AuthorityTypeScheme"), OWL.versionInfo, rdflib.Literal("1.1")),
     (rdflib.URIRef(_UNS + "ClassificationReasonScheme"), OWL.versionInfo, rdflib.Literal("1.1")),
     (rdflib.URIRef(_UNS + "ExemptionScheme"), OWL.versionInfo, rdflib.Literal("1.1")),
-    (rdflib.URIRef(_UNS + "MarkingScheme"), SKOS.note,
-     rdflib.Literal("Digraph notations from NITF MIL-STD-2500C Table A-4; align to the "
-                    "current CAPCO Register when applying.")),
+    (
+        rdflib.URIRef(_UNS + "MarkingScheme"),
+        SKOS.note,
+        rdflib.Literal(
+            "Digraph notations from NITF MIL-STD-2500C Table A-4; align to the current CAPCO Register when applying."
+        ),
+    ),
     # 2026-09-24: SKOS mapping properties relate concepts to concepts. H.264's exactMatch to an
     # ISO catalogue web page became rdfs:seeAlso, and Point's closeMatch named geosparql:Point,
     # which GeoSPARQL does not define; it now names the Simple Features class sf:Point.
-    (rdflib.URIRef("https://hexplain.io/ns/register/media-encoding#H264"), SKOS.exactMatch,
-     rdflib.URIRef("https://www.iso.org/standard/75400.html")),
-    (rdflib.URIRef("https://hexplain.io/ns/register/geometry-type#Point"), SKOS.closeMatch,
-     rdflib.URIRef("http://www.opengis.net/ont/geosparql#Point")),
+    (
+        rdflib.URIRef("https://hexplain.io/ns/register/media-encoding#H264"),
+        SKOS.exactMatch,
+        rdflib.URIRef("https://www.iso.org/standard/75400.html"),
+    ),
+    (
+        rdflib.URIRef("https://hexplain.io/ns/register/geometry-type#Point"),
+        SKOS.closeMatch,
+        rdflib.URIRef("http://www.opengis.net/ont/geosparql#Point"),
+    ),
     # Register 1.3: a retired entry is no longer offered as current. usnato:Restricted stays
     # skos:inScheme but is no longer a top concept, and usnato:Fouo left the current
     # HandlingCaveats grouping (both recorded in the register's history and change notes).
@@ -128,24 +146,33 @@ DELIBERATELY_CHANGED = {
     (rdflib.URIRef(_UNS + "HandlingCaveats"), SKOS.member, rdflib.URIRef(_UNS + "Fouo")),
 }
 
+
 def original(aspect):
     blob = subprocess.run(
         ["git", "show", f"{PRE_MIGRATION_SHA}:specification/aspect/{aspect}/{aspect}.ttl"],
-        capture_output=True, text=True, encoding="utf-8", check=True).stdout
-    g = rdflib.Graph(); g.parse(data=blob, format="turtle"); return g
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    ).stdout
+    g = rdflib.Graph()
+    g.parse(data=blob, format="turtle")
+    return g
+
 
 problems = []
 for aspect, reg in PAIRS:
     old = original(aspect)
-    new = rdflib.Graph(); new.parse(f"specification/aspect/{aspect}/{aspect}.ttl", format="turtle")
-    rgraph = rdflib.Graph(); rgraph.parse(f"specification/register/{reg}/{reg}.ttl", format="turtle")
+    new = rdflib.Graph()
+    new.parse(f"specification/aspect/{aspect}/{aspect}.ttl", format="turtle")
+    rgraph = rdflib.Graph()
+    rgraph.parse(f"specification/register/{reg}/{reg}.ttl", format="turtle")
 
     a_ns = f"https://hexplain.io/ns/aspect/{aspect}#"
     r_ns = f"https://hexplain.io/ns/register/{reg}#"
 
     def rewrite(t):
-        return tuple(rdflib.URIRef(str(x).replace(a_ns, r_ns))
-                     if isinstance(x, rdflib.URIRef) else x for x in t)
+        return tuple(rdflib.URIRef(str(x).replace(a_ns, r_ns)) if isinstance(x, rdflib.URIRef) else x for x in t)
 
     # Entities that actually migrate: concepts, schemes, and collections (per the docstring's
     # "rewriting concept/scheme IRIs" scope) -- not every property/class that merely shares the
@@ -154,14 +181,15 @@ for aspect, reg in PAIRS:
     for t in MOVING_TYPES:
         moving |= set(old.subjects(rdflib.RDF.type, t))
 
-    old_wanted = {rewrite(t) for t in old
-                  if t[0] in moving and t[1] not in (SKOS.notation, RDFS.isDefinedBy)}
+    old_wanted = {rewrite(t) for t in old if t[0] in moving and t[1] not in (SKOS.notation, RDFS.isDefinedBy)}
     old_wanted -= DELIBERATELY_CHANGED
     got = set(new) | set(rgraph)
+
     # Documentation literals were later tagged @en across the family (tools/test_language_tags.py):
     # the same text with a language tag is the same annotation, not a lost one.
     def untagged(t):
         return tuple(rdflib.Literal(str(x)) if isinstance(x, rdflib.Literal) and x.language == "en" else x for x in t)
+
     missing = {untagged(t) for t in old_wanted} - {untagged(t) for t in got}
     if missing:
         problems.append(f"{aspect}: {len(missing)} triple(s) lost, e.g. {sorted(missing, key=str)[:3]}")
@@ -184,8 +212,8 @@ for aspect, reg in PAIRS:
     got_concepts = len(set(rgraph.subjects(rdflib.RDF.type, SKOS.Concept)))
     if (got_schemes, got_concepts) != (exp_schemes, exp_concepts):
         problems.append(
-            f"{reg}: expected {exp_schemes} scheme(s)/{exp_concepts} concept(s), "
-            f"got {got_schemes}/{got_concepts}")
+            f"{reg}: expected {exp_schemes} scheme(s)/{exp_concepts} concept(s), got {got_schemes}/{got_concepts}"
+        )
 
     # every migrated scheme must be rdfs:isDefinedBy the new register ontology, not the old aspect
     reg_ont = rdflib.URIRef(f"https://hexplain.io/ns/register/{reg}")
@@ -195,5 +223,6 @@ for aspect, reg in PAIRS:
             problems.append(f"{aspect}: {rewritten_s} is not rdfs:isDefinedBy the register ontology")
 
 if problems:
-    print("FAIL:\n  " + "\n  ".join(problems)); sys.exit(1)
+    print("FAIL:\n  " + "\n  ".join(problems))
+    sys.exit(1)
 print("PASS: all 6 registers extracted; concepts conserved; notations removed")

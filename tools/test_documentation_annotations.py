@@ -17,6 +17,7 @@ annotations):
     template sentences;
   * the generated block of every module is Turtle written with prefixed names, not N-Triples.
 """
+
 import json
 import re
 import sys
@@ -30,9 +31,13 @@ MARKER = "\n# BEGIN GENERATED TERM DOCUMENTATION\n"
 PLACEHOLDER = re.compile(r"\{[?$][A-Za-z_]\w*\}")
 PROSE = (RDFS.label, RDFS.comment, SKOS.definition, SKOS.scopeNote)
 TEMPLATE_OPENERS = ("A reusable validation contract",)
-TEMPLATE_NOTES = ("Validation activation:", "Use it as a predicate.", "Assert this class on a resource representing the defined entity.",
-                  "Use this IRI as a controlled value where the profile or a shape accepts its declared type.",
-                  "Use as a controlled value or grouping in this register.")
+TEMPLATE_NOTES = (
+    "Validation activation:",
+    "Use it as a predicate.",
+    "Assert this class on a resource representing the defined entity.",
+    "Use this IRI as a controlled value where the profile or a shape accepts its declared type.",
+    "Use as a controlled value or grouping in this register.",
+)
 NTRIPLE = re.compile(r"^<[^>\s]+>\s+<[^>\s]+>\s", re.M)
 
 
@@ -50,20 +55,25 @@ def problems(g):
             if predicate == SKOS.scopeNote and any(n in str(text) for n in TEMPLATE_NOTES):
                 found.append(f"{where} is a retired template sentence: {str(text)[:80]}")
     for term, definition in g.subject_objects(SKOS.definition):
-        if isinstance(term, URIRef) and any(str(c).strip() == str(definition).strip() for c in g.objects(term, RDFS.comment)):
+        if isinstance(term, URIRef) and any(
+            str(c).strip() == str(definition).strip() for c in g.objects(term, RDFS.comment)
+        ):
             found.append(f"{term}: skos:definition repeats its rdfs:comment verbatim")
     return found
 
 
 def self_test():
-    g = Graph().parse(format="turtle", data="""
+    g = Graph().parse(
+        format="turtle",
+        data="""
         @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
         <https://hexplain.io/ns/x#a> rdfs:comment "Same." ; skos:definition "Same."@en .
         <https://hexplain.io/ns/x#b> skos:definition "{?s} declares {?n} things." .
         <https://hexplain.io/ns/x#c> skos:definition "A reusable validation contract for x." ;
-            skos:scopeNote "Use it as a predicate. More." .""")
+            skos:scopeNote "Use it as a predicate. More." .""",
+    )
     assert len(problems(g)) == 4, problems(g)
-    assert NTRIPLE.search("<https://hexplain.io/ns/x#a> <http://www.w3.org/2000/01/rdf-schema#label> \"a\" .")
+    assert NTRIPLE.search('<https://hexplain.io/ns/x#a> <http://www.w3.org/2000/01/rdf-schema#label> "a" .')
 
 
 def main():
@@ -79,10 +89,14 @@ def main():
             found.append(f"{rel}: the generated documentation block is written as N-Triples; regenerate it")
     found += problems(whole)
     if found:
-        print("FAIL:\n  " + "\n  ".join(found[:80]) + (f"\n  ... and {len(found) - 80} more" if len(found) > 80 else ""))
+        print(
+            "FAIL:\n  " + "\n  ".join(found[:80]) + (f"\n  ... and {len(found) - 80} more" if len(found) > 80 else "")
+        )
         return 1
-    print(f"PASS: documentation annotations of {len(files)} modules hold no placeholder, repeat no comment, "
-          "use no retired template and are written as prefixed Turtle")
+    print(
+        f"PASS: documentation annotations of {len(files)} modules hold no placeholder, repeat no comment, "
+        "use no retired template and are written as prefixed Turtle"
+    )
     return 0
 
 

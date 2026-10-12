@@ -1,51 +1,69 @@
 """Executable outcome/timeout probes; optional dependencies cannot masquerade as passes."""
-from pathlib import Path
-import sys
-import tempfile
+
 import contextlib
+import hashlib
 import io
 import json
-import hashlib
-from _gate_runner import run_gate, main
+import sys
+import tempfile
+from pathlib import Path
+
+from _gate_runner import main, run_gate
 
 with contextlib.redirect_stdout(io.StringIO()), tempfile.TemporaryDirectory() as temp:
     root = Path(temp)
-    for text, expected in [("print('PASS: checked')", "PASS"), ("print('SKIP: dependency absent')", "SKIP"), ("raise SystemExit(1)", "FAIL")]:
+    for text, expected in [
+        ("print('PASS: checked')", "PASS"),
+        ("print('SKIP: dependency absent')", "SKIP"),
+        ("raise SystemExit(1)", "FAIL"),
+    ]:
         result = run_gate([sys.executable, "-c", text], root, 10)
         assert result["status"] == expected, result
     assert run_gate([sys.executable, "-c", "import time; time.sleep(60)"], root, 0.2)["timed_out"]
-    flood = run_gate([sys.executable, "-c", "import sys; sys.stdout.write('x'*100000)"], root, 10, max_output_chars=1024)
+    flood = run_gate(
+        [sys.executable, "-c", "import sys; sys.stdout.write('x'*100000)"], root, 10, max_output_chars=1024
+    )
     assert flood["status"] == "FAIL" and flood["output_limit_exceeded"]
     assert len(flood["output"]) == 1024
-    for invalid in (float('nan'), float('inf'), 0, -1):
+    for invalid in (float("nan"), float("inf"), 0, -1):
         try:
             run_gate([sys.executable, "-c", "pass"], root, invalid)
             raise AssertionError("accepted invalid timeout")
         except ValueError:
             pass
-    (root/"tools").mkdir()
-    (root/"tools/test_optional.py").write_text("print('SKIP: dependency absent')", encoding="utf-8", newline="\n")
+    (root / "tools").mkdir()
+    (root / "tools/test_optional.py").write_text("print('SKIP: dependency absent')", encoding="utf-8", newline="\n")
     assert main(root, set(), ["--strict"]) == 1
-    report = root/".gate-results/summary.json"
+    report = root / ".gate-results/summary.json"
     assert json.loads(report.read_text())["status"] == "failed"
     assert main(root, set(), []) == 0
     saved = json.loads(report.read_text())
     assert saved["status"] == "complete"
     assert saved["selected_gates"] == ["test_optional"]
-    assert saved["gate_sha256"]["test_optional"] == hashlib.sha256((root/"tools/test_optional.py").read_bytes()).hexdigest()
-    (root/"tools/test_optional.py").write_text("""import json
+    assert (
+        saved["gate_sha256"]["test_optional"]
+        == hashlib.sha256((root / "tools/test_optional.py").read_bytes()).hexdigest()
+    )
+    (root / "tools/test_optional.py").write_text(
+        """import json
 from pathlib import Path
 report = json.loads(Path('.gate-results/summary.json').read_text())
 assert report['status'] == 'running'
 assert report['gates'] == []
 raise SystemExit(1)
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
     assert main(root, set(), ["--strict"]) == 1
     assert json.loads(report.read_text())["status"] == "failed"
-    (root/"specification").mkdir()
-    fixture = root/"specification/input.ttl"
+    (root / "specification").mkdir()
+    fixture = root / "specification/input.ttl"
     fixture.write_text("original", encoding="utf-8", newline="\n")
-    (root/"tools/test_optional.py").write_text("from pathlib import Path; Path('specification/input.ttl').write_text('changed')", encoding="utf-8", newline="\n")
+    (root / "tools/test_optional.py").write_text(
+        "from pathlib import Path; Path('specification/input.ttl').write_text('changed')",
+        encoding="utf-8",
+        newline="\n",
+    )
     assert main(root, set(), ["--strict"]) == 1
     saved = json.loads(report.read_text())
     assert saved["status"] == "failed"
@@ -57,17 +75,31 @@ raise SystemExit(1)
     # Child processes are where that memory goes, so the sample has to include them.
     # Held across several sampling intervals on purpose: the sampler is a sampler, and a peak
     # shorter than its interval is genuinely invisible to it.
-    child = run_gate([sys.executable, "-c",
-                      "import sys, time; block = bytearray(96*1024*1024); time.sleep(1);"
-                      " sys.stdout.write(str(len(block)))"], root, 60)
+    child = run_gate(
+        [
+            sys.executable,
+            "-c",
+            "import sys, time; block = bytearray(96*1024*1024); time.sleep(1); sys.stdout.write(str(len(block)))",
+        ],
+        root,
+        60,
+    )
     assert child["status"] == "PASS", child
-    assert child["peak_rss_bytes"] > 64*1024*1024, child["peak_rss_bytes"]
+    assert child["peak_rss_bytes"] > 64 * 1024 * 1024, child["peak_rss_bytes"]
     assert child["rss_samples"] > 0, child
-    spawner = run_gate([sys.executable, "-c", """
+    spawner = run_gate(
+        [
+            sys.executable,
+            "-c",
+            """
 import subprocess, sys
 subprocess.run([sys.executable, "-c", "import time; block = bytearray(192*1024*1024); time.sleep(1); print(len(block))"], check=True)
-"""], root, 120)
+""",
+        ],
+        root,
+        120,
+    )
     assert spawner["status"] == "PASS", spawner
-    assert spawner["peak_rss_bytes"] > 160*1024*1024, spawner["peak_rss_bytes"]
+    assert spawner["peak_rss_bytes"] > 160 * 1024 * 1024, spawner["peak_rss_bytes"]
     assert spawner["peak_processes"] >= 2, spawner
 print("PASS: distinct outcomes, timeout, strict rejection, optional local skips and sampled memory")
