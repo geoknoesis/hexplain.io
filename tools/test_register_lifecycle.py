@@ -39,7 +39,7 @@ def register_files() -> list[Any]:
     return [f"specification/{f}" for f in files if f.startswith("register/")]
 
 
-def is_true(value: str) -> bool:
+def is_true(value: Any) -> bool:
     return isinstance(value, Literal) and value.toPython() is True
 
 

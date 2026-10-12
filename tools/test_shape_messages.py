@@ -32,7 +32,7 @@ TARGETS = (SH.targetClass, SH.targetSubjectsOf, SH.targetObjectsOf, SH.targetNod
 PLACEHOLDER = re.compile(r"\{[?$][A-Za-z_]\w*\}")
 
 
-def reported(g: Graph, pshape: Any, seen: set[str] = frozenset()) -> bool:
+def reported(g: Graph, pshape: Any, seen: frozenset[Any] | set[Any] = frozenset()) -> bool:
     """True when a validator reports [pshape]'s results with [pshape] as their source shape."""
     if pshape in seen:
         return False
