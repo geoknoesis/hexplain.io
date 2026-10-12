@@ -67,6 +67,7 @@ PM_SECTION_CLASS = {
     "emission": "semantic-emitter",
     "multi-part-assets": "bundle-processor",
     "conformance-evaluation": "conformance-evaluator",
+    "serialisation": "writer",                               # the optional Writer target, not a processor class
 }
 
 #: Sentence-level class: a requirement whose sentence binds a class other than its section's.
@@ -80,6 +81,7 @@ CLASS_OVERRIDE = {
     "req-pm-emission-1": "physical-parser",                  # decoding a block is parsing
     "req-pm-privacy-1": "semantic-emitter",                  # the base a processor chooses for minting
     "req-pm-privacy-2": "conformance-evaluator",             # what a run report names its input by
+    "req-pm-codec-contracts-5": "hdl-compiler",              # a compiler's warning on a catalogue-only codec
 }
 #: Requirements on a description's author, not on a processor: they are registered and cited like
 #: any other, but a processor cannot fail them, so they never count as processor requirements.
@@ -346,14 +348,14 @@ def _blocks(source, only_section, titles=None):
     yield from flush()
 
 
-def _split(page, block, inherited=None, text_override=None):
+def _split(page, block, inherited=None, text_override=None, context=None):
     chars, anchors = block.chars, block.anchors
     plain = "".join(c for c, _ in chars)
     if inherited:
         # One requirement for the whole item: the list item, or the table row it heads.
         start = len(plain) - len(plain.lstrip())
         return [Sentence(page, block.section, normalise(text_override or plain), chars[start][1],
-                         [aid for _, aid in anchors], inherited)]
+                         [aid for _, aid in anchors], inherited, context)]
     bounds = [0] + [m.end() for m in SPLIT.finditer(plain)
                     if not plain[:m.start() + 1].rstrip().endswith(ABBREVIATIONS)] + [len(plain)]
     out = []
@@ -384,19 +386,20 @@ def sentences(page, source):
         if block.kind == "td":
             rows.setdefault(block.row, []).append(block)
     out = []
-    pending = None           # (level, container of the introducing sentence)
-    governed = None          # (level, container) of the list or table being read
+    pending = None           # (level, container of the introducing sentence, its text)
+    governed = None          # (level, container, introducing text) of the list or table being read
     seen = set()
     for block in blocks:
         if pending:
             # Only a list or table that directly follows the introducing sentence is governed by it.
             if block.container not in (0, pending[1]):
-                governed = (pending[0], block.container)
+                governed = (pending[0], block.container, pending[2])
             pending = None
         elif governed and block.container != governed[1] and block.kind not in ("li", "td"):
             governed = None
         inherit = override = None
-        if governed and block.container == governed[1] and block.element not in seen:
+        in_governed = governed is not None and block.container == governed[1]
+        if in_governed and block.element not in seen:
             plain = "".join(c for c, _ in block.chars)
             if block.kind == "li" and not KEYWORD.search(plain):
                 inherit = governed[0]
@@ -404,10 +407,16 @@ def sentences(page, source):
                 inherit = governed[0]
                 override = " | ".join(normalise("".join(c for c, _ in b.chars)) for b in rows[block.row])
         seen.add(block.element)
-        items = _split(page, block, inherit, override)
+        # An item of a governed list or table is a fragment on its own ("Integer | An xsd:long literal ..."):
+        # the registry records the sentence that introduces the list with it, so the entry stands alone.
+        items = _split(page, block, inherit, override, normalise(governed[2]) if inherit else None)
+        if in_governed and block.kind in ("li", "td"):
+            for s in items:
+                if s.is_requirement and not s.inherited:
+                    s.context = normalise(governed[2])
         for s in items:
             if s.introduces_items and not inherit:
-                pending = (s.level, block.container)
+                pending = (s.level, block.container, s.text)
         out.extend(items)
     # A sentence that opens with a pronoun ("It MUST be raised ...") names its subject in the sentence
     # before it; the registry records that sentence too, so an entry read on its own keeps its subject.
