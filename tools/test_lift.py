@@ -4,10 +4,11 @@ composed graph (bundle + referenced aspects + shapefile profile + instance),
 so the test exercises the real normative query. rdflib only; no pyshacl needed.
 """
 
-import glob
-import sys
+from pathlib import Path
 
 import rdflib
+
+ROOT = Path(__file__).resolve().parents[1]
 
 SH = rdflib.Namespace("http://www.w3.org/ns/shacl#")
 
@@ -23,15 +24,15 @@ def main() -> int:
         # facets SILENTLY not lift -- indistinguishable from a rule that does not work. The list
         # here was chosen for the Shapefile example and did not include hx-raster, which is exactly
         # how the synthetic replacement first appeared to fail.
-        *sorted(glob.glob("specification/aspect/*/*.ttl")),
-        *sorted(glob.glob("specification/register/*/*.ttl")),
+        *sorted(p.relative_to(ROOT).as_posix() for p in ROOT.glob("specification/aspect/*/*.ttl")),
+        *sorted(p.relative_to(ROOT).as_posix() for p in ROOT.glob("specification/register/*/*.ttl")),
         # The instance being lifted onto.
         "specification/aspect/bundle/example/bundle-example.ttl",
     ]
 
     g = rdflib.Graph()
     for f in FILES:
-        g.parse(f, format="turtle")
+        g.parse(ROOT / f, format="turtle")
 
     # Pull the authored CONSTRUCT text out of the lift rule.
     construct = None
@@ -39,7 +40,7 @@ def main() -> int:
         construct = str(q)
     if construct is None:
         print("FAIL: no sh:construct rule found in bundle.ttl")
-        sys.exit(1)
+        return 1
 
     # Apply the rule: run the CONSTRUCT and merge results back in ($this acts as a free var).
     for triple in g.query(construct):
@@ -54,7 +55,7 @@ def main() -> int:
     # literals (rdflib types them xsd:integer) while the source properties declare
     # narrower ranges, so an exact-datatype match would give a false FAIL. Numeric
     # value comparison is the robust check that the facet lifted.
-    def lifted_int(pred):
+    def lifted_int(pred: rdflib.URIRef) -> int | None:
         v = g.value(asset, pred)
         return None if v is None else int(v.toPython())
 
@@ -72,10 +73,10 @@ def main() -> int:
 
     if problems:
         print("FAIL: not lifted onto Asset:", problems)
-        sys.exit(1)
+        return 1
     if leaked:
         print("FAIL: physical afs:fileName leaked onto Asset:", leaked)
-        sys.exit(1)
+        return 1
     print("PASS: aspect facets lifted onto Asset; physical properties did not leak")
     return 0
 

@@ -3,7 +3,9 @@
 Mirrors tools/test_shapes.py's optional-pyshacl skip so the rdflib-only suite stays green.
 """
 
-import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def main() -> int:
@@ -11,16 +13,16 @@ def main() -> int:
         from pyshacl import validate
     except ImportError:
         print("SKIP: pyshacl not installed (optional formal SHACL gate)")
-        sys.exit(77)  # The runner's SKIP status (tools/_gate_runner.SKIP_EXIT).
+        return 77  # The runner's SKIP status (tools/_gate_runner.SKIP_EXIT).
 
     import rdflib
 
     shapes = rdflib.Graph()
-    shapes.parse("specification/hexplain/core.ttl", format="turtle")
+    shapes.parse(ROOT / "specification/hexplain/core.ttl", format="turtle")
 
-    def conforms(path):
+    def conforms(path: str) -> tuple[bool, str]:
         data = rdflib.Graph()
-        data.parse(path, format="turtle")
+        data.parse(ROOT / path, format="turtle")
         ok, _, text = validate(data, shacl_graph=shapes, advanced=True)
         return ok, text
 
@@ -38,7 +40,7 @@ def main() -> int:
         problems.append("value OUTSIDE the declared register conformed (binding not enforced)")
     if problems:
         print("FAIL:\n" + "\n".join(problems))
-        sys.exit(1)
+        return 1
     print("PASS: register bindings enforced (in-register conforms, out-of-register rejected)")
     return 0
 

@@ -18,13 +18,27 @@ from collections.abc import Iterable
 from pathlib import Path
 
 import rdflib
-from _family import family_paths, load
+from _family import family_paths
+from _family import load as _load_files
 from rdflib import OWL, RDF, Graph, URIRef
 
 ROOT = Path(__file__).resolve().parents[1]
 VANN_URI = URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
 CACHE_DIR = ROOT / ".gate-results/family-cache"
 MANIFEST_ENV = "HEXPLAIN_SOURCE_MANIFEST_SHA256"
+
+
+def load(paths: Iterable[str | Path]) -> Graph:
+    """One graph from Turtle files; a relative path is relative to the repository root.
+
+    Never to the working directory: a gate gives the same answer wherever it is started.
+    """
+    return _load_files([ROOT / p for p in paths])
+
+
+def glob(pattern: str) -> list[str]:
+    """The repository-relative POSIX paths of the files matching ``pattern``, sorted."""
+    return sorted(p.relative_to(ROOT).as_posix() for p in ROOT.glob(pattern) if p.is_file())
 
 
 def ontology_paths() -> list[str]:
@@ -68,7 +82,7 @@ def _family_graph(paths: list[str]) -> Graph:
             return graph
     except (OSError, pickle.UnpicklingError, EOFError, AttributeError, ValueError, TypeError):
         pass
-    graph = load([str(ROOT / p) for p in paths])
+    graph = load(paths)
     try:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         temporary = cache.with_suffix(f".{os.getpid()}.tmp")
@@ -121,4 +135,4 @@ def modules_for(namespaces: Iterable[str]) -> list[str]:
 
 def shapes_of(files: Iterable[str]) -> Graph:
     """The shapes graph of the given family files (repository-relative paths); a fresh graph."""
-    return load([str(ROOT / p) for p in files])
+    return load(files)

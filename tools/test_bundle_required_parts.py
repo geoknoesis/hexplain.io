@@ -4,9 +4,11 @@ the valid roads.* yields zero violation rows; the .shp-less instance yields >=1.
 rdflib only.
 """
 
-import sys
+from pathlib import Path
 
 import rdflib
+
+ROOT = Path(__file__).resolve().parents[1]
 
 SH = rdflib.Namespace("http://www.w3.org/ns/shacl#")
 BASE = [
@@ -25,19 +27,19 @@ ABND = rdflib.Namespace("https://hexplain.io/ns/aspect/bundle#")
 def main() -> int:
     gb = rdflib.Graph()
     for f in BASE:
-        gb.parse(f, format="turtle")
+        gb.parse(ROOT / f, format="turtle")
     select = None
     for constraint in gb.objects(ABND.RequiredPartsShape, SH.sparql):
         for q in gb.objects(constraint, SH.select):
             select = str(q)
     if select is None:
         print("FAIL: no sh:select found on abnd:RequiredPartsShape")
-        sys.exit(1)
+        return 1
 
-    def violations(instance_file):
+    def violations(instance_file: str) -> list[object]:
         g = rdflib.Graph()
         for f in BASE + [instance_file]:
-            g.parse(f, format="turtle")
+            g.parse(ROOT / f, format="turtle")
         return list(g.query(select))
 
     valid = violations("specification/aspect/bundle/example/bundle-example.ttl")
@@ -45,10 +47,10 @@ def main() -> int:
 
     if valid:
         print("FAIL: valid instance reported violations:", valid)
-        sys.exit(1)
+        return 1
     if not invalid:
         print("FAIL: invalid instance (missing the required .grd part) reported no violation")
-        sys.exit(1)
+        return 1
     print(f"PASS: valid=0 violations, invalid={len(invalid)} violation(s)")
     return 0
 

@@ -56,8 +56,11 @@ calls" for the full evidence trail):
 
 import subprocess
 import sys
+from pathlib import Path
 
 import rdflib
+
+ROOT = Path(__file__).resolve().parents[1]
 
 SKOS = rdflib.Namespace("http://www.w3.org/2004/02/skos/core#")
 RDFS = rdflib.Namespace("http://www.w3.org/2000/01/rdf-schema#")
@@ -157,6 +160,7 @@ def main() -> int:
             text=True,
             encoding="utf-8",
             check=True,
+            cwd=ROOT,
         ).stdout
         g = rdflib.Graph()
         g.parse(data=blob, format="turtle")
@@ -166,9 +170,9 @@ def main() -> int:
     for aspect, reg in PAIRS:
         old = original(aspect)
         new = rdflib.Graph()
-        new.parse(f"specification/aspect/{aspect}/{aspect}.ttl", format="turtle")
+        new.parse(ROOT / f"specification/aspect/{aspect}/{aspect}.ttl", format="turtle")
         rgraph = rdflib.Graph()
-        rgraph.parse(f"specification/register/{reg}/{reg}.ttl", format="turtle")
+        rgraph.parse(ROOT / f"specification/register/{reg}/{reg}.ttl", format="turtle")
 
         a_ns = f"https://hexplain.io/ns/aspect/{aspect}#"
         r_ns = f"https://hexplain.io/ns/register/{reg}#"

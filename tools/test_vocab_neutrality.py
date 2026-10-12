@@ -34,7 +34,6 @@ Profiles are deliberately NOT checked: a profile describing NITF is supposed to 
 
 from __future__ import annotations
 
-import glob
 import pathlib
 import re
 import sys
@@ -43,16 +42,22 @@ from typing import Any
 import rdflib
 from rdflib import Graph
 
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+
 SKOS = rdflib.Namespace("http://www.w3.org/2004/02/skos/core#")
 REGISTER_NS = "https://hexplain.io/ns/register/"
 ASPECT_NS = "https://hexplain.io/ns/aspect/"
 
 
 #: Vocabularies that must be format-neutral: the three foundations plus every aspect.
-def normative_files() -> Any:
-    return ["specification/bddo/bddo.ttl", "specification/dlv/dlv.ttl", "specification/hexplain/core.ttl"] + sorted(
-        glob.glob("specification/aspect/*/*.ttl")
-    )
+def repository_files(pattern: str) -> list[str]:
+    """Repository-relative POSIX paths matching ``pattern``, wherever the gate is started from."""
+    return sorted(p.relative_to(ROOT).as_posix() for p in ROOT.glob(pattern) if p.is_file())
+
+
+def normative_files() -> list[str]:
+    foundations = ["specification/bddo/bddo.ttl", "specification/dlv/dlv.ttl", "specification/hexplain/core.ttl"]
+    return foundations + repository_files("specification/aspect/*/*.ttl")
 
 
 #: Names that would betray a bias in a term. Matched against camelCase WORDS rather than as
@@ -193,7 +198,7 @@ def main() -> int:
 
     for path in normative_files():
         g = rdflib.Graph()
-        g.parse(data=pathlib.Path(path).read_text(encoding="utf-8"), format="turtle")
+        g.parse(data=(ROOT / path).read_text(encoding="utf-8"), format="turtle")
         ont = next((str(s) for s in g.subjects(rdflib.RDF.type, rdflib.OWL.Ontology)), None)
         if ont is None:
             problems.append(f"{path}: no owl:Ontology declaration, cannot scope its terms")
@@ -224,7 +229,7 @@ def main() -> int:
                     )
 
         # 4 -- aspects declare no concepts
-        if "/aspect/" in path.replace("\\", "/"):
+        if "/aspect/" in path:
             for kind in (SKOS.Concept, SKOS.ConceptScheme, SKOS.Collection):
                 for s in g.subjects(rdflib.RDF.type, kind):
                     problems.append(
@@ -234,9 +239,9 @@ def main() -> int:
                     )
 
     # 3 -- registers must not reference an aspect
-    for path in sorted(glob.glob("specification/register/*/*.ttl")):
+    for path in repository_files("specification/register/*/*.ttl"):
         g = rdflib.Graph()
-        g.parse(data=pathlib.Path(path).read_text(encoding="utf-8"), format="turtle")
+        g.parse(data=(ROOT / path).read_text(encoding="utf-8"), format="turtle")
         for s, p, o in g:
             for node in (s, p, o):
                 if isinstance(node, rdflib.URIRef) and str(node).startswith(ASPECT_NS):

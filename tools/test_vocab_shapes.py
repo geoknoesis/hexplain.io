@@ -26,10 +26,7 @@ instead of hiding behind the expected result.
 from __future__ import annotations
 
 import functools
-import glob
-import pathlib
 import re
-import sys
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from typing import Any
@@ -46,6 +43,7 @@ from rdflib import Graph, Namespace, URIRef
 CORE = specgraph.ontology_paths()
 
 load = specgraph.load
+ROOT = specgraph.ROOT
 
 
 def ontologies_for(fixture_path: Any) -> Any:
@@ -58,10 +56,10 @@ def ontologies_for(fixture_path: Any) -> Any:
     beside it -- some modules keep their SHACL in the vocabulary file (bddo.ttl),
     others in a sibling shapes.ttl (conf, req).
     """
-    mod_dir = pathlib.Path(fixture_path).parent.parent
+    mod_dir = (ROOT / fixture_path).parent.parent
     paths = list(CORE)
     for extra in sorted(mod_dir.glob("*.ttl")):
-        s = extra.as_posix()
+        s = extra.relative_to(ROOT).as_posix()
         if s not in paths:
             paths.append(s)
     return paths
@@ -71,11 +69,13 @@ def ontologies_for(fixture_path: Any) -> Any:
 # one-level glob silently skipped every aspect and profile fixture -- they were written,
 # committed and never run.
 _PATTERNS = ("specification/*/test/", "specification/*/*/test/")
-fixtures = sorted(
-    f for pat in _PATTERNS for suffix in ("*-valid.ttl", "*-invalid.ttl") for f in glob.glob(pat + suffix)
-)
-if not fixtures:
-    sys.exit("FAIL: no fixtures found (wrong working directory?)")
+
+
+def fixture_paths() -> list[str]:
+    """Every -valid and -invalid fixture, as repository-relative paths in a stable order."""
+    return sorted(
+        f for pat in _PATTERNS for suffix in ("*-valid.ttl", "*-invalid.ttl") for f in specgraph.glob(pat + suffix)
+    )
 
 
 @functools.cache
@@ -90,12 +90,12 @@ EXPECT = re.compile(r"^#\s*expect:\s*(\S+)\s+(\S+)(?:\s+(\S+))?\s*$", re.M)
 
 def expectations(path: Path) -> list[Any]:
     """The (focus, shape, component) triples an -invalid fixture declares, as IRIs."""
-    text = pathlib.Path(path).read_text(encoding="utf-8")
+    text = (ROOT / path).read_text(encoding="utf-8")
     prefixes = Graph().parse(data=text, format="turtle").namespace_manager
     bound = dict(prefixes.namespaces())
     bound.setdefault("sh", URIRef(str(SH)))
 
-    def iri(curie):
+    def iri(curie: str) -> URIRef:
         if curie.startswith("<") and curie.endswith(">"):
             return URIRef(curie[1:-1])
         prefix, _, local = curie.partition(":")
@@ -172,7 +172,7 @@ def check(path: str) -> Any:
     if missing:
         listed = "\n  ".join(" ".join(str(x) for x in m if x is not None) for m in missing)
         return f"{path}: expected results not reported:\n  {listed}\n{report}"
-    if EXPECT_ONLY.search(pathlib.Path(path).read_text(encoding="utf-8")):
+    if EXPECT_ONLY.search((ROOT / path).read_text(encoding="utf-8")):
         extra = unexpected(report_graph, shapes, expected)
         if extra:
             listed = "\n  ".join(" ".join(str(x) for x in m if x is not None) for m in extra)
@@ -180,7 +180,11 @@ def check(path: str) -> Any:
     return None
 
 
-def main() -> None:
+def main() -> int:
+    fixtures = fixture_paths()
+    if not fixtures:
+        print("FAIL: no fixtures found under specification/")
+        return 1
     parallel = gate_workers()
     print(f"Validating {len(fixtures)} vocabulary fixtures across {parallel} worker(s)", flush=True)
     # Fixtures sharing an ontology set are adjacent, so each worker reuses its cached shapes.
@@ -192,9 +196,10 @@ def main() -> None:
     failures = [failure for failure in results if failure]
     if failures:
         print("FAIL:\n" + "\n".join(failures))
-        sys.exit(1)
+        return 1
     print(f"PASS: {len(fixtures)} vocabulary fixtures behave as expected")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

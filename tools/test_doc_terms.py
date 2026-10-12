@@ -18,13 +18,14 @@ someone else's vocabulary and not ours to verify.
 
 from __future__ import annotations
 
-import glob
 import pathlib
 import re
 import sys
 from typing import Any
 
 import rdflib
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 #: Prefix -> namespace, for the vocabularies this project owns.
 PREFIXES = {
@@ -74,15 +75,20 @@ SKIP_DOCS = {"specification/review.html"}
 PRE = re.compile(r'<pre class="nohighlight">.*?</pre>', re.S)
 
 
+def repository_files(pattern: str) -> list[str]:
+    """Repository-relative POSIX paths matching ``pattern``, wherever the gate is started from."""
+    return sorted(p.relative_to(ROOT).as_posix() for p in ROOT.glob(pattern) if p.is_file())
+
+
 def defined_terms() -> Any:
     """Every subject IRI declared anywhere in the specification, excluding fixtures."""
     out = set()
-    for path in glob.glob("specification/**/*.ttl", recursive=True):
-        if "/test/" in path.replace("\\", "/"):
+    for path in repository_files("specification/**/*.ttl"):
+        if "/test/" in path:
             continue
         g = rdflib.Graph()
         try:
-            g.parse(data=pathlib.Path(path).read_text(encoding="utf-8"), format="turtle")
+            g.parse(data=(ROOT / path).read_text(encoding="utf-8"), format="turtle")
         except Exception as exc:  # noqa: BLE001 -- validate_all reports parse errors properly
             print(f"WARN: {path} did not parse ({exc}); its terms will look undefined")
             continue
@@ -93,7 +99,7 @@ def defined_terms() -> Any:
 def main() -> int:
     # A CURIE inside a longer absolute IRI is not a prose vocabulary reference.
     # In particular, urn:hexplain:security-example:Marked is not hexplain:security.
-    def names(text, prefix):
+    def names(text: str, prefix: str) -> set[str]:
         return set(re.findall(rf"(?<![\w:/#.-]){prefix}:([A-Za-z][A-Za-z0-9_]*)", text))
 
     assert names("urn:hexplain:security-example:Marked", "hexplain") == set()
@@ -101,16 +107,16 @@ def main() -> int:
     assert names("<code>dlv:MissingTerm</code> (dlv:Dimension)", "dlv") == {"MissingTerm", "Dimension"}
     defined = defined_terms()
     if len(defined) < 300:
-        print(f"FAIL: only {len(defined)} terms collected -- wrong working directory?")
+        print(f"FAIL: only {len(defined)} terms collected from specification/")
         return 1
 
     problems = []
     checked = 0
-    docs = sorted(glob.glob("specification/**/*.html", recursive=True))
+    docs = repository_files("specification/**/*.html")
     for doc in docs:
-        if doc.replace("\\", "/") in SKIP_DOCS:
+        if doc in SKIP_DOCS:
             continue
-        prose = PRE.sub(" ", pathlib.Path(doc).read_text(encoding="utf-8"))
+        prose = PRE.sub(" ", (ROOT / doc).read_text(encoding="utf-8"))
         for prefix, ns in PREFIXES.items():
             for local in sorted(names(prose, prefix)):
                 curie = f"{prefix}:{local}"

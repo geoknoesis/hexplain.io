@@ -5,7 +5,9 @@ present this genuinely runs AssetShape, PartShape (incl. register membership),
 and RequiredPartsShape.
 """
 
-import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def main() -> int:
@@ -13,7 +15,7 @@ def main() -> int:
         from pyshacl import validate
     except ImportError:
         print("SKIP: pyshacl not installed (optional formal SHACL gate)")
-        sys.exit(77)  # The runner's SKIP status (tools/_gate_runner.SKIP_EXIT).
+        return 77  # The runner's SKIP status (tools/_gate_runner.SKIP_EXIT).
     import rdflib
 
     BUNDLE = "specification/aspect/bundle/bundle.ttl"
@@ -35,13 +37,13 @@ def main() -> int:
         "specification/register/geometry-type/geometry-type.ttl",
     ]
 
-    def conforms(instance):
+    def conforms(instance: str) -> tuple[bool, str]:
         data = rdflib.Graph()
         for f in BASE + [instance]:
-            data.parse(f, format="turtle")
+            data.parse(ROOT / f, format="turtle")
         shapes = rdflib.Graph()
         for f in SHAPES:
-            shapes.parse(f, format="turtle")
+            shapes.parse(ROOT / f, format="turtle")
         ok, _, text = validate(data, shacl_graph=shapes, advanced=True)
         return ok, text
 
@@ -56,7 +58,7 @@ def main() -> int:
 
     if problems:
         print("FAIL:\n" + "\n".join(problems))
-        sys.exit(1)
+        return 1
     print("PASS: valid fixture conforms; invalid fixture fails SHACL (structural + required-parts executed)")
     return 0
 
