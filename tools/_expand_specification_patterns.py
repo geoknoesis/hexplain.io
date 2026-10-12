@@ -89,7 +89,7 @@ def run(write: bool = False) -> tuple[Any, ...]:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--write", action="store_true")
+    parser.add_argument("--write", action="store_true", help="Write the expanded modules instead of checking")
     args = parser.parse_args()
     count, changed = run(args.write)
     print(f"PASS: {count} authoring templates expanded; {changed} changed outputs")

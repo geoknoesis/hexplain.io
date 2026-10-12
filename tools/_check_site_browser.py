@@ -1,5 +1,7 @@
 """Headless browser acceptance for navigation, reflow, reduced motion and print."""
 
+from __future__ import annotations
+
 import json
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -14,7 +16,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 
 class Handler(SimpleHTTPRequestHandler):
-    def log_message(self, *args):
+    def log_message(self, *args: object) -> None:
         pass
 
 

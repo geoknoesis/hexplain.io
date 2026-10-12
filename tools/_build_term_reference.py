@@ -256,12 +256,12 @@ def sortkey(g: Graph, node: URIRef, seen: set[str] = frozenset()) -> str:
 
 
 class Renderer:
-    def __init__(self, g, registry, doc):
+    def __init__(self, g: Graph, registry: Any, doc: Any) -> None:
         self.g = g
         self.registry = registry
         self.doc = doc
 
-    def link(self, node):
+    def link(self, node: Any) -> str:
         if isinstance(node, Literal):
             return "<code>" + e(node.n3()) + "</code>"
         if node == RDF.nil:
@@ -277,10 +277,10 @@ class Renderer:
         )
         return f'<a href="{e(href, quote=True)}"><code>{e(label)}</code></a>'
 
-    def values(self, vals):
+    def values(self, vals: Iterable[Any]) -> str:
         return ", ".join(self.link(v) for v in sorted(vals, key=lambda x: sortkey(self.g, x)))
 
-    def node(self, node, seen=frozenset()):
+    def node(self, node: Any, seen: frozenset[Any] = frozenset()) -> str:
         if not isinstance(node, BNode):
             return self.link(node)
         if node in seen:
@@ -303,7 +303,7 @@ class Renderer:
             return "<ol>" + "".join("<li>" + v + "</li>" for v in vals) + "</ol>"
         return self.constraints(node, seen)
 
-    def constraints(self, node, seen=frozenset()):
+    def constraints(self, node: Any, seen: frozenset[Any] = frozenset()) -> str:
         rows = []
         for p, o in sorted(self.g.predicate_objects(node), key=lambda x: (str(x[0]), sortkey(self.g, x[1]))):
             if p in ANNOTATIONS or p == RDFS.comment:
@@ -661,8 +661,10 @@ def build(check: bool = False) -> Any:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--enrich", action="store_true")
-    parser.add_argument("--check", action="store_true")
+    parser.add_argument(
+        "--enrich", action="store_true", help="Also write the generated term annotations into the ontologies"
+    )
+    parser.add_argument("--check", action="store_true", help="Fail if a generated page differs; write nothing")
     args = parser.parse_args()
     if args.enrich and args.check:
         parser.error("--check cannot be combined with --enrich")

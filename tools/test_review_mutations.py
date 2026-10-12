@@ -73,7 +73,7 @@ def run(root: Path, chunk: int = 8) -> tuple[Any, ...]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", help="measure another checkout's shapes instead of this one's")
-    parser.add_argument("--list", action="store_true")
+    parser.add_argument("--list", action="store_true", help="Print every probe and its outcome")
     args = parser.parse_args()
     root = Path(args.root) if args.root else ROOT
     rows, wrong = run(root)

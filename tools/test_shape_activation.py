@@ -85,43 +85,51 @@ CLASS_ONLY = {
     "https://hexplain.io/ns/geo#VectorShape": "vector-dataset properties are shared with the geometry aspect",
     "https://hexplain.io/ns/image#ImageShape": "image-header properties are shared with the raster aspect",
 }
-for _local in [
-    "AsciiNumericWidthShape",
-    "DataTypeRuleShape",
-    "DataTypeShape",
-    "DelimitedRecordsShape",
-    "DelimitedTableShape",
-    "DerivedFieldShape",
-    "DispatchKeyUniquenessShape",
-    "DispatchTableShape",
-    "EndiannessRuleShape",
-    "EnumValueShape",
-    "EnumerationShape",
-    "FieldOffsetShape",
-    "FieldRepetitionShape",
-    "FieldShape",
-    "FieldSizingShape",
-    "GroupedRecordsShape",
-    "KeyPathShape",
-    "KeyValueHeaderShape",
-    "RecordGroupingShape",
-    "SeekScopeShape",
-    "StructShape",
-    "StructSizingShape",
-    "TreeDocumentShape",
-    "TypeSelectionExclusivityShape",
-    "VariableLengthFieldShape",
-    "VarintWidthShape",
-]:
-    CLASS_ONLY["https://hexplain.io/ns/bddo#" + _local] = _BDDO_TYPED
-for _local in [
-    "CellDataTypeRuleShape",
-    "ChunkedLayoutShape",
-    "DataLayoutShape",
-    "DimensionOrderRuleShape",
-    "DimensionShape",
-]:
-    CLASS_ONLY["https://hexplain.io/ns/dlv#" + _local] = _LAYOUT_TYPED
+CLASS_ONLY.update(
+    {
+        "https://hexplain.io/ns/bddo#" + local: _BDDO_TYPED
+        for local in [
+            "AsciiNumericWidthShape",
+            "DataTypeRuleShape",
+            "DataTypeShape",
+            "DelimitedRecordsShape",
+            "DelimitedTableShape",
+            "DerivedFieldShape",
+            "DispatchKeyUniquenessShape",
+            "DispatchTableShape",
+            "EndiannessRuleShape",
+            "EnumValueShape",
+            "EnumerationShape",
+            "FieldOffsetShape",
+            "FieldRepetitionShape",
+            "FieldShape",
+            "FieldSizingShape",
+            "GroupedRecordsShape",
+            "KeyPathShape",
+            "KeyValueHeaderShape",
+            "RecordGroupingShape",
+            "SeekScopeShape",
+            "StructShape",
+            "StructSizingShape",
+            "TreeDocumentShape",
+            "TypeSelectionExclusivityShape",
+            "VariableLengthFieldShape",
+            "VarintWidthShape",
+        ]
+    }
+)
+CLASS_ONLY.update(
+    {
+        "https://hexplain.io/ns/dlv#" + local: _LAYOUT_TYPED
+        for local in [
+            "CellDataTypeRuleShape",
+            "ChunkedLayoutShape",
+            "DataLayoutShape",
+            "DimensionOrderRuleShape",
+            "DimensionShape",
+        ]
+    }
+)
 PROPERTY_TARGETS = (SH.targetSubjectsOf, SH.targetObjectsOf, SH.target, SH.targetNode)
 
 

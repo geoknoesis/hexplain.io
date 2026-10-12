@@ -11,7 +11,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-from _gate_runner import SKIP_EXIT, gate_workers, load_gate_manifest, main, run_gate
+from _gate_runner import SKIP_EXIT, gate_workers, load_gate_manifest, run_gate
+from _gate_runner import main as run_gates
 
 
 def check_outcomes(root: Path) -> None:
@@ -51,10 +52,10 @@ def check_runner(root: Path) -> None:
     (root / "tools").mkdir()
     gate = root / "tools/test_optional.py"
     gate.write_text(f"print('SKIP: dependency absent'); raise SystemExit({SKIP_EXIT})", encoding="utf-8", newline="\n")
-    assert main(root, set(), ["--strict"]) == 1
+    assert run_gates(root, set(), ["--strict"]) == 1
     report = root / ".gate-results/summary.json"
     assert json.loads(report.read_text())["status"] == "failed"
-    assert main(root, set(), []) == 0
+    assert run_gates(root, set(), []) == 0
     saved = json.loads(report.read_text())
     assert saved["status"] == "complete"
     assert saved["selected_gates"] == ["test_optional"]
@@ -70,7 +71,7 @@ def check_runner(root: Path) -> None:
         encoding="utf-8",
         newline="\n",
     )
-    assert main(root, set(), ["--strict"]) == 1
+    assert run_gates(root, set(), ["--strict"]) == 1
     assert json.loads(report.read_text())["status"] == "failed"
     (root / "specification").mkdir()
     fixture = root / "specification/input.ttl"
@@ -80,7 +81,7 @@ def check_runner(root: Path) -> None:
         encoding="utf-8",
         newline="\n",
     )
-    assert main(root, set(), ["--strict"]) == 1
+    assert run_gates(root, set(), ["--strict"]) == 1
     saved = json.loads(report.read_text())
     assert saved["status"] == "failed"
     assert saved["changed_sources"] == ["specification/input.ttl"]
@@ -91,7 +92,7 @@ def check_runner(root: Path) -> None:
         encoding="utf-8",
         newline="\n",
     )
-    assert main(root, set(), ["--strict"]) == 0
+    assert run_gates(root, set(), ["--strict"]) == 0
 
 
 def check_concurrency(root: Path) -> None:
@@ -112,7 +113,7 @@ def check_concurrency(root: Path) -> None:
     (tools / "test_bad.py").write_text("raise SystemExit(2)\n", encoding="utf-8", newline="\n")
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
-        code = main(root, set(), ["--jobs", "3"])
+        code = run_gates(root, set(), ["--jobs", "3"])
     assert code == 1
     saved = json.loads((root / ".gate-results/summary.json").read_text())
     assert [g["gate"] for g in saved["gates"]] == ["test_a", "test_b", "test_bad", "test_c"], saved["gates"]
@@ -147,18 +148,20 @@ def check_manifest(root: Path) -> None:
         newline="\n",
     )
     assert set(load_gate_manifest(root)) == {"test_listed", "_check_docker"}
-    assert main(root, set(), ["--strict"]) == 0
+    assert run_gates(root, set(), ["--strict"]) == 0
     saved = json.loads((root / ".gate-results/summary.json").read_text())
     assert saved["selected_gates"] == ["test_listed"], saved["selected_gates"]
-    assert main(root, set(), ["--strict", "--class", "docker"]) == 1
+    assert run_gates(root, set(), ["--strict", "--class", "docker"]) == 1
     (tools / "test_unlisted.py").write_text("print('PASS')\n", encoding="utf-8", newline="\n")
     try:
-        main(root, set(), ["--strict"])
+        run_gates(root, set(), ["--strict"])
         raise AssertionError("ran with an undeclared gate")
     except SystemExit as refused:
         assert refused.code == 2, refused.code
     manifest.write_text(
-        json.dumps(dict(schema_version=1, gates=[dict(name="test_listed", timeout=0)])), encoding="utf-8"
+        json.dumps(dict(schema_version=1, gates=[dict(name="test_listed", timeout=0)])),
+        encoding="utf-8",
+        newline="\n",
     )
     try:
         load_gate_manifest(root)
@@ -221,7 +224,7 @@ def check_memory_sampling(root: Path) -> None:
     assert spawner["peak_processes"] >= 2, spawner
 
 
-def main_gate() -> int:
+def main() -> int:
     quiet = io.StringIO()
     with contextlib.redirect_stdout(quiet), contextlib.redirect_stderr(quiet), tempfile.TemporaryDirectory() as temp:
         root = Path(temp)
@@ -239,4 +242,4 @@ def main_gate() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main_gate())
+    raise SystemExit(main())

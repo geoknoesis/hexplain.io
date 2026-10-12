@@ -55,8 +55,8 @@ def normalize(graph: Graph) -> tuple[Any, ...]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("reports", type=Path)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("reports", type=Path, help="Directory holding the validators' raw SHACL reports")
+    parser.add_argument("--output", type=Path, required=True, help="Where to write the comparison evidence")
     args = parser.parse_args()
     evidence = dict(
         schema_version=2,

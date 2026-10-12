@@ -21,7 +21,7 @@ class Page(HTMLParser):
         self.ids, self.links = set(), []
         self.feed(path.read_text(encoding="utf-8"))
 
-    def handle_starttag(self, tag, attrs):
+    def handle_starttag(self, tag: str, attrs: Any) -> None:
         attrs = dict(attrs)
         if "id" in attrs:
             self.ids.add(attrs["id"])

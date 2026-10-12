@@ -64,7 +64,7 @@ def self_test() -> None:
     assert found[0].text == "A count MUST stay below 2^63 (see Sizes).", found[0].text
 
 
-if __name__ == "__main__":
+def main() -> int:
     self_test()
     # Every sentence-level rule names a registered requirement, and every shape a shape-backed
     # requirement names is a shape of the family: a renamed shape must not leave a dead link.
@@ -83,5 +83,9 @@ if __name__ == "__main__":
     missing = [(i, s) for i, names in ids.SHAPE_BACKED.items() for s in names if URIRef(s) not in shapes]
     if stale or missing:
         print(f"FAIL: rules name unregistered requirements {stale} or missing shapes {missing}")
-        sys.exit(1)
-    sys.exit(ids.main(["--check"]))
+        return 1
+    return int(ids.main(["--check"]) or 0)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

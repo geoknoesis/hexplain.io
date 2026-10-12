@@ -75,7 +75,7 @@ def render(text: str) -> Any:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--check", action="store_true")
+    parser.add_argument("--check", action="store_true", help="Fail if the page differs; write nothing")
     args = parser.parse_args()
     text = PAGE.read_text(encoding="utf-8")
     expected = render(text)

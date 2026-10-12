@@ -1,5 +1,7 @@
 """Exercise publication acceptance against a controlled HTTP origin."""
 
+from __future__ import annotations
+
 import json
 import subprocess
 import sys
@@ -27,10 +29,10 @@ def main() -> int:
     class Handler(BaseHTTPRequestHandler):
         fallback = False
 
-        def log_message(self, *args):
+        def log_message(self, *args: object) -> None:
             pass
 
-        def do_GET(self):
+        def do_GET(self) -> None:
             media, body = routes.get(self.path, ("text/plain", b"missing"))
             if self.fallback:
                 media, body = "text/html", b"<html>fallback</html>"

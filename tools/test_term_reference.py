@@ -1,5 +1,7 @@
 """Documentation completeness, determinism and annotation-only change contract."""
 
+from __future__ import annotations
+
 import json
 from html.parser import HTMLParser
 
@@ -21,13 +23,13 @@ from rdflib.compare import isomorphic
 
 
 class Page(HTMLParser):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.ids = []
         self.terms = []
         self.links = []
 
-    def handle_starttag(self, tag, attrs):
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         a = dict(attrs)
         if "id" in a:
             self.ids.append(a["id"])

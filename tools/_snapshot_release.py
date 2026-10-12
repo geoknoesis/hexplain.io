@@ -66,6 +66,6 @@ def snapshot(release_id: Any) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("release_id")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("release_id", help="Identifier of the snapshot, the directory created under releases/")
     snapshot(parser.parse_args().release_id)
