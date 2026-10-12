@@ -166,12 +166,20 @@ def main(argv):
                                    "#implementation-reports) to this file")
     ap.add_argument("--implementation", default="unnamed", help="the implementation's name, for the report")
     ap.add_argument("--implementation-version", default="unknown", help="the implementation's version, for the report")
+    ap.add_argument("--implementation-revision", help="the version-control identity of the build run (a Git commit "
+                                                      "hash), required for the report")
+    ap.add_argument("--os", help="the operating system of the run (default: as the platform reports it)")
+    ap.add_argument("--jvm", default="none", help="the Java runtime of a JVM implementation, else none")
+    ap.add_argument("--toolchain", help="the build tool and compiler that produced the build, required for the report")
     ap.add_argument("--check-report", metavar="FILE", help="check an implementation report against the suite and exit")
     args = ap.parse_args(argv)
     if args.check_report:
-        problems = report.check(json.loads(Path(args.check_report).read_text(encoding="utf-8")), Path(args.suite))
+        problems = report.check(json.loads(Path(args.check_report).read_text(encoding="utf-8")), Path(args.suite),
+                                path=args.check_report)
         print("\n".join(problems) if problems else "the report follows the format and covers the suite")
         return 1 if problems else 0
+    if args.json and not (args.implementation_revision and args.toolchain):
+        ap.error("--json needs --implementation-revision and --toolchain: a report names the build it ran")
     claims = json.loads(Path(args.claims).read_text(encoding="utf-8")) if args.claims else None
     results, counts = [], {"PASS": 0, "FAIL": 0, "SKIP": 0}
     for cls in CLASSES:
@@ -190,9 +198,13 @@ def main(argv):
             print(f"{status} {case_dir.name}" + (f"  {detail}" if detail and status != "PASS" else ""))
     print(f"{counts['PASS']} passed, {counts['FAIL']} failed, {counts['SKIP']} skipped")
     if args.json:
-        built = report.build(results, {"name": args.implementation, "version": args.implementation_version},
-                             claims or {}, Path(args.suite))
+        import platform
+        implementation = {"name": args.implementation, "version": args.implementation_version,
+                          "revision": args.implementation_revision}
+        environment = {"os": args.os or platform.platform(), "jvm": args.jvm, "toolchain": args.toolchain}
+        built = report.build(results, implementation, claims or {}, Path(args.suite), environment=environment)
         Path(args.json).write_text(json.dumps(built, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"report written to {args.json}; publish it as {report.report_path(built)}")
     return 1 if counts["FAIL"] else 0
 
 
