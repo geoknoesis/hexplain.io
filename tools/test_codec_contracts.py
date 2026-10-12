@@ -18,6 +18,8 @@ tools/codecs/_python_reference.py (Store, Deflate, Zlib, Gzip in plain Python) p
 suites through tools/codecs/run_vectors.py.
 """
 
+from __future__ import annotations
+
 import json
 import pathlib
 import subprocess
@@ -37,7 +39,7 @@ REGISTER = ROOT / "specification/register/media-encoding/media-encoding.ttl"
 HX = Namespace("https://hexplain.io/ns/core#")
 
 
-def repeat_load_problems(text):
+def repeat_load_problems(text: str) -> list[str]:
     """Why [text] does not survive being parsed twice into one graph, if it does not."""
     graph = Graph().parse(data=text, format="turtle")
     once = len(graph)
@@ -53,7 +55,7 @@ def repeat_load_problems(text):
     return problems
 
 
-def main():
+def main() -> int:
     failures = []
     text = REGISTER.read_text(encoding="utf-8")
     register = Graph().parse(data=text, format="turtle")
@@ -119,12 +121,13 @@ def main():
         failures.append("the Python reference does not pass the minimum-set suites:\n" + run.stdout + run.stderr)
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures))
-        sys.exit(1)
+        return 1
     print(
         f"PASS: {len(contracts)} executable codecs have a contract and a vector suite; the runner passes "
         f"the Python reference"
     )
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

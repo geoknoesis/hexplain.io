@@ -38,6 +38,11 @@ stale key falls back to parsing. Delete the directory if in doubt.
 `tools/test_lint.py` enforces both. Public functions carry type annotations. Write files with
 `newline="\n"` and resolve paths from the module's `ROOT`, never from the working directory.
 
+Modules that unmerged work is editing (`tools/_shape_text.py`, `tools/_build_ontology_docs.py`,
+`tools/_requirement_ids.py`, `tools/test_capabilities.py`, `tools/conformance/` and
+`tools/codecs/`) are excluded from the formatter and from the style rules in `ruff.toml`; the
+defect rules still apply to them. Reformat a module and delete its entry when its work lands.
+
 ## Authoring
 
 Edit shared constraint authoring where a canonical RDF module is generated. Regenerate the
