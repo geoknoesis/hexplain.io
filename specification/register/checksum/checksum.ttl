@@ -21,9 +21,10 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/register/checksum> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/register/checksum/checksum-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/register/checksum/1.3> ; owl:versionInfo "1.3" ;
     owl:priorVersion <https://hexplain.io/ns/register/checksum/1.2> ;
-    dcterms:modified "2026-10-12"^^xsd:date ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
     # core supplies hexplain:correspondsTo and imports bddo, whose individuals the concepts name.
     owl:imports <https://hexplain.io/ns/core> ;
     rdfs:label "Hexplain Register — Checksum Algorithm"@en ;
@@ -37,37 +38,37 @@
 rck:ChecksumAlgorithmScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/checksum> ;
     skos:prefLabel "Checksum Algorithm Register"@en ;
     skos:scopeNote "Each concept names one NAMED algorithm and corresponds one-to-one (hexplain:correspondsTo) to the bddo:ChecksumAlgorithm individual a physical description uses, so the physical layer (bddo:checksumAlgorithm) and the integrity aspect (aintg:checksumAlgorithm) identify the same thing by two IRIs that tools keep aligned. A parameterised CRC (bddo:CustomCrc, stated by its six Rocksoft parameters) has no concept here by design: it is a description of a computation, not an identifier, and a register of every parameter combination would be unbounded. A format whose CRC is a bddo:CustomCrc reports it with aintg:checksum alone, or publishes a sibling register that names that variant and links it to a bddo:ChecksumAlgorithm individual of its own."@en .
-rck:CRC16 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-16/CCITT-FALSE"@en ;
+rck:CRC16 a skos:Concept ; skos:definition "The CRC-16/CCITT-FALSE integrity check: polynomial 0x1021, initial value 0xFFFF, no input or output reflection and final XOR 0x0000 (check value 0x29B1 over the ASCII bytes 123456789). Other CRC-16 variants, such as CRC-16/ARC or CRC-16/XMODEM, have identifiers of their own."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-16/CCITT-FALSE"@en ;
     hexplain:correspondsTo bddo:crc16 .
-rck:CRC32 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-32"@en ;
+rck:CRC32 a skos:Concept ; skos:definition "The CRC-32/ISO-HDLC integrity check used by zlib and PNG: reflected polynomial 0xEDB88320, initial value 0xFFFFFFFF and final XOR 0xFFFFFFFF (check value 0xCBF43926 over the ASCII bytes 123456789). Other 32-bit CRC variants, such as CRC-32C, have identifiers of their own."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-32"@en ;
     hexplain:correspondsTo bddo:crc32 .
-rck:Adler32 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "Adler-32"@en ;
+rck:Adler32 a skos:Concept ; skos:definition "The Adler-32 checksum identifier, producing a 32-bit integrity value for a byte sequence."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "Adler-32"@en ;
     hexplain:correspondsTo bddo:adler32 .
-rck:MD5 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "MD5"@en ;
+rck:MD5 a skos:Concept ; skos:definition "The MD5 message-digest identifier, producing a 128-bit digest; this term identifies a stored integrity algorithm and does not claim cryptographic security."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "MD5"@en ;
     hexplain:correspondsTo bddo:md5 .
-rck:SHA1 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "SHA-1"@en ;
+rck:SHA1 a skos:Concept ; skos:definition "The SHA-1 message-digest identifier, producing a 160-bit digest; this term does not claim suitability for collision-resistant security uses."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "SHA-1"@en ;
     hexplain:correspondsTo bddo:sha1 .
-rck:SHA256 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "SHA-256"@en ;
+rck:SHA256 a skos:Concept ; skos:definition "The SHA-256 message-digest identifier, producing a 256-bit digest of the covered byte sequence."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "SHA-256"@en ;
     hexplain:correspondsTo bddo:sha256 .
-rck:CRC8SMBus a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-8/SMBUS"@en ;
+rck:CRC8SMBus a skos:Concept ; skos:definition "The CRC-8/SMBUS integrity check: width 8, polynomial 0x07, initial value 0x00, no input or output reflection and final XOR 0x00 (check value 0xF4 over the ASCII bytes 123456789)."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-8/SMBUS"@en ;
     hexplain:correspondsTo bddo:crc8Smbus .
-rck:CRC16ARC a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-16/ARC"@en ;
+rck:CRC16ARC a skos:Concept ; skos:definition "The CRC-16/ARC integrity check: width 16, polynomial 0x8005, initial value 0x0000, input and output reflected and final XOR 0x0000 (check value 0xBB3D over the ASCII bytes 123456789)."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-16/ARC"@en ;
     hexplain:correspondsTo bddo:crc16Arc .
-rck:CRC16XMODEM a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-16/XMODEM"@en ;
+rck:CRC16XMODEM a skos:Concept ; skos:definition "The CRC-16/XMODEM integrity check: width 16, polynomial 0x1021, initial value 0x0000, no input or output reflection and final XOR 0x0000 (check value 0x31C3 over the ASCII bytes 123456789)."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-16/XMODEM"@en ;
     hexplain:correspondsTo bddo:crc16Xmodem .
-rck:CRC16MODBUS a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-16/MODBUS"@en ;
+rck:CRC16MODBUS a skos:Concept ; skos:definition "The CRC-16/MODBUS integrity check: width 16, polynomial 0x8005, initial value 0xFFFF, input and output reflected and final XOR 0x0000 (check value 0x4B37 over the ASCII bytes 123456789)."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-16/MODBUS"@en ;
     hexplain:correspondsTo bddo:crc16Modbus .
-rck:CRC16X25 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-16/X-25"@en ;
+rck:CRC16X25 a skos:Concept ; skos:definition "The CRC-16/IBM-SDLC (X-25) integrity check: width 16, polynomial 0x1021, initial value 0xFFFF, input and output reflected and final XOR 0xFFFF (check value 0x906E over the ASCII bytes 123456789)."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-16/X-25"@en ;
     hexplain:correspondsTo bddo:crc16X25 .
-rck:CRC32C a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-32C"@en ;
+rck:CRC32C a skos:Concept ; skos:definition "The CRC-32/ISCSI (CRC-32C) integrity check: width 32, polynomial 0x1EDC6F41, initial value 0xFFFFFFFF, input and output reflected and final XOR 0xFFFFFFFF (check value 0xE3069283 over the ASCII bytes 123456789)."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-32C"@en ;
     hexplain:correspondsTo bddo:crc32c .
-rck:CRC32BZIP2 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-32/BZIP2"@en ;
+rck:CRC32BZIP2 a skos:Concept ; skos:definition "The CRC-32/BZIP2 integrity check: width 32, polynomial 0x04C11DB7, initial value 0xFFFFFFFF, no input or output reflection and final XOR 0xFFFFFFFF (check value 0xFC891918 over the ASCII bytes 123456789)."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-32/BZIP2"@en ;
     hexplain:correspondsTo bddo:crc32Bzip2 .
-rck:CRC32MPEG2 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-32/MPEG-2"@en ;
+rck:CRC32MPEG2 a skos:Concept ; skos:definition "The CRC-32/MPEG-2 integrity check: width 32, polynomial 0x04C11DB7, initial value 0xFFFFFFFF, no input or output reflection and final XOR 0x00000000 (check value 0x0376E6E7 over the ASCII bytes 123456789)."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-32/MPEG-2"@en ;
     hexplain:correspondsTo bddo:crc32Mpeg2 .
-rck:CRC64ECMA182 a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-64/ECMA-182"@en ;
+rck:CRC64ECMA182 a skos:Concept ; skos:definition "The CRC-64/ECMA-182 integrity check: width 64, polynomial 0x42F0E1EBA9EA3693, initial value 0x0000000000000000, no input or output reflection and final XOR 0x0000000000000000 (check value 0x6C40DF5F0B497347 over the ASCII bytes 123456789)."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-64/ECMA-182"@en ;
     hexplain:correspondsTo bddo:crc64Ecma182 .
-rck:CRC64XZ a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-64/XZ"@en ;
+rck:CRC64XZ a skos:Concept ; skos:definition "The CRC-64/XZ integrity check: width 64, polynomial 0x42F0E1EBA9EA3693, initial value 0xFFFFFFFFFFFFFFFF, input and output reflected and final XOR 0xFFFFFFFFFFFFFFFF (check value 0x995DC9BBDF1939FA over the ASCII bytes 123456789)."@en ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:topConceptOf rck:ChecksumAlgorithmScheme ; skos:prefLabel "CRC-64/XZ"@en ;
     hexplain:correspondsTo bddo:crc64Xz .
 
 # ---------- Term ownership ----------

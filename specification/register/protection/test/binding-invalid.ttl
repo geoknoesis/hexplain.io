@@ -1,0 +1,20 @@
+# expect: ex:enc hexplain:RegisterBindingShape sh:SPARQLConstraintComponent
+# expect: ex:sig hexplain:RegisterBindingShape sh:SPARQLConstraintComponent
+@prefix aprot: <https://hexplain.io/ns/aspect/protection#> .
+@prefix rprot: <https://hexplain.io/ns/register/protection#> .
+@prefix bddo:  <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix ex:    <https://example.org/protection#> .
+
+ex:profile hexplain:usesRegister
+    [ a hexplain:RegisterBinding ; hexplain:forProperty aprot:cipher ; hexplain:register rprot:CipherScheme ] ,
+    [ a hexplain:RegisterBinding ; hexplain:forProperty aprot:signatureAlgorithm ; hexplain:register rprot:SignatureAlgorithmScheme ] .
+ex:body a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 16 .
+ex:r a aprot:ByteRange ; aprot:fromField ex:body ; aprot:toField ex:body .
+# A signature algorithm is not a cipher, and an error-correcting code is not a signature algorithm.
+ex:enc a aprot:EncryptedRegion ; aprot:region ex:body ; aprot:cipher rprot:Ed25519 .
+ex:sig a aprot:Signature ; aprot:signatureAlgorithm rprot:ReedSolomon ; aprot:signatureValueField ex:body ; aprot:covers ex:r .

@@ -1,0 +1,15 @@
+# expect: ex:Bare bddo:AlignmentOriginShape sh:OrConstraintComponent
+# expect: ex:Unknown bddo:AlignmentOriginShape sh:InConstraintComponent
+# expect: ex:Two bddo:AlignmentOriginShape sh:MaxCountConstraintComponent
+# An origin measures a boundary: without bddo:alignment or bddo:padTo it selects nothing, and it
+# is one of the two declared origins, stated once.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/origin#> .
+
+ex:Bare a bddo:Field ; bddo:dataType bddo:uint32le ; bddo:alignmentOrigin bddo:structOrigin .
+ex:Unknown a bddo:Field ; bddo:dataType bddo:uint32le ; bddo:alignment 4 ; bddo:alignmentOrigin bddo:parentStart .
+ex:Two a bddo:Field ; bddo:dataType bddo:uint32le ; bddo:alignment 4 ;
+    bddo:alignmentOrigin bddo:structOrigin , bddo:streamOrigin .

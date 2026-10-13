@@ -1,0 +1,15 @@
+# expect: ex:Huge bddo:FixedPointScaleRangeShape sh:MaxInclusiveConstraintComponent sh:Warning
+# expect: ex:Tiny bddo:FixedPointScaleRangeShape sh:MinInclusiveConstraintComponent sh:Warning
+# expect: ex:hugeType bddo:FixedPointScaleRangeShape sh:MaxInclusiveConstraintComponent sh:Warning
+# A binary scale outside -4096..4096 is beyond the range every processor supports. The
+# description is valid; its author is told that it is not portable.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/scale#> .
+
+ex:Huge a bddo:Field ; bddo:dataType bddo:int32 ; bddo:fixedPointScale 4097 .
+ex:Tiny a bddo:Field ; bddo:dataType bddo:int32 ; bddo:fixedPointScale -4097 .
+ex:hugeType a bddo:DataType ; bddo:baseType bddo:baseInteger ; bddo:bitWidth 32 ; bddo:isSigned true ; bddo:fixedPointScale 8192 .
+ex:Edge a bddo:Field ; bddo:dataType bddo:int32 ; bddo:fixedPointScale 4096 .

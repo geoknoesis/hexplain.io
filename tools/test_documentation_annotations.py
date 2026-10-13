@@ -19,7 +19,13 @@ annotations):
   * the generated annotations of every module live in its sibling <module>-doc.ttl, written as
     Turtle with prefixed names, not N-Triples, and stating only rdfs:label, skos:definition and
     skos:scopeNote;
-  * no canonical module carries a generated documentation block.
+  * no canonical module carries a generated documentation block;
+  * every canonical module's owl:Ontology points at its annotation graph with rdfs:seeAlso, so a
+    consumer holding only the module can find the labels and definitions it does not carry;
+  * every annotation graph's header names tools/_term_editorial.py, the source to change;
+  * a register is self-describing: each skos:Concept of a register module states its
+    skos:definition (or rdfs:comment) in the register itself, and the register's annotation graph
+    defines no concept.
 """
 
 from __future__ import annotations
@@ -30,7 +36,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from rdflib import RDFS, Graph, Namespace, URIRef
+from rdflib import OWL, RDF, RDFS, Graph, Namespace, URIRef
 
 ROOT = Path(__file__).resolve().parents[1]
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
@@ -47,6 +53,35 @@ TEMPLATE_NOTES = (
     "Use as a controlled value or grouping in this register.",
 )
 NTRIPLE = re.compile(r"^<[^>\s]+>\s+<[^>\s]+>\s", re.M)
+#: Where the site publishes the family's files; an annotation graph has no namespace route.
+PUBLISHED = "https://hexplain.io/specification/"
+EDITORIAL_SOURCE = "tools/_term_editorial.py"
+
+
+def link_problems(rel: str, doc: str, module: Graph) -> list[str]:
+    """The module's ontology names its annotation graph, and only that, with rdfs:seeAlso."""
+    expected = URIRef(PUBLISHED + doc)
+    found = []
+    for ontology in module.subjects(RDF.type, OWL.Ontology):
+        links = {o for o in module.objects(ontology, RDFS.seeAlso) if str(o).endswith("-doc.ttl")}
+        if links != {expected}:
+            found.append(
+                f"{rel}: {ontology} must state rdfs:seeAlso <{expected}>; it states "
+                f"{sorted(map(str, links)) or 'no annotation graph'}"
+            )
+    return found
+
+
+def register_problems(rel: str, doc: str, module: Graph, generated: Graph) -> list[str]:
+    """A register defines its own concepts; its annotation graph defines none of them."""
+    found = []
+    for concept in sorted(set(module.subjects(RDF.type, SKOS.Concept))):
+        name = concept.n3(module.namespace_manager)
+        if (concept, SKOS.definition, None) not in module and (concept, RDFS.comment, None) not in module:
+            found.append(f"{rel}: {name} has no skos:definition; a register states its concepts' definitions itself")
+        if (concept, SKOS.definition, None) in generated:
+            found.append(f"{doc}: defines {name}; a concept's definition belongs in the register")
+    return found
 
 
 def problems(g: Graph) -> Any:
@@ -81,6 +116,30 @@ def self_test() -> None:
             skos:scopeNote "Use it as a predicate. More." .""",
     )
     assert len(problems(g)) == 4, problems(g)
+    module = Graph().parse(
+        format="turtle",
+        data="""
+        @prefix owl: <http://www.w3.org/2002/07/owl#> . @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . @prefix r: <https://hexplain.io/ns/register/x#> .
+        <https://hexplain.io/ns/register/x> a owl:Ontology ;
+            rdfs:seeAlso <https://hexplain.io/specification/register/y/y-doc.ttl> .
+        r:Defined a skos:Concept ; skos:definition "Said here."@en . r:Bare a skos:Concept .""",
+    )
+    generated = Graph().parse(
+        format="turtle",
+        data='<https://hexplain.io/ns/register/x#Bare> <http://www.w3.org/2004/02/skos/core#definition> "Elsewhere." .',
+    )
+    assert len(link_problems("register/x/x.ttl", "register/x/x-doc.ttl", module)) == 1
+    module.set(
+        (
+            URIRef("https://hexplain.io/ns/register/x"),
+            RDFS.seeAlso,
+            URIRef("https://hexplain.io/specification/register/x/x-doc.ttl"),
+        )
+    )
+    assert not link_problems("register/x/x.ttl", "register/x/x-doc.ttl", module)
+    found = register_problems("register/x/x.ttl", "register/x/x-doc.ttl", module, generated)
+    assert len(found) == 2 and "r:Bare has no skos:definition" in found[0] and "defines r:Bare" in found[1], found
     assert NTRIPLE.search('<https://hexplain.io/ns/x#a> <http://www.w3.org/2000/01/rdf-schema#label> "a" .')
 
 
@@ -91,7 +150,9 @@ def main() -> int:
     whole, found = Graph(), []
     for rel, doc in sorted(documentation.items()):
         text = (ROOT / "specification" / rel).read_text(encoding="utf-8")
-        whole.parse(data=text, format="turtle")
+        module = Graph().parse(data=text, format="turtle")
+        whole += module
+        found += link_problems(rel, doc, module)
         if MARKER in text:
             found.append(f"{rel}: carries a generated documentation block; it belongs in {doc}")
         path = ROOT / "specification" / doc
@@ -101,8 +162,12 @@ def main() -> int:
         generated = path.read_text(encoding="utf-8")
         if NTRIPLE.search(generated):
             found.append(f"{doc}: written as N-Triples; regenerate it")
+        if EDITORIAL_SOURCE not in generated.split("@prefix", 1)[0]:
+            found.append(f"{doc}: its header does not name {EDITORIAL_SOURCE}, the source to change; regenerate it")
         graph = Graph().parse(data=generated, format="turtle")
         whole += graph
+        if rel.startswith("register/"):
+            found += register_problems(rel, doc, module, graph)
         strays = sorted({p.n3(graph.namespace_manager) for p in graph.predicates() if p not in GENERATED})
         if strays:
             found.append(f"{doc}: states {', '.join(strays)}; a generated annotation graph holds prose only")
@@ -114,7 +179,8 @@ def main() -> int:
         return 1
     print(
         f"PASS: documentation annotations of {len(files)} modules hold no placeholder, repeat no comment, "
-        "use no retired template and are written as prefixed Turtle"
+        "use no retired template and are written as prefixed Turtle; every module links its annotation graph "
+        "and every register defines its own concepts"
     )
     return 0
 

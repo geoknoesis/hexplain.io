@@ -1,0 +1,149 @@
+# Hexplain Aspect — Protection (hx-protection) 1.0
+# Descriptive aspect: which bytes of a format are encrypted, signed or covered by an
+# error-correcting code, with what algorithm, and where the fields that parameterise it are.
+# It DESCRIBES protection metadata. It defines no processing: a processor is not required to
+# decrypt, verify a signature or correct errors, and reads protected bytes as the opaque bytes
+# their fields declare. Decryption, verification and correction are an optional feature a later
+# version may define; nothing here anticipates its semantics.
+# The algorithms are register concepts (register/protection, or a profile's own register), so
+# the aspect names none of them.
+@prefix :       <https://hexplain.io/ns/aspect/protection#> .
+@prefix aprot:  <https://hexplain.io/ns/aspect/protection#> .
+@prefix bddo:   <https://hexplain.io/ns/bddo#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+
+<https://hexplain.io/ns/aspect/protection> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/protection/1.0> ; owl:versionInfo "1.0" ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
+    owl:imports <https://hexplain.io/ns/bddo> ;
+    rdfs:seeAlso <https://hexplain.io/specification/aspect/protection/protection-doc.ttl> ;
+    rdfs:label "Hexplain Aspect — Protection (hx-protection)"@en ;
+    rdfs:comment "Aspect describing the cryptographic and error-control protection a format applies to its bytes: encrypted regions, signatures and message authentication codes, and error-correcting codes, each with its algorithm (a register concept) and the fields and byte ranges that parameterise it. Descriptive only: it states what a format declares about its protection, and defines no decryption, verification or correction."@en ;
+    skos:scopeNote "Use in a physical format description to record that a field or struct is encrypted, that a field carries a signature over a byte range, or that a byte range is protected by an error-correcting code. These terms describe protection metadata: a processor is not required to decrypt, verify or correct anything, and lifts protected bytes as the bytes their fields declare. Processing semantics for them are an optional feature a later version may define."@en ;
+    dcterms:created "2026-10-13"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "aprot" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/protection#" .
+
+# ---------- Classes ----------
+:EncryptedRegion a owl:Class ; rdfs:label "Encrypted Region"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "A declaration that the bytes of one field or struct are ciphertext: the region (aprot:region), the cipher (aprot:cipher), and, where the format carries them, the field holding the identifier of the key (aprot:keyIdentifierField), the field holding the initialisation vector or nonce (aprot:nonceField) and the byte range authenticated but not encrypted (aprot:additionalAuthenticatedData)."@en ;
+    skos:scopeNote "Assert on a resource of a format description, one per encrypted field or struct. It describes the protection and carries no key: a processor is not required to decrypt the region, and reads it as the bytes the field declares. Decryption is an optional feature a later version may define."@en .
+:Signature a owl:Class ; rdfs:label "Signature"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "A declaration that one field carries a digital signature or message authentication code: the field (aprot:signatureValueField), the algorithm (aprot:signatureAlgorithm), the byte range it is computed over (aprot:covers) and, where the format carries it, the field identifying the signer or the key (aprot:signerIdentifierField)."@en ;
+    skos:scopeNote "Assert on a resource of a format description, one per signature or authentication tag. It describes what the format declares: a processor is not required to verify the signature, and a description that states one does not say it is valid. Verification is an optional feature a later version may define. For an unkeyed checksum or digest that a processor does verify, use bddo:Checksum."@en .
+:ErrorCorrection a owl:Class ; rdfs:label "Error Correction"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "A declaration that a byte range is protected by an error-correcting code: the code (aprot:errorCorrectingCode), the range holding the protected data (aprot:dataRange) and the range holding the parity or check symbols (aprot:parityRange)."@en ;
+    skos:scopeNote "Assert on a resource of a format description, one per code block layout. It describes the layout: a processor is not required to detect or correct errors, and reads both ranges as the bytes their fields declare. Correction is an optional feature a later version may define."@en .
+:ByteRange a owl:Class ; rdfs:label "Byte Range"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "A contiguous run of bytes bounded by two fields of the description: it begins at the first byte of the field named by aprot:fromField and ends after the last byte of the field named by aprot:toField, both fields included. One field named by both bounds is the range of that field alone."@en ;
+    skos:scopeNote "Assert on the object of aprot:covers, aprot:additionalAuthenticatedData, aprot:dataRange or aprot:parityRange. Both bounds are stated; the fields are members of the description being protected, the first not after the second in reading order."@en .
+
+# ---------- Encrypted regions ----------
+:region a owl:ObjectProperty ; rdfs:label "region"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The bddo:Field or bddo:Struct whose bytes are the ciphertext an aprot:EncryptedRegion describes. No rdfs:range is declared: the value is one of two disjoint classes, which aprot:EncryptedRegionShape checks."@en ;
+    skos:scopeNote "Use exactly once on an aprot:EncryptedRegion."@en .
+:cipher a owl:ObjectProperty ; rdfs:label "cipher"@en ; rdfs:range skos:Concept ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The cipher and mode an encrypted region is encrypted with, from a cipher register bound by the profile (register/protection publishes common ones)."@en ;
+    skos:scopeNote "Use exactly once on an aprot:EncryptedRegion, naming a concept by IRI. Key length and other parameters the concept leaves open are the profile's to state."@en .
+:keyIdentifierField a owl:ObjectProperty ; rdfs:label "key identifier field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The field whose parsed value identifies the key an encrypted region was encrypted under (a key id, a key slot, a recipient identifier). It identifies the key and never holds it."@en ;
+    skos:scopeNote "Use at most once on an aprot:EncryptedRegion, when the format carries a key identifier."@en .
+:nonceField a owl:ObjectProperty ; rdfs:label "nonce field"@en ; skos:altLabel "initialisation vector field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The field holding the initialisation vector or nonce the cipher was run with for this region."@en ;
+    skos:scopeNote "Use at most once on an aprot:EncryptedRegion, when the format stores the IV or nonce."@en .
+:additionalAuthenticatedData a owl:ObjectProperty ; rdfs:label "additional authenticated data"@en ; rdfs:range :ByteRange ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The byte range an authenticated cipher authenticates without encrypting (the AAD of an AEAD mode), as an aprot:ByteRange."@en ;
+    skos:scopeNote "Use at most once on an aprot:EncryptedRegion whose cipher is an authenticated mode."@en .
+
+# ---------- Signatures ----------
+:signatureAlgorithm a owl:ObjectProperty ; rdfs:label "signature algorithm"@en ; rdfs:range skos:Concept ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The digital signature or message authentication algorithm an aprot:Signature was produced with, from a register bound by the profile (register/protection publishes common ones)."@en ;
+    skos:scopeNote "Use exactly once on an aprot:Signature, naming a concept by IRI."@en .
+:signatureValueField a owl:ObjectProperty ; rdfs:label "signature value field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The field whose bytes are the signature or authentication tag."@en ;
+    skos:scopeNote "Use exactly once on an aprot:Signature."@en .
+:covers a owl:ObjectProperty ; rdfs:label "covers"@en ; rdfs:range :ByteRange ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The byte range a signature or authentication tag is computed over, as an aprot:ByteRange: bounded by fields, as the range of a bddo:Checksum is by bddo:coversFromField and bddo:coversToField."@en ;
+    skos:scopeNote "Use exactly once on an aprot:Signature."@en .
+:signerIdentifierField a owl:ObjectProperty ; rdfs:label "signer identifier field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The field whose parsed value identifies the signer or the key a signature verifies under (a key id, a certificate serial, a fingerprint)."@en ;
+    skos:scopeNote "Use at most once on an aprot:Signature, when the format carries a signer identifier."@en .
+
+# ---------- Error correction ----------
+:errorCorrectingCode a owl:ObjectProperty ; rdfs:label "error-correcting code"@en ; rdfs:range skos:Concept ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The error-correcting code family an aprot:ErrorCorrection uses, from a register bound by the profile (register/protection publishes common ones). The code's parameters (symbol size, block and message length, generator polynomial) are the profile's to state."@en ;
+    skos:scopeNote "Use exactly once on an aprot:ErrorCorrection, naming a concept by IRI."@en .
+:dataRange a owl:ObjectProperty ; rdfs:label "data range"@en ; rdfs:range :ByteRange ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The byte range holding the data an error-correcting code protects, as an aprot:ByteRange."@en ;
+    skos:scopeNote "Use exactly once on an aprot:ErrorCorrection."@en .
+:parityRange a owl:ObjectProperty ; rdfs:label "parity range"@en ; rdfs:range :ByteRange ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The byte range holding the parity or check symbols of an error-correcting code, as an aprot:ByteRange."@en ;
+    skos:scopeNote "Use exactly once on an aprot:ErrorCorrection."@en .
+
+# ---------- Byte ranges ----------
+:fromField a owl:ObjectProperty ; rdfs:label "from field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The field at whose first byte an aprot:ByteRange begins."@en ;
+    skos:scopeNote "Use exactly once on an aprot:ByteRange."@en .
+:toField a owl:ObjectProperty ; rdfs:label "to field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    rdfs:comment "The field after whose last byte an aprot:ByteRange ends; the field is part of the range."@en ;
+    skos:scopeNote "Use exactly once on an aprot:ByteRange."@en .
+
+# ---------- SHACL ----------
+# Each shape is activated by its class and by its own properties, so a declaration whose
+# rdf:type was forgotten is still checked.
+aprot:EncryptedRegionShape a sh:NodeShape ; rdfs:label "Encrypted region shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    sh:targetClass aprot:EncryptedRegion ;
+    sh:targetSubjectsOf aprot:region , aprot:cipher , aprot:keyIdentifierField , aprot:nonceField , aprot:additionalAuthenticatedData ;
+    sh:property [ sh:path aprot:region ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+        sh:or ( [ sh:class bddo:Field ] [ sh:class bddo:Struct ] ) ;
+        sh:message "aprot:region takes exactly one value, an IRI naming an instance of bddo:Field or bddo:Struct." ] ;
+    sh:property [ sh:path aprot:cipher ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class skos:Concept ;
+        sh:message "aprot:cipher takes exactly one value, an IRI naming an instance of skos:Concept." ] ;
+    sh:property [ sh:path aprot:keyIdentifierField ; sh:maxCount 1 ; sh:class bddo:Field ;
+        sh:message "aprot:keyIdentifierField takes at most one value; each is an instance of bddo:Field." ] ;
+    sh:property [ sh:path aprot:nonceField ; sh:maxCount 1 ; sh:class bddo:Field ;
+        sh:message "aprot:nonceField takes at most one value; each is an instance of bddo:Field." ] ;
+    sh:property [ sh:path aprot:additionalAuthenticatedData ; sh:maxCount 1 ; sh:class aprot:ByteRange ;
+        sh:message "aprot:additionalAuthenticatedData takes at most one value; each is an instance of aprot:ByteRange." ] .
+
+aprot:SignatureShape a sh:NodeShape ; rdfs:label "Signature shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    sh:targetClass aprot:Signature ;
+    sh:targetSubjectsOf aprot:signatureAlgorithm , aprot:signatureValueField , aprot:covers , aprot:signerIdentifierField ;
+    sh:property [ sh:path aprot:signatureAlgorithm ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class skos:Concept ;
+        sh:message "aprot:signatureAlgorithm takes exactly one value, an IRI naming an instance of skos:Concept." ] ;
+    sh:property [ sh:path aprot:signatureValueField ; sh:minCount 1 ; sh:maxCount 1 ; sh:class bddo:Field ;
+        sh:message "aprot:signatureValueField takes exactly one value, an instance of bddo:Field." ] ;
+    sh:property [ sh:path aprot:covers ; sh:minCount 1 ; sh:maxCount 1 ; sh:class aprot:ByteRange ;
+        sh:message "aprot:covers takes exactly one value, an instance of aprot:ByteRange." ] ;
+    sh:property [ sh:path aprot:signerIdentifierField ; sh:maxCount 1 ; sh:class bddo:Field ;
+        sh:message "aprot:signerIdentifierField takes at most one value; each is an instance of bddo:Field." ] .
+
+aprot:ErrorCorrectionShape a sh:NodeShape ; rdfs:label "Error correction shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    sh:targetClass aprot:ErrorCorrection ;
+    sh:targetSubjectsOf aprot:errorCorrectingCode , aprot:dataRange , aprot:parityRange ;
+    sh:property [ sh:path aprot:errorCorrectingCode ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class skos:Concept ;
+        sh:message "aprot:errorCorrectingCode takes exactly one value, an IRI naming an instance of skos:Concept." ] ;
+    sh:property [ sh:path aprot:dataRange ; sh:minCount 1 ; sh:maxCount 1 ; sh:class aprot:ByteRange ;
+        sh:message "aprot:dataRange takes exactly one value, an instance of aprot:ByteRange." ] ;
+    sh:property [ sh:path aprot:parityRange ; sh:minCount 1 ; sh:maxCount 1 ; sh:class aprot:ByteRange ;
+        sh:message "aprot:parityRange takes exactly one value, an instance of aprot:ByteRange." ] .
+
+aprot:ByteRangeShape a sh:NodeShape ; rdfs:label "Byte range shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
+    sh:targetClass aprot:ByteRange ;
+    sh:targetSubjectsOf aprot:fromField , aprot:toField ;
+    sh:targetObjectsOf aprot:covers , aprot:additionalAuthenticatedData , aprot:dataRange , aprot:parityRange ;
+    sh:property [ sh:path aprot:fromField ; sh:minCount 1 ; sh:maxCount 1 ; sh:class bddo:Field ;
+        sh:message "aprot:fromField takes exactly one value, an instance of bddo:Field." ] ;
+    sh:property [ sh:path aprot:toField ; sh:minCount 1 ; sh:maxCount 1 ; sh:class bddo:Field ;
+        sh:message "aprot:toField takes exactly one value, an instance of bddo:Field." ] .

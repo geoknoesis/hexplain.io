@@ -238,11 +238,14 @@ def measure() -> dict[str, Any]:
             for extra in file.parent.parent.glob("*.ttl"):
                 if extra.relative_to(ROOT).as_posix() not in graphs:
                     shapes.parse(extra)
+            # A fixture is valid when no result is a Violation (tools/test_vocab_shapes.py), so a
+            # -valid fixture may carry the advisory results it declares.
             check(
                 file.relative_to(ROOT).as_posix(),
                 family + Graph().parse(file),
                 shapes,
                 file.name.endswith("-valid.ttl"),
+                allow_warnings=True,
             )
         # Reuse procedural semantic gates with the same canonical shape identities.
         # Their original independent assertions, including exact arithmetic, still run.

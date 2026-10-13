@@ -16,9 +16,10 @@
 @prefix vann:    <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/aspect/bundle> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/aspect/bundle/bundle-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.5> ; owl:versionInfo "1.5" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/bundle/1.4> ;
-    dcterms:modified "2026-10-12"^^xsd:date ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/bddo> ;
     rdfs:label "Hexplain Aspect — Bundle (hx-bundle)"@en ;
     rdfs:comment "Base aspect for multi-part assets: one logical Asset realized by N physical Parts, bound by containment, naming-convention, manifest-reference, or concatenation. Part aspect facets lift onto the Asset for a unified semantic view."@en ;
@@ -215,24 +216,22 @@ abnd:PartSpecShape a sh:NodeShape ;
     sh:targetObjectsOf abnd:partSpec ;
     sh:property [ sh:path abnd:pathPattern ; sh:datatype xsd:string ;
         sh:message "Each value of abnd:pathPattern is an xsd:string literal." ] ;
-    sh:property [ sh:path abnd:minParts ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minInclusive 0 ; sh:maxCount 1 ;
+    sh:property [ sh:path abnd:minParts ; sh:node abnd:IntegerValueShape ; sh:minInclusive 0 ; sh:maxCount 1 ;
         sh:message "abnd:minParts takes at most one value; each is an integer (of any XSD integer datatype) at least 0." ] ;
-    sh:property [ sh:path abnd:maxParts ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minInclusive 0 ; sh:maxCount 1 ;
+    sh:property [ sh:path abnd:maxParts ; sh:node abnd:IntegerValueShape ; sh:minInclusive 0 ; sh:maxCount 1 ;
         sh:message "abnd:maxParts takes at most one value; each is an integer (of any XSD integer datatype) at least 0." ] ;
     sh:property [ sh:path abnd:nestedProfile ; sh:class abnd:BundleProfile ; sh:maxCount 1 ;
         sh:message "abnd:nestedProfile takes at most one value; each is an instance of abnd:BundleProfile." ] ;
-    sh:not [ sh:and (
-        [ sh:property [ sh:path abnd:extension ; sh:minCount 1 ] ]
-        [ sh:property [ sh:path abnd:pathPattern ; sh:minCount 1 ] ] ) ] ;
     # Native rather than sh:sparql: sh:lessThanOrEquals says exactly this, and unlike a SPARQL
     # constraint it reports the offending path and value, so a finding points at abnd:minParts
     # instead of only at the spec that carries it.
     sh:property [ sh:path abnd:minParts ; sh:lessThanOrEquals abnd:maxParts ;
         sh:message "abnd:maxParts must not be less than abnd:minParts." ] ;
-    # Located one way: a spec with neither an extension nor a pattern matches no file.
-    sh:or ( [ sh:property [ sh:path abnd:extension ; sh:minCount 1 ] ]
-            [ sh:property [ sh:path abnd:pathPattern ; sh:minCount 1 ] ] ) ;
-    sh:message "A part spec is located by abnd:extension or abnd:pathPattern; with neither it matches no file." ;
+    # Located exactly one way: a spec with neither an extension nor a pattern matches no file,
+    # and one with both would have two answers to which files it matches.
+    sh:xone ( [ sh:property [ sh:path abnd:extension ; sh:minCount 1 ] ]
+              [ sh:property [ sh:path abnd:pathPattern ; sh:minCount 1 ] ] ) ;
+    sh:message "A part spec is located exactly one way, by abnd:extension or by abnd:pathPattern: with neither it matches no file, and it never states both." ;
     # Whole-string rules. An extension is a dot and one or more dot-separated steps, none empty
     # and none holding a path separator or a drive colon. A pattern is one or more '/'-separated
     # segments relative to the asset root: no empty segment (so no leading '/', trailing '/' or

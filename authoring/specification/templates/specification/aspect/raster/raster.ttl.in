@@ -15,10 +15,11 @@
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
 <https://hexplain.io/ns/aspect/raster> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/aspect/raster/raster-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/aspect/raster/1.3> ; owl:versionInfo "1.3" ;
     <http://schema.org/creativeWorkStatus> "working draft" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/raster/1.2> ;
-    dcterms:modified "2026-10-12"^^xsd:date ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Raster (hx-raster)"@en ;
     rdfs:comment "Content-representation aspect for a regular N-dimensional sample grid (width, height). Colour (hx-color) and per-sample precision (hx-sampling) compose with it at the vocabulary that describes the medium; neither is imported. Shared by image, video frames, and geospatial rasters."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -54,15 +55,22 @@
 :hasGroup a owl:ObjectProperty ; rdfs:range :ArrayGroup ; rdfs:label "has group"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
 
 # RDF datatypes retain the wire value's precision; SHACL accepts the integer family.
-# Kept local rather than referencing asamp:PositiveIntegerShape: shapes are validated module by
-# module (the family contracts and the engine load one module's shapes), and a sh:node into another
-# module's graph would silently accept every value when that module is not loaded.
+# One copy per module, byte-identical to bddo:IntegerValueShape (the master; template in
+# specification/shared-patterns/integer-value-shape.ttl.template): shapes are validated module by
+# module, and a sh:node into another module's graph is silently satisfied when that module is not loaded.
+araster:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
+    {{constraint:pattern_237}} .
+# A count and an extent are the module's integer with a bound: one conjunction each, so that the
+# shape's message states exactly the one thing it checks. Kept local rather than referencing
+# asamp:PositiveIntegerShape, for the reason the integer shape itself is a copy.
 :PositiveCountShape a sh:NodeShape ;
     sh:message "A count is a positive integer literal (an XSD integer-family datatype, greater than 0)." ;
-    {{constraint:pattern_237}} ; sh:minExclusive 0 .
+    sh:and ( araster:IntegerValueShape [ sh:minExclusive 0 ] ) .
 :ExtentShape a sh:NodeShape ;
     sh:message "An extent is a non-negative integer literal (an XSD integer-family datatype, at least 0; zero is an empty axis)." ;
-    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] ) ; sh:minInclusive 0 .
+    sh:and ( araster:IntegerValueShape [ sh:minInclusive 0 ] ) .
 :RasterSizeShape a sh:NodeShape ; sh:targetSubjectsOf :width, :height, :bandCount ;
     sh:property [ sh:path :width ; sh:node :PositiveCountShape ; sh:maxCount 1 ;
         sh:message "araster:width takes at most one value; each is a value conforming to araster:PositiveCountShape." ] ;

@@ -64,6 +64,11 @@ NODE_PHRASES = {
 }
 
 
+#: How an exclusive choice among property-stating branches opens ("Each focus node is a node that
+#: states exactly one of: A; B; C").
+EXACTLY_ONE = "a node that states exactly one of: "
+
+
 class Unhandled(Exception):
     pass
 
@@ -216,11 +221,73 @@ def branch_phrase(g: Any, shape: Any, prefixes: Any) -> Any:
     return value_phrase(g, shape, prefixes)
 
 
-def value_phrase(g: Any, shape: Any, prefixes: Any, allow_count: bool = False) -> Any:
-    """A noun phrase describing an acceptable value; raises Unhandled for what it cannot say."""
+#: Constraint parameters that state one thing together, and are therefore one conjunct of a negation.
+CONJUNCT_GROUPS = (
+    frozenset({SH.datatype, SH["class"], SH.nodeKind}),
+    frozenset({SH.minInclusive, SH.minExclusive, SH.maxInclusive, SH.maxExclusive}),
+    frozenset({SH.pattern, SH.flags}),
+    frozenset({SH.minLength, SH.maxLength}),
+)
+
+
+def conjuncts(g: Any, shape: Any) -> list[frozenset[Any]]:
+    """The constraints of a value shape as the separate things it demands, in a stable order."""
+    stated = {
+        p
+        for p in g.predicates(shape, None)
+        if p not in IGNORED and p not in NODE_LEVEL and p != SH.path and not str(p).startswith(SKOS_NS)
+    }
+    groups = [group & stated for group in CONJUNCT_GROUPS if group & stated]
+    grouped = set().union(*groups) if groups else set()
+    return groups + [frozenset({p}) for p in sorted(stated - grouped, key=str)]
+
+
+def negation(g: Any, shape: Any, prefixes: Any) -> str:
+    """What sh:not of a value shape demands.
+
+    A shape with several constraints is their conjunction, and its negation forbids only their
+    holding TOGETHER: "not both an instance of X and one of A, B or C". Rendering the conjunction
+    as one phrase and prefixing "not" read as "not an instance of X one of A, B or C".
+    """
+    parts = [value_phrase(g, shape, prefixes, only=group) for group in conjuncts(g, shape)]
+    if len(parts) < 2:
+        return "not " + value_phrase(g, shape, prefixes)
+    return "not " + ("both " if len(parts) == 2 else "all of ") + join(parts, "and")
+
+
+def conjunction(g: Any, shapes: list[Any], prefixes: Any) -> str:
+    """sh:and of value shapes: the first says what the value is, the others qualify it.
+
+    ( x:IntegerValueShape [ sh:minExclusive 0 ] ) reads "an integer (of any XSD integer datatype)
+    greater than 0". A later member must be a pure qualification ("a number ...", "a value ...").
+    """
+    phrases = []
+    for member in shapes:
+        known = NODE_PHRASES.get(str(member).rsplit("#", 1)[-1]) if isinstance(member, URIRef) else None
+        phrases.append(known or value_phrase(g, member, prefixes))
+    head, rest = phrases[0], []
+    for phrase in phrases[1:]:
+        for opener in ("a number ", "a value "):
+            if phrase.startswith(opener):
+                rest.append(phrase[len(opener) :])
+                break
+        else:
+            raise Unhandled("sh:and member that is not a qualification")
+    return head + (" " + ", ".join(rest) if rest else "")
+
+
+def value_phrase(
+    g: Any, shape: Any, prefixes: Any, allow_count: bool = False, only: frozenset[Any] | None = None
+) -> Any:
+    """A noun phrase describing an acceptable value; raises Unhandled for what it cannot say.
+
+    ``only`` restricts the phrase to those constraint parameters of the shape (one conjunct).
+    """
     po = {}
     for p, o in g.predicate_objects(shape):
         if p in IGNORED or p in NODE_LEVEL or p == SH.path or str(p).startswith(SKOS_NS):
+            continue
+        if only is not None and p not in only:
             continue
         if p in (SH.minCount, SH.maxCount) and allow_count:
             continue
@@ -234,7 +301,7 @@ def value_phrase(g: Any, shape: Any, prefixes: Any, allow_count: bool = False) -
     classes = [c(x) for x in po.pop(SH["class"], [])]
     kinds = po.pop(SH.nodeKind, [])
     ors = [(lst, "or") for lst in po.pop(SH["or"], [])] + [(lst, "xone") for lst in po.pop(SH.xone, [])]
-    alternatives = []
+    alternatives, conjunctions = [], []
     for lst, kind in ors:
         branches = members(g, lst)
         singles = [single(g, b) for b in branches]
@@ -246,7 +313,8 @@ def value_phrase(g: Any, shape: Any, prefixes: Any, allow_count: bool = False) -
             phrases = [branch_phrase(g, b, prefixes) for b in branches]
             # An exclusive choice among property-stating branches is said as such.
             if kind == "xone" and len(phrases) > 1 and all(p.startswith("a node that states ") for p in phrases):
-                alternatives.append("exactly one of these: " + "; ".join(p[len("a node that ") :] for p in phrases))
+                stated = "; ".join(p[len("a node that states ") :] for p in phrases)
+                alternatives.append(EXACTLY_ONE + stated)
             else:
                 alternatives.append(join(phrases))
     # sh:and of property-stating branches: everything they state, together.
@@ -255,9 +323,13 @@ def value_phrase(g: Any, shape: Any, prefixes: Any, allow_count: bool = False) -
         for member in members(g, lst):
             inner = property_parts(g, member, prefixes)
             if inner is None:
-                raise Unhandled("sh:and of value shapes")
+                collected = None
+                break
             collected.extend(inner)
-        alternatives.append("a node that states " + join(collected, "and"))
+        if collected is None:
+            conjunctions.append(conjunction(g, members(g, lst), prefixes))
+        else:
+            alternatives.append("a node that states " + join(collected, "and"))
     if datatypes:
         if len(datatypes) > 1:
             raise Unhandled("several datatypes")
@@ -300,9 +372,14 @@ def value_phrase(g: Any, shape: Any, prefixes: Any, allow_count: bool = False) -
         quals.append(f"including {c(hv)}")
     for alt in alternatives:
         if base is None:
-            base = ("either " + alt) if " or " in alt and not alt.startswith("exactly one of") else alt
+            base = ("either " + alt) if " or " in alt and not alt.startswith(EXACTLY_ONE) else alt
         else:
             quals.append(f"and {alt}")
+    for phrase in conjunctions:
+        if base is None:
+            base = phrase
+        else:
+            quals.append(f"and {phrase}")
     lo_ex = [str(v).lower() for v in po.get(SH.minExclusive, [])]
     hi_ex = [str(v).lower() for v in po.get(SH.maxExclusive, [])]
     if lo_ex == ["-inf"] and hi_ex == ["inf"]:
@@ -357,7 +434,7 @@ def value_phrase(g: Any, shape: Any, prefixes: Any, allow_count: bool = False) -
             if base is None:
                 base = "a node"
         else:
-            quals.append("not " + value_phrase(g, v, prefixes))
+            quals.append(negation(g, v, prefixes))
     for v in po.pop(SH.languageIn, []):
         quals.append("in language " + join([str(x) for x in members(g, v)]))
     if po.pop(SH.uniqueLang, []):
@@ -369,8 +446,12 @@ def value_phrase(g: Any, shape: Any, prefixes: Any, allow_count: bool = False) -
             base = "a number"
         elif quals and quals[0].startswith("conforming to "):
             return "a value " + ", ".join(quals)
+        elif quals and all(q.startswith("not ") for q in quals):
+            # Nothing but prohibitions: "is not an instance of X", never "is a value not an instance of X".
+            return " and ".join(quals)
         else:
             base = "a value"
+    quals = ["that is " + q if q.startswith("not ") else q for q in quals]
     sep = ", " if base.startswith("either ") else " "
     return base + (sep + ", ".join(quals) if quals else "")
 

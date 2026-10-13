@@ -76,6 +76,29 @@ def self_test() -> None:
     )
     found = problems(g, "probe")
     assert len(found) == 2 and "ex:a" in found[0] + found[1] and "placeholder" in found[0] + found[1], found
+    negation_self_test()
+
+
+def negation_self_test() -> None:
+    """sh:not of a conjunction forbids the conjuncts together; one conjunct is simply negated."""
+    from _shape_text import value_phrase
+
+    g = Graph().parse(
+        format="turtle",
+        data="""
+        @prefix sh: <http://www.w3.org/ns/shacl#> . @prefix ex: <urn:ex:> .
+        ex:Two sh:not [ sh:class ex:Custom ; sh:in ( ex:a ex:b ex:c ) ] .
+        ex:One sh:nodeKind sh:IRI ; sh:not [ sh:class ex:Field ] .
+        ex:Three sh:not [ sh:class ex:C ; sh:in ( ex:a ex:b ) ; sh:minLength 2 ] .""",
+    )
+    prefixes = {"ex": "urn:ex:"}
+    ex = "urn:ex:"
+    two = value_phrase(g, URIRef(ex + "Two"), prefixes)
+    assert two == "not both an instance of ex:Custom and one of ex:a, ex:b or ex:c", two
+    one = value_phrase(g, URIRef(ex + "One"), prefixes)
+    assert one == "an IRI that is not an instance of ex:Field", one
+    three = value_phrase(g, URIRef(ex + "Three"), prefixes)
+    assert three.startswith("not all of an instance of ex:C, ") and three.endswith("and either ex:a or ex:b"), three
 
 
 def main() -> int:

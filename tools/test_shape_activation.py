@@ -118,13 +118,21 @@ CLASS_ONLY.update(
         ]
     }
 )
+CLASS_ONLY["https://hexplain.io/ns/bddo#CustomEncodingCharsetShape"] = (
+    "advice for the encodings a profile mints: the registered encodings state bddo:ianaCharset too, so activating "
+    "on the property would warn about the registered charsets themselves"
+)
 CLASS_ONLY.update(
     {
         "https://hexplain.io/ns/dlv#" + local: _LAYOUT_TYPED
         for local in [
             "CellDataTypeRuleShape",
+            "CellTypeChoiceShape",
             "ChunkedLayoutShape",
             "DataLayoutShape",
+            "DimensionChunkExtentShape",
+            "DimensionExtentShape",
+            "DimensionOrderChoiceShape",
             "DimensionOrderRuleShape",
             "DimensionShape",
         ]

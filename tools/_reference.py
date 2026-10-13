@@ -313,29 +313,10 @@ def definition(g: Graph, t: URIRef) -> Any:
         )
     if k == "Ontology":
         return f"The vocabulary module publishing {name} terms, its imports and associated validation declarations."
-    if k == "Concept" and "/us-nato-security#" in str(t):
-        scheme = g.value(t, SKOS.inScheme)
-        if local(t).startswith("Reason"):
-            return (
-                f"A legacy classification-reason selector identifying {name}. It preserves the source policy "
-                "reference rather than asserting that the policy is current."
-            )
-        if re.fullmatch("X[0-9]+", local(t)):
-            clause = (
-                "4-202b(" + local(t)[1:] + ")"
-                if int(local(t)[1:]) < 10
-                else "4-301a(" + str(int(local(t)[1:]) - 250) + ")"
-            )
-            return (
-                f"A legacy exemption selector for DOD 5200.1-R paragraph {clause}, represented by the register label "
-                f"{name}. It records the cited exemption category, not an automatic decision to withhold or "
-                "declassify data."
-            )
-        return (
-            f"The legacy {label(g, scheme).removesuffix(' Register').lower()} designation “{name}” as an "
-            "interoperable concept IRI. It records the designation found in a source; it does not determine current "
-            "handling authority or grant access."
-        )
+    if k == "Concept" and "/ns/register/" in str(t):
+        # A register is read on its own, so its concepts are defined where they are declared and
+        # never in the generated annotation graph.
+        raise ValueError(f"{key} has no skos:definition; state it in the register that declares the concept")
     raise ValueError(f"Editorial definition required: {key} ({k})")
 
 
