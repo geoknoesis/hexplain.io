@@ -508,7 +508,9 @@ def compare_case(case_dir: Any, actual_path: Any, reported_base: Any = None, cat
         if not actual_path.is_file():
             return [f"no output at {actual_path}"]
         read = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.suffix == ".json" else None
-        error = read if actual_path.name == ERROR_FILE else None
+        # A JSON output is an error, except for a case verified by round trip, whose JSON output is the re-parsed
+        # tree unless it is the runner's error file.
+        error = read if name != "expected.json" or actual_path.name == ERROR_FILE else None
         if name == "expected.hex":
             if error is not None:
                 return [f"expected bytes, got {error!r}"]

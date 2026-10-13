@@ -210,6 +210,63 @@ def round_trip_problems() -> list[str]:
     return problems + [f"round_trip.py: {what}" for ok, what in probes if not ok]
 
 
+def comparator_problems() -> list[str]:
+    """The comparison rules this suite's newer case forms rest on: the sign of a zero, an error that is an equally
+    conforming outcome of a Physical Parser case, a Writer case verified by round trip, and claimed encodings."""
+    import tempfile
+
+    import compare
+
+    regex = SUITE / "physical-parser/pp-limit-regex-idle-iterations"
+    trip = SUITE / WRITER / "w-codec-compressor-round-trip"
+    claims = json.loads(
+        (SUITE / "physical-parser/pp-claims-statement/expected-claims.json").read_text(encoding="utf-8")
+    )
+    stated = {"classes": ["Physical Parser"], "optionalFeatures": [], "codecs": claims["mustInclude"]["codecs"]}
+    with tempfile.TemporaryDirectory() as tmp:
+
+        def output(name: str, value: Any) -> Path:
+            path = Path(tmp) / name
+            path.write_text(json.dumps(value), encoding="utf-8")
+            return path
+
+        tree = json.loads((regex / "expected.json").read_text(encoding="utf-8"))
+        back = json.loads((trip / "expected.json").read_text(encoding="utf-8"))
+        probes = (
+            (compare.compare_tree({"f": 0.0}, {"f": -0.0}) != [], "-0.0 passed for 0.0"),
+            (compare.compare_tree({"f": -0.0}, {"f": -0.0}) == [], "-0.0 failed for -0.0"),
+            (compare.compare_case(regex, output("actual.json", tree)) == [], "the tree of an orError case failed"),
+            (
+                compare.compare_case(regex, output(compare.ERROR_FILE, {"category": "ResourceLimit"})) == [],
+                "the orError category of a Physical Parser case failed",
+            ),
+            (
+                compare.compare_case(regex, output(compare.ERROR_FILE, {"category": "Validation"})) != [],
+                "another category passed for an orError case",
+            ),
+            (compare.compare_case(trip, output("actual.json", back)) == [], "a re-parsed tree failed its own case"),
+            (
+                compare.compare_case(trip, output("actual.json", dict(back, magic=0))) != [],
+                "another re-parsed tree passed a case verified by round trip",
+            ),
+            (
+                compare.compare_case(trip, output(compare.ERROR_FILE, {"category": "Unsupported"})) != [],
+                "a refusal passed a case verified by round trip",
+            ),
+            (compare.compare_claims(claims, stated) == [], "a statement without encodings failed"),
+            (
+                compare.compare_claims(claims, dict(stated, encodings=[ENCODING_NAMESPACE + "shiftJis"])) == [],
+                "a registered encoding failed",
+            ),
+            (
+                compare.compare_claims(claims, dict(stated, encodings=[ENCODING_NAMESPACE + "klingon"])) != [],
+                "an unregistered encoding passed",
+            ),
+            (compare.compare_claims(claims, dict(stated, encodings="shiftJis")) != [], "encodings as a string passed"),
+        )
+        return [f"compare.py: {what}" for ok, what in probes if not ok]
+
+
 def runner_problems() -> list[str]:
     """The runner's round trips reach the verdicts the expectations call for, probed with a stand-in writer and
     parser (tools/conformance/stub_processor.py) that produce each outcome on demand."""
@@ -423,6 +480,7 @@ def main() -> int:
         problems.append(f"{rid}: observed by the round-trip mode, which is its citation; no single case shows it")
     problems += round_trip_problems()
     problems += reference_encoding_problems()
+    problems += comparator_problems()
     problems += runner_problems()
     for cls, n in counts.items():
         if not n:
