@@ -15,7 +15,7 @@
     owl:versionIRI <https://hexplain.io/ns/aspect/geometry/1.4> ; owl:versionInfo "1.4" ;
     <http://schema.org/creativeWorkStatus> "working draft" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/geometry/1.3> ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-12"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Geometry (hx-geometry)"@en ;
     rdfs:comment "Aspect for explicit (vector) geometry: geometry type, dimensionality, coordinate precision. Sibling of hx-raster. Shared by vector graphics, geospatial vector, and font glyphs."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -42,8 +42,12 @@
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
+# One copy per module, byte-identical to bddo:IntegerValueShape (the master; template in
+# specification/shared-patterns/integer-value-shape.ttl.template): shapes are validated module by
+# module, and a sh:node into another module's graph is silently satisfied when that module is not loaded.
 ageom:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ;
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
 ageom:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ;
@@ -58,7 +62,7 @@ ageom:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 <https://hexplain.io/ns/aspect/geometry> skos:scopeNote "Use for explicit geometry semantics across vector graphics, geospatial features and glyph outlines. Spatial coordinates and measure ordinates must remain distinct."@en .
-ageom:IntegerValueShape skos:definition "Applied through references from other shapes. A conforming value is an integer (of any XSD integer datatype)."@en .
+ageom:IntegerValueShape skos:definition "Applied through references from other shapes. An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte). A conforming value is an integer (of any XSD integer datatype)."@en .
 ageom:OrdinateShape rdfs:label "Ordinate Shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/geometry> ;
     skos:definition "Applies to subjects using ageom:dimensionality, ageom:geometryType, ageom:hasM, ageom:hasZ. ageom:dimensionality takes at most one value; each is an integer (of any XSD integer datatype) greater than 0. Each value of ageom:geometryType is an IRI naming an instance of skos:Concept. ageom:hasM takes at most one value; each is an xsd:boolean literal. ageom:hasZ takes at most one value; each is an xsd:boolean literal."@en .

@@ -14,7 +14,7 @@
 <https://hexplain.io/ns/aspect/fsmeta> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/aspect/fsmeta/1.2> ; owl:versionInfo "1.2" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/fsmeta/1.1> ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-12"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Filesystem Metadata (hx-fsmeta)"@en ;
     rdfs:comment "Aspect for filesystem attributes: name, size, timestamps, directory flag (permissions/owner to follow). Shared by archives and disk images."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -35,8 +35,12 @@
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
+# One copy per module, byte-identical to bddo:IntegerValueShape (the master; template in
+# specification/shared-patterns/integer-value-shape.ttl.template): shapes are validated module by
+# module, and a sh:node into another module's graph is silently satisfied when that module is not loaded.
 afs:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/fsmeta> ;
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
 afs:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/fsmeta> ;
@@ -62,7 +66,7 @@ afs:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 <https://hexplain.io/ns/aspect/fsmeta> skos:scopeNote "Use for logical file or directory metadata recorded by a container or filesystem representation; it need not describe the current host filesystem."@en .
-afs:IntegerValueShape skos:definition "Applied through references from other shapes. A conforming value is an integer (of any XSD integer datatype)."@en .
+afs:IntegerValueShape skos:definition "Applied through references from other shapes. An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte). A conforming value is an integer (of any XSD integer datatype)."@en .
 afs:RangeDatatypeShape skos:definition "Applies to subjects using afs:creationTime, afs:fileName, afs:fileSize, afs:isDirectory, afs:modificationTime. afs:creationTime takes an xsd:dateTime literal (rdfs:range xsd:dateTime). afs:fileName takes an xsd:string literal (rdfs:range xsd:string). afs:fileSize takes an integer within the xsd:unsignedLong value space (rdfs:range xsd:unsignedLong). afs:isDirectory takes an xsd:boolean literal (rdfs:range xsd:boolean). afs:modificationTime takes an xsd:dateTime literal (rdfs:range xsd:dateTime)."@en .
 afs:creationTime skos:definition "The source-reported time at which an entry was created; precision and timezone availability depend on the format."@en .
 afs:fileName skos:definition "The name of a file or directory entry as recorded by its container or filesystem representation."@en .

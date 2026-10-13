@@ -18,7 +18,7 @@
 <https://hexplain.io/ns/aspect/bundle> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.5> ; owl:versionInfo "1.5" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/bundle/1.4> ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-12"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/bddo> ;
     rdfs:label "Hexplain Aspect — Bundle (hx-bundle)"@en ;
     rdfs:comment "Base aspect for multi-part assets: one logical Asset realized by N physical Parts, bound by containment, naming-convention, manifest-reference, or concatenation. Part aspect facets lift onto the Asset for a unified semantic view."@en ;
@@ -290,8 +290,12 @@ abnd:BundleProfileShape a sh:NodeShape ;
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
+# One copy per module, byte-identical to bddo:IntegerValueShape (the master; template in
+# specification/shared-patterns/integer-value-shape.ttl.template): shapes are validated module by
+# module, and a sh:node into another module's graph is silently satisfied when that module is not loaded.
 abnd:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
     {{constraint:pattern_237}} .
 abnd:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;

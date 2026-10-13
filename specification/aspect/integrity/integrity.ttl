@@ -14,15 +14,17 @@
 <https://hexplain.io/ns/aspect/integrity> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/aspect/integrity/1.2> ; owl:versionInfo "1.2" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/integrity/1.1> ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-12"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Integrity (hx-integrity)"@en ;
     rdfs:comment "Aspect for byte-integrity verification: checksum value and algorithm (signatures/ECC to follow). Cross-cutting across archives, network, and other formats."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "aintg" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/integrity#" .
 
-:checksum a owl:DatatypeProperty ; rdfs:label "checksum"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ; rdfs:range xsd:hexBinary ; rdfs:comment "Checksum/hash value over the content bytes."@en .
-:checksumAlgorithm a owl:ObjectProperty ; rdfs:label "checksum algorithm"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ; rdfs:range skos:Concept ; rdfs:comment "Algorithm used, from a checksum-algorithm register bound by the profile."@en .
+:checksum a owl:DatatypeProperty ; rdfs:label "checksum"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ; rdfs:range xsd:hexBinary ; rdfs:comment "Checksum/hash value over the content bytes."@en ;
+    skos:scopeNote "Use on a lifted resource for the digest VALUE recorded about its bytes, as hexBinary. Not bddo:checksum, which links the physical field carrying a checksum to the bddo:Checksum declaration a processor verifies it against."@en .
+:checksumAlgorithm a owl:ObjectProperty ; rdfs:label "checksum algorithm"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ; rdfs:range skos:Concept ; rdfs:comment "Algorithm used, from a checksum-algorithm register bound by the profile."@en ;
+    skos:scopeNote "Use on a lifted resource, naming a concept of the checksum register the profile binds. Not bddo:checksumAlgorithm, which names the bddo:ChecksumAlgorithm individual (or bddo:CustomCrc) a processor computes; the register's concepts link to those individuals with hexplain:correspondsTo."@en .
 
 # ---------- Range datatype shapes ----------
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
