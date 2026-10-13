@@ -4,13 +4,14 @@
         --pp-cmd "java -jar my.jar parse {description} {root} {input} --out {out} --error {err}" \
         --hc-cmd "my-hdl {input} -o {out}" ...
 
-Each class runs with its own command template (--pp-cmd, --se-cmd, --bp-cmd, --hc-cmd, --ce-cmd); a class with no
-template is skipped. The runner fills the template for each case, runs it in a fresh temporary directory, and compares
-what it wrote with the case's expected artifact (compare.py). Placeholders, each replaced by a path or a value inside
-the argument that holds it:
+Each class runs with its own command template (--pp-cmd, --se-cmd, --bp-cmd, --hc-cmd, --ce-cmd, and --w-cmd for the
+Writer cases); a class with no template is skipped. The runner fills the template for each case, runs it in a fresh
+temporary directory, and compares what it wrote with the case's expected artifact (compare.py). Placeholders, each
+replaced by a path or a value inside the argument that holds it:
 
   {case}        the case directory              {manifest}   its manifest.json
-  {description} description.ttl                 {input}      the input (input.bin, or the manifest's input: input.hx)
+  {description} description.ttl                 {input}      the input (input.bin, or the manifest's input: input.hx,
+                                                             or tree.json, the logical tree of a Writer case)
   {root}        the root struct IRI             {base}       the base IRI, empty when the processor is to choose one
   {rules}       rules.ttl (Conformance Evaluator)             {mode}       lenient or strict
   {version}     the input's format version, or empty          {instant}    the evaluation instant, or empty
@@ -22,6 +23,10 @@ Output, by class and outcome: the parsed tree as canonical JSON; the instance, a
 N-Triples; a conformance run as the JSON summary or, for a case with "reportForm": "rdf", as a conf: RDF report; an
 error as {"category": "<Processing Model category>"} written to {err}, the command exiting non-zero. For the HDL
 Compiler the runner also reads diagnostics from standard error in the form file:line:column: SEVERITY: message.
+
+A Writer case runs the other way: the command is given {description}, {root} and the tree ({input}, tree.json, in
+the canonical JSON form of a parsed tree) and writes the serialised stream to {out}, as the bytes themselves, or an
+error category to {err}. The bytes compare exactly with the case's expected.hex.
 
 A case applies when every optional feature and codec it requires is claimed and none it expects unclaimed is; the
 claims come
@@ -58,6 +63,7 @@ FLAGS = {
     "bundle-processor": "bp",
     "hdl-compiler": "hc",
     "conformance-evaluator": "ce",
+    "writer": "w",
 }
 DIAGNOSTIC = re.compile(r":(\d+):(\d+):\s*(ERROR|WARNING|INFO)\b", re.I)
 
@@ -127,7 +133,7 @@ def run_case(case_dir: Any, template: Any, claims: Any, timeout: Any, keep: Any 
     with tempfile.TemporaryDirectory(dir=keep) as tmp:
         tmp = Path(tmp)
         name = compare.expected_artifact(case_dir)
-        ext = ".ttl" if name.endswith(".ttl") else ".json"
+        ext = ".bin" if manifest["class"] == "writer" else ".ttl" if name.endswith(".ttl") else ".json"
         out, err, reported = tmp / ("actual" + ext), tmp / "error.json", tmp / "reported-base.txt"
         values = {
             "case": case_dir,

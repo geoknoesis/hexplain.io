@@ -4,7 +4,8 @@
   "semantic-emitter": 49,
   "bundle-processor": 13,
   "hdl-compiler": 180,
-  "conformance-evaluator": 41
+  "conformance-evaluator": 41,
+  "writer": 52
  },
  "excluded": {
   "blanket": [
@@ -64,6 +65,12 @@
   "Conformance Evaluator": {
    "total": 22,
    "covered": 22,
+   "notSuiteTestable": {},
+   "uncovered": []
+  },
+  "Writer": {
+   "total": 12,
+   "covered": 12,
    "notSuiteTestable": {},
    "uncovered": []
   }
@@ -128,6 +135,524 @@
     "total": 1,
     "covered": 0
    }
+  },
+  "writer": {
+   "MUST": {
+    "total": 12,
+    "covered": 12
+   },
+   "SHOULD": {
+    "total": 0,
+    "covered": 0
+   }
+  }
+ },
+ "writer": {
+  "cases": [
+   {
+    "id": "w-alignment",
+    "title": "bddo:alignment writes fill bytes to the next multiple of the alignment",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-bit-field-realigned",
+    "title": "The unused bits of a partial byte are written 0",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-byte-order",
+    "title": "Integers are written in the effective byte order",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-byte-order-conditional-big",
+    "title": "The same description writes the other byte order for the other value",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-byte-order-conditional-little",
+    "title": "A conditional byte order is evaluated over the fields written so far",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-checksum-covers-later-bytes",
+    "title": "A checksum is patched after its struct is written, in the field's byte order",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-19"
+    ]
+   },
+   {
+    "id": "w-checksum-filled",
+    "title": "An unbound checksum field is computed over the covered bytes and back-patched",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-19",
+     "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-checksum-inconsistent",
+    "title": "A bound checksum over bytes the tree determines must equal its recomputation",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-22"
+    ]
+   },
+   {
+    "id": "w-checksum-innermost-first",
+    "title": "An outer checksum covers the patched bytes of an inner one",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-19"
+    ]
+   },
+   {
+    "id": "w-chunk-table",
+    "title": "A layout with a chunk table is outside what this version writes",
+    "outcome": "Unsupported",
+    "requirements": [
+     "req-pm-serialisation-20"
+    ]
+   },
+   {
+    "id": "w-codec-delta-step",
+    "title": "An encoding step is encoded by its codec's contract with the step's parameters",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-18"
+    ]
+   },
+   {
+    "id": "w-codec-length-recomputed",
+    "title": "A length and a checksum that rest on encoded bytes are recomputed whatever the tree binds",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-18",
+     "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-codec-no-encode-direction",
+    "title": "A codec whose contract defines no encode direction is refused with Unsupported feature",
+    "outcome": "Unsupported",
+    "requirements": [
+     "req-pm-serialisation-18"
+    ]
+   },
+   {
+    "id": "w-codec-substream-struct",
+    "title": "An encoded struct is serialised to a fresh sub-stream, then encoded",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-18",
+     "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-container-key-value",
+    "title": "A key/value header is outside what this version writes",
+    "outcome": "Unsupported",
+    "requirements": [
+     "req-pm-serialisation-20"
+    ]
+   },
+   {
+    "id": "w-container-nested-delimited-table",
+    "title": "A text container reached through a field of a byte-level struct is refused",
+    "outcome": "Unsupported",
+    "requirements": [
+     "req-pm-serialisation-20"
+    ]
+   },
+   {
+    "id": "w-container-tree-document",
+    "title": "A tree document is outside what this version writes",
+    "outcome": "Unsupported",
+    "requirements": [
+     "req-pm-serialisation-20"
+    ]
+   },
+   {
+    "id": "w-count-filled",
+    "title": "An unbound count field is filled with the number of elements",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-count-inconsistent",
+    "title": "A bound count that differs from the number of elements is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-22"
+    ]
+   },
+   {
+    "id": "w-dispatch-selected",
+    "title": "A dispatched node is serialised as the struct its key selects",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-dispatch-wrong-members",
+    "title": "A node whose members are not the selected struct's fields is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-field-order",
+    "title": "Fields are written in list order, a sync struct beginning with its marker",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-fixed-value-filled",
+    "title": "A fixed-value field the tree leaves unbound is written as its constant",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-fixed-value-mismatch",
+    "title": "A tree that binds another value than the constant is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-length-filled",
+    "title": "An unbound length field is filled with the dependent field's byte length",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-length-inconsistent",
+    "title": "A bound length that differs from its recomputation is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-22"
+    ]
+   },
+   {
+    "id": "w-length-terminator-included",
+    "title": "A recomputed length counts the terminator",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-offset-addressed",
+    "title": "An offset-addressed field is written at its target and the cursor restored",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-offset-conflict",
+    "title": "A target already written with different bytes is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-pad-to-pad-byte",
+    "title": "The padding of a bddo:padTo is its declared bddo:padByte, and 00 when none is declared",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-presence-absent",
+    "title": "A field whose presence condition is false is not written",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-12"
+    ]
+   },
+   {
+    "id": "w-presence-absent-bound",
+    "title": "A field bound where its presence condition is false is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-12"
+    ]
+   },
+   {
+    "id": "w-presence-present",
+    "title": "A field whose presence condition is true is written in its place",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-12"
+    ]
+   },
+   {
+    "id": "w-presence-present-unbound",
+    "title": "A field unbound where its presence condition is true is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-12"
+    ]
+   },
+   {
+    "id": "w-region-filled",
+    "title": "A region of literal size is filled to its end after a shorter value",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-1",
+     "req-pm-serialisation-24"
+    ]
+   },
+   {
+    "id": "w-region-overflow",
+    "title": "A value longer than its region of literal size is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-separated-tokens",
+    "title": "A separated token is preceded by one space when a token precedes it",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-size-expression-mismatch",
+    "title": "A size given by an expression is not inverted",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-struct-size-filled",
+    "title": "A struct's declared size is a region, filled to its end",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-14"
+    ]
+   },
+   {
+    "id": "w-struct-size-overflow",
+    "title": "Fields that do not fit their struct's declared size are refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-14"
+    ]
+   },
+   {
+    "id": "w-text-encodings",
+    "title": "A string is encoded in its bddo:encoding",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-number-bound-width",
+    "title": "A width a bound field gives is the width to write",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-number-floats",
+    "title": "A Float written as text takes the canonical Float spelling; nan is followed by spaces",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-number-integers",
+    "title": "An Integer written as text is rendered canonically and zero-padded to a literal width",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-number-overflow",
+    "title": "A text number whose rendering does not fit its width is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-23",
+     "req-pm-serialisation-24"
+    ]
+   },
+   {
+    "id": "w-text-too-long",
+    "title": "A string longer than its fixed width is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-trim-null-padded",
+    "title": "A fixed-size trimNull string is followed by NUL code units to its width",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-unrepresentable",
+    "title": "A character the encoding cannot represent is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-tree-required-unbound",
+    "title": "A tree that leaves a required field unbound is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-tree-scalar-for-repeated",
+    "title": "A single value for a repeated field is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-tree-struct-for-scalar",
+    "title": "A struct node for a scalar field is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-tree-undeclared-key",
+    "title": "A tree that binds a field the description does not declare is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   }
+  ],
+  "requirements": {
+   "req-pm-serialisation-1": [
+    "w-field-order",
+    "w-fixed-value-filled",
+    "w-fixed-value-mismatch",
+    "w-region-filled",
+    "w-region-overflow",
+    "w-separated-tokens",
+    "w-size-expression-mismatch",
+    "w-tree-required-unbound",
+    "w-tree-scalar-for-repeated",
+    "w-tree-struct-for-scalar",
+    "w-tree-undeclared-key"
+   ],
+   "req-pm-serialisation-12": [
+    "w-presence-absent",
+    "w-presence-absent-bound",
+    "w-presence-present",
+    "w-presence-present-unbound"
+   ],
+   "req-pm-serialisation-14": [
+    "w-struct-size-filled",
+    "w-struct-size-overflow"
+   ],
+   "req-pm-serialisation-17": [
+    "w-byte-order",
+    "w-byte-order-conditional-big",
+    "w-byte-order-conditional-little",
+    "w-dispatch-selected",
+    "w-dispatch-wrong-members"
+   ],
+   "req-pm-serialisation-18": [
+    "w-codec-delta-step",
+    "w-codec-length-recomputed",
+    "w-codec-no-encode-direction",
+    "w-codec-substream-struct"
+   ],
+   "req-pm-serialisation-19": [
+    "w-checksum-covers-later-bytes",
+    "w-checksum-filled",
+    "w-checksum-innermost-first"
+   ],
+   "req-pm-serialisation-20": [
+    "w-chunk-table",
+    "w-container-key-value",
+    "w-container-nested-delimited-table",
+    "w-container-tree-document"
+   ],
+   "req-pm-serialisation-21": [
+    "w-checksum-filled",
+    "w-codec-length-recomputed",
+    "w-codec-substream-struct",
+    "w-count-filled",
+    "w-length-filled",
+    "w-length-terminator-included"
+   ],
+   "req-pm-serialisation-22": [
+    "w-checksum-inconsistent",
+    "w-count-inconsistent",
+    "w-length-inconsistent"
+   ],
+   "req-pm-serialisation-23": [
+    "w-text-encodings",
+    "w-text-number-bound-width",
+    "w-text-number-floats",
+    "w-text-number-integers",
+    "w-text-number-overflow",
+    "w-text-too-long",
+    "w-text-trim-null-padded",
+    "w-text-unrepresentable"
+   ],
+   "req-pm-serialisation-24": [
+    "w-region-filled",
+    "w-text-number-overflow"
+   ],
+   "req-pm-serialisation-25": [
+    "w-alignment",
+    "w-bit-field-realigned",
+    "w-offset-addressed",
+    "w-offset-conflict",
+    "w-pad-to-pad-byte"
+   ]
   }
  },
  "citations": {
@@ -1479,18 +2004,87 @@
   "req-pm-security-resources-1": [
    "pp-limit-visited-nodes"
   ],
-  "req-pm-serialisation-1": [],
-  "req-pm-serialisation-12": [],
-  "req-pm-serialisation-14": [],
-  "req-pm-serialisation-17": [],
-  "req-pm-serialisation-18": [],
-  "req-pm-serialisation-19": [],
-  "req-pm-serialisation-20": [],
-  "req-pm-serialisation-21": [],
-  "req-pm-serialisation-22": [],
-  "req-pm-serialisation-23": [],
-  "req-pm-serialisation-24": [],
-  "req-pm-serialisation-25": [],
+  "req-pm-serialisation-1": [
+   "w-field-order",
+   "w-fixed-value-filled",
+   "w-fixed-value-mismatch",
+   "w-region-filled",
+   "w-region-overflow",
+   "w-separated-tokens",
+   "w-size-expression-mismatch",
+   "w-tree-required-unbound",
+   "w-tree-scalar-for-repeated",
+   "w-tree-struct-for-scalar",
+   "w-tree-undeclared-key"
+  ],
+  "req-pm-serialisation-12": [
+   "w-presence-absent",
+   "w-presence-absent-bound",
+   "w-presence-present",
+   "w-presence-present-unbound"
+  ],
+  "req-pm-serialisation-14": [
+   "w-struct-size-filled",
+   "w-struct-size-overflow"
+  ],
+  "req-pm-serialisation-17": [
+   "w-byte-order",
+   "w-byte-order-conditional-big",
+   "w-byte-order-conditional-little",
+   "w-dispatch-selected",
+   "w-dispatch-wrong-members"
+  ],
+  "req-pm-serialisation-18": [
+   "w-codec-delta-step",
+   "w-codec-length-recomputed",
+   "w-codec-no-encode-direction",
+   "w-codec-substream-struct"
+  ],
+  "req-pm-serialisation-19": [
+   "w-checksum-covers-later-bytes",
+   "w-checksum-filled",
+   "w-checksum-innermost-first"
+  ],
+  "req-pm-serialisation-20": [
+   "w-chunk-table",
+   "w-container-key-value",
+   "w-container-nested-delimited-table",
+   "w-container-tree-document"
+  ],
+  "req-pm-serialisation-21": [
+   "w-checksum-filled",
+   "w-codec-length-recomputed",
+   "w-codec-substream-struct",
+   "w-count-filled",
+   "w-length-filled",
+   "w-length-terminator-included"
+  ],
+  "req-pm-serialisation-22": [
+   "w-checksum-inconsistent",
+   "w-count-inconsistent",
+   "w-length-inconsistent"
+  ],
+  "req-pm-serialisation-23": [
+   "w-text-encodings",
+   "w-text-number-bound-width",
+   "w-text-number-floats",
+   "w-text-number-integers",
+   "w-text-number-overflow",
+   "w-text-too-long",
+   "w-text-trim-null-padded",
+   "w-text-unrepresentable"
+  ],
+  "req-pm-serialisation-24": [
+   "w-region-filled",
+   "w-text-number-overflow"
+  ],
+  "req-pm-serialisation-25": [
+   "w-alignment",
+   "w-bit-field-realigned",
+   "w-offset-addressed",
+   "w-offset-conflict",
+   "w-pad-to-pad-byte"
+  ],
   "req-pm-size-resolution-1": [],
   "req-pm-size-resolution-2": [
    "pp-hel-size-result-type",
@@ -3296,11 +3890,11 @@
   "hel/index.html#undefined-names": 10,
   "hel/index.html#version-marker": 4,
   "hel/index.html#versioning": 5,
-  "processing#algorithm": 116,
-  "processing#alignment-padding": 11,
-  "processing#bit-cursor": 10,
-  "processing#byte-order": 14,
-  "processing#codec-contracts": 6,
+  "processing#algorithm": 133,
+  "processing#alignment-padding": 13,
+  "processing#bit-cursor": 11,
+  "processing#byte-order": 18,
+  "processing#codec-contracts": 8,
   "processing#codec-selection": 9,
   "processing#codec-sessions": 1,
   "processing#codec-status": 1,
@@ -3309,9 +3903,9 @@
   "processing#conformance-classes": 4,
   "processing#conformance-evaluation": 41,
   "processing#context": 6,
-  "processing#data-layouts": 8,
+  "processing#data-layouts": 9,
   "processing#delimited-records": 8,
-  "processing#delimited-tables": 7,
+  "processing#delimited-tables": 8,
   "processing#delta-parameters": 11,
   "processing#emission": 26,
   "processing#errors": 77,
@@ -3320,13 +3914,13 @@
   "processing#framing-parameters": 5,
   "processing#inputs-outputs": 1,
   "processing#iri-minting": 13,
-  "processing#key-value": 4,
+  "processing#key-value": 5,
   "processing#lz4-parameters": 4,
-  "processing#minimum-codecs": 30,
+  "processing#minimum-codecs": 33,
   "processing#multi-part-assets": 15,
   "processing#negative-offsets": 4,
   "processing#numeric-representation": 10,
-  "processing#optional-codecs": 23,
+  "processing#optional-codecs": 24,
   "processing#optional-features": 1,
   "processing#parameter-expressions": 6,
   "processing#parameter-scope": 9,
@@ -3337,14 +3931,15 @@
   "processing#resource-limits": 17,
   "processing#security-decompression": 4,
   "processing#security-resources": 1,
-  "processing#size-resolution": 21,
+  "processing#serialisation": 52,
+  "processing#size-resolution": 29,
   "processing#stream-metadata": 8,
-  "processing#struct-size": 8,
-  "processing#terminators": 8,
-  "processing#text-containers": 2,
-  "processing#text-decoding": 14,
-  "processing#text-numbers": 12,
-  "processing#tree-documents": 9,
+  "processing#struct-size": 10,
+  "processing#terminators": 9,
+  "processing#text-containers": 5,
+  "processing#text-decoding": 18,
+  "processing#text-numbers": 17,
+  "processing#tree-documents": 10,
   "processing#typed-cells": 3,
   "processing#value-mapping": 10,
   "req/index.html#conformance": 3

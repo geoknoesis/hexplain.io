@@ -20,13 +20,16 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 SUITE = ROOT / "specification/conformance"
 
-CLASSES = ("physical-parser", "semantic-emitter", "bundle-processor", "hdl-compiler", "conformance-evaluator")
+#: The case classes: the five conformance classes of the Processing Model, then `writer`, the cases of the optional
+#: feature of that name (a Physical Parser that claims it is the Writer conformance target).
+CLASSES = ("physical-parser", "semantic-emitter", "bundle-processor", "hdl-compiler", "conformance-evaluator", "writer")
 PREFIX = {
     "physical-parser": "pp",
     "semantic-emitter": "se",
     "bundle-processor": "bp",
     "hdl-compiler": "hc",
     "conformance-evaluator": "ce",
+    "writer": "w",
 }
 #: The Processing Model's error categories, as a case names them (conf:errorCategory spelling,
 #: with Dispatch kept apart from Description as the Processing Model's error table does).
@@ -49,7 +52,10 @@ EXPECTED = (
     "expected-report.json",
     "expected-report.ttl",
     "expected-claims.json",
+    "expected.hex",
 )
+#: The logical tree a Writer case gives the writer under test, in the canonical JSON form of a parsed tree.
+TREE = "tree.json"
 #: The error categories a conformance run's Parse finding names (a ResourceLimit is never a finding).
 FINDING_CATEGORIES = tuple(c for c in CATEGORIES if c != "ResourceLimit")
 #: The requirement identifiers every case of a class may cite without saying anything specific: a case
@@ -137,6 +143,8 @@ class Case:
     hdl_error: dict = None  # hdl-compiler expected diagnostic
     report_ttl: str = None  # conformance-evaluator expected run report, as Turtle (conf: run terms)
     claims: dict = None  # expected-claims.json: what a processor's claims statement must satisfy
+    tree: object = None  # writer: the logical tree to serialise, as Python values (tree.json)
+    expected_bytes: bytes = None  # writer: the exact bytes the specification requires (expected.hex)
 
     def artifacts(self) -> Any:
         """{file name: bytes} of the case directory."""
@@ -156,6 +164,13 @@ class Case:
         if self.input is not None:
             man["input"] = "input.bin"
             out["input.bin"] = bytes(self.input)
+        if self.cls == "writer":
+            if (self.expected_bytes is None) == (self.error is None):
+                raise ValueError(f"{self.id}: a writer case states the bytes or an error category, never both")
+            man["input"] = TREE
+            out[TREE] = canonical_json(self.tree)
+            if self.expected_bytes is not None:
+                out["expected.hex"] = hex_lines(self.expected_bytes)
         man.update(self.manifest)
         if self.description is not None:
             out["description.ttl"] = turtle(self.id, self.description).encode("utf-8")
@@ -191,6 +206,21 @@ def dedent(text: str) -> Any:
 
 def dump(value: Any) -> Any:
     return (json.dumps(value, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+
+
+def hex_lines(data: bytes) -> bytes:
+    """expected.hex: the bytes as lower-case hexadecimal digits, sixteen bytes to a line, one space between bytes."""
+    data = bytes(data)
+    rows = [data[i : i + 16].hex(" ") for i in range(0, len(data), 16)]
+    return ("\n".join(rows) + "\n").encode("ascii")
+
+
+def parse_hex(text: str) -> bytes:
+    """The bytes of an expected.hex: lower-case hexadecimal digits, two to a byte, white space ignored."""
+    digits = "".join(text.split())
+    if len(digits) % 2 or any(c not in "0123456789abcdef" for c in digits):
+        raise ValueError("expected.hex holds lower-case hexadecimal digits, two to a byte, and white space")
+    return bytes.fromhex(digits)
 
 
 def canonical(value: Any) -> Any:

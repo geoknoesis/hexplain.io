@@ -22,7 +22,16 @@ SUITE = ROOT / "specification/conformance"
 PAGE = SUITE / "index.html"
 COVERAGE = SUITE / "coverage.json"
 BEGIN, END = "<!-- BEGIN GENERATED COVERAGE -->", "<!-- END GENERATED COVERAGE -->"
-CASE_CLASSES = ("physical-parser", "semantic-emitter", "bundle-processor", "hdl-compiler", "conformance-evaluator")
+CASE_CLASSES = (
+    "physical-parser",
+    "semantic-emitter",
+    "bundle-processor",
+    "hdl-compiler",
+    "conformance-evaluator",
+    "writer",
+)
+#: The case class of the optional feature `writer`, and the registry class of the serialisation requirements.
+WRITER = "writer"
 REQUIREMENT_CLASSES = (
     ("physical-parser", "Physical Parser (Processing Model)"),
     ("hel", "HEL"),
@@ -30,6 +39,7 @@ REQUIREMENT_CLASSES = (
     ("bundle-processor", "Bundle Processor (Processing Model)"),
     ("conformance-evaluator", "Conformance Evaluator (Processing Model, conf, req)"),
     ("hdl-compiler", "HDL Compiler"),
+    (WRITER, "Writer (Processing Model, serialisation)"),
 )
 PAGE_LINKS = {
     "specification/processing/index.html": "../processing/index.html",
@@ -75,6 +85,7 @@ PROCESSOR_CLASSES = (
     ("Bundle Processor", ("bundle-processor",)),
     ("HDL Compiler", ("hdl-compiler",)),
     ("Conformance Evaluator", ("conformance-evaluator",)),
+    ("Writer", (WRITER,)),
 )
 
 
@@ -129,6 +140,19 @@ def counted(entry: dict[str, Any], rid: Any) -> bool:
     return not entry.get("withdrawn") and rid not in BLANKET and entry.get("audience", "processor") != "description"
 
 
+def writer_cases() -> list[dict[str, Any]]:
+    """The Writer cases on disk: identifier, title, the outcome each requires and the requirements it cites."""
+    out = []
+    for path in sorted((SUITE / WRITER).glob("*/manifest.json")):
+        man = json.loads(path.read_text(encoding="utf-8"))
+        error = path.with_name("expected-error.json")
+        outcome = json.loads(error.read_text(encoding="utf-8"))["category"] if error.is_file() else "bytes"
+        out.append(
+            {"id": man["id"], "title": man["title"], "outcome": outcome, "requirements": sorted(man["requirements"])}
+        )
+    return out
+
+
 def coverage() -> dict[str, Any]:
     reqs = {i: e for i, e in registry().items() if counted(e, i)}
     cases = manifests()
@@ -171,6 +195,14 @@ def coverage() -> dict[str, Any]:
         "excluded": {"blanket": list(BLANKET), "audience": "description"},
         "processorMust": processors,
         "requirements": classes,
+        "writer": {
+            "cases": writer_cases(),
+            "requirements": {
+                i: sorted(citing.get(i, []))
+                for i, e in registry().items()
+                if e["cls"] == WRITER and not e.get("withdrawn")
+            },
+        },
         "citations": {i: sorted(citing.get(i, [])) for i, e in registry().items() if not e.get("withdrawn")},
         "withdrawn": sorted(i for i, e in registry().items() if e.get("withdrawn")),
         "reports": published_reports(),
@@ -234,7 +266,9 @@ def render(data: dict[str, Any]) -> str:
     parts.append(
         '<h3 id="processor-coverage">Processor MUSTs by conformance class</h3><p>The MUST-level requirements '
         "a processor of each class is bound by (a Physical Parser by the Processing Model's physical rules and "
-        "by HEL), how many at least one case cites, those no case can observe (listed below with the reason), "
+        "by HEL; the Writer row is the optional feature <code>writer</code> of a Physical Parser, bound by the "
+        "serialisation rules only when it is claimed), how many at least one case cites, those no case can "
+        "observe (listed below with the reason), "
         "and those no case cites yet.</p>"
         '<div class="table"><table><thead><tr><th>Conformance class</th><th>MUSTs covered</th>'
         "<th>Not testable by a case</th><th>Not yet cited</th></tr></thead><tbody>"
@@ -257,6 +291,7 @@ def render(data: dict[str, Any]) -> str:
             link = PAGE_LINKS[reqs[rid]["page"]]
             parts.append(f'<tr><td><a href="{link}#{rid}"><code>{rid}</code></a></td><td>{html.escape(why)}</td></tr>')
     parts.append("</tbody></table></div>")
+    parts += render_writer(data["writer"])
     parts.append('<h3 id="published-reports">Published implementation reports</h3>')
     reports = data["reports"]
     if reports:
@@ -302,6 +337,36 @@ def render(data: dict[str, Any]) -> str:
     parts.append("</section>")
     parts.append(END)
     return "\n".join(parts)
+
+
+def render_writer(writer: dict[str, Any]) -> list[str]:
+    """The Writer class's own tables: each serialisation requirement with the cases that cite it, then each case
+    with the outcome it requires."""
+    link = PAGE_LINKS["specification/processing/index.html"]
+    refused = sum(1 for case in writer["cases"] if case["outcome"] != "bytes")
+    parts = [
+        '<h3 id="writer-coverage">Writer cases</h3><p>The cases of the <a href="#writer-class">Writer class</a>: '
+        f"{len(writer['cases'])} cases, {len(writer['cases']) - refused} that fix the bytes written and {refused} "
+        "that fix a refusal. Every live serialisation requirement is cited by at least one of them "
+        "(<code>tools/test_conformance_suite.py</code> fails otherwise).</p>"
+        '<div class="table"><table><thead><tr><th>Serialisation requirement</th><th>Writer cases</th></tr></thead>'
+        "<tbody>"
+    ]
+    for rid, cases in writer["requirements"].items():
+        cited = ", ".join(f"<code>{html.escape(c)}</code>" for c in cases) or "none"
+        parts.append(f'<tr><td><a href="{link}#{rid}"><code>{rid}</code></a></td><td>{cited}</td></tr>')
+    parts.append(
+        '</tbody></table></div><div class="table"><table><thead><tr><th>Case</th><th>What it checks</th>'
+        "<th>Required outcome</th></tr></thead><tbody>"
+    )
+    for case in writer["cases"]:
+        outcome = "the bytes of <code>expected.hex</code>" if case["outcome"] == "bytes" else f"{case['outcome']} error"
+        parts.append(
+            f"<tr><td><code>{html.escape(case['id'])}</code></td><td>{html.escape(case['title'])}</td>"
+            f"<td>{outcome}</td></tr>"
+        )
+    parts.append("</tbody></table></div>")
+    return parts
 
 
 def expected_page(source: str) -> Any:

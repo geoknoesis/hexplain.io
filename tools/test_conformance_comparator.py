@@ -189,6 +189,34 @@ def graph_checks(failures: Any) -> None:
     )
 
 
+def writer_checks(failures: Any) -> None:
+    """A Writer case compares bytes exactly, and an error only with an error."""
+    check(compare.compare_bytes(b"\x01\x02", b"\x01\x02") == [], "equal bytes match", failures)
+    check(compare.compare_bytes(b"\x01\x02", b"\x01\x03") != [], "one differing byte fails", failures)
+    check(compare.compare_bytes(b"\x01\x02", b"\x01\x02\x00") != [], "a longer output fails", failures)
+    check(compare.compare_bytes(b"\x01\x02", b"\x01") != [], "a shorter output fails", failures)
+    check(compare.parse_hex("01 0a\nff\n") == b"\x01\x0a\xff", "expected.hex ignores white space", failures)
+    for bad in ("0A", "012", "0g"):
+        try:
+            compare.parse_hex(bad)
+            failures.append(f"expected.hex accepted {bad!r}")
+        except ValueError:
+            pass
+    with tempfile.TemporaryDirectory() as tmp:
+        bytes_case, error_case = SUITE / "writer/w-field-order", SUITE / "writer/w-tree-undeclared-key"
+        written, error = Path(tmp) / "actual.bin", Path(tmp) / "error.json"
+        written.write_bytes(bytes.fromhex("01ffd8020003"))
+        error.write_text(json.dumps({"category": "Validation"}), encoding="utf-8")
+        check(compare.compare_case(bytes_case, written) == [], "the bytes a Writer case expects pass", failures)
+        check(compare.compare_case(bytes_case, error) != [], "an error where bytes are expected fails", failures)
+        check(compare.compare_case(error_case, error) == [], "the category a Writer case expects passes", failures)
+        check(compare.compare_case(error_case, written) != [], "bytes where an error is expected fail", failures)
+        written.write_bytes(bytes.fromhex("01ffd8020300"))
+        check(compare.compare_case(bytes_case, written) != [], "the other byte order fails", failures)
+        error.write_text(json.dumps({"category": "Unsupported"}), encoding="utf-8")
+        check(compare.compare_case(error_case, error) != [], "another category fails a Writer case", failures)
+
+
 def other_checks(failures: Any) -> None:
     check(
         compare.compare_error({"category": "Bounds"}, {"category": "Bounds"}) == [],
@@ -318,6 +346,8 @@ def self_check(failures: list[Any]) -> Any:
                         "codecs": expected["mustInclude"].get("codecs", []),
                     }
                 ).encode()
+            if name == "expected.hex":
+                actual, content = actual.with_suffix(".bin"), bytes.fromhex(content.decode("ascii"))
             actual.write_bytes(content)
             if name == "expected-report.ttl":
                 # An expected run report is a pattern (blank nodes are variables, and the copies of the requirements
@@ -339,6 +369,7 @@ def main() -> int:
     tree_checks(failures)
     graph_checks(failures)
     other_checks(failures)
+    writer_checks(failures)
     n = self_check(failures)
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures[:40]))

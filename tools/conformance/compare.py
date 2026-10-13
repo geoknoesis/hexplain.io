@@ -13,6 +13,7 @@
                                (expected-report.ttl)
   * pp-claims-statement        the processor's claims statement, JSON
 (expected-claims.json)
+  * writer, success            the bytes written, as they are (a binary file)                    (expected.hex)
 
 The comparison follows specification/conformance/index.html#canonicalisation; this module is the reference
 reading of that section, and the gate tools/test_conformance_comparator.py tests it. It uses only the standard
@@ -44,7 +45,7 @@ BY_VALUE = {"hdl-compiler", "conformance-evaluator"}
 sys.path.insert(0, str(HERE))
 
 import hel  # noqa: E402
-from suite import CATEGORIES, REPORTED_BASE  # noqa: E402
+from suite import CATEGORIES, REPORTED_BASE, parse_hex  # noqa: E402
 
 BDDO = "https://hexplain.io/ns/bddo#"
 CORE = "https://hexplain.io/ns/core#"
@@ -269,6 +270,19 @@ def compare_error(expected: Any, actual: Any, category_map: Any = None) -> Any:
     return [] if got == expected["category"] else [f"expected a {expected['category']} error, got {got}"]
 
 
+def compare_bytes(expected: bytes, actual: bytes) -> list[str]:
+    """Differences between the bytes a Writer case expects and the bytes written: the comparison is exact."""
+    if expected == actual:
+        return []
+    shared = min(len(expected), len(actual))
+    at = next((i for i in range(shared) if expected[i] != actual[i]), shared)
+    want, got = (data[at : at + 8].hex() or "the end" for data in (expected, actual))
+    return [
+        f"expected {len(expected)} bytes, got {len(actual)}; the first difference is at offset {at}: "
+        f"expected {want}, got {got}"
+    ]
+
+
 def compare_hdl_error(expected: Any, actual: Any) -> Any:
     """An HDL Compiler error case: at least one ERROR diagnostic (at the stated line, when the case states one) and no
     compiled output."""
@@ -459,6 +473,7 @@ def expected_artifact(case_dir: Any) -> Any:
         "expected-report.json",
         "expected-report.ttl",
         "expected-claims.json",
+        "expected.hex",
     ):
         if (case_dir / name).is_file():
             return name
@@ -471,6 +486,19 @@ def compare_case(case_dir: Any, actual_path: Any, reported_base: Any = None, cat
     manifest = json.loads((case_dir / "manifest.json").read_text(encoding="utf-8"))
     cls = manifest["class"]
     name = expected_artifact(case_dir)
+    if cls == "writer":
+        # A writer's output is bytes or an error: the file is read as JSON only when it is named as one (error.json).
+        if not actual_path.is_file():
+            return [f"no output at {actual_path}"]
+        error = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.suffix == ".json" else None
+        if name == "expected.hex":
+            if error is not None:
+                return [f"expected bytes, got {error!r}"]
+            return compare_bytes(parse_hex((case_dir / name).read_text(encoding="ascii")), actual_path.read_bytes())
+        expected = json.loads((case_dir / name).read_text(encoding="utf-8"))
+        if error is None:
+            return [f"expected a {expected['category']} error, got {actual_path.stat().st_size} bytes"]
+        return compare_error(expected, error, category_map)
     if name.endswith(".json"):
         expected = json.loads((case_dir / name).read_text(encoding="utf-8"))
         actual = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.is_file() else None

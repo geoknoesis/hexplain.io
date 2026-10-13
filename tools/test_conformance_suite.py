@@ -3,7 +3,9 @@
 Checks that specification/conformance/<class>/ is exactly what tools/conformance/ generates;
 that every case has a complete manifest, cites only registered requirement identifiers and
 sections the pages define, and has exactly one expected artifact; that every description,
-rule set and expected graph parses; and that the coverage section of the suite's page is current.
+rule set and expected graph parses; that a Writer case gives a tree and states exactly one of
+the bytes and an error category, and that every live serialisation requirement is cited by a
+Writer case; and that the coverage section of the suite's page is current.
 """
 
 from __future__ import annotations
@@ -23,10 +25,49 @@ sys.path.insert(0, str(HERE / "conformance"))
 
 import _build_conformance_page  # noqa: E402
 import generate_inputs  # noqa: E402
-from suite import BLANKET, CATEGORIES, CLASSES, EXPECTED, LIMITS, PREFIX, SUITE, feature_tokens  # noqa: E402
+from suite import (  # noqa: E402
+    BLANKET,
+    CATEGORIES,
+    CLASSES,
+    EXPECTED,
+    LIMITS,
+    PREFIX,
+    SUITE,
+    TREE,
+    feature_tokens,
+    parse_hex,
+)
 
 REQUIRED = ("id", "class", "title", "description", "requirements", "sections")
 MINIMUM_CASES = 150
+#: The registry class of the serialisation requirements, and the feature token a Writer case requires.
+WRITER = "writer"
+
+
+def writer_problems(case_dir: Any, man: Any, writer_requirements: Any) -> list[str]:
+    """The structural rules of a Writer case: a tree, exactly one of the bytes and an error category, the `writer`
+    feature required, and at least one serialisation requirement cited."""
+    where = f"{WRITER}/{case_dir.name}"
+    problems = []
+    if man.get("input") != TREE:
+        problems.append(f"{where}: a Writer case's input is {TREE}")
+    try:
+        json.loads((case_dir / TREE).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        problems.append(f"{where}: {TREE} is not a JSON tree: {exc}")
+    stated = [name for name in ("expected.hex", "expected-error.json") if (case_dir / name).is_file()]
+    if len(stated) != 1:
+        problems.append(f"{where}: a Writer case states exactly one of expected.hex and expected-error.json ({stated})")
+    if (case_dir / "expected.hex").is_file():
+        try:
+            parse_hex((case_dir / "expected.hex").read_text(encoding="ascii"))
+        except ValueError as exc:
+            problems.append(f"{where}: {exc}")
+    if WRITER not in man.get("features", {}).get("requires", []):
+        problems.append(f"{where}: a Writer case requires the feature {WRITER!r}")
+    if not set(man.get("requirements", [])) & writer_requirements:
+        problems.append(f"{where}: a Writer case cites at least one serialisation requirement")
+    return problems
 
 
 def section_ids(document: Any) -> Any:
@@ -53,6 +94,8 @@ def main() -> int:
     features = set(feature_tokens())
     pages = {}
     counts = {cls: 0 for cls in CLASSES}
+    writer_requirements = {i for i in live if registry[i]["cls"] == WRITER}
+    writer_cited = set()
     for cls in CLASSES:
         for case_dir in sorted(p for p in (SUITE / cls).iterdir() if p.is_dir()):
             where = f"{cls}/{case_dir.name}"
@@ -84,6 +127,11 @@ def main() -> int:
                     pages[document] = section_ids(document)
                 if pages[document] is None or anchor not in pages[document]:
                     problems.append(f"{where}: section {section} does not exist")
+            if cls == WRITER:
+                problems += writer_problems(case_dir, man, writer_requirements)
+                writer_cited |= set(man.get("requirements", []))
+            elif (case_dir / "expected.hex").is_file() or (case_dir / TREE).is_file():
+                problems.append(f"{where}: {TREE} and expected.hex belong to a Writer case")
             expected = [name for name in EXPECTED if (case_dir / name).is_file()]
             if len(expected) != 1:
                 problems.append(f"{where}: {len(expected)} expected artifacts, want exactly one ({expected})")
@@ -157,6 +205,8 @@ def main() -> int:
                 problems.append(f"{where}: unknown check {man['check']!r}")
             if man.get("orError") and man["orError"] not in CATEGORIES:
                 problems.append(f"{where}: unknown orError category {man['orError']}")
+    for rid in sorted(writer_requirements - writer_cited):
+        problems.append(f"{rid}: a live serialisation requirement no Writer case cites")
     for cls, n in counts.items():
         if not n:
             problems.append(f"no {cls} cases")

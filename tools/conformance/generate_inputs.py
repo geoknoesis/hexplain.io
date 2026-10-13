@@ -38,6 +38,7 @@ MODULES = (
     "cases_features",
     "cases_features_hdl",
     "cases_terms",
+    "cases_writer",
 )
 
 
