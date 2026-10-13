@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -273,6 +274,118 @@ def section_ids(document: Any) -> Any:
     return set(re.findall(r'\bid="([^"]+)"', path.read_text(encoding="utf-8")))
 
 
+@dataclass
+class Known:
+    """What the cases are checked against: the live requirement identifiers, those of the serialisation rules, the
+    feature tokens, and the element ids of the pages the cases name sections of (filled as pages are read)."""
+
+    live: set[str]
+    writer_requirements: set[str]
+    features: set[str]
+    pages: dict[str, Any] = field(default_factory=dict)
+
+
+def member_problems(cls: str, man: dict[str, Any], known: Known) -> list[str]:
+    """The optional manifest members that steer a run: limits, features, codecs, withdrawn claims and the flags of
+    particular classes."""
+    problems = []
+    for limit in man.get("limits", {}):
+        if limit not in LIMITS:
+            problems.append(f"unknown limit {limit}")
+    for kind, names in man.get("features", {}).items():
+        if kind not in ("requires", "unclaimed"):
+            problems.append(f"unknown features member {kind}")
+        for name in names:
+            if name not in known.features:
+                problems.append(f"{name!r} is not a feature token of the Processing Model's optional features")
+    for kind, iris in man.get("codecs", {}).items():
+        if kind not in ("requires", "unclaimed"):
+            problems.append(f"unknown codecs member {kind}")
+        for iri in iris:
+            if not iri.startswith("https://hexplain.io/ns/register/media-encoding#"):
+                problems.append(f"codecs names {iri!r}, which is not a media-encoding register IRI")
+    for kind, names in man.get("claims", {}).items():
+        if kind != "withdraw":
+            problems.append(f"unknown claims member {kind}")
+        for name in names:
+            if name not in known.features:
+                problems.append(f"claims withdraws {name!r}, which is not a feature token")
+    if "compareOntologyHeader" in man and (cls != "hdl-compiler" or not isinstance(man["compareOntologyHeader"], bool)):
+        problems.append("compareOntologyHeader is a Boolean of an HDL Compiler case")
+    if "base" in man and man["base"] is None and cls != "semantic-emitter":
+        problems.append("only a Semantic Emitter case may leave the base to the processor")
+    if man.get("parseMode", "lenient") not in ("lenient", "strict"):
+        problems.append("parseMode is lenient or strict")
+    for key in ("reportConformsToShapes",):
+        if key in man and (cls != "conformance-evaluator" or not isinstance(man[key], bool)):
+            problems.append(f"{key} is a Boolean of a Conformance Evaluator case")
+    if man.get("reportForm", "json") not in ("json", "rdf"):
+        problems.append("reportForm is json or rdf")
+    if man.get("check") not in (None, "claims"):
+        problems.append(f"unknown check {man['check']!r}")
+    if man.get("orError") and man["orError"] not in CATEGORIES:
+        problems.append(f"unknown orError category {man['orError']}")
+    return problems
+
+
+def case_problems(cls: str, case_dir: Path, man: dict[str, Any], known: Known) -> list[str]:
+    """Everything wrong with one case: its manifest, the files it names, and its expected artifact."""
+    where = f"{cls}/{case_dir.name}"
+    problems = []
+    for key in REQUIRED:
+        if not man.get(key):
+            problems.append(f"{where}: manifest lacks {key}")
+    if man.get("id") != case_dir.name or man.get("class") != cls or not case_dir.name.startswith(PREFIX[cls] + "-"):
+        problems.append(f"{where}: id, class and directory disagree")
+    for rid in man.get("requirements", []):
+        if rid not in known.live:
+            problems.append(f"{where}: cites {rid}, which the requirement registry does not list")
+    if man.get("requirements") and not set(man["requirements"]) - set(BLANKET):
+        problems.append(f"{where}: cites only blanket requirements {man['requirements']}; cite the specific rule")
+    for section in man.get("sections", []):
+        document, _, anchor = section.partition("#")
+        if document not in known.pages:
+            known.pages[document] = section_ids(document)
+        if known.pages[document] is None or anchor not in known.pages[document]:
+            problems.append(f"{where}: section {section} does not exist")
+    if cls == WRITER:
+        problems += writer_problems(case_dir, man, known.writer_requirements)
+    elif (case_dir / "expected.hex").is_file() or (case_dir / TREE).is_file() or "verify" in man:
+        problems.append(f"{where}: {TREE}, expected.hex and verify belong to a Writer case")
+    expected = [name for name in EXPECTED if (case_dir / name).is_file()]
+    if len(expected) != 1:
+        problems.append(f"{where}: {len(expected)} expected artifacts, want exactly one ({expected})")
+    files = [man.get("input"), man.get("rules")] + [p.get("file") for p in man.get("parts", [])]
+    files += list(man.get("registers", []))
+    if cls != "hdl-compiler" and "check" not in man:
+        files.append("description.ttl")
+    for name in filter(None, files):
+        if not (case_dir / name).is_file():
+            problems.append(f"{where}: manifest names {name}, which does not exist")
+    for name in ["description.ttl", "rules.ttl", "expected.ttl", "expected-report.ttl"] + list(
+        man.get("registers", [])
+    ):
+        if (case_dir / name).is_file():
+            try:
+                rdflib.Graph().parse(case_dir / name, format="turtle")
+            except Exception as exc:  # noqa: BLE001 -- any parse failure is the finding
+                problems.append(f"{where}: {name} does not parse: {exc}")
+    for name in ("expected.json", "expected-error.json", "expected-report.json"):
+        if (case_dir / name).is_file():
+            try:
+                value = json.loads((case_dir / name).read_text(encoding="utf-8"))
+            except ValueError as exc:
+                problems.append(f"{where}: {name} is not JSON: {exc}")
+                continue
+            if name == "expected-error.json" and cls != "hdl-compiler" and value.get("category") not in CATEGORIES:
+                problems.append(f"{where}: unknown error category {value.get('category')!r}")
+            if name == "expected-error.json" and cls == "hdl-compiler" and value.get("severity") != "ERROR":
+                problems.append(f"{where}: an HDL Compiler error names severity ERROR")
+    problems += [f"{where}: {p}" for p in member_problems(cls, man, known)]
+    problems += [f"{where}: {p}" for p in gating_problems(case_dir, man, cls)]
+    return problems
+
+
 def main() -> int:
     problems = []
     wanted = generate_inputs.expected_tree()
@@ -287,10 +400,9 @@ def main() -> int:
     registry = json.loads((SUITE / "requirements.json").read_text(encoding="utf-8"))["requirements"]
     live = {i for i, e in registry.items() if not e.get("withdrawn")}
     problems += context_problems(registry)
-    features = set(feature_tokens())
-    pages = {}
     counts = {cls: 0 for cls in CLASSES}
     writer_requirements = {i for i in live if registry[i]["cls"] == WRITER}
+    known = Known(live, writer_requirements, set(feature_tokens()))
     writer_cited = set()
     for cls in CLASSES:
         for case_dir in sorted(p for p in (SUITE / cls).iterdir() if p.is_dir()):
@@ -301,107 +413,9 @@ def main() -> int:
                 continue
             counts[cls] += 1
             man = json.loads(manifest_path.read_text(encoding="utf-8"))
-            for key in REQUIRED:
-                if not man.get(key):
-                    problems.append(f"{where}: manifest lacks {key}")
-            if (
-                man.get("id") != case_dir.name
-                or man.get("class") != cls
-                or not case_dir.name.startswith(PREFIX[cls] + "-")
-            ):
-                problems.append(f"{where}: id, class and directory disagree")
-            for rid in man.get("requirements", []):
-                if rid not in live:
-                    problems.append(f"{where}: cites {rid}, which the requirement registry does not list")
-            if man.get("requirements") and not set(man["requirements"]) - set(BLANKET):
-                problems.append(
-                    f"{where}: cites only blanket requirements {man['requirements']}; cite the specific rule"
-                )
-            for section in man.get("sections", []):
-                document, _, anchor = section.partition("#")
-                if document not in pages:
-                    pages[document] = section_ids(document)
-                if pages[document] is None or anchor not in pages[document]:
-                    problems.append(f"{where}: section {section} does not exist")
+            problems += case_problems(cls, case_dir, man, known)
             if cls == WRITER:
-                problems += writer_problems(case_dir, man, writer_requirements)
                 writer_cited |= set(man.get("requirements", []))
-            elif (case_dir / "expected.hex").is_file() or (case_dir / TREE).is_file() or "verify" in man:
-                problems.append(f"{where}: {TREE}, expected.hex and verify belong to a Writer case")
-            expected = [name for name in EXPECTED if (case_dir / name).is_file()]
-            if len(expected) != 1:
-                problems.append(f"{where}: {len(expected)} expected artifacts, want exactly one ({expected})")
-            files = [man.get("input"), man.get("rules")] + [p.get("file") for p in man.get("parts", [])]
-            files += list(man.get("registers", []))
-            if cls != "hdl-compiler" and "check" not in man:
-                files.append("description.ttl")
-            for name in filter(None, files):
-                if not (case_dir / name).is_file():
-                    problems.append(f"{where}: manifest names {name}, which does not exist")
-            for name in ["description.ttl", "rules.ttl", "expected.ttl", "expected-report.ttl"] + list(
-                man.get("registers", [])
-            ):
-                if (case_dir / name).is_file():
-                    try:
-                        rdflib.Graph().parse(case_dir / name, format="turtle")
-                    except Exception as exc:  # noqa: BLE001 -- any parse failure is the finding
-                        problems.append(f"{where}: {name} does not parse: {exc}")
-            for name in ("expected.json", "expected-error.json", "expected-report.json"):
-                if (case_dir / name).is_file():
-                    try:
-                        value = json.loads((case_dir / name).read_text(encoding="utf-8"))
-                    except ValueError as exc:
-                        problems.append(f"{where}: {name} is not JSON: {exc}")
-                        continue
-                    if (
-                        name == "expected-error.json"
-                        and cls != "hdl-compiler"
-                        and value.get("category") not in CATEGORIES
-                    ):
-                        problems.append(f"{where}: unknown error category {value.get('category')!r}")
-                    if name == "expected-error.json" and cls == "hdl-compiler" and value.get("severity") != "ERROR":
-                        problems.append(f"{where}: an HDL Compiler error names severity ERROR")
-            for limit in man.get("limits", {}):
-                if limit not in LIMITS:
-                    problems.append(f"{where}: unknown limit {limit}")
-            for kind, names in man.get("features", {}).items():
-                if kind not in ("requires", "unclaimed"):
-                    problems.append(f"{where}: unknown features member {kind}")
-                for name in names:
-                    if name not in features:
-                        problems.append(
-                            f"{where}: {name!r} is not a feature token of the Processing Model's optional features"
-                        )
-            for kind, iris in man.get("codecs", {}).items():
-                if kind not in ("requires", "unclaimed"):
-                    problems.append(f"{where}: unknown codecs member {kind}")
-                for iri in iris:
-                    if not iri.startswith("https://hexplain.io/ns/register/media-encoding#"):
-                        problems.append(f"{where}: codecs names {iri!r}, which is not a media-encoding register IRI")
-            for kind, names in man.get("claims", {}).items():
-                if kind != "withdraw":
-                    problems.append(f"{where}: unknown claims member {kind}")
-                for name in names:
-                    if name not in features:
-                        problems.append(f"{where}: claims withdraws {name!r}, which is not a feature token")
-            problems += [f"{where}: {p}" for p in gating_problems(case_dir, man, cls)]
-            if "compareOntologyHeader" in man and (
-                cls != "hdl-compiler" or not isinstance(man["compareOntologyHeader"], bool)
-            ):
-                problems.append(f"{where}: compareOntologyHeader is a Boolean of an HDL Compiler case")
-            if "base" in man and man["base"] is None and cls != "semantic-emitter":
-                problems.append(f"{where}: only a Semantic Emitter case may leave the base to the processor")
-            if man.get("parseMode", "lenient") not in ("lenient", "strict"):
-                problems.append(f"{where}: parseMode is lenient or strict")
-            for key in ("reportConformsToShapes",):
-                if key in man and (cls != "conformance-evaluator" or not isinstance(man[key], bool)):
-                    problems.append(f"{where}: {key} is a Boolean of a Conformance Evaluator case")
-            if man.get("reportForm", "json") not in ("json", "rdf"):
-                problems.append(f"{where}: reportForm is json or rdf")
-            if man.get("check") not in (None, "claims"):
-                problems.append(f"{where}: unknown check {man['check']!r}")
-            if man.get("orError") and man["orError"] not in CATEGORIES:
-                problems.append(f"{where}: unknown orError category {man['orError']}")
     by_mode = set(_build_conformance_page.OBSERVED_BY_ROUND_TRIP)
     for rid in sorted(writer_requirements - writer_cited - by_mode):
         problems.append(f"{rid}: a live serialisation requirement no Writer case cites")

@@ -176,6 +176,47 @@ rewritten.
     `hc-shared-namespace-*`, `hc-yaml-unknown-key-*`, `hc-yaml-value-kind-*`,
     `hc-encoded-with-unknown-register-concept` and `hc-pipeline-unknown-register-concept`.
 
+- **Scope and non-goals in one place (N4).** Processing Model, new informative section
+  `#scope-non-goals`, linked from the specification index: streaming; decryption, signature
+  verification and error correction (description-only terms may exist and direct no processor);
+  speculative or backtracking choice; byte-wise obfuscation transforms, for which a codec
+  contract is the extension point; the limits of the Writer; Zstandard dictionaries. The section
+  ends with an informative note of four *forthcoming terms*, described ahead of the vocabulary
+  revision that adds them and behind no requirement until then: a description is valid when
+  validation yields no `sh:Violation` (a Warning or an Info does not invalidate it); an origin
+  selector for alignment and padding (the stream's start, the default, or the containing
+  struct's); `bddo:vaxF` and two new terms, `vaxD` and `vaxG`, named apart; and `fieldStart`, an
+  offset base counting from a sibling field's start.
+- **Codec vectors: a parameter is shown by a step that succeeds (N5).**
+  `test_codec_vector_completeness.py` counts a declared parameter only when a succeeding step
+  passes a value the contract admits, in the direction the parameter applies (the compression
+  `level` on an encode step); a step expecting the parameter's refusal no longer counts. Deflate,
+  Zlib and XZ gain `round-trip-level-0` and `round-trip-level-9`
+  (`tools/codecs/_complete_vectors.py`, confirmed with hexplain-tools 490ff48d). No expectation
+  changes, so no suite version is raised.
+- **Codec manifests, the lock and typed HEL expectations (N8).** The codecs page states the
+  manifest's five members, `unreached` optional, as the schema does. `jsonschema` 4.25.1 is a
+  pinned requirement (`requirements.in`; `requirements.txt` regenerated with the documented
+  `uv pip compile` command, which also moved `wcwidth` from 0.9.1 to 0.9.2), so every manifest is
+  validated against the published schema on every run and the conditional skip is gone.
+  `hel-vectors.tsv`: an expected value may state its type (`int:3`, `float:2`), the tree context
+  gains `instant` and `asset`, and rows are added for the result types of `abs`, `min` and `max`
+  over mixed Integer and Float arguments, for `evaluationInstant()` and for `partExtension()`;
+  `test_hel_vectors.py` reads the typed form, checks the tree-context members and requires those
+  rows.
+- **Reference implementation.** `reference-engine-claims.json` gains `encodings` (the seventeen
+  registered encodings the engine decodes) and says that its published report covers the 52
+  Writer cases of the earlier suite; the Processing Model's note says the same. Run against this
+  suite, hexplain-tools 490ff48d fails ten of the new cases, each an intended change it has not
+  made yet: `.str` on every string-keyed arm (2), the shared-namespace ERROR (2), the
+  unknown-register-concept ERROR (2), a YAML value of the wrong kind in an optional position
+  (`hc-yaml-value-kind-alias-mapping`, `hc-yaml-value-kind-bit-length-sequence`), and two Writer
+  cases its runner cannot yet run (`w-codec-compressor-round-trip`, whose `verify` it does not
+  read, and `w-codec-encode-exceeds-limit`, whose `limits` it does not pass to the writer). It
+  skips the two layout-cell cases with the features it does not claim, and its vendored copy of
+  the HEL vectors predates the typed rows. Its own symmetry test agrees with
+  `round-trip-expectations.json` entry for entry.
+
 ### The reference implementation claims `writer` (2026-10-13)
 
 No requirement text, case or identifier changed; the suite is the 803 cases of digest

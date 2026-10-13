@@ -377,21 +377,23 @@ value_kind(
     """,
 )
 value_kind(
-    "name-mapping",
-    "A mapping where name takes a scalar is an ERROR",
-    "name is a scalar; a mapping there names nothing.",
+    "alias-mapping",
+    "A mapping where as takes a scalar is an ERROR",
+    "as names the field's alias, a scalar; a mapping there names nothing. Read as absent, the field would compile "
+    "under its own name, which is why the key is refused rather than skipped.",
     """
         fields:
-          - { name: { a: 1 }, type: u8 }
+          - { name: a, as: { x: 1 }, type: u8 }
     """,
 )
 value_kind(
-    "size-sequence",
-    "A sequence where size takes a scalar is an ERROR",
-    "size: [4] is a list; it is not coerced to its one element.",
+    "bit-length-sequence",
+    "A sequence where bit-length takes a scalar is an ERROR",
+    "bit-length: [3] is a list; it is not coerced to its one element, and without the ERROR the field would be a "
+    "whole byte.",
     """
         fields:
-          - { name: a, type: bytes, size: [4] }
+          - { name: a, type: u8, bit-length: [3] }
     """,
 )
 value_kind(
