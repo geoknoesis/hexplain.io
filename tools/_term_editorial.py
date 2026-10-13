@@ -151,10 +151,8 @@ group(
     "axisBand|The axis indexing separate bands or channels of a multi-component array.\n"
     "rowMajor|Chunk enumeration convention in which the last logical dimension varies fastest.\n"
     "columnMajor|Chunk enumeration convention in which the first logical dimension varies fastest.\n"
-    "morton|Chunk traversal ordered by interleaving coordinate bits into a Morton or Z-order key; the "
-    "profile/processor must agree on dimensionality and bounds.\n"
-    "hilbert|Chunk traversal following a Hilbert space-filling order; the profile/processor must identify the "
-    "applicable dimension and boundary convention.\n",
+    "morton|Chunk traversal in ascending Morton (Z-order) key, constructed as the term's comment specifies.\n"
+    "hilbert|Chunk traversal in ascending Hilbert-curve key, constructed as the term's comment specifies.\n",
 )
 group(
     "hexplain",
