@@ -197,7 +197,9 @@ def verdict(path: str, text: str, report_graph: Graph, shapes: Graph, report: st
         if any(e[3] == SH.Violation for e in expected):
             return f"{path}: a -valid fixture cannot expect a Violation; expect sh:Warning or sh:Info, or rename it"
         if violations:
-            return f"{path}: expected to be valid, but validation reported a Violation:\n  {_listed(violations)}\n{report}"
+            return (
+                f"{path}: expected to be valid, but validation reported a Violation:\n  {_listed(violations)}\n{report}"
+            )
         if missing:
             return f"{path}: expected advisory results not reported:\n  {_listed(missing)}\n{report}"
         extra = unexpected(report_graph, shapes, expected)

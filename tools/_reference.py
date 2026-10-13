@@ -153,34 +153,34 @@ def shape_targets(g: Graph, t: URIRef) -> str:
     )
 
 
+def _listed(items: list[str]) -> str:
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
 def codec_contract_definition(g: Graph, t: URIRef) -> str | None:
-    """The definition of a register concept's named codec contract or one of its parameter specs."""
-    if (t, RDF.type, HX.CodecContract) in g:
-        concept = g.value(None, HX.codecContract, t)
-        return (
-            f"The codec contract of {compact(g, concept)}, version {g.value(t, HX.contractVersion)}: the decode kind, "
-            f"the parameters a processor accepts and the error categories it may raise for that concept, verified "
-            f"by vector suite version {g.value(t, HX.vectorSuiteVersion)}."
-        )
+    """The definition of a register concept's named codec contract, read from what the contract states.
+
+    A parameter spec gets none here: what a parameter MEANS cannot be derived from its type and
+    bounds, so the register states it (rdfs:comment) and one that does not fails the build.
+    """
     if (t, RDF.type, HX.CodecParameterSpec) in g:
-        contract = g.value(None, HX.declaresParameter, t)
-        concept = g.value(None, HX.codecContract, contract)
-        return (
-            f"The {g.value(t, HX.parameterKey)} parameter declared by the codec contract of {compact(g, concept)}: "
-            f"its type, whether it is required, and any default, bounds or allowed values."
+        raise ValueError(
+            f"{compact(g, t)} states no rdfs:comment; say what the parameter means in the register that declares it"
         )
-    return None
-
-
-def codec_contract_scope(g: Graph, t: URIRef) -> str | None:
-    """The scope note of a codec contract or parameter spec, which states none of its own."""
-    if (t, RDF.type, HX.CodecContract) in g or (t, RDF.type, HX.CodecParameterSpec) in g:
-        return (
-            "Read by processors and conformance tools to bind and check the hexplain:codecParameter values of an "
-            "encoding step that names the concept. It is not a controlled value: profiles name the concept, never "
-            "its contract."
-        )
-    return None
+    if (t, RDF.type, HX.CodecContract) not in g:
+        return None
+    concept = g.value(None, HX.codecContract, t)
+    keys = sorted(str(g.value(p, HX.parameterKey)) for p in g.objects(t, HX.declaresParameter))
+    raised = sorted(str(c) for c in g.objects(t, HX.raisesCategory))
+    session = "keeps a session across blocks" if g.value(t, HX.keepsSession).toPython() else "keeps no session"
+    direction = "encodes as well as decodes" if g.value(t, HX.encodes).toPython() else "decodes only"
+    parameters = f"takes the parameter{'s' if len(keys) > 1 else ''} {_listed(keys)}" if keys else "takes no parameters"
+    errors = f"may raise {_listed(raised)} errors" if raised else "declares no error category"
+    return (
+        f"The codec contract of {compact(g, concept)}, version {g.value(t, HX.contractVersion)}, verified by vector "
+        f"suite version {g.value(t, HX.vectorSuiteVersion)}: a {local(g.value(t, HX.codecKind))} codec that {session} "
+        f"and {direction}, {parameters}, and {errors}."
+    )
 
 
 def stated_definition(g: Graph, t: URIRef) -> Any:
@@ -447,6 +447,9 @@ def scope(g: Graph, t: URIRef) -> Any:
     ontology, and a term's editorial note (_term_editorial.SCOPE_NOTES). Generating the module
     sentence, a kind sentence or a shape's activation onto every term repeated, 987 times, what
     the ontology's note and the term reference's own rows (activation, shape usage) already say.
+    For the same reason a codec contract and its parameter specs get no note each: how they are
+    used is the note of their classes, hexplain:CodecContract and hexplain:CodecParameterSpec,
+    and repeating it on every individual said nothing about any one of them.
     """
     k = kind(g, t)
     ns = str(owner(t))
@@ -456,9 +459,6 @@ def scope(g: Graph, t: URIRef) -> Any:
     for key in (str(t), compact(g, t)):
         if key in SCOPE_NOTES:
             return SCOPE_NOTES[key]
-    contract = codec_contract_scope(g, t)
-    if contract:
-        return contract
     if k != "Ontology":
         return None
     if "/register/" in ns:

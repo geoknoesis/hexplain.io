@@ -1147,7 +1147,7 @@ bddo:EnumValueShape a sh:NodeShape ;
 bddo:ChecksumShape a sh:NodeShape ;
     sh:targetClass bddo:Checksum ;
     sh:targetObjectsOf bddo:checksum ;
-    rdfs:comment "A bddo:Checksum names its algorithm and bounds the bytes it covers: exactly one START (bddo:coversFromField or bddo:coversFromExpression) and exactly one END (bddo:coversToField or bddo:coversToExpression), or the deprecated whole-range bddo:coversExpression alone. A checksum with an algorithm and no bounds covers nothing a processor could verify, so it is rejected rather than read as covering everything."@en ;
+    rdfs:comment "A bddo:Checksum names its algorithm exactly once, as one of the named algorithms or a bddo:CustomCrc, and states each property that bounds the bytes it covers at most once: a bddo:Field for bddo:coversFromField and bddo:coversToField, a HEL expression for bddo:coversFromExpression, bddo:coversToExpression and the deprecated whole-range bddo:coversExpression. That the range has exactly one start and exactly one end is bddo:ChecksumRangeStartShape and bddo:ChecksumRangeEndShape: a checksum with an algorithm and no bounds covers nothing a processor could verify, so it is rejected rather than read as covering everything."@en ;
     # The bounds of the covered range are bddo:ChecksumRangeStartShape and bddo:ChecksumRangeEndShape.
     sh:property [ sh:path bddo:checksumAlgorithm ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:or ( [ sh:in ( bddo:crc16 bddo:crc32 bddo:adler32 bddo:md5 bddo:sha1 bddo:sha256 bddo:crc8Smbus bddo:crc16Arc bddo:crc16Xmodem bddo:crc16Modbus bddo:crc16X25 bddo:crc32c bddo:crc32Bzip2 bddo:crc32Mpeg2 bddo:crc64Ecma182 bddo:crc64Xz ) ]
@@ -1294,7 +1294,7 @@ bddo:LocalBindingKindShape a sh:NodeShape ; rdfs:label "Local binding kind shape
 # An ASCII-coded numeric field must have a width, a terminator or a separator, or it cannot be
 # read. bddo:separatedBy is an extent mechanism in its own right -- the element is bounded by the
 # runs of separator bytes either side of it -- and it is the ONLY one such a field may combine
-# with none of the others: see bddo:FieldShape, which forbids pairing it with any size or with a
+# with none of the others: see bddo:SeparatedFieldExtentShape, which forbids pairing it with any size or with a
 # terminator, because two answers to "where does this value end" is one too many.
 # Exempt: a field of a delimited-record container gets its extent from the container's
 # recordDelimiter/fieldDelimiter, not from its own size, terminator or separator.

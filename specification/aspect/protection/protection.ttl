@@ -48,7 +48,7 @@
 # ---------- Encrypted regions ----------
 :region a owl:ObjectProperty ; rdfs:label "region"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
     rdfs:comment "The bddo:Field or bddo:Struct whose bytes are the ciphertext an aprot:EncryptedRegion describes. No rdfs:range is declared: the value is one of two disjoint classes, which aprot:EncryptedRegionShape checks."@en ;
-    skos:scopeNote "Use exactly once on an aprot:EncryptedRegion."@en .
+    skos:scopeNote "Use exactly once on each aprot:EncryptedRegion declaration; a declaration without it is refused."@en .
 :cipher a owl:ObjectProperty ; rdfs:label "cipher"@en ; rdfs:range skos:Concept ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
     rdfs:comment "The cipher and mode an encrypted region is encrypted with, from a cipher register bound by the profile (register/protection publishes common ones)."@en ;
     skos:scopeNote "Use exactly once on an aprot:EncryptedRegion, naming a concept by IRI. Key length and other parameters the concept leaves open are the profile's to state."@en .
@@ -68,10 +68,10 @@
     skos:scopeNote "Use exactly once on an aprot:Signature, naming a concept by IRI."@en .
 :signatureValueField a owl:ObjectProperty ; rdfs:label "signature value field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
     rdfs:comment "The field whose bytes are the signature or authentication tag."@en ;
-    skos:scopeNote "Use exactly once on an aprot:Signature."@en .
+    skos:scopeNote "Use exactly once on each aprot:Signature declaration; a declaration without it is refused."@en .
 :covers a owl:ObjectProperty ; rdfs:label "covers"@en ; rdfs:range :ByteRange ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
     rdfs:comment "The byte range a signature or authentication tag is computed over, as an aprot:ByteRange: bounded by fields, as the range of a bddo:Checksum is by bddo:coversFromField and bddo:coversToField."@en ;
-    skos:scopeNote "Use exactly once on an aprot:Signature."@en .
+    skos:scopeNote "Use exactly once on each aprot:Signature declaration; a declaration without it is refused."@en .
 :signerIdentifierField a owl:ObjectProperty ; rdfs:label "signer identifier field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
     rdfs:comment "The field whose parsed value identifies the signer or the key a signature verifies under (a key id, a certificate serial, a fingerprint)."@en ;
     skos:scopeNote "Use at most once on an aprot:Signature, when the format carries a signer identifier."@en .
@@ -82,18 +82,18 @@
     skos:scopeNote "Use exactly once on an aprot:ErrorCorrection, naming a concept by IRI."@en .
 :dataRange a owl:ObjectProperty ; rdfs:label "data range"@en ; rdfs:range :ByteRange ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
     rdfs:comment "The byte range holding the data an error-correcting code protects, as an aprot:ByteRange."@en ;
-    skos:scopeNote "Use exactly once on an aprot:ErrorCorrection."@en .
+    skos:scopeNote "Use exactly once on each aprot:ErrorCorrection declaration; a declaration without it is refused."@en .
 :parityRange a owl:ObjectProperty ; rdfs:label "parity range"@en ; rdfs:range :ByteRange ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
     rdfs:comment "The byte range holding the parity or check symbols of an error-correcting code, as an aprot:ByteRange."@en ;
-    skos:scopeNote "Use exactly once on an aprot:ErrorCorrection."@en .
+    skos:scopeNote "Use exactly once on each aprot:ErrorCorrection declaration; a declaration without it is refused."@en .
 
 # ---------- Byte ranges ----------
 :fromField a owl:ObjectProperty ; rdfs:label "from field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
     rdfs:comment "The field at whose first byte an aprot:ByteRange begins."@en ;
-    skos:scopeNote "Use exactly once on an aprot:ByteRange."@en .
+    skos:scopeNote "Use exactly once on each aprot:ByteRange declaration; a declaration without it is refused."@en .
 :toField a owl:ObjectProperty ; rdfs:label "to field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/protection> ;
     rdfs:comment "The field after whose last byte an aprot:ByteRange ends; the field is part of the range."@en ;
-    skos:scopeNote "Use exactly once on an aprot:ByteRange."@en .
+    skos:scopeNote "Use exactly once on each aprot:ByteRange declaration; a declaration without it is refused."@en .
 
 # ---------- SHACL ----------
 # Each shape is activated by its class and by its own properties, so a declaration whose

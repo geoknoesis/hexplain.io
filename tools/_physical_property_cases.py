@@ -117,9 +117,9 @@ def cases() -> list[dict[str, Any]]:
             ("trimWhitespace", "boolean"),
         ],
     )
-    # A checksum states exactly one start and one end of its covered range (bddo:ChecksumShape), so
-    # each bound is exercised with the other bound already stated; the deprecated whole-range
-    # form stands alone.
+    # A checksum states exactly one start and one end of its covered range
+    # (bddo:ChecksumRangeStartShape, bddo:ChecksumRangeEndShape), so each bound is exercised with
+    # the other bound already stated; the deprecated whole-range form stands alone.
     group(
         "checksum",
         "ex:f a b:Checksum; b:checksumAlgorithm b:crc32; b:coversToField ex:other.",
@@ -162,7 +162,8 @@ def cases() -> list[dict[str, Any]]:
         ("sizeToEndOfStream", "true"),
         ("terminator", '"20"^^xsd:hexBinary'),
     ]:
-        separated("excludes " + prop, f'ex:f b:separatedBy "whitespace"; b:{prop} {value}.', False, shape="FieldShape")
+        # bddo:SeparatedFieldExtentShape reports the excluded property itself.
+        separated("excludes " + prop, f'ex:f b:separatedBy "whitespace"; b:{prop} {value}.', False, path=prop)
     separated("ascii numeric width accepts a separator", 'ex:f b:separatedBy "whitespace"; b:encoding b:ascii.', True)
     separated("ascii numeric width rejects no extent", "", False, shape="AsciiNumericWidthShape")
     return rows

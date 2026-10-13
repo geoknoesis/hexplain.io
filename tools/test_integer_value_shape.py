@@ -88,7 +88,10 @@ def problems() -> tuple[list[str], int]:
         if path not in listed and DECLARATION.search((ROOT / path).read_text(encoding="utf-8")):
             found.append(f"{path}: declares an IntegerValueShape but is not listed in {CONTRACT.name}")
         graph = Graph().parse(data=(ROOT / path).read_text(encoding="utf-8"), format="turtle")
-        found += [f"{path}: inline integer-family union on {row}; use sh:node IntegerValueShape" for row in inline_unions(graph)]
+        found += [
+            f"{path}: inline integer-family union on {row}; use sh:node IntegerValueShape"
+            for row in inline_unions(graph)
+        ]
     return found, len(listed)
 
 
@@ -103,7 +106,8 @@ def self_test() -> None:
         @prefix sh: <http://www.w3.org/ns/shacl#> . @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
         @prefix ex: <urn:ex#> .
         ex:IntegerValueShape sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:int ] ) .
-        ex:S sh:property [ sh:path ex:count ; sh:or ( [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:integer ] ) ] ;
+        ex:S sh:property [ sh:path ex:count ;
+                sh:or ( [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:integer ] ) ] ;
             sh:property [ sh:path ex:rate ; sh:or ( [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] ) ] ;
             sh:property [ sh:path ex:n ; sh:node ex:IntegerValueShape ] .""",
     )

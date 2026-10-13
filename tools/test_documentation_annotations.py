@@ -24,8 +24,9 @@ annotations):
     consumer holding only the module can find the labels and definitions it does not carry;
   * every annotation graph's header names tools/_term_editorial.py, the source to change;
   * a register is self-describing: each skos:Concept of a register module states its
-    skos:definition (or rdfs:comment) in the register itself, and the register's annotation graph
-    defines no concept.
+    skos:definition (or rdfs:comment) in the register itself, the register's annotation graph
+    defines no concept, and each codec parameter a contract declares says what it means
+    (rdfs:comment): its type and bounds do not.
 """
 
 from __future__ import annotations
@@ -56,6 +57,7 @@ NTRIPLE = re.compile(r"^<[^>\s]+>\s+<[^>\s]+>\s", re.M)
 #: Where the site publishes the family's files; an annotation graph has no namespace route.
 PUBLISHED = "https://hexplain.io/specification/"
 EDITORIAL_SOURCE = "tools/_term_editorial.py"
+CODEC_PARAMETER_SPEC = URIRef("https://hexplain.io/ns/core#CodecParameterSpec")
 
 
 def link_problems(rel: str, doc: str, module: Graph) -> list[str]:
@@ -81,6 +83,10 @@ def register_problems(rel: str, doc: str, module: Graph, generated: Graph) -> li
             found.append(f"{rel}: {name} has no skos:definition; a register states its concepts' definitions itself")
         if (concept, SKOS.definition, None) in generated:
             found.append(f"{doc}: defines {name}; a concept's definition belongs in the register")
+    for spec in sorted(set(module.subjects(RDF.type, CODEC_PARAMETER_SPEC))):
+        if (spec, RDFS.comment, None) not in module:
+            name = spec.n3(module.namespace_manager)
+            found.append(f"{rel}: {name} has no rdfs:comment; a contract says what each of its parameters means")
     return found
 
 
@@ -123,7 +129,9 @@ def self_test() -> None:
         @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . @prefix r: <https://hexplain.io/ns/register/x#> .
         <https://hexplain.io/ns/register/x> a owl:Ontology ;
             rdfs:seeAlso <https://hexplain.io/specification/register/y/y-doc.ttl> .
-        r:Defined a skos:Concept ; skos:definition "Said here."@en . r:Bare a skos:Concept .""",
+        r:Defined a skos:Concept ; skos:definition "Said here."@en . r:Bare a skos:Concept .
+        r:Bare.contract.level a <https://hexplain.io/ns/core#CodecParameterSpec> .
+        r:Defined.contract.level a <https://hexplain.io/ns/core#CodecParameterSpec> ; rdfs:comment "The level."@en .""",
     )
     generated = Graph().parse(
         format="turtle",
@@ -139,7 +147,8 @@ def self_test() -> None:
     )
     assert not link_problems("register/x/x.ttl", "register/x/x-doc.ttl", module)
     found = register_problems("register/x/x.ttl", "register/x/x-doc.ttl", module, generated)
-    assert len(found) == 2 and "r:Bare has no skos:definition" in found[0] and "defines r:Bare" in found[1], found
+    assert len(found) == 3 and "r:Bare has no skos:definition" in found[0] and "defines r:Bare" in found[1], found
+    assert "Bare.contract.level" in found[2] and "has no rdfs:comment" in found[2], found
     assert NTRIPLE.search('<https://hexplain.io/ns/x#a> <http://www.w3.org/2000/01/rdf-schema#label> "a" .')
 
 

@@ -238,7 +238,7 @@ menc:Deflate.contract a owl:NamedIndividual, hexplain:CodecContract ;
     hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:encodes true ;
     hexplain:raisesCategory "Validation", "ResourceLimit" ;
     hexplain:declaresParameter menc:Deflate.contract.level .
-menc:Deflate.contract.level a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "level" ;
+menc:Deflate.contract.level a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The compression level a writer encodes with, 0 to 9, or -1 (the default) for the library's default level. Decoding does not depend on it: a reader accepts any value in range."@en ; hexplain:parameterKey "level" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue -1 ;
     hexplain:minimumValue -1 ; hexplain:maximumValue 9 .
 menc:Zlib hexplain:codecContract menc:Zlib.contract .
@@ -248,10 +248,10 @@ menc:Zlib.contract a owl:NamedIndividual, hexplain:CodecContract ;
     hexplain:raisesCategory "Validation", "Checksum", "ResourceLimit" ;
     hexplain:declaresParameter menc:Zlib.contract.level ,
         menc:Zlib.contract.trailing .
-menc:Zlib.contract.level a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "level" ;
+menc:Zlib.contract.level a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The compression level a writer encodes with, 0 to 9, or -1 (the default) for the library's default level. Decoding does not depend on it: a reader accepts any value in range."@en ; hexplain:parameterKey "level" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue -1 ;
     hexplain:minimumValue -1 ; hexplain:maximumValue 9 .
-menc:Zlib.contract.trailing a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "trailing" ;
+menc:Zlib.contract.trailing a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "What follows the zlib stream within the block: refuse (the default), any byte after it is a Validation error; ignore, the bytes after the stream are neither decoded nor reported."@en ; hexplain:parameterKey "trailing" ;
     hexplain:parameterType hexplain:StringParameterType ; hexplain:defaultValue "refuse" ;
     hexplain:allowedValue "refuse", "ignore" .
 menc:Gzip hexplain:codecContract menc:Gzip.contract .
@@ -260,7 +260,7 @@ menc:Gzip.contract a owl:NamedIndividual, hexplain:CodecContract ;
     hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:encodes true ;
     hexplain:raisesCategory "Validation", "Checksum", "ResourceLimit" ;
     hexplain:declaresParameter menc:Gzip.contract.trailing .
-menc:Gzip.contract.trailing a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "trailing" ;
+menc:Gzip.contract.trailing a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "What follows the last gzip member within the block: refuse (the default), any byte that does not begin another member is a Validation error; ignore, the bytes after the last complete member are neither decoded nor reported."@en ; hexplain:parameterKey "trailing" ;
     hexplain:parameterType hexplain:StringParameterType ; hexplain:defaultValue "refuse" ;
     hexplain:allowedValue "refuse", "ignore" .
 menc:Delta hexplain:codecContract menc:Delta.contract .
@@ -273,19 +273,19 @@ menc:Delta.contract a owl:NamedIndividual, hexplain:CodecContract ;
         menc:Delta.contract.littleEndian ,
         menc:Delta.contract.samplesPerPixel ,
         menc:Delta.contract.rowBytes .
-menc:Delta.contract.elementSize a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "elementSize" ;
+menc:Delta.contract.elementSize a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of bytes in one sample: 1, 2, 4 or 8. Differences are taken modulo 2 to the power 8 × elementSize."@en ; hexplain:parameterKey "elementSize" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:requiredParameter true ;
     hexplain:allowedValue 1, 2, 4, 8 .
-menc:Delta.contract.predictor a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "predictor" ;
+menc:Delta.contract.predictor a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The prediction applied: 2 (the default), horizontal differencing, each sample stored as its difference from the same channel of the previous pixel; 1, none, and the step is the identity. The values are those of TIFF's Predictor tag; a processor refuses any other with Unsupported feature."@en ; hexplain:parameterKey "predictor" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 2 ;
     hexplain:minimumValue 1 .
-menc:Delta.contract.littleEndian a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "littleEndian" ;
+menc:Delta.contract.littleEndian a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The byte order of a sample wider than one byte: 0 (the default), big-endian; 1, little-endian."@en ; hexplain:parameterKey "littleEndian" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 0 ;
     hexplain:allowedValue 0, 1 .
-menc:Delta.contract.samplesPerPixel a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "samplesPerPixel" ;
+menc:Delta.contract.samplesPerPixel a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of interleaved samples in one pixel, 1 by default. A sample is predicted from the sample this many positions earlier, the same channel of the previous pixel, as TIFF Predictor 2 does for chunky data."@en ; hexplain:parameterKey "samplesPerPixel" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 1 ;
     hexplain:minimumValue 1 .
-menc:Delta.contract.rowBytes a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "rowBytes" ;
+menc:Delta.contract.rowBytes a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of bytes in one row. The predictor restarts at each row, whose first pixel is stored as is; 0 (the default) means the whole block is one row. A positive value is a multiple of elementSize × samplesPerPixel."@en ; hexplain:parameterKey "rowBytes" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 0 ;
     hexplain:minimumValue 0 .
 menc:LZ4 hexplain:codecContract menc:LZ4.contract .
@@ -299,7 +299,7 @@ menc:LZ4Block.contract a owl:NamedIndividual, hexplain:CodecContract ;
     hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:encodes true ;
     hexplain:raisesCategory "Validation", "ResourceLimit" ;
     hexplain:declaresParameter menc:LZ4Block.contract.decodedSize .
-menc:LZ4Block.contract.decodedSize a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "decodedSize" ;
+menc:LZ4Block.contract.decodedSize a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The exact number of bytes the block decodes to. An LZ4 block records neither its own length nor its output's, so the block is the whole encoded byte run and decoding it yields exactly this many bytes."@en ; hexplain:parameterKey "decodedSize" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:requiredParameter true ;
     hexplain:minimumValue 1 ; hexplain:maximumValue 2147483647 .
 menc:Zstd hexplain:codecContract menc:Zstd.contract .
@@ -315,12 +315,12 @@ menc:XZ.contract a owl:NamedIndividual, hexplain:CodecContract ;
     hexplain:declaresParameter menc:XZ.contract.concatenated ,
         menc:XZ.contract.level ,
         menc:XZ.contract.memoryLimitKiB .
-menc:XZ.contract.concatenated a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "concatenated" ;
+menc:XZ.contract.concatenated a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "Whether the block may hold several XZ streams: 1 (the default), every stream is decoded in order, with the stream padding between them skipped, and their outputs are concatenated; 0, only the first stream is decoded and what follows it is not read."@en ; hexplain:parameterKey "concatenated" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 1 ; hexplain:allowedValue 0, 1 .
-menc:XZ.contract.level a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "level" ;
+menc:XZ.contract.level a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The compression preset a writer encodes with, 0 to 9, default 6. Decoding does not depend on it."@en ; hexplain:parameterKey "level" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 6 ;
     hexplain:minimumValue 0 ; hexplain:maximumValue 9 .
-menc:XZ.contract.memoryLimitKiB a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "memoryLimitKiB" ;
+menc:XZ.contract.memoryLimitKiB a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The most memory, in kibibytes, the decoder may use for the stream's dictionary and filters. A stream that needs more is refused with a ResourceLimit error before it is decoded."@en ; hexplain:parameterKey "memoryLimitKiB" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 73728 ;
     hexplain:minimumValue 1 ; hexplain:maximumValue 4194304 .
 menc:LZW hexplain:codecContract menc:LZW.contract .
@@ -328,7 +328,7 @@ menc:LZW.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contr
     hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:encodes true ;
     hexplain:raisesCategory "Validation", "ResourceLimit" ;
     hexplain:declaresParameter menc:LZW.contract.variant .
-menc:LZW.contract.variant a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "variant" ;
+menc:LZW.contract.variant a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The dialect of LZW the data is written in: tiff (the default and the only one defined), codes packed most significant bit first, with the early code-width change of TIFF 6.0."@en ; hexplain:parameterKey "variant" ;
     hexplain:parameterType hexplain:StringParameterType ; hexplain:defaultValue "tiff" ; hexplain:allowedValue "tiff" .
 menc:PackBits hexplain:codecContract menc:PackBits.contract .
 menc:PackBits.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
@@ -340,13 +340,13 @@ menc:CCITTModifiedHuffman.contract a owl:NamedIndividual, hexplain:CodecContract
         menc:CCITTModifiedHuffman.contract.rows ,
         menc:CCITTModifiedHuffman.contract.fillOrder ,
         menc:CCITTModifiedHuffman.contract.rowAlignment .
-menc:CCITTModifiedHuffman.contract.columns a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:CCITTModifiedHuffman.contract.columns a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixels in each coded row (the width of the image, strip or tile): the coded data does not record it."@en ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 1 ; hexplain:maximumValue 536870848 .
-menc:CCITTModifiedHuffman.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:CCITTModifiedHuffman.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixel rows the block holds. Decoding yields exactly that many rows; the coded data does not record the count."@en ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 0 .
-menc:CCITTModifiedHuffman.contract.fillOrder a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "fillOrder" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:CCITTModifiedHuffman.contract.fillOrder a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The order of the bits within each byte of the coded data, as TIFF's FillOrder: 1 (the default), the most significant bit first; 2, the least significant bit first."@en ; hexplain:parameterKey "fillOrder" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:defaultValue 1 ; hexplain:allowedValue 1, 2 .
-menc:CCITTModifiedHuffman.contract.rowAlignment a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "rowAlignment" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:CCITTModifiedHuffman.contract.rowAlignment a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The boundary, in bits, to which each coded row is padded: 8 (the default), every row starts on a byte boundary, as TIFF compression 2 writes it; 16, on a 16-bit word boundary, as TIFF compression 32771 writes it."@en ; hexplain:parameterKey "rowAlignment" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:defaultValue 8 ; hexplain:allowedValue 8, 16 .
 menc:CCITTGroup3 hexplain:codecContract menc:CCITTGroup3.contract .
 menc:CCITTGroup3.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
@@ -356,15 +356,15 @@ menc:CCITTGroup3.contract a owl:NamedIndividual, hexplain:CodecContract ; hexpla
         menc:CCITTGroup3.contract.options ,
         menc:CCITTGroup3.contract.fillOrder ,
         menc:CCITTGroup3.contract.noEol .
-menc:CCITTGroup3.contract.columns a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:CCITTGroup3.contract.columns a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixels in each coded row (the width of the image, strip or tile): the coded data does not record it."@en ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 1 ; hexplain:maximumValue 536870848 .
-menc:CCITTGroup3.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:CCITTGroup3.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixel rows the block holds. Decoding yields exactly that many rows; the coded data does not record the count."@en ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 0 .
-menc:CCITTGroup3.contract.options a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "options" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:CCITTGroup3.contract.options a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The coding options, as the bit flags of TIFF's T4Options: bit 0 set, two-dimensional (Modified READ) coding; bit 1 set, uncompressed mode; bit 2 set, fill bits pad each end-of-line code to a byte boundary. 0 (the default) is one-dimensional coding with none of them."@en ; hexplain:parameterKey "options" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:defaultValue 0 ; hexplain:minimumValue 0 .
-menc:CCITTGroup3.contract.fillOrder a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "fillOrder" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:CCITTGroup3.contract.fillOrder a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The order of the bits within each byte of the coded data, as TIFF's FillOrder: 1 (the default), the most significant bit first; 2, the least significant bit first."@en ; hexplain:parameterKey "fillOrder" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:defaultValue 1 ; hexplain:allowedValue 1, 2 .
-menc:CCITTGroup3.contract.noEol a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "noEol" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:CCITTGroup3.contract.noEol a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "Whether the coded rows are written without the end-of-line codes of ITU-T T.4: 0 (the default), every row is delimited by an EOL code; 1, the rows follow one another with no EOL code, each ending after its last pixel."@en ; hexplain:parameterKey "noEol" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:defaultValue 0 ; hexplain:allowedValue 0, 1 .
 menc:CCITTGroup4 hexplain:codecContract menc:CCITTGroup4.contract .
 menc:CCITTGroup4.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
@@ -373,13 +373,13 @@ menc:CCITTGroup4.contract a owl:NamedIndividual, hexplain:CodecContract ; hexpla
         menc:CCITTGroup4.contract.rows ,
         menc:CCITTGroup4.contract.options ,
         menc:CCITTGroup4.contract.fillOrder .
-menc:CCITTGroup4.contract.columns a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:CCITTGroup4.contract.columns a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixels in each coded row (the width of the image, strip or tile): the coded data does not record it."@en ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 1 ; hexplain:maximumValue 536870848 .
-menc:CCITTGroup4.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:CCITTGroup4.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixel rows the block holds. Decoding yields exactly that many rows; the coded data does not record the count."@en ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 0 .
-menc:CCITTGroup4.contract.options a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "options" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:CCITTGroup4.contract.options a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The coding options, as the bit flags of TIFF's T6Options: bit 1 set, uncompressed mode is allowed. 0 (the default) is plain ITU-T T.6 (Modified Modified READ) coding."@en ; hexplain:parameterKey "options" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:defaultValue 0 ; hexplain:minimumValue 0 .
-menc:CCITTGroup4.contract.fillOrder a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "fillOrder" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:CCITTGroup4.contract.fillOrder a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The order of the bits within each byte of the coded data, as TIFF's FillOrder: 1 (the default), the most significant bit first; 2, the least significant bit first."@en ; hexplain:parameterKey "fillOrder" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:defaultValue 1 ; hexplain:allowedValue 1, 2 .
 menc:NeXT hexplain:codecContract menc:NeXT.contract .
 menc:NeXT.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
@@ -387,11 +387,11 @@ menc:NeXT.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:cont
     hexplain:declaresParameter menc:NeXT.contract.columns ,
         menc:NeXT.contract.rowBytes ,
         menc:NeXT.contract.rows .
-menc:NeXT.contract.columns a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:NeXT.contract.columns a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixels in each coded row (the width of the image, strip or tile): the coded data does not record it."@en ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 1 .
-menc:NeXT.contract.rowBytes a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "rowBytes" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:NeXT.contract.rowBytes a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of bytes in one decoded row of 2-bit grey samples: the columns, four to a byte, rounded up to a whole byte."@en ; hexplain:parameterKey "rowBytes" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 1 .
-menc:NeXT.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:NeXT.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixel rows the block holds. Decoding yields exactly that many rows; the coded data does not record the count."@en ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 0 .
 menc:ThunderScan hexplain:codecContract menc:ThunderScan.contract .
 menc:ThunderScan.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
@@ -399,11 +399,11 @@ menc:ThunderScan.contract a owl:NamedIndividual, hexplain:CodecContract ; hexpla
     hexplain:declaresParameter menc:ThunderScan.contract.columns ,
         menc:ThunderScan.contract.rowBytes ,
         menc:ThunderScan.contract.rows .
-menc:ThunderScan.contract.columns a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:ThunderScan.contract.columns a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixels in each coded row (the width of the image, strip or tile): the coded data does not record it."@en ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 1 .
-menc:ThunderScan.contract.rowBytes a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "rowBytes" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:ThunderScan.contract.rowBytes a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of bytes in one decoded row of 4-bit samples: the columns, two to a byte, rounded up to a whole byte."@en ; hexplain:parameterKey "rowBytes" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 1 .
-menc:ThunderScan.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:ThunderScan.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixel rows the block holds. Decoding yields exactly that many rows; the coded data does not record the count."@en ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 0 .
 menc:FloatingPointPredictor hexplain:codecContract menc:FloatingPointPredictor.contract .
 menc:FloatingPointPredictor.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
@@ -412,13 +412,13 @@ menc:FloatingPointPredictor.contract a owl:NamedIndividual, hexplain:CodecContra
         menc:FloatingPointPredictor.contract.samplesPerPixel ,
         menc:FloatingPointPredictor.contract.rowBytes ,
         menc:FloatingPointPredictor.contract.littleEndian .
-menc:FloatingPointPredictor.contract.elementSize a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "elementSize" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:FloatingPointPredictor.contract.elementSize a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of bytes in one floating-point sample: 2, 3, 4 or 8. The predictor (TIFF Predictor 3) reorders the bytes of each row by significance and differences them byte by byte."@en ; hexplain:parameterKey "elementSize" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:allowedValue 2, 3, 4, 8 .
-menc:FloatingPointPredictor.contract.samplesPerPixel a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "samplesPerPixel" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:FloatingPointPredictor.contract.samplesPerPixel a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of interleaved samples in one pixel, 1 by default. A byte is differenced against the byte this many positions earlier in the reordered row."@en ; hexplain:parameterKey "samplesPerPixel" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:defaultValue 1 ; hexplain:minimumValue 1 .
-menc:FloatingPointPredictor.contract.rowBytes a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "rowBytes" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:FloatingPointPredictor.contract.rowBytes a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of bytes in one row. The predictor restarts at each row, whose first pixel is stored as is; 0 (the default) means the whole block is one row. A positive value is a multiple of elementSize × samplesPerPixel."@en ; hexplain:parameterKey "rowBytes" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:defaultValue 0 ; hexplain:minimumValue 0 .
-menc:FloatingPointPredictor.contract.littleEndian a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "littleEndian" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:FloatingPointPredictor.contract.littleEndian a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The byte order of the DECODED samples: 1 (the default), little-endian; 0, big-endian. The predictor always stores the most significant bytes of a row first."@en ; hexplain:parameterKey "littleEndian" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:defaultValue 1 ; hexplain:allowedValue 0, 1 .
 menc:BitReverse hexplain:codecContract menc:BitReverse.contract .
 menc:BitReverse.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
@@ -432,21 +432,21 @@ menc:JPEG.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:cont
         menc:JPEG.contract.colorTransform ,
         menc:JPEG.contract.rows ,
         menc:JPEG.contract.output .
-menc:JPEG.contract.tables a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "tables" ; hexplain:parameterType hexplain:BytesParameterType .
-menc:JPEG.contract.precision a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "precision" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:JPEG.contract.tables a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The quantisation and Huffman tables shared by the blocks of one image, as an abbreviated table-specification datastream (TIFF's JPEGTables). They are installed before each block is decoded."@en ; hexplain:parameterKey "tables" ; hexplain:parameterType hexplain:BytesParameterType .
+menc:JPEG.contract.precision a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The sample precision in bits of the coded stream: 8 (the default) or 12."@en ; hexplain:parameterKey "precision" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:defaultValue 8 ; hexplain:allowedValue 8, 12 .
-menc:JPEG.contract.colorTransform a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "colorTransform" ; hexplain:parameterType hexplain:StringParameterType ;
+menc:JPEG.contract.colorTransform a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The colour conversion applied to the decoded samples: none (the default), the samples are returned in the colour space the stream codes; ycbcr-to-rgb, a three-component stream is converted from YCbCr to RGB."@en ; hexplain:parameterKey "colorTransform" ; hexplain:parameterType hexplain:StringParameterType ;
     hexplain:defaultValue "none" ; hexplain:allowedValue "none", "ycbcr-to-rgb" .
-menc:JPEG.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:JPEG.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixel rows the block is expected to decode to, as its container states it."@en ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:minimumValue 0 .
-menc:JPEG.contract.output a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "output" ; hexplain:parameterType hexplain:StringParameterType ;
+menc:JPEG.contract.output a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The form of the decoded output: pixels (the default), samples upsampled to full resolution and interleaved by pixel; raw-planes, each component's plane at the resolution the stream codes it, one after another."@en ; hexplain:parameterKey "output" ; hexplain:parameterType hexplain:StringParameterType ;
     hexplain:defaultValue "pixels" ; hexplain:allowedValue "pixels", "raw-planes" .
 menc:WebP hexplain:codecContract menc:WebP.contract .
 menc:WebP.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
     hexplain:codecKind hexplain:BytesToSamples ; hexplain:keepsSession false ; hexplain:encodes false ;
     hexplain:raisesCategory "Validation", "Unsupported", "ResourceLimit" ;
     hexplain:declaresParameter menc:WebP.contract.bands .
-menc:WebP.contract.bands a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "bands" ;
+menc:WebP.contract.bands a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of samples in one decoded pixel: 3, red, green and blue; 4, with alpha as the fourth."@en ; hexplain:parameterKey "bands" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:allowedValue 3, 4 .
 menc:JPEGXL hexplain:codecContract menc:JPEGXL.contract .
 menc:JPEGXL.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
@@ -464,18 +464,18 @@ menc:LERC.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:cont
         menc:LERC.contract.planarSeparate ,
         menc:LERC.contract.alphaFromMask ,
         menc:LERC.contract.lercParameters .
-menc:LERC.contract.layout a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "layout" ; hexplain:parameterType hexplain:StringParameterType ;
+menc:LERC.contract.layout a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "How the blob is framed: blob (the default), a bare LERC blob whose header gives its geometry; tiff, a blob as a TIFF strip or tile carries it, whose geometry and sample type the container states and the width, height, samplesPerPixel and sampleType parameters pass on."@en ; hexplain:parameterKey "layout" ; hexplain:parameterType hexplain:StringParameterType ;
     hexplain:defaultValue "blob" ; hexplain:allowedValue "blob", "tiff" .
-menc:LERC.contract.width a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "width" ; hexplain:parameterType hexplain:IntegerParameterType ; hexplain:minimumValue 1 .
-menc:LERC.contract.height a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "height" ; hexplain:parameterType hexplain:IntegerParameterType ; hexplain:minimumValue 1 .
-menc:LERC.contract.samplesPerPixel a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "samplesPerPixel" ; hexplain:parameterType hexplain:IntegerParameterType ; hexplain:minimumValue 1 .
-menc:LERC.contract.sampleType a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "sampleType" ; hexplain:parameterType hexplain:StringParameterType ;
+menc:LERC.contract.width a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixels in each row the block is expected to decode to, as its container states it; part of the geometry that layout tiff requires."@en ; hexplain:parameterKey "width" ; hexplain:parameterType hexplain:IntegerParameterType ; hexplain:minimumValue 1 .
+menc:LERC.contract.height a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixel rows the block is expected to decode to, as its container states it; part of the geometry that layout tiff requires."@en ; hexplain:parameterKey "height" ; hexplain:parameterType hexplain:IntegerParameterType ; hexplain:minimumValue 1 .
+menc:LERC.contract.samplesPerPixel a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of samples in one pixel the block is expected to decode to."@en ; hexplain:parameterKey "samplesPerPixel" ; hexplain:parameterType hexplain:IntegerParameterType ; hexplain:minimumValue 1 .
+menc:LERC.contract.sampleType a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The type of one decoded sample: a signed or unsigned integer of 8, 16 or 32 bits, or an IEEE 754 float of 32 or 64 bits."@en ; hexplain:parameterKey "sampleType" ; hexplain:parameterType hexplain:StringParameterType ;
     hexplain:allowedValue "uint8", "int8", "uint16", "int16", "uint32", "int32", "float32", "float64" .
-menc:LERC.contract.planarSeparate a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "planarSeparate" ; hexplain:parameterType hexplain:BooleanParameterType ;
+menc:LERC.contract.planarSeparate a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "Whether the samples of a pixel are stored in separate blocks, one per band, rather than together (TIFF's PlanarConfiguration 2). Default false."@en ; hexplain:parameterKey "planarSeparate" ; hexplain:parameterType hexplain:BooleanParameterType ;
     hexplain:defaultValue false .
-menc:LERC.contract.alphaFromMask a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "alphaFromMask" ; hexplain:parameterType hexplain:BooleanParameterType ;
+menc:LERC.contract.alphaFromMask a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "Whether the validity mask of the blob is returned as one further sample of each pixel, an alpha band, after the data samples. Default false."@en ; hexplain:parameterKey "alphaFromMask" ; hexplain:parameterType hexplain:BooleanParameterType ;
     hexplain:defaultValue false .
-menc:LERC.contract.lercParameters a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "lercParameters" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:LERC.contract.lercParameters a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The integers of TIFF's LercParameters tag, in order: the LERC version the blob was written with, then the additional compression applied around it (0 none, 1 Deflate, 2 Zstandard)."@en ; hexplain:parameterKey "lercParameters" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:listValued true ; hexplain:minimumValue 0 .
 menc:YCbCrToRGB hexplain:codecContract menc:YCbCrToRGB.contract .
 menc:YCbCrToRGB.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
@@ -484,37 +484,37 @@ menc:YCbCrToRGB.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplai
         menc:YCbCrToRGB.contract.coefficients ,
         menc:YCbCrToRGB.contract.referenceBlackWhite ,
         menc:YCbCrToRGB.contract.layout .
-menc:YCbCrToRGB.contract.subsampling a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "subsampling" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:YCbCrToRGB.contract.subsampling a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The horizontal then vertical subsampling factors of the chroma samples relative to luma, each 1, 2 or 4 (TIFF's YCbCrSubSampling). The default, 1 1, is no subsampling."@en ; hexplain:parameterKey "subsampling" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:listValued true ; hexplain:listLength 2 ; hexplain:defaultValue "1 1" ; hexplain:allowedValue 1, 2, 4 .
-menc:YCbCrToRGB.contract.coefficients a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "coefficients" ; hexplain:parameterType hexplain:FloatParameterType ;
+menc:YCbCrToRGB.contract.coefficients a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The luma coefficients LumaRed, LumaGreen and LumaBlue the YCbCr samples were derived with, three numbers summing to 1 (TIFF's YCbCrCoefficients). The default, 0.299 0.587 0.114, is ITU-R BT.601."@en ; hexplain:parameterKey "coefficients" ; hexplain:parameterType hexplain:FloatParameterType ;
     hexplain:listValued true ; hexplain:listLength 3 ; hexplain:defaultValue "0.299 0.587 0.114" .
-menc:YCbCrToRGB.contract.referenceBlackWhite a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "referenceBlackWhite" ; hexplain:parameterType hexplain:FloatParameterType ;
+menc:YCbCrToRGB.contract.referenceBlackWhite a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The reference black and white levels of each component, as six numbers: black then white for Y, for Cb and for Cr (TIFF's ReferenceBlackWhite). The default, 0 255 128 255 128 255, is full-range coding with the chroma zero at 128."@en ; hexplain:parameterKey "referenceBlackWhite" ; hexplain:parameterType hexplain:FloatParameterType ;
     hexplain:listValued true ; hexplain:listLength 6 ; hexplain:defaultValue "0 255 128 255 128 255" .
-menc:YCbCrToRGB.contract.layout a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "layout" ; hexplain:parameterType hexplain:StringParameterType ;
+menc:YCbCrToRGB.contract.layout a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "How the YCbCr samples are arranged in the input: pixels (the default), Y, Cb and Cr interleaved for every pixel; planes, all Y samples, then all Cb, then all Cr; units, TIFF's subsampled data units, the Y samples of one block followed by its one Cb and one Cr."@en ; hexplain:parameterKey "layout" ; hexplain:parameterType hexplain:StringParameterType ;
     hexplain:defaultValue "pixels" ; hexplain:allowedValue "pixels", "units", "planes" .
 menc:CIELabToRGB hexplain:codecContract menc:CIELabToRGB.contract .
 menc:CIELabToRGB.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
     hexplain:codecKind hexplain:SamplesToSamples ; hexplain:keepsSession false ; hexplain:encodes false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
     hexplain:declaresParameter menc:CIELabToRGB.contract.whitePoint ,
         menc:CIELabToRGB.contract.alpha .
-menc:CIELabToRGB.contract.whitePoint a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "whitePoint" ; hexplain:parameterType hexplain:FloatParameterType ;
+menc:CIELabToRGB.contract.whitePoint a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The white point the L*a*b* values are relative to, as the two numbers of TIFF's WhitePoint tag, in the order the tag gives them."@en ; hexplain:parameterKey "whitePoint" ; hexplain:parameterType hexplain:FloatParameterType ;
     hexplain:listValued true ; hexplain:listLength 2 .
-menc:CIELabToRGB.contract.alpha a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "alpha" ; hexplain:parameterType hexplain:BooleanParameterType ;
+menc:CIELabToRGB.contract.alpha a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "Whether each decoded pixel is four samples, red, green, blue and alpha, rather than three. Default false."@en ; hexplain:parameterKey "alpha" ; hexplain:parameterType hexplain:BooleanParameterType ;
     hexplain:defaultValue false .
 menc:CMYKToRGB hexplain:codecContract menc:CMYKToRGB.contract .
 menc:CMYKToRGB.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
     hexplain:codecKind hexplain:SamplesToSamples ; hexplain:keepsSession false ; hexplain:encodes false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
     hexplain:declaresParameter menc:CMYKToRGB.contract.alpha .
-menc:CMYKToRGB.contract.alpha a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "alpha" ;
+menc:CMYKToRGB.contract.alpha a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "Whether each decoded pixel is four samples, red, green, blue and alpha, rather than three. Default false."@en ; hexplain:parameterKey "alpha" ;
     hexplain:parameterType hexplain:BooleanParameterType ; hexplain:defaultValue false .
 menc:SGILogRLE hexplain:codecContract menc:SGILogRLE.contract .
 menc:SGILogRLE.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
     hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:encodes false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
     hexplain:declaresParameter menc:SGILogRLE.contract.columns ,
         menc:SGILogRLE.contract.rows .
-menc:SGILogRLE.contract.columns a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:SGILogRLE.contract.columns a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixels in each coded row (the width of the image, strip or tile): the coded data does not record it."@en ; hexplain:parameterKey "columns" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 1 .
-menc:SGILogRLE.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:SGILogRLE.contract.rows a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixel rows the block holds. Decoding yields exactly that many rows; the coded data does not record the count."@en ; hexplain:parameterKey "rows" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 0 .
 menc:MicrosoftRLE hexplain:codecContract menc:MicrosoftRLE.contract .
 menc:MicrosoftRLE.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
@@ -523,11 +523,11 @@ menc:MicrosoftRLE.contract a owl:NamedIndividual, hexplain:CodecContract ; hexpl
     hexplain:declaresParameter menc:MicrosoftRLE.contract.bitsPerPixel ,
         menc:MicrosoftRLE.contract.width ,
         menc:MicrosoftRLE.contract.height .
-menc:MicrosoftRLE.contract.bitsPerPixel a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "bitsPerPixel" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:MicrosoftRLE.contract.bitsPerPixel a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of bits in one pixel of the decoded bitmap: 8 for RLE8, 4 for RLE4. It selects which of the two run-length schemes the data is read as."@en ; hexplain:parameterKey "bitsPerPixel" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:allowedValue 4, 8 .
-menc:MicrosoftRLE.contract.width a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "width" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:MicrosoftRLE.contract.width a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixels in each row of the decoded bitmap: the coded data does not record it."@en ; hexplain:parameterKey "width" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 1 .
-menc:MicrosoftRLE.contract.height a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "height" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:MicrosoftRLE.contract.height a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of pixel rows of the decoded bitmap: the coded data moves through the rows with end-of-line and delta escapes and does not record how many there are."@en ; hexplain:parameterKey "height" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:requiredParameter true ; hexplain:minimumValue 1 .
 
 # ---------- Codec contracts: array-family (Blosc, numcodecs filters) ----------
@@ -540,26 +540,26 @@ menc:Blosc.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:con
         menc:Blosc.contract.shuffle ,
         menc:Blosc.contract.typesize ,
         menc:Blosc.contract.blocksize .
-menc:Blosc.contract.cname a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "cname" ; hexplain:parameterType hexplain:StringParameterType ;
+menc:Blosc.contract.cname a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The name of the compressor Blosc ran inside the frame, as c-blosc spells it. It describes how the frame was written; the frame header records the compressor as well."@en ; hexplain:parameterKey "cname" ; hexplain:parameterType hexplain:StringParameterType ;
     hexplain:allowedValue "blosclz", "lz4", "lz4hc", "snappy", "zlib", "zstd" .
-menc:Blosc.contract.clevel a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "clevel" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:Blosc.contract.clevel a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The compression level the frame was written with, from 0 (no compression) to 9 (the strongest). Decoding does not depend on it."@en ; hexplain:parameterKey "clevel" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:minimumValue 0 ; hexplain:maximumValue 9 .
-menc:Blosc.contract.shuffle a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "shuffle" ; hexplain:parameterType hexplain:BooleanParameterType .
-menc:Blosc.contract.typesize a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "typesize" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:Blosc.contract.shuffle a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "Whether the byte-shuffle filter, which regroups the bytes of successive elements by significance, was applied before compression. The frame header records the filter as well."@en ; hexplain:parameterKey "shuffle" ; hexplain:parameterType hexplain:BooleanParameterType .
+menc:Blosc.contract.typesize a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The size in bytes of one element of the compressed array, 1 to 255: the unit the shuffle filter regroups. The frame header records it as well."@en ; hexplain:parameterKey "typesize" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:minimumValue 1 ; hexplain:maximumValue 255 .
-menc:Blosc.contract.blocksize a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "blocksize" ; hexplain:parameterType hexplain:IntegerParameterType ;
+menc:Blosc.contract.blocksize a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The size in bytes of the internal blocks the frame is split into for compression; 0 means the compressor chose it."@en ; hexplain:parameterKey "blocksize" ; hexplain:parameterType hexplain:IntegerParameterType ;
     hexplain:minimumValue 0 .
 menc:BloscLZ hexplain:codecContract menc:BloscLZ.contract .
 menc:BloscLZ.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
     hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:encodes false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
     hexplain:declaresParameter menc:BloscLZ.contract.decodedSize .
-menc:BloscLZ.contract.decodedSize a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "decodedSize" ;
+menc:BloscLZ.contract.decodedSize a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The exact number of bytes the block decodes to. A BloscLZ block records neither its own length nor its output's, so the block is the whole encoded byte run and decoding it yields exactly this many bytes."@en ; hexplain:parameterKey "decodedSize" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:requiredParameter true ; hexplain:minimumValue 0 .
 menc:Shuffle hexplain:codecContract menc:Shuffle.contract .
 menc:Shuffle.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
     hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:encodes false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
     hexplain:declaresParameter menc:Shuffle.contract.elementSize .
-menc:Shuffle.contract.elementSize a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "elementSize" ;
+menc:Shuffle.contract.elementSize a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of bytes in one element: 1, 2, 4 (the default) or 8. The filter stored the first byte of every element, then the second of every element, and so on; decoding interleaves them back."@en ; hexplain:parameterKey "elementSize" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:defaultValue 4 ; hexplain:allowedValue 1, 2, 4, 8 .
 menc:TypedDelta hexplain:codecContract menc:TypedDelta.contract .
 menc:TypedDelta.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
@@ -567,9 +567,9 @@ menc:TypedDelta.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplai
     hexplain:raisesCategory "Validation", "Unsupported", "ResourceLimit" ;
     hexplain:declaresParameter menc:TypedDelta.contract.dtype ,
         menc:TypedDelta.contract.astype .
-menc:TypedDelta.contract.dtype a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "dtype" ; hexplain:parameterType hexplain:StringParameterType ;
+menc:TypedDelta.contract.dtype a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The type of the DECODED values, as a NumPy array-interface type string: a byte-order mark ('<' little-endian, '>' big-endian, '|' not applicable), a kind letter (i signed integer, u unsigned integer, f IEEE 754 float) and the size in bytes. Each value after the first was stored as its difference from the value before it."@en ; hexplain:parameterKey "dtype" ; hexplain:parameterType hexplain:StringParameterType ;
     hexplain:requiredParameter true .
-menc:TypedDelta.contract.astype a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "astype" ; hexplain:parameterType hexplain:StringParameterType .
+menc:TypedDelta.contract.astype a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The type of the ENCODED (stored) values, as a NumPy array-interface type string spelt like dtype. Decoding reads values of this type and yields values of dtype. Absent, it is dtype."@en ; hexplain:parameterKey "astype" ; hexplain:parameterType hexplain:StringParameterType .
 menc:FixedScaleOffset hexplain:codecContract menc:FixedScaleOffset.contract .
 menc:FixedScaleOffset.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
     hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:encodes false ; hexplain:raisesCategory "Validation", "ResourceLimit" ;
@@ -577,13 +577,13 @@ menc:FixedScaleOffset.contract a owl:NamedIndividual, hexplain:CodecContract ; h
         menc:FixedScaleOffset.contract.scale ,
         menc:FixedScaleOffset.contract.dtype ,
         menc:FixedScaleOffset.contract.astype .
-menc:FixedScaleOffset.contract.offset a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "offset" ; hexplain:parameterType hexplain:FloatParameterType ;
+menc:FixedScaleOffset.contract.offset a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The value subtracted from each number before it was scaled and stored. Decoding computes stored / scale + offset."@en ; hexplain:parameterKey "offset" ; hexplain:parameterType hexplain:FloatParameterType ;
     hexplain:requiredParameter true .
-menc:FixedScaleOffset.contract.scale a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "scale" ; hexplain:parameterType hexplain:FloatParameterType ;
+menc:FixedScaleOffset.contract.scale a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The factor each number was multiplied by, after the offset was subtracted, before it was rounded and stored. Decoding computes stored / scale + offset."@en ; hexplain:parameterKey "scale" ; hexplain:parameterType hexplain:FloatParameterType ;
     hexplain:requiredParameter true .
-menc:FixedScaleOffset.contract.dtype a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "dtype" ; hexplain:parameterType hexplain:StringParameterType ;
+menc:FixedScaleOffset.contract.dtype a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The type of the DECODED values, as a NumPy array-interface type string: a byte-order mark ('<' little-endian, '>' big-endian, '|' not applicable), a kind letter (i signed integer, u unsigned integer, f IEEE 754 float) and the size in bytes."@en ; hexplain:parameterKey "dtype" ; hexplain:parameterType hexplain:StringParameterType ;
     hexplain:requiredParameter true ; hexplain:allowedValue "<f4", "<f8" .
-menc:FixedScaleOffset.contract.astype a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "astype" ; hexplain:parameterType hexplain:StringParameterType ;
+menc:FixedScaleOffset.contract.astype a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The type of the ENCODED (stored) values, as a NumPy array-interface type string spelt like dtype. Decoding reads values of this type and yields values of dtype."@en ; hexplain:parameterKey "astype" ; hexplain:parameterType hexplain:StringParameterType ;
     hexplain:requiredParameter true ; hexplain:allowedValue "|u1", "<u2", "<u4", "<f4" .
 menc:Quantize hexplain:codecContract menc:Quantize.contract .
 menc:Quantize.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
@@ -591,16 +591,16 @@ menc:Quantize.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:
     hexplain:declaresParameter menc:Quantize.contract.digits ,
         menc:Quantize.contract.dtype ,
         menc:Quantize.contract.astype .
-menc:Quantize.contract.digits a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "digits" ; hexplain:parameterType hexplain:IntegerParameterType .
-menc:Quantize.contract.dtype a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "dtype" ; hexplain:parameterType hexplain:StringParameterType ;
+menc:Quantize.contract.digits a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of decimal digits after the decimal point the encoder kept: each value was rounded to the nearest multiple of the smallest power of two that preserves them. Decoding returns the stored values, converted to dtype, and does not depend on it."@en ; hexplain:parameterKey "digits" ; hexplain:parameterType hexplain:IntegerParameterType .
+menc:Quantize.contract.dtype a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The type of the DECODED values, as a NumPy array-interface type string: a byte-order mark ('<' little-endian, '>' big-endian, '|' not applicable), a kind letter (i signed integer, u unsigned integer, f IEEE 754 float) and the size in bytes."@en ; hexplain:parameterKey "dtype" ; hexplain:parameterType hexplain:StringParameterType ;
     hexplain:requiredParameter true ; hexplain:allowedValue "<f4", "<f8" .
-menc:Quantize.contract.astype a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "astype" ; hexplain:parameterType hexplain:StringParameterType ;
+menc:Quantize.contract.astype a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The type of the ENCODED (stored) values, as a NumPy array-interface type string spelt like dtype. Decoding reads values of this type and yields values of dtype."@en ; hexplain:parameterKey "astype" ; hexplain:parameterType hexplain:StringParameterType ;
     hexplain:requiredParameter true ; hexplain:allowedValue "<f4", "<f8" .
 menc:BitRound hexplain:codecContract menc:BitRound.contract .
 menc:BitRound.contract a owl:NamedIndividual, hexplain:CodecContract ; hexplain:contractVersion 1 ; hexplain:vectorSuiteVersion 1 ;
     hexplain:codecKind hexplain:BytesToBytes ; hexplain:keepsSession false ; hexplain:encodes false ; hexplain:raisesCategory "ResourceLimit" ;
     hexplain:declaresParameter menc:BitRound.contract.keepbits .
-menc:BitRound.contract.keepbits a owl:NamedIndividual, hexplain:CodecParameterSpec ; hexplain:parameterKey "keepbits" ;
+menc:BitRound.contract.keepbits a owl:NamedIndividual, hexplain:CodecParameterSpec ; rdfs:comment "The number of most significant mantissa bits of each floating-point value that the encoder kept: the bits below them were rounded away and are stored as zero, which is what makes the data compress. Decoding returns the stored values unchanged and does not depend on it."@en ; hexplain:parameterKey "keepbits" ;
     hexplain:parameterType hexplain:IntegerParameterType ; hexplain:minimumValue 0 ; hexplain:maximumValue 64 .
 
 # ---------- Term ownership ----------
