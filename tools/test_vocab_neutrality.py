@@ -40,6 +40,7 @@ import sys
 from typing import Any
 
 import rdflib
+from _family import is_documentation
 from rdflib import Graph
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -57,7 +58,10 @@ def repository_files(pattern: str) -> list[str]:
 
 def normative_files() -> list[str]:
     foundations = ["specification/bddo/bddo.ttl", "specification/dlv/dlv.ttl", "specification/hexplain/core.ttl"]
-    return foundations + repository_files("specification/aspect/*/*.ttl")
+    # A module's generated annotation graph (<module>-doc.ttl) declares no term and no ontology: the
+    # names it documents are checked where they are declared.
+    aspects = [f for f in repository_files("specification/aspect/*/*.ttl") if not is_documentation(f)]
+    return foundations + aspects
 
 
 #: Names that would betray a bias in a term. Matched against camelCase WORDS rather than as

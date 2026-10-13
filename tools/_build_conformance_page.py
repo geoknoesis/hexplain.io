@@ -105,6 +105,16 @@ NOT_SUITE_TESTABLE = {
     "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the "
     "condition is asserted by the HEL vectors (validation/test/hel-vectors.tsv, "
     "req-hel-conformance-9).",
+    "req-pm-alignment-padding-3": "Verifying a fill byte is optional (a processor MAY compare the padding with "
+    "bddo:padByte), so a case cannot tell a processor that does not verify from one that verified and agreed; the "
+    "rule binds only what a verifying processor reports.",
+    "req-pm-data-layouts-3": "The key construction orders the chunk table, which only cell access reads; a parsed "
+    "tree holds the field's bytes and this version gives cells no output form, so no case observes which chunk a "
+    "key selects.",
+    "req-hel-ext-text-7": "A statement in the processor's claims or report environment, not a result of a parse; "
+    "it is checked by reading the published report.",
+    "req-hel-ext-text-8": "The bound on a pattern's size and nesting is the implementation's own; a case would "
+    "need a pattern beyond every conforming evaluator's bound, and no size is.",
     "req-hdl-modules-3": "The import bounds are the compiler's own; a case would need an imported file larger "
     "than every "
     "conforming compiler's bound, and no size is.",

@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-ROOTS = ("instance", "parent", "root", "self", "stream", "asset")
+ROOTS = ("instance", "parent", "root", "self", "stream", "asset", "param")
 RESERVED = ROOTS + ("and", "or", "not", "true", "false")
 MAX_INTEGER = 2**63 - 1
 
@@ -270,8 +270,9 @@ def parse(text: str) -> Any:
 
 
 def _float(v):
-    """Java's Double.toString spelling, which the canonical form uses: the shortest digits that round-trip, written
-    plainly when the magnitude is in [1e-3, 1e7) and as d.dddE<n> otherwise."""
+    """HEL's Float rendering (hel/index.html#float-rendering), which the canonical form uses: the shortest digits
+    that round-trip, two digits where one would do, written plainly when the magnitude is in [1e-3, 1e7) and as
+    d.dddE<n> otherwise."""
     from decimal import Decimal
 
     if v == 0:
@@ -279,6 +280,18 @@ def _float(v):
     sign, digits, exponent = Decimal(repr(abs(v))).as_tuple()
     text = "".join(map(str, digits)).rstrip("0") or "0"
     scientific = len("".join(map(str, digits))) - 1 + exponent
+    if len(text) == 1:
+        # One digit reads back to the value: take the two-digit decimals that do, and the nearest of them. For a
+        # normal value that is the digit and a zero; near the smallest subnormal it is not (4.9E-324).
+        exact = Decimal(abs(v))
+        candidates = []
+        for exp in (scientific - 1, scientific - 2):
+            for n in range(10, 100):
+                candidate = Decimal(n).scaleb(exp)
+                if float(candidate) == abs(v):
+                    candidates.append((abs(candidate - exact), n % 2, n, exp))
+        _, _, n, exp = min(candidates)
+        text, scientific = str(n).rstrip("0") or "0", exp + 1
     minus = "-" if v < 0 else ""
     if 1e-3 <= abs(v) < 1e7:
         plain = format(Decimal(repr(abs(v))), "f")

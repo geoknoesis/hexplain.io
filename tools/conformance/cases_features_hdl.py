@@ -1012,11 +1012,13 @@ hc(
     "encoded-with-catalogue-codec",
     "A catalogue-only codec compiles: a warning at most, never an ERROR",
     "menc:BZip2 is in the register with no contract, so no processor decodes it; the description still records the "
-    "encoding, and the compiler emits it.",
+    "encoding, and the compiler emits it. The register prefix is bound with use, as every register prefix must "
+    "be, so the only diagnostic the source can draw is the WARNING.",
     OK + ["req-hdl-semantic-1", "req-pm-codec-contracts-5"],
     ["semantic", "processing#codec-status"],
     """
    format t @namespace "{ns}"
+   use menc: <https://hexplain.io/ns/register/media-encoding#>
    struct Root {
      data : bytes[..] @encoded-with menc:BZip2
    }

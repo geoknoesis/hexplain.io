@@ -652,6 +652,7 @@ CASES.append(
                 "hel-ext-quantifier",
                 "hel-ext-geometry",
                 "hel-ext-register",
+                "writer",
             ],
             "mustInclude": {
                 "classes": ["Physical Parser"],

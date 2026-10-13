@@ -27,7 +27,9 @@
 # form cannot express. Its members: "root", the parsed tree (a JSON object is a struct node whose
 # keys are its declared fields, an array an array node, null a declared field that is absent);
 # "instance", the node path (Processing Model, IRI minting: root/hdr/items/1) of the current
-# struct node, and "self", a node path or a JSON value for the value under test (null: undefined);
+# struct node, and "self", a node path or a JSON value for the value under test (null: undefined;
+# a JSON string that is a node path of this tree, root or root/..., denotes that NODE, never the
+# string, so a String value under test that spells a node path cannot be given here);
 # "stream", the three stream.* integers; "param", the parameters of the instance's struct (its
 # keys are the declared parameters); "unparsed", the node paths of declared fields not yet reached
 # (reading one is a forward-reference error; a declared field that is null and not listed here is
@@ -288,3 +290,19 @@ root.parent is Null	root.parent.count == 2	value	false	eyIkdHJlZSI6IHsicm9vdCI6I
 parent after self is Null	self.parent.n == 2	value	false	eyIkdHJlZSI6IHsicm9vdCI6IHsiaGRyIjogeyJuIjogMiwgIml0ZW1zIjogW3sidiI6IDEwLCAidGFnIjogIkEifSwgeyJ2IjogMjAsICJ0YWciOiAiQiJ9XX0sICJjb3VudCI6IDIsICJsYXRlciI6IG51bGx9LCAiaW5zdGFuY2UiOiAicm9vdC9oZHIvaXRlbXMvMSIsICJzZWxmIjogInJvb3QvaGRyL2l0ZW1zLzEiLCAic3RyZWFtIjogeyJsZW5ndGgiOiAxMDAsICJwb3NpdGlvbiI6IDQwLCAicmVtYWluaW5nIjogOH0sICJwYXJhbSI6IHsidyI6IDR9LCAidW5wYXJzZWQiOiBbXSwgImV4dGVudHMiOiB7InJvb3QvaGRyIjogWzAsIDEyXSwgInJvb3QvaGRyL2l0ZW1zLzAiOiBbNCwgOF0sICJyb290L2hkci9pdGVtcy8xIjogWzgsIDEyXX0sICJyZWdpc3RlcnMiOiB7fX19
 parent after param is Null	param.w.parent.n == 2	value	false	eyIkdHJlZSI6IHsicm9vdCI6IHsiaGRyIjogeyJuIjogMiwgIml0ZW1zIjogW3sidiI6IDEwLCAidGFnIjogIkEifSwgeyJ2IjogMjAsICJ0YWciOiAiQiJ9XX0sICJjb3VudCI6IDIsICJsYXRlciI6IG51bGx9LCAiaW5zdGFuY2UiOiAicm9vdC9oZHIvaXRlbXMvMSIsICJzZWxmIjogInJvb3QvaGRyL2l0ZW1zLzEiLCAic3RyZWFtIjogeyJsZW5ndGgiOiAxMDAsICJwb3NpdGlvbiI6IDQwLCAicmVtYWluaW5nIjogOH0sICJwYXJhbSI6IHsidyI6IDR9LCAidW5wYXJzZWQiOiBbXSwgImV4dGVudHMiOiB7InJvb3QvaGRyIjogWzAsIDEyXSwgInJvb3QvaGRyL2l0ZW1zLzAiOiBbNCwgOF0sICJyb290L2hkci9pdGVtcy8xIjogWzgsIDEyXX0sICJyZWdpc3RlcnMiOiB7fX19
 parent after stream is Null	stream.parent.n == 2	value	false	eyIkdHJlZSI6IHsicm9vdCI6IHsiaGRyIjogeyJuIjogMiwgIml0ZW1zIjogW3sidiI6IDEwLCAidGFnIjogIkEifSwgeyJ2IjogMjAsICJ0YWciOiAiQiJ9XX0sICJjb3VudCI6IDIsICJsYXRlciI6IG51bGx9LCAiaW5zdGFuY2UiOiAicm9vdC9oZHIvaXRlbXMvMSIsICJzZWxmIjogInJvb3QvaGRyL2l0ZW1zLzEiLCAic3RyZWFtIjogeyJsZW5ndGgiOiAxMDAsICJwb3NpdGlvbiI6IDQwLCAicmVtYWluaW5nIjogOH0sICJwYXJhbSI6IHsidyI6IDR9LCAidW5wYXJzZWQiOiBbXSwgImV4dGVudHMiOiB7InJvb3QvaGRyIjogWzAsIDEyXSwgInJvb3QvaGRyL2l0ZW1zLzAiOiBbNCwgOF0sICJyb290L2hkci9pdGVtcy8xIjogWzgsIDEyXX0sICJyZWdpc3RlcnMiOiB7fX19
+#
+# Reserved roots in every position, keys of stream and param, HEL-RE details and Float rendering
+# (hel/index.html#no-holder, #roots-are-not-keys, #hel-re-details, #float-rendering).
+a key of stream records no holder	stream.length.parent.n == 2	value	false	eyIkdHJlZSI6IHsicm9vdCI6IHsiaGRyIjogeyJuIjogMiwgIml0ZW1zIjogW3sidiI6IDEwLCAidGFnIjogIkEifSwgeyJ2IjogMjAsICJ0YWciOiAiQiJ9XX0sICJjb3VudCI6IDIsICJsYXRlciI6IG51bGx9LCAiaW5zdGFuY2UiOiAicm9vdC9oZHIvaXRlbXMvMSIsICJzZWxmIjogInJvb3QvaGRyL2l0ZW1zLzEiLCAic3RyZWFtIjogeyJsZW5ndGgiOiAxMDAsICJwb3NpdGlvbiI6IDQwLCAicmVtYWluaW5nIjogOH0sICJwYXJhbSI6IHsidyI6IDR9LCAidW5wYXJzZWQiOiBbXSwgImV4dGVudHMiOiB7InJvb3QvaGRyIjogWzAsIDEyXSwgInJvb3QvaGRyL2l0ZW1zLzAiOiBbNCwgOF0sICJyb290L2hkci9pdGVtcy8xIjogWzgsIDEyXX0sICJyZWdpc3RlcnMiOiB7fX19
+a key of param records no holder	param.w.parent.count == 2	value	false	eyIkdHJlZSI6IHsicm9vdCI6IHsiaGRyIjogeyJuIjogMiwgIml0ZW1zIjogW3sidiI6IDEwLCAidGFnIjogIkEifSwgeyJ2IjogMjAsICJ0YWciOiAiQiJ9XX0sICJjb3VudCI6IDIsICJsYXRlciI6IG51bGx9LCAiaW5zdGFuY2UiOiAicm9vdC9oZHIvaXRlbXMvMSIsICJzZWxmIjogInJvb3QvaGRyL2l0ZW1zLzEiLCAic3RyZWFtIjogeyJsZW5ndGgiOiAxMDAsICJwb3NpdGlvbiI6IDQwLCAicmVtYWluaW5nIjogOH0sICJwYXJhbSI6IHsidyI6IDR9LCAidW5wYXJzZWQiOiBbXSwgImV4dGVudHMiOiB7InJvb3QvaGRyIjogWzAsIDEyXSwgInJvb3QvaGRyL2l0ZW1zLzAiOiBbNCwgOF0sICJyb290L2hkci9pdGVtcy8xIjogWzgsIDEyXX0sICJyZWdpc3RlcnMiOiB7fX19
+a root is not a function name	asset(1)	error	"syntax"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=	"asset"
+param is not a function name	param()	error	"syntax"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=	"param"
+a root is not a key after a dot	a.param	error	"syntax"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=	"param"
+asset is not a key after a dot	a.asset	error	"syntax"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=	"asset"
+a hyphen first in a class is a literal	matches('-', '[-a]')	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+a hyphen last in a class is a literal	matches('-', '[a-]')	value	true	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+a hyphen that is neither first, last nor a range	matches('b', '[a-c-e]')	error	"argument"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=	"-"
+an unknown block name is an argument error	matches('a', '\\p{IsNoSuchBlock}')	error	"argument"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=	"IsNoSuchBlock"
+a quantifier bound above 2^31-1	matches('a', 'a{2147483648}')	error	"argument"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=	"2147483648"
+toString of the smallest subnormal is its shortest digits	toString(5e-324)	value	"4.9E-324"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+toString writes one digit where one round-trips	toString(1e23)	value	"1.0E23"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=

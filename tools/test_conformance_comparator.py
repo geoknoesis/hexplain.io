@@ -53,6 +53,11 @@ def hel_checks(failures: Any) -> None:
     check(hel.canonical("a < b < c") is None, "comparisons do not chain", failures)
     check(hel.canonical("9223372036854775808") is None, "an Integer literal above 2^63-1 is a syntax error", failures)
     check(hel.canonical("root.self") is None, "a reserved word is not a key", failures)
+    check(hel.canonical("a.param") is None, "param is a reserved root, not a key", failures)
+    check(hel.canonical("param.w + 1") == "param.w + 1", "param is a root, not a field of instance", failures)
+    check(hel.canonical("asset(1)") is None and hel.canonical("param()") is None, "a root is not a function", failures)
+    check(hel.canonical("5e-324") == "4.9E-324", "one digit that round-trips is written as the nearest two", failures)
+    check(hel.canonical("1e23") == "1.0E23" and hel.canonical("0.5") == "0.5", "shortest digits elsewhere", failures)
     check(hel.canonical("'\\q'") is None, "an unknown escape is a syntax error", failures)
     check(
         hel.canonical("'a\x01b'") == "'a\\x01b'", "a control character is written \\xHH in the canonical form", failures

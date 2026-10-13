@@ -1,6 +1,52 @@
 {
  "schema": 1,
  "requirements": {
+  "req-pm-alignment-padding-1": {
+   "page": "specification/processing/index.html",
+   "section": "alignment-padding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Physical Parser MUST advance the cursor for either property to the least multiple of the boundary that is not less than the cursor, after realigning the bit cursor to a whole byte (Bit-level fields (the bit cursor)); a cursor already on the boundary does not move, and a boundary of 1 moves nothing.",
+   "sha256": "23251654d8c2a88c"
+  },
+  "req-pm-alignment-padding-2": {
+   "page": "specification/processing/index.html",
+   "section": "alignment-padding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A skip that would pass the end of the innermost bounded region, or of the current stream when none is in force, MUST raise a bounds error rather than stop at the region's end: the description states where the next element starts, and that position does not exist.",
+   "sha256": "bc2fc4446418468b"
+  },
+  "req-pm-alignment-padding-3": {
+   "page": "specification/processing/index.html",
+   "section": "alignment-padding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "It is informative about the data: a processor MAY compare the skipped bytes with it, and one that does MUST raise a validation error when a skipped byte differs, a check on bytes already passed that leaves the cursor sound (Recovery in a Lenient Mode).",
+   "sha256": "4f764d01fee321f3",
+   "context": "bddo:padByte states the octet the padding of a bddo:padTo is expected to hold."
+  },
+  "req-pm-alignment-padding-4": {
+   "page": "specification/processing/index.html",
+   "section": "alignment-padding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST accept padding of any content when no bddo:padByte is stated, and MUST NOT verify the bytes skipped by bddo:alignment, which has no fill byte.",
+   "sha256": "c348d0d8793ccd57"
+  },
+  "req-pm-alignment-padding-5": {
+   "page": "specification/processing/index.html",
+   "section": "alignment-padding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A bddo:padByte without a bddo:padTo on the same field or struct describes no padding and is refused by bddo:PaddingShape; a processor that meets one MUST raise a description error.",
+   "sha256": "6e8489064038a02b"
+  },
   "req-pm-bit-cursor-1": {
    "page": "specification/processing/index.html",
    "section": "bit-cursor",
@@ -202,6 +248,15 @@
    "audience": "processor",
    "text": "An HDL compiler SHOULD warn when a description names a catalogue-only concept in @encoded-with, a pipeline step or a candidate, since the description it compiles can be read but never decoded; it MUST still compile it, because recording the encoding of data no processor yet decodes is what the catalogue is for.",
    "sha256": "97b70673465860ea"
+  },
+  "req-pm-codec-contracts-6": {
+   "page": "specification/processing/index.html",
+   "section": "codec-contracts",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A codec raises it only where its contract declares it, and a processor MUST report it as a Description error, which no lenient mode continues past, never as a Validation error: the bytes are not at fault, the description is.",
+   "sha256": "bf5e66e223476474"
   },
   "req-pm-codec-selection-1": {
    "page": "specification/processing/index.html",
@@ -556,8 +611,32 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Before any cell is addressed, a processor MUST resolve the layout against the field's containing struct: each dlv:dimensionSizeFromField, dlv:dimensionStrideFromField and dlv:cellBitWidthFromField reads the named field (looked up as for bddo:sizeFromField), each dlv:dimensionStrideFromExpression is evaluated, and the first holding arm of dlv:hasConditionalCellDataType and of dlv:hasConditionalDimensionOrder is selected (DLV conditional layout).",
-   "sha256": "d2d5f154f88e5b48"
+   "text": "Before any cell is addressed, a processor MUST resolve the layout against the field's containing struct: each dlv:dimensionSizeFromField, dlv:dimensionStrideFromField, dlv:chunkSizeFromField and dlv:cellBitWidthFromField reads the named field (looked up as for bddo:sizeFromField), each dlv:dimensionSizeFromExpression, dlv:dimensionStrideFromExpression, dlv:chunkSizeFromExpression and dlv:cellBitWidthFromExpression is evaluated with the containing struct as instance (HEL, name binding), and the first holding arm of dlv:hasConditionalCellDataType and of dlv:hasConditionalDimensionOrder is selected (DLV conditional layout).",
+   "sha256": "3d4642383d5dd883",
+   "history": [
+    "d2d5f154f88e5b48"
+   ]
+  },
+  "req-pm-data-layouts-2": {
+   "page": "specification/processing/index.html",
+   "section": "data-layouts",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST resolve a computed form when the layout is resolved, before any cell is addressed, and never per cell, so that an expression that reads the stream position or a field of the struct yields one value for the whole layout.",
+   "sha256": "f6ccc4b0706f444c",
+   "history": [
+    "43b8e037a2ad619e"
+   ]
+  },
+  "req-pm-data-layouts-3": {
+   "page": "specification/processing/index.html",
+   "section": "data-layouts",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor that claims chunk-order-other MUST order the chunk table of a dlv:morton or dlv:hilbert layout by the key DLV constructs for that order and no other: the bit-interleaved Morton key and the Hilbert index of Skilling's algorithm, over the chunk indices in declared dimension order, each dimension's chunk count padded to the next power of two and the keys of cells outside the real counts skipped (dlv:morton, dlv:hilbert; J.",
+   "sha256": "9f086cf4069ab50a"
   },
   "req-pm-delimited-records-1": {
    "page": "specification/processing/index.html",
@@ -780,6 +859,16 @@
    "sha256": "c03f4c82e4b18cd6",
    "context": "A Semantic Emitter MUST emit these triples:"
   },
+  "req-pm-emission-13": {
+   "page": "specification/processing/index.html",
+   "section": "emission",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A field that carries an enumeration and both hexplain:mapsToProperty P and hexplain:mapsToObjectProperty Q is emitted under both, each by its own rule: a processor MUST emit the raw literal on P, the symbol IRI on P as this rule says, and the symbol IRI on Q as the object-property rule says, so a matched value with a symbol yields three triples (and one more pair per further matching symbol of a flags enumeration) and a matched value without one yields the literal on P alone.",
+   "sha256": "ccf70a215edbe8f7",
+   "context": "A Semantic Emitter MUST emit these triples:"
+  },
   "req-pm-errors-1": {
    "page": "specification/processing/index.html",
    "section": "errors",
@@ -873,8 +962,8 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Description error | The description itself is inconsistent: two dispatch arms with one key, both dispatch mechanisms on one field, an empty terminator, a variable-length field with no extent, an unbound namespace prefix, cyclic cross-part references, two part specs described by structs sharing a local name, a malformed fixed value, a packed width on a non-integer cell type, a bddo:repeatUntil on a text container, a codec parameter that is unknown, missing or a literal out of range, or that carries both or neither of a literal and an expression, a parameter expression for a parameter the contract does not declare, a codec step that its contract otherwise refuses, a pipeline whose kinds do not connect or whose first decoded step reads samples (Codec contracts, Parameter expressions), a selection whose candidates repeat a codec or include one whose kind does not connect at the step's position, a selecting step that carries a hexplain:codecParameter, a step with both hexplain:codec and hexplain:codecFromExpression, a selecting step without hexplain:codecCandidates or with an empty candidate list (Run-time codec selection), a pair of conflicting forms (a repeat count with a repeat-until condition, two count or offset forms, a dispatch table with conditional type rules, two values of a functional property), two fields of one struct sharing a local name; a parameterised struct named with a number of arguments other than its number of parameters, arguments for a struct without parameters or for a data type, a literal argument that is not of its parameter's type (an evaluated one is a Type / HEL error: ParseField, Value), a parameter or local binding sharing its name with a field, parameter or binding of its struct, param.x in an expression whose instance struct has no parameter x (inside a quantifier over struct elements, the element’s struct: Stream metadata and eof()), a root or bundle-part struct with parameters, a parameterised struct named by a bddo:dispatchDefault (which cannot state arguments), a parameter or a local binding declared by a text container (a delimited table or record sequence, a key/value header or a tree document); a CRC whose checksum field is not an integer exactly as wide as the CRC, or a digest whose checksum field is not a bddo:bytes field of literal size exactly the digest's length; an menc:LZ4Block step without a decodedSize, or with an invalid literal one. An invalid profile or rule set is a Description error when it is loaded: a description, conformance profile or rule set that the family’s shapes reject, including a requirement identity stated twice (by IRI, or by a blank-node pair with one req:requirementId and req:fromStandard), a requirement without a statement, and a parse attribution naming ResourceLimit. A Description error SHOULD be raised when the description is loaded.",
-   "sha256": "d3e4d0786e013473",
+   "text": "Description error | The description itself is inconsistent: two dispatch arms with one key, both dispatch mechanisms on one field, an empty terminator, a variable-length field with no extent, an unbound namespace prefix, cyclic cross-part references, two part specs described by structs sharing a local name, a malformed fixed value, a CRC, digest or Adler-32 whose checksum field is not of the algorithm's kind and width, a float format on a width it is not defined for, bddo:bcd on a field that is not a whole-byte fixed-width integer, a bddo:padByte without a bddo:padTo, a bddo:CustomEncoding without its one bddo:ianaCharset, a packed width on a non-integer cell type, a bddo:repeatUntil on a text container, a codec parameter that is unknown, missing or a literal out of range, or that carries both or neither of a literal and an expression, a parameter expression for a parameter the contract does not declare, a codec step that its contract otherwise refuses, a pipeline whose kinds do not connect or whose first decoded step reads samples (Codec contracts, Parameter expressions), a selection whose candidates repeat a codec or include one whose kind does not connect at the step's position, a selecting step that carries a hexplain:codecParameter, a step with both hexplain:codec and hexplain:codecFromExpression, a selecting step without hexplain:codecCandidates or with an empty candidate list (Run-time codec selection), a pair of conflicting forms (a repeat count with a repeat-until condition, two count or offset forms, a dispatch table with conditional type rules, two values of a functional property), two fields of one struct sharing a local name; a parameterised struct named with a number of arguments other than its number of parameters, arguments for a struct without parameters or for a data type, a literal argument that is not of its parameter's type (an evaluated one is a Type / HEL error: ParseField, Value), a parameter or local binding sharing its name with a field, parameter or binding of its struct, param.x in an expression whose instance struct has no parameter x (inside a quantifier over struct elements, the element’s struct: Stream metadata and eof()), a root or bundle-part struct with parameters, a parameterised struct named by a bddo:dispatchDefault (which cannot state arguments), a parameter or a local binding declared by a text container (a delimited table or record sequence, a key/value header or a tree document); a CRC whose checksum field is not an integer exactly as wide as the CRC, or a digest whose checksum field is not a bddo:bytes field of literal size exactly the digest's length; an menc:LZ4Block step without a decodedSize, or with an invalid literal one. An invalid profile or rule set is a Description error when it is loaded: a description, conformance profile or rule set that the family’s shapes reject, including a requirement identity stated twice (by IRI, or by a blank-node pair with one req:requirementId and req:fromStandard), a requirement without a statement, and a parse attribution naming ResourceLimit. A Description error SHOULD be raised when the description is loaded.",
+   "sha256": "cd705eff541560bd",
    "context": "Processors MUST distinguish and report the following conditions rather than emit a silently-wrong graph:",
    "history": [
     "0cb63e59ec525203",
@@ -884,7 +973,8 @@
     "f8ffe1ebc5e7b4d8",
     "346d0c03b0091053",
     "5726121f91229d13",
-    "4996455a75da033c"
+    "4996455a75da033c",
+    "d3e4d0786e013473"
    ]
   },
   "req-pm-errors-9": {
@@ -906,8 +996,8 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Unsupported feature | The description uses a construct outside the conformance classes the processor claims, or an optional feature or a codec it does not claim (for example a codec beyond the minimum set, or a chunk order other than row- or column-major), or a parameter value or coding feature of a listed codec that its contract defines but the processor does not implement (Codec contracts), or declares a HEL version the processor does not implement: another major version, or a later 1.x version whose functions it calls (HEL, version marker). The asset root and partExtension() outside an asset are a Type / HEL error, not this (Multi-part Assets). Only those; see Refusal. An Unsupported feature error SHOULD be raised when the description is loaded. An Unsupported feature error MUST be raised no later than the first time the construct would affect the result. Distinct from a Description error: the description is valid, this processor cannot run it.",
-   "sha256": "47fdf937f4c7c2b1",
+   "text": "Unsupported feature | The description uses a construct outside the conformance classes the processor claims, or an optional feature or a codec it does not claim (for example a codec beyond the minimum set, or a chunk order other than row- or column-major), or a parameter value or coding feature of a listed codec that its contract defines but the processor does not implement (Codec contracts), or a character encoding beyond the five every Physical Parser decodes whose character set the processor does not decode (Numbers written as text, separated tokens and varints), or declares a HEL version the processor does not implement: another major version, or a later 1.x version whose functions it calls (HEL, version marker). The asset root and partExtension() outside an asset are a Type / HEL error, not this (Multi-part Assets). Only those; see Refusal. An Unsupported feature error SHOULD be raised when the description is loaded. An Unsupported feature error MUST be raised no later than the first time the construct would affect the result. Distinct from a Description error: the description is valid, this processor cannot run it.",
+   "sha256": "a2a6198ac22bb47a",
    "context": "Processors MUST distinguish and report the following conditions rather than emit a silently-wrong graph:",
    "history": [
     "67b9ad3cf8842035",
@@ -915,7 +1005,8 @@
     "0ecf3594f929e78a",
     "a77fac437dfbb3c9",
     "c07352552f2e0ec3",
-    "cdc6ba2888f04934"
+    "cdc6ba2888f04934",
+    "47fdf937f4c7c2b1"
    ]
   },
   "req-pm-errors-11": {
@@ -1207,6 +1298,91 @@
    "text": "A part that is carried but not parsed (its spec has no abnd:describedBy) MUST still be minted the same way: its root is <part>#root, which the lifting below links and types, and which carries no triple of its own content.",
    "sha256": "6a5d5330e8283c4a"
   },
+  "req-pm-numeric-representation-1": {
+   "page": "specification/processing/index.html",
+   "section": "numeric-representation",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Physical Parser MUST decode each as follows, the field's value being an IEEE 754 value in every case:",
+   "sha256": "aa15d49e6d298cfa"
+  },
+  "req-pm-numeric-representation-2": {
+   "page": "specification/processing/index.html",
+   "section": "numeric-representation",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "bddo:ieee754: binary16, binary32 or binary64 by the data type's width, in the byte order in force.",
+   "sha256": "00095232b432cdc4",
+   "context": "A Physical Parser MUST decode each as follows, the field's value being an IEEE 754 value in every case:"
+  },
+  "req-pm-numeric-representation-3": {
+   "page": "specification/processing/index.html",
+   "section": "numeric-representation",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "bddo:ibmHexadecimal, for a 32- or 64-bit data type: read in the byte order in force, the most significant bit is the sign s, the next seven bits the exponent e, and the remaining 24 or 56 bits the fraction f, an unsigned integer; the number is (−1)^s × f × 16^e − 64 − 6 for 32 bits and (−1)^s × f × 16^e − 64 − 14 for 64 bits. A fraction that is not normalised is read by this formula like any other, and a zero fraction is zero of the stated sign whatever the exponent.",
+   "sha256": "04d70fa3770948c4",
+   "context": "A Physical Parser MUST decode each as follows, the field's value being an IEEE 754 value in every case:"
+  },
+  "req-pm-numeric-representation-4": {
+   "page": "specification/processing/index.html",
+   "section": "numeric-representation",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "bddo:vaxF, for a 32-bit data type (F_floating) or a 64-bit one (D_floating): the bytes are two or four 16-bit words, each stored least significant byte first, the first word the most significant; this order is the format's own, and the byte order in force is not consulted. In the 32 or 64 bits so assembled the most significant bit is the sign s, the next eight the exponent e and the remaining 23 or 55 the fraction f. With e ≠ 0 the number is (−1)^s × (0.5 + f / 2^24) × 2^e − 128 for 32 bits and (−1)^s × (0.5 + f / 2^56) × 2^e − 128 for 64 bits; with e = 0 and s = 0 it is zero, whatever the fraction; e = 0 with s = 1 is VAX's reserved operand, which is no number, and is a validation error.",
+   "sha256": "eb0131eb7b20b6db",
+   "context": "A Physical Parser MUST decode each as follows, the field's value being an IEEE 754 value in every case:"
+  },
+  "req-pm-numeric-representation-5": {
+   "page": "specification/processing/index.html",
+   "section": "numeric-representation",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "bddo:bfloat16, for a 16-bit data type: read in the byte order in force, a sign bit, an eight-bit exponent and a seven-bit fraction, which are the sixteen most significant bits of the IEEE 754 binary32 value whose other sixteen bits are zero. The value is that binary32 value, NaN and the infinities included.",
+   "sha256": "9d65227ca739a507",
+   "context": "A Physical Parser MUST decode each as follows, the field's value being an IEEE 754 value in every case:"
+  },
+  "req-pm-numeric-representation-6": {
+   "page": "specification/processing/index.html",
+   "section": "numeric-representation",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The number an bddo:ibmHexadecimal or bddo:vaxF field holds MUST be converted to the IEEE 754 format of the field's own width, binary32 or binary64, rounding to nearest with ties to even; a magnitude beyond that format's largest finite value becomes the infinity of its sign, and one below its smallest subnormal becomes zero of its sign.",
+   "sha256": "096249627c7621e8"
+  },
+  "req-pm-numeric-representation-7": {
+   "page": "specification/processing/index.html",
+   "section": "numeric-representation",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST raise a description error, when the description is loaded, for a float format on a width it is not defined for: bddo:ibmHexadecimal or bddo:vaxF on a 16-bit type, bddo:bfloat16 on a 32- or 64-bit one.",
+   "sha256": "dcc8d94c622c3bb8"
+  },
+  "req-pm-numeric-representation-8": {
+   "page": "specification/processing/index.html",
+   "section": "numeric-representation",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Physical Parser MUST read the field's value as the non-negative decimal number those digits spell, so the two big-endian bytes 12 34 are 1234 and the same bytes little-endian are 3412.",
+   "sha256": "ff8db983ec41cf46"
+  },
+  "req-pm-numeric-representation-9": {
+   "page": "specification/processing/index.html",
+   "section": "numeric-representation",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A nibble above 9 is no digit: a processor MUST raise a validation error for it, the field's extent being known, so the cursor is sound.",
+   "sha256": "f6ef888a129eed1d"
+  },
   "req-pm-optional-codecs-1": {
    "page": "specification/processing/index.html",
    "section": "optional-codecs",
@@ -1473,13 +1649,14 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Checksum. If bddo:checksum is present, compute the algorithm over the covered byte range — from the first byte of coversFromField, or the offset coversFromExpression yields, to the last byte of coversToField (inclusive), or up to and excluding the offset coversToExpression yields (the two bounds may mix a field and an expression); or the [start, end) range yielded by the deprecated coversExpression — and compare with the stored value; a mismatch raises a checksum error. A coverage bound outside the current (sub-)stream raises a bounds error; a range whose end precedes its start covers nothing and is not checked. The bddo:checksumAlgorithm values are the named algorithms of BDDO, Checksum Algorithms — bddo:crc32 (CRC-32 as in zlib), bddo:crc16 (CRC-16/CCITT-FALSE: polynomial 0x1021, initial value 0xFFFF), the further CRC-8, CRC-16, CRC-32 and CRC-64 variants, bddo:adler32, bddo:md5, bddo:sha1 and bddo:sha256 — and bddo:CustomCrc; an integer checksum is compared numerically, a digest byte for byte. Every CRC, named or custom, is computed by the Rocksoft model with the algorithm's six parameters as BDDO defines it, and compared with the checksum field's value read in the field's own data type, width and byte order. A CRC whose checksum field is not an integer field exactly as wide as the CRC (a bddo:uint16 for a CRC-16, a bddo:uint24 for a 24-bit custom CRC) is a description error. A digest (bddo:md5, bddo:sha1, bddo:sha256) is compared byte for byte with the checksum field's raw bytes, so its checksum field is a bddo:bytes field whose extent is exactly the digest's length — 16, 20 and 32 bytes — given as a literal bddo:size; a digest whose checksum field is not such a field (an integer or string field, a bddo:bytes field of another or of a non-literal size) is a description error, raised when the description is loaded. bddo:adler32 is a 32-bit integer check: its checksum field is an integer field exactly 32 bits wide, as for a CRC-32.",
-   "sha256": "b60ac8e478ddc6fb",
+   "text": "Checksum. If bddo:checksum is present, compute the algorithm over the covered byte range — from the first byte of coversFromField, or the offset coversFromExpression yields, to the last byte of coversToField (inclusive), or up to and excluding the offset coversToExpression yields (the two bounds may mix a field and an expression); or the [start, end) range yielded by the deprecated coversExpression — and compare with the stored value; a mismatch raises a checksum error. A coverage bound outside the current (sub-)stream raises a bounds error; a range whose end precedes its start covers nothing and is not checked. The bddo:checksumAlgorithm values are the named algorithms of BDDO, Checksum Algorithms — bddo:crc32 (CRC-32 as in zlib), bddo:crc16 (CRC-16/CCITT-FALSE: polynomial 0x1021, initial value 0xFFFF), the further CRC-8, CRC-16, CRC-32 and CRC-64 variants, bddo:adler32, bddo:md5, bddo:sha1 and bddo:sha256 — and bddo:CustomCrc; an integer checksum is compared numerically, a digest byte for byte. Every CRC, named or custom, is computed by the Rocksoft model with the algorithm's six parameters as BDDO defines it, and compared with the checksum field's value read in the field's own data type, width and byte order. A CRC whose checksum field is not an integer field exactly as wide as the CRC (a bddo:uint16 for a CRC-16, a bddo:uint24 for a 24-bit custom CRC) is a description error. A digest (bddo:md5, bddo:sha1, bddo:sha256) is compared byte for byte with the checksum field's raw bytes, so its checksum field is a bddo:bytes field whose extent is exactly the digest's length — 16, 20 and 32 bytes — given as a literal bddo:size; a digest whose checksum field is not such a field (an integer or string field, a bddo:bytes field of another or of a non-literal size) is a description error, raised when the description is loaded. bddo:adler32 is a 32-bit integer check: its checksum field is an integer field exactly 32 bits wide, as for a CRC-32. An Adler-32 whose checksum field is not such a field is a description error, exactly as a CRC of another width and a digest whose field is not its bytes are (Checksum fields).",
+   "sha256": "96e74f2a83be8400",
    "context": "A Physical Parser MUST parse a field by these steps, in this order; a step whose property the field does not declare does nothing:",
    "history": [
     "8bdf97ff4687a0ea",
     "9c7f7d2454eface5",
-    "3ea125439989b8d4"
+    "3ea125439989b8d4",
+    "b60ac8e478ddc6fb"
    ]
   },
   "req-pm-parsefield-17": {
@@ -1595,8 +1772,47 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "An offset whose value is negative, or whose target lies outside the innermost bounded region (unless the field declares bddo:seekScope bddo:streamScope, which resolves it against the whole stream as above), MUST raise a bounds error; a target before the struct's start is reachable only through streamStart.",
-   "sha256": "bfa5352919cb0a74"
+   "text": "A parentStart offset whose target lies outside the innermost bounded region (unless the field declares bddo:seekScope bddo:streamScope, which resolves it against the whole stream as above) MUST raise a bounds error; its value is never negative (below), so a target before the struct's start is reachable only through streamStart.",
+   "sha256": "f791d3005b9d2c6d",
+   "history": [
+    "bfa5352919cb0a74"
+   ]
+  },
+  "req-pm-parsefield-30": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST raise a description error, when the description is loaded, for a bddo:checksum on a field that is not of its algorithm's kind and width: for a CRC, named or custom, an integer field exactly as wide as the CRC; for bddo:adler32, an integer field exactly 32 bits wide, so that a bddo:uint16, a bddo:uint64, a bddo:bytes and a string field are each refused; for a digest (bddo:md5, bddo:sha1, bddo:sha256), a bddo:bytes field whose literal bddo:size is the digest's length, 16, 20 or 32 bytes.",
+   "sha256": "8e2965c11c129cce"
+  },
+  "req-pm-parsefield-31": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST apply it once the field's value has been read and its checks made (after the Root key step): the cursor advances to the next multiple of the padding boundary (Alignment and padding).",
+   "sha256": "44112cafd692d3fe"
+  },
+  "req-pm-parsefield-32": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST raise a bounds error for a negative value with any of these three bases, whether the value is a literal, read from a field or computed: a negative distance names no position, and it is never reinterpreted as counting the other way.",
+   "sha256": "40068f05b180509b"
+  },
+  "req-pm-parsefield-33": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "bddo:currentPosition is the one relative base: its value MAY be negative, which moves backward from the cursor, and for it a processor MUST NOT refuse the value for its sign but MUST raise a bounds error when the target lies outside the innermost bounded region (or, with bddo:seekScope bddo:streamScope, outside the stream), exactly as for a positive value.",
+   "sha256": "5fa0428fc3f352a0"
   },
   "req-pm-parsestruct-1": {
    "page": "specification/processing/index.html",
@@ -1699,6 +1915,24 @@
    "text": "A member that is a bddo:LocalBinding is not a field: when its position is reached a processor MUST evaluate its bddo:localExpression with n as instance and bind the result under the binding's name in a local scope of n, which HEL reads by bare name or instance.name from the next member on; the binding consumes no bytes, is not a child of n, and a Null result binds Null.",
    "sha256": "b9fe5c0966dba4d3",
    "context": "A Physical Parser MUST parse a struct by these steps, in this order:"
+  },
+  "req-pm-parsestruct-11": {
+   "page": "specification/processing/index.html",
+   "section": "parsestruct",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST apply it before step 1: the cursor advances to the next multiple of the alignment (Alignment and padding), and only then is a bddo:syncOnMarker searched for and the node's start offset recorded, so the skipped bytes lie before the struct and are not part of its extent.",
+   "sha256": "85157cfce85078b2"
+  },
+  "req-pm-parsestruct-12": {
+   "page": "specification/processing/index.html",
+   "section": "parsestruct",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST apply it after the last member is processed and before the last step: the cursor advances to the next multiple of the padding boundary (Alignment and padding), the skipped bytes are part of the struct's extent, and a struct that also declares a size still ends at start+size.",
+   "sha256": "6b9d3e0df395603d"
   },
   "req-pm-privacy-1": {
    "page": "specification/processing/index.html",
@@ -2156,6 +2390,34 @@
    "text": "For a fixed-size bddo:string field with bddo:trimNull true, a processor MUST decode only the bytes before the field's first NUL code unit, which is located in the raw bytes before any decoding (ParseField, Value), and MUST NOT decode or validate the bytes from that NUL to the end of the field: they are padding, not text, and a sequence there that is not well-formed is not an error.",
    "sha256": "88dd6d603599df6b"
   },
+  "req-pm-text-decoding-5": {
+   "page": "specification/processing/index.html",
+   "section": "text-decoding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor that does not decode the character set of an encoding a description uses — a registered encoding beyond the five, or a bddo:CustomEncoding whose bddo:ianaCharset it has no decoder for — MUST raise an Unsupported feature error, and SHOULD raise it when the description is loaded, since the encoding is stated in the description and not in the data.",
+   "sha256": "740cd01c1f0dae1d"
+  },
+  "req-pm-text-decoding-6": {
+   "page": "specification/processing/index.html",
+   "section": "text-decoding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "It MUST NOT read the field in another encoding, as bytes, or as bddo:latin1 because every byte sequence is well-formed there: text decoded in the wrong character set is a plausible but wrong value.",
+   "sha256": "2af4f405ae397ce7",
+   "context": "A processor that does not decode the character set of an encoding a description uses — a registered encoding beyond the five, or a bddo:CustomEncoding whose bddo:ianaCharset it has no decoder for — MUST raise an Unsupported feature error, and SHOULD raise it when the description is loaded, since the encoding is stated in the description and not in the data."
+  },
+  "req-pm-text-decoding-7": {
+   "page": "specification/processing/index.html",
+   "section": "text-decoding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor that decodes the character set of a bddo:CustomEncoding MUST decode it exactly as it would a registered encoding of that set, so that ex:Latin2 with bddo:ianaCharset \"ISO-8859-2\" and bddo:iso8859_2 read the same bytes as the same text.",
+   "sha256": "7fb88b4db7a708ab"
+  },
   "req-pm-text-numbers-1": {
    "page": "specification/processing/index.html",
    "section": "text-numbers",
@@ -2221,6 +2483,15 @@
    "audience": "processor",
    "text": "A value that does not parse as the declared number is a validation error; it MUST NOT be kept as a string, because an expression reading a declared number cannot tell such a string from a real one.",
    "sha256": "2fa7041e48e9bae6"
+  },
+  "req-pm-value-mapping-1": {
+   "page": "specification/processing/index.html",
+   "section": "value-mapping",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Semantic Emitter MUST emit a mapped field that declares bddo:fixedPointScale k, itself or through its data type, as the number the integer stands for, the integer read times 2^k, in an xsd:decimal literal, which holds every such value exactly: the Q16.16 field holding 00 01 80 00 is emitted \"1.5\"^^xsd:decimal, and a scale of 2 on the integer 3 is emitted \"12\"^^xsd:decimal.",
+   "sha256": "c8cb98efb338a3cb"
   },
   "req-hel-coercion-1": {
    "page": "specification/hel/index.html",
@@ -2515,6 +2786,42 @@
     "588335633120f774"
    ]
   },
+  "req-hel-ext-text-5": {
+   "page": "specification/hel/index.html",
+   "section": "ext-text",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A block escape names a Unicode block by Is and the block's name (\\p{IsBasicLatin}): an evaluator MUST raise an argument error for a \\p{Is…} or \\P{Is…} whose block name it does not know, and for an unknown category, and MUST NOT read an unknown block as matching nothing or everything.",
+   "sha256": "e88e4905dff9db3f"
+  },
+  "req-hel-ext-text-6": {
+   "page": "specification/hel/index.html",
+   "section": "ext-text",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An unescaped - in a character class is a literal hyphen only as the class's first member (after a negating ^) or its last (before the closing ] or a subtraction's -[); anywhere else it MUST form a range between the single characters on either side of it, and a - that does neither ([a-c-e], a range whose end is below its start) is an argument error.",
+   "sha256": "19050c796f667794"
+  },
+  "req-hel-ext-text-7": {
+   "page": "specification/hel/index.html",
+   "section": "ext-text",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The characters that \\p{…}, \\P{…}, \\w, \\W, \\d and the block names denote are those of one version of the Unicode Standard, the version of the implementation's platform: a processor that implements this group MUST state that Unicode version in its claims statement or in the environment of its implementation report (member unicode), so that two reports that disagree on a pattern over a recently assigned character can be told apart by it.",
+   "sha256": "95fb927772feb401"
+  },
+  "req-hel-ext-text-8": {
+   "page": "specification/hel/index.html",
+   "section": "ext-text",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An implementation MAY bound the size and nesting of a pattern it compiles; a pattern that is a HEL-RE expression but too large or too deeply nested for the evaluator to compile MUST be reported as a ResourceLimit error, never as an argument error, which would say the pattern is not HEL-RE, and never as false.",
+   "sha256": "5c35f357e31b409e"
+  },
   "req-hel-extension-groups-1": {
    "page": "specification/hel/index.html",
    "section": "extension-groups",
@@ -2553,6 +2860,15 @@
    "audience": "processor",
    "text": "A FunctionName MUST NOT be a ReservedWord: an evaluator MUST read not(x), not (x) and not x alike, as the not operator applied to x (so not(a) and b is (not a) and b, by precedence), and instance(1), and(), true() are syntax errors, not calls.",
    "sha256": "c8f2dc73f5c42a31"
+  },
+  "req-hel-formal-grammar-4": {
+   "page": "specification/hel/index.html",
+   "section": "formal-grammar",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An evaluator MUST report a syntax error for a root written as a function name (asset(1), param()) and for a root written as a key after a dot (x.param, x.asset, x.stream, x.self, x.root, x.instance): a Step is parent or a Name, and a Name is never a reserved word.",
+   "sha256": "f75e55a4f159fc42"
   },
   "req-hel-key-resolution-1": {
    "page": "specification/hel/index.html",
@@ -2640,6 +2956,25 @@
    "audience": "processor",
    "text": "With d those digits and e the decimal exponent such that the value is 0.d × 10^e, an evaluator MUST write a value whose magnitude is at least 10^−3 and below 10^7 in positional notation — the digits with the point after the e-th, zeros supplied on either side as needed, and at least one digit on each side of the point (123.0, 0.001, 1234567.0) — and every other value in scientific notation: the first digit, a point, the remaining digits or a single 0, then E and the exponent e−1 in decimal with a - when negative and no + (1.0E7, 1.5E-5, 1.7976931348623157E308, 4.9E-324), with a leading - for a negative value.",
    "sha256": "207487c3d81f5ea5"
+  },
+  "req-hel-math-5": {
+   "page": "specification/hel/index.html",
+   "section": "math",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "They are functions of a number's value, not Integer arithmetic: an evaluator MUST accept an unsigned 64-bit Integer above 2^63−1 (Unsigned 64-bit values) as an argument of floor, ceil, trunc, round, abs, min, max and toString, and MUST NOT raise the out-of-range error that arithmetic on such a value raises.",
+   "sha256": "c27eb52c75f04b1f",
+   "context": "They take Integers and Floats only; a Null, Boolean, String, Bytes or node argument is a type error, and an argument count outside what is shown is a syntax error."
+  },
+  "req-hel-math-6": {
+   "page": "specification/hel/index.html",
+   "section": "math",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The rendering is defined by the two rules above and by nothing else: no platform's number formatting is its definition, and an evaluator whose platform function differs on any value (several wrote more digits than the shortest before they were corrected) MUST NOT use it.",
+   "sha256": "f549ec997373dc8a"
   },
   "req-hel-name-binding-1": {
    "page": "specification/hel/index.html",
@@ -2814,6 +3149,15 @@
    "history": [
     "c6827b508facbb9f"
    ]
+  },
+  "req-hel-reserved-roots-5": {
+   "page": "specification/hel/index.html",
+   "section": "reserved-roots",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The stream, a parameter scope and the asset are not struct instances, so a key step taken on stream, param or asset records no holder: an evaluator MUST read stream.length.parent, param.n.parent and asset.Header.parent as Null, as it reads stream.parent, and MUST NOT report them as a key applied to a scalar or resolve them to the current struct.",
+   "sha256": "7f0545488d8cef6a"
   },
   "req-hel-tonumber-1": {
    "page": "specification/hel/index.html",
@@ -3395,8 +3739,11 @@
    "cls": "hdl-compiler",
    "level": "MUST",
    "audience": "processor",
-   "text": "A concept whose register status is catalogue rather than contracted (Processing Model, codec status) has no contract at all, so no processor decodes it; a compiler SHOULD report a WARNING diagnostic, not an ERROR, for @encoded-with, a pipeline step or a switch arm that names a catalogue-only concept, and MUST still compile the description.",
-   "sha256": "65acb818e1b0f507"
+   "text": "A catalogue-only concept, one that carries no hexplain:codecContract (Processing Model, codec status), has no contract at all, so no processor decodes it; a compiler SHOULD report a WARNING diagnostic, not an ERROR, for @encoded-with, a pipeline step or a switch arm that names a catalogue-only concept, and MUST still compile the description.",
+   "sha256": "87e0eedbaa2a2fea",
+   "history": [
+    "65acb818e1b0f507"
+   ]
   },
   "req-hdl-types-1": {
    "page": "specification/hdl/index.html",

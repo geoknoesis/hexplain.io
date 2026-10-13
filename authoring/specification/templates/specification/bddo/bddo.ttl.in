@@ -285,11 +285,11 @@
 :repeatCountFromExpression a owl:DatatypeProperty ; rdfs:label "repeat count from expression"@en ; rdfs:range xsd:string .
 :repeatUntil            a owl:DatatypeProperty ; rdfs:label "repeat until"@en ; rdfs:range xsd:string .
 # Padding is the mirror image of alignment: alignment moves the START of a field or struct to a
-# boundary, padding extends its END to one. Both are relative to the start of the enclosing
-# region, as byte offsets are. The fill byte is what the padding is expected to hold; a
+# boundary, padding extends its END to one. Both are measured from the start of the current
+# stream (Processing Model, Alignment and padding). The fill byte is what the padding is expected to hold; a
 # processor MAY verify it and MUST NOT require it to be stated.
 :padTo                  a owl:DatatypeProperty ; rdfs:label "pad to"@en ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "After this Field's value (or, on a Struct, after its last member) is read, the parser skips forward to the next multiple of this many bytes from the start of the enclosing region; the skipped bytes are padding, neither decoded nor lifted. A value of 1 pads nothing. Distinct from bddo:alignment, which positions where a field STARTS, and from bddo:size, which fixes an extent outright."@en .
+    rdfs:comment "After this Field's value (or, on a Struct, after its last member) is read, the parser skips forward to the next multiple of this many bytes from the start of the current stream, the same origin bddo:alignment uses (a bounded region does not move it); the skipped bytes are padding, part of the subject's extent but neither decoded nor lifted. A value of 1 pads nothing. Distinct from bddo:alignment, which positions where a field STARTS, and from bddo:size, which fixes an extent outright."@en .
 :padByte                a owl:DatatypeProperty ; rdfs:label "pad byte"@en ; rdfs:range xsd:hexBinary ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "The fill byte the padding introduced by bddo:padTo is expected to hold, as one hexBinary octet (\"00\", \"20\", \"FF\"). Informative: a processor MAY verify the padding against it and report a Validation error when it differs, and MUST accept padding when no fill byte is stated. Meaningful only beside bddo:padTo."@en .
 :separatedBy            a owl:DatatypeProperty ; rdfs:label "separated by"@en ; rdfs:range xsd:string ;
@@ -299,7 +299,7 @@
 :atOffsetFromExpression a owl:DatatypeProperty ; rdfs:label "at offset from expression"@en ; rdfs:range xsd:string .
 :offsetBase             a owl:ObjectProperty ; rdfs:label "offset base"@en ; rdfs:range :OffsetBase .
 :alignment              a owl:DatatypeProperty ; rdfs:label "alignment"@en ; rdfs:range xsd:positiveInteger ;
-    rdfs:comment "A byte boundary, relative to the start of the enclosing region, at which the subject starts: before a Field is read, or before each instance of a Struct is read, the parser skips forward to the next multiple of this many bytes. On a Struct it applies to every instance of the struct, wherever it is used; a Field's own alignment is applied after its struct's. A value of 1 aligns nothing. Positions a START; bddo:padTo extends an END."@en .
+    rdfs:comment "A byte boundary at which the subject starts, measured from the start of the current stream (the input stream, or a decoded sub-stream; a bounded region does not move the origin): before a Field is read, or before each instance of a Struct is read, the parser skips forward to the next multiple of this many bytes. On a Struct it applies to every instance of the struct, wherever it is used; a Field that names the struct applies its own alignment first, then the struct's. A value of 1 aligns nothing. Positions a START; bddo:padTo extends an END."@en .
 :hasFixedValue          a owl:DatatypeProperty ; rdfs:label "has fixed value"@en ; rdfs:range rdfs:Literal ;
     rdfs:comment "The literal a parsed field is required to equal, such as a signature or a fixed discriminator: a numeric literal for a numeric field, a string for a text field, an xsd:hexBinary for bytes. A parsed value that differs is a Validation error. At most one; a field whose acceptable values are several states them with bddo:validIf instead."@en .
 :isPresentIf            a owl:DatatypeProperty ; rdfs:label "is present if"@en ; rdfs:range xsd:string .
