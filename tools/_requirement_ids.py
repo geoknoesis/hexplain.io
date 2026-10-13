@@ -199,7 +199,9 @@ class Sentence:
     start: int  # source offset of its first character
     anchors: list = field(default_factory=list)  # IDs of anchors inside it
     inherited: str = None  # level of the "...MUST:" sentence that introduces this item
-    context: str = None  # the sentence before it, when this one opens with a pronoun
+    context: str = None  # what the sentence needs to be read alone: see `sentences` and `standalone`
+    block: Any = None  # the Block the sentence was split from
+    items: list = field(default_factory=list)  # the items of the list or table this sentence introduces
 
     @property
     def keywords(self) -> list[Any]:
@@ -274,9 +276,12 @@ def link_titles(page: Any, source: Any) -> Any:
     return titles
 
 
-def _blocks(source, only_section, titles=None):
-    """Yield one Block per run of text between block-level tags."""
+def _blocks(source, only_section, titles=None, terms=None):
+    """Yield one Block per run of text between block-level tags. `terms`, when given, is filled with what names
+    a block from outside it: {table row: its header cells' text} and {dd element: the text of its dt}."""
     titles = titles or {}
+    terms = {} if terms is None else terms
+    header, last_dt = [], ""
     sections = []  # stack of [id-or-None, heading-slug-or-None]
     elements = []  # stack of (tag, number) of open block elements
     containers = [0]
@@ -313,6 +318,8 @@ def _blocks(source, only_section, titles=None):
         if text and not skip:
             if heading_open:
                 heading_text.append(text)
+            if header:
+                header[-1].append(text)
             if not excluded:
                 for piece in re.finditer(r"&[#A-Za-z0-9]+;|[^&]+|&", text):
                     raw = piece.group()
@@ -347,7 +354,15 @@ def _blocks(source, only_section, titles=None):
             continue
         if name not in BLOCK and name not in EXCLUDED_BLOCK:
             continue
+        if name == "dt" and closing and chars:
+            last_dt = normalise("".join(c for c, _ in chars))
         yield from flush()
+        if name == "th":
+            if closing and header:
+                cell = normalise(html.unescape(re.sub(r"<[^>]+>", "", "".join(header.pop()))))
+                terms[row] = " | ".join(p for p in (terms.get(row, ""), cell) if p)
+            elif not closing:
+                header.append([])
         if closing:
             while elements and elements[-1][0] != name:
                 elements.pop()
@@ -361,6 +376,8 @@ def _blocks(source, only_section, titles=None):
                 containers.append(elements[-1][1])
             if name == "tr":
                 row = elements[-1][1]
+            if name == "dd":
+                terms[elements[-1][1]] = last_dt
         if name == "section":
             if closing:
                 if sections:
@@ -401,6 +418,7 @@ def _split(page, block, inherited=None, text_override=None, context=None):
                 [aid for _, aid in anchors],
                 inherited,
                 context,
+                block,
             )
         ]
     bounds = (
@@ -413,9 +431,8 @@ def _split(page, block, inherited=None, text_override=None, context=None):
         start = a + len(plain[a:b]) - len(plain[a:b].lstrip())
         text = plain[start:b].strip()
         if text:
-            out.append(
-                Sentence(page, block.section, text, chars[start][1], [aid for off, aid in anchors if a <= off < b])
-            )
+            ids = [aid for off, aid in anchors if a <= off < b]
+            out.append(Sentence(page, block.section, text, chars[start][1], ids, block=block))
     return out
 
 
@@ -431,20 +448,21 @@ def sentences(page: Any, source: Any) -> Any:
     # A generated region restates other sources (the term reference restates the RDF); blank it
     # out, keeping every offset, so its sentences are neither anchored nor registered.
     source = GENERATED.sub(lambda m: " " * len(m.group(0)), source)
-    blocks = list(_blocks(source, PAGES[page][1], titles))
+    terms = {}
+    blocks = list(_blocks(source, PAGES[page][1], titles, terms))
     rows = {}
     for block in blocks:
         if block.kind == "td":
             rows.setdefault(block.row, []).append(block)
     out = []
-    pending = None  # (level, container of the introducing sentence, its text)
-    governed = None  # (level, container, introducing text) of the list or table being read
+    pending = None  # (level, container of the introducing sentence, its text, the sentence)
+    governed = None  # (level, container, introducing text, the sentence) of the list or table being read
     seen = set()
     for block in blocks:
         if pending:
             # Only a list or table that directly follows the introducing sentence is governed by it.
             if block.container not in (0, pending[1]):
-                governed = (pending[0], block.container, pending[2])
+                governed = (pending[0], block.container, pending[2], pending[3])
             pending = None
         elif governed and block.container != governed[1] and block.kind not in ("li", "td"):
             governed = None
@@ -457,6 +475,8 @@ def sentences(page: Any, source: Any) -> Any:
             elif block.kind == "td" and rows[block.row][0] is block and not KEYWORD.search(plain):
                 inherit = governed[0]
                 override = " | ".join(normalise("".join(c for c, _ in b.chars)) for b in rows[block.row])
+        if in_governed and block.element not in seen and block.kind in ("li", "td"):
+            governed[3].items.append(normalise("".join(c for c, _ in block.chars)))
         seen.add(block.element)
         # An item of a governed list or table is a fragment on its own ("Integer | An xsd:long literal ..."):
         # the registry records the sentence that introduces the list with it, so the entry stands alone.
@@ -467,14 +487,70 @@ def sentences(page: Any, source: Any) -> Any:
                     s.context = normalise(governed[2])
         for s in items:
             if s.introduces_items and not inherit:
-                pending = (s.level, block.container, s.text)
+                pending = (s.level, block.container, s.text, s)
         out.extend(items)
     # A sentence that opens with a pronoun ("It MUST be raised ...") names its subject in the sentence
     # before it; the registry records that sentence too, so an entry read on its own keeps its subject.
     for before, s in zip(out, out[1:], strict=False):
         if s.is_requirement and not s.inherited and ANAPHOR.match(s.text):
             s.context = normalise(before.text)
+    standalone(out, rows, terms, source)
     return out
+
+
+#: A requirement shorter than this names its subject elsewhere ("Value MUST be a bddo:DataType.").
+SHORT = 60
+#: How much of an introduced item, and of the whole introduced list, a list head's context quotes.
+ITEM_QUOTE, LIST_QUOTE = 160, 1200
+#: A requirement that introduces the rules after it.
+HEAD = re.compile(r"(:|\bas follows\.)$")
+PRE = re.compile(r"\s*(?:</[a-z0-9]+>\s*)*<pre\b[^>]*>(.*?)</pre>", re.S)
+
+
+def clip(text: str, limit: int) -> str:
+    return text if len(text) <= limit else text[: limit - 1].rstrip() + "\u2026"
+
+
+def introduced(s: Sentence, after: list[Sentence], source: str) -> str | None:
+    """What a list head introduces, quoted so the entry reads alone: the items of the list or table it governs;
+    for a head followed by a grammar or an example, the opening of that block; and for a head whose rules follow
+    in its own paragraph ("... as follows. With ..."), those sentences."""
+    if s.items:
+        return clip("Introduces: " + " | ".join(clip(item, ITEM_QUOTE) for item in s.items), LIST_QUOTE)
+    block = PRE.match(source, s.block.chars[-1][1] + 1) if s.block else None
+    if block and s.text.rstrip().endswith(":"):
+        return clip("Introduces: " + normalise(html.unescape(re.sub(r"<[^>]+>", "", block.group(1)))), LIST_QUOTE)
+    rest = [normalise(t.text) for t in after if t.block is s.block]
+    return clip("Introduces: " + " ".join(rest), LIST_QUOTE) if rest else None
+
+
+def surroundings(s: Sentence, before: Sentence | None, rows: dict[int, list[Block]], terms: dict[int, str]) -> str:
+    """The subject of a short requirement: the rest of its table row (its header cell first), or the term a
+    definition belongs to, then the sentence before it."""
+    block, parts = s.block, []
+    if block.kind == "td":
+        parts = [terms.get(block.row, "")]
+        parts += [normalise("".join(c for c, _ in b.chars)) for b in rows[block.row] if b is not block]
+    elif block.kind == "dd":
+        parts = [terms.get(block.element, "")]
+    if before is not None and (before.block is block or not any(parts)):
+        parts.append(normalise(before.text))
+    return clip(" | ".join(p for p in parts if p), LIST_QUOTE)
+
+
+def standalone(out: list[Sentence], rows: dict[int, list[Block]], terms: dict[int, str], source: str) -> None:
+    """Give every requirement that cannot be read alone a context: a list head ("... MUST:", "... as follows.")
+    gets what it introduces, and a short sentence gets its table row or definition term and the sentence before
+    it. A context already set (the introducing sentence of an item, the antecedent of a pronoun) is kept."""
+    before = None
+    for n, s in enumerate(out):
+        if s.is_requirement and not s.inherited and not s.context:
+            head = bool(s.items) or bool(HEAD.search(s.text.rstrip()))
+            if head:
+                s.context = introduced(s, out[n + 1 :], source)
+            if not s.context and (head or len(normalise(s.text)) < SHORT):
+                s.context = surroundings(s, before, rows, terms) or None
+        before = s
 
 
 def read(page: Any) -> Any:

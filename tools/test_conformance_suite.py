@@ -70,6 +70,22 @@ def writer_problems(case_dir: Any, man: Any, writer_requirements: Any) -> list[s
     return problems
 
 
+#: A registry entry shorter than this, or one that introduces the rules after it, cannot be read alone.
+SHORT_REQUIREMENT = 60
+
+
+def context_problems(registry: dict[str, Any]) -> list[str]:
+    """Every live requirement that is a list head or a short sentence carries a `context` (the generator,
+    tools/_requirement_ids.py, records what the head introduces, or the short sentence's surroundings)."""
+    problems = []
+    for rid, entry in registry.items():
+        text = entry["text"].rstrip()
+        head = text.endswith((":", "as follows."))
+        if not entry.get("withdrawn") and (head or len(text) < SHORT_REQUIREMENT) and not entry.get("context"):
+            problems.append(f"{rid}: a list head or short requirement without a context: {text[:70]!r}")
+    return problems
+
+
 def section_ids(document: Any) -> Any:
     """The element ids of a page named as a case's section document (`processing`, `hel/index.html`)."""
     path = ROOT / "specification" / (document if "/" in document else f"{document}/index.html")
@@ -91,6 +107,7 @@ def main() -> int:
 
     registry = json.loads((SUITE / "requirements.json").read_text(encoding="utf-8"))["requirements"]
     live = {i for i, e in registry.items() if not e.get("withdrawn")}
+    problems += context_problems(registry)
     features = set(feature_tokens())
     pages = {}
     counts = {cls: 0 for cls in CLASSES}

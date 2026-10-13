@@ -58,6 +58,16 @@ rewritten.
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### Second re-review of the normative documents (2026-10-13)
+
+- **Registry entries read alone (F16).** `tools/_requirement_ids.py` gives a `context` to every
+  requirement that cannot be read on its own: a list head (a sentence ending in a colon or in
+  "as follows.") records what it introduces -- the items of the list or table it governs, the
+  grammar after it, or the rules that follow in its paragraph -- and a sentence shorter than 60
+  characters records its table row (header cell first) or the term its definition belongs to, and
+  the sentence before it. No requirement text or hash changes. `test_conformance_suite.py` fails
+  on a live entry of either kind without a context.
+
 ### The reference implementation claims `writer` (2026-10-13)
 
 No requirement text, case or identifier changed; the suite is the 803 cases of digest
