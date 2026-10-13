@@ -190,6 +190,8 @@ IRIs.
   that has not changed.
 - **Gate manifest.** `test_vocab_shapes` is allowed an hour: it recorded 479 s on a loaded host,
   and the manifest's rule is ten times the recorded duration, at most an hour.
+  The runner retries the atomic replace of its run record, which a scanner holding the file
+  open made fail with a PermissionError on Windows.
 - **Suite corrections.** `hc-encoded-with-catalogue-codec` binds `menc:` with `use`, as
   `req-hdl-prefixes-1` requires, so its only possible diagnostic is the warning it tests;
   `pp-claims-statement` accepts the `writer` feature token. The suite has 744 cases and the

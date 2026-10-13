@@ -286,6 +286,10 @@ def manifest_digest(manifest: dict[str, str]) -> str:
     return hashlib.sha256(json.dumps(manifest, sort_keys=True).encode("utf-8")).hexdigest()
 
 
+#: How often the run record's atomic replace is tried before a PermissionError is let through.
+REPLACE_ATTEMPTS = 20
+
+
 def load_gate_manifest(root: Path) -> dict[str, dict[str, Any]] | None:
     """The declared gates of tools/gates.json by name, or None when a tree declares none.
 
@@ -486,7 +490,17 @@ def main(root: Path, excluded: set[str], argv: list[str] | None = None) -> int:
             evidence["gates"] = [records[name] for name in sorted(records)]
             temporary = destination.with_suffix(destination.suffix + ".tmp")
             temporary.write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8", newline="\n")
-            temporary.replace(destination)
+            # On Windows a scanner or indexer that has the record open makes the replace fail with
+            # PermissionError for a moment; the record is rewritten after every gate, so a short retry
+            # is all it takes, and the last attempt raises like the first would have.
+            for attempt in range(REPLACE_ATTEMPTS):
+                try:
+                    temporary.replace(destination)
+                    break
+                except PermissionError:
+                    if attempt == REPLACE_ATTEMPTS - 1:
+                        raise
+                    time.sleep(0.05 * (attempt + 1))
 
     save()  # Replace stale results before starting any gate.
     stream = jobs == 1
