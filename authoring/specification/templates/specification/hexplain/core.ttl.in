@@ -111,6 +111,8 @@
     rdfs:comment "The codec's kind. A pipeline whose adjacent steps' kinds do not connect is refused when the description is loaded."@en .
 :keepsSession a owl:DatatypeProperty ; rdfs:label "keeps session"@en ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "True when the codec keeps state across blocks (JPEG tables, a CCITT reference line across strips). The processor creates the session at a scope a later profile property declares, and passes it to every call."@en .
+:encodes a owl:DatatypeProperty ; rdfs:label "encodes"@en ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
+    rdfs:comment "True when the contract covers the encode direction as well as decode: the codec's normative vector suite then holds encode steps and at least one round trip (an encode step whose output the next decode step reads back to the encode step's input), and a writer may select the codec. Absent or false, the contract is decode-only: its suite holds no encode step, and a processor asked to encode with the codec raises an Unsupported error."@en .
 :raisesCategory a owl:DatatypeProperty ; rdfs:label "raises category"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "A Processing Model error category the codec may raise while it runs, by its conformance-suite notation: Validation, Checksum, Unsupported, ResourceLimit or Description (a parameter value the contract admits but the codec cannot act on, found only when the step runs)."@en .
 :CodecParameterSpec a owl:Class ; rdfs:label "Codec Parameter Spec"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
@@ -332,7 +334,7 @@ hexplain:CodecContractBindingShape a sh:NodeShape ;
 hexplain:CodecContractShape a sh:NodeShape ;
     sh:targetClass hexplain:CodecContract ;
     sh:targetSubjectsOf hexplain:contractVersion , hexplain:vectorSuiteVersion , hexplain:codecKind ,
-        hexplain:keepsSession , hexplain:raisesCategory , hexplain:declaresParameter ;
+        hexplain:keepsSession , hexplain:encodes , hexplain:raisesCategory , hexplain:declaresParameter ;
     sh:property [ sh:path hexplain:contractVersion ; sh:datatype xsd:integer ; sh:minInclusive 1 ;
         sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "A codec contract states exactly one hexplain:contractVersion, a positive integer." ] ;
@@ -344,6 +346,8 @@ hexplain:CodecContractShape a sh:NodeShape ;
         sh:message "A codec contract states exactly one hexplain:codecKind." ] ;
     sh:property [ sh:path hexplain:keepsSession ; sh:datatype xsd:boolean ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "A codec contract states hexplain:keepsSession once, as a boolean." ] ;
+    sh:property [ sh:path hexplain:encodes ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
+        sh:message "hexplain:encodes takes at most one value, an xsd:boolean literal." ] ;
     sh:property [ sh:path hexplain:raisesCategory ; sh:datatype xsd:string ;
         sh:in ( "Validation" "Checksum" "Unsupported" "ResourceLimit" "Description" ) ;
         sh:message "hexplain:raisesCategory is one of Validation, Checksum, Unsupported, ResourceLimit and Description." ] ;

@@ -5,13 +5,15 @@ tools/test_codec_contracts.py checks that a suite is well formed; this gate chec
   * every category the contract declares with hexplain:raisesCategory is expected by at least one step
     (a limit, a truncation or corruption, a flipped check, a refused coding feature);
   * every parameter the contract declares is passed by at least one step;
-  * a codec whose contract encodes -- the register says so with hexplain:encodes, or, until the register
-    states it, the suite already carries an encode step -- has at least one round trip: an encode step
-    followed, in the same vector, by a decode step whose input is the encode step's expected output and
-    whose expected output is the encode step's input (Processing Model, Serialisation, symmetry).
+  * a codec whose contract encodes (hexplain:encodes true on the contract) has at least one round trip: an
+    encode step followed, in the same vector, by a decode step whose input is the encode step's expected
+    output and whose expected output is the encode step's input (Processing Model, Serialisation, symmetry);
+  * a codec whose contract does not state hexplain:encodes true has no encode step at all: the register, not
+    the suite, says which direction a contract covers.
 A declared category that no input of any known implementation raises is a defect of the contract, not of
 the suite: the manifest records it under "unreached" with the reason, this gate reports it as a WARN line
-rather than a failure, and the register is to withdraw the category. Nothing else is exempt.
+rather than a failure, and the register is to withdraw the category (none is recorded today). Nothing else
+is exempt.
 """
 
 from __future__ import annotations
@@ -108,7 +110,12 @@ def problems(manifest: Any, contract: Any, declared_categories: Any, encodes: An
         out.append(f"the contract declares hexplain:raisesCategory {category}, and no step expects it")
     for name in sorted(set(contract["parameters"]) - params):
         out.append(f"the contract declares the parameter {name}, and no step passes it")
-    if (encodes or "encode" in directions) and not round_trips(manifest):
+    if "encode" in directions and not encodes:
+        out.append(
+            "a step encodes, and the contract does not state hexplain:encodes true (the register says which "
+            "directions a contract covers)"
+        )
+    if encodes and not round_trips(manifest):
         out.append(
             "the codec encodes, and no vector holds a round trip (an encode step whose expected output the next "
             "decode step reads back to the encode step's input)"
@@ -167,6 +174,10 @@ def main() -> int:
         ]
     }
     assert round_trips(trip) == ["rt"], "the round-trip check no longer recognises one"
+    assert problems(trip, {"parameters": {}}, set(), True) == [], "a round trip of an encoding contract was refused"
+    assert len(problems(trip, {"parameters": {}}, set(), False)) == 1, (
+        "an encode step under a contract that does not state hexplain:encodes went unnoticed"
+    )
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures))
         return 1
