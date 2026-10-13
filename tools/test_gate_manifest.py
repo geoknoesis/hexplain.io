@@ -10,8 +10,9 @@ No timeout is chosen by hand. Each is what tools/_gate_cost.derive_timeout makes
 duration in the tracked cost record (tools/gate-costs.json): ten times the recorded duration,
 rounded up to five minutes, at least five minutes and at most an hour; a gate added since the last
 recording has no duration yet and gets the minimum. The record names no gate the manifest lacks,
-and the workflow job limits must leave room for the gate timeouts they contain. ``pytest tools``
-must collect the same offline gates.
+and the workflow job limits must leave room for the gate timeouts they contain. The figures
+CONTRIBUTING.md gives for the suite's cost are the record's own, and ``pytest tools`` must
+collect the same offline gates.
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from _gate_cost import COSTS, derive_timeout, load_costs, read_record
+from _gate_cost import COSTS, derive_timeout, evidence_rows, load_costs, read_record
 from _gate_runner import GATE_CLASSES, WORKER_CAP, Gate, load_gate_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,6 +76,22 @@ def check_timeouts(manifest: dict[str, Gate]) -> str:
     unrecorded = sorted(name for name, entry in manifest.items() if entry["class"] == "offline" and name not in costs)
     covered = f"{len(costs)} recorded costs"
     return covered + (f" ({', '.join(unrecorded)} not yet recorded: minimum timeout)" if unrecorded else "")
+
+
+def check_evidence_note() -> None:
+    """The contributor guide quotes the offline run of the record, figure for figure."""
+    guide = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
+    assert "\n## Gate cost\n" in guide, "CONTRIBUTING.md has no 'Gate cost' section"
+    section = guide.split("\n## Gate cost\n", 1)[1].split("\n## ", 1)[0]
+    missing = [row for row in evidence_rows(read_record(ROOT)["runs"]["offline"]) if row not in section]
+    assert not missing, (
+        f"the 'Gate cost' section of CONTRIBUTING.md does not quote {COSTS} "
+        "(print the rows with `python tools/_gate_cost.py --note`):\n  " + "\n  ".join(missing)
+    )
+    for workflow in (VALIDATE_WORKFLOW, SITE_WORKFLOW):
+        assert "Gate cost" in workflow.read_text(encoding="utf-8"), (
+            f"{workflow.name} must cite the 'Gate cost' section rather than restate figures that go stale"
+        )
 
 
 def job_limit_seconds(workflow: Path, job: str) -> int:
@@ -134,6 +151,7 @@ def main() -> int:
     check_declarations(manifest)
     recorded = check_timeouts(manifest)
     check_workflows(manifest)
+    check_evidence_note()
     collection = check_pytest_collection(manifest)
     by_class = {c: sum(e["class"] == c for e in manifest.values()) for c in GATE_CLASSES}
     print(

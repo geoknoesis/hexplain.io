@@ -10,6 +10,10 @@ target any module declares, a one-triple case that the target would select must 
 module in; imports and shapes-only companions must follow; and the only custom targets may be
 the register-binding ones the selection models. Two real fixtures on which the homes of their
 terms alone are not enough are then validated both ways, and the reports must be the same.
+
+A graph given to pySHACL as shapes must not also be the context of a data graph: pySHACL
+writes subclass axioms into it that change later verdicts. The check shows the effect on a
+shared graph and that ``specgraph.context_and_shapes`` keeps the data side clean.
 """
 
 from __future__ import annotations
@@ -180,7 +184,7 @@ def results(report: Graph) -> Counter[tuple[str, ...]]:
 
 def check_equivalence() -> list[str]:
     """Fixtures whose selection needs more than their terms' homes report the same either way."""
-    family = specgraph.shapes_of(specgraph.ontology_paths())
+    family, family_shapes = specgraph.context_and_shapes(specgraph.ontology_paths())
     fixtures = sorted(
         path
         for depth in ("specification/*/test/", "specification/*/*/test/")
@@ -192,9 +196,9 @@ def check_equivalence() -> list[str]:
         files = specgraph.modules_used_by(data)
         if set(files) <= set(specgraph.modules_for(specgraph.namespaces_in(data))):
             continue  # The homes of its terms already select everything: no aimed-in module to prove.
-        context = specgraph.shapes_of(files)
-        narrow = validate(context + data, shacl_graph=context, inference="none", advanced=True)
-        whole = validate(family + data, shacl_graph=family, inference="none", advanced=True)
+        context, shapes = specgraph.context_and_shapes(files)
+        narrow = validate(context + data, shacl_graph=shapes, inference="none", advanced=True)
+        whole = validate(family + data, shacl_graph=family_shapes, inference="none", advanced=True)
         assert bool(narrow[0]) == bool(whole[0]), f"{path}: verdict differs between its selection and the family"
         assert results(narrow[1]) == results(whole[1]), (
             f"{path}: validated with its {len(files)} selected modules it reports differently than with the family",
@@ -208,7 +212,43 @@ def check_equivalence() -> list[str]:
     return sampled
 
 
+def check_shapes_stay_out_of_data() -> None:
+    """The graph a case's data is built from never acquires the axioms pySHACL writes into shapes graphs."""
+    probe_shapes = Graph().parse(
+        data="""@prefix sh: <http://www.w3.org/ns/shacl#> . @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+<urn:specgraph-test:Shape> a sh:NodeShape ; sh:targetNode <urn:specgraph-test:p> ; sh:class rdf:Property .""",
+        format="turtle",
+    )
+    case = Graph().parse(
+        data="""@prefix owl: <http://www.w3.org/2002/07/owl#> .
+<urn:specgraph-test:p> a owl:DatatypeProperty .""",
+        format="turtle",
+    )
+    # What goes wrong when one graph is both: after the first call it holds pySHACL's axioms, and
+    # as data they make an owl:DatatypeProperty an rdf:Property -- the second verdict differs.
+    both = Graph() + probe_shapes
+    first = validate(both + case, shacl_graph=both, inference="none")[0]
+    second = validate(both + case, shacl_graph=both, inference="none")[0]
+    assert (first, second) == (False, True), (
+        "pySHACL no longer leaks its axioms through a shared shapes graph; context_and_shapes may be simplified",
+        first,
+        second,
+    )
+    assert specgraph.pyshacl_axioms_in(both) == list(specgraph.PYSHACL_AXIOMS)
+    # context_and_shapes keeps the two apart, so every call gives the first verdict.
+    files = specgraph.modules_for(sorted(specgraph.family_namespaces())[:1])
+    context, shapes = specgraph.context_and_shapes(files)
+    assert context is not shapes and len(context) == len(shapes) > 0
+    verdicts = [validate(context + case, shacl_graph=shapes + probe_shapes, inference="none")[0] for _ in range(2)]
+    for _ in range(2):
+        validate(context + case, shacl_graph=shapes, inference="none")
+    assert specgraph.pyshacl_axioms_in(context) == [], "the data-side context acquired pySHACL's axioms"
+    assert specgraph.pyshacl_axioms_in(shapes) == list(specgraph.PYSHACL_AXIOMS)
+    assert verdicts == [False, False], verdicts
+
+
 def main() -> int:
+    check_shapes_stay_out_of_data()
     with tempfile.TemporaryDirectory() as temp:
         check_prune(Path(temp))
     with tempfile.TemporaryDirectory() as temp:

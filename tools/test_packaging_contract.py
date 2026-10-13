@@ -7,7 +7,8 @@ fsmeta and what they import), not the whole family: the case's triples and those
 triples are the data graph, and those modules' shapes are the shapes graph. The class hierarchy
 a case relies on (an archive entry is a packaging entry) is in that context; the thirty-odd
 modules a packaging case never mentions are not, and validating against them cost twenty times
-the time for the same verdicts.
+the time for the same verdicts. The context copied into each data graph and the graph given to
+pySHACL as shapes are separate objects (``specgraph.context_and_shapes`` says why).
 """
 
 from __future__ import annotations
@@ -60,9 +61,9 @@ CASES: list[tuple[str, str, bool, URIRef | None]] = [
 
 def main() -> int:
     parsed = [(name, Graph().parse(data=PREFIX + ttl, format="turtle"), ok, path) for name, ttl, ok, path in CASES]
-    context = specgraph.shapes_of(specgraph.modules_used_by(*(data for _, data, _, _ in parsed)))
+    context, shapes = specgraph.context_and_shapes(specgraph.modules_used_by(*(data for _, data, _, _ in parsed)))
     for name, data, expected, path in parsed:
-        actual, report, detail = validate(context + data, shacl_graph=context, inference="none", advanced=True)
+        actual, report, detail = validate(context + data, shacl_graph=shapes, inference="none", advanced=True)
         assert bool(actual) == expected, (name, detail)
         if path:
             assert path in set(report.objects(None, SH.resultPath)), (name, detail)

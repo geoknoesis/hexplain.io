@@ -79,10 +79,10 @@ def fixture_paths() -> list[str]:
 
 @functools.cache
 def shapes_for(ont: tuple[str, ...]) -> Graph:
-    """One graph per distinct module set, reused by every fixture with that context; never modified.
+    """One shapes graph per distinct module set, reused by every fixture of that module.
 
-    It is the shapes graph of a fixture and, with the fixture's own triples added to a copy, the
-    ontology context of its data graph.
+    Only ever a shapes graph: pySHACL writes axioms of its own into it (see
+    ``specgraph.context_and_shapes``), so a fixture's data graph is parsed separately.
     """
     return load(list(ont))
 
@@ -159,8 +159,8 @@ def check(path: str) -> str | None:
     """Validate one fixture, returning a failure description or None."""
     should_conform = path.endswith("-valid.ttl")
     ont = ontologies_for(path)
+    data = load(ont + [path])
     shapes = shapes_for(tuple(ont))
-    data = shapes + load([path])
     conforms, report_graph, report = validate(
         data, shacl_graph=shapes, inference="none", advanced=True, meta_shacl=False
     )

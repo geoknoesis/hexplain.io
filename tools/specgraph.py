@@ -31,7 +31,7 @@ from _module_selection import family_namespaces as family_namespaces
 from _module_selection import modules_for as modules_for
 from _module_selection import modules_used_by as modules_used_by
 from _module_selection import namespaces_in as namespaces_in
-from rdflib import Graph
+from rdflib import OWL, RDF, RDFS, Graph, URIRef
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE_DIR = ROOT / ".gate-results/family-cache"
@@ -40,6 +40,8 @@ MANIFEST_ENV = "HEXPLAIN_SOURCE_MANIFEST_SHA256"
 CACHE_KEEP = 3
 #: Seconds after which a temporary cache file is taken to be abandoned rather than in progress.
 STALE_TEMPORARY = 600
+#: What pySHACL adds to any graph it is given as a shapes graph (pyshacl.ShapesGraph.system_triples).
+PYSHACL_AXIOMS = ((OWL.Class, RDFS.subClassOf, RDFS.Class), (OWL.DatatypeProperty, RDFS.subClassOf, RDF.Property))
 
 
 def load(paths: Iterable[str | Path]) -> Graph:
@@ -179,3 +181,22 @@ def shapes() -> Graph:
 def shapes_of(files: Iterable[str]) -> Graph:
     """The shapes graph of the given family files (repository-relative paths); a fresh graph."""
     return load(files)
+
+
+def context_and_shapes(files: Iterable[str]) -> tuple[Graph, Graph]:
+    """Two separate graphs of ``files``: one to add a case's triples to, one to give pySHACL as shapes.
+
+    They must not be one object. pySHACL writes :data:`PYSHACL_AXIOMS` into whatever graph it is
+    handed as shapes; if that graph is then also the ontology context of the next case's data,
+    ``sh:class rdf:Property`` begins to accept an ``owl:DatatypeProperty`` there -- an inference
+    nobody asked for, present for every case but the first, so that a verdict could depend on
+    the order the cases run in. The first graph is never given to pySHACL as shapes and stays
+    what the files say; copy it into each data graph (``context + case``).
+    """
+    files = list(files)
+    return shapes_of(files), shapes_of(files)
+
+
+def pyshacl_axioms_in(graph: Graph) -> list[tuple[URIRef, URIRef, URIRef]]:
+    """The axioms pySHACL adds to shapes graphs that ``graph`` holds (none, for a graph kept as data)."""
+    return [axiom for axiom in PYSHACL_AXIOMS if axiom in graph]

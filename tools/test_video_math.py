@@ -46,9 +46,9 @@ def cases() -> list[tuple[str, bool, Graph]]:
 
 def main() -> int:
     rows = cases()
-    context = specgraph.shapes_of(specgraph.modules_used_by(*(data for _, _, data in rows)))
+    context, shapes = specgraph.context_and_shapes(specgraph.modules_used_by(*(data for _, _, data in rows)))
     for case, expected, data in rows:
-        conforms, _, report = validate(context + data, shacl_graph=context, advanced=True)
+        conforms, _, report = validate(context + data, shacl_graph=shapes, advanced=True)
         assert conforms == expected, (case, report)
     assert "specification/vdv/video.ttl" in specgraph.ontology_paths()
     print(f"PASS: {len(rows)} video numeric/rational cases through the family's video shapes")

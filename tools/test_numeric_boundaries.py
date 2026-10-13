@@ -91,11 +91,11 @@ def targeted(shapes: Graph, node: BNode) -> Graph:
 
 def main() -> int:
     rows = cases()
-    context = specgraph.shapes_of(specgraph.modules_used_by(*(case.graph for case in rows)))
+    context, shapes = specgraph.context_and_shapes(specgraph.modules_used_by(*(case.graph for case in rows)))
     failures = []
     for case in rows:
-        shapes = context if case.target is None else targeted(context, case.target)
-        actual = bool(validate(context + case.graph, shacl_graph=shapes, advanced=True)[0])
+        aimed = shapes if case.target is None else targeted(shapes, case.target)
+        actual = bool(validate(context + case.graph, shacl_graph=aimed, advanced=True)[0])
         if actual != case.expected:
             failures.append(f"{case.name}: expected {case.expected}, got {actual}")
     assert not failures, "\n".join(failures)

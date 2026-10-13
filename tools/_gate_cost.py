@@ -163,6 +163,25 @@ def derive_timeouts(root: Path) -> list[str]:
     return changed
 
 
+def evidence_rows(run: dict[str, Any]) -> list[str]:
+    """One recorded run as the Markdown table rows the contributor guide quotes.
+
+    ``python tools/_gate_cost.py --note`` prints them for every recorded class, and
+    tools/test_gate_manifest.py requires the guide to hold the offline run's rows verbatim, so
+    the figures a reader is given cannot drift from the record they are read from.
+    """
+    return [
+        f"| Recorded (UTC) | {run['recorded_utc'][:19]} |",
+        f"| Host | {run['platform']}; {run['cpu_count']} logical CPUs; {run['memory_mb']} MiB; "
+        f"Python {run['python']} |",
+        f"| Host load when the run began | {run['cpu_busy_percent_at_start']} % of the CPUs already busy; "
+        f"{run['available_mb_at_start']} MiB free |",
+        f"| Gates run, at `--jobs` | {run['gates']}, at {run['jobs']} |",
+        f"| Wall clock | {run['wall_clock_s']} s |",
+        f"| Sum of the gates' durations | {run['sequential_sum_s']} s |",
+    ]
+
+
 def summarise(path: Path | str) -> dict[str, Any]:
     """The totals and orderings of one finished run record."""
     path = Path(path)
@@ -222,8 +241,12 @@ def render(summary: dict[str, Any], top: int = 10) -> str:
 
 
 def main(argv: list[str]) -> int:
+    if argv == ["--note"]:
+        for gate_class, run in read_record(Path(__file__).resolve().parents[1])["runs"].items():
+            print(f"{gate_class}:\n" + "\n".join(evidence_rows(run)))
+        return 0
     if len(argv) != 1:
-        raise SystemExit("usage: _gate_cost.py <.gate-results/summary.json>")
+        raise SystemExit("usage: _gate_cost.py <.gate-results/summary.json> | --note")
     print(render(summarise(argv[0])))
     return 0
 
