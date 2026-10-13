@@ -76,6 +76,19 @@ FORMAT_WORDS = {
 #: specifying document is not a format leaking in -- bddo already carries crc32, adler32, md5
 #: and sha256 on exactly that basis.
 EXEMPT = {
+    "ieee754":
+        "A floating-point BIT LAYOUT named after its specifying standard, as bddo:crc32 and bddo:md5 "
+        "are named after theirs: the bddo:FloatFormat individual for IEEE 754 binary interchange, the "
+        "default against which bddo:ibmHexadecimal, bddo:vaxF and bddo:bfloat16 are the exceptions. "
+        "No format and no jurisdiction is named; a descriptive rename (binaryInterchange) would be "
+        "less precise, since the standard is what fixes the bit layout.",
+    **{name:
+       "A CHARACTER SET named by the document that defines it, as bddo:crc32 and bddo:ieee754 are: "
+       "the bddo:Encoding individual for one part of ISO/IEC 8859 (or for Shift_JIS, whose name "
+       "contains a standards body's). The name is the charset's own; no file format is named and "
+       "no authority's policy is encoded. A descriptive alias (latin2, cyrillic) names a script "
+       "several charsets cover and would be ambiguous."
+       for name in ("iso8859_2", "iso8859_5", "iso8859_7", "iso8859_9", "iso8859_15", "shiftJis")},
     "sqliteVarint":
         "An integer ENCODING, not a format. SQLite specifies it the way DWARF specifies "
         "LEB128, and it is used across GeoPackage, MBTiles and Rasterlite rather than by one "

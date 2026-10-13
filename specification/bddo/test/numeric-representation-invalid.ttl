@@ -1,0 +1,37 @@
+# expect: ex:FloatOnInteger bddo:NumericRepresentationShape sh:SPARQLConstraintComponent
+# expect: ex:BcdOnFloat bddo:NumericRepresentationShape sh:SPARQLConstraintComponent
+# expect: ex:ScaleOnFloatType bddo:NumericRepresentationShape sh:SPARQLConstraintComponent
+# expect: ex:ScaledBcd bddo:NumericRepresentationShape sh:NotConstraintComponent
+# expect: ex:UnknownFormat bddo:FieldShape sh:InConstraintComponent
+# expect: ex:TwoFormats bddo:FieldShape sh:MaxCountConstraintComponent
+# expect: ex:TextScale bddo:RangeDatatypeShape sh:NodeConstraintComponent
+# expect: ex:TextBcd bddo:RangeDatatypeShape sh:DatatypeConstraintComponent
+# expect: ex:TwoScales bddo:FieldShape sh:MaxCountConstraintComponent
+# expect: ex:TwoBcd bddo:FieldShape sh:MaxCountConstraintComponent
+# expect: ex:TypeUnknownFormat bddo:DataTypeShape sh:InConstraintComponent
+# expect: ex:TypeTwoFormats bddo:DataTypeShape sh:MaxCountConstraintComponent
+# expect: ex:TypeTwoScales bddo:DataTypeShape sh:MaxCountConstraintComponent
+# expect: ex:TypeTextBcd bddo:DataTypeShape sh:DatatypeConstraintComponent
+# expect: ex:TypeTwoBcd bddo:DataTypeShape sh:MaxCountConstraintComponent
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/num#> .
+
+ex:FloatOnInteger a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:floatFormat bddo:ibmHexadecimal .
+ex:BcdOnFloat a bddo:Field ; bddo:dataType bddo:float32 ; bddo:bcd true .
+ex:ScaleOnFloatType a bddo:DataType ; bddo:baseType bddo:baseFloat ; bddo:bitWidth 32 ; bddo:fixedPointScale -8 .
+ex:ScaledBcd a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:bcd true ; bddo:fixedPointScale -2 .
+ex:UnknownFormat a bddo:Field ; bddo:dataType bddo:float32 ; bddo:floatFormat ex:cray .
+ex:TwoFormats a bddo:Field ; bddo:dataType bddo:float32 ; bddo:floatFormat bddo:ieee754 , bddo:vaxF .
+ex:TextScale a bddo:Field ; bddo:dataType bddo:int16 ; bddo:fixedPointScale "-16" .
+ex:TextBcd a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:bcd "yes" .
+# Each representation property is stated at most once, on a field and on a profile's own datatype alike.
+ex:TwoScales a bddo:Field ; bddo:dataType bddo:int16 ; bddo:fixedPointScale -8 , -16 .
+ex:TwoBcd a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:bcd true , false .
+ex:TypeUnknownFormat a bddo:DataType ; bddo:baseType bddo:baseFloat ; bddo:bitWidth 64 ; bddo:floatFormat ex:cray .
+ex:TypeTwoFormats a bddo:DataType ; bddo:baseType bddo:baseFloat ; bddo:bitWidth 32 ; bddo:floatFormat bddo:ibmHexadecimal , bddo:vaxF .
+ex:TypeTwoScales a bddo:DataType ; bddo:baseType bddo:baseInteger ; bddo:bitWidth 16 ; bddo:isSigned true ; bddo:fixedPointScale -8 , -16 .
+ex:TypeTextBcd a bddo:DataType ; bddo:baseType bddo:baseInteger ; bddo:bitWidth 32 ; bddo:isSigned false ; bddo:bcd "yes" .
+ex:TypeTwoBcd a bddo:DataType ; bddo:baseType bddo:baseInteger ; bddo:bitWidth 32 ; bddo:isSigned false ; bddo:bcd true , false .

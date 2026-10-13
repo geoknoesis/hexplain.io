@@ -1,0 +1,11 @@
+# A field's bit order overrides its struct's: the flags here are read MSB-first inside a struct
+# whose other bit fields are LSB-first.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/bits#> .
+
+ex:Header a bddo:Struct ; bddo:bitOrder bddo:LSBFirst ; bddo:hasField ( ex:Header.version ex:Header.flags ) .
+ex:Header.version a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 4 .
+ex:Header.flags a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 4 ; bddo:bitOrder bddo:MSBFirst .

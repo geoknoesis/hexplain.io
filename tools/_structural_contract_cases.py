@@ -12,7 +12,10 @@ def cases():
         ('RecordGrouping',{'groupingStyle':'b:keyedGroup','groupOpenToken':'"BEGIN"','groupCloseToken':'"END"'},{'groupingStyle':'b:valuedGroup','groupOpenToken':'"OPEN"','groupCloseToken':'"CLOSE"'},{'groupingStyle':'ex:unknown','groupOpenToken':'1','groupCloseToken':'1'}),
         ('NamespaceBinding',{'namespacePrefix':'"x"','namespaceIRI':'"urn:x:"^^xsd:anyURI'},{'namespacePrefix':'"y"','namespaceIRI':'"urn:y:"^^xsd:anyURI'},{'namespacePrefix':'1','namespaceIRI':'1'}),
         ('Checksum',{'checksumAlgorithm':'b:crc32'},{'checksumAlgorithm':'b:sha256'},{'checksumAlgorithm':'ex:unknown'})]:
-        def body(v):return 'ex:f a b:'+cls+'. '+''.join('ex:f b:'+p+' '+value+'. ' for p,value in v.items())
+        # A checksum must bound the bytes it covers (bddo:ChecksumShape); the bounds are fixed here
+        # so that the cases below exercise the algorithm property alone.
+        context={'Checksum':'ex:f b:coversFromField ex:count; b:coversToField ex:other. '}.get(cls,'')
+        def body(v):return 'ex:f a b:'+cls+'. '+context+''.join('ex:f b:'+p+' '+value+'. ' for p,value in v.items())
         add(cls+' valid',body(values),True)
         for prop in values:
             for label,value in [('missing',None),('duplicate',values[prop]+','+alternatives[prop]),('invalid',invalid[prop])]:

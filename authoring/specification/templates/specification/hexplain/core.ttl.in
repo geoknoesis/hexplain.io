@@ -16,7 +16,7 @@
 <https://hexplain.io/ns/core> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/core/1.3> ; owl:versionInfo "1.3" ;
     owl:priorVersion <https://hexplain.io/ns/core/1.2> ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-12"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/bddo> , <https://hexplain.io/ns/dlv> ;
     rdfs:label "Hexplain Core Ontology"@en ;
     rdfs:comment "Properties linking the physical, layout, and semantic layers of the Hexplain framework."@en ;
@@ -71,7 +71,8 @@
 :hasEncodingStep a owl:ObjectProperty ; rdfs:label "has encoding step"@en ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "Ordered rdf:List of EncodingStep, in the order the ENCODER applied them; a decoder inverts them in reverse. Mutually exclusive with hexplain:isEncodedWith, which remains the shorthand for a single unparameterised codec."@en .
 :codec a owl:ObjectProperty ; rdfs:label "codec"@en ; rdfs:range skos:Concept ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The algorithm this step applies, drawn from whichever codec or compression register the profile binds -- the same registers hexplain:isEncodedWith draws on."@en .
+    rdfs:comment "The algorithm this step applies, drawn from whichever codec or compression register the profile binds -- the same registers hexplain:isEncodedWith draws on."@en ;
+    skos:scopeNote "Use on a hexplain:EncodingStep of a physical description: the codec a PROCESSOR runs to decode a field's bytes. Not aenc:codec, which records on a lifted stream which codec its content is encoded with and runs nothing; a profile usually maps the one to the other."@en .
 :codecParameter a owl:ObjectProperty ; rdfs:label "codec parameter"@en ; rdfs:range :CodecParameter ; rdfs:isDefinedBy <https://hexplain.io/ns/core> .
 :parameterName a owl:DatatypeProperty ; rdfs:label "parameter name"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "The setting's name as the codec itself names it: \"clevel\", \"shuffle\", \"predictor\"."@en .
@@ -111,7 +112,7 @@
 :keepsSession a owl:DatatypeProperty ; rdfs:label "keeps session"@en ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "True when the codec keeps state across blocks (JPEG tables, a CCITT reference line across strips). The processor creates the session at a scope a later profile property declares, and passes it to every call."@en .
 :raisesCategory a owl:DatatypeProperty ; rdfs:label "raises category"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "A Processing Model error category the codec may raise while it runs, by its conformance-suite notation: Validation, Checksum, Unsupported or ResourceLimit."@en .
+    rdfs:comment "A Processing Model error category the codec may raise while it runs, by its conformance-suite notation: Validation, Checksum, Unsupported, ResourceLimit or Description (a parameter value the contract admits but the codec cannot act on, found only when the step runs)."@en .
 :CodecParameterSpec a owl:Class ; rdfs:label "Codec Parameter Spec"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "One parameter a codec contract declares: its name, type, whether it is required, its default and the values it may take."@en .
 :declaresParameter a owl:ObjectProperty ; rdfs:label "declares parameter"@en ; rdfs:range :CodecParameterSpec ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
@@ -133,7 +134,8 @@
 :FloatParameterType a owl:NamedIndividual, :CodecParameterType ; rdfs:label "float"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "A binary64 number; xsd:decimal, xsd:double or xsd:integer, or a HEL Float or Integer."@en .
 :parameterType a owl:ObjectProperty ; rdfs:label "parameter type"@en ; rdfs:range :CodecParameterType ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "The type of the parameter's value."@en .
+    rdfs:comment "The type of the parameter's value."@en ;
+    skos:scopeNote "Use exactly once on a hexplain:CodecParameterSpec, with one of the six hexplain:CodecParameterType individuals. Not bddo:parameterType, which types a parameterised Struct's bddo:Parameter with a HEL value type."@en .
 :requiredParameter a owl:DatatypeProperty ; rdfs:label "required parameter"@en ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "True when every step must state the parameter; false or absent otherwise."@en .
 :listValued a owl:DatatypeProperty ; rdfs:label "list valued"@en ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
@@ -151,7 +153,7 @@
 
 :hasConditionalMapping a owl:ObjectProperty ; rdfs:label "has conditional mapping"@en ; rdfs:range rdf:List ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> .
-:condition a owl:DatatypeProperty ; rdfs:label "condition"@en ; rdfs:range xsd:string ;
+:condition a owl:DatatypeProperty ; rdfs:label "mapping condition"@en ; rdfs:range xsd:string ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ; rdfs:seeAlso bddo:condition .
 :semanticProperty a owl:ObjectProperty ; rdfs:label "semantic property"@en ; rdfs:range rdf:Property ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> .
@@ -235,6 +237,7 @@ hexplain:correspondsTo a owl:AnnotationProperty ; rdfs:label "corresponds to"@en
 # ---------- SHACL ----------
 hexplain:MapsToClassShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToClass ;
+    sh:message "hexplain:mapsToClass is declared on a bddo:Struct." ;
     sh:class bddo:Struct ;
     # OWL vocabularies type classes owl:Class; RDFS ones (schema.org, for one) type them rdfs:Class.
     sh:property [ sh:path hexplain:mapsToClass ; sh:nodeKind sh:IRI ;
@@ -242,6 +245,7 @@ hexplain:MapsToClassShape a sh:NodeShape ;
         sh:message "Each value of hexplain:mapsToClass is an IRI naming an instance of owl:Class or rdfs:Class." ] .
 hexplain:MapsToPropertyShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToProperty ;
+    sh:message "hexplain:mapsToProperty is declared on a bddo:Field." ;
     sh:class bddo:Field ;
     sh:property [ sh:path hexplain:mapsToProperty ; sh:nodeKind sh:IRI ;
         sh:or ( [ sh:class rdf:Property ] [ sh:class owl:DatatypeProperty ]
@@ -249,11 +253,13 @@ hexplain:MapsToPropertyShape a sh:NodeShape ;
         sh:message "Each value of hexplain:mapsToProperty is an IRI naming an instance of rdf:Property, owl:DatatypeProperty, owl:ObjectProperty or owl:AnnotationProperty." ] .
 hexplain:HasDataLayoutShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:hasDataLayout ;
+    sh:message "hexplain:hasDataLayout is declared on a bddo:Field." ;
     sh:class bddo:Field ;
     sh:property [ sh:path hexplain:hasDataLayout ; sh:class dlv:DataLayout ; sh:maxCount 1 ;
         sh:message "hexplain:hasDataLayout takes at most one value; each is an instance of dlv:DataLayout." ] .
 hexplain:IsEncodedWithShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:isEncodedWith ;
+    sh:message "A block is encoded one way: a single hexplain:isEncodedWith codec or a hexplain:hasEncodingStep pipeline, never both." ;
     sh:property [ sh:path hexplain:isEncodedWith ; sh:nodeKind sh:IRI ; sh:class skos:Concept ; sh:maxCount 1 ;
         sh:message "hexplain:isEncodedWith takes at most one value; each is an IRI naming an instance of skos:Concept." ] ;
     # A block is encoded one way or the other: a single shorthand codec, or a pipeline.
@@ -271,6 +277,7 @@ hexplain:EncodingPipelineShape a sh:NodeShape ;
 hexplain:EncodingStepShape a sh:NodeShape ;
     sh:targetClass hexplain:EncodingStep ;
     sh:targetSubjectsOf hexplain:codec , hexplain:codecParameter , hexplain:codecFromExpression ;
+    sh:message "An encoding step names its codec with hexplain:codec or selects one with hexplain:codecFromExpression, never both and never neither." ;
     # A step names its codec, or selects it at run time -- never both, never neither.
     sh:xone ( [ sh:property [ sh:path hexplain:codec ; sh:minCount 1 ] ]
               [ sh:property [ sh:path hexplain:codecFromExpression ; sh:minCount 1 ] ] ) ;
@@ -295,6 +302,7 @@ hexplain:CodecSelectionShape a sh:NodeShape ;
 # A parameter without both halves says nothing; its value is a literal or an expression.
 hexplain:CodecParameterShape a sh:NodeShape ;
     sh:targetClass hexplain:CodecParameter ;
+    sh:message "A codec parameter states its value exactly one way: hexplain:parameterValue or hexplain:parameterExpression." ;
     sh:targetObjectsOf hexplain:codecParameter ;
     sh:targetSubjectsOf hexplain:parameterName , hexplain:parameterValue , hexplain:parameterExpression ;
     sh:property [ sh:path hexplain:parameterName ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
@@ -308,6 +316,7 @@ hexplain:CodecParameterShape a sh:NodeShape ;
 
 hexplain:CodecSessionScopeShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:codecSessionScope ;
+    sh:message "hexplain:codecSessionScope is declared on a bddo:Field." ;
     sh:class bddo:Field ;
     sh:property [ sh:path hexplain:codecSessionScope ; sh:maxCount 1 ; sh:in ( bddo:PerInstance bddo:PerLayout ) ;
         sh:message "hexplain:codecSessionScope is bddo:PerInstance or bddo:PerLayout, at most once." ] .
@@ -315,6 +324,7 @@ hexplain:CodecSessionScopeShape a sh:NodeShape ;
 # ---------- Codec contract shapes ----------
 hexplain:CodecContractBindingShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:codecContract ;
+    sh:message "hexplain:codecContract is declared on a register concept (a skos:Concept)." ;
     sh:class skos:Concept ;
     sh:property [ sh:path hexplain:codecContract ; sh:maxCount 1 ; sh:class hexplain:CodecContract ;
         sh:message "A register concept states at most one hexplain:codecContract, and it is a hexplain:CodecContract." ] .
@@ -335,8 +345,8 @@ hexplain:CodecContractShape a sh:NodeShape ;
     sh:property [ sh:path hexplain:keepsSession ; sh:datatype xsd:boolean ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "A codec contract states hexplain:keepsSession once, as a boolean." ] ;
     sh:property [ sh:path hexplain:raisesCategory ; sh:datatype xsd:string ;
-        sh:in ( "Validation" "Checksum" "Unsupported" "ResourceLimit" ) ;
-        sh:message "hexplain:raisesCategory is one of Validation, Checksum, Unsupported and ResourceLimit." ] ;
+        sh:in ( "Validation" "Checksum" "Unsupported" "ResourceLimit" "Description" ) ;
+        sh:message "hexplain:raisesCategory is one of Validation, Checksum, Unsupported, ResourceLimit and Description." ] ;
     sh:property [ sh:path hexplain:declaresParameter ; sh:class hexplain:CodecParameterSpec ;
         sh:message "Every hexplain:declaresParameter value is a hexplain:CodecParameterSpec." ] .
 
@@ -375,11 +385,13 @@ hexplain:ValueExpressionShape a sh:NodeShape ;
     # it. NITF's IGEOLO is the case: 60 characters that are decimal degrees, degrees-minutes-
     # seconds, UTM or MGRS depending on ICORDS, and only the first two are even the same
     # quantity.
+    sh:message "hexplain:valueExpression and hexplain:valueDatatype are declared on a bddo:Field or a hexplain:MappingRule." ;
     sh:or ( [ sh:class bddo:Field ] [ sh:class hexplain:MappingRule ] ) ;
     sh:property {{constraint:pattern_227}} ;
     sh:property {{constraint:pattern_226}} .
 hexplain:HasConditionalMappingShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:hasConditionalMapping ;
+    sh:message "hexplain:hasConditionalMapping is declared on a bddo:Field." ;
     sh:class bddo:Field ;
     sh:property [ sh:path ( hexplain:hasConditionalMapping [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
         sh:class hexplain:MappingRule ;
@@ -396,12 +408,14 @@ hexplain:MappingRuleShape a sh:NodeShape ;
     sh:property {{constraint:pattern_226}} .
 hexplain:MapsToObjectPropertyShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:mapsToObjectProperty ;
+    sh:message "hexplain:mapsToObjectProperty is declared on a bddo:Field." ;
     sh:class bddo:Field ;
     sh:property [ sh:path hexplain:mapsToObjectProperty ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
         sh:or ( [ sh:class rdf:Property ] [ sh:class owl:ObjectProperty ] ) ;
         sh:message "hexplain:mapsToObjectProperty takes at most one value; each is an IRI naming an instance of rdf:Property or owl:ObjectProperty." ] .
 hexplain:HasConditionalClassMappingShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:hasConditionalClassMapping ;
+    sh:message "hexplain:hasConditionalClassMapping is declared on a bddo:Struct." ;
     sh:class bddo:Struct ;
     sh:property [ sh:path hexplain:mapsToClass ; sh:maxCount 0 ;
         sh:message "hexplain:mapsToClass and hexplain:hasConditionalClassMapping are mutually exclusive." ] ;
@@ -418,11 +432,13 @@ hexplain:ClassMappingRuleShape a sh:NodeShape ;
         sh:message "hexplain:semanticClass takes exactly one value, an IRI naming an instance of owl:Class or rdfs:Class." ] .
 hexplain:UnitShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:unit ;
+    sh:message "hexplain:unit is declared on a bddo:Field." ;
     sh:class bddo:Field ;
     sh:property [ sh:path hexplain:unit ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
         sh:message "hexplain:unit takes at most one value; each is an IRI." ] .
 hexplain:LanguageShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:language ;
+    sh:message "hexplain:language is declared on a bddo:Field." ;
     sh:class bddo:Field ;
     sh:property [ sh:path hexplain:language ; sh:datatype xsd:language ; sh:maxCount 1 ;
         sh:message "hexplain:language takes at most one value; each is an xsd:language literal." ] ;
@@ -430,6 +446,7 @@ hexplain:LanguageShape a sh:NodeShape ;
         sh:message "hexplain:language and hexplain:languageFromField are mutually exclusive." ] .
 hexplain:LanguageFromFieldShape a sh:NodeShape ;
     sh:targetSubjectsOf hexplain:languageFromField ;
+    sh:message "hexplain:languageFromField is declared on a bddo:Field." ;
     sh:class bddo:Field ;
     sh:property [ sh:path hexplain:languageFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
         sh:message "hexplain:languageFromField takes at most one value; each is an instance of bddo:Field." ] .
@@ -556,7 +573,8 @@ hexplain:RegisterLifecycleShape a sh:NodeShape ; rdfs:label "Register lifecycle 
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
 hexplain:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
+    {{constraint:pattern_237}} .
 hexplain:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     sh:targetSubjectsOf hexplain:byteLength ,

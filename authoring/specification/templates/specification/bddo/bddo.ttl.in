@@ -17,7 +17,7 @@
     owl:versionIRI <https://hexplain.io/ns/bddo/1.3> ;
     owl:versionInfo "1.3" ;
     owl:priorVersion <https://hexplain.io/ns/bddo/1.2> ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-12"^^xsd:date ;
     rdfs:label "Binary Data Description Ontology (BDDO)"@en ;
     rdfs:comment "Vocabulary for declaratively describing the physical structure of binary data."@en ;
     dcterms:created "2025-08-16"^^xsd:date ;
@@ -30,7 +30,8 @@
 :Struct       a owl:Class ; rdfs:label "Struct"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "An ordered sequence of fields; a container in a binary format."@en .
 :Field        a owl:Class ; rdfs:label "Field"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "A single element within a Struct: a value, a bit slice, or an array."@en .
+    rdfs:comment "A single element within a Struct: a value, a bit slice, or an array."@en ;
+    skos:scopeNote "A physical field: a run of bytes or bits located by a Struct's member list. Not atab:Field, which is a typed column of a tabular schema after parsing; a bddo:Field that carries a column's bytes names that column through its semantic mapping."@en .
 :DataType     a owl:Class ; rdfs:label "Data Type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :DataTypeRule a owl:Class ; rdfs:label "Data Type Rule"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :Enumeration  a owl:Class ; rdfs:label "Enumeration"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
@@ -130,8 +131,22 @@
 :BitOrder         a owl:Class ; rdfs:label "Bit Order"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :BaseType         a owl:Class ; rdfs:label "Base Type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
 :OffsetBase       a owl:Class ; rdfs:label "Offset Base"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
-:Encoding         a owl:Class ; rdfs:label "Encoding"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+:Encoding         a owl:Class ; rdfs:label "Encoding"@en ; skos:altLabel "character encoding"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    skos:scopeNote "A CHARACTER encoding, the mapping of bytes to text that bddo:encoding names on a string field. It is open: the individuals below are the registered encodings, and a profile may mint its own as a bddo:CustomEncoding. Not the content encoding of hx-encoding (aenc:codec, aenc:compression) nor a codec step of a hexplain:hasEncodingStep pipeline."@en .
+# An encoding a profile mints for a format whose text is in a character set this vocabulary does
+# not register: it is a bddo:Encoding, so bddo:encoding accepts it, and it names the IANA charset
+# so that a processor can find a decoder for it (and so that two profiles minting the same charset
+# can be told to agree). Its use is reported at sh:Warning, never refused.
+:CustomEncoding   a owl:Class ; rdfs:subClassOf :Encoding ; rdfs:label "Custom Encoding"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "A character encoding minted by a profile rather than registered here, identified by exactly one bddo:ianaCharset: the IANA Character Sets registry name (or one of its registered aliases) of the charset it denotes. A conforming processor decodes it when it supports that charset and reports an Unsupported error otherwise."@en .
 :ChecksumAlgorithm a owl:Class ; rdfs:label "Checksum Algorithm"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> .
+# How the bytes of a floating-point field are laid out. IEEE 754 is the default and the only
+# format the primitive float datatypes assume; the others are what older scientific and
+# mainframe data carry (VICAR, old PDS and GRIB1 products, IBM-written files) and bfloat16 what
+# machine-learning tensors carry. A format decides how bits are read, not how wide the value is:
+# width and byte order still come from the datatype and the endianness.
+:FloatFormat      a owl:Class ; rdfs:label "Float Format"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The bit layout of a floating-point value: one of the four individuals bddo:ieee754 (the default), bddo:ibmHexadecimal, bddo:vaxF and bddo:bfloat16. Closed set, checked with sh:in by bddo:FieldShape and bddo:DataTypeShape."@en .
 # Any CRC is fixed by the six parameters of the Rocksoft model, so one class covers every CRC a
 # format uses without a new individual per variant. The named CRC individuals below carry the
 # same six parameters, and their catalogue check value, as statements about themselves.
@@ -143,11 +158,13 @@
 
 # ---------- Structural properties ----------
 :hasField     a owl:ObjectProperty ; rdfs:label "has field"@en ; rdfs:range rdf:List ;
-    rdfs:comment "Ordered rdf:List of the members of a Struct: its Fields, and any LocalBindings among them, in the order they are processed."@en .
+    rdfs:comment "Ordered rdf:List of the members of a Struct: its Fields, and any LocalBindings among them, in the order they are processed."@en ;
+    skos:scopeNote "Use on a bddo:Struct for its ordered physical members. Not atab:hasField, which links a tabular schema to its typed columns and takes a single column, not a list."@en .
 :hasParameter a owl:ObjectProperty ; rdfs:label "has parameter"@en ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "Ordered rdf:List of the bddo:Parameter resources of a parameterised Struct. Every place that names the struct as a type supplies exactly one argument per parameter, positionally, with bddo:hasArgument."@en .
 :parameterType a owl:ObjectProperty ; rdfs:label "parameter type"@en ; rdfs:range :ParameterType ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "Restricts the kind of value a Parameter accepts to one HEL value type: bddo:IntegerParameter, bddo:FloatParameter (an Integer argument is converted to Float), bddo:StringParameter, bddo:BytesParameter or bddo:BooleanParameter. Absent, the parameter accepts any scalar value, Null included."@en .
+    rdfs:comment "Restricts the kind of value a Parameter accepts to one HEL value type: bddo:IntegerParameter, bddo:FloatParameter (an Integer argument is converted to Float), bddo:StringParameter, bddo:BytesParameter or bddo:BooleanParameter. Absent, the parameter accepts any scalar value, Null included."@en ;
+    skos:scopeNote "Use on a bddo:Parameter of a parameterised Struct. Not hexplain:parameterType, which types a codec contract's parameter (a hexplain:CodecParameterSpec) with a hexplain:CodecParameterType."@en .
 :hasArgument a owl:ObjectProperty ; rdfs:label "has argument"@en ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "Ordered rdf:List of HEL expression strings, the positional arguments for the parameterised Struct this resource names as a type: on a Field, for its bddo:dataType; on a DataTypeRule, for its bddo:ruleDataType; on a DispatchArm, for its bddo:armDataType. A bddo:dispatchDefault has nowhere to state arguments, so it never names a parameterised struct. Each is evaluated in the CALLER's context -- the struct containing the field -- at the point the field is read."@en .
 :localExpression a owl:DatatypeProperty ; rdfs:label "local expression"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
@@ -156,7 +173,8 @@
     rdfs:comment "Byte order for a Struct, Field, or DataType."@en .
 :hasConditionalEndianness a owl:ObjectProperty ; rdfs:label "has conditional endianness"@en ; rdfs:range rdf:List ;
     rdfs:comment "Ordered rdf:List of EndiannessRule. The first rule whose condition holds selects the byte order for this Struct or Field and, as with bddo:endianness, for its descendants unless they override it. Use for formats that declare their own byte order, such as TIFF's 4949h/4D4Dh marker. Mutually exclusive with bddo:endianness."@en .
-:bitOrder     a owl:ObjectProperty ; rdfs:label "bit order"@en ; rdfs:range :BitOrder .
+:bitOrder     a owl:ObjectProperty ; rdfs:label "bit order"@en ; rdfs:range :BitOrder ;
+    rdfs:comment "The order in which bits are consumed within each byte for sub-byte fields, on a Struct (for all of its bit-level fields) or on a Field (for that field alone, overriding its struct's). Field over struct; absent on both, bddo:MSBFirst. Independent of the byte order of a multi-byte value."@en .
 :syncOnMarker a owl:DatatypeProperty ; rdfs:label "sync on marker"@en ; rdfs:range xsd:hexBinary .
 
 # ---------- Field properties ----------
@@ -185,7 +203,11 @@
 :terminator             a owl:DatatypeProperty ; rdfs:label "terminator"@en ; rdfs:range xsd:hexBinary .
 :trimNull               a owl:DatatypeProperty ; rdfs:label "trim null"@en ; rdfs:range xsd:boolean ;
     rdfs:comment "For a fixed-size (padded) string field, the value is the bytes before the first NUL code unit of the field's encoding within its width (a 0x00 byte, or a 00 00 pair at an even offset in UTF-16), decoded; the NUL and the bytes after it are padding, neither decoded nor validated."@en .
-:encoding               a owl:ObjectProperty ; rdfs:label "encoding"@en ; rdfs:range :Encoding .
+:encoding               a owl:ObjectProperty ; rdfs:label "encoding"@en ; skos:altLabel "character encoding"@en ; rdfs:range :Encoding ;
+    rdfs:comment "The character encoding applied when a textual field's bytes are decoded: one of the registered bddo:Encoding individuals, or a bddo:CustomEncoding a profile mints for a charset not registered here (accepted, and reported at sh:Warning). Absent, a string field is read as bddo:utf8."@en ;
+    skos:scopeNote "Use at most once on a bddo:Field whose data type is textual. It names how BYTES become TEXT; the content encoding of a stream (aenc:codec, aenc:compression) and the codec of a pipeline step (hexplain:codec) are different things with different registers."@en .
+:ianaCharset            a owl:DatatypeProperty ; rdfs:label "IANA charset"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The name of the character set a bddo:Encoding denotes, as the IANA Character Sets registry spells it (its preferred MIME name or a registered alias, compared case-insensitively): \"UTF-8\", \"ISO-8859-2\", \"windows-1252\", \"IBM037\", \"Shift_JIS\". Required, exactly once, on a bddo:CustomEncoding; stated on the registered encodings too, so that a processor resolves every encoding the same way."@en .
 :recordDelimiter        a owl:DatatypeProperty ; rdfs:label "record delimiter"@en ; rdfs:range xsd:hexBinary ;
     rdfs:comment "Byte sequence separating records. Default 0A (LF); a CR LF pair is also accepted when this is 0A."@en .
 :fieldDelimiter         a owl:DatatypeProperty ; rdfs:label "field delimiter"@en ; rdfs:range xsd:hexBinary ;
@@ -262,14 +284,24 @@
 :repeatCountFromField   a owl:ObjectProperty ; rdfs:label "repeat count from field"@en ; rdfs:range :Field .
 :repeatCountFromExpression a owl:DatatypeProperty ; rdfs:label "repeat count from expression"@en ; rdfs:range xsd:string .
 :repeatUntil            a owl:DatatypeProperty ; rdfs:label "repeat until"@en ; rdfs:range xsd:string .
+# Padding is the mirror image of alignment: alignment moves the START of a field or struct to a
+# boundary, padding extends its END to one. Both are relative to the start of the enclosing
+# region, as byte offsets are. The fill byte is what the padding is expected to hold; a
+# processor MAY verify it and MUST NOT require it to be stated.
+:padTo                  a owl:DatatypeProperty ; rdfs:label "pad to"@en ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "After this Field's value (or, on a Struct, after its last member) is read, the parser skips forward to the next multiple of this many bytes from the start of the enclosing region; the skipped bytes are padding, neither decoded nor lifted. A value of 1 pads nothing. Distinct from bddo:alignment, which positions where a field STARTS, and from bddo:size, which fixes an extent outright."@en .
+:padByte                a owl:DatatypeProperty ; rdfs:label "pad byte"@en ; rdfs:range xsd:hexBinary ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The fill byte the padding introduced by bddo:padTo is expected to hold, as one hexBinary octet (\"00\", \"20\", \"FF\"). Informative: a processor MAY verify the padding against it and report a Validation error when it differs, and MUST accept padding when no fill byte is stated. Meaningful only beside bddo:padTo."@en .
 :separatedBy            a owl:DatatypeProperty ; rdfs:label "separated by"@en ; rdfs:range xsd:string ;
     rdfs:comment "The element extent of a field -- repeated or scalar -- whose value is a number written as text, separated rather than sized or terminated: each element is preceded and followed by a run of separator bytes, and the run belongs to the element that owns it so the byte sequence can be rebuilt exactly. The only defined value is \"whitespace\" (space, tab, CR, LF). A separator is a RUN and a terminator is a SEQUENCE: between two delimiters of a delimited table an empty value is meaningful, whereas an empty run is not a value at all. Permitted only on a field whose data type is a number written as text. Because the LAST element's trailing run consumes every separator byte up to the field's own extent (or end of stream), a field declaring bddo:separatedBy must either be the last field read from its enclosing region, or be immediately followed by data that does not itself begin with a separator byte (space, tab, CR, LF) -- otherwise the trailing run consumes bytes that belong to the following field."@en .
 :atOffset               a owl:DatatypeProperty ; rdfs:label "at offset"@en ; rdfs:range xsd:nonNegativeInteger .
 :atOffsetFromField      a owl:ObjectProperty ; rdfs:label "at offset from field"@en ; rdfs:range :Field .
 :atOffsetFromExpression a owl:DatatypeProperty ; rdfs:label "at offset from expression"@en ; rdfs:range xsd:string .
 :offsetBase             a owl:ObjectProperty ; rdfs:label "offset base"@en ; rdfs:range :OffsetBase .
-:alignment              a owl:DatatypeProperty ; rdfs:label "alignment"@en ; rdfs:range xsd:positiveInteger .
-:hasFixedValue          a owl:DatatypeProperty ; rdfs:label "has fixed value"@en .
+:alignment              a owl:DatatypeProperty ; rdfs:label "alignment"@en ; rdfs:range xsd:positiveInteger ;
+    rdfs:comment "A byte boundary, relative to the start of the enclosing region, at which the subject starts: before a Field is read, or before each instance of a Struct is read, the parser skips forward to the next multiple of this many bytes. On a Struct it applies to every instance of the struct, wherever it is used; a Field's own alignment is applied after its struct's. A value of 1 aligns nothing. Positions a START; bddo:padTo extends an END."@en .
+:hasFixedValue          a owl:DatatypeProperty ; rdfs:label "has fixed value"@en ; rdfs:range rdfs:Literal ;
+    rdfs:comment "The literal a parsed field is required to equal, such as a signature or a fixed discriminator: a numeric literal for a numeric field, a string for a text field, an xsd:hexBinary for bytes. A parsed value that differs is a Validation error. At most one; a field whose acceptable values are several states them with bddo:validIf instead."@en .
 :isPresentIf            a owl:DatatypeProperty ; rdfs:label "is present if"@en ; rdfs:range xsd:string .
 :valueFromExpression    a owl:DatatypeProperty ; rdfs:label "value from expression"@en ; rdfs:range xsd:string ;
     rdfs:comment "A HEL expression giving the value of a derived, zero-byte field. The field consumes no bytes; its computed value is placed in the parse context under the field's name so later sizing, offset, presence, mapping and validation expressions may reference it. A field with bddo:valueFromExpression declares no bddo:dataType and no sizing, offset or bit-length; the result's type is that of the HEL expression."@en .
@@ -278,7 +310,17 @@
 :rootKeyFromField       a owl:ObjectProperty ; rdfs:label "root key from field"@en ; rdfs:range :Field ;
     rdfs:comment "After this Field is parsed, its value is also bound in the ROOT parsing context under the key given by the named sibling Field's parsed value, if that key is not already bound (first occurrence wins). Lets a later record address an earlier one through its discriminator -- `root.<key>.<field>` -- when the earlier record sits inside a repeated sequence that HEL cannot search. A neutral generalisation of the chunk-type aliasing that several chunked container formats need."@en .
 :enumeration            a owl:ObjectProperty ; rdfs:label "enumeration"@en ; rdfs:range :Enumeration .
-:checksum               a owl:ObjectProperty ; rdfs:label "checksum"@en ; rdfs:range :Checksum .
+:checksum               a owl:ObjectProperty ; rdfs:label "checksum"@en ; rdfs:range :Checksum ;
+    skos:scopeNote "Use on the bddo:Field that CARRIES a checksum, naming the bddo:Checksum declaration (algorithm and covered byte range) a processor verifies it against. Not aintg:checksum, which is the digest VALUE recorded about a resource after parsing, as an xsd:hexBinary."@en .
+# ---------- Numeric representation ----------
+# How the bits of a numeric field are read, beyond width, signedness and byte order. Stated on
+# a Field, or on a DataType a profile mints so that every field of that type shares it.
+:floatFormat            a owl:ObjectProperty ; rdfs:label "float format"@en ; rdfs:range :FloatFormat ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The bit layout of a floating-point Field or DataType: bddo:ieee754 (the default when absent), bddo:ibmHexadecimal, bddo:vaxF or bddo:bfloat16. Only meaningful where the data type's bddo:baseType is bddo:baseFloat; the width comes from the data type and the byte order from the endianness in force."@en .
+:fixedPointScale        a owl:DatatypeProperty ; rdfs:label "fixed-point scale"@en ; rdfs:range xsd:integer ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The binary scale exponent of a fixed-point integer Field or DataType: the value represented is the parsed integer times 2 raised to this power, so a Q16.16 number has scale -16 and a value stored in units of 4 has scale 2. Only meaningful where the data type's bddo:baseType is bddo:baseInteger; the parsed HEL value stays the raw integer, and the scaled value is what the field's semantic mapping emits. A decimal (power-of-ten) scale is not a representation of the bits and is written as a hexplain:valueExpression instead."@en .
+:bcd                    a owl:DatatypeProperty ; rdfs:label "BCD"@en ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "If true, the bytes of this integer Field or DataType are packed binary-coded decimal: two decimal digits per byte, the most significant digit in the high nibble, read in the byte order in force, and a nibble above 9 is a Validation error. The parsed HEL value is the decimal number the digits spell. Only meaningful where the data type's bddo:baseType is bddo:baseInteger. Default false."@en .
 
 # ---------- DataType / Rule / Enum / Checksum properties ----------
 :baseType      a owl:ObjectProperty ; rdfs:label "base type"@en ; rdfs:range :BaseType .
@@ -286,11 +328,12 @@
 :isSigned      a owl:DatatypeProperty ; rdfs:label "is signed"@en ; rdfs:range xsd:boolean .
 :xsdType       a owl:ObjectProperty ; rdfs:label "xsd type"@en ; rdfs:range rdfs:Datatype ;
     rdfs:comment "The RDF literal datatype produced when a value of this DataType is emitted."@en .
-:condition     a owl:DatatypeProperty ; rdfs:label "condition"@en ; rdfs:range xsd:string ;
+:condition     a owl:DatatypeProperty ; rdfs:label "parse condition"@en ; rdfs:range xsd:string ;
     # Not the same property as hexplain:condition: this one guards how BYTES are read, while
     # parsing; that one guards which RDF a parsed node is LIFTED to. They are evaluated at
     # different times, and a processor reads each only on its own rule classes.
-    rdfs:seeAlso <https://hexplain.io/ns/core#condition> .
+    rdfs:seeAlso <https://hexplain.io/ns/core#condition> ;
+    skos:scopeNote "Use exactly once on a bddo:DataTypeRule, bddo:EndiannessRule, dlv:CellDataTypeRule or dlv:DimensionOrderRule. Evaluated while the bytes are read; not hexplain:condition, the mapping condition evaluated after parsing on a hexplain:MappingRule or hexplain:ClassMappingRule."@en .
 :ruleDataType  a owl:ObjectProperty ; rdfs:label "rule data type"@en ; rdfs:range :DataTypeOrStruct .
 :ruleEndianness a owl:ObjectProperty ; rdfs:label "rule endianness"@en ; rdfs:range :Endianness ;
     rdfs:comment "The byte order selected by an EndiannessRule."@en .
@@ -299,7 +342,8 @@
 :enumSymbol    a owl:ObjectProperty ; rdfs:label "enum symbol"@en .
 :enumIsFlags   a owl:DatatypeProperty ; rdfs:label "enum is flags"@en ; rdfs:range xsd:boolean ;
     rdfs:comment "If true, the Enumeration is a bit-flag set: each EnumValue's raw value is a bitmask, and every symbol whose bit(s) are set in the parsed value is emitted."@en .
-:checksumAlgorithm a owl:ObjectProperty ; rdfs:label "checksum algorithm"@en ; rdfs:range :ChecksumAlgorithm .
+:checksumAlgorithm a owl:ObjectProperty ; rdfs:label "checksum algorithm"@en ; rdfs:range :ChecksumAlgorithm ;
+    skos:scopeNote "Use exactly once on a bddo:Checksum, naming a bddo:ChecksumAlgorithm individual or a bddo:CustomCrc that a processor COMPUTES over the covered bytes. Not aintg:checksumAlgorithm, which records on a parsed resource which register concept names the algorithm a digest was made with; the checksum register links the two with hexplain:correspondsTo."@en .
 :coversFromField   a owl:ObjectProperty ; rdfs:label "covers from field"@en ; rdfs:range :Field .
 :coversToField     a owl:ObjectProperty ; rdfs:label "covers to field"@en ; rdfs:range :Field .
 # A single expression can only describe a range it computes whole, so a checksum whose start
@@ -345,6 +389,7 @@
 :HelExpressionValueShape a sh:NodeShape ;
     rdfs:label "HEL expression value shape"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "A HEL expression literal: typed xsd:string, as existing descriptions write it, or bddo:HelExpression. Every expression-valued property's shapes use it in place of sh:datatype xsd:string."@en ;
+    sh:message "A HEL expression is an xsd:string or bddo:HelExpression literal." ;
     sh:or ( [ sh:datatype xsd:string ] [ sh:datatype :HelExpression ] ) .
 
 # The HEL version a description's expressions are written against. HEL 1.x adds functions but
@@ -398,11 +443,48 @@
     rdfs:comment "The default: an offset-addressed read must stay within the innermost enclosing bounded region."@en .
 :streamScope a owl:NamedIndividual, :SeekScope ; rdfs:label "Seek scope: whole stream"@en ;
     rdfs:comment "The read is resolved against the whole stream; the enclosing region bound does not apply to it."@en .
-:utf8 a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-8"@en .
-:ascii a owl:NamedIndividual, :Encoding ; rdfs:label "US-ASCII"@en .
-:utf16le a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 LE"@en .
-:utf16be a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 BE"@en .
-:latin1 a owl:NamedIndividual, :Encoding ; rdfs:label "ISO-8859-1"@en .
+:utf8 a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-8"@en ; :ianaCharset "UTF-8" .
+:ascii a owl:NamedIndividual, :Encoding ; rdfs:label "US-ASCII"@en ; :ianaCharset "US-ASCII" .
+:utf16le a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 LE"@en ; :ianaCharset "UTF-16LE" .
+:utf16be a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-16 BE"@en ; :ianaCharset "UTF-16BE" .
+:latin1 a owl:NamedIndividual, :Encoding ; rdfs:label "ISO-8859-1"@en ; :ianaCharset "ISO-8859-1" .
+# Registered encodings beyond the original five. Named for the character set (the ISO 8859
+# parts by part number, as bddo:iso8859_2); each states its IANA charset so that a processor and a profile's
+# bddo:CustomEncoding resolve through the same registry. Byte order is part of a UTF-16/32
+# encoding's name, never taken from the struct's endianness.
+:utf32le a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-32 LE"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; :ianaCharset "UTF-32LE" ;
+    rdfs:comment "UTF-32 character encoding with each 32-bit code unit stored in little-endian byte order; one code unit per Unicode scalar value, no byte-order mark."@en .
+:utf32be a owl:NamedIndividual, :Encoding ; rdfs:label "UTF-32 BE"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; :ianaCharset "UTF-32BE" ;
+    rdfs:comment "UTF-32 character encoding with each 32-bit code unit stored in big-endian byte order; one code unit per Unicode scalar value, no byte-order mark."@en .
+:ucs2le a owl:NamedIndividual, :Encoding ; rdfs:label "UCS-2 LE"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; :ianaCharset "ISO-10646-UCS-2" ;
+    rdfs:comment "UCS-2 character encoding, little-endian: one 16-bit unit per character of the Basic Multilingual Plane and no surrogate pairs, which is how pre-Unicode-2.0 formats and some SQLite and NTFS structures store text. A surrogate code unit is a Validation error, which is what distinguishes it from bddo:utf16le."@en .
+:ucs2be a owl:NamedIndividual, :Encoding ; rdfs:label "UCS-2 BE"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; :ianaCharset "ISO-10646-UCS-2" ;
+    rdfs:comment "UCS-2 character encoding, big-endian: one 16-bit unit per character of the Basic Multilingual Plane and no surrogate pairs. A surrogate code unit is a Validation error, which is what distinguishes it from bddo:utf16be."@en .
+:windows1252 a owl:NamedIndividual, :Encoding ; rdfs:label "Windows-1252"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; :ianaCharset "windows-1252" ;
+    rdfs:comment "The Windows-1252 single-byte encoding: ISO-8859-1 with printable characters (curly quotes, the euro sign, dashes) in the 0x80-0x9F range that Latin-1 leaves to C1 controls. What DBF, ESRI and most Windows-written text actually carries when a format says \"ANSI\"."@en .
+:iso8859_2 a owl:NamedIndividual, :Encoding ; rdfs:label "ISO-8859-2"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; :ianaCharset "ISO-8859-2" ;
+    rdfs:comment "ISO-8859-2 (Latin-2) single-byte character encoding for Central European languages, mapping each byte to one character."@en .
+:iso8859_5 a owl:NamedIndividual, :Encoding ; rdfs:label "ISO-8859-5"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; :ianaCharset "ISO-8859-5" ;
+    rdfs:comment "ISO-8859-5 (Latin/Cyrillic) single-byte character encoding, mapping each byte to one character."@en .
+:iso8859_7 a owl:NamedIndividual, :Encoding ; rdfs:label "ISO-8859-7"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; :ianaCharset "ISO-8859-7" ;
+    rdfs:comment "ISO-8859-7 (Latin/Greek) single-byte character encoding, mapping each byte to one character."@en .
+:iso8859_9 a owl:NamedIndividual, :Encoding ; rdfs:label "ISO-8859-9"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; :ianaCharset "ISO-8859-9" ;
+    rdfs:comment "ISO-8859-9 (Latin-5, Turkish) single-byte character encoding, mapping each byte to one character."@en .
+:iso8859_15 a owl:NamedIndividual, :Encoding ; rdfs:label "ISO-8859-15"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; :ianaCharset "ISO-8859-15" ;
+    rdfs:comment "ISO-8859-15 (Latin-9) single-byte character encoding: Latin-1 with the euro sign and seven other characters replacing little-used ones."@en .
+:ebcdic037 a owl:NamedIndividual, :Encoding ; rdfs:label "EBCDIC 037"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; :ianaCharset "IBM037" ;
+    rdfs:comment "EBCDIC code page 037 (US/Canada), the single-byte encoding of IBM mainframe-written text; digits, letters and space sit at code points unrelated to ASCII's, so a text field read with the wrong one is garbage rather than slightly off."@en .
+:shiftJis a owl:NamedIndividual, :Encoding ; rdfs:label "Shift_JIS"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ; :ianaCharset "Shift_JIS" ;
+    rdfs:comment "Shift_JIS, the variable-width (one or two bytes per character) Japanese encoding; a lead byte in 0x81-0x9F or 0xE0-0xEF is followed by one trail byte, and a truncated pair is a Validation error."@en .
+# Float formats: the bit layouts a floating-point value may have (bddo:floatFormat).
+:ieee754 a owl:NamedIndividual, :FloatFormat ; rdfs:label "IEEE 754"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "IEEE 754 binary interchange format of the data type's width: binary16, binary32 or binary64, sign bit first, biased exponent, then the significand. The default: what every primitive float datatype denotes when no bddo:floatFormat is stated."@en .
+:ibmHexadecimal a owl:NamedIndividual, :FloatFormat ; rdfs:label "IBM hexadecimal"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "IBM System/360 hexadecimal floating point: a sign bit, a 7-bit base-16 exponent biased by 64, and a 24-bit (32-bit value) or 56-bit (64-bit value) hexadecimal fraction. Carried by GRIB edition 1, SEG-Y and mainframe-written scientific data; converted to the nearest IEEE 754 value of the same width when lifted."@en .
+:vaxF a owl:NamedIndividual, :FloatFormat ; rdfs:label "VAX F/D floating"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "DEC VAX floating point in its PDP-11-derived middle-endian word order: F_floating for a 32-bit value (8-bit exponent biased by 128, hidden-bit fraction) and D_floating for a 64-bit value. Carried by VICAR and older PDS products written on VAX systems."@en .
+:bfloat16 a owl:NamedIndividual, :FloatFormat ; rdfs:label "bfloat16"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The 16-bit brain floating-point format: the upper half of an IEEE 754 binary32 value (sign, 8-bit exponent, 7-bit fraction). Only meaningful for a 16-bit data type; distinct from binary16, which bddo:ieee754 denotes at that width."@en .
 :crc16 a owl:NamedIndividual, :ChecksumAlgorithm ; rdfs:label "CRC-16"@en ;
     :crcWidth 16 ; :crcPolynomial 4129 ; :crcInit 65535 ; :crcReflectIn false ; :crcReflectOut false ; :crcXorOut 0 ; :crcCheck 10673 ;
     rdfs:comment "CRC-16/CCITT-FALSE (the catalogue's CRC-16/IBM-3740): polynomial 0x1021, initial value 0xFFFF, no input or output reflection, final XOR 0x0000; check value 0x29B1 over the ASCII bytes \"123456789\". No other CRC-16 variant is identified by this term: CRC-16/ARC, XMODEM, MODBUS and X-25 have terms of their own, and any other is a bddo:CustomCrc. HDL: crc16."@en .
@@ -483,6 +565,7 @@
 {{datatype:float64be}}
 {{datatype:float64le}}
 :bytes  a owl:NamedIndividual , :DataType ; rdfs:label "bytes"@en  ; :baseType :baseBytes  ; :xsdType xsd:hexBinary .
+:bytes skos:scopeNote "The uninterpreted byte-sequence DATA TYPE of a field. Not hxf:bytes, the SPARQL function that returns the bytes of a lifted resource."@en .
 :string a owl:NamedIndividual , :DataType ; rdfs:label "string"@en ; :baseType :baseString ; :xsdType xsd:string .
 
 # ---------- ASCII-coded numeric types ----------
@@ -533,6 +616,13 @@ bddo:StructShape a sh:NodeShape ;
         sh:message "bddo:bitOrder takes at most one value; each is either bddo:MSBFirst or bddo:LSBFirst." ] ;
     sh:property [ sh:path bddo:syncOnMarker ; sh:maxCount 1 ; sh:datatype xsd:hexBinary ;
         sh:message "bddo:syncOnMarker takes at most one value; each is an xsd:hexBinary literal." ] ;
+    # Struct-level alignment and padding: where each instance starts, and to what boundary it ends.
+    sh:property [ sh:path bddo:alignment ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "bddo:alignment takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path bddo:padTo ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "bddo:padTo takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path bddo:padByte ; sh:datatype xsd:hexBinary ; sh:pattern "^[0-9A-Fa-f]{2}$" ; sh:maxCount 1 ;
+        sh:message "bddo:padByte takes at most one value; each is one xsd:hexBinary octet (two hex digits)." ] ;
     # Struct-level size bounds the byte extent of the Struct (a bounded region for its children).
     sh:property {{constraint:pattern_158}} ;
     sh:property {{constraint:pattern_160}} ;
@@ -550,6 +640,7 @@ bddo:StructSizingShape a sh:NodeShape ;
 
 bddo:FieldShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
+    sh:message "A bddo:Field declares how it is typed (bddo:dataType, bddo:hasConditionalDataType, bddo:hasDispatchTable or bddo:valueFromExpression) and, if it is a separated text number (bddo:separatedBy), no size, size source, end-of-stream flag or terminator." ;
     sh:or (
         [ sh:property [ sh:path bddo:dataType ; sh:minCount 1 ] ]
         [ sh:property [ sh:path bddo:hasConditionalDataType ; sh:minCount 1 ] ]
@@ -598,12 +689,47 @@ bddo:FieldShape a sh:NodeShape ;
         [ sh:property [ sh:path bddo:terminator ; sh:minCount 1 ] ] ) ] ;
     sh:property [ sh:path bddo:trimNull ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
         sh:message "bddo:trimNull takes at most one value; each is an xsd:boolean literal." ] ;
-    sh:property [ sh:path bddo:encoding ; sh:maxCount 1 ; sh:in ( bddo:utf8 bddo:ascii bddo:utf16le bddo:utf16be bddo:latin1 ) ;
-        sh:message "bddo:encoding takes at most one value; each is one of bddo:utf8, bddo:ascii, bddo:utf16le, bddo:utf16be or bddo:latin1." ] ;
+    # The encoding set is OPEN: a registered individual, or any bddo:Encoding (a profile's
+    # bddo:CustomEncoding). The registered individuals are also accepted by name, so that a
+    # description validates against these shapes alone, without the vocabulary loaded; anything
+    # else must be typed. An unregistered encoding is then reported once more, as a warning.
+    sh:property [ sh:path bddo:encoding ; sh:maxCount 1 ;
+        sh:or ( [ sh:in ( bddo:utf8 bddo:ascii bddo:utf16le bddo:utf16be bddo:latin1 bddo:utf32le bddo:utf32be bddo:ucs2le bddo:ucs2be bddo:windows1252 bddo:iso8859_2 bddo:iso8859_5 bddo:iso8859_7 bddo:iso8859_9 bddo:iso8859_15 bddo:ebcdic037 bddo:shiftJis ) ]
+                [ sh:class bddo:Encoding ] ) ;
+        sh:message "bddo:encoding takes at most one value; each is a registered bddo:Encoding individual or an instance of bddo:Encoding (a bddo:CustomEncoding a profile mints)." ] ;
+    sh:property [ sh:path bddo:encoding ; sh:severity sh:Warning ;
+        sh:in ( bddo:utf8 bddo:ascii bddo:utf16le bddo:utf16be bddo:latin1 bddo:utf32le bddo:utf32be bddo:ucs2le bddo:ucs2be bddo:windows1252 bddo:iso8859_2 bddo:iso8859_5 bddo:iso8859_7 bddo:iso8859_9 bddo:iso8859_15 bddo:ebcdic037 bddo:shiftJis ) ;
+        sh:message "bddo:encoding names an encoding outside the registered set (bddo:utf8, bddo:ascii, bddo:utf16le, bddo:utf16be, bddo:latin1, bddo:utf32le, bddo:utf32be, bddo:ucs2le, bddo:ucs2be, bddo:windows1252, bddo:iso8859_2, bddo:iso8859_5, bddo:iso8859_7, bddo:iso8859_9, bddo:iso8859_15, bddo:ebcdic037, bddo:shiftJis); a bddo:CustomEncoding is accepted, but only a processor that supports its bddo:ianaCharset can decode it." ] ;
     sh:property [ sh:path bddo:bitLength ; sh:minExclusive 0 ; sh:maxCount 1 ;
         sh:message "bddo:bitLength takes at most one value; each is a number greater than 0." ] ;
+    # A field's bit order overrides its struct's (Processing Model, bit-level fields).
+    sh:property [ sh:path bddo:bitOrder ; sh:maxCount 1 ; sh:in ( bddo:MSBFirst bddo:LSBFirst ) ;
+        sh:message "bddo:bitOrder takes at most one value; each is either bddo:MSBFirst or bddo:LSBFirst." ] ;
     sh:property [ sh:path bddo:alignment ; sh:minExclusive 0 ; sh:maxCount 1 ;
         sh:message "bddo:alignment takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path bddo:padTo ; sh:minExclusive 0 ; sh:maxCount 1 ;
+        sh:message "bddo:padTo takes at most one value; each is a number greater than 0." ] ;
+    sh:property [ sh:path bddo:padByte ; sh:datatype xsd:hexBinary ; sh:pattern "^[0-9A-Fa-f]{2}$" ; sh:maxCount 1 ;
+        sh:message "bddo:padByte takes at most one value; each is one xsd:hexBinary octet (two hex digits)." ] ;
+    # A fixed value is one literal; a repetition is stated once, by one mechanism (the
+    # mechanisms' exclusivity is bddo:FieldRepetitionShape).
+    sh:property [ sh:path bddo:hasFixedValue ; sh:nodeKind sh:Literal ; sh:maxCount 1 ;
+        sh:message "bddo:hasFixedValue takes at most one value; each is a literal." ] ;
+    sh:property [ sh:path bddo:repeatCount ; sh:minInclusive 0 ; sh:maxCount 1 ;
+        sh:message "bddo:repeatCount takes at most one value; each is a number at least 0." ] ;
+    sh:property [ sh:path bddo:repeatCountFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
+        sh:message "bddo:repeatCountFromField takes at most one value; each is an instance of bddo:Field." ] ;
+    sh:property [ sh:path bddo:repeatCountFromExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ;
+        sh:message "bddo:repeatCountFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
+    sh:property [ sh:path bddo:repeatUntil ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ;
+        sh:message "bddo:repeatUntil takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
+    # Numeric representation (bddo:NumericRepresentationShape says which base type each needs).
+    sh:property [ sh:path bddo:floatFormat ; sh:maxCount 1 ; sh:in ( bddo:ieee754 bddo:ibmHexadecimal bddo:vaxF bddo:bfloat16 ) ;
+        sh:message "bddo:floatFormat takes at most one value; each is one of bddo:ieee754, bddo:ibmHexadecimal, bddo:vaxF or bddo:bfloat16." ] ;
+    sh:property [ sh:path bddo:fixedPointScale ; sh:maxCount 1 ;
+        sh:message "bddo:fixedPointScale takes at most one value." ] ;
+    sh:property [ sh:path bddo:bcd ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
+        sh:message "bddo:bcd takes at most one value; each is an xsd:boolean literal." ] ;
     sh:property [ sh:path bddo:atOffset ; sh:minInclusive 0 ; sh:maxCount 1 ;
         sh:message "bddo:atOffset takes at most one value; each is a number at least 0." ] ;
     sh:property [ sh:path bddo:atOffsetFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
@@ -711,7 +837,66 @@ bddo:DataTypeShape a sh:NodeShape ;
         sh:message "bddo:isSigned takes at most one value; each is an xsd:boolean literal." ] ;
     sh:property {{constraint:pattern_123}} ;
     sh:property [ sh:path bddo:xsdType ; sh:nodeKind sh:IRI ; sh:maxCount 1 ;
-        sh:message "bddo:xsdType takes at most one value; each is an IRI." ] .
+        sh:message "bddo:xsdType takes at most one value; each is an IRI." ] ;
+    # A profile's own datatype may fix its numeric representation for every field that uses it.
+    sh:property [ sh:path bddo:floatFormat ; sh:maxCount 1 ; sh:in ( bddo:ieee754 bddo:ibmHexadecimal bddo:vaxF bddo:bfloat16 ) ;
+        sh:message "bddo:floatFormat takes at most one value; each is one of bddo:ieee754, bddo:ibmHexadecimal, bddo:vaxF or bddo:bfloat16." ] ;
+    sh:property [ sh:path bddo:fixedPointScale ; sh:maxCount 1 ;
+        sh:message "bddo:fixedPointScale takes at most one value." ] ;
+    sh:property [ sh:path bddo:bcd ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
+        sh:message "bddo:bcd takes at most one value; each is an xsd:boolean literal." ] .
+
+# A representation says how the bits of a NUMBER are read, so it needs the base type it is
+# for: a float format on an integer field, or a BCD flag on a float, describes nothing. Checked
+# only where the base type is known (a stated bddo:dataType with a bddo:baseType, or the subject's
+# own bddo:baseType); a conditional or dispatched type is resolved by the processor.
+bddo:NumericRepresentationShape a sh:NodeShape ;
+    rdfs:comment "bddo:floatFormat applies to a floating-point Field or DataType (bddo:baseType bddo:baseFloat); bddo:fixedPointScale and bddo:bcd apply to an integer one (bddo:baseType bddo:baseInteger). Also, a BCD field is not scaled: bddo:bcd true and bddo:fixedPointScale are mutually exclusive, because the digits spell a decimal number, not a binary one."@en ;
+    sh:targetSubjectsOf bddo:floatFormat , bddo:fixedPointScale , bddo:bcd ;
+    sh:message "bddo:bcd true and bddo:fixedPointScale are mutually exclusive: BCD digits spell a decimal number, which no binary scale applies to." ;
+    sh:not [ sh:and ( [ sh:property [ sh:path bddo:bcd ; sh:hasValue true ] ]
+                      [ sh:property [ sh:path bddo:fixedPointScale ; sh:minCount 1 ] ] ) ] ;
+    sh:sparql [ sh:message "bddo:floatFormat applies to a floating-point Field or DataType; {?base} is not bddo:baseFloat." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this ?base WHERE {
+            $this bddo:floatFormat ?f .
+            { $this bddo:dataType/bddo:baseType ?base } UNION { $this bddo:baseType ?base }
+            FILTER(?base != bddo:baseFloat)
+        }""" ] ;
+    sh:sparql [ sh:message "{?p} applies to an integer Field or DataType; {?base} is not bddo:baseInteger." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this ?p ?base WHERE {
+            $this ?p ?v .
+            FILTER(?p IN (bddo:fixedPointScale, bddo:bcd))
+            { $this bddo:dataType/bddo:baseType ?base } UNION { $this bddo:baseType ?base }
+            FILTER(?base != bddo:baseInteger)
+        }""" ] .
+
+# A fill byte describes padding, so it needs padding to describe.
+bddo:PaddingShape a sh:NodeShape ;
+    rdfs:comment "bddo:padByte states what the padding bddo:padTo introduces is expected to hold; without bddo:padTo there is no padding for it to describe."@en ;
+    sh:targetSubjectsOf bddo:padByte ;
+    sh:message "bddo:padByte is only meaningful beside bddo:padTo, which introduces the padding it describes." ;
+    sh:property [ sh:path bddo:padTo ; sh:minCount 1 ;
+        sh:message "bddo:padByte is only meaningful beside bddo:padTo, which introduces the padding it describes." ] .
+
+# A custom encoding is identified by its charset name, exactly once, and is accepted (with a
+# warning from bddo:FieldShape) wherever a registered encoding is.
+bddo:CustomEncodingShape a sh:NodeShape ;
+    # Activated by the class and by the property, so that an encoding a profile forgot to type
+    # is still checked. The registered encodings state bddo:ianaCharset too and are therefore
+    # focus nodes; every constraint below holds for them, and the sh:not only reports a
+    # registered encoding that is ALSO typed bddo:CustomEncoding.
+    sh:targetClass bddo:CustomEncoding ;
+    sh:targetSubjectsOf bddo:ianaCharset ;
+    sh:message "An encoding that states a bddo:ianaCharset is an IRI (so that the fields using it can name it), and a registered encoding is never also typed bddo:CustomEncoding." ;
+    sh:nodeKind sh:IRI ;
+    sh:not [ sh:class bddo:CustomEncoding ; sh:in ( bddo:utf8 bddo:ascii bddo:utf16le bddo:utf16be bddo:latin1 bddo:utf32le bddo:utf32be bddo:ucs2le bddo:ucs2be bddo:windows1252 bddo:iso8859_2 bddo:iso8859_5 bddo:iso8859_7 bddo:iso8859_9 bddo:iso8859_15 bddo:ebcdic037 bddo:shiftJis ) ] ;
+    # IANA charset names: up to 40 characters from letters, digits and the punctuation the
+    # registry permits, starting with a letter or digit.
+    sh:property [ sh:path bddo:ianaCharset ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:pattern "^[A-Za-z0-9][A-Za-z0-9._:()+-]{0,39}$" ;
+        sh:message "An encoding states exactly one bddo:ianaCharset, an IANA Character Sets registry name (letters, digits and . _ : ( ) + -, at most 40 characters); a bddo:CustomEncoding must state it." ] .
 
 bddo:DataTypeRuleShape a sh:NodeShape ;
     sh:targetClass bddo:DataTypeRule ;
@@ -722,6 +907,7 @@ bddo:DataTypeRuleShape a sh:NodeShape ;
 
 bddo:DispatchTableShape a sh:NodeShape ;
     sh:targetClass bddo:DispatchTable ;
+    sh:message "A bddo:DispatchTable states its key exactly one way: bddo:dispatchOnField or bddo:dispatchOnExpression." ;
     sh:xone (
         [ sh:property [ sh:path bddo:dispatchOnField ; sh:minCount 1 ] ]
         [ sh:property [ sh:path bddo:dispatchOnExpression ; sh:minCount 1 ] ]
@@ -794,6 +980,18 @@ bddo:EnumValueShape a sh:NodeShape ;
 bddo:ChecksumShape a sh:NodeShape ;
     sh:targetClass bddo:Checksum ;
     sh:targetObjectsOf bddo:checksum ;
+    rdfs:comment "A bddo:Checksum names its algorithm and bounds the bytes it covers: exactly one START (bddo:coversFromField or bddo:coversFromExpression) and exactly one END (bddo:coversToField or bddo:coversToExpression), or the deprecated whole-range bddo:coversExpression alone. A checksum with an algorithm and no bounds covers nothing a processor could verify, so it is rejected rather than read as covering everything."@en ;
+    sh:message "A bddo:Checksum states exactly one start of its covered range (bddo:coversFromField or bddo:coversFromExpression) and exactly one end (bddo:coversToField or bddo:coversToExpression), or the deprecated whole-range bddo:coversExpression alone." ;
+    # Each bound, stated exactly once. The deprecated whole-range form counts as both bounds, so
+    # pairing it with a per-bound property states that bound twice and fails the same way as a
+    # field and an expression for one bound would: the two forms do not even agree on whether
+    # the end byte is included, so which wins would change the bytes hashed.
+    sh:xone ( [ sh:property {{constraint:pattern_112}} ]
+              [ sh:property {{constraint:pattern_110}} ]
+              [ sh:property [ sh:path bddo:coversExpression ; sh:minCount 1 ] ] ) ;
+    sh:xone ( [ sh:property {{constraint:pattern_116}} ]
+              [ sh:property {{constraint:pattern_114}} ]
+              [ sh:property [ sh:path bddo:coversExpression ; sh:minCount 1 ] ] ) ;
     sh:property [ sh:path bddo:checksumAlgorithm ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:or ( [ sh:in ( bddo:crc16 bddo:crc32 bddo:adler32 bddo:md5 bddo:sha1 bddo:sha256 bddo:crc8Smbus bddo:crc16Arc bddo:crc16Xmodem bddo:crc16Modbus bddo:crc16X25 bddo:crc32c bddo:crc32Bzip2 bddo:crc32Mpeg2 bddo:crc64Ecma182 bddo:crc64Xz ) ]
                 [ sh:class bddo:CustomCrc ] ) ;
@@ -807,21 +1005,7 @@ bddo:ChecksumShape a sh:NodeShape ;
     sh:property [ sh:path bddo:coversFromExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ;
         sh:message "bddo:coversFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
     sh:property [ sh:path bddo:coversToExpression ; sh:node bddo:HelExpressionValueShape ; sh:maxCount 1 ;
-        sh:message "bddo:coversToExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
-    # One mechanism per bound. Both would leave the reader to guess which wins, and the two
-    # forms do not even agree on whether the end byte is included, so the guess changes the
-    # bytes hashed.
-    sh:not [ sh:and ( [ sh:property {{constraint:pattern_112}} ]
-                      [ sh:property {{constraint:pattern_110}} ] ) ] ;
-    sh:not [ sh:and ( [ sh:property {{constraint:pattern_116}} ]
-                      [ sh:property {{constraint:pattern_114}} ] ) ] ;
-    # The deprecated whole-range form describes both bounds by itself, so pairing it with a
-    # per-bound property describes the same bound twice.
-    sh:not [ sh:and ( [ sh:property [ sh:path bddo:coversExpression ; sh:minCount 1 ] ]
-                      [ sh:or ( [ sh:property {{constraint:pattern_112}} ]
-                                [ sh:property {{constraint:pattern_116}} ]
-                                [ sh:property {{constraint:pattern_110}} ]
-                                [ sh:property {{constraint:pattern_114}} ] ) ] ) ] .
+        sh:message "bddo:coversToExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] .
 
 # ---------- Custom CRC ----------
 bddo:CustomCrcShape a sh:NodeShape ;
@@ -866,8 +1050,10 @@ bddo:ParameterisedStructShape a sh:NodeShape ;
     sh:property [ sh:path ( bddo:hasParameter [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
         sh:class bddo:Parameter ; sh:nodeKind sh:IRI ;
         sh:message "Every member of a hasParameter list is a bddo:Parameter named by its IRI." ] ;
-    sh:property [ sh:path rdf:type ; sh:hasValue bddo:Struct ;
-        sh:message "bddo:hasParameter is declared on a bddo:Struct." ] .
+    # sh:class rather than a hasValue on rdf:type: a DelimitedTable or TreeDocument is a Struct
+    # by rdfs:subClassOf, and sh:class follows that in the data graph where rdf:type does not.
+    sh:class bddo:Struct ;
+    sh:message "bddo:hasParameter is declared on a bddo:Struct (or a subclass of it)." .
 
 bddo:ParameterShape a sh:NodeShape ;
     sh:targetClass bddo:Parameter ;
@@ -875,6 +1061,7 @@ bddo:ParameterShape a sh:NodeShape ;
     sh:property [ sh:path bddo:parameterType ; sh:maxCount 1 ;
         sh:in ( bddo:IntegerParameter bddo:FloatParameter bddo:StringParameter bddo:BytesParameter bddo:BooleanParameter ) ;
         sh:message "bddo:parameterType is one of bddo:IntegerParameter, bddo:FloatParameter, bddo:StringParameter, bddo:BytesParameter and bddo:BooleanParameter." ] ;
+    sh:message "A bddo:Parameter is not a bddo:Field: it consumes no bytes and is not a member of the parsed tree." ;
     sh:not [ sh:class bddo:Field ] .
 
 bddo:ArgumentListShape a sh:NodeShape ;
@@ -904,6 +1091,7 @@ bddo:ArgumentArityShape a sh:NodeShape ;
 bddo:LocalBindingShape a sh:NodeShape ;
     sh:targetClass bddo:LocalBinding ;
     sh:targetSubjectsOf bddo:localExpression ;
+    sh:message "A bddo:LocalBinding is an IRI (its name is the simple key of its IRI) and is not a bddo:Field." ;
     sh:nodeKind sh:IRI ;
     sh:property [ sh:path bddo:localExpression ; sh:minCount 1 ; sh:maxCount 1 ; sh:node bddo:HelExpressionValueShape ;
         sh:message "A bddo:LocalBinding states exactly one bddo:localExpression." ] ;
@@ -975,6 +1163,7 @@ bddo:ConditionalEndiannessShape a sh:NodeShape ;
 
 bddo:DelimitedRecordsShape a sh:NodeShape ;
     sh:targetClass bddo:DelimitedRecords ;
+    sh:message "A bddo:DelimitedRecords separates values by a fixed bddo:fieldDelimiter or by runs of whitespace (bddo:whitespaceSeparated true), never both." ;
     sh:property [ sh:path bddo:recordDelimiter ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ;
         sh:message "bddo:recordDelimiter takes at most one value; each is an xsd:hexBinary literal." ] ;
     sh:property [ sh:path bddo:fieldDelimiter ; sh:datatype xsd:hexBinary ; sh:maxCount 1 ;
@@ -1167,6 +1356,7 @@ bddo:KeyPathShape a sh:NodeShape ;
 # bddo:key is meaningful only inside a KeyValueHeader; a table's columns are positional.
 bddo:DelimitedTableShape a sh:NodeShape ;
     sh:targetClass bddo:DelimitedTable ;
+    sh:message "A bddo:DelimitedTable declares how its columns are separated: a bddo:fieldDelimiter or bddo:whitespaceSeparated true." ;
     sh:or ( [ sh:property {{constraint:pattern_130}} ]
             [ sh:property {{constraint:pattern_172}} ] ) ;
     sh:property [ sh:path bddo:keyValueSeparator ; sh:maxCount 0 ;
@@ -1195,12 +1385,14 @@ bddo:VarintWidthShape a sh:NodeShape ;
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
 bddo:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
+    {{constraint:pattern_237}} .
 bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     sh:targetSubjectsOf bddo:alignment ,
         bddo:atOffset ,
         bddo:atOffsetFromExpression ,
+        bddo:bcd ,
         bddo:bitLength ,
         bddo:bitWidth ,
         bddo:commentPrefix ,
@@ -1219,8 +1411,10 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
         bddo:enumIsFlags ,
         bddo:escapeChar ,
         bddo:fieldDelimiter ,
+        bddo:fixedPointScale ,
         bddo:groupCloseToken ,
         bddo:groupOpenToken ,
+        bddo:ianaCharset ,
         bddo:isPresentIf ,
         bddo:isSigned ,
         bddo:key ,
@@ -1232,6 +1426,8 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
         bddo:namespacePrefix ,
         bddo:nodePath ,
         bddo:numericBase ,
+        bddo:padByte ,
+        bddo:padTo ,
         bddo:pathSeparator ,
         bddo:quoteChar ,
         bddo:recordDelimiter ,
@@ -1256,6 +1452,8 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
         sh:message "bddo:atOffset takes a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
     sh:property [ sh:path bddo:atOffsetFromExpression ; sh:node bddo:HelExpressionValueShape ;
         sh:message "bddo:atOffsetFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:bcd ; sh:datatype xsd:boolean ;
+        sh:message "bddo:bcd takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] ;
     sh:property [ sh:path bddo:bitLength ; sh:node bddo:IntegerValueShape ; sh:minInclusive 1 ;
         sh:message "bddo:bitLength takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
     sh:property [ sh:path bddo:bitWidth ; sh:node bddo:IntegerValueShape ; sh:minInclusive 1 ;
@@ -1292,10 +1490,14 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
         sh:message "bddo:escapeChar takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
     sh:property [ sh:path bddo:fieldDelimiter ; sh:datatype xsd:hexBinary ;
         sh:message "bddo:fieldDelimiter takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
+    sh:property [ sh:path bddo:fixedPointScale ; sh:node bddo:IntegerValueShape ;
+        sh:message "bddo:fixedPointScale takes an integer (rdfs:range xsd:integer)." ] ;
     sh:property [ sh:path bddo:groupCloseToken ; sh:datatype xsd:string ;
         sh:message "bddo:groupCloseToken takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:groupOpenToken ; sh:datatype xsd:string ;
         sh:message "bddo:groupOpenToken takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path bddo:ianaCharset ; sh:datatype xsd:string ;
+        sh:message "bddo:ianaCharset takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:isPresentIf ; sh:node bddo:HelExpressionValueShape ;
         sh:message "bddo:isPresentIf takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:isSigned ; sh:datatype xsd:boolean ;
@@ -1318,6 +1520,10 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
         sh:message "bddo:nodePath takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:numericBase ; sh:node bddo:IntegerValueShape ; sh:minInclusive 1 ;
         sh:message "bddo:numericBase takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path bddo:padByte ; sh:datatype xsd:hexBinary ;
+        sh:message "bddo:padByte takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] ;
+    sh:property [ sh:path bddo:padTo ; sh:node bddo:IntegerValueShape ; sh:minInclusive 1 ;
+        sh:message "bddo:padTo takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
     sh:property [ sh:path bddo:pathSeparator ; sh:datatype xsd:string ;
         sh:message "bddo:pathSeparator takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path bddo:quoteChar ; sh:datatype xsd:hexBinary ;
