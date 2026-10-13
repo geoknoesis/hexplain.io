@@ -1,9 +1,10 @@
 """Complete the vector suites to what tools/test_codec_vector_completeness.py requires.
 
-For every suite that lacks a vector for a category its contract declares, a parameter it declares, or a
-round trip, this adds one. Error vectors are made from the suite's own inputs -- a truncation, a flipped
-byte, a lowered output limit, a parameter the codec refuses -- and the category each candidate raises is
-confirmed with the reference engine's codec CLI before it is recorded, so a candidate the engine reads as
+For every suite that lacks a vector for a category its contract declares, a parameter it declares, a
+round trip, or a round trip at a stated compression level, this adds one. Error vectors are made from the
+suite's own inputs -- a truncation, a flipped byte, a lowered output limit, a parameter the codec refuses --
+and the category each candidate raises is confirmed with the reference engine's codec CLI before it is
+recorded, so a candidate the engine reads as
 a different category is dropped rather than asserted. Parameter and round-trip vectors of the transform
 codecs are worked by hand or by the independent Python references (zlib); where a parameter's output has
 no independent oracle (JPEG raw planes, LERC's TIFF layout), the engine's output is recorded and the
@@ -240,7 +241,40 @@ def complete(name: str, manifest: Any, contract: Any, declared: Any, base: Any, 
                 ids.add(trip["id"])
             else:
                 log.append(f"{name}/{trip['id']}: round trip refused by the engine: {result}")
+
+    # An encode-only parameter (the compression level) is shown honoured only by an encode step that succeeds.
+    for trip in level_round_trips(name, contract):
+        if trip["id"] in ids:
+            continue
+        result = engine.run(manifest["codec"], base, trip)
+        if category(result) is None and all(st.get("ok") for st in result["steps"]):
+            manifest["vectors"].append(trip)
+            added.append(trip["id"])
+            ids.add(trip["id"])
+        else:
+            log.append(f"{name}/{trip['id']}: round trip refused by the engine: {result}")
     return added
+
+
+def level_round_trips(name: str, contract: Any) -> list[Any]:
+    """Round trips of a compressor whose contract declares `level`, at the lowest and the highest explicit level
+    (0, where the contract's range reaches it, and the maximum): the encode step passes the level and expects
+    success, the encoded bytes being the implementation's own, and the decode step reads them back."""
+    spec = contract["parameters"].get("level")
+    if name not in COMPRESSORS or spec is None:
+        return []
+    original = b"round trip through the compressor at a stated level " * 4
+    trips = []
+    for level in sorted({max(int(spec["minimum"]), 0), int(spec["maximum"])}):
+        decode = {"direction": "decode", "params": {}, "input": {"previous": True}, "expect": {"hex": original.hex()}}
+        trips.append(
+            {
+                "id": f"round-trip-level-{level}",
+                "source": "round-trip",
+                "steps": [step(original, {"ok": True}, {"level": level}, direction="encode"), decode],
+            }
+        )
+    return trips
 
 
 def unsupported_candidates(name: str, data: Any, ok_step: Any) -> Iterator[Any]:
