@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "Every gate tools/run_gates.py may run. class: offline gates run in the validate workflow and locally; docker and browser gates run in the site workflow (python tools/run_gates.py --class docker|browser). timeout is seconds per gate (ten times the recorded duration, rounded up to five minutes, at most an hour); procs is the number of processes the gate fans out to, used with the recorded peak RSS to bound concurrency. Every tools/test_*.py must be listed (tools/test_gate_manifest.py).",
+  "description": "Every gate tools/run_gates.py may run. class: offline gates run in the validate workflow and locally; docker and browser gates run in the site workflow (python tools/run_gates.py --class docker|browser). timeout is seconds per gate and is never edited by hand: `python tools/run_gates.py --derive-timeouts` writes it from the duration tools/gate-costs.json records (ten times that, rounded up to five minutes, at least five minutes, at most an hour). procs is the number of processes the gate fans out to at most; the runner caps it by the gate's share of the machine and bounds concurrency with it and with the recorded peak RSS. Every tools/test_*.py must be listed (tools/test_gate_manifest.py).",
   "gates": [
     {
       "name": "test_bundle_lifting_contract",
@@ -109,6 +109,11 @@
       "class": "offline",
       "timeout": 300,
       "procs": 3
+    },
+    {
+      "name": "test_gate_schedule",
+      "class": "offline",
+      "timeout": 300
     },
     {
       "name": "test_gdal_inventory",
@@ -351,6 +356,11 @@
       "timeout": 300
     },
     {
+      "name": "test_specgraph",
+      "class": "offline",
+      "timeout": 300
+    },
+    {
       "name": "test_specification_patterns",
       "class": "offline",
       "timeout": 300
@@ -362,6 +372,11 @@
     },
     {
       "name": "test_term_reference",
+      "class": "offline",
+      "timeout": 300
+    },
+    {
+      "name": "test_types",
       "class": "offline",
       "timeout": 300
     },
