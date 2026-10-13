@@ -120,7 +120,8 @@ rewritten.
   `specification/conformance/writer/round-trip-expectations.json` (case to `round-trip`,
   `Unsupported` or `Validation`), which is generated with the suite from
   `tools/conformance/round_trip.py` and checked for completeness by `test_conformance_suite.py`.
-  req-pm-serialisation-24 is cited by that mode, no longer by two cases. The comparator keeps the
+  req-pm-serialisation-24 is cited by that mode, no longer by two cases, and a processor may
+  claim `writer` when the class passes and the mode reports no failure. The comparator keeps the
   sign of a zero (`-0.0` is not `0.0`), and `orError` now applies to a Physical Parser case too.
 - **Text encodings are claimed and observed (N3).** Processing Model, Further encodings: the
   list of well-formedness rules is governed by a requirement (req-pm-text-decoding-9, its items
