@@ -7,6 +7,10 @@ written cases -- one conforming and one or more non-conforming per competency qu
 the four-column corpus format (name, conforms, expected result path, base64 Turtle). This gate
 validates each against the conf, req and fn shapes and checks the stored corpus is current;
 run it with --write after changing a case.
+
+The ontology graph mixed into each case is the modules the cases are written in terms of (conf,
+req, fn, bddo and what they import), not the whole family: a shape here reads the class of a
+requirement or a struct, which those modules state, and nothing the other thirty state.
 """
 
 from __future__ import annotations
@@ -14,7 +18,6 @@ from __future__ import annotations
 import base64
 import sys
 from pathlib import Path
-from typing import Any
 
 import specgraph
 from pyshacl import validate
@@ -51,10 +54,15 @@ ex:c2 a conf:Constraint ; conf:scope ex:count ; conf:assertion "self > 0" ;
 NS = {"conf": "https://hexplain.io/ns/conf#", "req": "https://hexplain.io/ns/req#", "hxf": "https://hexplain.io/ns/fn#"}
 
 
-def cases() -> Any:
-    rows = []
+#: One case: (name, expected conformance, expected result path IRI or "", Turtle).
+Case = tuple[str, bool, str, str]
 
-    def add(name, body, ok, path=""):
+
+def cases() -> list[Case]:
+    """Every authored case, grouped by the competency question it answers."""
+    rows: list[Case] = []
+
+    def add(name: str, body: str, ok: bool, path: str = "") -> None:
         prefix, local = path.split(":") if path else ("", "")
         rows.append((name, ok, NS[prefix] + local if path else "", P + body))
 
@@ -186,7 +194,8 @@ def cases() -> Any:
     return rows
 
 
-def render(rows: list[dict[str, Any]]) -> str:
+def render(rows: list[Case]) -> str:
+    """The corpus file: two comment lines, then one tab-separated line per case."""
     lines = [
         "# Conformance, requirement and function competency cases (tools/test_conformance_competency.py --write).",
         "# name\tconforms\texpected-path\tbase64 Turtle",
@@ -196,13 +205,13 @@ def render(rows: list[dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def main() -> None:
-    shapes = specgraph.load([str(ROOT / p) for p in SHAPES])
-    family = specgraph.ontologies()
+def main() -> int:
+    shapes = specgraph.load(SHAPES)
     rows = cases()
-    for name, ok, path, body in rows:
-        data = Graph().parse(data=body, format="turtle")
-        conforms, report, text = validate(data, shacl_graph=shapes, ont_graph=family, inference="none", advanced=True)
+    parsed = [Graph().parse(data=body, format="turtle") for _, _, _, body in rows]
+    context = specgraph.shapes_of(specgraph.modules_used_by(*parsed))
+    for (name, ok, path, _), data in zip(rows, parsed, strict=True):
+        conforms, report, text = validate(data, shacl_graph=shapes, ont_graph=context, inference="none", advanced=True)
         assert bool(conforms) == ok, (name, text)
         if path:
             assert URIRef(path) in report.objects(None, SH.resultPath), (name, text)
@@ -211,9 +220,10 @@ def main() -> None:
         CORPUS.write_text(expected, encoding="utf-8", newline="\n")
     if not CORPUS.exists() or CORPUS.read_text(encoding="utf-8") != expected:
         print("FAIL: conformance-competency.tsv is stale; run python tools/test_conformance_competency.py --write")
-        sys.exit(1)
+        return 1
     print(f"PASS: {len(rows)} conformance, requirement and function competency cases with result-path assertions")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

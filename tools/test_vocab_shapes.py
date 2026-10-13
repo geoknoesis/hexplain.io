@@ -36,18 +36,21 @@ from _gate_runner import gate_workers
 from pyshacl import validate
 from rdflib import Graph, Namespace, URIRef
 
-# Every vocabulary, aspect and register in the family. A fixture targets aspect properties
-# with hexplain:mapsToProperty and names register concepts (a codec in an encoding pipeline,
-# a part role); when the term's home ontology is missing the shape reports the FIXTURE as
-# broken. specgraph globs, so a new aspect or register is context here the moment it lands.
-CORE = specgraph.ontology_paths()
-
 load = specgraph.load
 ROOT = specgraph.ROOT
 
 
-def ontologies_for(fixture_path: Any) -> Any:
-    """Core vocabularies plus the owning module's own vocabulary and shapes.
+def ontologies_for(fixture_path: str) -> list[str]:
+    """The modules a fixture is validated with: the ones it is written in terms of, and its own.
+
+    A fixture targets aspect properties with hexplain:mapsToProperty and names register concepts
+    (a codec in an encoding pipeline, a part role); when the term's home ontology is missing the
+    shape reports the FIXTURE as broken. So the context is every family module one of the
+    fixture's own IRIs belongs to, with everything those modules import
+    (``specgraph.modules_used_by``) -- a new aspect or register is context the moment a fixture
+    mentions it. The rest of the family is left out: it never mentions the fixture's terms, and
+    loading all forty modules as data and as shapes for each of 150 fixtures was nine tenths of
+    this gate's time and memory.
 
     A fixture lives in a `test/` directory beside the module it exercises, at either
     depth: specification/<mod>/test/ (bddo, dlv, conf, req) or
@@ -57,12 +60,8 @@ def ontologies_for(fixture_path: Any) -> Any:
     others in a sibling shapes.ttl (conf, req).
     """
     mod_dir = (ROOT / fixture_path).parent.parent
-    paths = list(CORE)
-    for extra in sorted(mod_dir.glob("*.ttl")):
-        s = extra.relative_to(ROOT).as_posix()
-        if s not in paths:
-            paths.append(s)
-    return paths
+    beside = {extra.relative_to(ROOT).as_posix() for extra in mod_dir.glob("*.ttl")}
+    return sorted(set(specgraph.modules_used_by(load([fixture_path]))) | beside)
 
 
 # Two depths: specification/<mod>/test/ and specification/<group>/<mod>/test/. The
@@ -79,8 +78,12 @@ def fixture_paths() -> list[str]:
 
 
 @functools.cache
-def shapes_for(ont: Any) -> Any:
-    """One shapes graph per distinct ontology set, reused by every fixture of that module."""
+def shapes_for(ont: tuple[str, ...]) -> Graph:
+    """One graph per distinct module set, reused by every fixture with that context; never modified.
+
+    It is the shapes graph of a fixture and, with the fixture's own triples added to a copy, the
+    ontology context of its data graph.
+    """
     return load(list(ont))
 
 
@@ -156,8 +159,8 @@ def check(path: str) -> Any:
     """Validate one fixture, returning a failure description or None."""
     should_conform = path.endswith("-valid.ttl")
     ont = ontologies_for(path)
-    data = load(ont + [path])
     shapes = shapes_for(tuple(ont))
+    data = shapes + load([path])
     conforms, report_graph, report = validate(
         data, shacl_graph=shapes, inference="none", advanced=True, meta_shacl=False
     )
