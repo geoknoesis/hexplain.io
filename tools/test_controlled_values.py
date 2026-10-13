@@ -36,6 +36,7 @@ OPEN_CLASSES = {
     HX + "bddo#DataType": "profiles declare their own primitive data types (nitf:BCSA, ...)",
     HX + "dlv#Axis": "domain vocabularies add axes (audio#axisSample, geo#axisLatitude, ...)",
     HX + "fn#Function": "the function catalogue grows by addition; each function is its own resource",
+    HX + "req/requirements#ShapeRequirement": "one requirement per node shape of the family (req/requirements.ttl); each is its own resource, added as shapes are",
 }
 LEGACY = {
     HX + "bddo#integer": "bddo:BaseType values predate the policy; the base-type shape checks by class",
