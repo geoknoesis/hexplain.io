@@ -6,16 +6,21 @@ checks one against the suite it names. A report is published as
 specification/conformance/reports/<implementation>/<version>-<suite digest, 12 hex digits>.json, so the reports of
 earlier suites are kept beside the current one.
 
-    python tools/conformance/report.py --complete report.json --revision <commit> --os "..." --jvm "..." --toolchain "..."
+    python tools/conformance/report.py --complete report.json --revision <commit> --os "..." --jvm "..." --toolchain
+"..."
     python tools/conformance/report.py --path report.json        # the path the report is published at
 """
+
+from __future__ import annotations
+
 import argparse
 import hashlib
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from suite import CATEGORIES, CLASSES, SUITE
 
@@ -30,12 +35,12 @@ PRERELEASE = re.compile(r"snapshot|dev|rc|alpha|beta|\+", re.I)
 ENVIRONMENT = ("os", "jvm", "toolchain")
 
 
-def suite_cases(suite=SUITE):
+def suite_cases(suite: Any = SUITE) -> dict[str, Any]:
     """{case id: class} of every case of the suite on disk."""
     return {p.parent.name: cls for cls in CLASSES for p in sorted((Path(suite) / cls).glob("*/manifest.json"))}
 
 
-def suite_digest(suite=SUITE):
+def suite_digest(suite: Any = SUITE) -> Any:
     """SHA-256 over every case file of the suite, by relative path, so a report names the exact suite it ran."""
     h = hashlib.sha256()
     for cls in CLASSES:
@@ -46,24 +51,26 @@ def suite_digest(suite=SUITE):
     return h.hexdigest()
 
 
-def claims_digest(claims):
+def claims_digest(claims: Any) -> Any:
     """SHA-256 of the claims statement's canonical JSON: keys sorted, no whitespace, non-ASCII unescaped, UTF-8."""
     canonical = json.dumps(claims, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def safe_name(text):
+def safe_name(text: str) -> Any:
     return re.sub(r"[^a-z0-9.-]", "-", str(text).lower())
 
 
-def report_path(report):
+def report_path(report: Any) -> str:
     """The path, relative to specification/conformance/, a report is published at."""
     impl = report.get("implementation", {})
     digest = str(report.get("suite", {}).get("digest", ""))[:12]
     return f"reports/{safe_name(impl.get('name', ''))}/{safe_name(impl.get('version', ''))}-{digest}.json"
 
 
-def build(results, implementation, claims, suite=SUITE, date=None, environment=None):
+def build(
+    results: Any, implementation: Any, claims: Any, suite: Any = SUITE, date: Any = None, environment: Any = None
+) -> dict[str, Any]:
     counts = {s: sum(1 for r in results if r["status"] == s) for s in STATUSES}
     return {
         "format": FORMAT,
@@ -73,14 +80,16 @@ def build(results, implementation, claims, suite=SUITE, date=None, environment=N
         "claims": claims,
         "claimsDigest": claims_digest(claims),
         "suite": {"digest": suite_digest(suite), "cases": len(suite_cases(suite))},
-        "run": {"date": date or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "runner": "tools/conformance/run_suite.py"},
+        "run": {
+            "date": date or datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "runner": "tools/conformance/run_suite.py",
+        },
         "counts": counts,
         "results": results,
     }
 
 
-def complete(report, revision, environment):
+def complete(report: Any, revision: Any, environment: Any) -> Any:
     """[report] with the revision, environment, claims digest and format version a runner left out, in place."""
     report.setdefault("implementation", {})["revision"] = revision
     report["environment"] = dict(environment)
@@ -88,8 +97,18 @@ def complete(report, revision, environment):
         report["claimsDigest"] = claims_digest(report["claims"])
     report["formatVersion"] = FORMAT_VERSION
     ordered = {}
-    for key in ("format", "formatVersion", "implementation", "environment", "claims", "claimsDigest", "suite", "run",
-                "counts", "results"):
+    for key in (
+        "format",
+        "formatVersion",
+        "implementation",
+        "environment",
+        "claims",
+        "claimsDigest",
+        "suite",
+        "run",
+        "counts",
+        "results",
+    ):
         if key in report:
             ordered[key] = report[key]
     ordered.update({k: v for k, v in report.items() if k not in ordered})
@@ -105,17 +124,23 @@ def _version_problems(report, historical):
     version = report.get("formatVersion")
     if version is None:
         if not historical:
-            problems.append("a report of the current suite carries formatVersion 2 with its revision, environment "
-                            "and claimsDigest; a version-1 report stays published only for an earlier suite")
+            problems.append(
+                "a report of the current suite carries formatVersion 2 with its revision, environment "
+                "and claimsDigest; a version-1 report stays published only for an earlier suite"
+            )
         return problems
     if version != FORMAT_VERSION:
         problems.append(f"formatVersion is {version!r}, not {FORMAT_VERSION}")
     impl = report.get("implementation") if isinstance(report.get("implementation"), dict) else {}
     revision = impl.get("revision")
     if not isinstance(revision, str) or not REVISION.match(revision):
-        problems.append("implementation.revision must be a Git commit hash (7 to 40 hex digits) or <system>:<identifier>")
+        problems.append(
+            "implementation.revision must be a Git commit hash (7 to 40 hex digits) or <system>:<identifier>"
+        )
         if isinstance(impl.get("version"), str) and PRERELEASE.search(impl["version"]):
-            problems.append(f"version {impl['version']!r} names no fixed build and is not admissible without a revision")
+            problems.append(
+                f"version {impl['version']!r} names no fixed build and is not admissible without a revision"
+            )
     env = report.get("environment")
     if not isinstance(env, dict) or not all(isinstance(env.get(k), str) and env.get(k).strip() for k in ENVIRONMENT):
         problems.append("environment must state os, jvm (or none) and toolchain, each a non-empty string")
@@ -124,7 +149,7 @@ def _version_problems(report, historical):
     return problems
 
 
-def check(report, suite=SUITE, path=None):
+def check(report: Any, suite: Any = SUITE, path: Any = None) -> Any:
     """The problems of a report, [] when it follows the format and covers the suite it names.
 
     [path], when given, is where the report is published (any path ending in reports/<implementation>/<file>.json):
@@ -173,12 +198,12 @@ def check(report, suite=SUITE, path=None):
     return problems
 
 
-def published():
+def published() -> list[Any]:
     """Every published report, as (path, report)."""
     return [(p, json.loads(p.read_text(encoding="utf-8"))) for p in sorted(REPORTS.glob("*/*.json"))]
 
 
-def main(argv):
+def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--complete", metavar="FILE", help="add the revision, environment and claims digest to this report")
     ap.add_argument("--path", metavar="FILE", help="print the path this report is published at")

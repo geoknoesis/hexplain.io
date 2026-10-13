@@ -23,6 +23,9 @@ reader sees it: an empty link reads as its target's title, and a superscript as 
     python tools/_requirement_ids.py            # anchor new sentences and refresh the registry
     python tools/_requirement_ids.py --check    # report what --write would change; exit 1 if any
 """
+
+from __future__ import annotations
+
 import hashlib
 import html
 import json
@@ -30,6 +33,7 @@ import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "specification/conformance/requirements.json"
@@ -51,12 +55,21 @@ PAGES = {
     "specification/aspect/raster/index.html": ("raster", None),
     "specification/aspect/spatialref/index.html": ("spatialref", None),
 }
-VOCABULARY_PAGES = {page for page, (prefix, _) in PAGES.items() if prefix in
-                    ("bddo", "dlv", "core", "bundle", "geometry", "raster", "spatialref")}
+VOCABULARY_PAGES = {
+    page
+    for page, (prefix, _) in PAGES.items()
+    if prefix in ("bddo", "dlv", "core", "bundle", "geometry", "raster", "spatialref")
+}
 #: Default conformance class of a vocabulary page's processor requirements.
-VOCABULARY_CLASS = {"bddo": "physical-parser", "dlv": "physical-parser", "core": "semantic-emitter",
-                    "bundle": "bundle-processor", "geometry": "semantic-emitter", "raster": "semantic-emitter",
-                    "spatialref": "semantic-emitter"}
+VOCABULARY_CLASS = {
+    "bddo": "physical-parser",
+    "dlv": "physical-parser",
+    "core": "semantic-emitter",
+    "bundle": "bundle-processor",
+    "geometry": "semantic-emitter",
+    "raster": "semantic-emitter",
+    "spatialref": "semantic-emitter",
+}
 GENERATED = re.compile(r"<!-- BEGIN GENERATED ([A-Z ]+) -->.*?<!-- END GENERATED \1 -->", re.S)
 
 #: Processing Model sections whose requirements belong to a class other than Physical Parser.
@@ -67,35 +80,35 @@ PM_SECTION_CLASS = {
     "emission": "semantic-emitter",
     "multi-part-assets": "bundle-processor",
     "conformance-evaluation": "conformance-evaluator",
-    "serialisation": "writer",                               # the optional Writer target, not a processor class
+    "serialisation": "writer",  # the optional Writer target, not a processor class
 }
 
 #: Sentence-level class: a requirement whose sentence binds a class other than its section's.
 CLASS_OVERRIDE = {
-    "req-pm-conformance-classes-1": "bundle-processor",      # nested profiles: a Bundle Processor
-    "req-pm-conformance-classes-2": "hdl-compiler",          # an HDL compiler's output
-    "req-pm-errors-13": "conformance-evaluator",             # the lenient mode a conformance run uses
+    "req-pm-conformance-classes-1": "bundle-processor",  # nested profiles: a Bundle Processor
+    "req-pm-conformance-classes-2": "hdl-compiler",  # an HDL compiler's output
+    "req-pm-errors-13": "conformance-evaluator",  # the lenient mode a conformance run uses
     "req-pm-errors-14": "conformance-evaluator",
-    "req-pm-multi-part-assets-3": "physical-parser",         # "a processor that is not a Bundle Processor"
-    "req-hdl-layout-1": "physical-parser",                   # which processor can run the example
-    "req-pm-emission-1": "physical-parser",                  # decoding a block is parsing
-    "req-pm-privacy-1": "semantic-emitter",                  # the base a processor chooses for minting
-    "req-pm-privacy-2": "conformance-evaluator",             # what a run report names its input by
-    "req-pm-codec-contracts-5": "hdl-compiler",              # a compiler's warning on a catalogue-only codec
+    "req-pm-multi-part-assets-3": "physical-parser",  # "a processor that is not a Bundle Processor"
+    "req-hdl-layout-1": "physical-parser",  # which processor can run the example
+    "req-pm-emission-1": "physical-parser",  # decoding a block is parsing
+    "req-pm-privacy-1": "semantic-emitter",  # the base a processor chooses for minting
+    "req-pm-privacy-2": "conformance-evaluator",  # what a run report names its input by
+    "req-pm-codec-contracts-5": "hdl-compiler",  # a compiler's warning on a catalogue-only codec
 }
 #: Requirements on a description's author, not on a processor: they are registered and cited like
 #: any other, but a processor cannot fail them, so they never count as processor requirements.
 DESCRIPTION_AUDIENCE = {
-    "req-hel-key-resolution-3",       # a field that expressions need MUST NOT have a reserved name
-    "req-hel-name-binding-2",         # new descriptions MUST NOT use the alias
-    "req-pm-context-2",               # new descriptions MUST NOT use the alias
+    "req-hel-key-resolution-3",  # a field that expressions need MUST NOT have a reserved name
+    "req-hel-name-binding-2",  # new descriptions MUST NOT use the alias
+    "req-pm-context-2",  # new descriptions MUST NOT use the alias
     "req-hel-operator-precedence-1",  # a guard MUST be written with the ternary
-    "req-dlv-conditional-1",          # a more specific arm MUST precede a more general one
-    "req-raster-document-4",          # calibration values MUST be finite
-    "req-raster-document-5",          # axes MUST NOT be forced into X/Y/Z
-    "req-spatialref-document-7",      # a polynomialBasis IRI MUST identify a published contract
-    "req-spatialref-document-8",      # coefficient orders MUST NOT be interchanged
-    "req-spatialref-document-9",      # a profile MUST identify the complete contract
+    "req-dlv-conditional-1",  # a more specific arm MUST precede a more general one
+    "req-raster-document-4",  # calibration values MUST be finite
+    "req-raster-document-5",  # axes MUST NOT be forced into X/Y/Z
+    "req-spatialref-document-7",  # a polynomialBasis IRI MUST identify a published contract
+    "req-spatialref-document-8",  # coefficient orders MUST NOT be interchanged
+    "req-spatialref-document-9",  # a profile MUST identify the complete contract
     "req-bddo-parameterised-structs-2",  # a parameter MUST NOT share its name with another member
     "req-bddo-parameterised-structs-4",  # a text container MUST NOT declare parameters
     "req-hel-expression-literals-2",  # authoring tools SHOULD type expressions bddo:HelExpression
@@ -134,15 +147,39 @@ SHAPE_BACKED = {
     "req-raster-document-1": [_R + "BandMembershipShape"],
     "req-raster-document-2": [_R + "SampleArrayShape"],
 }
-CLASS_OVERRIDE.update({
-    "req-core-static-mapping-properties-3": "physical-parser",   # decoding a block is parsing
-})
+CLASS_OVERRIDE.update(
+    {
+        "req-core-static-mapping-properties-3": "physical-parser",  # decoding a block is parsing
+    }
+)
 
 KEYWORD = re.compile(r"\b(MUST NOT|MUST|SHALL NOT|SHALL|REQUIRED|SHOULD NOT|SHOULD|NOT RECOMMENDED|RECOMMENDED)\b")
 MUST_LEVEL = {"MUST", "MUST NOT", "SHALL", "SHALL NOT", "REQUIRED"}
 BOILERPLATE = '"MUST"'
-BLOCK = {"p", "li", "td", "dd", "dt", "figcaption", "caption", "blockquote", "div", "ul", "ol",
-         "table", "tr", "dl", "section", "body", "nav", "header", "footer", "aside", "main", "article"}
+BLOCK = {
+    "p",
+    "li",
+    "td",
+    "dd",
+    "dt",
+    "figcaption",
+    "caption",
+    "blockquote",
+    "div",
+    "ul",
+    "ol",
+    "table",
+    "tr",
+    "dl",
+    "section",
+    "body",
+    "nav",
+    "header",
+    "footer",
+    "aside",
+    "main",
+    "article",
+}
 EXCLUDED_BLOCK = {"th", "h1", "h2", "h3", "h4", "h5", "h6"}
 SKIPPED = {"pre", "script", "style"}
 ABBREVIATIONS = ("e.g.", "i.e.", "etc.", "cf.", "vs.", "Fig.", "no.", "approx.")
@@ -158,40 +195,40 @@ class Sentence:
     page: str
     section: str
     text: str
-    start: int                      # source offset of its first character
-    anchors: list = field(default_factory=list)   # IDs of anchors inside it
-    inherited: str = None           # level of the "...MUST:" sentence that introduces this item
-    context: str = None             # the sentence before it, when this one opens with a pronoun
+    start: int  # source offset of its first character
+    anchors: list = field(default_factory=list)  # IDs of anchors inside it
+    inherited: str = None  # level of the "...MUST:" sentence that introduces this item
+    context: str = None  # the sentence before it, when this one opens with a pronoun
 
     @property
-    def keywords(self):
+    def keywords(self) -> list[Any]:
         return [m.group(1) for m in KEYWORD.finditer(self.text)]
 
     @property
-    def is_requirement(self):
+    def is_requirement(self) -> Any:
         return (bool(self.keywords) or self.inherited is not None) and BOILERPLATE not in self.text
 
     @property
-    def level(self):
+    def level(self) -> Any:
         if self.inherited:
             return self.inherited
         return "MUST" if MUST_LEVEL & set(self.keywords) else "SHOULD"
 
     @property
-    def introduces_items(self):
+    def introduces_items(self) -> Any:
         """A requirement ending in a colon ("A conforming evaluator MUST:") governs the next list or table."""
         return bool(self.keywords) and self.text.rstrip().endswith(":")
 
 
-def normalise(text):
+def normalise(text: str) -> Any:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def text_hash(text):
+def text_hash(text: str) -> Any:
     return hashlib.sha256(normalise(text).encode("utf-8")).hexdigest()[:16]
 
 
-def slug(text):
+def slug(text: str) -> Any:
     head = text.split("(")[0]
     words = re.findall(r"[a-z0-9]+", head.lower())[:3]
     return "-".join(words) or "section"
@@ -200,18 +237,18 @@ def slug(text):
 @dataclass
 class Block:
     section: str
-    chars: list          # [(char, source offset)]
-    anchors: list        # [(plain offset, anchor id)]
-    kind: str            # the element holding the text: li, td, p, ...
-    element: int         # a number identifying that element
-    container: int       # the innermost list or table around it (0 for none)
-    row: int             # the table row, for a td
+    chars: list  # [(char, source offset)]
+    anchors: list  # [(plain offset, anchor id)]
+    kind: str  # the element holding the text: li, td, p, ...
+    element: int  # a number identifying that element
+    container: int  # the innermost list or table around it (0 for none)
+    row: int  # the table row, for a td
 
 
 HEADING = re.compile(r"<h[1-6][^>]*>(.*?)</h[1-6]>", re.S)
 
 
-def link_titles(page, source):
+def link_titles(page: Any, source: Any) -> Any:
     """What an empty link renders as: ReSpec fills <a href="#x"></a> with the title of section x.
 
     The registry records a sentence as a reader sees it, so an empty link reads as its target's
@@ -227,7 +264,7 @@ def link_titles(page, source):
             if not path.is_file():
                 continue
             text = path.read_text(encoding="utf-8")
-        at = re.search(r'\bid="%s"' % re.escape(fragment), text) if fragment else None
+        at = re.search(rf'\bid="{re.escape(fragment)}"', text) if fragment else None
         if not at:
             continue
         heading = HEADING.search(text, at.end())
@@ -239,8 +276,8 @@ def link_titles(page, source):
 def _blocks(source, only_section, titles=None):
     """Yield one Block per run of text between block-level tags."""
     titles = titles or {}
-    sections = []            # stack of [id-or-None, heading-slug-or-None]
-    elements = []            # stack of (tag, number) of open block elements
+    sections = []  # stack of [id-or-None, heading-slug-or-None]
+    elements = []  # stack of (tag, number) of open block elements
     containers = [0]
     counter = [0]
     row = 0
@@ -271,7 +308,7 @@ def _blocks(source, only_section, titles=None):
 
     pos = 0
     for match in TAG.finditer(source):
-        text = source[pos:match.start()]
+        text = source[pos : match.start()]
         if text and not skip:
             if heading_open:
                 heading_text.append(text)
@@ -305,7 +342,7 @@ def _blocks(source, only_section, titles=None):
             chars.extend((ch, match.start()) for ch in titles.get(href.group(1), "") if href)
             continue
         if name == "sup" and not closing and not excluded:
-            chars.append(("^", match.start()))    # 2<sup>63</sup> reads as 2^63
+            chars.append(("^", match.start()))  # 2<sup>63</sup> reads as 2^63
             continue
         if name not in BLOCK and name not in EXCLUDED_BLOCK:
             continue
@@ -354,21 +391,34 @@ def _split(page, block, inherited=None, text_override=None, context=None):
     if inherited:
         # One requirement for the whole item: the list item, or the table row it heads.
         start = len(plain) - len(plain.lstrip())
-        return [Sentence(page, block.section, normalise(text_override or plain), chars[start][1],
-                         [aid for _, aid in anchors], inherited, context)]
-    bounds = [0] + [m.end() for m in SPLIT.finditer(plain)
-                    if not plain[:m.start() + 1].rstrip().endswith(ABBREVIATIONS)] + [len(plain)]
+        return [
+            Sentence(
+                page,
+                block.section,
+                normalise(text_override or plain),
+                chars[start][1],
+                [aid for _, aid in anchors],
+                inherited,
+                context,
+            )
+        ]
+    bounds = (
+        [0]
+        + [m.end() for m in SPLIT.finditer(plain) if not plain[: m.start() + 1].rstrip().endswith(ABBREVIATIONS)]
+        + [len(plain)]
+    )
     out = []
     for a, b in zip(bounds, bounds[1:], strict=False):
         start = a + len(plain[a:b]) - len(plain[a:b].lstrip())
         text = plain[start:b].strip()
         if text:
-            out.append(Sentence(page, block.section, text, chars[start][1],
-                                [aid for off, aid in anchors if a <= off < b]))
+            out.append(
+                Sentence(page, block.section, text, chars[start][1], [aid for off, aid in anchors if a <= off < b])
+            )
     return out
 
 
-def sentences(page, source):
+def sentences(page: Any, source: Any) -> Any:
     """Every sentence of the page's normative text, in document order.
 
     A requirement that ends in a colon ("A conforming HEL 1.0 evaluator MUST:") governs the list or
@@ -386,8 +436,8 @@ def sentences(page, source):
         if block.kind == "td":
             rows.setdefault(block.row, []).append(block)
     out = []
-    pending = None           # (level, container of the introducing sentence, its text)
-    governed = None          # (level, container, introducing text) of the list or table being read
+    pending = None  # (level, container of the introducing sentence, its text)
+    governed = None  # (level, container, introducing text) of the list or table being read
     seen = set()
     for block in blocks:
         if pending:
@@ -426,19 +476,19 @@ def sentences(page, source):
     return out
 
 
-def read(page):
+def read(page: Any) -> Any:
     """The page's text with its line endings as they are on disk, so a rewrite changes only anchors."""
     with open(ROOT / page, encoding="utf-8", newline="") as stream:
         return stream.read()
 
 
-def load_registry():
+def load_registry() -> Any:
     if REGISTRY.is_file():
         return json.loads(REGISTRY.read_text(encoding="utf-8"))
     return {"schema": 1, "requirements": {}}
 
 
-def requirement_class(page, section, identifier=None):
+def requirement_class(page: Any, section: Any, identifier: Any = None) -> Any:
     if identifier in CLASS_OVERRIDE:
         return CLASS_OVERRIDE[identifier]
     prefix = PAGES[page][0]
@@ -449,12 +499,12 @@ def requirement_class(page, section, identifier=None):
     return {"hel": "hel", "hdl": "hdl-compiler"}.get(prefix, "conformance-evaluator")
 
 
-def audience(identifier):
+def audience(identifier: Any) -> Any:
     """processor, or description for a rule on a description's author (a shape-backed one included)."""
     return "description" if identifier in DESCRIPTION_AUDIENCE or identifier in SHAPE_BACKED else "processor"
 
 
-def scan():
+def scan() -> Any:
     """(sentences per page, problems) for the pages as they are on disk."""
     found, problems = {}, []
     for page in PAGES:
@@ -462,21 +512,29 @@ def scan():
         found[page] = sentences(page, source)
         for s in found[page]:
             if not s.is_requirement and s.anchors:
-                problems.append(f"{page}: anchor {', '.join(s.anchors)} is on a sentence with no requirement: {s.text[:90]!r}")
+                problems.append(
+                    f"{page}: anchor {', '.join(s.anchors)} is on a sentence with no requirement: {s.text[:90]!r}"
+                )
             if s.is_requirement and len(s.anchors) > 1:
                 problems.append(f"{page}: one requirement carries several anchors {s.anchors}: {s.text[:90]!r}")
     return found, problems
 
 
-def entries(found):
+def entries(found: Any) -> Any:
     out = {}
     for page, items in found.items():
         for s in items:
             if s.is_requirement and len(s.anchors) == 1:
                 identifier = s.anchors[0]
-                entry = dict(page=page, section=s.section, cls=requirement_class(page, s.section, identifier),
-                             level=s.level, audience=audience(identifier), text=normalise(s.text),
-                             sha256=text_hash(s.text))
+                entry = dict(
+                    page=page,
+                    section=s.section,
+                    cls=requirement_class(page, s.section, identifier),
+                    level=s.level,
+                    audience=audience(identifier),
+                    text=normalise(s.text),
+                    sha256=text_hash(s.text),
+                )
                 if s.context:
                     entry["context"] = s.context
                 if identifier in SHAPE_BACKED:
@@ -485,7 +543,7 @@ def entries(found):
     return out
 
 
-def assign(write):
+def assign(write: Any) -> Any:
     """Anchor every unanchored requirement sentence; return the number of anchors added."""
     found, problems = scan()
     registry = load_registry()["requirements"]
@@ -500,7 +558,7 @@ def assign(write):
         inserts = []
         for s in missing:
             stem = f"req-{prefix}-{s.section}-"
-            numbers = [int(i[len(stem):]) for i in used if i.startswith(stem) and i[len(stem):].isdigit()]
+            numbers = [int(i[len(stem) :]) for i in used if i.startswith(stem) and i[len(stem) :].isdigit()]
             new = f"{stem}{max(numbers, default=0) + 1}"
             used.add(new)
             inserts.append((s.start, f'<span class="req" id="{new}"></span>'))
@@ -517,18 +575,20 @@ CHANGELOG = ROOT / "CHANGELOG.md"
 #: were read as their target's title (its hash is of the text as recorded then).
 LEGACY_TEXT = {
     "req-pm-errors-15": "A HEL type error, division/modulo by zero, undefined name, forward reference, or an array "
-                        "subscript out of range; asset.X read before part X is parsed or naming a part the asset does "
-                        "not have, and the asset root or partExtension() in a part parsed on its own (Multi-part "
-                        "Assets); a malformed HEL expression (one the HEL grammar does not generate, including an "
-                        "out-of-range literal, an unknown escape or a call with the wrong number of arguments), which "
-                        "SHOULD be raised when the description is loaded and is this category, not a Description "
-                        "error, even then.",
+    "subscript out of range; asset.X read before part X is parsed or naming a part the asset does "
+    "not have, and the asset root or partExtension() in a part parsed on its own (Multi-part "
+    "Assets); a malformed HEL expression (one the HEL grammar does not generate, including an "
+    "out-of-range literal, an unknown escape or a call with the wrong number of arguments), which "
+    "SHOULD be raised when the description is loaded and is this category, not a Description "
+    "error, even then.",
 }
-ID_PATTERN = re.compile(r"^req-(pm|hel|hdl|ce-conf|ce-req|bddo|dlv|core|bundle|geometry|raster|spatialref)"
-                        r"-[a-z0-9]+(-[a-z0-9]+)*-[1-9][0-9]*$")
+ID_PATTERN = re.compile(
+    r"^req-(pm|hel|hdl|ce-conf|ce-req|bddo|dlv|core|bundle|geometry|raster|spatialref)"
+    r"-[a-z0-9]+(-[a-z0-9]+)*-[1-9][0-9]*$"
+)
 
 
-def pending_changes(changelog):
+def pending_changes(changelog: Any) -> Any:
     """The CHANGELOG section that records changes not yet in a snapshot.
 
     A changed or withdrawn requirement must be named where its change is recorded -- the
@@ -542,12 +602,12 @@ def pending_changes(changelog):
     return sections[0] if sections else ""
 
 
-def names(text, identifier):
+def names(text: str, identifier: Any) -> bool:
     """True when [text] names [identifier] as a whole word: req-pm-errors-1 is not in req-pm-errors-10."""
     return re.search(r"(?<![A-Za-z0-9-])" + re.escape(identifier) + r"(?![A-Za-z0-9-])", text) is not None
 
 
-def reconcile(current, old, changelog):
+def reconcile(current: Any, old: Any, changelog: Any) -> Any:
     """The registry that follows from the pages ([current]) and the previous registry ([old]).
 
     An ID never changes meaning silently: when its sentence's text changes, the old hash is kept in
@@ -583,7 +643,7 @@ def reconcile(current, old, changelog):
     return {i: merged[i] for i in sorted(merged, key=sort_key)}, problems
 
 
-def main(argv):
+def main(argv: list[str]) -> int:
     write = "--check" not in argv
     added, problems = assign(write)
     if problems:
@@ -599,21 +659,26 @@ def main(argv):
         return 1
     if write:
         REGISTRY.parent.mkdir(parents=True, exist_ok=True)
-        REGISTRY.write_text(json.dumps({"schema": 1, "requirements": merged}, indent=1, ensure_ascii=False) + "\n",
-                            encoding="utf-8", newline="\n")
+        REGISTRY.write_text(
+            json.dumps({"schema": 1, "requirements": merged}, indent=1, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
         print(f"anchored {added} new requirement(s); registry lists {len(merged)}")
         return 0
     if added or merged != old:
         stale = sorted(i for i in merged.keys() | old.keys() if merged.get(i) != old.get(i))
-        print(f"FAIL: {added} requirement sentence(s) lack an anchor and {len(stale)} registry entr(ies) are "
-              "missing or stale; run python tools/_requirement_ids.py\n  " + "\n  ".join(stale[:20]))
+        print(
+            f"FAIL: {added} requirement sentence(s) lack an anchor and {len(stale)} registry entr(ies) are "
+            "missing or stale; run python tools/_requirement_ids.py\n  " + "\n  ".join(stale[:20])
+        )
         return 1
     live = sum(1 for e in merged.values() if not e.get("withdrawn"))
     print(f"PASS: {live} requirements anchored and registered ({len(merged) - live} withdrawn)")
     return 0
 
 
-def sort_key(identifier):
+def sort_key(identifier: Any) -> Any:
     order = {p[0]: n for n, p in enumerate(PAGES.values())}
     stem, _, number = identifier.rpartition("-")
     prefix = next((p for p in sorted(order, key=len, reverse=True) if identifier.startswith(f"req-{p}-")), "")

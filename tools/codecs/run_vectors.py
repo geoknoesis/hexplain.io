@@ -13,6 +13,9 @@ whatever the vector's own outcome. For the reference engine (after `:core:instal
 --codec restricts the run to suites by local name (repeatable). Exit status: 0 every vector
 passed, 1 a vector failed or the command misbehaved, 2 usage.
 """
+
+from __future__ import annotations
+
 import argparse
 import json
 import pathlib
@@ -24,7 +27,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import vectors  # noqa: E402
 
 
-def main(argv=None):
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--command", required=True)
     parser.add_argument("--codec", action="append", default=[])
@@ -56,8 +59,10 @@ def main(argv=None):
             try:
                 result = json.loads(run.stdout)
             except json.JSONDecodeError:
-                failures.append(f"{path.parent.parent.name}/{vector['id']}: exit {run.returncode}, no JSON result: "
-                                f"{run.stdout[:300]} {run.stderr[:300]}")
+                failures.append(
+                    f"{path.parent.parent.name}/{vector['id']}: exit {run.returncode}, no JSON result: "
+                    f"{run.stdout[:300]} {run.stderr[:300]}"
+                )
                 continue
             for problem in vectors.compare(vector, result):
                 failures.append(f"{path.parent.parent.name}/{vector['id']}: {problem}")

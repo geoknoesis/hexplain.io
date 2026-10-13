@@ -14,15 +14,12 @@ from __future__ import annotations
 import base64
 import json
 import re
-import sys
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 VECTORS = ROOT / "specification/validation/test/hel-vectors.tsv"
 HEL = ROOT / "specification/hel/index.html"
-#: Conditions that a flat data context cannot raise (the vector format's header says why).
-NOT_EXPRESSIBLE = {"forward-reference"}
 
 
 def conditions() -> Any:
@@ -56,7 +53,7 @@ def check(text: str, defined: Any) -> tuple[Any, ...]:
             if expected not in defined:
                 problems.append(f"line {number}: {expected!r} is not a condition of hel/index.html#error-conditions")
             used.add(expected)
-    for missing in sorted(set(defined) - used - NOT_EXPRESSIBLE):
+    for missing in sorted(set(defined) - used):
         problems.append(f"no row raises the condition {missing!r}")
     return rows, problems
 
@@ -77,4 +74,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

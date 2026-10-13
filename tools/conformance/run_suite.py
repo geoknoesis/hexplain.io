@@ -1,7 +1,7 @@
 """Run the processor conformance suite against an implementation's command line, and report pass/fail per case.
 
-    python tools/conformance/run_suite.py --claims claims.json \\
-        --pp-cmd "java -jar my.jar parse {description} {root} {input} --out {out} --error {err}" \\
+    python tools/conformance/run_suite.py --claims claims.json \
+        --pp-cmd "java -jar my.jar parse {description} {root} {input} --out {out} --error {err}" \
         --hc-cmd "my-hdl {input} -o {out}" ...
 
 Each class runs with its own command template (--pp-cmd, --se-cmd, --bp-cmd, --hc-cmd, --ce-cmd); a class with no
@@ -23,13 +23,17 @@ N-Triples; a conformance run as the JSON summary or, for a case with "reportForm
 error as {"category": "<Processing Model category>"} written to {err}, the command exiting non-zero. For the HDL
 Compiler the runner also reads diagnostics from standard error in the form file:line:column: SEVERITY: message.
 
-A case applies when every optional feature and codec it requires is claimed and none it expects unclaimed is; the claims come
+A case applies when every optional feature and codec it requires is claimed and none it expects unclaimed is; the
+claims come
 from --claims (a JSON claims statement: {"classes": [...], "optionalFeatures": [tokens]} or {token: {"claimed": bool}},
 and "codecs": [codec IRIs]).
 The template is split into arguments as a POSIX shell would split it, and run without a shell. A case that withdraws
 features ("claims": {"withdraw": [...]}) runs only when the template has a {withdraw} placeholder.
 Every case that does not apply is reported as SKIP with its reason. The exit status is 1 when any case fails.
 """
+
+from __future__ import annotations
+
 import argparse
 import fnmatch
 import json
@@ -39,6 +43,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from typing import Any
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -47,33 +52,40 @@ import compare  # noqa: E402
 import report  # noqa: E402
 from suite import CLASSES, SUITE  # noqa: E402
 
-FLAGS = {"physical-parser": "pp", "semantic-emitter": "se", "bundle-processor": "bp", "hdl-compiler": "hc",
-         "conformance-evaluator": "ce"}
+FLAGS = {
+    "physical-parser": "pp",
+    "semantic-emitter": "se",
+    "bundle-processor": "bp",
+    "hdl-compiler": "hc",
+    "conformance-evaluator": "ce",
+}
 DIAGNOSTIC = re.compile(r":(\d+):(\d+):\s*(ERROR|WARNING|INFO)\b", re.I)
 
 
-def claimed_features(claims):
+def claimed_features(claims: Any) -> Any:
     value = claims.get("optionalFeatures", {})
     if isinstance(value, dict):
         return {k for k, v in value.items() if (v.get("claimed") if isinstance(v, dict) else v)}
     return set(value)
 
 
-def claimed_codecs(claims):
+def claimed_codecs(claims: Any) -> Any:
     """The codec IRIs a claims statement lists: its "codecs" member is an array of IRIs."""
     value = claims.get("codecs", [])
     return set(value) if isinstance(value, list) else set()
 
 
-def fill(template, values):
+def fill(template: Any, values: Any) -> list[Any]:
     """The command as an argument list: the template is split like a POSIX shell line first, then each placeholder is
     replaced inside its argument, so a path with a space stays one argument and nothing is interpreted by a shell."""
+
     def one(arg):
         return re.sub(r"\{(\w+)\}", lambda m: str(values[m.group(1)]) if m.group(1) in values else m.group(0), arg)
+
     return [one(arg) for arg in shlex.split(template)]
 
 
-def run_case(case_dir, template, claims, timeout, keep=None, observed=None):
+def run_case(case_dir: Any, template: Any, claims: Any, timeout: Any, keep: Any = None, observed: Any = None) -> Any:
     """(status, detail) for one case: PASS, FAIL or SKIP. When the implementation reports an error, its category is
     stored in `observed["category"]` for the implementation report."""
     manifest = json.loads((case_dir / "manifest.json").read_text(encoding="utf-8"))
@@ -81,7 +93,9 @@ def run_case(case_dir, template, claims, timeout, keep=None, observed=None):
     if manifest.get("check") == "claims":
         if claims is None:
             return "SKIP", "no --claims statement given"
-        problems = compare.compare_claims(json.loads((case_dir / "expected-claims.json").read_text(encoding="utf-8")), claims)
+        problems = compare.compare_claims(
+            json.loads((case_dir / "expected-claims.json").read_text(encoding="utf-8")), claims
+        )
         return ("FAIL", "; ".join(problems)) if problems else ("PASS", "")
     wanted = manifest.get("features", {})
     if wanted.get("requires"):
@@ -115,24 +129,38 @@ def run_case(case_dir, template, claims, timeout, keep=None, observed=None):
         name = compare.expected_artifact(case_dir)
         ext = ".ttl" if name.endswith(".ttl") else ".json"
         out, err, reported = tmp / ("actual" + ext), tmp / "error.json", tmp / "reported-base.txt"
-        values = {"case": case_dir, "manifest": case_dir / "manifest.json", "description": case_dir / "description.ttl",
-                  "input": case_dir / manifest.get("input", "input.bin"), "root": manifest.get("root", ""),
-                  "base": manifest.get("base") or "", "rules": case_dir / manifest.get("rules", "rules.ttl"),
-                  "mode": manifest.get("parseMode", "lenient"), "version": manifest.get("fileVersion", ""),
-                  "instant": manifest.get("evaluationInstant", ""), "limits": json.dumps(manifest.get("limits", {})),
-                  "withdraw": ",".join(withdraw), "out": out, "err": err, "reported": reported}
+        values = {
+            "case": case_dir,
+            "manifest": case_dir / "manifest.json",
+            "description": case_dir / "description.ttl",
+            "input": case_dir / manifest.get("input", "input.bin"),
+            "root": manifest.get("root", ""),
+            "base": manifest.get("base") or "",
+            "rules": case_dir / manifest.get("rules", "rules.ttl"),
+            "mode": manifest.get("parseMode", "lenient"),
+            "version": manifest.get("fileVersion", ""),
+            "instant": manifest.get("evaluationInstant", ""),
+            "limits": json.dumps(manifest.get("limits", {})),
+            "withdraw": ",".join(withdraw),
+            "out": out,
+            "err": err,
+            "reported": reported,
+        }
         command = fill(template, values)
         try:
             proc = subprocess.run(command, cwd=tmp, capture_output=True, text=True, timeout=timeout)
         except subprocess.TimeoutExpired:
             return "FAIL", f"timed out after {timeout}s"
         if manifest["class"] == "hdl-compiler" and name == "expected-error.json":
-            diags = [{"severity": m.group(3).upper(), "line": int(m.group(1))} for m in DIAGNOSTIC.finditer(proc.stderr)]
+            diags = [
+                {"severity": m.group(3).upper(), "line": int(m.group(1))} for m in DIAGNOSTIC.finditer(proc.stderr)
+            ]
             if err.is_file():
                 diags += json.loads(err.read_text(encoding="utf-8")).get("diagnostics", [])
             actual = tmp / "diagnostics.json"
-            actual.write_text(json.dumps({"diagnostics": diags, "output": out.is_file() and out.stat().st_size > 0}),
-                              encoding="utf-8")
+            actual.write_text(
+                json.dumps({"diagnostics": diags, "output": out.is_file() and out.stat().st_size > 0}), encoding="utf-8"
+            )
         elif err.is_file():
             actual = err
             if observed is not None:
@@ -143,7 +171,11 @@ def run_case(case_dir, template, claims, timeout, keep=None, observed=None):
         elif out.is_file():
             actual = out
         else:
-            return "FAIL", f"the command wrote neither {out.name} nor {err.name} (exit {proc.returncode}): {proc.stderr.strip()[:300]}"
+            return (
+                "FAIL",
+                f"the command wrote neither {out.name} nor {err.name} (exit {proc.returncode}): "
+                f"{proc.stderr.strip()[:300]}",
+            )
         base = reported.read_text(encoding="utf-8").strip() if reported.is_file() else None
         if "base" in manifest and manifest["base"] is None and not base and actual == out:
             return "FAIL", "the case gives no base and the processor reported none"
@@ -154,28 +186,36 @@ def run_case(case_dir, template, claims, timeout, keep=None, observed=None):
         return ("FAIL", "; ".join(problems)) if problems else ("PASS", "")
 
 
-def main(argv):
+def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     for cls, flag in FLAGS.items():
         ap.add_argument(f"--{flag}-cmd", help=f"command template for the {cls} cases")
     ap.add_argument("--suite", default=str(SUITE), help="the suite directory (specification/conformance)")
     ap.add_argument("--claims", help="the implementation's claims statement (JSON)")
-    ap.add_argument("--case", action="append", default=[], help="run only cases whose id matches this glob (repeatable)")
+    ap.add_argument(
+        "--case", action="append", default=[], help="run only cases whose id matches this glob (repeatable)"
+    )
     ap.add_argument("--timeout", type=float, default=120)
-    ap.add_argument("--json", help="write the implementation report (specification/conformance/index.html"
-                                   "#implementation-reports) to this file")
+    ap.add_argument(
+        "--json",
+        help="write the implementation report (specification/conformance/index.html"
+        "#implementation-reports) to this file",
+    )
     ap.add_argument("--implementation", default="unnamed", help="the implementation's name, for the report")
     ap.add_argument("--implementation-version", default="unknown", help="the implementation's version, for the report")
-    ap.add_argument("--implementation-revision", help="the version-control identity of the build run (a Git commit "
-                                                      "hash), required for the report")
+    ap.add_argument(
+        "--implementation-revision",
+        help="the version-control identity of the build run (a Git commit hash), required for the report",
+    )
     ap.add_argument("--os", help="the operating system of the run (default: as the platform reports it)")
     ap.add_argument("--jvm", default="none", help="the Java runtime of a JVM implementation, else none")
     ap.add_argument("--toolchain", help="the build tool and compiler that produced the build, required for the report")
     ap.add_argument("--check-report", metavar="FILE", help="check an implementation report against the suite and exit")
     args = ap.parse_args(argv)
     if args.check_report:
-        problems = report.check(json.loads(Path(args.check_report).read_text(encoding="utf-8")), Path(args.suite),
-                                path=args.check_report)
+        problems = report.check(
+            json.loads(Path(args.check_report).read_text(encoding="utf-8")), Path(args.suite), path=args.check_report
+        )
         print("\n".join(problems) if problems else "the report follows the format and covers the suite")
         return 1 if problems else 0
     if args.json and not (args.implementation_revision and args.toolchain):
@@ -193,14 +233,25 @@ def main(argv):
             else:
                 status, detail = run_case(case_dir, template, claims, args.timeout, observed=observed)
             counts[status] += 1
-            results.append({"case": case_dir.name, "class": cls, "status": status,
-                            "category": observed.get("category"), "detail": detail})
+            results.append(
+                {
+                    "case": case_dir.name,
+                    "class": cls,
+                    "status": status,
+                    "category": observed.get("category"),
+                    "detail": detail,
+                }
+            )
             print(f"{status} {case_dir.name}" + (f"  {detail}" if detail and status != "PASS" else ""))
     print(f"{counts['PASS']} passed, {counts['FAIL']} failed, {counts['SKIP']} skipped")
     if args.json:
         import platform
-        implementation = {"name": args.implementation, "version": args.implementation_version,
-                          "revision": args.implementation_revision}
+
+        implementation = {
+            "name": args.implementation,
+            "version": args.implementation_version,
+            "revision": args.implementation_revision,
+        }
         environment = {"os": args.os or platform.platform(), "jvm": args.jvm, "toolchain": args.toolchain}
         built = report.build(results, implementation, claims or {}, Path(args.suite), environment=environment)
         Path(args.json).write_text(json.dumps(built, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")

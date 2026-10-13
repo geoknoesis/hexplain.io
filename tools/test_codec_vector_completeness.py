@@ -14,8 +14,11 @@ the suite: the manifest records it under "unreached" with the reason, this gate 
 rather than a failure, and the register is to withdraw the category. Nothing else is exempt.
 """
 
+from __future__ import annotations
+
 import pathlib
 import sys
+from typing import Any
 
 from rdflib import Graph, Namespace, URIRef
 
@@ -39,7 +42,7 @@ def _bytes(spec):
         return None
 
 
-def round_trips(manifest):
+def round_trips(manifest: Any) -> Any:
     """The ids of the vectors that hold a round trip."""
     found = []
     for vector in manifest.get("vectors", []):
@@ -63,7 +66,7 @@ def round_trips(manifest):
     return found
 
 
-def schema_validator():
+def schema_validator() -> Any:
     """A validator of the published manifest schema, or None where the jsonschema package is not installed (it is
     not one of the pinned requirements, so the schema check runs where it is available and is reported either way)."""
     import json
@@ -77,7 +80,7 @@ def schema_validator():
     return jsonschema.Draft202012Validator(schema)
 
 
-def problems(manifest, contract, declared_categories, encodes, warnings=None):
+def problems(manifest: Any, contract: Any, declared_categories: Any, encodes: Any, warnings: Any = None) -> Any:
     out = []
     expected, params, directions = set(), set(), set()
     for vector in manifest.get("vectors", []):
@@ -113,7 +116,7 @@ def problems(manifest, contract, declared_categories, encodes, warnings=None):
     return out
 
 
-def main():
+def main() -> int:
     register = Graph().parse(REGISTER, format="turtle")
     contracts = vectors.contracts(register)
     failures, warnings, trips = [], [], 0
@@ -166,7 +169,7 @@ def main():
     assert round_trips(trip) == ["rt"], "the round-trip check no longer recognises one"
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures))
-        sys.exit(1)
+        return 1
     print(
         f"PASS: {len(contracts)} codec vector suites expect every declared category, pass every declared parameter "
         f"and hold {trips} round trips; "
@@ -176,7 +179,8 @@ def main():
             else "schema validation not run (jsonschema is not installed)"
         )
     )
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

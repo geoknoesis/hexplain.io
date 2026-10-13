@@ -10,7 +10,11 @@ makes before a case uses it.
 References: LZ4 Block Format Description and LZ4 Frame Format Description (lz4/lz4, doc/),
 and the xxHash specification (Cyan4973/xxHash, doc/xxhash_spec.md).
 """
+
+from __future__ import annotations
+
 import struct
+from typing import Any
 
 MASK32 = 0xFFFFFFFF
 P1, P2, P3, P4, P5 = 2654435761, 2246822519, 3266489917, 668265263, 374761393
@@ -21,7 +25,7 @@ def _rotl(x, r):
     return ((x << r) | (x >> (32 - r))) & MASK32
 
 
-def xxh32(data, seed=0):
+def xxh32(data: Any, seed: int = 0) -> Any:
     """xxHash-32 of `data`."""
     n = len(data)
     i = 0
@@ -77,7 +81,7 @@ def _sequence(literals, offset=None, match=0):
     return out + (_length(m - 15) if m >= 15 else b"")
 
 
-def compress_block(data):
+def compress_block(data: Any) -> Any:
     """One LZ4 block: greedy 4-byte matching, honouring the end-of-block rules (the last five bytes
     are literals, and no match starts in the last twelve)."""
     n = len(data)
@@ -86,7 +90,7 @@ def compress_block(data):
     last_match_start = n - 12
     table = {}
     while i < last_match_start:
-        key = data[i:i + 4]
+        key = data[i : i + 4]
         candidate = table.get(key)
         table[key] = i
         if candidate is not None and i - candidate <= 0xFFFF:
@@ -95,7 +99,7 @@ def compress_block(data):
                 length += 1
             out += _sequence(data[anchor:i], i - candidate, length)
             for j in range(i + 1, min(i + length, last_match_start)):
-                table[data[j:j + 4]] = j
+                table[data[j : j + 4]] = j
             i += length
             anchor = i
         else:
@@ -108,7 +112,7 @@ class Malformed(ValueError):
     """Not a well-formed LZ4 block."""
 
 
-def decompress_block(block, size):
+def decompress_block(block: Any, size: Any) -> Any:
     """Decode one LZ4 block that must yield exactly `size` bytes."""
     out = bytearray()
     i = 0
@@ -129,7 +133,7 @@ def decompress_block(block, size):
                     break
         if i + lit > len(block):
             raise Malformed("literals run past the block")
-        out += block[i:i + lit]
+        out += block[i : i + lit]
         i += lit
         if i == len(block):
             break
@@ -158,22 +162,28 @@ def decompress_block(block, size):
     return bytes(out)
 
 
-def frame(content, block_checksum=False, content_checksum=True, content_size=False, blocks=None):
+def frame(
+    content: Any,
+    block_checksum: bool = False,
+    content_checksum: bool = True,
+    content_size: bool = False,
+    blocks: Any = None,
+) -> Any:
     """An LZ4 frame holding `content`: linked blocks of at most 64 KiB, each compressed (or stored
     when compression does not help), with the checksums asked for."""
-    flg = 0x40 | 0x20                  # version 01, blocks independent
+    flg = 0x40 | 0x20  # version 01, blocks independent
     if block_checksum:
         flg |= 0x10
     if content_size:
         flg |= 0x08
     if content_checksum:
         flg |= 0x04
-    bd = 0x40                          # 64 KiB maximum block size
+    bd = 0x40  # 64 KiB maximum block size
     descriptor = bytes([flg, bd]) + (struct.pack("<Q", len(content)) if content_size else b"")
     header = FRAME_MAGIC + descriptor + bytes([(xxh32(descriptor) >> 8) & 0xFF])
     out = bytearray(header)
     for start in range(0, len(content), 65536) if blocks is None else blocks:
-        chunk = content[start:start + 65536]
+        chunk = content[start : start + 65536]
         packed = compress_block(chunk)
         assert decompress_block(packed, len(chunk)) == chunk
         if len(packed) < len(chunk):

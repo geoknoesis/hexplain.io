@@ -2,8 +2,8 @@
 
 `ruff check` applies ruff.toml (defect rules plus the 120-column style contract) and
 `ruff format --check` fails on a module the formatter would change, so a reformat is never
-left to the next contributor. The modules ruff.toml excludes from the formatter are not checked
-for formatting here either.
+left to the next contributor. No module is exempt: tools/conformance/ and tools/codecs/ are
+checked with the gates.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ def main() -> int:
     assert check.returncode == 0, (check.stdout or "") + (check.stderr or "")
     formatted = ruff("format", "--check", "tools", "--no-cache")
     assert formatted.returncode == 0, "run `ruff format tools`:\n" + (formatted.stdout or "") + (formatted.stderr or "")
-    count = len(list((ROOT / "tools").glob("*.py")))
+    count = len(list((ROOT / "tools").rglob("*.py")))
     print(f"PASS: {count} tool modules pass the shared lint and formatting contract (ruff.toml)")
     return 0
 

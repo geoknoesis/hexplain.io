@@ -11,6 +11,9 @@ vector's source says so. Re-running adds nothing a suite already has.
 
     python tools/codecs/_complete_vectors.py --engine <hexplain-codec CLI> [--java-home DIR] [--codec NAME]...
 """
+
+from __future__ import annotations
+
 import argparse
 import json
 import lzma
@@ -21,39 +24,41 @@ import struct
 import subprocess
 import sys
 import tempfile
+from collections.abc import Iterator
+from typing import Any
 
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import vectors  # noqa: E402
-from vectors import ROOT, step  # noqa: E402
-
 from rdflib import Graph, Namespace, URIRef  # noqa: E402
+from vectors import ROOT, step  # noqa: E402
 
 HX = Namespace("https://hexplain.io/ns/core#")
 ENGINE_SOURCE = {
     "id": "reference-engine",
     "url": "https://github.com/geoknoesis/hexplain-tools",
-    "description": "Inputs derived here (tools/codecs/_complete_vectors.py) from this suite's own vectors: truncations, "
-                   "single-byte corruptions, lowered output limits and parameter settings; the category or output of each "
-                   "was confirmed with hexplain-tools {revision} (hexplain-codec vector) before it was recorded, since no "
-                   "independent implementation of this codec was at hand.",
+    "description": "Inputs derived here (tools/codecs/_complete_vectors.py) from this suite's own vectors: "
+    "truncations, "
+    "single-byte corruptions, lowered output limits and parameter settings; the category or output of each "
+    "was confirmed with hexplain-tools {revision} (hexplain-codec vector) before it was recorded, since no "
+    "independent implementation of this codec was at hand.",
     "licence": "inputs as the vectors they derive from; expectations CC0-1.0",
 }
 HAND_SOURCE = {
     "id": "round-trip",
     "url": "https://hexplain.io/specification/processing/#round-trip",
     "description": "Round trips worked by hand from the codec's definition (a transform) or fed through the previous "
-                   "step's output (a compressor, encoded with zlib for the expectation-free encode step).",
+    "step's output (a compressor, encoded with zlib for the expectation-free encode step).",
     "licence": "CC0-1.0",
 }
 
 
 class Engine:
-    def __init__(self, cli, java_home):
+    def __init__(self, cli: Any, java_home: Any) -> None:
         self.cli, self.java_home = cli, java_home
         self.tmp = pathlib.Path(tempfile.mkdtemp(prefix="hexplain-vectors-"))
 
-    def run(self, codec, base, vector):
+    def run(self, codec: Any, base: Any, vector: Any) -> Any:
         """The engine's result for [vector], a vector of the suite whose manifest lives at [base]."""
         directory = self.tmp / vectors.local_name(codec)
         if not directory.is_dir():
@@ -63,26 +68,31 @@ class Engine:
         env = dict(os.environ)
         if self.java_home:
             env["JAVA_HOME"] = self.java_home
-        run = subprocess.run([self.cli, "vector", "--manifest", str(directory / "probe.json"), "--id", vector["id"]],
-                             capture_output=True, text=True, env=env, timeout=300)
+        run = subprocess.run(
+            [self.cli, "vector", "--manifest", str(directory / "probe.json"), "--id", vector["id"]],
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=300,
+        )
         try:
             return json.loads(run.stdout)
         except json.JSONDecodeError:
             return {"steps": [{"ok": False, "category": "CRASH", "message": (run.stdout + run.stderr)[-400:]}]}
 
 
-def category(result):
+def category(result: Any) -> Any:
     last = result.get("steps", [])[-1] if result.get("steps") else {}
     return None if last.get("ok") else last.get("category")
 
 
-def flip(data, at):
+def flip(data: Any, at: Any) -> Any:
     b = bytearray(data)
     b[at % len(b)] ^= 0x01
     return bytes(b)
 
 
-def first_success(manifest, base):
+def first_success(manifest: Any, base: Any) -> Any:
     for v in manifest["vectors"]:
         s = v["steps"][0]
         if s["direction"] == "decode" and "error" not in s["expect"]:
@@ -90,11 +100,11 @@ def first_success(manifest, base):
     raise ValueError("no successful vector")
 
 
-def input_of(s, base):
+def input_of(s: Any, base: Any) -> Any:
     return vectors.input_bytes(s["input"], base)
 
 
-def with_input(s, data, expect, **extra):
+def with_input(s: Any, data: Any, expect: Any, **extra: Any) -> Any:
     """A copy of step [s] over [data] (inline hex, samples kept) expecting [expect]."""
     out = {"direction": s["direction"], "params": dict(s.get("params", {})), "expect": expect}
     if "samples" in s["input"]:
@@ -106,7 +116,7 @@ def with_input(s, data, expect, **extra):
     return out
 
 
-def expected_size(s):
+def expected_size(s: Any) -> Any:
     e = s["expect"]
     if "hex" in e:
         return len(e["hex"]) // 2
@@ -115,7 +125,7 @@ def expected_size(s):
     return None
 
 
-def complete(name, manifest, contract, declared, base, engine, log):
+def complete(name: str, manifest: Any, contract: Any, declared: Any, base: Any, engine: Any, log: Any) -> Any:
     added = []
     ids = {v["id"] for v in manifest["vectors"]}
     expected_cats, params_used, directions = set(), set(), set()
@@ -159,17 +169,22 @@ def complete(name, manifest, contract, declared, base, engine, log):
     if "ResourceLimit" in declared and "ResourceLimit" not in expected_cats:
         size = expected_size(ok_step)
         limit = 0 if size is None else max(0, size - 1)
-        propose("over-bound", [with_input(ok_step, data, {"error": "ResourceLimit"}, maxOutputBytes=limit)], "ResourceLimit")
+        propose(
+            "over-bound", [with_input(ok_step, data, {"error": "ResourceLimit"}, maxOutputBytes=limit)], "ResourceLimit"
+        )
 
     # Validation: truncations and corruptions of the first successful input.
     if "Validation" in declared and "Validation" not in expected_cats:
         candidates = []
         if "samples" in ok_step["input"]:
             candidates.append(("partial-pixel", data[:-1]))
-            candidates.append(("partial-pixel", data[:len(data) // 2 + 1]))
+            candidates.append(("partial-pixel", data[: len(data) // 2 + 1]))
         else:
-            candidates += [("truncated", data[:len(data) // 2]), ("truncated", data[:-1]),
-                           ("truncated", data[:max(1, len(data) // 4)])]
+            candidates += [
+                ("truncated", data[: len(data) // 2]),
+                ("truncated", data[:-1]),
+                ("truncated", data[: max(1, len(data) // 4)]),
+            ]
             candidates += [("corrupted", flip(data, i)) for i in (0, 1, 2, 3, 4, 5, 8, len(data) // 2, len(data) - 1)]
             candidates += [("partial-element", data[:-1]), ("trailing-byte", data + b"\x00")]
         for label, d in candidates:
@@ -179,7 +194,9 @@ def complete(name, manifest, contract, declared, base, engine, log):
     # Checksum: flip bytes near the end of the first successful input (where the checks sit).
     if "Checksum" in declared and "Checksum" not in expected_cats:
         for i in range(1, min(len(data), 48)):
-            if propose("checksum-mismatch", [with_input(ok_step, flip(data, len(data) - i), {"error": "Checksum"})], "Checksum"):
+            if propose(
+                "checksum-mismatch", [with_input(ok_step, flip(data, len(data) - i), {"error": "Checksum"})], "Checksum"
+            ):
                 break
 
     # Unsupported: a coding feature the contract names as refused.
@@ -211,7 +228,7 @@ def complete(name, manifest, contract, declared, base, engine, log):
     return added
 
 
-def unsupported_candidates(name, data, ok_step):
+def unsupported_candidates(name: str, data: Any, ok_step: Any) -> Iterator[Any]:
     if name == "JPEG":
         yield "arithmetic-coding", data.replace(b"\xff\xc0", b"\xff\xc9", 1), None
         yield "lossless-process", data.replace(b"\xff\xc0", b"\xff\xc3", 1), None
@@ -230,12 +247,22 @@ def unsupported_candidates(name, data, ok_step):
         yield "animation", b"RIFF" + struct.pack("<I", len(body)) + body, dict(ok_step.get("params", {}))
     elif name == "XZ":
         raw = b"XZ unsupported probe " * 50
-        yield "x86-filter", lzma.compress(raw, format=lzma.FORMAT_XZ, filters=[{"id": lzma.FILTER_X86}, {"id": lzma.FILTER_LZMA2}]), None
-        yield "delta-filter", lzma.compress(raw, format=lzma.FORMAT_XZ, filters=[{"id": lzma.FILTER_DELTA, "dist": 4}, {"id": lzma.FILTER_LZMA2}]), None
+        yield (
+            "x86-filter",
+            lzma.compress(raw, format=lzma.FORMAT_XZ, filters=[{"id": lzma.FILTER_X86}, {"id": lzma.FILTER_LZMA2}]),
+            None,
+        )
+        yield (
+            "delta-filter",
+            lzma.compress(
+                raw, format=lzma.FORMAT_XZ, filters=[{"id": lzma.FILTER_DELTA, "dist": 4}, {"id": lzma.FILTER_LZMA2}]
+            ),
+            None,
+        )
         yield "no-check", lzma.compress(raw, format=lzma.FORMAT_XZ, check=lzma.CHECK_NONE), None
 
 
-def parameter_candidates(name, pname, manifest, base, ok_step, data):
+def parameter_candidates(name: str, pname: Any, manifest: Any, base: Any, ok_step: Any, data: Any) -> Iterator[Any]:
     params = dict(ok_step.get("params", {}))
     if name == "Blosc":
         header = data[:16]
@@ -257,30 +284,49 @@ def parameter_candidates(name, pname, manifest, base, ok_step, data):
         yield "raw-planes", [with_input(ok_step, data, None, params=dict(params, output="raw-planes"))]
     elif name == "LERC":
         rows, cols = struct.unpack_from("<ii", data, 10)
-        geometry = {"layout": "tiff", "width": cols, "height": rows, "samplesPerPixel": 1, "sampleType": "int8",
-                    "planarSeparate": False, "alphaFromMask": False, "lercParameters": [0, 0]}
+        geometry = {
+            "layout": "tiff",
+            "width": cols,
+            "height": rows,
+            "samplesPerPixel": 1,
+            "sampleType": "int8",
+            "planarSeparate": False,
+            "alphaFromMask": False,
+            "lercParameters": [0, 0],
+        }
         yield "tiff-layout-char", [with_input(ok_step, data, None, params=geometry)]
 
 
-def round_trip(name, manifest):
+def round_trip(name: str, manifest: Any) -> Any:
     def hexes(v):
         return v["steps"][0]["input"]["hex"], v["steps"][0]["expect"]["hex"], v["steps"][0].get("params", {})
-    encode = next((v for v in manifest["vectors"] if v["steps"][0]["direction"] == "encode"
-                   and "hex" in v["steps"][0]["expect"]), None)
+
+    encode = next(
+        (v for v in manifest["vectors"] if v["steps"][0]["direction"] == "encode" and "hex" in v["steps"][0]["expect"]),
+        None,
+    )
     if encode:
         original, encoded, params = hexes(encode)
-        return {"id": "round-trip", "source": "round-trip", "steps": [
-            step(bytes.fromhex(original), {"hex": encoded}, params, direction="encode"),
-            step(bytes.fromhex(encoded), {"hex": original}, params)]}
+        return {
+            "id": "round-trip",
+            "source": "round-trip",
+            "steps": [
+                step(bytes.fromhex(original), {"hex": encoded}, params, direction="encode"),
+                step(bytes.fromhex(encoded), {"hex": original}, params),
+            ],
+        }
     if name in ("Deflate", "Zlib", "Gzip"):
         original = b"round trip through the compressor " * 4
         decode = {"direction": "decode", "params": {}, "input": {"previous": True}, "expect": {"hex": original.hex()}}
-        return {"id": "round-trip", "source": "round-trip", "steps": [
-            step(original, {"ok": True}, direction="encode"), decode]}
+        return {
+            "id": "round-trip",
+            "source": "round-trip",
+            "steps": [step(original, {"ok": True}, direction="encode"), decode],
+        }
     return None
 
 
-def main(argv=None):
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--engine", required=True, help="the hexplain-codec command-line tool")
     ap.add_argument("--java-home")
@@ -303,7 +349,9 @@ def main(argv=None):
             sources = {s["id"] for s in manifest["sources"]}
             needed = {v["source"] for v in manifest["vectors"] if v["id"] in added}
             if "reference-engine" in needed and "reference-engine" not in sources:
-                manifest["sources"].append(dict(ENGINE_SOURCE, description=ENGINE_SOURCE["description"].format(revision=args.revision)))
+                manifest["sources"].append(
+                    dict(ENGINE_SOURCE, description=ENGINE_SOURCE["description"].format(revision=args.revision))
+                )
             if "round-trip" in needed and "round-trip" not in sources:
                 manifest["sources"].append(HAND_SOURCE)
             path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")

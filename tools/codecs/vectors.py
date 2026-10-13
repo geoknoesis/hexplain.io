@@ -48,10 +48,14 @@ most significant bit first, widened to one byte per sample, the row's padding bi
 "deinterleave" (pixel-interleaved samples of `bands` bands of `sampleBytes` bytes each rewritten
 band-sequentially). A step that fails ends the vector; the result lists the steps run.
 """
+
+from __future__ import annotations
+
 import base64
 import hashlib
 import json
 import pathlib
+from typing import Any
 
 from rdflib import URIRef
 
@@ -60,21 +64,24 @@ HX = "https://hexplain.io/ns/core#"
 CATEGORIES = {"Validation", "Checksum", "Unsupported", "ResourceLimit", "Description"}
 SAMPLE_TYPES = {"uint8", "int8", "uint16", "int16", "uint32", "int32", "float32", "float64"}
 TYPES = {
-    HX + "IntegerParameterType": "integer", HX + "BooleanParameterType": "boolean",
-    HX + "StringParameterType": "string", HX + "BytesParameterType": "bytes",
-    HX + "IriParameterType": "iri", HX + "FloatParameterType": "float",
+    HX + "IntegerParameterType": "integer",
+    HX + "BooleanParameterType": "boolean",
+    HX + "StringParameterType": "string",
+    HX + "BytesParameterType": "bytes",
+    HX + "IriParameterType": "iri",
+    HX + "FloatParameterType": "float",
 }
 
 
-def local_name(iri):
+def local_name(iri: str) -> Any:
     return iri.rsplit("#", 1)[-1]
 
 
-def suite_path(iri):
+def suite_path(iri: str) -> Any:
     return ROOT / "specification" / "codecs" / local_name(iri) / "vectors" / "manifest.json"
 
 
-def load(path):
+def load(path: Any) -> Any:
     return json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
 
 
@@ -82,7 +89,7 @@ def _number(literal):
     return float(literal.toPython()) if literal is not None else None
 
 
-def contracts(graph):
+def contracts(graph: Any) -> Any:
     """Every contract of [graph] as {concept IRI: {"version", "suite", "kind", "session", "parameters"}}."""
     out = {}
     hx = lambda name: URIRef(HX + name)  # noqa: E731
@@ -93,8 +100,12 @@ def contracts(graph):
             parameters[name] = {
                 "type": TYPES.get(str(graph.value(spec, hx("parameterType")))),
                 "list": bool(graph.value(spec, hx("listValued")) and graph.value(spec, hx("listValued")).toPython()),
-                "length": graph.value(spec, hx("listLength")).toPython() if graph.value(spec, hx("listLength")) else None,
-                "required": bool(graph.value(spec, hx("requiredParameter")) and graph.value(spec, hx("requiredParameter")).toPython()),
+                "length": graph.value(spec, hx("listLength")).toPython()
+                if graph.value(spec, hx("listLength"))
+                else None,
+                "required": bool(
+                    graph.value(spec, hx("requiredParameter")) and graph.value(spec, hx("requiredParameter")).toPython()
+                ),
                 "minimum": _number(graph.value(spec, hx("minimumValue"))),
                 "maximum": _number(graph.value(spec, hx("maximumValue"))),
                 "allowed": [v.toPython() for v in graph.objects(spec, hx("allowedValue"))],
@@ -117,7 +128,7 @@ def _decode_bytes(spec):
     raise ValueError(f"no hex or base64 in {spec}")
 
 
-def input_bytes(spec, base, previous=None):
+def input_bytes(spec: Any, base: Any, previous: Any = None) -> Any:
     """The bytes of a step's input (for samples, their data; for {"previous": true}, [previous], the output of the
     step before it, which a static reader passes as None)."""
     if "file" in spec:
@@ -142,9 +153,9 @@ def _item_problem(name, value, spec):
     if kind == "string" and not isinstance(value, str):
         return f"parameter {name} is not a string: {value!r}"
     if kind == "bytes" and not (isinstance(value, dict) and ("hex" in value or "base64" in value)):
-        return f"parameter {name} is not bytes ({{\"hex\": ..}}): {value!r}"
+        return f'parameter {name} is not bytes ({{"hex": ..}}): {value!r}'
     if kind == "iri" and not (isinstance(value, dict) and "iri" in value):
-        return f"parameter {name} is not an IRI ({{\"iri\": ..}}): {value!r}"
+        return f'parameter {name} is not an IRI ({{"iri": ..}}): {value!r}'
     if kind in ("integer", "float"):
         if spec["minimum"] is not None and value < spec["minimum"]:
             return f"parameter {name} = {value} is below {spec['minimum']}"
@@ -155,7 +166,7 @@ def _item_problem(name, value, spec):
     return None
 
 
-def parameter_problems(params, contract):
+def parameter_problems(params: Any, contract: Any) -> Any:
     problems = []
     declared = contract["parameters"]
     for name in params:
@@ -181,11 +192,14 @@ def parameter_problems(params, contract):
     return problems
 
 
-def problems(manifest, contract, base):
+def problems(manifest: Any, contract: Any, base: Any) -> Any:
     """Everything wrong with [manifest] against [contract]; empty when it is well formed."""
     out = []
     if manifest.get("suiteVersion") != contract["suite"]:
-        out.append(f"suiteVersion {manifest.get('suiteVersion')} differs from the contract's vectorSuiteVersion {contract['suite']}")
+        out.append(
+            f"suiteVersion {manifest.get('suiteVersion')} differs from the contract's vectorSuiteVersion "
+            f"{contract['suite']}"
+        )
     sources = {s.get("id"): s for s in manifest.get("sources", [])}
     if not sources:
         out.append("no sources")
@@ -234,11 +248,11 @@ def problems(manifest, contract, base):
     return out
 
 
-def sha256(data):
+def sha256(data: Any) -> Any:
     return hashlib.sha256(data).hexdigest()
 
 
-def compare(vector, result):
+def compare(vector: Any, result: Any) -> Any:
     """Differences between what [vector] expects and what an implementation reported."""
     out = []
     reported = result.get("steps", [])
@@ -258,7 +272,10 @@ def compare(vector, result):
         if "hex" in expect or "base64" in expect:
             want = _decode_bytes(expect)
             if got.get("sha256") != sha256(want) or got.get("size") != len(want):
-                out.append(f"step {i}: output {got.get('size')} bytes {got.get('sha256')}, expected {len(want)} bytes {sha256(want)}")
+                out.append(
+                    f"step {i}: output {got.get('size')} bytes {got.get('sha256')}, expected {len(want)} "
+                    f"bytes {sha256(want)}"
+                )
         elif "sha256" in expect:
             if got.get("sha256") != expect["sha256"] or ("size" in expect and got.get("size") != expect["size"]):
                 out.append(f"step {i}: output {got.get('size')} bytes {got.get('sha256')}, expected {expect}")
@@ -270,7 +287,9 @@ def compare(vector, result):
                     out.append(f"step {i}: {key} {geometry.get(key)}, expected {want[key]}")
             digest = got.get("sha256Band") if want.get("order", "pixel") == "band" else got.get("sha256")
             if "sha256" in want and digest != want["sha256"]:
-                out.append(f"step {i}: samples {digest}, expected {want['sha256']} ({want.get('order', 'pixel')} order)")
+                out.append(
+                    f"step {i}: samples {digest}, expected {want['sha256']} ({want.get('order', 'pixel')} order)"
+                )
         if "validitySha256" in expect and got.get("validitySha256") != expect["validitySha256"]:
             out.append(f"step {i}: validity masks {got.get('validitySha256')}, expected {expect['validitySha256']}")
     if "expectAll" in vector and not out:
@@ -280,12 +299,12 @@ def compare(vector, result):
     return out
 
 
-def unpack(data, bits, width):
+def unpack(data: Any, bits: Any, width: Any) -> Any:
     """Rows of [width] samples of [bits] bits (MSB first, rows padded to a byte) as one byte per sample."""
     row_bytes = (width * bits + 7) // 8
     out = bytearray()
     for start in range(0, len(data) - len(data) % row_bytes if row_bytes else 0, row_bytes):
-        row = data[start:start + row_bytes]
+        row = data[start : start + row_bytes]
         for x in range(width):
             bit = x * bits
             value = 0
@@ -296,7 +315,7 @@ def unpack(data, bits, width):
     return bytes(out)
 
 
-def deinterleave(data, bands, item=1):
+def deinterleave(data: Any, bands: Any, item: int = 1) -> Any:
     """Pixel-interleaved samples of [bands] bands (each [item] bytes) rewritten band-sequentially."""
     pixels = len(data) // (bands * item)
     out = bytearray(len(data))
@@ -304,28 +323,38 @@ def deinterleave(data, bands, item=1):
         for b in range(bands):
             src = (p * bands + b) * item
             dst = (b * pixels + p) * item
-            out[dst:dst + item] = data[src:src + item]
+            out[dst : dst + item] = data[src : src + item]
     return bytes(out)
 
 
 MENC = "https://hexplain.io/ns/register/media-encoding#"
 
 
-def step(data, expect, params=None, direction="decode", max_output=None, file=None):
+def step(
+    data: Any, expect: Any, params: Any = None, direction: str = "decode", max_output: Any = None, file: Any = None
+) -> Any:
     """One vector step over [data] (inline hex), or over [file] beside the manifest when given."""
-    s = {"direction": direction, "params": params or {},
-         "input": {"file": file} if file else {"hex": data.hex()}, "expect": expect}
+    s = {
+        "direction": direction,
+        "params": params or {},
+        "input": {"file": file} if file else {"hex": data.hex()},
+        "expect": expect,
+    }
     if max_output is not None:
         s["maxOutputBytes"] = max_output
     return s
 
 
-def write_suite(name, sources, vector_list, files=None):
+def write_suite(name: str, sources: Any, vector_list: Any, files: Any = None) -> None:
     """Write specification/codecs/<name>/vectors/manifest.json and the binary [files] beside it."""
     directory = ROOT / "specification" / "codecs" / name / "vectors"
     directory.mkdir(parents=True, exist_ok=True)
     for rel, data in (files or {}).items():
         (directory / rel).write_bytes(data)
-    manifest = {"codec": MENC + name, "suiteVersion": 1, "sources": sources,
-                "vectors": [dict(v, source=v.get("source", sources[0]["id"])) for v in vector_list]}
+    manifest = {
+        "codec": MENC + name,
+        "suiteVersion": 1,
+        "sources": sources,
+        "vectors": [dict(v, source=v.get("source", sources[0]["id"])) for v in vector_list],
+    }
     (directory / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")

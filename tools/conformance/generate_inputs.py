@@ -7,9 +7,13 @@ Every case -- its description, its input bytes and its expected output -- is aut
 cases_*.py modules beside this file, so a binary input is reviewable as the Python that builds it
 and reproducible byte for byte. The class directories are generated: edit the modules, not them.
 """
+
+from __future__ import annotations
+
 import shutil
 import sys
 from pathlib import Path
+from typing import Any
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -17,12 +21,26 @@ sys.path.insert(0, str(HERE))
 from suite import CLASSES, PREFIX, SUITE  # noqa: E402
 
 #: Case modules. The physical-parser modules after cases_physical add to its CASES list.
-MODULES = ("cases_physical", "cases_integers", "cases_regions", "cases_selection", "cases_integrity",
-           "cases_text", "cases_limits", "cases_hel", "cases_rules", "cases_semantic", "cases_bundle", "cases_hdl",
-           "cases_evaluator", "cases_features", "cases_features_hdl")
+MODULES = (
+    "cases_physical",
+    "cases_integers",
+    "cases_regions",
+    "cases_selection",
+    "cases_integrity",
+    "cases_text",
+    "cases_limits",
+    "cases_hel",
+    "cases_rules",
+    "cases_semantic",
+    "cases_bundle",
+    "cases_hdl",
+    "cases_evaluator",
+    "cases_features",
+    "cases_features_hdl",
+)
 
 
-def all_cases():
+def all_cases() -> Any:
     lists = []
     for module in [__import__(name) for name in MODULES]:
         own = getattr(module, "CASES", None)
@@ -41,7 +59,7 @@ def all_cases():
     return cases
 
 
-def expected_tree():
+def expected_tree() -> Any:
     """{relative path: bytes} of every generated file."""
     out = {}
     for case in all_cases():
@@ -50,7 +68,7 @@ def expected_tree():
     return out
 
 
-def on_disk():
+def on_disk() -> Any:
     out = {}
     for cls in CLASSES:
         base = SUITE / cls
@@ -61,14 +79,16 @@ def on_disk():
     return out
 
 
-def main(argv):
+def main(argv: list[str]) -> int:
     wanted = expected_tree()
     if "--check" in argv:
         present = on_disk()
         stale = sorted(p for p in wanted.keys() | present.keys() if wanted.get(p) != present.get(p))
         if stale:
-            print(f"FAIL: {len(stale)} suite file(s) differ from the case modules; run "
-                  "python tools/conformance/generate_inputs.py\n  " + "\n  ".join(stale[:20]))
+            print(
+                f"FAIL: {len(stale)} suite file(s) differ from the case modules; run "
+                "python tools/conformance/generate_inputs.py\n  " + "\n  ".join(stale[:20])
+            )
             return 1
         print(f"PASS: {len(wanted)} suite files match the case modules")
         return 0

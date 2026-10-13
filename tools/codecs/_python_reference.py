@@ -5,12 +5,16 @@ code with the reference engine. Usage (the runner's command template):
 
     python tools/codecs/_python_reference.py vector --manifest M --id ID
 """
+
+from __future__ import annotations
+
 import argparse
 import hashlib
 import json
 import pathlib
 import sys
 import zlib
+from typing import Any
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import vectors  # noqa: E402
@@ -19,7 +23,7 @@ MENC = "https://hexplain.io/ns/register/media-encoding#"
 
 
 class CodecError(Exception):
-    def __init__(self, category, message):
+    def __init__(self, category: Any, message: str) -> None:
         super().__init__(message)
         self.category = category
 
@@ -72,8 +76,8 @@ def _encode(name, params, data, limit):
     return out
 
 
-def apply(codec, direction, params, data, limit):
-    name = codec[len(MENC):]
+def apply(codec: Any, direction: Any, params: Any, data: Any, limit: Any) -> Any:
+    name = codec[len(MENC) :]
     if name == "Store":
         if params:
             raise CodecError("Description", "Store takes no parameters")
@@ -118,7 +122,7 @@ def apply(codec, direction, params, data, limit):
     raise CodecError("Unsupported", f"{codec} is not implemented here")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=["vector"])
     parser.add_argument("--manifest", required=True)
@@ -130,9 +134,13 @@ def main():
     steps, outputs = [], []
     for step in vector["steps"]:
         try:
-            data = apply(manifest["codec"], step["direction"], step.get("params", {}),
-                         vectors.input_bytes(step["input"], path.parent, outputs[-1] if outputs else None),
-                         step.get("maxOutputBytes", 67108864))
+            data = apply(
+                manifest["codec"],
+                step["direction"],
+                step.get("params", {}),
+                vectors.input_bytes(step["input"], path.parent, outputs[-1] if outputs else None),
+                step.get("maxOutputBytes", 67108864),
+            )
         except CodecError as e:
             steps.append({"ok": False, "category": e.category, "message": str(e)})
             break
