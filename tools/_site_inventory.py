@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import re
 from html.parser import HTMLParser
@@ -73,21 +72,6 @@ def sitemap() -> str:
     )
 
 
-def generated_on_demand(target: Path) -> bool:
-    """A linked file that is not tracked but is rebuilt from the tree and pinned by a tracked manifest.
-
-    The ontology review archive is 22 MB of files the tree already holds, so only its manifest
-    (archive name, SHA-256 and every entry's hash) is tracked; `python tools/_review_candidate.py
-    --archive-only` rebuilds it and the validate workflow retains it as an artifact. The link to it
-    is live once the archive is built, and tools/test_review_candidate.py proves the manifest pins it.
-    """
-    manifest = target.parent / "review-manifest.json"
-    if target.parent != ROOT / "specification/ontology-review" or not manifest.is_file():
-        return False
-    record = json.loads(manifest.read_text(encoding="utf-8"))
-    return record.get("archive") == target.name and record.get("archive_tracked") is False
-
-
 def broken_links() -> Any:
     parsed = {p.resolve(): Page(p) for p in pages()}
     broken = []
@@ -111,7 +95,7 @@ def broken_links() -> Any:
                 continue
             if target.is_dir():
                 target /= "index.html"
-            if not target.is_file() and not generated_on_demand(target):
+            if not target.is_file():
                 broken.append((path.relative_to(ROOT).as_posix(), link, "missing file"))
                 continue
             if url.fragment and target.suffix == ".html":
