@@ -849,11 +849,13 @@ png:Keyword a bddo:Field ;
 png:TextString a bddo:Field ;
     bddo:dataType bddo:string ;
     bddo:encoding bddo:latin1 ;
-    # HEL: total chunk length minus the keyword bytes and its 1-byte separator.
-    bddo:sizeFromExpression "instance.parent.ChunkLength - (sizeof(instance.parent.Keyword) + 1)" ;
+    # HEL: total chunk length minus the keyword bytes and its 1-byte separator. In an expression on a
+    # field, instance is the struct that contains the field (png:tEXt_ChunkData): Keyword is a sibling,
+    # so it is instance.Keyword, and ChunkLength belongs to the enclosing chunk, instance.parent.
+    bddo:sizeFromExpression "instance.parent.ChunkLength - (sizeof(instance.Keyword) + 1)" ;
     hexplain:hasConditionalMapping (
-        [ a hexplain:MappingRule ; hexplain:condition "instance.parent.Keyword == 'Title'" ;  hexplain:semanticProperty dfv:title ]
-        [ a hexplain:MappingRule ; hexplain:condition "instance.parent.Keyword == 'Author'" ; hexplain:semanticProperty dfv:author ]
+        [ a hexplain:MappingRule ; hexplain:condition "instance.Keyword == 'Title'" ;  hexplain:semanticProperty dfv:title ]
+        [ a hexplain:MappingRule ; hexplain:condition "instance.Keyword == 'Author'" ; hexplain:semanticProperty dfv:author ]
     ) .
         </pre>
     </section>
