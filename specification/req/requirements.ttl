@@ -1,0 +1,773 @@
+# Hexplain Specification Requirements 1.0 -- the requirements the family's own node shapes enforce
+# Generated once from the node shapes of bddo, dlv and core (one req:Requirement per shape,
+# identifier req-shape-<ShapeLocalName>); maintained by hand after that: an identifier, once
+# minted, keeps its meaning, and a shape that changes its contract gets a new statement here.
+@prefix reqs:    <https://hexplain.io/ns/req/requirements#> .
+@prefix req:     <https://hexplain.io/ns/req#> .
+@prefix bddo:    <https://hexplain.io/ns/bddo#> .
+@prefix dlv:     <https://hexplain.io/ns/dlv#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+
+<https://hexplain.io/ns/req/requirements> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/req/requirements/1.0> ; owl:versionInfo "1.0" ;
+    dcterms:modified "2026-10-12"^^xsd:date ; dcterms:created "2026-10-12"^^xsd:date ;
+    dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    # req supplies the requirement vocabulary; core (and through it bddo and dlv) supplies the
+    # shapes each requirement references. The link runs from the requirement to the shape
+    # because the layering runs the other way: bddo cannot import a module above it.
+    owl:imports <https://hexplain.io/ns/req> , <https://hexplain.io/ns/core> ;
+    vann:preferredNamespacePrefix "reqs" ; vann:preferredNamespaceUri "https://hexplain.io/ns/req/requirements#" ;
+    rdfs:label "Hexplain Specification Requirements"@en ;
+    rdfs:comment "The normative requirements that the specification's own SHACL node shapes enforce on a description, each a req:Requirement citing its shape with dcterms:references. The source document of every requirement is the vocabulary module that publishes the shape; its identifier is req-shape-<ShapeLocalName> (req-shape-<prefix>-<ShapeLocalName> where several modules share a local name, as for RangeDatatypeShape) and never changes meaning (tools/_requirement_ids.py states the same rule for prose requirements). A conformance profile may cite these requirements with conf:satisfies exactly as it cites a format standard's."@en ;
+    skos:scopeNote "Load with a conformance profile that attributes a description-level finding to the shape requirement it breaks, or to read which requirement a shape stands for. It mints no shapes and no new constraints: every statement restates a shape's message."@en .
+
+# A requirement of the specification itself, as opposed to one a conformance profile declares
+# for a format standard. A subclass, and the individuals are typed with it alone: conf:RunShape
+# demands an outcome for every resource typed req:Requirement in the graph it validates (a run
+# report with its rule set), and the family's own requirements are not part of any rule set.
+# Under RDFS entailment each is a req:Requirement; req:RequirementShape still validates each
+# through its activation by req:requirementId and the other requirement properties.
+reqs:ShapeRequirement a owl:Class ; rdfs:subClassOf req:Requirement ; rdfs:label "Shape Requirement"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "A req:Requirement that one of the specification's own SHACL node shapes enforces on a description, named by dcterms:references. Its req:fromStandard is the vocabulary module publishing the shape and its req:requirementId is req-shape-<ShapeLocalName>."@en ;
+    skos:scopeNote "Assert on the family's own requirements only; a conformance profile's requirements for a format standard are plain req:Requirement resources. A conf:Constraint may cite a shape requirement with conf:satisfies like any other."@en .
+
+reqs:req-shape-ArgumentArityShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:ArgumentArityShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:ArgumentArityShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-ArgumentArityShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Wherever a bddo:Struct that declares parameters is named as a type (by bddo:dataType, bddo:ruleDataType or bddo:armDataType), the naming node supplies exactly one bddo:hasArgument list member per parameter. List nodes are counted, so two equal argument strings count twice."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:ArgumentArityShape .
+reqs:req-shape-ArgumentListShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:ArgumentListShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:ArgumentListShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-ArgumentListShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to subjects using bddo:hasArgument. bddo:hasArgument must point to a single rdf:List. Every member of a hasArgument list is a HEL expression, an xsd:string or bddo:HelExpression literal."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:ArgumentListShape .
+reqs:req-shape-AsciiNumericWidthShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:AsciiNumericWidthShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:AsciiNumericWidthShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-AsciiNumericWidthShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Field. A bddo:asciiInteger / bddo:asciiDecimal field must declare a width (size / sizeFromField / sizeFromExpression), a terminator, or bddo:separatedBy."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:AsciiNumericWidthShape .
+reqs:req-shape-ChecksumShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:ChecksumShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:ChecksumShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-ChecksumShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "A bddo:Checksum states exactly one start of its covered range (bddo:coversFromField or bddo:coversFromExpression) and exactly one end (bddo:coversToField or bddo:coversToExpression), or the deprecated whole-range bddo:coversExpression alone."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:ChecksumShape .
+reqs:req-shape-ConditionalEndiannessShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:ConditionalEndiannessShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:ConditionalEndiannessShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-ConditionalEndiannessShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to subjects using bddo:hasConditionalEndianness. bddo:endianness and bddo:hasConditionalEndianness are mutually exclusive. bddo:hasConditionalEndianness must point to a single rdf:List. Every member of a hasConditionalEndianness list must be a bddo:EndiannessRule."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:ConditionalEndiannessShape .
+reqs:req-shape-CustomCrcShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:CustomCrcShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:CustomCrcShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-CustomCrcShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:CustomCrc. A bddo:CustomCrc states exactly one bddo:crcInit. A bddo:CustomCrc states exactly one bddo:crcPolynomial. A bddo:CustomCrc states exactly one bddo:crcReflectIn. A bddo:CustomCrc states exactly one bddo:crcReflectOut. A bddo:CustomCrc states exactly one bddo:crcWidth, an integer from 8 to 64. A bddo:CustomCrc states exactly one bddo:crcXorOut."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:CustomCrcShape .
+reqs:req-shape-CustomEncodingShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:CustomEncodingShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:CustomEncodingShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-CustomEncodingShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:CustomEncoding and to subjects using bddo:ianaCharset. An encoding that states a bddo:ianaCharset is an IRI (so that the fields using it can name it), and a registered encoding is never also typed bddo:CustomEncoding. An encoding states exactly one bddo:ianaCharset, an IANA Character Sets registry name; a bddo:CustomEncoding must state it."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:CustomEncodingShape .
+reqs:req-shape-DataTypeRuleShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:DataTypeRuleShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:DataTypeRuleShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-DataTypeRuleShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:DataTypeRule. bddo:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). bddo:ruleDataType takes exactly one value, an IRI naming an instance of bddo:DataType or bddo:Struct."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:DataTypeRuleShape .
+reqs:req-shape-DataTypeShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:DataTypeShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:DataTypeShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-DataTypeShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:DataType. bddo:baseType takes at most one value; each is one of bddo:baseInteger, bddo:baseFloat, bddo:baseString or bddo:baseBytes. bddo:bcd takes at most one value; each is an xsd:boolean literal. bddo:bitWidth takes at most one value; each is a number greater than 0. bddo:endianness takes at most one value; each is either bddo:BigEndian or bddo:LittleEndian. bddo:fixedPointScale takes at most one value. bddo:floatFormat takes at most one value; each is one of bddo:ieee754, bddo:ibmHexadecimal, bddo:vaxF or bddo:bfloat16. bddo:isSigned takes at most one value; each is an xsd:boolean literal. bddo:xsdType takes at most one value; each is an IRI."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:DataTypeShape .
+reqs:req-shape-DelimitedRecordsShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:DelimitedRecordsShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:DelimitedRecordsShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-DelimitedRecordsShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "A bddo:DelimitedRecords separates values by a fixed bddo:fieldDelimiter or by runs of whitespace (bddo:whitespaceSeparated true), never both."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:DelimitedRecordsShape .
+reqs:req-shape-DelimitedTableShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:DelimitedTableShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:DelimitedTableShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-DelimitedTableShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "A bddo:DelimitedTable declares how its columns are separated: a bddo:fieldDelimiter or bddo:whitespaceSeparated true."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:DelimitedTableShape .
+reqs:req-shape-DerivedFieldShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:DerivedFieldShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:DerivedFieldShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-DerivedFieldShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Field. A bddo:valueFromExpression (derived) field must not also declare a byte-consuming mechanism (dataType, hasConditionalDataType, size*, terminator, bitLength, atOffset* or enumeration)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:DerivedFieldShape .
+reqs:req-shape-DisjointKindsShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:DisjointKindsShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:DisjointKindsShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-DisjointKindsShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "A node is at most one of bddo:Struct, bddo:Field and bddo:DataType (subclasses included), as the owl:AllDisjointClasses axiom states."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:DisjointKindsShape .
+reqs:req-shape-DispatchArmShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:DispatchArmShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:DispatchArmShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-DispatchArmShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:DispatchArm; subjects using bddo:armDataType, bddo:armKey, bddo:armTable. bddo:armDataType takes exactly one value, an IRI naming an instance of bddo:DataType or bddo:Struct. bddo:armKey takes exactly one value, an xsd:string or xsd:integer literal. bddo:armTable takes exactly one value, an instance of bddo:DispatchTable."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:DispatchArmShape .
+reqs:req-shape-DispatchKeyUniquenessShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:DispatchKeyUniquenessShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:DispatchKeyUniquenessShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-DispatchKeyUniquenessShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:DispatchTable. Two DispatchArms of one DispatchTable declare the same armKey."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:DispatchKeyUniquenessShape .
+reqs:req-shape-DispatchTableShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:DispatchTableShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:DispatchTableShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-DispatchTableShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "A bddo:DispatchTable states its key exactly one way: bddo:dispatchOnField or bddo:dispatchOnExpression."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:DispatchTableShape .
+reqs:req-shape-EndiannessRuleShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:EndiannessRuleShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:EndiannessRuleShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-EndiannessRuleShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:EndiannessRule. bddo:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). bddo:ruleEndianness must be bddo:BigEndian or bddo:LittleEndian."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:EndiannessRuleShape .
+reqs:req-shape-EnumValueShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:EnumValueShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:EnumValueShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-EnumValueShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:EnumValue. bddo:enumRawValue takes exactly one value. bddo:enumSymbol takes at most one value; each is an IRI."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:EnumValueShape .
+reqs:req-shape-EnumerationShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:EnumerationShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:EnumerationShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-EnumerationShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Enumeration. bddo:enumIsFlags takes at most one value; each is an xsd:boolean literal. bddo:hasEnumValue takes at least one value; each is an instance of bddo:EnumValue."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:EnumerationShape .
+reqs:req-shape-FieldOffsetShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:FieldOffsetShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:FieldOffsetShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-FieldOffsetShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Field. A bddo:Field must use at most one offset mechanism."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:FieldOffsetShape .
+reqs:req-shape-FieldRepetitionShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:FieldRepetitionShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:FieldRepetitionShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-FieldRepetitionShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Field. A bddo:Field must use at most one repetition mechanism."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:FieldRepetitionShape .
+reqs:req-shape-FieldShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:FieldShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:FieldShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-FieldShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "A bddo:Field declares how it is typed (bddo:dataType, bddo:hasConditionalDataType, bddo:hasDispatchTable or bddo:valueFromExpression) and, if it is a separated text number (bddo:separatedBy), no size, size source, end-of-stream flag or terminator."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:FieldShape .
+reqs:req-shape-FieldSizingShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:FieldSizingShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:FieldSizingShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-FieldSizingShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Field. A bddo:Field must use at most one sizing/termination mechanism."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:FieldSizingShape .
+reqs:req-shape-GroupedRecordsShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:GroupedRecordsShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:GroupedRecordsShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-GroupedRecordsShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:DelimitedRecords. bddo:hasGrouping takes at most one value; each is an instance of bddo:RecordGrouping. bddo:pathSeparator takes at most one value; each is an xsd:string literal."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:GroupedRecordsShape .
+reqs:req-shape-HelExpressionValueShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:HelExpressionValueShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:HelExpressionValueShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-HelExpressionValueShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "A HEL expression is an xsd:string or bddo:HelExpression literal."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:HelExpressionValueShape .
+reqs:req-shape-HelVersionShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:HelVersionShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:HelVersionShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-HelVersionShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to subjects using bddo:helVersion. bddo:helVersion is stated at most once, as an xsd:string major.minor version of two decimal numbers without leading zeros, such as \"1.0\"."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:HelVersionShape .
+reqs:req-shape-bddo-IntegerValueShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:IntegerValueShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:IntegerValueShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-bddo-IntegerValueShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:IntegerValueShape .
+reqs:req-shape-KeyPathShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:KeyPathShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:KeyPathShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-KeyPathShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Field. bddo:keyPath takes at most one value; each is an xsd:string literal. bddo:keyPath locates a field inside nested groups, so its container must declare bddo:hasGrouping; without one the container is flat and the path addresses nothing."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:KeyPathShape .
+reqs:req-shape-KeyValueHeaderShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:KeyValueHeaderShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:KeyValueHeaderShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-KeyValueHeaderShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:KeyValueHeader. A bddo:KeyValueHeader must declare bddo:keyValueSeparator. Every field of a bddo:KeyValueHeader declares at most one bddo:key (flat) or one bddo:keyPath (nested), never both; a field with neither is located by its simple key."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:KeyValueHeaderShape .
+reqs:req-shape-LocalBindingShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:LocalBindingShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:LocalBindingShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-LocalBindingShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "A bddo:LocalBinding is an IRI (its name is the simple key of its IRI) and is not a bddo:Field."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:LocalBindingShape .
+reqs:req-shape-NamespaceBindingShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:NamespaceBindingShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:NamespaceBindingShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-NamespaceBindingShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:NamespaceBinding; subjects using bddo:namespaceIRI, bddo:namespacePrefix; objects of bddo:hasNamespaceBinding. A namespace binding needs the IRI it binds to; a prefix alone names nothing. bddo:namespaceIRI must be an absolute IRI (it begins with a scheme). bddo:namespacePrefix takes exactly one value, an xsd:string literal."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:NamespaceBindingShape .
+reqs:req-shape-NodePathShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:NodePathShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:NodePathShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-NodePathShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Field; subjects using bddo:nodePath. bddo:nodePath takes at most one value; each is an xsd:string literal."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:NodePathShape .
+reqs:req-shape-NumericBaseShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:NumericBaseShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:NumericBaseShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-NumericBaseShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to subjects using bddo:numericBase. bddo:numericBase applies only to a field whose bddo:dataType is bddo:asciiInteger. bddo:numericBase must be 8, 10 or 16."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:NumericBaseShape .
+reqs:req-shape-NumericRepresentationShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:NumericRepresentationShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:NumericRepresentationShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-NumericRepresentationShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "bddo:bcd true and bddo:fixedPointScale are mutually exclusive: BCD digits spell a decimal number, which no binary scale applies to."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:NumericRepresentationShape .
+reqs:req-shape-PaddingShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:PaddingShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:PaddingShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-PaddingShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "bddo:padByte is only meaningful beside bddo:padTo, which introduces the padding it describes."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:PaddingShape .
+reqs:req-shape-ParameterShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:ParameterShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:ParameterShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-ParameterShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "A bddo:Parameter is not a bddo:Field: it consumes no bytes and is not a member of the parsed tree."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:ParameterShape .
+reqs:req-shape-ParameterisedStructShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:ParameterisedStructShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:ParameterisedStructShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-ParameterisedStructShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "bddo:hasParameter is declared on a bddo:Struct (or a subclass of it)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:ParameterisedStructShape .
+reqs:req-shape-bddo-RangeDatatypeShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:RangeDatatypeShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:RangeDatatypeShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-bddo-RangeDatatypeShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to subjects using bddo:alignment, bddo:atOffset, bddo:atOffsetFromExpression, bddo:bcd, bddo:bitLength, bddo:bitWidth, bddo:commentPrefix, bddo:condition, bddo:coversExpression, bddo:coversFromExpression, bddo:coversToExpression, bddo:crcCheck, bddo:crcInit, bddo:crcPolynomial, bddo:crcReflectIn, bddo:crcReflectOut, bddo:crcWidth, bddo:crcXorOut, bddo:dispatchOnExpression, bddo:enumIsFlags, bddo:escapeChar, bddo:fieldDelimiter, bddo:fixedPointScale, bddo:groupCloseToken, bddo:groupOpenToken, bddo:ianaCharset, bddo:isPresentIf, bddo:isSigned, bddo:key, bddo:keyIsCaseInsensitive, bddo:keyPath, bddo:keyValueSeparator, bddo:localExpression, bddo:namespaceIRI, bddo:namespacePrefix, bddo:nodePath, bddo:numericBase, bddo:padByte, bddo:padTo, bddo:pathSeparator, bddo:quoteChar, bddo:recordDelimiter, bddo:repeatCount, bddo:repeatCountFromExpression, bddo:repeatUntil, bddo:separatedBy, bddo:size, bddo:sizeFromExpression, bddo:sizeToEndOfStream, bddo:skipRecords, bddo:syncOnMarker, bddo:terminator, bddo:trimNull, bddo:trimWhitespace, bddo:validIf, bddo:valueFromExpression, bddo:whitespaceSeparated. bddo:alignment takes a positive integer (rdfs:range xsd:positiveInteger). bddo:atOffset takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:atOffsetFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:bcd takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:bitLength takes a positive integer (rdfs:range xsd:positiveInteger). bddo:bitWidth takes a positive integer (rdfs:range xsd:positiveInteger). bddo:commentPrefix takes an xsd:string literal (rdfs:range xsd:string). bddo:condition takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:coversExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:coversFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:coversToExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:crcCheck takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:crcInit takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:crcPolynomial takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:crcReflectIn takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:crcReflectOut takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:crcWidth takes a positive integer (rdfs:range xsd:positiveInteger). bddo:crcXorOut takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:dispatchOnExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:enumIsFlags takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:escapeChar takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:fieldDelimiter takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:fixedPointScale takes an integer (rdfs:range xsd:integer). bddo:groupCloseToken takes an xsd:string literal (rdfs:range xsd:string). bddo:groupOpenToken takes an xsd:string literal (rdfs:range xsd:string). bddo:ianaCharset takes an xsd:string literal (rdfs:range xsd:string). bddo:isPresentIf takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:isSigned takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:key takes an xsd:string literal (rdfs:range xsd:string). bddo:keyIsCaseInsensitive takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:keyPath takes an xsd:string literal (rdfs:range xsd:string). bddo:keyValueSeparator takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:localExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:namespaceIRI takes an xsd:anyURI literal (rdfs:range xsd:anyURI). bddo:namespacePrefix takes an xsd:string literal (rdfs:range xsd:string). bddo:nodePath takes an xsd:string literal (rdfs:range xsd:string). bddo:numericBase takes a positive integer (rdfs:range xsd:positiveInteger). bddo:padByte takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:padTo takes a positive integer (rdfs:range xsd:positiveInteger). bddo:pathSeparator takes an xsd:string literal (rdfs:range xsd:string). bddo:quoteChar takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:recordDelimiter takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:repeatCount takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:repeatCountFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:repeatUntil takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:separatedBy takes an xsd:string literal (rdfs:range xsd:string). bddo:size takes a positive integer (rdfs:range xsd:positiveInteger). bddo:sizeFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:sizeToEndOfStream takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:skipRecords takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:syncOnMarker takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:terminator takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:trimNull takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:trimWhitespace takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:validIf takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:valueFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:whitespaceSeparated takes an xsd:boolean literal (rdfs:range xsd:boolean)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:RangeDatatypeShape .
+reqs:req-shape-RecordGroupingShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:RecordGroupingShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:RecordGroupingShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-RecordGroupingShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:RecordGrouping. bddo:groupCloseToken takes exactly one value, an xsd:string literal. bddo:groupOpenToken takes exactly one value, an xsd:string literal. A bddo:RecordGrouping must name exactly one style: keyedGroup, valuedGroup or sectionHeaded."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:RecordGroupingShape .
+reqs:req-shape-SeekScopeShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:SeekScopeShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:SeekScopeShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-SeekScopeShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Field. bddo:seekScope is only meaningful on an offset-addressed Field (atOffset / atOffsetFromField / atOffsetFromExpression)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:SeekScopeShape .
+reqs:req-shape-StructShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:StructShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:StructShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-StructShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Struct. bddo:alignment takes at most one value; each is a number greater than 0. bddo:bitOrder takes at most one value; each is either bddo:MSBFirst or bddo:LSBFirst. bddo:endianness takes at most one value; each is either bddo:BigEndian or bddo:LittleEndian. bddo:hasField must point to a single rdf:List. bddo:padByte takes at most one value; each is one xsd:hexBinary octet (two hex digits). bddo:padTo takes at most one value; each is a number greater than 0. bddo:size takes at most one value; each is a number greater than 0. bddo:sizeFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal). bddo:sizeFromField takes at most one value; each is an instance of bddo:Field. bddo:syncOnMarker takes at most one value; each is an xsd:hexBinary literal. Every member of a Struct's hasField list must be a bddo:Field or a bddo:LocalBinding."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:StructShape .
+reqs:req-shape-StructSizingShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:StructSizingShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:StructSizingShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-StructSizingShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Struct. A bddo:Struct must use at most one sizing mechanism (size / sizeFromField / sizeFromExpression)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:StructSizingShape .
+reqs:req-shape-TreeDocumentShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:TreeDocumentShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:TreeDocumentShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-TreeDocumentShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:TreeDocument. A bddo:TreeDocument must declare at least one field. Each value of bddo:hasNamespaceBinding is an instance of bddo:NamespaceBinding. A bddo:TreeDocument must declare exactly one bddo:treeSyntax: bddo:xml or bddo:json. Every field of a bddo:TreeDocument is located by exactly one bddo:nodePath, and not by a key, a key path or a byte offset. bddo:hasNamespaceBinding applies to an XML tree document; JSON Pointer has no namespace prefixes."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:TreeDocumentShape .
+reqs:req-shape-TreePrefixBindingShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:TreePrefixBindingShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:TreePrefixBindingShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-TreePrefixBindingShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "An XML tree document binds each namespace prefix at most once, and every prefix its fields' bddo:nodePath values use is bound by one of its bddo:hasNamespaceBinding entries; only xml is predeclared."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:TreePrefixBindingShape .
+reqs:req-shape-TypeSelectionExclusivityShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:TypeSelectionExclusivityShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:TypeSelectionExclusivityShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-TypeSelectionExclusivityShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Field. A bddo:Field must not declare both hasDispatchTable and hasConditionalDataType."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:TypeSelectionExclusivityShape .
+reqs:req-shape-VariableLengthFieldShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:VariableLengthFieldShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:VariableLengthFieldShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-VariableLengthFieldShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Field. A bddo:bytes or bddo:string field must declare a sizing or termination mechanism."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:VariableLengthFieldShape .
+reqs:req-shape-VarintWidthShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of bddo:VarintWidthShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement bddo:VarintWidthShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-VarintWidthShape" ;
+    req:fromStandard "Hexplain Binary Data Description Ontology (BDDO) 1.3" ;
+    req:statement "Applies to instances of bddo:Field. A variable-length integer field (bddo:varuint, bddo:varint, bddo:sqliteVarint) must not declare a width or terminator: its length is discovered from the bytes."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references bddo:VarintWidthShape .
+reqs:req-shape-CellDataTypeRuleShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of dlv:CellDataTypeRuleShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement dlv:CellDataTypeRuleShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-CellDataTypeRuleShape" ;
+    req:fromStandard "Hexplain Data Layout Vocabulary (DLV) 1.3" ;
+    req:statement "Applies to instances of dlv:CellDataTypeRule. bddo:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). dlv:ruleCellDataType takes exactly one value, an instance of bddo:DataType."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references dlv:CellDataTypeRuleShape .
+reqs:req-shape-ChunkedLayoutShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of dlv:ChunkedLayoutShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement dlv:ChunkedLayoutShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-ChunkedLayoutShape" ;
+    req:fromStandard "Hexplain Data Layout Vocabulary (DLV) 1.3" ;
+    req:statement "Applies to instances of dlv:DataLayout. dlv:chunkLengthsFromField takes at most one value; each is an instance of bddo:Field. dlv:chunkOffsetBase takes at most one value; each is one of bddo:streamStart, bddo:streamEnd, bddo:parentStart or bddo:currentPosition. dlv:chunkOffsetsFromField takes at most one value; each is an instance of bddo:Field. dlv:chunkOrder takes at most one value; each is an instance of dlv:ChunkOrder. A chunked dlv:DataLayout (any Dimension declaring dlv:chunkSize, dlv:chunkSizeFromField or dlv:chunkSizeFromExpression) must declare dlv:chunkOffsetsFromField."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references dlv:ChunkedLayoutShape .
+reqs:req-shape-DataLayoutShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of dlv:DataLayoutShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement dlv:DataLayoutShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-DataLayoutShape" ;
+    req:fromStandard "Hexplain Data Layout Vocabulary (DLV) 1.3" ;
+    req:statement "A dlv:DataLayout fixes its cell type (dlv:cellDataType) or chooses it (dlv:hasConditionalCellDataType), and fixes its dimension order (dlv:hasDimension) or chooses it (dlv:hasConditionalDimensionOrder): one of each pair, never both and never neither."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references dlv:DataLayoutShape .
+reqs:req-shape-DimensionOrderRuleShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of dlv:DimensionOrderRuleShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement dlv:DimensionOrderRuleShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-DimensionOrderRuleShape" ;
+    req:fromStandard "Hexplain Data Layout Vocabulary (DLV) 1.3" ;
+    req:statement "Applies to instances of dlv:DimensionOrderRule. bddo:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). dlv:ruleDimensionOrder takes exactly one value, a resource (an IRI or a blank node). Every member of a ruleDimensionOrder list must be a dlv:Dimension."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references dlv:DimensionOrderRuleShape .
+reqs:req-shape-DimensionShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of dlv:DimensionShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement dlv:DimensionShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-DimensionShape" ;
+    req:fromStandard "Hexplain Data Layout Vocabulary (DLV) 1.3" ;
+    req:statement "A dlv:Dimension states its extent exactly one way (dlv:dimensionSize, dlv:dimensionSizeFromField or dlv:dimensionSizeFromExpression) and its chunk extent at most one way (dlv:chunkSize, dlv:chunkSizeFromField or dlv:chunkSizeFromExpression)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references dlv:DimensionShape .
+reqs:req-shape-dlv-IntegerValueShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of dlv:IntegerValueShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement dlv:IntegerValueShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-dlv-IntegerValueShape" ;
+    req:fromStandard "Hexplain Data Layout Vocabulary (DLV) 1.3" ;
+    req:statement "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references dlv:IntegerValueShape .
+reqs:req-shape-dlv-RangeDatatypeShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of dlv:RangeDatatypeShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement dlv:RangeDatatypeShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-dlv-RangeDatatypeShape" ;
+    req:fromStandard "Hexplain Data Layout Vocabulary (DLV) 1.3" ;
+    req:statement "Applies to subjects using dlv:cellBitWidth, dlv:cellBitWidthFromExpression, dlv:chunkSize, dlv:chunkSizeFromExpression, dlv:dimensionSize, dlv:dimensionSizeFromExpression, dlv:dimensionStride, dlv:dimensionStrideFromExpression. dlv:cellBitWidth takes a positive integer (rdfs:range xsd:positiveInteger). dlv:cellBitWidthFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). dlv:chunkSize takes a positive integer (rdfs:range xsd:positiveInteger). dlv:chunkSizeFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). dlv:dimensionSize takes a positive integer (rdfs:range xsd:positiveInteger). dlv:dimensionSizeFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). dlv:dimensionStride takes a positive integer (rdfs:range xsd:positiveInteger). dlv:dimensionStrideFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references dlv:RangeDatatypeShape .
+reqs:req-shape-ClassMappingRuleShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:ClassMappingRuleShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:ClassMappingRuleShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-ClassMappingRuleShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "Applies to instances of hexplain:ClassMappingRule. hexplain:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). hexplain:semanticClass takes exactly one value, an IRI naming an instance of owl:Class or rdfs:Class."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:ClassMappingRuleShape .
+reqs:req-shape-CodecContractBindingShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:CodecContractBindingShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:CodecContractBindingShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-CodecContractBindingShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "hexplain:codecContract is declared on a register concept (a skos:Concept)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:CodecContractBindingShape .
+reqs:req-shape-CodecContractShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:CodecContractShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:CodecContractShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-CodecContractShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "Applies to instances of hexplain:CodecContract; subjects using hexplain:codecKind, hexplain:contractVersion, hexplain:declaresParameter, hexplain:keepsSession, hexplain:raisesCategory, hexplain:vectorSuiteVersion. A codec contract states exactly one hexplain:codecKind. A codec contract states exactly one hexplain:contractVersion, a positive integer. Every hexplain:declaresParameter value is a hexplain:CodecParameterSpec. A codec contract states hexplain:keepsSession once, as a boolean. hexplain:raisesCategory is one of Validation, Checksum, Unsupported, ResourceLimit and Description. A codec contract states exactly one hexplain:vectorSuiteVersion, a positive integer."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:CodecContractShape .
+reqs:req-shape-CodecParameterShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:CodecParameterShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:CodecParameterShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-CodecParameterShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "A codec parameter states its value exactly one way: hexplain:parameterValue or hexplain:parameterExpression."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:CodecParameterShape .
+reqs:req-shape-CodecParameterSpecShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:CodecParameterSpecShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:CodecParameterSpecShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-CodecParameterSpecShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "Applies to instances of hexplain:CodecParameterSpec; subjects using hexplain:allowedValue, hexplain:defaultValue, hexplain:listLength, hexplain:listValued, hexplain:maximumValue, hexplain:minimumValue, hexplain:parameterKey, hexplain:parameterType, hexplain:requiredParameter. Each value of hexplain:allowedValue is a literal. hexplain:defaultValue takes at most one value, a literal. hexplain:listLength takes at most one value, an xsd:integer of at least 1. hexplain:listValued takes at most one value, an xsd:boolean literal. hexplain:maximumValue takes at most one value, a literal. hexplain:minimumValue takes at most one value, a literal. A codec parameter spec states exactly one hexplain:parameterKey, an xsd:string literal. A codec parameter spec states exactly one hexplain:parameterType, one of the six hexplain:CodecParameterType individuals. hexplain:requiredParameter takes at most one value, an xsd:boolean literal."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:CodecParameterSpecShape .
+reqs:req-shape-CodecSelectionShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:CodecSelectionShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:CodecSelectionShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-CodecSelectionShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "Applies to subjects using hexplain:codecCandidates, hexplain:codecFromExpression. A step that selects its codec at run time lists its candidates in one hexplain:codecCandidates list. hexplain:codecFromExpression takes at most one value, a HEL expression, an xsd:string or bddo:HelExpression literal. A step that selects its codec at run time carries no hexplain:codecParameter; parameters belong to the candidate steps. Every candidate is a hexplain:EncodingStep."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:CodecSelectionShape .
+reqs:req-shape-CodecSessionScopeShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:CodecSessionScopeShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:CodecSessionScopeShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-CodecSessionScopeShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "hexplain:codecSessionScope is declared on a bddo:Field."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:CodecSessionScopeShape .
+reqs:req-shape-EncodingPipelineShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:EncodingPipelineShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:EncodingPipelineShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-EncodingPipelineShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "Applies to subjects using hexplain:hasEncodingStep. hexplain:hasEncodingStep must point to a single rdf:List. Every member of a hasEncodingStep list must be a hexplain:EncodingStep."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:EncodingPipelineShape .
+reqs:req-shape-EncodingStepShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:EncodingStepShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:EncodingStepShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-EncodingStepShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "An encoding step names its codec with hexplain:codec or selects one with hexplain:codecFromExpression, never both and never neither."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:EncodingStepShape .
+reqs:req-shape-HasConditionalClassMappingShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:HasConditionalClassMappingShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:HasConditionalClassMappingShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-HasConditionalClassMappingShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "hexplain:hasConditionalClassMapping is declared on a bddo:Struct."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:HasConditionalClassMappingShape .
+reqs:req-shape-HasConditionalMappingShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:HasConditionalMappingShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:HasConditionalMappingShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-HasConditionalMappingShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "hexplain:hasConditionalMapping is declared on a bddo:Field."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:HasConditionalMappingShape .
+reqs:req-shape-HasDataLayoutShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:HasDataLayoutShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:HasDataLayoutShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-HasDataLayoutShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "hexplain:hasDataLayout is declared on a bddo:Field."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:HasDataLayoutShape .
+reqs:req-shape-hexplain-IntegerValueShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:IntegerValueShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:IntegerValueShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-hexplain-IntegerValueShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:IntegerValueShape .
+reqs:req-shape-IsEncodedWithShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:IsEncodedWithShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:IsEncodedWithShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-IsEncodedWithShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "A block is encoded one way: a single hexplain:isEncodedWith codec or a hexplain:hasEncodingStep pipeline, never both."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:IsEncodedWithShape .
+reqs:req-shape-LanguageFromFieldShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:LanguageFromFieldShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:LanguageFromFieldShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-LanguageFromFieldShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "hexplain:languageFromField is declared on a bddo:Field."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:LanguageFromFieldShape .
+reqs:req-shape-LanguageShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:LanguageShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:LanguageShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-LanguageShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "hexplain:language is declared on a bddo:Field."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:LanguageShape .
+reqs:req-shape-MappingRuleShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:MappingRuleShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:MappingRuleShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-MappingRuleShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "Applies to instances of hexplain:MappingRule. hexplain:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). hexplain:semanticProperty takes exactly one value, an IRI naming an instance of rdf:Property, owl:DatatypeProperty, owl:ObjectProperty or owl:AnnotationProperty. hexplain:valueDatatype takes at most one value; each is an IRI. hexplain:valueExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:MappingRuleShape .
+reqs:req-shape-MapsToClassShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:MapsToClassShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:MapsToClassShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-MapsToClassShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "hexplain:mapsToClass is declared on a bddo:Struct."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:MapsToClassShape .
+reqs:req-shape-MapsToObjectPropertyShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:MapsToObjectPropertyShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:MapsToObjectPropertyShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-MapsToObjectPropertyShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "hexplain:mapsToObjectProperty is declared on a bddo:Field."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:MapsToObjectPropertyShape .
+reqs:req-shape-MapsToPropertyShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:MapsToPropertyShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:MapsToPropertyShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-MapsToPropertyShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "hexplain:mapsToProperty is declared on a bddo:Field."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:MapsToPropertyShape .
+reqs:req-shape-hexplain-RangeDatatypeShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:RangeDatatypeShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:RangeDatatypeShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-hexplain-RangeDatatypeShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "Applies to subjects using hexplain:byteLength, hexplain:byteOffset, hexplain:condition, hexplain:parameterName. hexplain:byteLength takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). hexplain:byteOffset takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). hexplain:condition takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). hexplain:parameterName takes an xsd:string literal (rdfs:range xsd:string)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:RangeDatatypeShape .
+reqs:req-shape-RegisterBindingShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:RegisterBindingShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:RegisterBindingShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-RegisterBindingShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "A value of a property that a hexplain:RegisterBinding binds is skos:inScheme at least one of the registers bound to that property."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:RegisterBindingShape .
+reqs:req-shape-RegisterDeprecatedValueShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:RegisterDeprecatedValueShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:RegisterDeprecatedValueShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-RegisterDeprecatedValueShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "A value of a bound property that is an owl:deprecated register entry is reported at sh:Warning, naming its replacement when it has one."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:RegisterDeprecatedValueShape .
+reqs:req-shape-RegisterLifecycleShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:RegisterLifecycleShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:RegisterLifecycleShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-RegisterLifecycleShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "A deprecated register entry states hexplain:status hexplain:statusDeprecated or hexplain:statusSuperseded, and says what changed in a skos:historyNote or skos:changeNote."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:RegisterLifecycleShape .
+reqs:req-shape-RegisterStatusShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:RegisterStatusShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:RegisterStatusShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-RegisterStatusShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "A deprecated or superseded register entry must carry owl:deprecated true."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:RegisterStatusShape .
+reqs:req-shape-UnitShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:UnitShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:UnitShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-UnitShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "hexplain:unit is declared on a bddo:Field."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:UnitShape .
+reqs:req-shape-ValueExpressionShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of hexplain:ValueExpressionShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement hexplain:ValueExpressionShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-ValueExpressionShape" ;
+    req:fromStandard "Hexplain Core Ontology 1.3" ;
+    req:statement "hexplain:valueExpression and hexplain:valueDatatype are declared on a bddo:Field or a hexplain:MappingRule."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references hexplain:ValueExpressionShape .
+
+# BEGIN GENERATED TERM DOCUMENTATION
+# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.

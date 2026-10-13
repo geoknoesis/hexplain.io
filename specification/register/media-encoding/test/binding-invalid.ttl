@@ -1,0 +1,22 @@
+# expect: ex:stream hexplain:RegisterBindingShape sh:SPARQLConstraintComponent
+# expect: ex:tile hexplain:RegisterBindingShape sh:SPARQLConstraintComponent
+# expect: ex:Lossy hexplain:RegisterLifecycleShape sh:OrConstraintComponent
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix aenc: <https://hexplain.io/ns/aspect/encoding#> .
+@prefix ex:   <https://example.org/media#> .
+
+ex:profile hexplain:usesRegister
+    [ a hexplain:RegisterBinding ; hexplain:forProperty aenc:codec ; hexplain:register menc:CodecScheme ] ,
+    [ a hexplain:RegisterBinding ; hexplain:forProperty aenc:compression ; hexplain:register menc:CompressionScheme ] .
+# A compression method is not a codec, and a codec is not a compression method: each property is
+# bound to one scheme and the value sits in the other.
+ex:stream aenc:codec menc:Deflate .
+ex:tile aenc:compression menc:H264 .
+# A retired entry of this register that states no status and no note.
+ex:Lossy a skos:Concept ; skos:inScheme menc:CodecScheme ; skos:prefLabel "Lossy"@en ; owl:deprecated true .

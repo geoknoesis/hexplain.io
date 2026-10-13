@@ -1,0 +1,37 @@
+# expect: ex:CustomUse bddo:FieldShape sh:InConstraintComponent
+# expect: ex:UnknownUse bddo:FieldShape sh:OrConstraintComponent
+# expect: ex:TwoNames bddo:CustomEncodingShape sh:MaxCountConstraintComponent
+# expect: ex:BadName bddo:CustomEncodingShape sh:PatternConstraintComponent
+# expect: ex:NoName bddo:CustomEncodingShape sh:MinCountConstraintComponent
+# expect: bddo:utf8 bddo:CustomEncodingShape sh:NotConstraintComponent
+# expect: ex:TaggedName bddo:CustomEncodingShape sh:DatatypeConstraintComponent
+# expect: ex:UntypedBadName bddo:CustomEncodingShape sh:PatternConstraintComponent
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/enc#> .
+
+# A custom encoding is ACCEPTED (its field conforms at sh:Violation) but reported at sh:Warning:
+# only a processor that supports IBM437 can decode it. The field's Violation-level result set is
+# empty; the warning is what this fixture expects.
+ex:cp437 a bddo:CustomEncoding ; bddo:ianaCharset "IBM437" .
+ex:CustomUse a bddo:Field ; bddo:dataType bddo:string ; bddo:size 8 ; bddo:encoding ex:cp437 .
+
+# An encoding that is neither registered nor typed bddo:Encoding names nothing a processor can
+# resolve: a Violation, not a warning.
+ex:UnknownUse a bddo:Field ; bddo:dataType bddo:string ; bddo:size 8 ; bddo:encoding ex:unknown .
+
+# A custom encoding states its charset exactly once, as an IANA name.
+ex:TwoNames a bddo:CustomEncoding ; bddo:ianaCharset "IBM437" , "cp437" .
+ex:BadName a bddo:CustomEncoding ; bddo:ianaCharset "code page 437" .
+ex:NoName a bddo:CustomEncoding .
+
+# A registered encoding is not re-declared as a custom one.
+bddo:utf8 a bddo:CustomEncoding ; bddo:ianaCharset "UTF-8" .
+
+# A charset name is a plain string, and it is checked on an encoding a profile forgot to type.
+ex:TaggedName a bddo:CustomEncoding ; bddo:ianaCharset "IBM437"@en .
+ex:UntypedBadName bddo:ianaCharset "code page 437" .
+# An encoding is named: a blank node cannot be referred to by another description.
+[] a bddo:CustomEncoding ; bddo:ianaCharset "IBM850" .

@@ -1,0 +1,29 @@
+# expect: ex:TwoFixed bddo:FieldShape sh:MaxCountConstraintComponent
+# expect: ex:IriFixed bddo:FieldShape sh:NodeKindConstraintComponent
+# expect: ex:Negative bddo:FieldShape sh:MinInclusiveConstraintComponent
+# expect: ex:Untyped bddo:FieldShape sh:ClassConstraintComponent
+# expect: ex:TwoUntil bddo:FieldShape sh:MaxCountConstraintComponent
+# expect: ex:NumberExpression bddo:FieldShape sh:NodeConstraintComponent
+# expect: ex:TwoCounts bddo:FieldShape sh:MaxCountConstraintComponent
+# expect: ex:TwoCountFields bddo:FieldShape sh:MaxCountConstraintComponent
+# expect: ex:TwoCountExpressions bddo:FieldShape sh:MaxCountConstraintComponent
+# expect: ex:NumberUntil bddo:FieldShape sh:NodeConstraintComponent
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/rep#> .
+
+ex:TwoFixed a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:hasFixedValue 1 , 2 .
+ex:IriFixed a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:hasFixedValue ex:One .
+ex:Negative a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount -1 .
+ex:Untyped a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCountFromField ex:NotAField .
+ex:TwoUntil a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatUntil "self.value == 0" , "self.value == 1" .
+ex:NumberExpression a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCountFromExpression 4 .
+# Every way of stating a repetition is stated at most once, and a stop condition is an expression.
+ex:Count a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:OtherCount a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:TwoCounts a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount 2 , 3 .
+ex:TwoCountFields a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCountFromField ex:Count , ex:OtherCount .
+ex:TwoCountExpressions a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCountFromExpression "instance.count" , "instance.count + 1" .
+ex:NumberUntil a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatUntil 0 .

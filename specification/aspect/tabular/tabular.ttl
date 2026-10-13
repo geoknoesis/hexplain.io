@@ -7,22 +7,25 @@
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 
 <https://hexplain.io/ns/aspect/tabular> a owl:Ontology ;
     owl:versionIRI <https://hexplain.io/ns/aspect/tabular/1.2> ; owl:versionInfo "1.2" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/tabular/1.1> ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-12"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Tabular (hx-tabular)"@en ;
     rdfs:comment "Aspect for tabular records: rows of typed columns (field schema). Shared by vector attribute tables, DBF, and CSV-like data."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "atab" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/tabular#" .
 
-:Field a owl:Class ; rdfs:label "Field"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:comment "A typed column in a tabular schema."@en .
+:Field a owl:Class ; rdfs:label "Field"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:comment "A typed column in a tabular schema."@en ;
+    skos:scopeNote "A column of a tabular schema, described after parsing. Not bddo:Field, the physical run of bytes a Struct locates; the bddo:Field carrying a column's bytes names the column through its semantic mapping."@en .
 :rowCount a owl:DatatypeProperty ; rdfs:label "row count"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:range xsd:unsignedLong .
-:hasField a owl:ObjectProperty ; rdfs:label "has field"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:range :Field .
+:hasField a owl:ObjectProperty ; rdfs:label "has field"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:range :Field ;
+    skos:scopeNote "Use on a tabular resource, once per column, naming an atab:Field. Not bddo:hasField, whose single value is the ordered rdf:List of a Struct's physical members."@en .
 :fieldName a owl:DatatypeProperty ; rdfs:label "field name"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:range xsd:string .
 :fieldDataType a owl:DatatypeProperty ; rdfs:label "field data type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:range xsd:string .
 
@@ -30,8 +33,12 @@
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
+# One copy per module, byte-identical to bddo:IntegerValueShape (the master; template in
+# specification/shared-patterns/integer-value-shape.ttl.template): shapes are validated module by
+# module, and a sh:node into another module's graph is silently satisfied when that module is not loaded.
 atab:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ;
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
 atab:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ;
@@ -51,7 +58,7 @@ atab:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 <https://hexplain.io/ns/aspect/tabular> skos:scopeNote "Use for tabular records and typed column declarations. Source datatype names require interpretation by the relevant format/profile."@en .
-atab:IntegerValueShape skos:definition "Applied through references from other shapes. A conforming value is an integer (of any XSD integer datatype)."@en .
+atab:IntegerValueShape skos:definition "Applied through references from other shapes. An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte). A conforming value is an integer (of any XSD integer datatype)."@en .
 atab:RangeDatatypeShape skos:definition "Applies to subjects using atab:fieldDataType, atab:fieldName, atab:rowCount. atab:fieldDataType takes an xsd:string literal (rdfs:range xsd:string). atab:fieldName takes an xsd:string literal (rdfs:range xsd:string). atab:rowCount takes an integer within the xsd:unsignedLong value space (rdfs:range xsd:unsignedLong)."@en .
 atab:fieldDataType skos:definition "The source's textual datatype designation for a column; a format profile defines how this name is interpreted."@en .
 atab:fieldName skos:definition "The source-level name identifying a column within its table schema."@en .

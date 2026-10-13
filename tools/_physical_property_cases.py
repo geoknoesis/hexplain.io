@@ -12,7 +12,8 @@ b:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .
 ex:other a b:Field; b:dataType b:uint8 .
 ex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .
 ex:enum2 a b:Enumeration; b:hasEnumValue ex:v .
-ex:check a b:Checksum; b:checksumAlgorithm b:crc32 . ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256 .
+ex:check a b:Checksum; b:checksumAlgorithm b:crc32; b:coversFromField ex:count; b:coversToField ex:other .
+ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256; b:coversFromField ex:count; b:coversToField ex:other .
 """
 VALUES = {
     "positive": ("1", "2", "0"),
@@ -116,17 +117,20 @@ def cases() -> list[dict[str, Any]]:
             ("trimWhitespace", "boolean"),
         ],
     )
+    # A checksum states exactly one start and one end of its covered range (bddo:ChecksumShape), so
+    # each bound is exercised with the other bound already stated; the deprecated whole-range
+    # form stands alone.
     group(
         "checksum",
-        "ex:f a b:Checksum; b:checksumAlgorithm b:crc32.",
-        [
-            ("coversFromField", "field"),
-            ("coversToField", "field"),
-            ("coversExpression", "string"),
-            ("coversFromExpression", "string"),
-            ("coversToExpression", "string"),
-        ],
+        "ex:f a b:Checksum; b:checksumAlgorithm b:crc32; b:coversToField ex:other.",
+        [("coversFromField", "field"), ("coversFromExpression", "string")],
     )
+    group(
+        "checksum",
+        "ex:f a b:Checksum; b:checksumAlgorithm b:crc32; b:coversFromField ex:count.",
+        [("coversToField", "field"), ("coversToExpression", "string")],
+    )
+    group("checksum", "ex:f a b:Checksum; b:checksumAlgorithm b:crc32.", [("coversExpression", "string")])
     # bddo:separatedBy is itself the extent of a text-numeric field: the term admits exactly
     # one spelling, "whitespace", states it at most once, and -- being an answer to "where does
     # this element end" -- cannot be combined with any of the five other answers. Expectations

@@ -278,7 +278,9 @@ def definition(g: Graph, t: URIRef) -> Any:
             else ("signed integer" if signed is not None and bool(signed.toPython()) else "unsigned integer")
         )
         end = g.value(t, BDDO.endianness)
-        return f"A {width}-bit {flavor} primitive datatype. " + (
+        # "an 8-bit", "an 11-bit", "an 18-bit": the article follows the spoken number.
+        article = "An" if width.startswith(("8", "11", "18")) else "A"
+        return f"{article} {width}-bit {flavor} primitive datatype. " + (
             "Byte order is " + label(g, end) + "."
             if end
             else "Byte order is not fixed on this datatype; the field and processing context determine it."

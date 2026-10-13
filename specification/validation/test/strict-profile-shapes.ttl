@@ -71,6 +71,29 @@ strict:ClosedCustomCrcShape a sh:NodeShape ;
         <http://purl.org/dc/terms/source>
     ) .
 
+strict:ClosedCustomEncodingShape a sh:NodeShape ;
+    sh:targetClass <https://hexplain.io/ns/bddo#CustomEncoding> ;
+    sh:targetSubjectsOf <https://hexplain.io/ns/bddo#ianaCharset> ;
+    sh:message "A bddo:CustomEncoding carries only the properties the family's shapes apply to it and documentation annotations; map a semantic property with hexplain:mapsToProperty." ;
+    sh:closed true ;
+    sh:ignoredProperties (
+        <https://hexplain.io/ns/bddo#ianaCharset>
+        <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>
+        <http://www.w3.org/2000/01/rdf-schema#label>
+        <http://www.w3.org/2000/01/rdf-schema#comment>
+        <http://www.w3.org/2000/01/rdf-schema#seeAlso>
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy>
+        <http://www.w3.org/2002/07/owl#deprecated>
+        <http://www.w3.org/2004/02/skos/core#definition>
+        <http://www.w3.org/2004/02/skos/core#scopeNote>
+        <http://www.w3.org/2004/02/skos/core#note>
+        <http://www.w3.org/2004/02/skos/core#editorialNote>
+        <http://www.w3.org/2004/02/skos/core#historyNote>
+        <http://www.w3.org/2004/02/skos/core#changeNote>
+        <http://purl.org/dc/terms/description>
+        <http://purl.org/dc/terms/source>
+    ) .
+
 strict:ClosedDataTypeShape a sh:NodeShape ;
     sh:targetClass <https://hexplain.io/ns/bddo#DataType> ;
     sh:targetSubjectsOf <https://hexplain.io/ns/bddo#baseType> ,
@@ -81,9 +104,12 @@ strict:ClosedDataTypeShape a sh:NodeShape ;
     sh:closed true ;
     sh:ignoredProperties (
         <https://hexplain.io/ns/bddo#baseType>
+        <https://hexplain.io/ns/bddo#bcd>
         <https://hexplain.io/ns/bddo#bitWidth>
         <https://hexplain.io/ns/bddo#encoding>
         <https://hexplain.io/ns/bddo#endianness>
+        <https://hexplain.io/ns/bddo#fixedPointScale>
+        <https://hexplain.io/ns/bddo#floatFormat>
         <https://hexplain.io/ns/bddo#isSigned>
         <https://hexplain.io/ns/bddo#xsdType>
         <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>
@@ -146,6 +172,7 @@ strict:ClosedDelimitedRecordsShape a sh:NodeShape ;
             [ sh:not [ sh:class <https://hexplain.io/ns/bddo#DelimitedRecords> ] ; sh:property [ sh:path <https://hexplain.io/ns/bddo#keyIsCaseInsensitive> ; sh:minCount 1 ] ]
             [ sh:closed true ;
           sh:ignoredProperties (
+            <https://hexplain.io/ns/bddo#alignment>
             <https://hexplain.io/ns/bddo#bitOrder>
             <https://hexplain.io/ns/bddo#commentPrefix>
             <https://hexplain.io/ns/bddo#endianness>
@@ -157,6 +184,8 @@ strict:ClosedDelimitedRecordsShape a sh:NodeShape ;
             <https://hexplain.io/ns/bddo#hasGrouping>
             <https://hexplain.io/ns/bddo#hasParameter>
             <https://hexplain.io/ns/bddo#keyValueSeparator>
+            <https://hexplain.io/ns/bddo#padByte>
+            <https://hexplain.io/ns/bddo#padTo>
             <https://hexplain.io/ns/bddo#pathSeparator>
             <https://hexplain.io/ns/bddo#quoteChar>
             <https://hexplain.io/ns/bddo#recordDelimiter>
@@ -191,6 +220,7 @@ strict:ClosedDelimitedTableShape a sh:NodeShape ;
     sh:message "A bddo:DelimitedTable carries only the properties the family's shapes apply to it and documentation annotations; map a semantic property with hexplain:mapsToProperty." ;
     sh:closed true ;
     sh:ignoredProperties (
+        <https://hexplain.io/ns/bddo#alignment>
         <https://hexplain.io/ns/bddo#bitOrder>
         <https://hexplain.io/ns/bddo#commentPrefix>
         <https://hexplain.io/ns/bddo#endianness>
@@ -202,6 +232,8 @@ strict:ClosedDelimitedTableShape a sh:NodeShape ;
         <https://hexplain.io/ns/bddo#hasGrouping>
         <https://hexplain.io/ns/bddo#hasParameter>
         <https://hexplain.io/ns/bddo#keyValueSeparator>
+        <https://hexplain.io/ns/bddo#padByte>
+        <https://hexplain.io/ns/bddo#padTo>
         <https://hexplain.io/ns/bddo#pathSeparator>
         <https://hexplain.io/ns/bddo#quoteChar>
         <https://hexplain.io/ns/bddo#recordDelimiter>
@@ -362,8 +394,7 @@ strict:ClosedEnumerationShape a sh:NodeShape ;
 
 strict:ClosedFieldShape a sh:NodeShape ;
     sh:targetClass <https://hexplain.io/ns/bddo#Field> ;
-    sh:targetSubjectsOf <https://hexplain.io/ns/bddo#alignment> ,
-        <https://hexplain.io/ns/bddo#atOffset> ,
+    sh:targetSubjectsOf <https://hexplain.io/ns/bddo#atOffset> ,
         <https://hexplain.io/ns/bddo#atOffsetFromExpression> ,
         <https://hexplain.io/ns/bddo#atOffsetFromField> ,
         <https://hexplain.io/ns/bddo#bitLength> ,
@@ -407,12 +438,16 @@ strict:ClosedFieldShape a sh:NodeShape ;
         <https://hexplain.io/ns/bddo#atOffset>
         <https://hexplain.io/ns/bddo#atOffsetFromExpression>
         <https://hexplain.io/ns/bddo#atOffsetFromField>
+        <https://hexplain.io/ns/bddo#bcd>
         <https://hexplain.io/ns/bddo#bitLength>
+        <https://hexplain.io/ns/bddo#bitOrder>
         <https://hexplain.io/ns/bddo#checksum>
         <https://hexplain.io/ns/bddo#dataType>
         <https://hexplain.io/ns/bddo#encoding>
         <https://hexplain.io/ns/bddo#endianness>
         <https://hexplain.io/ns/bddo#enumeration>
+        <https://hexplain.io/ns/bddo#fixedPointScale>
+        <https://hexplain.io/ns/bddo#floatFormat>
         <https://hexplain.io/ns/bddo#hasArgument>
         <https://hexplain.io/ns/bddo#hasConditionalDataType>
         <https://hexplain.io/ns/bddo#hasConditionalEndianness>
@@ -426,6 +461,8 @@ strict:ClosedFieldShape a sh:NodeShape ;
         <https://hexplain.io/ns/bddo#nodePath>
         <https://hexplain.io/ns/bddo#numericBase>
         <https://hexplain.io/ns/bddo#offsetBase>
+        <https://hexplain.io/ns/bddo#padByte>
+        <https://hexplain.io/ns/bddo#padTo>
         <https://hexplain.io/ns/bddo#parameterType>
         <https://hexplain.io/ns/bddo#repeatCount>
         <https://hexplain.io/ns/bddo#repeatCountFromExpression>
@@ -475,6 +512,7 @@ strict:ClosedKeyValueHeaderShape a sh:NodeShape ;
     sh:message "A bddo:KeyValueHeader carries only the properties the family's shapes apply to it and documentation annotations; map a semantic property with hexplain:mapsToProperty." ;
     sh:closed true ;
     sh:ignoredProperties (
+        <https://hexplain.io/ns/bddo#alignment>
         <https://hexplain.io/ns/bddo#bitOrder>
         <https://hexplain.io/ns/bddo#commentPrefix>
         <https://hexplain.io/ns/bddo#endianness>
@@ -487,6 +525,8 @@ strict:ClosedKeyValueHeaderShape a sh:NodeShape ;
         <https://hexplain.io/ns/bddo#hasParameter>
         <https://hexplain.io/ns/bddo#keyIsCaseInsensitive>
         <https://hexplain.io/ns/bddo#keyValueSeparator>
+        <https://hexplain.io/ns/bddo#padByte>
+        <https://hexplain.io/ns/bddo#padTo>
         <https://hexplain.io/ns/bddo#pathSeparator>
         <https://hexplain.io/ns/bddo#quoteChar>
         <https://hexplain.io/ns/bddo#recordDelimiter>
@@ -614,8 +654,7 @@ strict:ClosedRecordGroupingShape a sh:NodeShape ;
 
 strict:ClosedStructShape a sh:NodeShape ;
     sh:targetClass <https://hexplain.io/ns/bddo#Struct> ;
-    sh:targetSubjectsOf <https://hexplain.io/ns/bddo#bitOrder> ,
-        <https://hexplain.io/ns/bddo#hasField> ,
+    sh:targetSubjectsOf <https://hexplain.io/ns/bddo#hasField> ,
         <https://hexplain.io/ns/bddo#hasParameter> ,
         <https://hexplain.io/ns/bddo#syncOnMarker> ,
         <https://hexplain.io/ns/bddo#usesStruct> ,
@@ -642,12 +681,15 @@ strict:ClosedStructShape a sh:NodeShape ;
             [ sh:not [ sh:class <https://hexplain.io/ns/bddo#Struct> ] ; sh:property [ sh:path <https://hexplain.io/ns/bddo#whitespaceSeparated> ; sh:minCount 1 ] ]
             [ sh:closed true ;
           sh:ignoredProperties (
+            <https://hexplain.io/ns/bddo#alignment>
             <https://hexplain.io/ns/bddo#bitOrder>
             <https://hexplain.io/ns/bddo#endianness>
             <https://hexplain.io/ns/bddo#hasConditionalEndianness>
             <https://hexplain.io/ns/bddo#hasEndianness>
             <https://hexplain.io/ns/bddo#hasField>
             <https://hexplain.io/ns/bddo#hasParameter>
+            <https://hexplain.io/ns/bddo#padByte>
+            <https://hexplain.io/ns/bddo#padTo>
             <https://hexplain.io/ns/bddo#size>
             <https://hexplain.io/ns/bddo#sizeFromExpression>
             <https://hexplain.io/ns/bddo#sizeFromField>
@@ -678,6 +720,7 @@ strict:ClosedTreeDocumentShape a sh:NodeShape ;
     sh:message "A bddo:TreeDocument carries only the properties the family's shapes apply to it and documentation annotations; map a semantic property with hexplain:mapsToProperty." ;
     sh:closed true ;
     sh:ignoredProperties (
+        <https://hexplain.io/ns/bddo#alignment>
         <https://hexplain.io/ns/bddo#bitOrder>
         <https://hexplain.io/ns/bddo#endianness>
         <https://hexplain.io/ns/bddo#hasConditionalEndianness>
@@ -685,6 +728,8 @@ strict:ClosedTreeDocumentShape a sh:NodeShape ;
         <https://hexplain.io/ns/bddo#hasField>
         <https://hexplain.io/ns/bddo#hasNamespaceBinding>
         <https://hexplain.io/ns/bddo#hasParameter>
+        <https://hexplain.io/ns/bddo#padByte>
+        <https://hexplain.io/ns/bddo#padTo>
         <https://hexplain.io/ns/bddo#size>
         <https://hexplain.io/ns/bddo#sizeFromExpression>
         <https://hexplain.io/ns/bddo#sizeFromField>
@@ -939,6 +984,7 @@ strict:ClosedCellDataTypeRuleShape a sh:NodeShape ;
 strict:ClosedDataLayoutShape a sh:NodeShape ;
     sh:targetClass <https://hexplain.io/ns/dlv#DataLayout> ;
     sh:targetSubjectsOf <https://hexplain.io/ns/dlv#cellBitWidth> ,
+        <https://hexplain.io/ns/dlv#cellBitWidthFromExpression> ,
         <https://hexplain.io/ns/dlv#cellBitWidthFromField> ,
         <https://hexplain.io/ns/dlv#cellDataType> ,
         <https://hexplain.io/ns/dlv#cellPackingOrder> ,
@@ -953,6 +999,7 @@ strict:ClosedDataLayoutShape a sh:NodeShape ;
     sh:closed true ;
     sh:ignoredProperties (
         <https://hexplain.io/ns/dlv#cellBitWidth>
+        <https://hexplain.io/ns/dlv#cellBitWidthFromExpression>
         <https://hexplain.io/ns/dlv#cellBitWidthFromField>
         <https://hexplain.io/ns/dlv#cellDataType>
         <https://hexplain.io/ns/dlv#cellPackingOrder>
@@ -982,8 +1029,10 @@ strict:ClosedDataLayoutShape a sh:NodeShape ;
 strict:ClosedDimensionShape a sh:NodeShape ;
     sh:targetClass <https://hexplain.io/ns/dlv#Dimension> ;
     sh:targetSubjectsOf <https://hexplain.io/ns/dlv#chunkSize> ,
+        <https://hexplain.io/ns/dlv#chunkSizeFromExpression> ,
         <https://hexplain.io/ns/dlv#chunkSizeFromField> ,
         <https://hexplain.io/ns/dlv#dimensionSize> ,
+        <https://hexplain.io/ns/dlv#dimensionSizeFromExpression> ,
         <https://hexplain.io/ns/dlv#dimensionSizeFromField> ,
         <https://hexplain.io/ns/dlv#dimensionStride> ,
         <https://hexplain.io/ns/dlv#dimensionStrideFromExpression> ,
@@ -993,8 +1042,10 @@ strict:ClosedDimensionShape a sh:NodeShape ;
     sh:closed true ;
     sh:ignoredProperties (
         <https://hexplain.io/ns/dlv#chunkSize>
+        <https://hexplain.io/ns/dlv#chunkSizeFromExpression>
         <https://hexplain.io/ns/dlv#chunkSizeFromField>
         <https://hexplain.io/ns/dlv#dimensionSize>
+        <https://hexplain.io/ns/dlv#dimensionSizeFromExpression>
         <https://hexplain.io/ns/dlv#dimensionSizeFromField>
         <https://hexplain.io/ns/dlv#dimensionStride>
         <https://hexplain.io/ns/dlv#dimensionStrideFromExpression>

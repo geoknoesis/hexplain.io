@@ -1,17 +1,41 @@
-# expect: ex:DoubleStart bddo:ChecksumShape sh:NotConstraintComponent
+# expect: ex:DoubleStart bddo:ChecksumShape sh:XoneConstraintComponent
+# expect: ex:NoBounds bddo:ChecksumShape sh:XoneConstraintComponent
+# expect: ex:StartOnly bddo:ChecksumShape sh:XoneConstraintComponent
+# expect: ex:LegacyAndEnd bddo:ChecksumShape sh:XoneConstraintComponent
 @prefix bddo: <https://hexplain.io/ns/bddo#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ex:   <http://example.org/cov#> .
 
 ex:TypeField a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:LengthField a bddo:Field ; bddo:dataType bddo:uint32 .
 
-# Expected to trip bddo:ChecksumShape: the START bound is stated twice, once as a field and
-# once as an expression. Which wins is unguessable, and it matters -- the field form starts at
-# that field's first byte while the expression yields whatever offset it computes, so the two
-# readings hash different bytes and disagree about whether the file is intact.
+# The START bound is stated twice, once as a field and once as an expression. Which wins is
+# unguessable, and it matters -- the field form starts at that field's first byte while the
+# expression yields whatever offset it computes, so the two readings hash different bytes.
 ex:DoubleStart a bddo:Checksum ;
     rdfs:comment "Expected violation: coversFromField and coversFromExpression on one checksum." ;
     bddo:checksumAlgorithm bddo:crc32 ;
     bddo:coversFromField ex:TypeField ;
     bddo:coversFromExpression "root.headerSize" ;
     bddo:coversToExpression "root.end" .
+
+# An algorithm and no bounds at all: nothing a processor could verify, and nothing that may be
+# read as "covers everything". This used to validate.
+ex:NoBounds a bddo:Checksum ;
+    rdfs:comment "Expected violation: no covered range." ;
+    bddo:checksumAlgorithm bddo:crc32 .
+
+# A start without an end.
+ex:StartOnly a bddo:Checksum ;
+    rdfs:comment "Expected violation: coversFromField without an end bound." ;
+    bddo:checksumAlgorithm bddo:crc16 ;
+    bddo:coversFromField ex:TypeField .
+
+# The deprecated whole-range form states both bounds, so an end bound beside it states the end twice.
+ex:LegacyAndEnd a bddo:Checksum ;
+    rdfs:comment "Expected violation: coversExpression and coversToField together." ;
+    bddo:checksumAlgorithm bddo:adler32 ;
+    bddo:coversExpression "[root.start, root.end)" ;
+    bddo:coversToField ex:LengthField .

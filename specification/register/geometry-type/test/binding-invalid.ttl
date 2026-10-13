@@ -1,0 +1,18 @@
+# expect: ex:parcel hexplain:RegisterBindingShape sh:SPARQLConstraintComponent
+# expect: ex:Curve hexplain:RegisterLifecycleShape sh:OrConstraintComponent
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix rgeo:  <https://hexplain.io/ns/register/geometry-type#> .
+@prefix rcol:  <https://hexplain.io/ns/register/color#> .
+@prefix ageom: <https://hexplain.io/ns/aspect/geometry#> .
+@prefix ex:    <https://example.org/geometry#> .
+
+ex:profile hexplain:usesRegister [ a hexplain:RegisterBinding ; hexplain:forProperty ageom:geometryType ; hexplain:register rgeo:GeometryTypeScheme ] .
+# A colour space is not a geometry type.
+ex:parcel ageom:geometryType rcol:sRGB .
+# A retired entry of this register that states no status and no note.
+ex:Curve a skos:Concept ; skos:inScheme rgeo:GeometryTypeScheme ; skos:prefLabel "Curve"@en ; owl:deprecated true .

@@ -1,0 +1,43 @@
+# The expression form of each sizing triad: a dimension extent, a chunk extent and a packed
+# cell width computed by HEL, beside the fixed and field-read forms.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix dlv:  <https://hexplain.io/ns/dlv#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <https://hexplain.io/test/size-expression#> .
+
+ex:Grid a bddo:Struct ;
+    bddo:hasField ( ex:Grid.width ex:Grid.height ex:Grid.bytesPerSample ex:Grid.tileBytes ex:Grid.tileOffsets ex:Grid.pixels ) .
+ex:Grid.width a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Grid.height a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Grid.bytesPerSample a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:Grid.tileBytes a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Grid.tileOffsets a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:repeatCountFromExpression "instance.width / 256" .
+ex:Grid.pixels a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ; hexplain:hasDataLayout ex:Layout .
+
+ex:Layout a dlv:DataLayout ;
+    dlv:cellDataType bddo:uint8 ;
+    # The header carries bytes per sample; the packed width is bits.
+    dlv:cellBitWidthFromExpression "instance.bytesPerSample * 8"^^bddo:HelExpression ;
+    dlv:cellPackingOrder bddo:MSBFirst ;
+    dlv:hasDimension ( ex:DimY ex:DimX ) ;
+    dlv:chunkOffsetsFromField ex:Grid.tileOffsets .
+# A row count read from a field, chunked at a tile height computed from a byte count.
+ex:DimY a dlv:Dimension ; dlv:hasAxis dlv:axisY ; dlv:dimensionSizeFromField ex:Grid.height ;
+    dlv:chunkSizeFromExpression "instance.tileBytes / (instance.width * instance.bytesPerSample)"^^bddo:HelExpression .
+# A column count computed: a packed mask whose row holds the next whole byte.
+ex:DimX a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSizeFromExpression "((instance.width + 7) / 8) * 8"^^bddo:HelExpression ;
+    dlv:chunkSize 256 .
+# The same three, written as plain strings: both spellings of an expression are accepted.
+ex:PlainLayout a dlv:DataLayout ;
+    dlv:cellDataType bddo:uint8 ;
+    dlv:cellBitWidthFromExpression "instance.bytesPerSample * 8" ;
+    dlv:cellPackingOrder bddo:MSBFirst ;
+    dlv:hasDimension ( ex:PlainDimY ex:PlainDimX ) ;
+    dlv:chunkOffsetsFromField ex:Grid.tileOffsets .
+ex:PlainDimY a dlv:Dimension ; dlv:hasAxis dlv:axisY ; dlv:dimensionSizeFromField ex:Grid.height ;
+    dlv:chunkSizeFromExpression "instance.tileBytes / (instance.width * instance.bytesPerSample)" .
+ex:PlainDimX a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSizeFromExpression "((instance.width + 7) / 8) * 8" ;
+    dlv:chunkSize 256 .

@@ -114,6 +114,61 @@ def single(g, shape):
     return po[0] if len(po) == 1 else None
 
 
+def property_parts(g, shape, prefixes):
+    """What a shape built of property shapes (and sh:and of such shapes) says the focus node states.
+
+    Returns the list of phrases, one per property shape ("bddo:coversFromField", "no bddo:keyPath",
+    "bddo:whitespaceSeparated true", "exactly one bddo:key"), or None when the shape is not such a
+    shape. A logical branch of this kind used to be rendered as "a value", which made an sh:xone of
+    two branches read "either a value or a value".
+    """
+    parts = []
+    structural = {SH.property, SH['and']}
+    if any(p not in IGNORED and p not in structural and not str(p).startswith(SKOS_NS) for p in g.predicates(shape, None)):
+        return None
+    pshapes = list(g.objects(shape, SH.property))
+    for lst in g.objects(shape, SH['and']):
+        for member in members(g, lst):
+            inner = property_parts(g, member, prefixes)
+            if inner is None:
+                return None
+            parts.extend(inner)
+    if not pshapes and not parts:
+        return None
+    for ps in pshapes:
+        path = g.value(ps, SH.path)
+        if path is None:
+            raise Unhandled('branch property without a path')
+        name, _listy = path_phrase(g, path, prefixes)
+        lo = g.value(ps, SH.minCount); hi = g.value(ps, SH.maxCount)
+        lo = int(lo) if lo is not None else None; hi = int(hi) if hi is not None else None
+        hv = g.value(ps, SH.hasValue)
+        if any(p not in IGNORED and p not in (SH.path, SH.minCount, SH.maxCount, SH.hasValue) for p in g.predicates(ps, None)):
+            # The branch also constrains the value: say what it accepts, in parentheses.
+            name = f'{name} ({value_phrase(g, ps, prefixes, allow_count=True)})'
+        if hv is not None:
+            parts.append(f'{name} {curie(g, hv, prefixes)}')
+        elif hi == 0:
+            parts.append(f'no {name}')
+        elif lo and hi is not None and lo == hi:
+            parts.append(f'exactly one {name}' if lo == 1 else f'exactly {lo} {name}')
+        elif lo:
+            parts.append(name if lo == 1 else f'at least {lo} {name}')
+        elif hi is not None:
+            parts.append(f'at most {hi} {name}')
+        else:
+            parts.append(name)
+    return parts
+
+
+def branch_phrase(g, shape, prefixes):
+    """A logical branch as a noun phrase: by the properties it states, else by its value constraints."""
+    parts = property_parts(g, shape, prefixes)
+    if parts is not None:
+        return 'a node that states ' + join(parts, 'and')
+    return value_phrase(g, shape, prefixes)
+
+
 def value_phrase(g, shape, prefixes, allow_count=False):
     """A noun phrase describing an acceptable value; raises Unhandled for what it cannot say."""
     po = {}
@@ -128,9 +183,9 @@ def value_phrase(g, shape, prefixes, allow_count=False):
     datatypes = [c(x) for x in po.pop(SH.datatype, [])]
     classes = [c(x) for x in po.pop(SH['class'], [])]
     kinds = po.pop(SH.nodeKind, [])
-    ors = po.pop(SH['or'], []) + po.pop(SH.xone, [])
+    ors = [(lst, 'or') for lst in po.pop(SH['or'], [])] + [(lst, 'xone') for lst in po.pop(SH.xone, [])]
     alternatives = []
-    for lst in ors:
+    for lst, kind in ors:
         branches = members(g, lst)
         singles = [single(g, b) for b in branches]
         if all(s and s[0] == SH.datatype for s in singles):
@@ -138,7 +193,21 @@ def value_phrase(g, shape, prefixes, allow_count=False):
         elif all(s and s[0] == SH['class'] for s in singles):
             classes.append(join([c(s[1]) for s in singles]))
         else:
-            alternatives.append(join([value_phrase(g, b, prefixes) for b in branches]))
+            phrases = [branch_phrase(g, b, prefixes) for b in branches]
+            # An exclusive choice among property-stating branches is said as such.
+            if kind == 'xone' and len(phrases) > 1 and all(p.startswith('a node that states ') for p in phrases):
+                alternatives.append('exactly one of these: ' + '; '.join(p[len('a node that '):] for p in phrases))
+            else:
+                alternatives.append(join(phrases))
+    # sh:and of property-stating branches: everything they state, together.
+    for lst in po.pop(SH['and'], []):
+        collected = []
+        for member in members(g, lst):
+            inner = property_parts(g, member, prefixes)
+            if inner is None:
+                raise Unhandled('sh:and of value shapes')
+            collected.extend(inner)
+        alternatives.append('a node that states ' + join(collected, 'and'))
     if datatypes:
         if len(datatypes) > 1:
             raise Unhandled('several datatypes')
@@ -181,7 +250,7 @@ def value_phrase(g, shape, prefixes, allow_count=False):
         quals.append(f'including {c(hv)}')
     for alt in alternatives:
         if base is None:
-            base = ('either ' + alt) if ' or ' in alt else alt
+            base = ('either ' + alt) if ' or ' in alt and not alt.startswith('exactly one of') else alt
         else:
             quals.append(f'and {alt}')
     lo_ex = [str(v).lower() for v in po.get(SH.minExclusive, [])]; hi_ex = [str(v).lower() for v in po.get(SH.maxExclusive, [])]
@@ -221,7 +290,14 @@ def value_phrase(g, shape, prefixes, allow_count=False):
         else:
             quals.append(f'conforming to {c(v)}')
     for v in po.pop(SH['not'], []):
-        quals.append('not ' + value_phrase(g, v, prefixes))
+        parts = property_parts(g, v, prefixes)
+        if parts is not None:
+            # "not a node that states A and B" reads as a prohibition on each; say what it is.
+            quals.append('that does not state ' + ('both ' if len(parts) == 2 else 'all of ' if len(parts) > 2 else '') + join(parts, 'and'))
+            if base is None:
+                base = 'a node'
+        else:
+            quals.append('not ' + value_phrase(g, v, prefixes))
     for v in po.pop(SH.languageIn, []):
         quals.append('in language ' + join([str(x) for x in members(g, v)]))
     if po.pop(SH.uniqueLang, []):

@@ -1,0 +1,18 @@
+# expect: ex:shp hexplain:RegisterBindingShape sh:SPARQLConstraintComponent
+# expect: ex:Index hexplain:RegisterLifecycleShape sh:OrConstraintComponent
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix rpr:  <https://hexplain.io/ns/register/part-role#> .
+@prefix rgeo: <https://hexplain.io/ns/register/geometry-type#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix ex:   <https://example.org/parts#> .
+
+ex:profile hexplain:usesRegister [ a hexplain:RegisterBinding ; hexplain:forProperty abnd:partRole ; hexplain:register rpr:PartRoleScheme ] .
+# A geometry type is a concept, but not of the part-role register.
+ex:shp a abnd:Part ; abnd:partRole rgeo:Point .
+# A retired entry of this register that states no status and no note.
+ex:Index a skos:Concept ; skos:inScheme rpr:PartRoleScheme ; skos:prefLabel "Index"@en ; owl:deprecated true .

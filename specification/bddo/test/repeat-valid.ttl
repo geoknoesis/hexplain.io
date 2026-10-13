@@ -1,0 +1,16 @@
+# Fixed values and the four repetition mechanisms, one per field, each stated once.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/rep#> .
+
+ex:Count a bddo:Field ; bddo:dataType bddo:uint16 .
+ex:Magic a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 ; bddo:hasFixedValue "89504E47"^^xsd:hexBinary .
+ex:Version a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:hasFixedValue 2 .
+ex:Tag a bddo:Field ; bddo:dataType bddo:string ; bddo:size 4 ; bddo:encoding bddo:ascii ; bddo:hasFixedValue "IHDR" .
+ex:Fixed a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:repeatCount 4 .
+ex:Empty a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:repeatCount 0 .
+ex:Counted a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:repeatCountFromField ex:Count .
+ex:Computed a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:repeatCountFromExpression "instance.count * 2" .
+ex:Until a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatUntil "self.value == 0"^^bddo:HelExpression .

@@ -58,9 +58,18 @@ def cases() -> list[dict[str, Any]]:
             {"checksumAlgorithm": "ex:unknown"},
         ),
     ]:
+        # A checksum must bound the bytes it covers (bddo:ChecksumShape); the bounds are fixed here
+        # so that the cases below exercise the algorithm property alone.
+        context = {"Checksum": "ex:f b:coversFromField ex:count; b:coversToField ex:other. "}.get(cls, "")
 
-        def body(v: dict[str, str], cls: str = cls) -> str:
-            return "ex:f a b:" + cls + ". " + "".join("ex:f b:" + p + " " + value + ". " for p, value in v.items())
+        def body(v: dict[str, str], cls: str = cls, context: str = context) -> str:
+            return (
+                "ex:f a b:"
+                + cls
+                + ". "
+                + context
+                + "".join("ex:f b:" + p + " " + value + ". " for p, value in v.items())
+            )
 
         add(cls + " valid", body(values), True)
         for prop in values:
