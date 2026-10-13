@@ -7,6 +7,12 @@
       "url": "https://github.com/OSGeo/gdal/tree/v3.13.3",
       "description": "Pixels decoded by GDAL 3.13.3 (container ghcr.io/osgeo/gdal@sha256:2dd0f81ef927ff4c3d4dbe4f73c029dc86d4073974c0564f8e196f6e1412e2e0) from GDAL autotest files at commit c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc and from synthetic files written by hexplain-tools tests/gdal/codec_vectors.py; imported by tools/codecs/_import_gdal_vectors.py from core/src/test/resources/gdal-codec-vectors.tsv, gdal-codec-refusals.tsv and gdal-color-*.tsv.",
       "licence": "GDAL autotest data: MIT/X (GDAL LICENSE.TXT and per-file notices); synthetic files CC0-1.0"
+    },
+    {
+      "id": "reference-engine",
+      "url": "https://github.com/geoknoesis/hexplain-tools",
+      "description": "Inputs derived here (tools/codecs/_complete_vectors.py) from this suite's own vectors: truncations, single-byte corruptions, lowered output limits and parameter settings; the category or output of each was confirmed with hexplain-tools 97c952f24508 (hexplain-codec vector) before it was recorded, since no independent implementation of this codec was at hand.",
+      "licence": "inputs as the vectors they derive from; expectations CC0-1.0"
     }
   ],
   "vectors": [
@@ -31,6 +37,45 @@
         }
       ],
       "source": "gdal-3.13.3"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 20,
+            "rows": 20
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "input": {
+            "hex": "9200146b7b847384848c8484846b846b84846b7b739c9492001473846b7b9473a5738c6b7b7b63847b848484639c92001473848c847b738c6b8c73847b6b848473736b736b92001494847b7b7384847b737b737b6b73946b738c7384920014849c848c84847373737b947ba57b846b6b849c7b920014bdadad949473947b6b8473849c637b738484ce6b920014c5ad948c8c8463847b738c848463847b84ad7b73920014947b9473947b8c7b6b7384736b73637b63b5636b9200147b7384737b847384847b7b846373637b8473736b9200148c8c638c63737b6b846b736b737b847b6b7b84849200148484847b63847b6b9463737b8cad7b6b7b7b7b6b92000c7b7b7b6b8c7b7b73735a6bad826b0463847b73920014ad94637b7b6b7b636bbdad6b73736b638c6bad8c9200149484846b7b6363736384638c73947b63847b948c9200148c6b8c5a6b736b5a637b7373737b7b9473946384920014a5949c7b6b6b6b738c637363636b7384735a7b73920014bdad8c8ca573845a63735a63636b6384636b84849200149cb58cad7b8463737b4a73637b8c9c84a58c8c63920014adf7ffce846b8c7b9484a5a5948c847b6b7b6b7b92000cb5b59c949c9c9cb584947384836b0373636b"
+          },
+          "maxOutputBytes": 0
+        }
+      ],
+      "source": "reference-engine"
+    },
+    {
+      "id": "truncated",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 20,
+            "rows": 20
+          },
+          "expect": {
+            "error": "Validation"
+          },
+          "input": {
+            "hex": "9200146b7b847384848c8484846b846b84846b7b739c9492001473846b7b9473a5738c6b7b7b63847b848484639c92001473848c847b738c6b8c73847b6b848473736b736b92001494847b7b7384847b737b737b6b73946b738c7384920014849c848c84847373737b947ba57b846b6b849c7b920014bdadad949473947b6b8473849c637b738484ce6b920014c5ad948c8c8463847b738c848463847b84ad7b73920014947b9473947b8c7b6b7384736b73637b63b5636b9200147b7384737b847384847b7b846373637b8473736b9200148c8c638c63737b6b846b736b737b847b6b7b"
+          }
+        }
+      ],
+      "source": "reference-engine"
     }
   ]
 }

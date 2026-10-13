@@ -466,3 +466,153 @@ hel("extension-group-unclaimed", "A function of an extension group the processor
     ["req-hel-extension-groups-1", "req-hel-conformance-5", "req-pm-errors-10"], ["extension-groups", "conformance"],
     one("matches('a', 'a')"), b"", error="Unsupported",
     manifest={"claims": {"withdraw": ["hel-ext-text"]}})
+
+
+# ----------------------------------------------------------------- the math group, Float remainder
+
+N5 = ["ex:n a bddo:Field ; bddo:dataType bddo:int8 ."]
+
+hel("math-rounding", "floor, ceil, trunc and round yield Integers; round ties away from zero",
+    "floor(-2.5) is -3 and ceil(-2.5) is -2; trunc(-2.7) is -2; round(2.5) is 3, round(-2.5) is -3 and round(-0.4) is 0; "
+    "an Integer argument is returned unchanged, and ceil(n / 2.0) is the Integer 3 for n = 5.",
+    ["req-hel-math-1", "req-hel-core-functions-1"], ["math"],
+    derived(N5, {"fl": "floor(2.7)", "fn": "floor(-2.5)", "ce": "ceil(2.1)", "cn": "ceil(-2.5)", "tn": "trunc(-2.7)",
+                 "ru": "round(2.5)", "rn": "round(-2.5)", "rz": "round(-0.4)", "same": "floor(n)",
+                 "half": "ceil(n / 2.0)"}),
+    b"\x05", {"n": 5, "fl": 2, "fn": -3, "ce": 3, "cn": -2, "tn": -2, "ru": 3, "rn": -3, "rz": 0, "same": 5, "half": 3})
+
+hel("math-rounding-nan", "Rounding NaN is an argument error",
+    "Infinity - Infinity is NaN, which has no integer value.",
+    ["req-hel-math-1", TYPE_ERROR], ["math"], one("floor((1e308 * 10.0) - (1e308 * 10.0))"), b"", error="Expression")
+
+hel("math-rounding-infinity", "Rounding an infinite Float is an argument error",
+    "1e308 * 10.0 overflows to Infinity.",
+    ["req-hel-math-1", TYPE_ERROR], ["math"], one("ceil(1e308 * 10.0)"), b"", error="Expression")
+
+hel("math-rounding-overflow", "A rounded value outside the signed 64-bit range is an overflow error",
+    "1e19 is above 2^63-1.",
+    ["req-hel-math-1", TYPE_ERROR], ["math"], one("round(1e19)"), b"", error="Expression")
+
+hel("math-abs-min-max", "abs keeps its argument's type; min and max select an argument with its own type",
+    "abs(-3) is the Integer 3 and abs(-2.5) the Float 2.5; min(2, 2.5) is the Integer 2 and max(2, 2.5) the Float 2.5; "
+    "of two equal arguments the first is selected, so min(1, 1.0) is the Integer 1 and min(1.0, 1) the Float 1.0.",
+    ["req-hel-math-2", "req-hel-core-functions-1"], ["math"],
+    derived(N5, {"ai": "abs(n)", "af": "abs(-2.5)", "lo": "min(2, 2.5)", "hi": "max(2, 2.5)", "first": "min(1, 1.0)",
+                 "firstf": "min(1.0, 1)", "three": "max(n, 0, 7)", "single": "min(n)"}),
+    b"\xfd", {"n": -3, "ai": 3, "af": 2.5, "lo": 2, "hi": 2.5, "first": 1, "firstf": 1.0, "three": 7, "single": -3})
+
+hel("math-min-string", "min and max take numbers only",
+    "max(1, 'a') is a type error.",
+    ["req-hel-core-functions-1", TYPE_ERROR], ["math"], one("max(1, 'a')"), b"", error="Expression")
+
+hel("math-min-no-arguments", "min and max take at least one argument",
+    "min() is an error that names the function.",
+    ["req-hel-core-functions-1", TYPE_ERROR], ["math", "core-functions"], one("min()"), b"", error="Expression")
+
+hel("math-tostring", "toString renders a number canonically",
+    "An Integer is its decimal digits; a Float is its shortest round-trip digits, positional from 10^-3 up to but not "
+    "including 10^7 and scientific outside that range, always with a digit on each side of the point.",
+    ["req-hel-math-3", "req-hel-math-4"], ["math", "float-rendering"],
+    derived(N5, {"neg": "toString(-42)", "two": "toString(2.0)", "sum": "toString(0.1 + 0.2)", "big": "toString(1e7)",
+                 "below": "toString(1234567.0)", "milli": "toString(0.001)", "small": "toString(1e-4)",
+                 "tiny": "toString(4.9e-324)", "huge": "toString(1.7976931348623157e308)",
+                 "minus": "toString(-1.5e-5)", "cat": "concat('n=', toString(n))"}),
+    b"\x05", {"n": 5, "neg": "-42", "two": "2.0", "sum": "0.30000000000000004", "big": "1.0E7", "below": "1234567.0",
+              "milli": "0.001", "small": "1.0E-4", "tiny": "4.9E-324", "huge": "1.7976931348623157E308",
+              "minus": "-1.5E-5", "cat": "n=5"})
+
+hel("math-tostring-string", "toString converts numbers, nothing else",
+    "toString('a') is a type error.",
+    ["req-hel-math-3", TYPE_ERROR], ["math"], one("toString('a')"), b"", error="Expression")
+
+hel("float-remainder", "Float % is the truncated remainder, with the dividend's sign",
+    "5.5 % 2.0 is 1.5, -5.5 % 2.0 is -1.5, 5.5 % -2.0 is 1.5 and -5.5 % -2.0 is -1.5; a mixed Integer and Float % is a "
+    "Float remainder (7.5 % 5 is 2.5), and a finite dividend with an infinite divisor is returned unchanged.",
+    ["req-hel-numeric-semantics-7"], ["numeric-semantics", "float-remainder"],
+    derived(N5, {"pp": "5.5 % 2.0", "np": "-5.5 % 2.0", "pn": "5.5 % -2.0", "nn": "-5.5 % -2.0", "mixed": "7.5 % n",
+                 "inf": "3.5 % (1e308 * 10.0)"}),
+    b"\x05", {"n": 5, "pp": 1.5, "np": -1.5, "pn": 1.5, "nn": -1.5, "mixed": 2.5, "inf": 3.5})
+
+hel("float-remainder-by-zero", "Float % by zero is an error",
+    "5.5 % 0.0 is a division-by-zero error, not NaN.",
+    ["req-hel-numeric-semantics-7", "req-hel-numeric-semantics-2", TYPE_ERROR], ["numeric-semantics"],
+    one("5.5 % 0.0"), b"", error="Expression")
+
+# ----------------------------------------------------------------- HEL-RE, reserved words, non-leading parent
+
+TEXT = {"features": {"requires": ["hel-ext-text"]}}
+
+hel("regex-xsd-constructs", "matches patterns are XSD regular expressions",
+    "The digit and category escapes, class subtraction, a counted quantifier, a branch and a literal dollar written "
+    "as a class each have the meaning XSD gives them. A backslash of the pattern is written twice in the HEL literal.",
+    ["req-hel-ext-text-4"], ["ext-text"],
+    derived([], {"digits": r"matches('123', '\\\\d+')", "consonant": "matches('c', '[a-z-[aeiou]]')",
+                 "vowel": "matches('e', '[a-z-[aeiou]]')", "category": r"matches('A1', '\\\\p{Lu}\\\\d')",
+                 "dollar": "matches('a$', 'a[$]')", "branch": "matches('z', '[a-c][0-9]+|z')",
+                 "counted": "matches('aaa', 'a{2,3}')", "over": "matches('aaaa', 'a{2,3}')"}),
+    b"", {"digits": True, "consonant": True, "vowel": False, "category": True, "dollar": True, "branch": True,
+          "counted": True, "over": False}, manifest=TEXT)
+
+for _id, _what, _pattern in (("backreference", "A back-reference", r"(a)\\\\1"),
+                             ("lookahead", "Look-ahead", "(?=a)ab"),
+                             ("non-capturing-group", "A non-capturing group", "(?:a)b"),
+                             ("anchors", "An unescaped ^ or $", "^ab$"),
+                             ("lazy-quantifier", "A lazy quantifier", "a.*?b"),
+                             ("hex-escape", "A hexadecimal escape", r"\\\\x61b"),
+                             ("word-boundary", "The word-boundary escape", r"a\\\\bb")):
+    hel(f"regex-{_id}", f"{_what} is not HEL-RE: an argument error",
+        "XSD's regular-expression language does not define the construct, so the pattern is refused rather than given "
+        "one dialect's meaning.",
+        ["req-hel-ext-text-4", TYPE_ERROR], ["ext-text"], one(f"matches('ab', '{_pattern}')"), b"", error="Expression",
+        manifest=TEXT)
+
+hel("regex-pattern-from-data", "A pattern read from the data is held to HEL-RE too",
+    "The pattern bytes are (?i)a, which opens with an inline flag; the error is raised when the pattern is evaluated.",
+    ["req-hel-ext-text-4", TYPE_ERROR], ["ext-text"],
+    one("matches('a', p)", ["ex:p a bddo:Field ; bddo:dataType bddo:string ; bddo:size 5 ; bddo:encoding bddo:ascii ."]),
+    b"(?i)a", error="Expression", manifest=TEXT)
+
+hel("not-is-an-operator", "not followed by a parenthesis is the operator, never a call",
+    "not(n == 5) and n == 0 is (not (n == 5)) and (n == 0), false for n = 5; were not(...) to take the whole "
+    "conjunction it would be true. not (n == 0) and n == 5 is true.",
+    ["req-hel-formal-grammar-3"], ["syntax"],
+    derived(N5, {"tight": "not(n == 5) and n == 0", "spaced": "not (n == 0) and n == 5"}),
+    b"\x05", {"n": 5, "tight": False, "spaced": True})
+
+hel("reserved-word-call", "A reserved word followed by a parenthesis is not a function call",
+    "true() is a syntax error: no function is named by a reserved word.",
+    ["req-hel-formal-grammar-3", TYPE_ERROR] + SYNTAX, ["syntax"], one("true()"), b"", error="Expression")
+
+hel("parent-non-leading", "A .parent step after a key or a subscript is the struct holding that field",
+    "hdr.parent is the root (count 9); hdr.n.parent is hdr, though n is a scalar; hdr.items[0].parent is hdr, the "
+    "struct holding the array field; in an element, v.parent.parent climbs one above the element, to hdr; and above "
+    "the root the step is Null, as root.parent is.",
+    ["req-hel-reserved-roots-4", "req-hel-key-resolution-2"], ["reserved-roots", "non-leading-parent"],
+    """
+    ex:Root a bddo:Struct ; bddo:hasField ( ex:count ex:hdr ex:holder ex:value ex:element ex:above ) .
+    ex:count a bddo:Field ; bddo:dataType bddo:uint8 .
+    ex:hdr a bddo:Field ; bddo:dataType ex:Hdr .
+    ex:holder a bddo:Field ; bddo:valueFromExpression "hdr.parent.count" .
+    ex:value a bddo:Field ; bddo:valueFromExpression "hdr.n.parent.n" .
+    ex:element a bddo:Field ; bddo:valueFromExpression "hdr.items[0].parent.n" .
+    ex:above a bddo:Field ; bddo:valueFromExpression "hdr.parent.parent == root.parent" .
+    ex:Hdr a bddo:Struct ; bddo:hasField ( ex:n ex:items ) .
+    ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
+    ex:items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCountFromField ex:n .
+    ex:Item a bddo:Struct ; bddo:hasField ( ex:v ex:climb ) .
+    ex:v a bddo:Field ; bddo:dataType bddo:uint8 .
+    ex:climb a bddo:Field ; bddo:valueFromExpression "v.parent.parent.n" .
+    """,
+    b"\x09\x02\x0a\x14",
+    {"count": 9, "hdr": {"n": 2, "items": [{"v": 10, "climb": 2}, {"v": 20, "climb": 2}]},
+     "holder": 9, "value": 2, "element": 2, "above": True})
+
+hel("stream-length-before-first-field", "The length of the input is known before the first field is read",
+    "The first field's size is stream.length - 1: the processor knows |S| before it reads anything.",
+    ["req-pm-inputs-outputs-1"], ["processing#inputs-outputs", "reserved-roots"],
+    """
+    ex:Root a bddo:Struct ; bddo:hasField ( ex:body ex:last ) .
+    ex:body a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "stream.length - 1" .
+    ex:last a bddo:Field ; bddo:dataType bddo:uint8 .
+    """,
+    b"abc\x07", {"body": b"abc", "last": 7})

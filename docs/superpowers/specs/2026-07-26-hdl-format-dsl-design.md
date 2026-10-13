@@ -1,6 +1,6 @@
 # Design — HDL: A DSL for Authoring Hexplain Format Descriptions
 
-**Status:** Draft for review · **Date:** 2026-07-26 · **Author:** Stephane Fellah
+**Status:** Superseded — kept for history only; the normative language is specification/hdl/index.html · **Date:** 2026-07-26 · **Author:** Stephane Fellah
 **Family:** Hexplain aspect-oriented ontology (pre-release, all modules v1.0)
 **Working name:** **HDL — Hexplain Description Language** (rename freely)
 

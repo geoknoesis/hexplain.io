@@ -7,6 +7,18 @@
       "url": "https://chriscox.org/TIFFTN3d1.pdf",
       "description": "Rows encoded by tools/codecs/_generate_tiff_vectors.py from the floating-point predictor of Adobe Photoshop TIFF Technical Note 3 (April 2005).",
       "licence": "CC0-1.0"
+    },
+    {
+      "id": "reference-engine",
+      "url": "https://github.com/geoknoesis/hexplain-tools",
+      "description": "Inputs derived here (tools/codecs/_complete_vectors.py) from this suite's own vectors: truncations, single-byte corruptions, lowered output limits and parameter settings; the category or output of each was confirmed with hexplain-tools 97c952f24508 (hexplain-codec vector) before it was recorded, since no independent implementation of this codec was at hand.",
+      "licence": "inputs as the vectors they derive from; expectations CC0-1.0"
+    },
+    {
+      "id": "round-trip",
+      "url": "https://hexplain.io/specification/processing/#round-trip",
+      "description": "Round trips worked by hand from the codec's definition (a transform) or fed through the previous step's output (a compressor, encoded with zlib for the expectation-free encode step).",
+      "licence": "CC0-1.0"
     }
   ],
   "vectors": [
@@ -138,6 +150,55 @@
         }
       ],
       "source": "tiff-tn3"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 4
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "input": {
+            "hex": "3f0180823ea030783800000000000000"
+          },
+          "maxOutputBytes": 15
+        }
+      ],
+      "source": "reference-engine"
+    },
+    {
+      "id": "round-trip",
+      "source": "round-trip",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "elementSize": 4
+          },
+          "input": {
+            "hex": "0000803f00002040000050c00000c842"
+          },
+          "expect": {
+            "hex": "3f0180823ea030783800000000000000"
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 4
+          },
+          "input": {
+            "hex": "3f0180823ea030783800000000000000"
+          },
+          "expect": {
+            "hex": "0000803f00002040000050c00000c842"
+          }
+        }
+      ]
     }
   ]
 }

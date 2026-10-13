@@ -7,6 +7,12 @@
       "url": "https://github.com/OSGeo/gdal/tree/v3.13.3",
       "description": "Pixels decoded by GDAL 3.13.3 (container ghcr.io/osgeo/gdal@sha256:2dd0f81ef927ff4c3d4dbe4f73c029dc86d4073974c0564f8e196f6e1412e2e0) from GDAL autotest files at commit c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc and from synthetic files written by hexplain-tools tests/gdal/codec_vectors.py; imported by tools/codecs/_import_gdal_vectors.py from core/src/test/resources/gdal-codec-vectors.tsv, gdal-codec-refusals.tsv and gdal-color-*.tsv.",
       "licence": "GDAL autotest data: MIT/X (GDAL LICENSE.TXT and per-file notices); synthetic files CC0-1.0"
+    },
+    {
+      "id": "reference-engine",
+      "url": "https://github.com/geoknoesis/hexplain-tools",
+      "description": "Inputs derived here (tools/codecs/_complete_vectors.py) from this suite's own vectors: truncations, single-byte corruptions, lowered output limits and parameter settings; the category or output of each was confirmed with hexplain-tools 97c952f24508 (hexplain-codec vector) before it was recorded, since no independent implementation of this codec was at hand.",
+      "licence": "inputs as the vectors they derive from; expectations CC0-1.0"
     }
   ],
   "vectors": [
@@ -154,6 +160,47 @@
         }
       ],
       "source": "gdal-3.13.3"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "bitsPerPixel": 4,
+            "width": 20,
+            "height": 20
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "input": {
+            "hex": "0288057702870b770000028f02f8067702880877000005780b770287027700000005887780000f77000002871277000014770000147700000287077702880777028700000b770287077700000d770287057700001477000014770000117702870177000002880f7702870177000003880f77028700000c770287067700001477000014770000067702870c77000014770001"
+          },
+          "maxOutputBytes": 399
+        }
+      ],
+      "source": "reference-engine"
+    },
+    {
+      "id": "delta-escape",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "bitsPerPixel": 8,
+            "width": 4,
+            "height": 2
+          },
+          "expect": {
+            "error": "Unsupported"
+          },
+          "input": {
+            "hex": "0002010100000001"
+          }
+        }
+      ],
+      "source": "reference-engine"
     }
   ]
 }

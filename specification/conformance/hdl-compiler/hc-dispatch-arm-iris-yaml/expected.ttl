@@ -1,0 +1,27 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/hc-dispatch-arm-iris-yaml#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.kind ex:Root.body ) .
+ex:Root.kind a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:ascii ; bddo:size 4 .
+ex:Root.body a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ; bddo:hasDispatchTable ex:T .
+ex:T a bddo:DispatchTable ; bddo:dispatchOnField ex:Root.kind ; bddo:dispatchDefault ex:Blob .
+ex:T.arm.ftyp a bddo:DispatchArm ; bddo:armTable ex:T ; bddo:armKey "ftyp" ; bddo:armDataType ex:A .
+ex:T.arm.7 a bddo:DispatchArm ; bddo:armTable ex:T ; bddo:armKey 7 ; bddo:armDataType ex:B .
+ex:T.arm.7.str a bddo:DispatchArm ; bddo:armTable ex:T ; bddo:armKey "7" ; bddo:armDataType ex:A .
+ex:A a bddo:Struct ; bddo:hasField ( ex:A.a ) .
+ex:A.a a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:B a bddo:Struct ; bddo:hasField ( ex:B.b ) .
+ex:B.b a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:Blob a bddo:Struct ; bddo:hasField ( ex:Blob.raw ) .
+ex:Blob.raw a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true .

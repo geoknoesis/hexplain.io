@@ -28,7 +28,14 @@ from rdflib import BNode, Literal, URIRef
 from rdflib.compare import graph_diff, to_isomorphic
 from rdflib.namespace import RDF, XSD
 
+# A Semantic Emitter's literals compare by lexical form (the Processing Model requires the canonical one, Semantic
+# Triple Emission, lexical forms), so rdflib must keep the form it parsed rather than rewrite it by value.
+rdflib.NORMALIZE_LITERALS = False
+
 HERE = Path(__file__).resolve().parent
+#: The classes whose graphs compare typed literals by value (the lexical form is not fixed for them): the HDL
+#: Compiler, whose specification fixes datatypes only, and the Conformance Evaluator's RDF run report.
+BY_VALUE = {"hdl-compiler", "conformance-evaluator"}
 sys.path.insert(0, str(HERE))
 
 import hel  # noqa: E402
@@ -127,7 +134,7 @@ def _argument_cells(g):
     return cells
 
 
-def _canonical_literal(p, o, hel_bearing=False):
+def _canonical_literal(p, o, hel_bearing=False, by_value=False):
     if not isinstance(o, Literal):
         return o
     # A HEL expression typed bddo:HelExpression is the same expression as the xsd:string one (HEL, expression
@@ -135,7 +142,8 @@ def _canonical_literal(p, o, hel_bearing=False):
     if (hel_bearing or p in HEL_PROPERTIES) and (o.datatype in (None, XSD.string, HEL_EXPRESSION)) and not o.language:
         c = hel.canonical(str(o))
         return Literal(c if c is not None else str(o))
-    if o.datatype is None or o.language:
+    if o.datatype is None or o.language or not by_value:
+        # An emitted literal compares as written: the Processing Model fixes its canonical lexical form.
         return o
     try:
         return Literal(str(o), datatype=o.datatype, normalize=True) if o.ill_typed is False else o
@@ -146,7 +154,8 @@ def _canonical_literal(p, o, hel_bearing=False):
 def normalise_graph(g, *, cls=None, manifest=None, reported_base=None, header=None):
     """The graph a case compares: extents removed, the bundle profile's closure removed (Bundle Processor), the
     ontology header removed (HDL Compiler, unless the case compares it), the reported base rewritten to the
-    placeholder, typed literals in canonical lexical form with their datatype unchanged, HEL literals canonical."""
+    placeholder, typed literals as written (by value for an HDL Compiler graph, whose datatypes alone are fixed),
+    HEL literals canonical."""
     manifest = manifest or {}
     drop = set()
     if cls == "bundle-processor" and manifest.get("bundleProfile"):
@@ -172,7 +181,7 @@ def normalise_graph(g, *, cls=None, manifest=None, reported_base=None, header=No
         argument = p == RDF.first and s in arguments
         if reported_base:
             s, o = (_rebase(t, reported_base) for t in (s, o))
-        out.add((s, p, _canonical_literal(p, o, argument)))
+        out.add((s, p, _canonical_literal(p, o, argument, by_value=cls in BY_VALUE)))
     return out
 
 
@@ -266,7 +275,7 @@ def _report_graph(g):
     for s, p, o in g:
         if p == URIRef(CONF + "errorCategory") and isinstance(o, Literal) and str(o) in CATEGORY_IRIS:
             o = URIRef(CONF + CATEGORY_IRIS[str(o)])
-        out.add((s, p, _canonical_literal(p, o)))
+        out.add((s, p, _canonical_literal(p, o, by_value=True)))
     return out
 
 

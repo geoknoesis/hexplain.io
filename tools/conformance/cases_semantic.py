@@ -38,7 +38,7 @@ se("class-and-literals", "A mapped struct is typed and its mapped fields become 
    struct.pack(">IBhd", 1920, 8, -2, 0.5) + b"hi" + b"\x0a\x0b",
    f"""
    {ROOT} a ex:Image ; ex:width "1920"^^xsd:unsignedInt ; ex:bitDepth "8"^^xsd:unsignedByte ;
-       ex:offset "-2"^^xsd:short ; ex:scale "0.5"^^xsd:double ; ex:name "hi" ; ex:raw "0A0B"^^xsd:hexBinary .
+       ex:offset "-2"^^xsd:short ; ex:scale "5.0E-1"^^xsd:double ; ex:name "hi" ; ex:raw "0A0B"^^xsd:hexBinary .
    """)
 
 se("nested-paths", "Nested structs and array elements are minted by node path",
@@ -118,7 +118,7 @@ se("value-expression", "hexplain:valueExpression emits a computed value in hexpl
    ex:raw a bddo:Field ; bddo:dataType bddo:int16 ; hexplain:mapsToProperty ex:celsius ;
        hexplain:valueExpression "raw * 0.5" ; hexplain:valueDatatype xsd:double .
    """,
-   struct.pack(">h", 21), f"{ROOT} a ex:Reading ; ex:celsius \"10.5\"^^xsd:double .")
+   struct.pack(">h", 21), f"{ROOT} a ex:Reading ; ex:celsius \"1.05E1\"^^xsd:double .")
 
 se("conditional-mapping", "hexplain:hasConditionalMapping emits the property of the first holding rule",
    "Records name their value by a key; each record's value goes to the property its key selects, on the root's subject.",
@@ -298,7 +298,7 @@ se("value-natural-unsigned-beyond-long", "A computed uint64 value above 2^63-1 i
 se("value-natural-float", "A computed Float with no valueDatatype is an xsd:double literal",
    "raw * 0.5 is the Float 10.5.",
    NATURAL + ["req-pm-computed-values-4"], ["computed-values"], computed("raw * 0.5", RAW), struct.pack(">h", 21) + b"\x00",
-   f'{ROOT} a ex:Rec ; ex:value "10.5"^^xsd:double .')
+   f'{ROOT} a ex:Rec ; ex:value "1.05E1"^^xsd:double .')
 
 se("value-natural-float-infinity", "A computed infinite Float is written INF",
    "1e308 * 10.0 overflows binary64 to +Infinity, whose xsd:double lexical form is INF.",
@@ -345,7 +345,7 @@ se("value-natural-array-node", "A computed array node is a Type / HEL error",
 se("value-datatype-integer-as-double", "An Integer result typed xsd:double is emitted as that double",
    "raw + 1 is the Integer 22 and hexplain:valueDatatype is xsd:double: the literal is 22 as an xsd:double.",
    TYPED, ["computed-values"], computed("raw + 1", RAW, "xsd:double"), struct.pack(">h", 21) + b"\x00",
-   f'{ROOT} a ex:Rec ; ex:value "22.0E0"^^xsd:double .')
+   f'{ROOT} a ex:Rec ; ex:value "2.2E1"^^xsd:double .')
 
 se("value-datatype-string-as-integer", "A String result typed xsd:integer is a Type / HEL error",
    "trim(name) is a String, which has no value in xsd:integer's value space; the datatype is never re-labelled.",
@@ -398,3 +398,126 @@ se("key-percent-sign", "A '%' in a key is always percent-encoded as %25",
    {ROOT} a ex:Doc .
    <{BASE}#root/%2Fa%2520b> a ex:MetaClass ; ex:name "x" .
    """, manifest={"features": {"requires": ["tree-documents"]}})
+
+
+# ----------------------------------------------------------------- canonical lexical forms, enumeration symbols
+
+se("lexical-forms-canonical", "Emitted literals are in the canonical lexical form of their datatype",
+   "100.0 is an xsd:double written 1.0E2, never 100.0 or 1E2; the float32 negative zero is -0.0E0 and 2.5 is 2.5E0; "
+   "0.001 is 1.0E-3; the bytes AB CD are the upper-case ABCD; -7 has no sign padding.",
+   MINT + ["req-pm-emission-5", "req-pm-emission-12"], ["emission", "value-mapping"],
+   """
+   ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Rec ; bddo:hasField ( ex:big ex:nz ex:half ex:small ex:raw ex:n ) .
+   ex:big a bddo:Field ; bddo:dataType bddo:float64 ; hexplain:mapsToProperty ex:big .
+   ex:nz a bddo:Field ; bddo:dataType bddo:float32 ; hexplain:mapsToProperty ex:negativeZero .
+   ex:half a bddo:Field ; bddo:dataType bddo:float32 ; hexplain:mapsToProperty ex:half .
+   ex:small a bddo:Field ; bddo:dataType bddo:float64 ; hexplain:mapsToProperty ex:small .
+   ex:raw a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 2 ; hexplain:mapsToProperty ex:raw .
+   ex:n a bddo:Field ; bddo:dataType bddo:int8 ; hexplain:mapsToProperty ex:n .
+   """,
+   struct.pack(">dffd", 100.0, -0.0, 2.5, 0.001) + b"\xab\xcd" + b"\xf9",
+   f"""
+   {ROOT} a ex:Rec ; ex:big "1.0E2"^^xsd:double ; ex:negativeZero "-0.0E0"^^xsd:float ; ex:half "2.5E0"^^xsd:float ;
+       ex:small "1.0E-3"^^xsd:double ; ex:raw "ABCD"^^xsd:hexBinary ; ex:n "-7"^^xsd:byte .
+   """)
+
+se("lexical-forms-computed", "Computed literals are in canonical lexical form too",
+   "raw * 2.0 is the Float 42.0: as an xsd:decimal it is 42, with no point, and as the natural xsd:double 4.2E1; "
+   "0.0 * raw is 0.0E0.",
+   MINT + ["req-pm-emission-5", "req-pm-emission-12"], ["emission", "computed-values"],
+   """
+   ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Rec ; bddo:hasField ( ex:raw ex:d ex:f ex:z ) .
+   ex:raw a bddo:Field ; bddo:dataType bddo:int16 .
+   ex:d a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty ex:decimal ;
+       hexplain:valueExpression "raw * 2.0" ; hexplain:valueDatatype xsd:decimal .
+   ex:f a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty ex:double ;
+       hexplain:valueExpression "raw * 2.0" .
+   ex:z a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty ex:zero ;
+       hexplain:valueExpression "0.0 * raw" .
+   """,
+   struct.pack(">h", 21) + b"\x00\x00\x00",
+   f'{ROOT} a ex:Rec ; ex:decimal "42"^^xsd:decimal ; ex:double "4.2E1"^^xsd:double ; ex:zero "0.0E0"^^xsd:double .')
+
+ENUM = """
+   ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Image ; bddo:hasField ( ex:colour ) .
+   ex:colour a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty ex:colourType ;
+       bddo:enumeration [ a bddo:Enumeration FLAGS;
+           bddo:hasEnumValue [ a bddo:EnumValue ; bddo:enumRawValue 1 ; bddo:enumSymbol ex:Palette ] ,
+                             [ a bddo:EnumValue ; bddo:enumRawValue 2 ; bddo:enumSymbol ex:Colour ] ,
+                             [ a bddo:EnumValue ; bddo:enumRawValue 4 ; rdfs:label "alpha" ] ] .
+   """
+
+se("enum-symbol-with-literal", "A matched enumeration symbol is emitted alongside the raw literal",
+   "Colour type 2 matches the value whose symbol is ex:Colour: the mapped property carries the literal and the symbol.",
+   MINT + ["req-pm-parsefield-15", "req-pm-emission-2", "req-pm-emission-5"], ["emission"],
+   ENUM.replace("FLAGS", ""), b"\x02",
+   f'{ROOT} a ex:Image ; ex:colourType "2"^^xsd:unsignedByte , ex:Colour .')
+
+se("enum-value-without-symbol", "A matched enumeration value without a symbol emits the literal alone",
+   "Colour type 4 matches a value that has an rdfs:label and no bddo:enumSymbol, so there is no symbol to emit.",
+   MINT + ["req-pm-parsefield-15", "req-pm-emission-2", "req-pm-emission-5"], ["emission"],
+   ENUM.replace("FLAGS", ""), b"\x04",
+   f'{ROOT} a ex:Image ; ex:colourType "4"^^xsd:unsignedByte .')
+
+se("enum-flags-symbols-with-literal", "A flags enumeration emits every matching symbol alongside the raw literal",
+   "7 has the bits of all three values; the two that have a symbol are both emitted, with the literal.",
+   MINT + ["req-pm-parsefield-15", "req-pm-emission-2", "req-pm-emission-5"], ["emission"],
+   ENUM.replace("FLAGS", "; bddo:enumIsFlags true "), b"\x07",
+   f'{ROOT} a ex:Image ; ex:colourType "7"^^xsd:unsignedByte , ex:Palette , ex:Colour .')
+
+
+# ----------------------------------------------------------------- expressions evaluated over the complete tree
+
+LATER = ["req-pm-emission-11", "req-hel-name-binding-3", "req-pm-context-1"]
+
+se("value-expression-later-field", "A value expression may name a field declared after its own",
+   "raw is scaled by scale, the field after it: the expression is evaluated over the complete tree, so scale is bound.",
+   MINT + ["req-pm-emission-5"] + LATER, ["emission", "evaluation-time", "context"],
+   """
+   ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Rec ; bddo:hasField ( ex:raw ex:scale ) .
+   ex:raw a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty ex:value ;
+       hexplain:valueExpression "raw * scale" .
+   ex:scale a bddo:Field ; bddo:dataType bddo:uint8 .
+   """,
+   b"\x03\x04", f'{ROOT} a ex:Rec ; ex:value "12"^^xsd:long .')
+
+se("map-guard-later-field", "A map guard may name a field declared after its own",
+   "val is mapped by kind, which follows it: kind is 2, so the second rule's property carries the value.",
+   MINT + ["req-pm-emission-7"] + LATER, ["emission", "evaluation-time"],
+   """
+   ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Image ; bddo:hasField ( ex:val ex:kind ) .
+   ex:val a bddo:Field ; bddo:dataType bddo:uint8 ;
+       hexplain:hasConditionalMapping (
+           [ a hexplain:MappingRule ; hexplain:condition "kind == 1" ; hexplain:semanticProperty ex:width ]
+           [ a hexplain:MappingRule ; hexplain:condition "kind == 2" ; hexplain:semanticProperty ex:height ] ) .
+   ex:kind a bddo:Field ; bddo:dataType bddo:uint8 .
+   """,
+   b"\x05\x02", f'{ROOT} a ex:Image ; ex:height "5"^^xsd:unsignedByte .')
+
+se("class-guard-later-field", "A means-when guard may name a field parsed after its struct",
+   "The item is typed by parent.kind, a field of the root that follows the item.",
+   MINT + ["req-pm-emission-4"] + LATER, ["emission", "evaluation-time"],
+   """
+   ex:Root a bddo:Struct ; hexplain:mapsToClass ex:File ; bddo:hasField ( ex:item ex:kind ) .
+   ex:item a bddo:Field ; bddo:dataType ex:Item .
+   ex:kind a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Item a bddo:Struct ; bddo:hasField ( ex:v ) ;
+       hexplain:hasConditionalClassMapping (
+           [ a hexplain:ClassMappingRule ; hexplain:condition "parent.kind == 1" ; hexplain:semanticClass ex:Point ]
+           [ a hexplain:ClassMappingRule ; hexplain:condition "parent.kind == 2" ; hexplain:semanticClass ex:Line ] ) .
+   ex:v a bddo:Field ; bddo:dataType bddo:uint8 .
+   """,
+   b"\x07\x02", f"{ROOT} a ex:File . <{BASE}#root/item> a ex:Line .")
+
+se("value-expression-absent-later-field", "An absent later field reads as Null in a value expression",
+   "raw's value is computed as opt, the optional field after it, which is absent (flag is 0): Null, not a forward "
+   "reference, so nothing is emitted for ex:value.",
+   MINT + ["req-pm-emission-5", "req-pm-computed-values-8"] + LATER, ["emission", "evaluation-time", "computed-values"],
+   """
+   ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Rec ; bddo:hasField ( ex:flag ex:raw ex:opt ) .
+   ex:flag a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:raw a bddo:Field ; bddo:dataType bddo:uint8 ; hexplain:mapsToProperty ex:value ;
+       hexplain:valueExpression "opt" .
+   ex:opt a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:isPresentIf "flag == 1" .
+   """,
+   b"\x00\x03", f"{ROOT} a ex:Rec .")

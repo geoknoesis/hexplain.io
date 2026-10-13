@@ -58,6 +58,116 @@ rewritten.
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### Normative review fixes (F1–F21)
+
+- **`bddo:parentStart`** (F1). The Processing Model's Addressing step names the fourth offset base,
+  and a new paragraph `processing#parent-start` defines it: the start offset of the containing
+  struct node as ParseStruct recorded it, after any sync seek; never an ancestor; a negative
+  offset or a target outside the region is a bounds error. `req-pm-parsefield-7` reworded to list
+  the base; new `req-pm-parsefield-27`, `req-pm-parsefield-28`, `req-pm-parsefield-29`; cases
+  `pp-offset-parent-start`, `pp-offset-parent-start-after-sync`, `pp-offset-parent-start-negative`
+  and `pp-offset-parent-start-outside-region`.
+- **Zlib and Gzip `trailing`** (F2). The two unconditional Validation-error sentences are
+  qualified by the step's `trailing` parameter (`req-pm-minimum-codecs-6` and
+  `req-pm-minimum-codecs-10` reworded), and the table `processing#framing-parameters` lists the
+  Deflate, Zlib and Gzip parameters `level` and `trailing` like Delta's; new
+  `req-pm-minimum-codecs-11` says what `ignore` still verifies.
+- **Serialisation (write direction)** (F3). New Processing Model section `processing#serialisation`
+  with the writer rules derived from the parse rules (field order and presence, derived lengths,
+  counts and checksums, extent inference, fill and alignment, text-number rendering, type
+  selection, codec encode parameters, checksum back-patching, scope) and the symmetry requirement
+  `processing#round-trip`; new requirements `req-pm-serialisation-1`, `req-pm-serialisation-11` to `req-pm-serialisation-20`.
+  New optional feature token `writer` (the Writer conformance target, stated in
+  `specification/index.html`); `reference-engine-claims.json` leaves it unclaimed. Round-trip
+  vectors in the BitReverse, Delta, FloatingPointPredictor and Store suites, and `previous`-fed round
+  trips in Deflate, Zlib and Gzip.
+- **Codec-contract coverage** (F4). New Physical Parser cases `pp-codec-parameter-*`,
+  `pp-codec-pipeline-kinds-disconnected`, `pp-codec-contract-decoded-byte-limit`,
+  `pp-codec-selection-*` and `pp-codec-session-per-instance` cite
+  `req-pm-codec-contracts-1` to `-4`, `req-pm-codec-selection-1` to `-3`,
+  `req-pm-codec-sessions-1` and `req-pm-parameter-expressions-1` to `-3`.
+- **Vector completeness** (F5). New gate `tools/test_codec_vector_completeness.py`: every declared
+  `hexplain:raisesCategory` expected by a step, every declared parameter passed, a round trip for
+  every codec that encodes. The suites gained the missing vectors; each manifest's `sources`
+  record where the new expectations come from (an independent library, or the reference engine
+  where none exists).
+- **`codecs-beyond-minimum`** (F6) is gone from the conformance page's manifest table (which now
+  documents the `codecs` member) and from the published report, which is superseded.
+- **Vector manifest format** (F7). Published as `specification/codecs/index.html` with the JSON
+  Schema `specification/codecs/vector-manifest.schema.json`; the `Description` category is defined
+  there and the register's contract shape is to admit it. New input form `{"previous": true}`.
+- **Codec status** (F8). `processing#codec-status` defines `contracted` and `catalogue`; an HDL
+  compiler warns on a catalogue-only concept (`req-pm-codec-contracts-5`, `req-hdl-semantic-1`).
+- **Evaluation over the complete tree** (F9). `req-pm-context-1` reworded to list value
+  expressions, map guards and means-when guards among the deferred evaluations; new
+  `req-pm-emission-11`; HEL name-binding note `hel#complete-tree` (`req-hel-name-binding-3`); the
+  HDL forward-reference bullet aligned.
+- **Field-level bit order** (F10). `processing#bit-order` gives the precedence field, struct,
+  `bddo:MSBFirst` (`req-pm-byte-order-8`, `req-pm-byte-order-9`; `req-pm-bit-cursor-3` reworded to
+  point at it); HDL `hdl#field-bit-order` (`req-hdl-clauses-6`); cases
+  `pp-bits-field-order-overrides-struct`, `pp-bits-field-order-without-struct-order` and
+  `hc-bit-order-field`.
+- **HEL `math` group** (F11): `floor`, `ceil`, `trunc`, `round` (half away from zero), `abs`,
+  `min`, `max` and `toString`, with the Float rendering pinned (`hel#math`,
+  `req-hel-math-1` to `req-hel-math-4`; `req-hel-core-functions-1` reworded for the variadic
+  `min`/`max`); vectors in `hel-vectors.tsv`.
+- **Float `%` and the regex dialect** (F12). Float `%` is the truncated remainder
+  (`req-hel-numeric-semantics-7`); `matches` patterns are HEL-RE, the XSD 1.1 regular-expression
+  language, every other construct an `argument` error (`req-hel-ext-text-4`;
+  `req-hel-ext-text-2`, the SHOULD on common constructs, is withdrawn); vectors for both.
+- **HEL vectors in a struct tree** (F13). `hel-vectors.tsv` gains a tree context form (`"$tree"`)
+  with rows for subscripts, `parent`, `root`, `self`, `stream.*`, `param.*`, `sizeof`, `eof()`,
+  forward references, and the geometry and register groups.
+- **Lexical forms and `enumSymbol`** (F14). Emitted literals are in XSD 1.1 canonical lexical form
+  (`req-pm-emission-12`) and the symbol of a matched enumeration is emitted (`req-pm-emission-2`
+  is now a MUST); `tools/conformance/compare.py` compares emitter graphs by lexical form (HDL
+  Compiler graphs and run reports still by value); the Semantic Emitter expected graphs are
+  canonical.
+- **Implementation report format version 2** (F15): `implementation.revision`, `environment`
+  (`os`, `jvm`, `toolchain`), `claimsDigest`; a pre-release version only with a revision; reports
+  published as `<version>-<suite digest>.json` and kept by digest; `report.py --complete`.
+- **Registry context** (F16). `requirements.json` records the introducing sentence as `context`
+  for every item of a governed list or table.
+- **`dlv:morton` and `dlv:hilbert`** (F17): no page text. Their definitions are the vocabulary's
+  (`dlv.ttl`, from which the term reference is generated), so the DLV page is unchanged.
+- **Known-length inputs** (F18): the Processing Model's Inputs section states that this version has
+  no streaming model (`req-pm-inputs-outputs-1`: the length is known before the first field is read,
+  an input of unknown length is read to its end first, and a parse of a prefix is never reported as
+  a parse of the input); Security and Privacy, `processing#security-known-length`, restates it for
+  the input-byte limit. Case `pp-hel-stream-length-before-first-field`.
+- **`not(` is never a call** (F19): `req-hel-formal-grammar-3`.
+- **Digest checksum fields** (F20): a digest's checksum field is a `bddo:bytes` field of literal
+  size exactly the digest's length (`req-pm-parsefield-16` and `req-pm-errors-8` reworded); cases
+  `pp-checksum-digest-field-width` and `pp-checksum-digest-field-short`.
+- **Evidence digests** (F21) are computed over LF-normalised bytes in `tools/test_capabilities.py`.
+- **Non-leading `.parent`** (HEL). A `.parent` step after a key step or a subscript yields the
+  struct instance holding the field that step names, one more climbs above the node the path
+  started from, and above `root`, or after `self`, `stream`, `param`, `asset` or a local binding, it
+  is Null (`hel#non-leading-parent`, new `req-hel-reserved-roots-4`; the key-resolution, `param` and
+  `stream` sentences except the keyword). Vectors in `hel-vectors.tsv`; case
+  `pp-hel-parent-non-leading`.
+- **YAML byte strings** (HDL). A quoted `"0x…"` scalar is a string; `{ hex: "0x…" }` is the explicit
+  byte-string form; `sync`, `terminator` and a container's delimiters take an unquoted hex scalar,
+  that mapping or an integer byte, and a quoted `"0x…"` there is an `ERROR` (new `req-hdl-yaml-3`,
+  `req-hdl-yaml-4`, `req-hdl-yaml-5`; the two sentences that still read a quoted hex literal as bytes
+  are corrected). Cases `hc-yaml-hex-mapping`, `hc-yaml-quoted-hex-terminator`,
+  `hc-yaml-quoted-hex-sync` and `hc-yaml-quoted-hex-separator`.
+- **Dispatch arm IRIs** (HDL). The arms of a keyed dispatch are emitted as IRIs
+  `<ns#Table.arm.key>`, never blank nodes (new `req-hdl-modules-4`); cases `hc-dispatch-arm-iris`
+  and `hc-dispatch-arm-iris-yaml`.
+- **Writer requirements** are registered with the class `writer` (the optional Writer target), so
+  the coverage tables of the five processor classes do not count them; the conformance page says
+  what observes them.
+- **Cases for the new requirements.** `pp-hel-math-*`, `pp-hel-float-remainder`,
+  `pp-hel-regex-*`, `pp-hel-not-*` and `pp-hel-reserved-word-call` put the HEL additions in a parse;
+  `pp-codec-zlib-trailing-ignore*` and `pp-codec-gzip-trailing-ignore*` exercise `trailing`;
+  `se-lexical-forms-canonical`, `se-lexical-forms-computed`, `se-enum-symbol-with-literal`,
+  `se-enum-value-without-symbol`, `se-enum-flags-symbols-with-literal` and
+  `se-*-later-field` exercise the emission rules; `hc-encoded-with-catalogue-codec` compiles a
+  catalogue-only codec.
+- The HDL format DSL design note under `docs/superpowers/specs/` is marked superseded by
+  `specification/hdl/index.html`.
+
 ### Codec contracts, claims and profile codec features
 
 - The Processing Model gains Codec contracts (kinds, typed parameters, sessions, error categories
