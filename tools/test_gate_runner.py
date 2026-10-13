@@ -348,23 +348,38 @@ def check_memory_sampling(root: Path) -> None:
 
 def main() -> int:
     quiet = io.StringIO()
-    with contextlib.redirect_stdout(quiet), contextlib.redirect_stderr(quiet), tempfile.TemporaryDirectory() as temp:
-        root = Path(temp)
-        check_outcomes(root)
-        check_runner(root)
-        check_concurrency(root)
-        check_tight_budget_serialises(root)
-        check_manifest(root)
-        check_effective_procs(root)
-        check_workers()
-        check_kill_fallback()
-        check_memory_sampling(root)
+    # Under the runner this gate is itself handed a worker count; the runs it starts must be
+    # planned as a standalone run would be, not capped by what the outer run gave this gate.
+    inherited = os.environ.pop("HEXPLAIN_GATE_WORKERS", None)
+    try:
+        with (
+            tempfile.TemporaryDirectory() as temp,
+            contextlib.redirect_stdout(quiet),
+            contextlib.redirect_stderr(quiet),
+        ):
+            run_checks(Path(temp))
+    finally:
+        if inherited is not None:
+            os.environ["HEXPLAIN_GATE_WORKERS"] = inherited
     print(
         "PASS: exit-status outcomes, timeout, strict rejection, concurrent scheduling, a tight memory budget "
         "serialising, the gate manifest, effective process counts, the worker helper, the tree-kill fallback "
         "and sampled memory"
     )
     return 0
+
+
+def run_checks(root: Path) -> None:
+    """Every check, in the order they build on the shared tree."""
+    check_outcomes(root)
+    check_runner(root)
+    check_concurrency(root)
+    check_tight_budget_serialises(root)
+    check_manifest(root)
+    check_effective_procs(root)
+    check_workers()
+    check_kill_fallback()
+    check_memory_sampling(root)
 
 
 if __name__ == "__main__":

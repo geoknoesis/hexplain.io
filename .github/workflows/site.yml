@@ -7,7 +7,11 @@ permissions:
 jobs:
   publication:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Above the sum of the browser and docker gate timeouts of tools/gates.json (they run one
+    # after the other; a job cancelled before a gate's own timeout uploads no gate record), with
+    # room for installing the browser. tools/test_gate_manifest.py asserts the first part; the
+    # timeouts are derived from tools/gate-costs.json (see "Gate cost" in CONTRIBUTING.md).
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:

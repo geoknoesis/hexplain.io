@@ -126,6 +126,12 @@ def gate_tree(root: Path) -> None:
     )
 
 
+def timeouts_of(root: Path) -> dict[str, float]:
+    """The timeout each gate of the last run was held to, from its run record."""
+    saved = json.loads((root / ".gate-results/summary.json").read_text(encoding="utf-8"))
+    return {row["gate"]: row["timeout_seconds"] for row in saved["gates"]}
+
+
 def refused(root: Path, argv: list[str]) -> bool:
     try:
         run_gates(root, set(), argv)
@@ -149,6 +155,9 @@ def check_record(root: Path) -> None:
     assert not record.exists(), "a failed run was recorded"
     (root / "tools/test_two.py").write_text("print('PASS')\n", encoding="utf-8", newline="\n")
     assert run_gates(root, set(), ["--strict", "--record-costs"]) == 0
+    # While its cost is recorded for the first time a gate runs under the cap, not under whatever
+    # the manifest says for a gate nobody has measured: otherwise a slow gate could never be recorded.
+    assert timeouts_of(root) == {"test_one": 3600.0, "test_two": 3600.0}, timeouts_of(root)
     first = read_record(root)
     assert sorted(first["gates"]) == ["test_one", "test_two"], first["gates"]
     assert set(first["gates"]["test_one"]) == {"duration_s", "peak_rss_mb", "procs"}, first["gates"]["test_one"]
@@ -166,6 +175,13 @@ def check_record(root: Path) -> None:
     before = record.read_bytes()
     assert run_gates(root, set(), ["--strict", "test_one"]) == 0
     assert run_gates(root, set(), ["--strict"]) == 0
+    # ... and runs under the declared timeouts, as does a recording of gates already recorded.
+    assert timeouts_of(root) == {"test_one": 900.0, "test_two": 300.0}, timeouts_of(root)
+    assert run_gates(root, set(), ["--strict", "--record-costs"]) == 0
+    assert timeouts_of(root) == {"test_one": 900.0, "test_two": 300.0}, timeouts_of(root)
+    merged["gates"].update({name: read_record(root)["gates"][name] for name in ("test_one", "test_two")})
+    merged["runs"]["offline"] = read_record(root)["runs"]["offline"]
+    before = record.read_bytes()
     assert record.read_bytes() == before, "a run without --record-costs changed the tracked record"
     assert record.read_text(encoding="utf-8") == json.dumps(merged, indent=2) + "\n", "record is not canonical JSON"
     # A gate removed from the manifest leaves the record with the next recording.

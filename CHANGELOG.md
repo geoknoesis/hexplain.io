@@ -58,6 +58,75 @@ rewritten.
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### Gate tooling: second review pass (2026-10-13)
+
+No vocabulary, shape or published document changes. The validation evidence that is regenerated
+is the constraint ledger and its page, the retained family contracts and the review manifest.
+
+- **Cases are validated against the modules they involve, not the family.**
+  `test_packaging_contract`, `test_video_math`, `test_numeric_boundaries`,
+  `test_conformance_competency`, `test_vocab_shapes` and the ledger builder loaded all forty
+  modules as data and as shapes for every case. `specgraph.modules_used_by(case)`
+  (`tools/_module_selection.py`) now names the modules a case involves: the homes of its terms,
+  every module with a shape aimed at a class, property or node the case states (including the
+  classes the family gives a term the case mentions), and what those import. The assertions are
+  unchanged and so is every pySHACL outcome: verdict and result multiset are identical before and
+  after for the 58 cases of the four gates and for all 151 vocabulary fixtures.
+  `tools/test_specgraph.py` checks the selection against every target in the family and
+  validates two fixtures both ways.
+- **A shapes graph is never also a data graph.** pySHACL writes `owl:Class rdfs:subClassOf
+  rdfs:Class` and `owl:DatatypeProperty rdfs:subClassOf rdf:Property` into the graph it is given
+  as shapes. `test_packaging_contract` used one graph in both roles, so every case after the first
+  was validated with those axioms in its data, where they change what `sh:class` accepts; no
+  verdict of its eleven cases depended on it, but the order of cases could have decided one.
+  `specgraph.context_and_shapes` returns two graphs, and the gates and the ledger builder use it.
+- **The constraint ledger is measured in parallel and stored compactly.**
+  `tools/_constraint_coverage.py` runs the corpora as 71 tasks across a process pool
+  (`tools/_coverage_corpora.py`); the result is byte-identical at 8 and at 12 workers, and with
+  the old whole-family context it reproduces the previous ledger exactly. Measuring takes eight
+  to ten minutes on a host whose processors are fully used by other work, where it took forty.
+  With cases validated in context, 33,644 of the 234,248 booked evaluations are gone: each was an
+  outcome the family's own triples produce with no case at all, booked to whichever case was
+  running. All 1,991 obligations are still two-sided. `constraint-coverage.json` is one JSON
+  document with an obligation per line and cases as indices into a name table (16.5 MB to
+  2.2 MB), read back with `_constraint_coverage.read_ledger()`; `constraint-coverage.html` holds
+  the names once and fills a list when it is opened (14.6 MB to 2.6 MB), and
+  `test_constraint_coverage` now fails unless the page is the ledger rendered. The page stays
+  tracked because the site is served from the committed tree.
+- **Gate scheduling.** `tools/gate-costs.json` is the tracked record of each gate's duration,
+  peak RSS and process count, written by `python tools/run_gates.py --strict --record-costs` from
+  a complete, unfiltered run and merged by gate; the runner orders gates and estimates memory
+  from it, in CI as locally, and no longer reads the ignored `.gate-results/summary.json`.
+  `--derive-timeouts` writes every timeout in `tools/gates.json` as ten times the recorded
+  duration, rounded up to five minutes, from five minutes to an hour, and `test_gate_manifest`
+  asserts that for every gate, that the workflow job limits leave room for the gate timeouts
+  (`site.yml` allowed twenty minutes for gates that could take thirty-five), and that the
+  figures under "Gate cost" in `CONTRIBUTING.md` are the record's own. A gate's effective process
+  count, `min(declared, max(1, cpu // jobs))` and never more than eight, is both what the process
+  budget counts and the `HEXPLAIN_GATE_WORKERS` the gate is given; the cap holds on the
+  environment path too. The memory budget is read from the host at every scheduling decision,
+  against what the running gates hold, or fixed with `HEXPLAIN_GATE_MEMORY_MB`;
+  `test_gate_runner` pins it (on a host with less than 1.5 GiB free its three probes were run one
+  at a time and timed out waiting for each other) and proves that a tight budget serialises. A
+  `taskkill` that hangs or is missing no longer aborts the run. `_gate_cost.py` reports wall
+  clock and the sum of durations separately; `pytest tools` collects the offline gates of
+  `gates.json` with their timeouts.
+- **Types and complexity.** `python -m mypy tools` runs (explicit package bases) and
+  `tools/test_types.py` gates it: untyped definitions are disallowed and bodies checked. mypy
+  1.20.1 is in both hash-pinned locks. `ruff.toml` adds ANN and C901 at a complexity of 15; the
+  functions above it are split, as is the 394-line probe builder of `_review_mutation_cases`
+  (the 150 probes are unchanged, compared as graphs). The modules of the conformance suite, the codec tooling,
+  the requirement registry and the shape-text renderer, and the expectation half of
+  `test_vocab_shapes`, do not meet the new rules yet and are listed (`ruff.toml` per-file
+  entries, `PENDING` in `test_types`); `test_lint` and `test_types` fail when a listed module no
+  longer has a finding, so the lists only shrink.
+- **Smaller points.** Every `_*_cases.py` library builds its prefix declarations with
+  `prefix_block()` from `PREFIXES` (each case's graph is isomorphic to what it was, and
+  `family-contracts.json` is rewritten from them). `test_lint` rejects a text write without
+  `newline=`. `tools/_build_family_contracts.py --write/--check` replaces the `--write` mode of
+  `test_family_contract`, which only checks. The family pickle cache keeps its three newest
+  entries and a failed write leaves no temporary file.
+
 ### The reference implementation claims `writer` (2026-10-13)
 
 No requirement text, case or identifier changed; the suite is the 803 cases of digest

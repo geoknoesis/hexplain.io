@@ -9,9 +9,11 @@ python tools/run_gates.py --strict
 ```
 
 Python 3.12 is the target (3.11 is the floor). The runner takes its gate list from
-`tools/gates.json`, schedules independent gates concurrently within a memory budget
-(`--jobs`, default the smaller of the CPU count and four), limits each gate, and records
-`.gate-results/summary.json`. A gate reports PASS, SKIP or FAIL by its exit status (0, 77,
+`tools/gates.json`, schedules independent gates concurrently within process and memory
+budgets (`--jobs`, default the smaller of the CPU count and four) from the tracked cost record
+`tools/gate-costs.json`, limits each gate by a timeout derived from that record, and writes the
+run's own record to `.gate-results/summary.json` (local state; nothing tracked reads it). A gate
+reports PASS, SKIP or FAIL by its exit status (0, 77,
 other). `specification/family.json` is the complete ontology/shape inventory. Missing and
 unlisted modules are errors, including for profile consumers. Each module has a generated annotation
 graph beside it (`<module>-doc.ttl`: labels, definitions and scope notes), listed there too. See

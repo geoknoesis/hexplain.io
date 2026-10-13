@@ -24,12 +24,13 @@ import platform
 import sys
 import threading
 import time
+from collections.abc import Mapping
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from _gate_cost import COSTS, derive_timeouts, load_costs, record_costs
+from _gate_cost import COSTS, TIMEOUT_CAP, GateCost, derive_timeouts, load_costs, record_costs
 from _gate_process import run_gate
 from _gate_schedule import Gate, MemoryBudget, Scheduler, effective_procs
 
@@ -233,16 +234,23 @@ def _check_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace) 
     return jobs
 
 
-def _plan(root: Path, excluded: set[str], args: argparse.Namespace, jobs: int) -> list[Gate]:
+def _plan(
+    root: Path, excluded: set[str], args: argparse.Namespace, jobs: int, costs: Mapping[str, GateCost]
+) -> list[Gate]:
     """The gates this run executes, each with its timeout and effective process count."""
     manifest = load_gate_manifest(root)
-    gates = _select_gates(root, excluded, manifest, args.gate_class, args.filters, args.timeout or 3600)
+    gates = _select_gates(root, excluded, manifest, args.gate_class, args.filters, args.timeout or TIMEOUT_CAP)
     if not gates:
         raise ValueError("no gates matched")
     cpu, requested = os.cpu_count() or 1, requested_workers()
     for gate in gates:
         if args.timeout is not None:
             gate["timeout"] = min(float(gate["timeout"]), args.timeout)
+        elif args.record_costs and gate["name"] not in costs:
+            # A gate nobody has recorded has the minimum timeout, which is a guess about a gate
+            # whose cost is exactly what this run is there to find out: while recording, it gets
+            # the cap, or a gate that takes six minutes could never be recorded at all.
+            gate["timeout"] = TIMEOUT_CAP
         gate["effective_procs"] = effective_procs(min(gate.get("procs", 1), WORKER_CAP), cpu, jobs, requested)
     return gates
 
@@ -299,6 +307,7 @@ class _Run:
         row = dict(
             gate=name,
             procs=gate["effective_procs"],
+            timeout_seconds=float(gate["timeout"]),
             **run_gate(
                 [sys.executable, "-u", str(gate["path"])],
                 self.root,
@@ -406,9 +415,9 @@ def main(root: Path, excluded: set[str], argv: list[str] | None = None) -> int:
         )
         return 0
     try:
-        gates = _plan(root, excluded, args, jobs)
-        memory = MemoryBudget.from_environment()
         costs = load_costs(root)
+        gates = _plan(root, excluded, args, jobs, costs)
+        memory = MemoryBudget.from_environment()
     except ValueError as error:
         parser.error(str(error))
     destination = root / args.json

@@ -33,9 +33,12 @@ jobs:
     name: Gates (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     # The gates are declared in tools/gates.json and run concurrently (--jobs 4 on a four-core
-    # hosted runner), bounded by each gate's recorded peak RSS. The sequential strict suite took
-    # 674 s on a 20-core Windows host; the per-gate durations and sampled memory in the uploaded
-    # evidence are what should be used to tighten this ceiling rather than a guess.
+    # hosted runner), ordered and bounded by the tracked cost record tools/gate-costs.json. What
+    # the suite costs, and on which host that was measured, is stated once, under "Gate cost" in
+    # CONTRIBUTING.md, and tools/test_gate_manifest.py keeps those figures equal to the record;
+    # no figure is repeated here to go stale. The same gate asserts that this limit exceeds the
+    # longest gate timeout. A hosted runner has a fifth of the recording host's processors, so
+    # the limit is several times the recorded wall clock.
     timeout-minutes: 90
     strategy:
       # Gate timings and the worker cap were both measured on Windows, and the published site is
