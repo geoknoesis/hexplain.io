@@ -11,11 +11,11 @@ and to say that per-file and RDF declarations are not overridden.
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 from typing import Any
 
+from _family import canonical_files
 from rdflib import OWL, RDF, Graph, Namespace, URIRef
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,7 +56,7 @@ def self_test() -> None:
 
 def main() -> int:
     self_test()
-    files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
+    files = canonical_files(ROOT / "specification")
     found = []
     for rel in files:
         text = (ROOT / "specification" / rel).read_text(encoding="utf-8")

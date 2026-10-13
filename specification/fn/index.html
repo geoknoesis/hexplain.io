@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hexplain SPARQL function library (hxf) &#8212; Hexplain specification</title><style>body{font:16px/1.65 system-ui,sans-serif;margin:2rem auto;padding:0 1.5rem;max-width:1120px;color:#17333d}pre{overflow:auto;background:#eff4f2;padding:1rem;font:13px/1.6 ui-monospace,Consolas,monospace}a{color:#006b60}table.simple{width:100%;border-collapse:collapse;font-size:14px;margin:1rem 0}table.simple th,table.simple td{border-bottom:1px solid #dce9e4;padding:.5rem;text-align:left;vertical-align:top}table.simple th{background:#eff4f2}</style><link rel="stylesheet" href="../print.css" media="print">
-</head><body><nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a href="#term-reference">Complete reference: 44 terms and shapes</a> · <a href="../reference/index.html">All vocabularies and reading guide</a></p></nav><header><a href="../index.html">Specification family</a><h1>Hexplain SPARQL function library (hxf)</h1><p>Custom SPARQL functions that reach the bytes, parsed values, array cells and aspect coordinates of a file described by a Hexplain profile. Functions bind to the description vocabularies, never to a format.</p><p>Unofficial working specification. The namespace and version metadata below identify the vocabulary; documentation does not certify an implementation.</p></header>
+</head><body><nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a href="#term-reference">Complete reference: 44 terms and shapes</a> · <a href="../reference/index.html">All vocabularies and reading guide</a> · Generated labels, definitions and scope notes (Turtle): <a href="fn-doc.ttl">fn-doc.ttl</a></p></nav><header><a href="../index.html">Specification family</a><h1>Hexplain SPARQL function library (hxf)</h1><p>Custom SPARQL functions that reach the bytes, parsed values, array cells and aspect coordinates of a file described by a Hexplain profile. Functions bind to the description vocabularies, never to a format.</p><p>Unofficial working specification. The namespace and version metadata below identify the vocabulary; documentation does not certify an implementation.</p></header>
 <section id="overview"><h2>Overview</h2>
 <p>The graph a Hexplain profile lifts from a file describes the file; it does not contain it. The <b>hxf</b> library is a set of custom SPARQL functions, one IRI per function in the namespace <code>https://hexplain.io/ns/fn#</code>, that reach past the description graph into the bytes, parsed values, array cells and aspect coordinates of the asset the graph describes. Every function is written once against the description vocabularies (BDDO, DLV, core, the aspects) and works for any profile that uses them; none knows what TIFF, NITF, PNG, Zarr, WAV or a shapefile is.</p>
 <p><b>Layer 0 &#8212; bytes.</b> <code>hxf:bytes</code> and <code>hxf:digest</code> read a lifted node's recorded <code>hexplain:byteOffset</code> and <code>hexplain:byteLength</code> (emitted by the lifter's <code>ExtractOptions.includeByteRange</code>) and then need only the asset's bytes, not its profile or a parse. <code>hxf:decodedBytes</code> instead reads the node's encoding chain (<code>hexplain:isEncodedWith</code>, <code>hexplain:hasEncodingStep</code>) and still needs the parse, because the codec chain lives in the profile. All three work for any node of any format because they touch only core properties.</p>
@@ -527,51 +527,38 @@ hxf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     sh:property [ sh:path hxf:total ; sh:datatype xsd:boolean ;
         sh:message "hxf:total takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] .
 
-# BEGIN GENERATED TERM DOCUMENTATION
-# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-@prefix hxf: &lt;https://hexplain.io/ns/fn#&gt; .
-@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
-@prefix skos: &lt;http://www.w3.org/2004/02/skos/core#&gt; .
-
-&lt;https://hexplain.io/ns/fn&gt; skos:scopeNote "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it."@en .
-hxf:IntegerValueShape skos:definition "Applied through references from other shapes. An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte). A conforming value is an integer (of any XSD integer datatype)."@en .
-hxf:Native rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:NativeFunctionShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:Pure rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:RangeDatatypeShape skos:definition "Applies to subjects using hxf:layer, hxf:maxBytesPerCall, hxf:maxCellsPerWindow, hxf:signature, hxf:total. hxf:layer takes an integer (rdfs:range xsd:integer). hxf:maxBytesPerCall takes a positive integer (rdfs:range xsd:positiveInteger). hxf:maxCellsPerWindow takes a positive integer (rdfs:range xsd:positiveInteger). hxf:signature takes an xsd:string literal (rdfs:range xsd:string). hxf:total takes an xsd:boolean literal (rdfs:range xsd:boolean)."@en .
-hxf:arg1 rdfs:label "arg1"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:arg2 rdfs:label "arg2"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:arg3 rdfs:label "arg3"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:bytes rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:calibrate rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:cell rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:column rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:decode rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:decodedBytes rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:digest rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:explain rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:extent rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:hel rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:isNoData rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:kind rdfs:label "kind"@en .
-hxf:layer rdfs:label "layer"@en .
-hxf:layout rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:physicalAt rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:rank rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:reads rdfs:label "reads"@en .
-hxf:row rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:sampleAt rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:sampleAtTime rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:sampleAtWorld rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:signature rdfs:label "signature"@en .
-hxf:stat rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:value rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:window rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:wkt rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:worldX rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
-hxf:worldY rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+# ---------- Term ownership ----------
+# rdfs:isDefinedBy for the terms whose declaration above does not state it. A new term states
+# its own; tools/test_term_reference.py requires it of every term this file defines.
+:Native rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:NativeFunctionShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:Pure rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:arg1 rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:arg2 rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:arg3 rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:bytes rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:calibrate rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:cell rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:column rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:decode rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:decodedBytes rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:digest rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:explain rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:extent rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:hel rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:isNoData rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:layout rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:physicalAt rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:rank rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:row rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:sampleAt rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:sampleAtTime rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:sampleAtWorld rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:stat rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:value rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:window rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:wkt rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:worldX rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
+:worldY rdfs:isDefinedBy &lt;https://hexplain.io/ns/fn&gt; .
 </pre></section>
 </body></html>

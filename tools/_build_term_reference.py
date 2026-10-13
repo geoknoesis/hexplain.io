@@ -1,6 +1,7 @@
 """Enrich documentation annotations and build complete, linked HTML term references.
 
-Run with --enrich once after editorial changes; ordinary regeneration reads canonical RDF.
+Run with --enrich after editorial changes: it rewrites each module's annotation graph (<module>-doc.ttl) and
+never the canonical Turtle; ordinary regeneration reads the RDF as it stands.
 --check verifies the generated sections without modifying files.
 """
 
@@ -19,7 +20,6 @@ from pathlib import Path
 from typing import Any
 
 from _reference import (
-    ANNOTATION_MARKER,
     ANNOTATIONS,
     ROOT,
     SH,
@@ -28,6 +28,7 @@ from _reference import (
     closure,
     compact,
     definition,
+    documentation_path,
     kind,
     label,
     load,
@@ -165,7 +166,7 @@ PREDICATES = {
 
 @cache
 def file_subjects(path: Path) -> set[Any]:
-    return set(load([path]).subjects())
+    return set(load([path], base=True).subjects())
 
 
 LOCAL = re.compile(r"[A-Za-z_][A-Za-z0-9_-]*")
@@ -175,8 +176,8 @@ BLOCK_PREFIXES = {"rdfs": str(RDFS), "skos": str(SKOS)}
 def block_turtle(rows: list[dict[str, Any]], namespaces: Any) -> Any:
     """The generated annotations as readable Turtle: prefixed names, one subject per statement.
 
-    The block carries its own @prefix lines, so it also parses on its own (the documentation gate
-    subtracts it from the module to prove it adds annotations only)."""
+    The text carries its own @prefix lines: it is the body of the module's annotation graph
+    (<module>-doc.ttl), which parses on its own."""
     prefixes = dict(BLOCK_PREFIXES)
     prefixes.update(namespaces)
 
@@ -188,7 +189,7 @@ def block_turtle(rows: list[dict[str, Any]], namespaces: Any) -> Any:
                 return f"{p}:{str(node)[len(ns) :]}"
         return node.n3()
 
-    order = {RDFS.label: 0, RDFS.isDefinedBy: 1, SKOS.definition: 2, SKOS.scopeNote: 3}
+    order = {RDFS.label: 0, SKOS.definition: 2, SKOS.scopeNote: 3}
     by_subject = defaultdict(list)
     for s, p, o in rows:
         by_subject[s].append((p, o))
@@ -203,7 +204,23 @@ def block_turtle(rows: list[dict[str, Any]], namespaces: Any) -> Any:
     return head + ("\n" if head else "") + "\n".join(statements) + ("\n" if statements else "")
 
 
+def doc_header(path: Path, ontology: Any) -> str:
+    """The comment that opens a module's annotation graph: what it is, and that it is generated."""
+    subject = f"<{ontology}>" if ontology is not None else path.name
+    return (
+        f"# Generated term documentation for {subject} ({path.as_posix()}).\n"
+        "# Written by tools/_build_term_reference.py --enrich; do not edit. Editorial annotations only\n"
+        "# (rdfs:label, skos:definition, skos:scopeNote) on terms the module declares: no OWL axiom and no\n"
+        "# SHACL constraint is stated here, and the module validates identically without this file.\n"
+    )
+
+
 def enrich() -> None:
+    """Rewrite every module's annotation graph (<module>-doc.ttl) from the canonical files.
+
+    The canonical files are read, never written: a module's Turtle changes only when its author
+    changes it.
+    """
     edits = []
     for _directory, paths in modules().items():
         g = load(paths, base=True)
@@ -213,8 +230,8 @@ def enrich() -> None:
             if g.value(o, VANN.preferredNamespaceUri) is not None
         }
         for path in paths:
-            base = (ROOT / path).read_text(encoding="utf-8").split(ANNOTATION_MARKER)[0].rstrip() + "\n"
-            ownfile = Graph().parse(data=base, format="turtle")
+            ownfile = load([path], base=True)
+            ontology = next(iter(ownfile.subjects(RDF.type, OWL.Ontology)), None)
             rows = []
             for t in owned(ownfile):
                 annotations = []
@@ -227,19 +244,14 @@ def enrich() -> None:
                 if not list(g.objects(t, RDFS.label)):
                     annotations.append((RDFS.label, Literal(label(g, t), lang="en")))
                 if not list(g.objects(t, RDFS.isDefinedBy)) and kind(g, t) != "Ontology":
-                    annotations.append((RDFS.isDefinedBy, owner(t)))
+                    # Ownership is a fact about the vocabulary, not editorial prose: it is authored.
+                    raise ValueError(
+                        f"{t} has no rdfs:isDefinedBy; state `rdfs:isDefinedBy <{owner(t)}>` in {path.as_posix()}"
+                    )
                 for predicate, value in annotations:
                     if not list(ownfile.objects(t, predicate)):
                         rows.append((t, predicate, value))
-            edits.append(
-                (
-                    ROOT / path,
-                    base
-                    + ANNOTATION_MARKER
-                    + "# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.\n"
-                    + block_turtle(rows, namespaces),
-                )
-            )
+            edits.append((ROOT / documentation_path(path), doc_header(path, ontology) + block_turtle(rows, namespaces)))
     # Resolve every definition before any write, so a missing entry cannot leave half an update.
     for p, text in edits:
         p.write_text(text, encoding="utf-8", newline="\n")
@@ -590,10 +602,14 @@ def build(check: bool = False) -> Any:
         without = refresh_lead(without, module_graph)
         without = re.sub(r'<nav id="ontology-reference-navigation".*?</nav>', "", without, flags=re.S)
         catalog = os.path.relpath(ROOT / "specification/reference/index.html", doc.parent).replace("\\", "/")
+        generated = " · ".join(
+            f'<a href="{e(documentation_path(p).name)}">{e(documentation_path(p).name)}</a>' for p in paths
+        )
         navigation = (
             '<nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a '
             f'href="#term-reference">Complete reference: {len(terms)} terms and shapes</a> · <a href="{catalog}">All '
-            "vocabularies and reading guide</a></p></nav>"
+            f"vocabularies and reading guide</a> · Generated labels, definitions and scope notes (Turtle): {generated}"
+            "</p></nav>"
         )
         without = re.sub(r"(<body\b[^>]*>)", lambda m: m[0] + navigation, without, count=1)
         if not re.search(r'<meta\s+name=["\']viewport["\']', without, re.I):
@@ -662,7 +678,9 @@ def build(check: bool = False) -> Any:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--enrich", action="store_true", help="Also write the generated term annotations into the ontologies"
+        "--enrich",
+        action="store_true",
+        help="Also rewrite each module's generated annotation graph (<module>-doc.ttl)",
     )
     parser.add_argument("--check", action="store_true", help="Fail if a generated page differs; write nothing")
     args = parser.parse_args()

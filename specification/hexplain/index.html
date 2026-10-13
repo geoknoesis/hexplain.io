@@ -20,7 +20,7 @@
     </script>
 <meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../print.css" media="print">
 </head>
-<body><nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a href="#term-reference">Complete reference: 98 terms and shapes</a> · <a href="../reference/index.html">All vocabularies and reading guide</a></p></nav>
+<body><nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a href="#term-reference">Complete reference: 98 terms and shapes</a> · <a href="../reference/index.html">All vocabularies and reading guide</a> · Generated labels, definitions and scope notes (Turtle): <a href="core-doc.ttl">core-doc.ttl</a></p></nav>
     <section id="abstract">
         <p>
             The Hexplain Core Ontology provides the essential vocabulary to link physical data structures, described by the Binary Data Description Ontology (BDDO), to their abstract semantic meaning (described by domain vocabularies) and to their multi-dimensional layout (described by the Data Layout Vocabulary). It is the central "glue" of the Hexplain Ontology Family. This specification provides the normative OWL vocabulary, SHACL shapes, and JSON-LD context for Hexplain Core.
@@ -766,121 +766,31 @@ hexplain:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@e
     sh:property [ sh:path hexplain:parameterName ; sh:datatype xsd:string ;
         sh:message "hexplain:parameterName takes an xsd:string literal (rdfs:range xsd:string)." ] .
 
-# BEGIN GENERATED TERM DOCUMENTATION
-# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-@prefix hexplain: &lt;https://hexplain.io/ns/core#&gt; .
-@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
-@prefix skos: &lt;http://www.w3.org/2004/02/skos/core#&gt; .
-
-&lt;https://hexplain.io/ns/core&gt; skos:scopeNote "Import to link a physical description (bddo, dlv) to the RDF it emits: class and property mappings, conditional mappings, computed values, encoding pipelines, register bindings and the register lifecycle. It adds no byte-layout terms of its own."@en .
-hexplain:ClassMappingRule skos:scopeNote "Assert on each member of a hexplain:hasConditionalClassMapping list, with one hexplain:condition and one hexplain:semanticClass. Rules are tried in list order; the first whose condition holds decides the struct's class."@en .
-hexplain:ClassMappingRuleShape rdfs:label "Class Mapping Rule Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to instances of hexplain:ClassMappingRule. hexplain:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). hexplain:semanticClass takes exactly one value, an IRI naming an instance of owl:Class or rdfs:Class."@en .
-hexplain:CodecContractBindingShape rdfs:label "Codec Contract Binding Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:codecContract. hexplain:codecContract is declared on a register concept (a skos:Concept). Each focus node is an instance of skos:Concept. A register concept states at most one hexplain:codecContract, and it is a hexplain:CodecContract."@en .
-hexplain:CodecContractShape rdfs:label "Codec Contract Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to instances of hexplain:CodecContract; subjects using hexplain:codecKind, hexplain:contractVersion, hexplain:declaresParameter, hexplain:keepsSession, hexplain:raisesCategory, hexplain:vectorSuiteVersion. A codec contract states exactly one hexplain:codecKind. A codec contract states exactly one hexplain:contractVersion, a positive integer. Every hexplain:declaresParameter value is a hexplain:CodecParameterSpec. A codec contract states hexplain:keepsSession once, as a boolean. hexplain:raisesCategory is one of Validation, Checksum, Unsupported, ResourceLimit and Description. A codec contract states exactly one hexplain:vectorSuiteVersion, a positive integer."@en .
-hexplain:CodecParameter skos:scopeNote "Assert on each object of hexplain:codecParameter, with exactly one hexplain:parameterName, spelt as the codec itself names the setting, and exactly one of hexplain:parameterValue or hexplain:parameterExpression as its value."@en .
-hexplain:CodecParameterShape rdfs:label "Codec Parameter Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to instances of hexplain:CodecParameter; subjects using hexplain:parameterExpression, hexplain:parameterName, hexplain:parameterValue; objects of hexplain:codecParameter. A codec parameter states its value exactly one way: hexplain:parameterValue or hexplain:parameterExpression. Each focus node is exactly one of these: states hexplain:parameterValue; states hexplain:parameterExpression. hexplain:parameterExpression takes at most one value, a HEL expression, an xsd:string or bddo:HelExpression literal. hexplain:parameterName takes exactly one value, an xsd:string literal. hexplain:parameterValue takes at most one value; a parameter states exactly one of hexplain:parameterValue and hexplain:parameterExpression."@en .
-hexplain:CodecParameterSpecShape rdfs:label "Codec Parameter Spec Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to instances of hexplain:CodecParameterSpec; subjects using hexplain:allowedValue, hexplain:defaultValue, hexplain:listLength, hexplain:listValued, hexplain:maximumValue, hexplain:minimumValue, hexplain:parameterKey, hexplain:parameterType, hexplain:requiredParameter. Each value of hexplain:allowedValue is a literal. hexplain:defaultValue takes at most one value, a literal. hexplain:listLength takes at most one value, an xsd:integer of at least 1. hexplain:listValued takes at most one value, an xsd:boolean literal. hexplain:maximumValue takes at most one value, a literal. hexplain:minimumValue takes at most one value, a literal. A codec parameter spec states exactly one hexplain:parameterKey, an xsd:string literal. A codec parameter spec states exactly one hexplain:parameterType, one of the six hexplain:CodecParameterType individuals. hexplain:requiredParameter takes at most one value, an xsd:boolean literal."@en .
-hexplain:CodecSelectionShape rdfs:label "Codec Selection Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:codecCandidates, hexplain:codecFromExpression. A step that selects its codec at run time lists its candidates in one hexplain:codecCandidates list. hexplain:codecFromExpression takes at most one value, a HEL expression, an xsd:string or bddo:HelExpression literal. A step that selects its codec at run time carries no hexplain:codecParameter; parameters belong to the candidate steps. Every candidate is a hexplain:EncodingStep."@en .
-hexplain:CodecSessionScopeShape rdfs:label "Codec Session Scope Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:codecSessionScope. hexplain:codecSessionScope is declared on a bddo:Field. Each focus node is an instance of bddo:Field. hexplain:codecSessionScope is bddo:PerInstance or bddo:PerLayout, at most once."@en .
-hexplain:EncodingPipelineShape rdfs:label "Encoding Pipeline Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:hasEncodingStep. hexplain:hasEncodingStep must point to a single rdf:List. Every member of a hasEncodingStep list must be a hexplain:EncodingStep."@en .
-hexplain:EncodingStep skos:scopeNote "Assert on each member of a hexplain:hasEncodingStep list, naming its codec with exactly one hexplain:codec, or selecting it at run time with hexplain:codecFromExpression and hexplain:codecCandidates instead, plus any hexplain:codecParameter settings a codec-naming step was applied with (a selecting step carries none of its own). List the steps in the order the encoder applied them."@en .
-hexplain:EncodingStepShape rdfs:label "Encoding Step Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to instances of hexplain:EncodingStep; subjects using hexplain:codec, hexplain:codecFromExpression, hexplain:codecParameter. An encoding step names its codec with hexplain:codec or selects one with hexplain:codecFromExpression, never both and never neither. Each focus node is exactly one of these: states hexplain:codec; states hexplain:codecFromExpression. An encoding step names at most one codec, a skos:Concept IRI; it names one with hexplain:codec or selects one with hexplain:codecFromExpression, never both and never neither. Each value of hexplain:codecParameter is an instance of hexplain:CodecParameter."@en .
-hexplain:HasConditionalClassMappingShape rdfs:label "Has Conditional Class Mapping Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:hasConditionalClassMapping. hexplain:hasConditionalClassMapping is declared on a bddo:Struct. Each focus node is an instance of bddo:Struct. hexplain:mapsToClass and hexplain:hasConditionalClassMapping are mutually exclusive. Every member of a hasConditionalClassMapping list must be a hexplain:ClassMappingRule."@en .
-hexplain:HasConditionalMappingShape rdfs:label "Has Conditional Mapping Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:hasConditionalMapping. hexplain:hasConditionalMapping is declared on a bddo:Field. Each focus node is an instance of bddo:Field. Every member of a hasConditionalMapping list must be a hexplain:MappingRule."@en .
-hexplain:HasDataLayoutShape rdfs:label "Has Data Layout Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:hasDataLayout. hexplain:hasDataLayout is declared on a bddo:Field. Each focus node is an instance of bddo:Field. hexplain:hasDataLayout takes at most one value; each is an instance of dlv:DataLayout."@en .
-hexplain:IntegerValueShape skos:definition "Applied through references from other shapes. An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte). A conforming value is an integer (of any XSD integer datatype)."@en .
-hexplain:IsEncodedWithShape rdfs:label "Is Encoded With Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:isEncodedWith. A block is encoded one way: a single hexplain:isEncodedWith codec or a hexplain:hasEncodingStep pipeline, never both. Each focus node is a node that does not state both hexplain:isEncodedWith and hexplain:hasEncodingStep. hexplain:isEncodedWith takes at most one value; each is an IRI naming an instance of skos:Concept."@en .
-hexplain:LanguageFromFieldShape rdfs:label "Language From Field Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:languageFromField. hexplain:languageFromField is declared on a bddo:Field. Each focus node is an instance of bddo:Field. hexplain:languageFromField takes at most one value; each is an instance of bddo:Field."@en .
-hexplain:LanguageShape rdfs:label "Language Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:language. hexplain:language is declared on a bddo:Field. Each focus node is an instance of bddo:Field. hexplain:language takes at most one value; each is an xsd:language literal. hexplain:language and hexplain:languageFromField are mutually exclusive."@en .
-hexplain:MappingRule skos:scopeNote "Assert on each member of a hexplain:hasConditionalMapping list, with one hexplain:condition and one hexplain:semanticProperty, and optionally a hexplain:valueExpression computing the value that arm emits."@en .
-hexplain:MappingRuleShape rdfs:label "Mapping Rule Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to instances of hexplain:MappingRule. hexplain:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). hexplain:semanticProperty takes exactly one value, an IRI naming an instance of rdf:Property, owl:DatatypeProperty, owl:ObjectProperty or owl:AnnotationProperty. hexplain:valueDatatype takes at most one value; each is an IRI. hexplain:valueExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)."@en .
-hexplain:MapsToClassShape rdfs:label "Maps To Class Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:mapsToClass. hexplain:mapsToClass is declared on a bddo:Struct. Each focus node is an instance of bddo:Struct. Each value of hexplain:mapsToClass is an IRI naming an instance of owl:Class or rdfs:Class."@en .
-hexplain:MapsToObjectPropertyShape rdfs:label "Maps To Object Property Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:mapsToObjectProperty. hexplain:mapsToObjectProperty is declared on a bddo:Field. Each focus node is an instance of bddo:Field. hexplain:mapsToObjectProperty takes at most one value; each is an IRI naming an instance of rdf:Property or owl:ObjectProperty."@en .
-hexplain:MapsToPropertyShape rdfs:label "Maps To Property Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:mapsToProperty. hexplain:mapsToProperty is declared on a bddo:Field. Each focus node is an instance of bddo:Field. Each value of hexplain:mapsToProperty is an IRI naming an instance of rdf:Property, owl:DatatypeProperty, owl:ObjectProperty or owl:AnnotationProperty."@en .
-hexplain:RangeDatatypeShape skos:definition "Applies to subjects using hexplain:byteLength, hexplain:byteOffset, hexplain:condition, hexplain:parameterName. hexplain:byteLength takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). hexplain:byteOffset takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). hexplain:condition takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). hexplain:parameterName takes an xsd:string literal (rdfs:range xsd:string)."@en .
-hexplain:RegisterBinding skos:scopeNote "Assert on the object of each hexplain:usesRegister, with exactly one hexplain:forProperty and one hexplain:register. Several bindings for one property are read together: a value in any of their schemes is accepted."@en .
-hexplain:RegisterStatus skos:scopeNote "The class of the three controlled values of hexplain:status; do not mint further statuses. A register publishes the status of its entries; data never states it."@en .
-hexplain:UnitShape rdfs:label "Unit Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:unit. hexplain:unit is declared on a bddo:Field. Each focus node is an instance of bddo:Field. hexplain:unit takes at most one value; each is an IRI."@en .
-hexplain:ValueExpressionShape rdfs:label "Value Expression Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Applies to subjects using hexplain:valueDatatype, hexplain:valueExpression. hexplain:valueExpression and hexplain:valueDatatype are declared on a bddo:Field or a hexplain:MappingRule. Each focus node is an instance of bddo:Field or hexplain:MappingRule. hexplain:valueDatatype takes at most one value; each is an IRI. hexplain:valueExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)."@en .
-hexplain:_prefixes rdfs:label "prefixes"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; ;
-    skos:definition "Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data."@en .
-hexplain:byteLength skos:scopeNote "Stated by a processor on the resources it lifts, with hexplain:byteOffset, when it records byte ranges; a profile does not declare it. Also locates a conf:Finding's evidence."@en .
-hexplain:byteOffset skos:scopeNote "Stated by a processor on the resources it lifts, with hexplain:byteLength, when it records byte ranges; a profile does not declare it. Also locates a conf:Finding's evidence."@en .
-hexplain:codecParameter skos:definition "A named parameter value associated with one stage of an encoding pipeline."@en ;
-    skos:scopeNote "Use on a hexplain:EncodingStep, once per setting the codec was applied with; omit it for a codec that takes none, and for a step that selects its codec at run time with hexplain:codecFromExpression (its hexplain:codecCandidates carry the parameters instead)."@en .
-hexplain:condition skos:definition "The HEL Boolean expression guarding a semantic mapping rule (a hexplain:MappingRule or hexplain:ClassMappingRule): evaluated after the bytes are parsed, in the context of the field or struct being lifted, it decides which property or class the lifted RDF uses. It never changes how bytes are read; that is bddo:condition."@en ;
-    skos:scopeNote "Use exactly once on a hexplain:MappingRule or hexplain:ClassMappingRule: a HEL Boolean expression evaluated in the context of the field or struct being mapped."@en .
-hexplain:correspondsTo skos:scopeNote "Use on a register concept to name the ontology individual that denotes the same thing in another layer (a checksum concept and its bddo:ChecksumAlgorithm). It is an annotation: never a SKOS mapping, never equivalence, and it licenses no inference."@en .
-hexplain:forProperty skos:definition "The semantic RDF predicate whose controlled-value register binding is declared by this binding resource."@en ;
-    skos:scopeNote "Use exactly once on a hexplain:RegisterBinding, naming the property whose values the binding constrains."@en .
-hexplain:hasConditionalClassMapping skos:scopeNote "Use at most once on a bddo:Struct whose class depends on a discriminator; its object is an rdf:List of hexplain:ClassMappingRule. Do not combine with hexplain:mapsToClass on the same struct."@en .
-hexplain:hasConditionalMapping skos:definition "An ordered list of mapping rules that choose a semantic property according to the parsed instance."@en ;
-    skos:scopeNote "Use at most once on a bddo:Field whose meaning depends on a discriminator; its object is an rdf:List of hexplain:MappingRule, the first matching rule deciding the property and value emitted."@en .
-hexplain:hasDataLayout skos:scopeNote "Use at most once on a bddo:Field whose bytes are a multi-dimensional array, naming the dlv:DataLayout that addresses its cells."@en .
-hexplain:hasEncodingStep skos:scopeNote "Use at most once on a bddo:Field whose bytes pass through a pipeline of codecs; its object is an rdf:List of hexplain:EncodingStep in encoding order. Do not combine with hexplain:isEncodedWith."@en .
-hexplain:isEncodedWith skos:scopeNote "Use at most once on a bddo:Field whose bytes are encoded by a single codec without parameters. For several codecs or parameterised ones, use hexplain:hasEncodingStep instead."@en .
-hexplain:language skos:scopeNote "Use at most once on a bddo:Field that emits a string literal, with a BCP 47 tag fixed by the format. Do not combine with hexplain:languageFromField."@en .
-hexplain:languageFromField skos:scopeNote "Use at most once on a bddo:Field whose language the data states in a sibling field, naming that field. Do not combine with hexplain:language."@en .
-hexplain:mapsToClass skos:scopeNote "Use at most once on a bddo:Struct, naming the owl:Class every parsed instance of it is typed with. Use hexplain:hasConditionalClassMapping when the class depends on a discriminator."@en .
-hexplain:mapsToObjectProperty skos:scopeNote "Use at most once on a bddo:Field whose emitted object is an IRI: a nested struct's resource or an enumeration symbol. Use hexplain:mapsToProperty for a literal value."@en .
-hexplain:mapsToProperty skos:scopeNote "Use on a bddo:Field that emits a literal, naming the property the literal is the value of."@en .
-hexplain:parameterName skos:scopeNote "Use exactly once on a hexplain:CodecParameter."@en .
-hexplain:parameterValue skos:scopeNote "Use on a hexplain:CodecParameter that is not given a hexplain:parameterExpression instead, as the literal the format carries, with the datatype that literal naturally has."@en .
-hexplain:register skos:scopeNote "Use exactly once on a hexplain:RegisterBinding, naming the skos:ConceptScheme whose members are permitted values of the bound property."@en .
-hexplain:semanticClass skos:scopeNote "Use exactly once on a hexplain:ClassMappingRule, naming the class chosen when its condition holds."@en .
-hexplain:semanticProperty skos:definition "The RDF property selected by a matching semantic mapping rule."@en ;
-    skos:scopeNote "Use exactly once on a hexplain:MappingRule, naming the property emitted when its condition holds."@en .
-hexplain:status skos:scopeNote "Use at most once on a register entry (a concept, collection or scheme) that a register retires or reaffirms. A deprecated or superseded entry is also owl:deprecated true and has a history note; a superseded one names its replacement with dcterms:isReplacedBy."@en .
-hexplain:statusDeprecated skos:scopeNote "Use as the hexplain:status of a retired register entry that has no single replacement."@en .
-hexplain:statusSuperseded skos:scopeNote "Use as the hexplain:status of a retired register entry that names its replacement with dcterms:isReplacedBy."@en .
-hexplain:statusValid skos:scopeNote "Use as the hexplain:status of a current register entry, where saying so explicitly helps; an entry with no status is current unless it is owl:deprecated."@en .
-hexplain:unit skos:scopeNote "Use at most once on a bddo:Field whose value is a quantity, naming its unit of measure. It records the unit; it does not rescale the value."@en .
-hexplain:usesRegister skos:scopeNote "Use on the profile, once per property it binds to a register; the object is a hexplain:RegisterBinding."@en .
-hexplain:valueDatatype skos:scopeNote "Use at most once beside a hexplain:valueExpression, naming the datatype of the literal it emits when the HEL result's natural datatype is not the one wanted."@en .
-hexplain:valueExpression skos:scopeNote "Use at most once on a bddo:Field or a hexplain:MappingRule, when the emitted value is computed from the parsed one (scaling, offsets, unit conversion) rather than copied."@en .
+# ---------- Term ownership ----------
+# rdfs:isDefinedBy for the terms whose declaration above does not state it. A new term states
+# its own; tools/test_term_reference.py requires it of every term this file defines.
+:ClassMappingRuleShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:CodecContractBindingShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:CodecContractShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:CodecParameterShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:CodecParameterSpecShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:CodecSelectionShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:CodecSessionScopeShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:EncodingPipelineShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:EncodingStepShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:HasConditionalClassMappingShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:HasConditionalMappingShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:HasDataLayoutShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:IsEncodedWithShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:LanguageFromFieldShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:LanguageShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:MappingRuleShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:MapsToClassShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:MapsToObjectPropertyShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:MapsToPropertyShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:UnitShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:ValueExpressionShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
+:_prefixes rdfs:isDefinedBy &lt;https://hexplain.io/ns/core&gt; .
 </pre></section>
 
 

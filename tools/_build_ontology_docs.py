@@ -238,10 +238,18 @@ of the term reference, not notes.</li><li><b>Generated prose never templates SPA
 never copies a message that names result variables (<code>{?x}</code>); a shape with nothing else to say gets an \
 editorial <code>rdfs:comment</code>.</li><li><b>English, tagged.</b> Every <code>rdfs:label</code>, \
 <code>rdfs:comment</code> and SKOS documentation literal of a family term is tagged \
-<code>@en</code>.</li><li><b>Readable generated Turtle.</b> <code>tools/_build_term_reference.py --enrich</code> \
-appends its annotations after the marker <code># BEGIN GENERATED TERM DOCUMENTATION</code> as prefixed Turtle, one \
-statement per term; it adds annotations only. <code>tools/test_documentation_annotations.py</code> and \
-<code>tools/test_language_tags.py</code> check these rules.</li></ol>
+<code>@en</code>.</li><li><b>Generated annotations live beside the module, not in it.</b> \
+<code>tools/_build_term_reference.py --enrich</code> writes each module's generated labels, definitions and scope \
+notes to a sibling annotation graph, <code>&lt;module&gt;-doc.ttl</code> (<code>bddo/bddo-doc.ttl</code> beside \
+<code>bddo/bddo.ttl</code>), as prefixed Turtle, one statement per term. That file states \
+<code>rdfs:label</code>, <code>skos:definition</code> and <code>skos:scopeNote</code> only, declares no ontology, \
+and is listed in <code>family.json</code> (<code>files</code> and the <code>documentation</code> map), so loading \
+the family loads it. The canonical file is never written by a generator: it holds what its author wrote, which is \
+what an <code>owl:versionIRI</code> names and what a diff of it shows.</li><li><b>Ownership is authored.</b> \
+Every term's <code>rdfs:isDefinedBy</code> is stated in the canonical file that declares it, never in the \
+annotation graph. <code>tools/test_term_reference.py</code>, \
+<code>tools/test_documentation_annotations.py</code> and <code>tools/test_language_tags.py</code> check these \
+rules.</li></ol>
 <h2 id="hel-expressions">HEL expressions and versions</h2><p>A HEL expression is RDF text: \
 <code>bddo:sizeFromExpression</code>, <code>bddo:condition</code>, <code>bddo:validIf</code>, \
 <code>hexplain:condition</code>, <code>hexplain:valueExpression</code>, \

@@ -1,11 +1,16 @@
-"""Canonical local namespace routes; generation and server checks share this inventory."""
+"""Canonical local namespace routes; generation and server checks share this inventory.
+
+An ontology or version IRI is routed to the canonical module that declares it. A module's
+generated annotation graph (<module>-doc.ttl) declares no ontology and so has no namespace
+route: it is published at its own path under /specification/, served as Turtle.
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
-from _family import family_paths
+from _family import family_paths, is_documentation
 from rdflib import OWL, RDF, Graph
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,6 +29,15 @@ def routes() -> Any:
                         raise ValueError(f"Duplicate ontology route: {route}")
                     result[route] = file
     return result
+
+
+def documentation_routes() -> dict[str, Path]:
+    """Site path -> file, for every generated annotation graph of the family."""
+    return {
+        "/" + Path(path).relative_to(ROOT).as_posix(): Path(path)
+        for path in family_paths(ROOT / "specification")
+        if is_documentation(path)
+    }
 
 
 def render() -> str:
@@ -51,6 +65,18 @@ def render() -> str:
                 "  }",
             ]
         )
+    for route, file in sorted(documentation_routes().items()):
+        page = file.parent.relative_to(ROOT).as_posix() + "/index.html"
+        lines.extend(
+            [
+                f"  location = {route} {{",
+                "    types { }",
+                "    default_type text/turtle;",
+                "    add_header X-Content-Type-Options nosniff always;",
+                f'    add_header Link "</{page}>; rel=describedby" always;',
+                "  }",
+            ]
+        )
     lines += [
         "  location /ns/ { return 404; }",
         "  location /releases/ { try_files $uri $uri/ =404; }",
@@ -62,4 +88,7 @@ def render() -> str:
 
 if __name__ == "__main__":
     (ROOT / "deployment/publication.conf").write_text(render(), encoding="utf-8", newline="\n")
-    print(f"Generated {len(routes())} ontology and version routes")
+    print(
+        f"Generated {len(routes())} ontology and version routes and {len(documentation_routes())} "
+        "annotation-graph routes"
+    )

@@ -5,7 +5,8 @@ source already said and to fill gaps with templates. A review counted 267 terms 
 skos:definition repeated their rdfs:comment word for word, 140 shape definitions opening "A
 reusable validation contract for", 987 templated scope notes, and six definitions that had
 copied a SPARQL message with its result variables -- "{?s} declares {?np} parameter(s)" -- into
-prose. The block itself was appended as N-Triples in the middle of hand-written Turtle.
+prose. The block itself was appended as N-Triples in the middle of hand-written Turtle, and later
+as a generated suffix that outweighed the authored text in every diff of a canonical file.
 
 This gate holds the family to the rule in specification/ontology-design (Documentation
 annotations):
@@ -15,7 +16,10 @@ annotations):
   * no term has a skos:definition equal to one of its rdfs:comment values;
   * no definition starts with the old template opener, and no scope note is one of the retired
     template sentences;
-  * the generated block of every module is Turtle written with prefixed names, not N-Triples.
+  * the generated annotations of every module live in its sibling <module>-doc.ttl, written as
+    Turtle with prefixed names, not N-Triples, and stating only rdfs:label, skos:definition and
+    skos:scopeNote;
+  * no canonical module carries a generated documentation block.
 """
 
 from __future__ import annotations
@@ -30,7 +34,8 @@ from rdflib import RDFS, Graph, Namespace, URIRef
 
 ROOT = Path(__file__).resolve().parents[1]
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
-MARKER = "\n# BEGIN GENERATED TERM DOCUMENTATION\n"
+MARKER = "GENERATED TERM DOCUMENTATION"
+GENERATED = (RDFS.label, SKOS.definition, SKOS.scopeNote)
 PLACEHOLDER = re.compile(r"\{[?$][A-Za-z_]\w*\}")
 PROSE = (RDFS.label, RDFS.comment, SKOS.definition, SKOS.scopeNote)
 TEMPLATE_OPENERS = ("A reusable validation contract",)
@@ -81,15 +86,26 @@ def self_test() -> None:
 
 def main() -> int:
     self_test()
-    files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
+    documentation = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["documentation"]
+    files = sorted(documentation)
     whole, found = Graph(), []
-    for rel in files:
+    for rel, doc in sorted(documentation.items()):
         text = (ROOT / "specification" / rel).read_text(encoding="utf-8")
         whole.parse(data=text, format="turtle")
-        if MARKER not in text:
-            found.append(f"{rel}: no generated documentation block")
-        elif NTRIPLE.search(text.split(MARKER, 1)[1]):
-            found.append(f"{rel}: the generated documentation block is written as N-Triples; regenerate it")
+        if MARKER in text:
+            found.append(f"{rel}: carries a generated documentation block; it belongs in {doc}")
+        path = ROOT / "specification" / doc
+        if not path.is_file():
+            found.append(f"{rel}: no generated annotation graph {doc}; run tools/_build_term_reference.py --enrich")
+            continue
+        generated = path.read_text(encoding="utf-8")
+        if NTRIPLE.search(generated):
+            found.append(f"{doc}: written as N-Triples; regenerate it")
+        graph = Graph().parse(data=generated, format="turtle")
+        whole += graph
+        strays = sorted({p.n3(graph.namespace_manager) for p in graph.predicates() if p not in GENERATED})
+        if strays:
+            found.append(f"{doc}: states {', '.join(strays)}; a generated annotation graph holds prose only")
     found += problems(whole)
     if found:
         print(

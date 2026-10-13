@@ -13,7 +13,9 @@ Python 3.12 is the target (3.11 is the floor). The runner takes its gate list fr
 (`--jobs`, default the smaller of the CPU count and four), limits each gate, and records
 `.gate-results/summary.json`. A gate reports PASS, SKIP or FAIL by its exit status (0, 77,
 other). `specification/family.json` is the complete ontology/shape inventory. Missing and
-unlisted modules are errors, including for profile consumers. See [CONTRIBUTING.md](CONTRIBUTING.md).
+unlisted modules are errors, including for profile consumers. Each module has a generated annotation
+graph beside it (`<module>-doc.ttl`: labels, definitions and scope notes), listed there too. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 This is a prerelease specification. The independent review package is reproducible, but
 independent reviewer acceptance remains distinct from automated tests. Historical archive

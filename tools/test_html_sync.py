@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import rdflib
+from _family import DOC_SUFFIX
 from rdflib.compare import graph_diff, to_isomorphic
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -30,6 +31,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 def _modules():
     found = {}
     for ttl in sorted((ROOT / "specification").glob("*/*.ttl")) + sorted((ROOT / "specification").glob("*/*/*.ttl")):
+        if ttl.name.endswith(DOC_SUFFIX):
+            continue  # a generated annotation graph, not the vocabulary a page embeds
         doc = ttl.parent / "index.html"
         if doc.exists():
             key = ttl.parent.relative_to(ROOT / "specification").as_posix()
@@ -110,16 +113,19 @@ def main() -> int:
     # compared with it here.
     import json  # noqa: E402
 
-    MARKER = "\n# BEGIN GENERATED TERM DOCUMENTATION\n"
     VANN = rdflib.Namespace("http://purl.org/vocab/vann/")
     version_failures = []
-    family = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
+    family = [
+        f
+        for f in json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
+        if not f.endswith(DOC_SUFFIX)
+    ]
     registry = (ROOT / "specification/index.html").read_text(encoding="utf-8")
     registry = _section(registry, "namespaces")
     for rel in family:
         ttl = ROOT / "specification" / rel
         text = ttl.read_text(encoding="utf-8").replace("\r\n", "\n")
-        g = rdflib.Graph().parse(data=text.split(MARKER)[0], format="turtle")
+        g = rdflib.Graph().parse(data=text, format="turtle")
         ontology = next(iter(g.subjects(rdflib.RDF.type, rdflib.OWL.Ontology)), None)
         if ontology is None:
             continue

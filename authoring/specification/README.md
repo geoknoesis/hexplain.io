@@ -4,7 +4,7 @@ The catalogs and `.ttl.in` templates are build inputs, not a new public ontology
 
 1. Find the canonical target in `manifest.json`; edit its template or a referenced catalog entry.
 2. Use `rg 'constraint:pattern_ID' authoring/specification/templates` to find all consumers before changing a shared fragment. Share only identical constraints; targets and surrounding cardinalities remain local.
-3. Run `python tools/_expand_specification_patterns.py --write`. The generator resolves all inputs before writing. It preserves the existing generated term-annotation suffix, which remains owned by `_build_term_reference.py --enrich`.
+3. Run `python tools/_expand_specification_patterns.py --write`. The generator resolves all inputs before writing. A templated module is its expanded template, whole; the generated term annotations live in the module's sibling `<module>-doc.ttl`, which is owned by `_build_term_reference.py --enrich` and which this generator never touches. A term's `rdfs:isDefinedBy` is authored in the template.
 4. Run `python tools/_build_simplification_guide.py` and `python tools/_build_term_reference.py` after editorial changes. Ordinary reference generation does not enrich or change RDF.
 5. Run `python tools/run_gates.py`. The new pattern and equivalence gates are automatically discovered. Default expansion without `--write` checks freshness.
 

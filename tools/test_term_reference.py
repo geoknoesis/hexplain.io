@@ -7,12 +7,12 @@ from html.parser import HTMLParser
 
 from _build_term_reference import GUIDE, build
 from _reference import (
-    ANNOTATION_MARKER,
-    ANNOTATIONS,
+    GENERATED_ANNOTATIONS,
     RDFS,
     ROOT,
     SKOS,
     Graph,
+    documentation_path,
     kind,
     label,
     load,
@@ -46,13 +46,18 @@ def main() -> int:
     for directory, paths in modules().items():
         g = load(paths)
         base = load(paths, base=True)
-        # Parse only appended full-IRI annotations, then subtract them from this parse.
+        # The generated annotation graph of each module file: editorial annotations only, about terms
+        # the module declares, and nothing the module already states.
         annotations = Graph()
         for p in paths:
-            text = (ROOT / p).read_text(encoding="utf-8")
-            assert ANNOTATION_MARKER in text, p
-            annotations.parse(data=text.split(ANNOTATION_MARKER, 1)[1], format="turtle")
-        assert all(p in ANNOTATIONS for s, p, o in annotations), "Documentation changed formal semantics"
+            doc = ROOT / documentation_path(p)
+            assert doc.is_file(), f"{p}: no generated annotation graph ({doc.name}); run --enrich"
+            annotations.parse(data=doc.read_text(encoding="utf-8"), format="turtle")
+        assert all(p in GENERATED_ANNOTATIONS for s, p, o in annotations), "Documentation changed formal semantics"
+        assert set(annotations.subjects()) <= set(owned(base)), (
+            f"{directory}: documentation of a term not declared here"
+        )
+        assert not set(annotations) & set(base), f"{directory}: the annotation graph repeats the canonical file"
         assert isomorphic(g - annotations, base), directory
         for t in owned(g):
             total += 1
@@ -64,7 +69,10 @@ def main() -> int:
             scope_note = g.value(t, SKOS.scopeNote)
             assert definition and len(str(definition)) > 25 and str(definition).strip() != label(g, t), t
             assert (scope_note is None and kind(g, t) != "Ontology") or (scope_note and len(str(scope_note)) > 40), t
-            assert kind(g, t) == "Ontology" or g.value(t, RDFS.isDefinedBy), t
+            # Ownership is stated where the term is declared, never in the generated graph.
+            assert kind(g, t) == "Ontology" or base.value(t, RDFS.isDefinedBy), (
+                f"{t}: no rdfs:isDefinedBy in the canonical file"
+            )
             shapes += kind(g, t) in ["Node shape", "Property shape"]
         p = ROOT / directory / "index.html"
         page = Page()

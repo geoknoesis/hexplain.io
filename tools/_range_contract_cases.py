@@ -10,11 +10,11 @@ does not depend on the subject's type.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
 from _cases import row
+from _family import canonical_files
 from rdflib import RDFS, Graph, URIRef
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -71,7 +71,7 @@ def _routes() -> tuple[dict[URIRef, str], set[tuple[object, str]]]:
     """property -> module file whose subjects-of shape states its datatype."""
     from _range_datatypes import SH, allowed_datatypes
 
-    files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
+    files = canonical_files(ROOT / "specification")
     routes, narrowed = {}, set()
     for rel in files:
         g = Graph().parse(data=(ROOT / "specification" / rel).read_text(encoding="utf-8"), format="turtle")

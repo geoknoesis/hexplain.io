@@ -17,7 +17,7 @@
     </script>
 <meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../print.css" media="print">
 </head>
-<body><nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a href="#term-reference">Complete reference: 15 terms and shapes</a> · <a href="../reference/index.html">All vocabularies and reading guide</a></p></nav>
+<body><nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a href="#term-reference">Complete reference: 15 terms and shapes</a> · <a href="../reference/index.html">All vocabularies and reading guide</a> · Generated labels, definitions and scope notes (Turtle): <a href="geo-doc.ttl">geo-doc.ttl</a></p></nav>
     <section id="abstract">
         <p>
             The Hexplain Geospatial Vocabulary (GV) provides standard terms for geospatial and geointelligence data — raster, vector, and point-cloud formats. Used with BDDO, DLV, and Hexplain Core, it maps low-level fields from GeoTIFF, NetCDF, HDF5, or LAS to high-level concepts. GV is a <em>composition</em>: it defines the dataset kinds and <code>owl:imports</code> the orthogonal aspects that carry the actual concerns — spatial reference (<code>asref:</code>), geometry (<code>ageom:</code>), raster (<code>araster:</code>), point cloud (<code>apc:</code>), provenance (<code>aprov:</code>), and security (<code>asec:</code>). <b>Prefix:</b> <code>gv</code>; <b>namespace:</b> <code>https://hexplain.io/ns/geo#</code>.
@@ -162,39 +162,16 @@ gv:AcquisitionShape a sh:NodeShape ; sh:targetSubjectsOf aprov:acquisitionTime, 
     sh:property [ sh:path aprov:sensorType ; sh:datatype xsd:string ;
         sh:message "Each value of aprov:sensorType is an xsd:string literal." ] .
 
-# BEGIN GENERATED TERM DOCUMENTATION
-# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-@prefix gv: &lt;https://hexplain.io/ns/geo#&gt; .
-@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
-@prefix skos: &lt;http://www.w3.org/2004/02/skos/core#&gt; .
-
-&lt;https://hexplain.io/ns/geo&gt; skos:scopeNote "Use for georeferenced datasets. Combine the dataset kind with the appropriate raster, geometry, point-cloud, spatial-reference and provenance aspects."@en .
-gv:AcquisitionShape rdfs:label "Acquisition Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ;
-    skos:definition "Applies to subjects using aprov:acquisitionTime, aprov:platformName, aprov:sensorType. aprov:acquisitionTime takes at most one value; each is an xsd:dateTime literal. Each value of aprov:platformName is an xsd:string literal. Each value of aprov:sensorType is an xsd:string literal."@en .
-gv:CrsShape rdfs:label "Crs Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ;
-    skos:definition "Applies to subjects using asref:epsgCode, asref:wktString. asref:epsgCode takes at most one value; each is a number greater than 0. asref:wktString takes at most one value; each is an xsd:string literal."@en .
-gv:OriginShape rdfs:label "Origin Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ;
-    skos:definition "Applies to subjects using asref:originLatitude, asref:originLongitude. asref:originLatitude takes at most one value; each is a literal. asref:originLongitude takes at most one value; each is a literal."@en .
-gv:PixelRegistrationShape rdfs:label "Pixel Registration Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ;
-    skos:definition "Applies to subjects using asref:pixelRegistration. asref:pixelRegistration takes at most one value; each is either asref:PixelCorner or asref:PixelCenter."@en .
-gv:PointCloud skos:definition "A georeferenced collection of sampled points with per-point positions and optional attributes, without assuming a regular grid."@en .
-gv:PointCloudShape rdfs:label "Point Cloud Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ;
-    skos:definition "Applies to instances of gv:PointCloud; subjects using apc:pointCount, apc:pointDataLayout. apc:pointCount takes at most one value; each is a number at least 0. apc:pointDataLayout takes at most one value; each is an instance of bddo:Struct."@en .
-gv:RasterDataset skos:definition "A georeferenced dataset whose values are organized as sample grids or raster bands, described using raster and spatial-reference aspects."@en .
-gv:VectorDataset skos:definition "A georeferenced dataset whose spatial content is represented by explicit geometries and associated attributes."@en .
-gv:VectorShape rdfs:label "Vector Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ;
-    skos:definition "Applies to instances of gv:VectorDataset. ageom:geometryType takes at most one value; each is an IRI naming an instance of skos:Concept."@en .
-gv:axisElevation skos:definition "Deprecated duplicate of dlv:axisZ, kept so existing descriptions resolve. Units and vertical reference are supplied by the spatial reference."@en .
-gv:axisLatitude skos:definition "Deprecated duplicate of dlv:axisY, kept so existing descriptions resolve. Geographic meaning of a grid axis comes from its spatial reference, not from a separate axis individual."@en .
-gv:axisLongitude skos:definition "Deprecated duplicate of dlv:axisX, kept so existing descriptions resolve. Geographic meaning of a grid axis comes from its spatial reference, not from a separate axis individual."@en .
-gv:axisPoint rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; ;
-    skos:definition "The index axis of an unstructured point sequence, rather than a regular spatial grid direction."@en .
+# ---------- Term ownership ----------
+# rdfs:isDefinedBy for the terms whose declaration above does not state it. A new term states
+# its own; tools/test_term_reference.py requires it of every term this file defines.
+:AcquisitionShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
+:CrsShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
+:OriginShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
+:PixelRegistrationShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
+:PointCloudShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
+:VectorShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
+:axisPoint rdfs:isDefinedBy &lt;https://hexplain.io/ns/geo&gt; .
 </pre></section>
 
 

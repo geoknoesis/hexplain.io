@@ -23,6 +23,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
+from _family import canonical_files
 from rdflib import OWL, RDF, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection
 
@@ -35,7 +36,7 @@ STATUSES = RETIRED | {HEX.statusValid}
 
 
 def register_files() -> list[Any]:
-    files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
+    files = canonical_files(ROOT / "specification")
     return [f"specification/{f}" for f in files if f.startswith("register/")]
 
 

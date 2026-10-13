@@ -15,6 +15,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from _family import canonical_files
 from _site_inventory import ROOT, pages
 
 REGISTRY = ROOT / "specification/page-governance.json"
@@ -45,7 +46,7 @@ def layout_cases() -> Any:
 
 def vocabulary_modules() -> Any:
     """Family modules other than the shapes documents of conf and req (the homepage said "16+")."""
-    files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
+    files = canonical_files(ROOT / "specification")
     return sum(1 for f in files if not f.endswith("/shapes.ttl"))
 
 

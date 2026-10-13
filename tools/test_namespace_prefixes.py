@@ -24,6 +24,7 @@ from html import escape
 from pathlib import Path
 from typing import Any
 
+from _family import canonical_files
 from rdflib import OWL, RDF, Graph, Namespace
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -91,7 +92,7 @@ def main() -> int:
     if not isinstance(rows, list):
         print("FAIL: specification/family.json has no namespaces table")
         return 1
-    found = problems(rows, declared(family["files"]), PAGE.read_text(encoding="utf-8"))
+    found = problems(rows, declared(canonical_files(ROOT / "specification")), PAGE.read_text(encoding="utf-8"))
     if found:
         print("FAIL:\n  " + "\n  ".join(found))
         return 1

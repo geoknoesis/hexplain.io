@@ -79,7 +79,7 @@ def _shape_inventory(modules: list[dict[str, Any]], trace: dict[str, Any]) -> di
 
 
 def _payload_paths(modules: list[dict[str, Any]]) -> set[str]:
-    paths = set(specgraph.ontology_paths())
+    paths = set(specgraph.family_file_paths())
     paths.update(
         p.relative_to(ROOT).as_posix() for p in (ROOT / "specification/validation/test").glob("*") if p.is_file()
     )

@@ -150,39 +150,14 @@ araster:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en
     sh:property [ sh:path araster:dimensionName ; sh:datatype xsd:string ;
         sh:message "araster:dimensionName takes an xsd:string literal (rdfs:range xsd:string)." ] .
 
-# BEGIN GENERATED TERM DOCUMENTATION
-# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-
-<https://hexplain.io/ns/aspect/raster> skos:scopeNote "Use for logical raster samples, bands and arrays after parsing. Logical dimensions are independent of physical DLV addressing; partial graphs and complete dimension lists have different completeness contracts."@en .
-araster:ArrayDimensionShape rdfs:label "Array Dimension Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
-    skos:definition "Applies to instances of araster:ArrayDimension. An array dimension is a resource (an IRI or a blank node), not a literal. Each focus node is a resource (an IRI or a blank node). araster:coordinateArray takes at most one value; each is a resource (an IRI or a blank node). araster:dimensionExtent takes exactly one value, a value conforming to araster:ExtentShape. araster:dimensionKind takes at most one value; each is an IRI. araster:dimensionName takes at most one value; each is an xsd:string literal at least 1 character long."@en .
-araster:BandMembershipShape rdfs:label "Band Membership Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
-    skos:definition "Applies to subjects using araster:hasBand. Each value of araster:hasBand is a value conforming to araster:RasterBandShape. Band indexes must be unique within one grid and may not exceed its declared count. Described bands exceed the declared total."@en .
-araster:ExtentShape rdfs:label "Extent Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
-    skos:definition "Applied through references from other shapes. An extent is a non-negative integer literal (an XSD integer-family datatype, at least 0; zero is an empty axis). A conforming value is an integer (of any XSD integer datatype) at least 0."@en .
-araster:GroupHierarchyShape rdfs:label "Group Hierarchy Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
-    skos:definition "Applies to subjects using araster:hasGroup. Each value of araster:hasGroup is a resource (an IRI or a blank node). Group containment must be acyclic."@en .
-araster:PositiveCountShape rdfs:label "Positive Count Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
-    skos:definition "Applied through references from other shapes. A count is a positive integer literal (an XSD integer-family datatype, greater than 0). A conforming value is an integer (of any XSD integer datatype) greater than 0."@en .
-araster:RangeDatatypeShape skos:definition "Applies to subjects using araster:dimensionExtent, araster:dimensionName. araster:dimensionExtent takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). araster:dimensionName takes an xsd:string literal (rdfs:range xsd:string)."@en .
-araster:RasterBandShape rdfs:label "Raster Band Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
-    skos:definition "Applies to instances of araster:RasterBand; subjects using araster:bandIndex, araster:noDataValue, araster:sampleOffset, araster:sampleScale, araster:sampleUnit; objects of araster:hasBand, araster:hasMask. A raster band is a resource (an IRI or a blank node), not a literal. Each focus node is a resource (an IRI or a blank node). araster:bandIndex takes at most one value; each is a value conforming to araster:PositiveCountShape. araster:noDataValue is at most one numeric literal (xsd:double/float, including NaN; xsd:decimal; or an integer-family datatype). araster:sampleOffset takes at most one value; each is an xsd:double literal that is finite (not NaN or infinite). araster:sampleScale takes at most one value; each is an xsd:double literal that is finite (not NaN or infinite). araster:sampleUnit takes at most one value; each is an IRI. A band belongs to at most one grid (araster:hasBand): no-data inheritance and band indexing need a single owning grid."@en .
-araster:RasterSizeShape rdfs:label "Raster Size Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
-    skos:definition "Applies to subjects using araster:bandCount, araster:height, araster:width. araster:bandCount takes at most one value; each is a value conforming to araster:PositiveCountShape. araster:height takes at most one value; each is a value conforming to araster:PositiveCountShape. araster:width takes at most one value; each is a value conforming to araster:PositiveCountShape."@en .
-araster:SampleArrayShape rdfs:label "Sample Array Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
-    skos:definition "Applies to instances of araster:SampleArray; subjects using araster:dimensions; objects of araster:coordinateArray, araster:hasArray. araster:dimensions takes exactly one value, a resource (an IRI or a blank node). Each member of the araster:dimensions list is a value conforming to araster:ArrayDimensionShape. Dimension lists must terminate in rdf:nil, contain exactly one first/rest per cell, and contain no cycles."@en .
-araster:dimensionName skos:definition "The source-level name of a logical array dimension, independent of its position in any one array."@en .
-araster:hasArray skos:definition "A logical array contained in a group, independent of its physical storage path."@en .
-araster:hasBand skos:definition "A band view belonging to a raster grid. A reused physical sample plane may need distinct band views when its position differs between grids."@en .
-araster:hasGroup skos:definition "A logical child group within an acyclic array-group hierarchy."@en .
+# ---------- Term ownership ----------
+# rdfs:isDefinedBy for the terms whose declaration above does not state it. A new term states
+# its own; tools/test_term_reference.py requires it of every term this file defines.
+:ArrayDimensionShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:BandMembershipShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:ExtentShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:GroupHierarchyShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:PositiveCountShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:RasterBandShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:RasterSizeShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .
+:SampleArrayShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> .

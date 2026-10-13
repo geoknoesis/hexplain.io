@@ -51,6 +51,13 @@ with `python tools/conformance/generate_inputs.py --check` that the suite on dis
 Edit shared constraint authoring where a canonical RDF module is generated. Regenerate the
 affected module and documentation using its existing builder. Keep `specification/family.json`
 complete when adding a vocabulary; coordinate the identical discovery contract with profiles.
+
+A canonical module holds only what its author wrote. Generated labels, definitions and scope
+notes are written by `python tools/_build_term_reference.py --enrich` to the module's sibling
+annotation graph, `<module>-doc.ttl`, which `family.json` lists under `files` and maps under
+`documentation`; never edit one by hand, and never paste generated prose into a canonical file.
+State each new term's `rdfs:isDefinedBy` where you declare it: the generator refuses a term
+without one.
 Add positive and negative semantic cases, including activation, result path and numeric edges.
 Regenerate changed evidence rather than weakening freshness or coverage assertions.
 

@@ -38,6 +38,9 @@ def discover(base: str) -> list[Case]:
                 iri = str(ontology)
                 if iri.startswith("https://hexplain.io/ns/"):
                     cases.append((base + iri.removeprefix("https://hexplain.io"), "text/turtle", file))
+            if file.name.endswith("-doc.ttl"):
+                # A generated annotation graph declares no ontology; it is published at its own path.
+                cases.append((base + "/" + file.relative_to(ROOT).as_posix(), "text/turtle", file))
     for file in sorted((ROOT / "releases").glob("*/manifest.json")):
         cases.append((base + "/" + file.relative_to(ROOT).as_posix(), "application/json", file))
     assert cases, "No publication contracts discovered"

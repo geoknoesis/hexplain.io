@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import specgraph
+from _family import documentation_name
 from _shape_text import PLACEHOLDER, Unhandled, constrains_value, value_phrase
 from _shape_text import message as shape_message
 from _term_editorial import DEFINITIONS, SCOPE_NOTES
@@ -21,8 +22,11 @@ SH = Namespace("http://www.w3.org/ns/shacl#")
 VANN = Namespace("http://purl.org/vocab/vann/")
 BDDO = Namespace("https://hexplain.io/ns/bddo#")
 HX = Namespace("https://hexplain.io/ns/core#")
-ANNOTATION_MARKER = "\n# BEGIN GENERATED TERM DOCUMENTATION\n"
+#: Annotations that describe a term without changing what it means.
 ANNOTATIONS = {RDFS.label, RDFS.isDefinedBy, SKOS.definition, SKOS.scopeNote}
+#: The annotations a module's generated graph (<module>-doc.ttl) may state. rdfs:isDefinedBy is not
+#: among them: a term's ownership is stated in the canonical file that declares it.
+GENERATED_ANNOTATIONS = {RDFS.label, SKOS.definition, SKOS.scopeNote}
 TARGETS = {
     SH.targetClass: "instances of",
     SH.targetSubjectsOf: "subjects using",
@@ -38,13 +42,24 @@ def modules() -> dict[str, Any]:
     return dict(sorted(out.items(), key=lambda x: str(x[0])))
 
 
+def documentation_path(path: Any) -> Path:
+    """The generated annotation graph beside a canonical module file (same root-relativity as ``path``)."""
+    path = Path(path)
+    return path.with_name(documentation_name(path.name))
+
+
 def load(paths: Iterable[Any], base: bool = False) -> Any:
+    """The graph of the canonical module files ``paths``, with their generated annotations unless ``base``.
+
+    ``base=True`` is the module as authored: what a version IRI names, and what the generated
+    annotations are computed from.
+    """
     g = Graph()
     for p in paths:
-        text = (ROOT / p).read_text(encoding="utf-8")
-        if base:
-            text = text.split(ANNOTATION_MARKER)[0]
-        g.parse(data=text, format="turtle")
+        g.parse(data=(ROOT / p).read_text(encoding="utf-8"), format="turtle")
+        doc = ROOT / documentation_path(p)
+        if not base and doc.is_file():
+            g.parse(data=doc.read_text(encoding="utf-8"), format="turtle")
     return g
 
 

@@ -18,7 +18,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 import rdflib
-from _family import family_paths
+from _family import family_paths, is_documentation
 from _family import load as _load_files
 from rdflib import OWL, RDF, Graph, URIRef
 
@@ -41,9 +41,23 @@ def glob(pattern: str) -> list[str]:
     return sorted(p.relative_to(ROOT).as_posix() for p in ROOT.glob(pattern) if p.is_file())
 
 
-def ontology_paths() -> list[str]:
-    """Every family file, as a path relative to the repository root."""
+def family_file_paths() -> list[str]:
+    """Every family file, canonical modules and their generated annotation graphs alike."""
     return [Path(p).relative_to(ROOT).as_posix() for p in family_paths(ROOT / "specification")]
+
+
+def ontology_paths() -> list[str]:
+    """Every canonical module of the family, as a path relative to the repository root.
+
+    These are the files that declare terms and shapes. Their generated annotation graphs
+    (``<module>-doc.ttl``) are :func:`documentation_paths`; :func:`ontologies` loads both.
+    """
+    return [p for p in family_file_paths() if not is_documentation(p)]
+
+
+def documentation_paths() -> list[str]:
+    """Every generated annotation graph of the family, as a path relative to the repository root."""
+    return [p for p in family_file_paths() if is_documentation(p)]
 
 
 def shape_paths() -> list[str]:
@@ -96,8 +110,12 @@ def _family_graph(paths: list[str]) -> Graph:
 
 
 def ontologies(extra: Iterable[str] = ()) -> Graph:
-    """The family graph plus any ``extra`` Turtle files; a fresh graph on every call."""
-    graph = _family_graph(ontology_paths())
+    """The family graph plus any ``extra`` Turtle files; a fresh graph on every call.
+
+    The family graph is every canonical module with its generated annotations, so labels,
+    definitions and scope notes are present whichever file states them.
+    """
+    graph = _family_graph(family_file_paths())
     extra = list(extra)
     if extra:
         graph += load(extra)
@@ -106,7 +124,7 @@ def ontologies(extra: Iterable[str] = ()) -> Graph:
 
 def shapes() -> Graph:
     """The family's shapes graph; a fresh graph on every call."""
-    return _family_graph(shape_paths())
+    return _family_graph(family_file_paths())
 
 
 def modules_for(namespaces: Iterable[str]) -> list[str]:
@@ -116,7 +134,7 @@ def modules_for(namespaces: Iterable[str]) -> list[str]:
     pays for every shape in the graph on every call); the import closure keeps the selection
     honest when a module starts depending on another.
     """
-    family = _family_graph(ontology_paths())
+    family = _family_graph(family_file_paths())
     wanted = set(namespaces)
     selected = {o for o in family.subjects(RDF.type, OWL.Ontology) if str(family.value(o, VANN_URI) or "") in wanted}
     todo = list(selected)

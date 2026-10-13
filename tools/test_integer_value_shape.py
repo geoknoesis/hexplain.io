@@ -3,8 +3,8 @@
 Shapes are validated module by module, so each module that ranges a property over integers
 carries its own <prefix>:IntegerValueShape. specification/shared-patterns/integer-value-shape.json
 lists those modules and integer-value-shape.ttl.template is the one spelling; this gate renders the
-template per listed module and requires the result verbatim in the module's canonical Turtle,
-before the generated documentation block. A family module that declares an IntegerValueShape
+template per listed module and requires the result verbatim in the module's canonical Turtle.
+A family module that declares an IntegerValueShape
 without being listed, or declares it twice, fails.
 """
 
@@ -14,9 +14,10 @@ import json
 import re
 from pathlib import Path
 
+from _family import canonical_files
+
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "specification/shared-patterns/integer-value-shape.json"
-MARKER = "\n# BEGIN GENERATED TERM DOCUMENTATION\n"
 DECLARATION = re.compile(r"^\S*:IntegerValueShape a sh:NodeShape", re.M)
 
 
@@ -33,17 +34,17 @@ def problems() -> tuple[list[str], int]:
     found, listed = [], set()
     for row in contract["copies"]:
         listed.add(row["file"])
-        text = (ROOT / row["file"]).read_text(encoding="utf-8").split(MARKER)[0]
+        text = (ROOT / row["file"]).read_text(encoding="utf-8")
         if rendered(template, row["prefix"], row["ontology"]) not in text:
             found.append(f"{row['file']}: {row['prefix']}:IntegerValueShape differs from the shared template")
         if len(DECLARATION.findall(text)) != 1:
             found.append(f"{row['file']}: IntegerValueShape is declared {len(DECLARATION.findall(text))} times")
     if contract["master"] not in listed:
         found.append("the master module is not among the copies")
-    family = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
+    family = canonical_files(ROOT / "specification")
     for rel in family:
         path = "specification/" + rel
-        if path not in listed and DECLARATION.search((ROOT / path).read_text(encoding="utf-8").split(MARKER)[0]):
+        if path not in listed and DECLARATION.search((ROOT / path).read_text(encoding="utf-8")):
             found.append(f"{path}: declares an IntegerValueShape but is not listed in {CONTRACT.name}")
     return found, len(listed)
 

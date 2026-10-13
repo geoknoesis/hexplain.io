@@ -17,7 +17,7 @@
     </script>
 <meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../print.css" media="print">
 </head>
-<body><nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a href="#term-reference">Complete reference: 10 terms and shapes</a> · <a href="../reference/index.html">All vocabularies and reading guide</a></p></nav>
+<body><nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a href="#term-reference">Complete reference: 10 terms and shapes</a> · <a href="../reference/index.html">All vocabularies and reading guide</a> · Generated labels, definitions and scope notes (Turtle): <a href="archive-doc.ttl">archive-doc.ttl</a></p></nav>
     <section id="abstract">
         <p>
             The Hexplain Archive Vocabulary (AXV) provides standard terms for the semantic properties of archive and container formats. Used with BDDO and Hexplain Core, it maps low-level fields from formats like ZIP, TAR, 7z, or GZIP to high-level concepts such as file name, uncompressed size, checksum, and modification time, enabling interoperability and semantic querying across archive formats. AXV is a thin composition that <code>owl:imports</code> the Hexplain aspect layer and reuses its cross-cutting terms — packaging (<code>apkg</code>), filesystem metadata (<code>afs</code>), integrity (<code>aintg</code>), and encoding (<code>aenc</code>) — retaining only archive-specific terms of its own. <b>Prefix:</b> <code>axv</code>; <b>namespace:</b> <code>https://hexplain.io/ns/archive#</code>.
@@ -146,26 +146,11 @@ axv:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     sh:property [ sh:path axv:entryComment ; sh:datatype xsd:string ;
         sh:message "axv:entryComment takes an xsd:string literal (rdfs:range xsd:string)." ] .
 
-# BEGIN GENERATED TERM DOCUMENTATION
-# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-@prefix axv: &lt;https://hexplain.io/ns/archive#&gt; .
-@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
-@prefix skos: &lt;http://www.w3.org/2004/02/skos/core#&gt; .
-
-&lt;https://hexplain.io/ns/archive&gt; skos:scopeNote "Use for archive resources and member entries. Distinguish stored compressed bytes from logical member content."@en .
-axv:Archive skos:definition "A container resource packaging independently identifiable member entries."@en .
-axv:ArchiveEntry skos:definition "One member of an archive, including its payload and associated entry metadata."@en .
-axv:ArchiveShape rdfs:label "Archive Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ;
-    skos:definition "Applies to instances of axv:Archive. Each value of apkg:hasEntry is an instance of axv:ArchiveEntry."@en .
-axv:CentralDirectory skos:definition "An index component describing archive entries and the information needed to locate them."@en .
-axv:EntryShape rdfs:label "Entry Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; ;
-    skos:definition "Applies to instances of axv:ArchiveEntry; subjects using axv:compressedSize, axv:entryComment. axv:compressedSize takes at most one value; each is a number at least 0. aenc:compression takes at most one value; each is an IRI naming an instance of skos:Concept. afs:fileName takes at most one value; each is an xsd:string literal. afs:fileSize takes at most one value; each is a number at least 0. afs:isDirectory takes at most one value; each is an xsd:boolean literal. afs:modificationTime takes at most one value; each is an xsd:dateTime literal. aintg:checksum takes at most one value; each is an xsd:hexBinary literal."@en .
-axv:IntegerValueShape skos:definition "Applied through references from other shapes. An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte). A conforming value is an integer (of any XSD integer datatype)."@en .
-axv:RangeDatatypeShape skos:definition "Applies to subjects using axv:compressedSize, axv:entryComment. axv:compressedSize takes an integer within the xsd:unsignedLong value space (rdfs:range xsd:unsignedLong). axv:entryComment takes an xsd:string literal (rdfs:range xsd:string)."@en .
-axv:compressedSize skos:definition "The number of bytes occupied by an archive entry's compressed representation, distinct from its logical uncompressed size."@en .
-axv:entryComment skos:definition "Free-text commentary associated with an individual archive entry."@en .
+# ---------- Term ownership ----------
+# rdfs:isDefinedBy for the terms whose declaration above does not state it. A new term states
+# its own; tools/test_term_reference.py requires it of every term this file defines.
+:ArchiveShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; .
+:EntryShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/archive&gt; .
 </pre></section>
 
 

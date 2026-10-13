@@ -20,7 +20,7 @@
     </script>
 <meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../print.css" media="print">
 </head>
-<body><nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a href="#term-reference">Complete reference: 290 terms and shapes</a> · <a href="../reference/index.html">All vocabularies and reading guide</a></p></nav>
+<body><nav id="ontology-reference-navigation" aria-label="Ontology documentation"><p><a href="#term-reference">Complete reference: 290 terms and shapes</a> · <a href="../reference/index.html">All vocabularies and reading guide</a> · Generated labels, definitions and scope notes (Turtle): <a href="bddo-doc.ttl">bddo-doc.ttl</a></p></nav>
     <section id="abstract">
         <p>
             The Binary Data Description Ontology (BDDO) provides a formal vocabulary to declaratively describe the structure, syntax, and layout of binary data. It is the foundational physical layer of the Hexplain Ontology Family. BDDO allows authors to model binary formats as nested structures and typed fields, with support for dynamic layouts through conditional logic, variable sizing, offset-based addressing, bit-level fields, arrays, stream synchronization, enumerations, and integrity checksums. This specification provides the normative OWL vocabulary for BDDO and a set of SHACL shapes for validating BDDO descriptions.
@@ -2126,421 +2126,203 @@ bddo:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     sh:property [ sh:path bddo:whitespaceSeparated ; sh:datatype xsd:boolean ;
         sh:message "bddo:whitespaceSeparated takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] .
 
-# BEGIN GENERATED TERM DOCUMENTATION
-# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-@prefix bddo: &lt;https://hexplain.io/ns/bddo#&gt; .
-@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
-@prefix skos: &lt;http://www.w3.org/2004/02/skos/core#&gt; .
-
-&lt;https://hexplain.io/ns/bddo&gt; skos:scopeNote "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification."@en .
-bddo:ArgumentArityShape rdfs:label "Argument Arity Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:ArgumentListShape rdfs:label "Argument List Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to subjects using bddo:hasArgument. bddo:hasArgument must point to a single rdf:List. Every member of a hasArgument list is a HEL expression, an xsd:string or bddo:HelExpression literal."@en .
-bddo:AsciiNumericWidthShape rdfs:label "Ascii Numeric Width Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Field. A bddo:asciiInteger / bddo:asciiDecimal field must declare a width (size / sizeFromField / sizeFromExpression), a terminator, or bddo:separatedBy."@en .
-bddo:BaseType skos:definition "The interpretation category of a primitive value before its particular width or encoding is applied."@en .
-bddo:BigEndian rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Byte order placing the most significant byte of a multi-byte value first."@en .
-bddo:BitOrder skos:definition "The order in which bits are consumed within a byte for sub-byte fields; independent of multi-byte endianness."@en .
-bddo:ChecksumAlgorithm skos:definition "An identifier for an integrity-check algorithm; a profile must resolve algorithm variants and parameters unambiguously."@en .
-bddo:ChecksumShape rdfs:label "Checksum Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:ConditionalEndiannessShape rdfs:label "Conditional Endianness Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to subjects using bddo:hasConditionalEndianness. bddo:endianness and bddo:hasConditionalEndianness are mutually exclusive. bddo:hasConditionalEndianness must point to a single rdf:List. Every member of a hasConditionalEndianness list must be a bddo:EndiannessRule."@en .
-bddo:CustomCrcShape rdfs:label "Custom Crc Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:CustomCrc. A bddo:CustomCrc states exactly one bddo:crcInit. A bddo:CustomCrc states exactly one bddo:crcPolynomial. A bddo:CustomCrc states exactly one bddo:crcReflectIn. A bddo:CustomCrc states exactly one bddo:crcReflectOut. A bddo:CustomCrc states exactly one bddo:crcWidth, an integer from 8 to 64. A bddo:CustomCrc states exactly one bddo:crcXorOut."@en .
-bddo:CustomEncodingShape rdfs:label "Custom Encoding Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:CustomEncoding; subjects using bddo:ianaCharset. An encoding that states a bddo:ianaCharset is an IRI (so that the fields using it can name it), and a registered encoding is never also typed bddo:CustomEncoding. Each focus node is an IRI not an instance of bddo:CustomEncoding one of bddo:utf8, bddo:ascii, bddo:utf16le, bddo:utf16be, bddo:latin1, bddo:utf32le, bddo:utf32be, bddo:ucs2le, bddo:ucs2be, bddo:windows1252, bddo:iso8859_2, bddo:iso8859_5, bddo:iso8859_7, bddo:iso8859_9, bddo:iso8859_15, bddo:ebcdic037 or bddo:shiftJis. An encoding states exactly one bddo:ianaCharset, an IANA Character Sets registry name (letters, digits and . _ : ( ) + -, at most 40 characters); a bddo:CustomEncoding must state it."@en .
-bddo:DataType skos:definition "A reusable declaration of how a primitive field value is represented and interpreted, including its base category, width, signedness and optional RDF datatype."@en .
-bddo:DataTypeOrStruct skos:definition "The union of a primitive datatype declaration and a structured record declaration; either can supply a field's effective type."@en .
-bddo:DataTypeRule skos:definition "A conditional choice of the effective datatype or structure of a field."@en .
-bddo:DataTypeRuleShape rdfs:label "Data Type Rule Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:DataTypeRule. bddo:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). bddo:ruleDataType takes exactly one value, an IRI naming an instance of bddo:DataType or bddo:Struct."@en .
-bddo:DataTypeShape rdfs:label "Data Type Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:DataType. bddo:baseType takes at most one value; each is one of bddo:baseInteger, bddo:baseFloat, bddo:baseString or bddo:baseBytes. bddo:bcd takes at most one value; each is an xsd:boolean literal. bddo:bitWidth takes at most one value; each is a number greater than 0. bddo:endianness takes at most one value; each is either bddo:BigEndian or bddo:LittleEndian. bddo:fixedPointScale takes at most one value. bddo:floatFormat takes at most one value; each is one of bddo:ieee754, bddo:ibmHexadecimal, bddo:vaxF or bddo:bfloat16. bddo:isSigned takes at most one value; each is an xsd:boolean literal. bddo:xsdType takes at most one value; each is an IRI."@en .
-bddo:DelimitedRecordsShape rdfs:label "Delimited Records Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:DelimitedRecords. A bddo:DelimitedRecords separates values by a fixed bddo:fieldDelimiter or by runs of whitespace (bddo:whitespaceSeparated true), never both. Each focus node is a node that does not state both bddo:fieldDelimiter and bddo:whitespaceSeparated true. bddo:commentPrefix takes at most one value; each is an xsd:string literal. bddo:escapeChar takes at most one value; each is an xsd:hexBinary literal. bddo:fieldDelimiter takes at most one value; each is an xsd:hexBinary literal. A bddo:DelimitedRecords must declare at least one field. bddo:keyValueSeparator takes at most one value; each is an xsd:hexBinary literal. bddo:quoteChar takes at most one value; each is an xsd:hexBinary literal. bddo:recordDelimiter takes at most one value; each is an xsd:hexBinary literal. bddo:skipRecords takes at most one value; each is a number at least 0. bddo:trimWhitespace takes at most one value; each is an xsd:boolean literal. bddo:whitespaceSeparated takes at most one value; each is an xsd:boolean literal."@en .
-bddo:DelimitedTableShape rdfs:label "Delimited Table Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:DelimitedTable. A bddo:DelimitedTable declares how its columns are separated: a bddo:fieldDelimiter or bddo:whitespaceSeparated true. Each focus node is either a node that states bddo:fieldDelimiter or a node that states bddo:whitespaceSeparated true. bddo:keyValueSeparator applies to a KeyValueHeader, not a DelimitedTable. No field of a bddo:DelimitedTable states bddo:key: a table's columns are located by position, and bddo:key applies to a field of a KeyValueHeader."@en .
-bddo:DerivedFieldShape rdfs:label "Derived Field Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Field. A bddo:valueFromExpression (derived) field must not also declare a byte-consuming mechanism (dataType, hasConditionalDataType, size*, terminator, bitLength, atOffset* or enumeration)."@en .
-bddo:DispatchArm skos:definition "One key-to-type association contributed to a dispatch table; keys are unique within a table across all contributing graphs."@en .
-bddo:DispatchArmShape rdfs:label "Dispatch Arm Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:DispatchArm; subjects using bddo:armDataType, bddo:armKey, bddo:armTable. bddo:armDataType takes exactly one value, an IRI naming an instance of bddo:DataType or bddo:Struct. bddo:armKey takes exactly one value, an xsd:string or xsd:integer literal. bddo:armTable takes exactly one value, an instance of bddo:DispatchTable."@en .
-bddo:DispatchKeyUniquenessShape rdfs:label "Dispatch Key Uniqueness Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:DispatchTable. Two DispatchArms of one DispatchTable declare the same armKey."@en .
-bddo:DispatchTable skos:definition "A keyed, open selection of a field's effective type: the dispatch key is matched by equality against the keys of arms that any importing description may contribute."@en .
-bddo:DispatchTableShape rdfs:label "Dispatch Table Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:DispatchTable. A bddo:DispatchTable states its key exactly one way: bddo:dispatchOnField or bddo:dispatchOnExpression. Each focus node is exactly one of these: states bddo:dispatchOnField; states bddo:dispatchOnExpression. bddo:dispatchDefault takes at most one value; each is an IRI naming an instance of bddo:DataType or bddo:Struct. bddo:dispatchOnExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal). bddo:dispatchOnField takes at most one value; each is an instance of bddo:Field."@en .
-bddo:Encoding skos:definition "A character encoding used to convert a sequence of bytes to text."@en .
-bddo:Endianness skos:definition "The order in which the bytes of a multi-byte value contribute to its significance."@en .
-bddo:EndiannessRuleShape rdfs:label "Endianness Rule Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:EndiannessRule. bddo:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). bddo:ruleEndianness must be bddo:BigEndian or bddo:LittleEndian."@en .
-bddo:EnumValue skos:definition "One association between a raw enumeration value and the semantic symbol it denotes."@en .
-bddo:EnumValueShape rdfs:label "Enum Value Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:EnumValue. bddo:enumRawValue takes exactly one value. bddo:enumSymbol takes at most one value; each is an IRI."@en .
-bddo:Enumeration skos:definition "A mapping from raw parsed values, or bit masks when flags are enabled, to semantic symbol IRIs."@en .
-bddo:EnumerationShape rdfs:label "Enumeration Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Enumeration. bddo:enumIsFlags takes at most one value; each is an xsd:boolean literal. bddo:hasEnumValue takes at least one value; each is an instance of bddo:EnumValue."@en .
-bddo:FieldOffsetShape rdfs:label "Field Offset Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Field. A bddo:Field must use at most one offset mechanism."@en .
-bddo:FieldRepetitionShape rdfs:label "Field Repetition Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Field. A bddo:Field must use at most one repetition mechanism."@en .
-bddo:FieldShape rdfs:label "Field Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Field. A bddo:Field declares how it is typed (bddo:dataType, bddo:hasConditionalDataType, bddo:hasDispatchTable or bddo:valueFromExpression) and, if it is a separated text number (bddo:separatedBy), no size, size source, end-of-stream flag or terminator. Each focus node is either a node that states bddo:dataType, a node that states bddo:hasConditionalDataType, a node that states bddo:valueFromExpression or a node that states bddo:hasDispatchTable, that does not state both bddo:separatedBy and bddo:size, that does not state both bddo:separatedBy and bddo:sizeFromField, that does not state both bddo:separatedBy and bddo:sizeFromExpression, that does not state both bddo:separatedBy and bddo:sizeToEndOfStream, that does not state both bddo:separatedBy and bddo:terminator. bddo:alignment takes at most one value; each is a number greater than 0. bddo:atOffset takes at most one value; each is a number at least 0. bddo:atOffsetFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal). bddo:atOffsetFromField takes at most one value; each is an instance of bddo:Field. bddo:bcd takes at most one value; each is an xsd:boolean literal. bddo:bitLength takes at most one value; each is a number greater than 0. bddo:bitOrder takes at most one value; each is either bddo:MSBFirst or bddo:LSBFirst. bddo:checksum takes at most one value; each is an instance of bddo:Checksum. bddo:dataType takes at most one value; each is an IRI naming an instance of bddo:DataType or bddo:Struct. bddo:encoding takes at most one value; each is a registered bddo:Encoding individual or an instance of bddo:Encoding (a bddo:CustomEncoding a profile mints). bddo:encoding names an encoding outside the registered set (bddo:utf8, bddo:ascii, bddo:utf16le, bddo:utf16be, bddo:latin1, bddo:utf32le, bddo:utf32be, bddo:ucs2le, bddo:ucs2be, bddo:windows1252, bddo:iso8859_2, bddo:iso8859_5, bddo:iso8859_7, bddo:iso8859_9, bddo:iso8859_15, bddo:ebcdic037, bddo:shiftJis); a bddo:CustomEncoding is accepted, but only a processor that supports its bddo:ianaCharset can decode it. bddo:enumeration takes at most one value; each is an instance of bddo:Enumeration. bddo:fixedPointScale takes at most one value. bddo:floatFormat takes at most one value; each is one of bddo:ieee754, bddo:ibmHexadecimal, bddo:vaxF or bddo:bfloat16. bddo:hasDispatchTable takes at most one value; each is an instance of bddo:DispatchTable. bddo:hasFixedValue takes at most one value; each is a literal. bddo:isPresentIf takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal). bddo:offsetBase takes at most one value; each is one of bddo:streamStart, bddo:streamEnd, bddo:parentStart or bddo:currentPosition. bddo:padByte takes at most one value; each is one xsd:hexBinary octet (two hex digits). bddo:padTo takes at most one value; each is a number greater than 0. bddo:repeatCount takes at most one value; each is a number at least 0. bddo:repeatCountFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal). bddo:repeatCountFromField takes at most one value; each is an instance of bddo:Field. bddo:repeatUntil takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal). bddo:rootKeyFromField takes at most one value; each is an instance of bddo:Field. bddo:seekScope takes at most one value; each is either bddo:regionScope or bddo:streamScope. bddo:separatedBy takes at most one value; each is an xsd:string literal equal to \"whitespace\". bddo:size takes at most one value; each is a number greater than 0. bddo:sizeFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal). bddo:sizeFromField takes at most one value; each is an instance of bddo:Field. bddo:sizeToEndOfStream takes at most one value; each is an xsd:boolean literal. bddo:terminator takes at most one value; each is an xsd:hexBinary literal. bddo:trimNull takes at most one value; each is an xsd:boolean literal. bddo:validIf takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal). bddo:valueFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal). Every member of a hasConditionalDataType list must be a bddo:DataTypeRule."@en .
-bddo:FieldSizingShape rdfs:label "Field Sizing Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Field. A bddo:Field must use at most one sizing/termination mechanism."@en .
-bddo:GroupedRecordsShape rdfs:label "Grouped Records Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:DelimitedRecords. bddo:hasGrouping takes at most one value; each is an instance of bddo:RecordGrouping. bddo:pathSeparator takes at most one value; each is an xsd:string literal."@en .
-bddo:HelVersionShape skos:definition "Applies to subjects using bddo:helVersion. bddo:helVersion is stated at most once, as an xsd:string major.minor version of two decimal numbers without leading zeros, such as \"1.0\"."@en .
-bddo:IntegerValueShape skos:definition "Applied through references from other shapes. An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte). A conforming value is an integer (of any XSD integer datatype)."@en .
-bddo:KeyPathShape rdfs:label "Key Path Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Field. bddo:keyPath takes at most one value; each is an xsd:string literal. bddo:keyPath locates a field inside nested groups, so its container must declare bddo:hasGrouping; without one the container is flat and the path addresses nothing."@en .
-bddo:KeyValueHeaderShape rdfs:label "Key Value Header Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:KeyValueHeader. A bddo:KeyValueHeader must declare bddo:keyValueSeparator. Every field of a bddo:KeyValueHeader declares at most one bddo:key (flat) or one bddo:keyPath (nested), never both; a field with neither is located by its simple key."@en .
-bddo:LSBFirst rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Bit order consuming the least significant remaining bit of each byte first."@en .
-bddo:LittleEndian rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Byte order placing the least significant byte of a multi-byte value first."@en .
-bddo:LocalBindingShape rdfs:label "Local Binding Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:LocalBinding; subjects using bddo:localExpression. A bddo:LocalBinding is an IRI (its name is the simple key of its IRI) and is not a bddo:Field. Each focus node is an IRI not an instance of bddo:Field. A bddo:LocalBinding states exactly one bddo:localExpression."@en .
-bddo:MSBFirst rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Bit order consuming the most significant remaining bit of each byte first."@en .
-bddo:NamespaceBindingShape rdfs:label "Namespace Binding Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:NamespaceBinding; subjects using bddo:namespaceIRI, bddo:namespacePrefix; objects of bddo:hasNamespaceBinding. A namespace binding needs the IRI it binds to; a prefix alone names nothing. bddo:namespaceIRI must be an absolute IRI (it begins with a scheme). bddo:namespacePrefix takes exactly one value, an xsd:string literal."@en .
-bddo:NodePathShape rdfs:label "Node Path Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Field; subjects using bddo:nodePath. bddo:nodePath takes at most one value; each is an xsd:string literal."@en .
-bddo:NumericBaseShape rdfs:label "Numeric Base Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to subjects using bddo:numericBase. bddo:numericBase applies only to a field whose bddo:dataType is bddo:asciiInteger. bddo:numericBase must be 8, 10 or 16."@en .
-bddo:NumericRepresentationShape rdfs:label "Numeric Representation Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:OffsetBase skos:definition "The reference position against which an explicit field offset is resolved."@en .
-bddo:PaddingShape rdfs:label "Padding Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:ParameterShape rdfs:label "Parameter Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Parameter; subjects using bddo:parameterType. A bddo:Parameter is not a bddo:Field: it consumes no bytes and is not a member of the parsed tree. Each focus node is a value not an instance of bddo:Field. bddo:parameterType is one of bddo:IntegerParameter, bddo:FloatParameter, bddo:StringParameter, bddo:BytesParameter and bddo:BooleanParameter."@en .
-bddo:ParameterisedStructShape rdfs:label "Parameterised Struct Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to subjects using bddo:hasParameter. bddo:hasParameter is declared on a bddo:Struct (or a subclass of it). Each focus node is an instance of bddo:Struct. bddo:hasParameter must point to a single rdf:List. Every member of a hasParameter list is a bddo:Parameter named by its IRI."@en .
-bddo:RangeDatatypeShape skos:definition "Applies to subjects using bddo:alignment, bddo:atOffset, bddo:atOffsetFromExpression, bddo:bcd, bddo:bitLength, bddo:bitWidth, bddo:commentPrefix, bddo:condition, bddo:coversExpression, bddo:coversFromExpression, bddo:coversToExpression, bddo:crcCheck, bddo:crcInit, bddo:crcPolynomial, bddo:crcReflectIn, bddo:crcReflectOut, bddo:crcWidth, bddo:crcXorOut, bddo:dispatchOnExpression, bddo:enumIsFlags, bddo:escapeChar, bddo:fieldDelimiter, bddo:fixedPointScale, bddo:groupCloseToken, bddo:groupOpenToken, bddo:ianaCharset, bddo:isPresentIf, bddo:isSigned, bddo:key, bddo:keyIsCaseInsensitive, bddo:keyPath, bddo:keyValueSeparator, bddo:localExpression, bddo:namespaceIRI, bddo:namespacePrefix, bddo:nodePath, bddo:numericBase, bddo:padByte, bddo:padTo, bddo:pathSeparator, bddo:quoteChar, bddo:recordDelimiter, bddo:repeatCount, bddo:repeatCountFromExpression, bddo:repeatUntil, bddo:separatedBy, bddo:size, bddo:sizeFromExpression, bddo:sizeToEndOfStream, bddo:skipRecords, bddo:syncOnMarker, bddo:terminator, bddo:trimNull, bddo:trimWhitespace, bddo:validIf, bddo:valueFromExpression, bddo:whitespaceSeparated. bddo:alignment takes a positive integer (rdfs:range xsd:positiveInteger). bddo:atOffset takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:atOffsetFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:bcd takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:bitLength takes a positive integer (rdfs:range xsd:positiveInteger). bddo:bitWidth takes a positive integer (rdfs:range xsd:positiveInteger). bddo:commentPrefix takes an xsd:string literal (rdfs:range xsd:string). bddo:condition takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:coversExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:coversFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:coversToExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:crcCheck takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:crcInit takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:crcPolynomial takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:crcReflectIn takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:crcReflectOut takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:crcWidth takes a positive integer (rdfs:range xsd:positiveInteger). bddo:crcXorOut takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:dispatchOnExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:enumIsFlags takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:escapeChar takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:fieldDelimiter takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:fixedPointScale takes an integer (rdfs:range xsd:integer). bddo:groupCloseToken takes an xsd:string literal (rdfs:range xsd:string). bddo:groupOpenToken takes an xsd:string literal (rdfs:range xsd:string). bddo:ianaCharset takes an xsd:string literal (rdfs:range xsd:string). bddo:isPresentIf takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:isSigned takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:key takes an xsd:string literal (rdfs:range xsd:string). bddo:keyIsCaseInsensitive takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:keyPath takes an xsd:string literal (rdfs:range xsd:string). bddo:keyValueSeparator takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:localExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:namespaceIRI takes an xsd:anyURI literal (rdfs:range xsd:anyURI). bddo:namespacePrefix takes an xsd:string literal (rdfs:range xsd:string). bddo:nodePath takes an xsd:string literal (rdfs:range xsd:string). bddo:numericBase takes a positive integer (rdfs:range xsd:positiveInteger). bddo:padByte takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:padTo takes a positive integer (rdfs:range xsd:positiveInteger). bddo:pathSeparator takes an xsd:string literal (rdfs:range xsd:string). bddo:quoteChar takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:recordDelimiter takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:repeatCount takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:repeatCountFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:repeatUntil takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:separatedBy takes an xsd:string literal (rdfs:range xsd:string). bddo:size takes a positive integer (rdfs:range xsd:positiveInteger). bddo:sizeFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:sizeToEndOfStream takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:skipRecords takes a non-negative integer (rdfs:range xsd:nonNegativeInteger). bddo:syncOnMarker takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:terminator takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary). bddo:trimNull takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:trimWhitespace takes an xsd:boolean literal (rdfs:range xsd:boolean). bddo:validIf takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:valueFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string). bddo:whitespaceSeparated takes an xsd:boolean literal (rdfs:range xsd:boolean)."@en .
-bddo:RecordGroupingShape rdfs:label "Record Grouping Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:RecordGrouping. bddo:groupCloseToken takes exactly one value, an xsd:string literal. bddo:groupOpenToken takes exactly one value, an xsd:string literal. A bddo:RecordGrouping must name exactly one style: keyedGroup, valuedGroup or sectionHeaded."@en .
-bddo:SeekScope skos:definition "The reach of an offset-addressed read: the innermost bounded region, or the whole stream."@en .
-bddo:SeekScopeShape rdfs:label "Seek Scope Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Field. bddo:seekScope is only meaningful on an offset-addressed Field (atOffset / atOffsetFromField / atOffsetFromExpression)."@en .
-bddo:StructShape rdfs:label "Struct Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Struct. bddo:alignment takes at most one value; each is a number greater than 0. bddo:bitOrder takes at most one value; each is either bddo:MSBFirst or bddo:LSBFirst. bddo:endianness takes at most one value; each is either bddo:BigEndian or bddo:LittleEndian. bddo:hasField must point to a single rdf:List. bddo:padByte takes at most one value; each is one xsd:hexBinary octet (two hex digits). bddo:padTo takes at most one value; each is a number greater than 0. bddo:size takes at most one value; each is a number greater than 0. bddo:sizeFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal). bddo:sizeFromField takes at most one value; each is an instance of bddo:Field. bddo:syncOnMarker takes at most one value; each is an xsd:hexBinary literal. Every member of a Struct's hasField list must be a bddo:Field or a bddo:LocalBinding."@en .
-bddo:StructSizingShape rdfs:label "Struct Sizing Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Struct. A bddo:Struct must use at most one sizing mechanism (size / sizeFromField / sizeFromExpression)."@en .
-bddo:TreeDocumentShape rdfs:label "Tree Document Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:TreeDocument. A bddo:TreeDocument must declare at least one field. Each value of bddo:hasNamespaceBinding is an instance of bddo:NamespaceBinding. A bddo:TreeDocument must declare exactly one bddo:treeSyntax: bddo:xml or bddo:json. Every field of a bddo:TreeDocument is located by exactly one bddo:nodePath, and not by a key, a key path or a byte offset. bddo:hasNamespaceBinding applies to an XML tree document; JSON Pointer has no namespace prefixes."@en .
-bddo:TreePrefixBindingShape rdfs:label "Tree Prefix Binding Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:TypeSelectionExclusivityShape rdfs:label "Type Selection Exclusivity Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Field. A bddo:Field must not declare both hasDispatchTable and hasConditionalDataType."@en .
-bddo:VariableLengthFieldShape rdfs:label "Variable Length Field Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Field. A bddo:bytes or bddo:string field must declare a sizing or termination mechanism."@en .
-bddo:VarintWidthShape rdfs:label "Varint Width Shape"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Applies to instances of bddo:Field. A variable-length integer field (bddo:varuint, bddo:varint, bddo:sqliteVarint) must not declare a width or terminator: its length is discovered from the bytes."@en .
-bddo:_prefixes rdfs:label "prefixes"@en ;
-    rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data."@en .
-bddo:adler32 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The Adler-32 checksum identifier, producing a 32-bit integrity value for a byte sequence."@en .
-bddo:alignment rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A positive byte-boundary requirement applied when positioning a field under the processing model."@en .
-bddo:armDataType rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The datatype or structure selected when an arm's key matches."@en .
-bddo:armKey rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The string or integer key value an arm matches by equality."@en .
-bddo:armTable rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The dispatch table an arm contributes to."@en .
-bddo:ascii rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "US-ASCII character encoding using seven-bit character values."@en .
-bddo:asciiDecimal rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:asciiInteger rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:atOffset rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The fixed byte displacement locating a field relative to the selected offset base."@en .
-bddo:atOffsetFromExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A HEL expression computing a byte displacement relative to the selected offset base."@en .
-bddo:atOffsetFromField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The field whose parsed value supplies the byte displacement relative to the selected offset base."@en .
-bddo:baseBytes rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Primitive category for an uninterpreted byte sequence."@en .
-bddo:baseFloat rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Primitive category for floating-point numeric values, before a particular width is selected."@en .
-bddo:baseInteger rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Primitive category for integral numeric values, before width and signedness are applied."@en .
-bddo:baseString rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Primitive category for textual values interpreted using a character encoding."@en .
-bddo:baseType rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The primitive interpretation category from which a datatype is constructed."@en .
-bddo:bitLength rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The number of bits occupied by a bit-level field, distinct from a primitive datatype's declared bit width."@en .
-bddo:bitOrder rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The order used to consume bits within each byte when reading sub-byte fields; it is independent of the byte order of a multi-byte value."@en .
-bddo:bitWidth rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The fixed number of bits used to represent one value of a primitive datatype."@en .
-bddo:bytes rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Variable-length primitive byte-sequence datatype; its extent is supplied by the field's sizing mechanism."@en .
-bddo:checksum rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The integrity-check declaration associated with a field, including its algorithm and covered byte interval."@en .
-bddo:checksumAlgorithm rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The algorithm used to compute the integrity value over the declared coverage interval."@en .
-bddo:commentPrefix rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:condition rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The HEL Boolean expression guarding a physical parsing rule (a bddo:DataTypeRule or bddo:EndiannessRule, or a dlv:CellDataTypeRule or dlv:DimensionOrderRule): evaluated while the bytes are read, in the context of the field or struct being parsed, it decides which datatype, byte order, cell type or dimension order applies. It never chooses the RDF a node is lifted to; that is hexplain:condition."@en .
-bddo:coversExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:coversFromExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:coversFromField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The field whose first byte is the inclusive start of a checksum's covered interval."@en .
-bddo:coversToExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:coversToField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The field whose last byte is included in a checksum's covered interval. This differs from the exclusive end used by coversToExpression."@en .
-bddo:crc16 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The CRC-16/CCITT-FALSE integrity check: polynomial 0x1021, initial value 0xFFFF, no input or output reflection and final XOR 0x0000 (check value 0x29B1 over the ASCII bytes 123456789). Other CRC-16 variants, such as CRC-16/ARC or CRC-16/XMODEM, have identifiers of their own."@en .
-bddo:crc16Arc rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The CRC-16/ARC integrity check: width 16, polynomial 0x8005, initial value 0x0000, input and output reflected and final XOR 0x0000 (check value 0xBB3D over the ASCII bytes 123456789)."@en .
-bddo:crc16Modbus rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The CRC-16/MODBUS integrity check: width 16, polynomial 0x8005, initial value 0xFFFF, input and output reflected and final XOR 0x0000 (check value 0x4B37 over the ASCII bytes 123456789)."@en .
-bddo:crc16X25 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The CRC-16/IBM-SDLC (X-25) integrity check: width 16, polynomial 0x1021, initial value 0xFFFF, input and output reflected and final XOR 0xFFFF (check value 0x906E over the ASCII bytes 123456789)."@en .
-bddo:crc16Xmodem rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The CRC-16/XMODEM integrity check: width 16, polynomial 0x1021, initial value 0x0000, no input or output reflection and final XOR 0x0000 (check value 0x31C3 over the ASCII bytes 123456789)."@en .
-bddo:crc32 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The CRC-32/ISO-HDLC integrity check used by zlib and PNG: reflected polynomial 0xEDB88320, initial value 0xFFFFFFFF and final XOR 0xFFFFFFFF (check value 0xCBF43926 over the ASCII bytes 123456789). Other 32-bit CRC variants, such as CRC-32C, have identifiers of their own."@en .
-bddo:crc32Bzip2 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The CRC-32/BZIP2 integrity check: width 32, polynomial 0x04C11DB7, initial value 0xFFFFFFFF, no input or output reflection and final XOR 0xFFFFFFFF (check value 0xFC891918 over the ASCII bytes 123456789)."@en .
-bddo:crc32Mpeg2 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The CRC-32/MPEG-2 integrity check: width 32, polynomial 0x04C11DB7, initial value 0xFFFFFFFF, no input or output reflection and final XOR 0x00000000 (check value 0x0376E6E7 over the ASCII bytes 123456789)."@en .
-bddo:crc32c rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The CRC-32/ISCSI (CRC-32C) integrity check: width 32, polynomial 0x1EDC6F41, initial value 0xFFFFFFFF, input and output reflected and final XOR 0xFFFFFFFF (check value 0xE3069283 over the ASCII bytes 123456789)."@en .
-bddo:crc64Ecma182 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The CRC-64/ECMA-182 integrity check: width 64, polynomial 0x42F0E1EBA9EA3693, initial value 0x0000000000000000, no input or output reflection and final XOR 0x0000000000000000 (check value 0x6C40DF5F0B497347 over the ASCII bytes 123456789)."@en .
-bddo:crc64Xz rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The CRC-64/XZ integrity check: width 64, polynomial 0x42F0E1EBA9EA3693, initial value 0xFFFFFFFFFFFFFFFF, input and output reflected and final XOR 0xFFFFFFFFFFFFFFFF (check value 0x995DC9BBDF1939FA over the ASCII bytes 123456789)."@en .
-bddo:crc8Smbus rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The CRC-8/SMBUS integrity check: width 8, polynomial 0x07, initial value 0x00, no input or output reflection and final XOR 0x00 (check value 0xF4 over the ASCII bytes 123456789)."@en .
-bddo:currentPosition rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Offset reference at the parser's current position before the explicitly addressed field is read."@en .
-bddo:dataType rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The primitive datatype or nested structure used to interpret a physical field when a conditional type does not replace it."@en .
-bddo:dispatchDefault rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The type selected when no arm matches the dispatch key."@en .
-bddo:dispatchOnExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A HEL expression whose value is the dispatch key."@en .
-bddo:dispatchOnField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The sibling field whose parsed value is the dispatch key."@en .
-bddo:encoding rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The character encoding applied when interpreting a textual field."@en .
-bddo:endianness rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:enumIsFlags rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:enumRawValue rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The raw literal matched by an enumeration member; for flag enumerations it is interpreted as a bit mask."@en .
-bddo:enumSymbol rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The semantic resource IRI emitted for a matching enumeration member."@en .
-bddo:enumeration rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The enumeration used to associate a field's raw value with one or more semantic symbol IRIs."@en .
-bddo:escapeChar rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:fieldDelimiter rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:float16 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 16-bit floating-point primitive datatype. Byte order is not fixed on this datatype; the field and processing context determine it."@en .
-bddo:float16be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 16-bit floating-point primitive datatype. Byte order is Big Endian."@en .
-bddo:float16le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 16-bit floating-point primitive datatype. Byte order is Little Endian."@en .
-bddo:float32 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 32-bit floating-point primitive datatype. Byte order is not fixed on this datatype; the field and processing context determine it."@en .
-bddo:float32be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 32-bit floating-point primitive datatype. Byte order is Big Endian."@en .
-bddo:float32le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 32-bit floating-point primitive datatype. Byte order is Little Endian."@en .
-bddo:float64 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 64-bit floating-point primitive datatype. Byte order is not fixed on this datatype; the field and processing context determine it."@en .
-bddo:float64be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 64-bit floating-point primitive datatype. Byte order is Big Endian."@en .
-bddo:float64le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 64-bit floating-point primitive datatype. Byte order is Little Endian."@en .
-bddo:groupingStyle skos:definition "The grouping convention that determines how opening and closing records establish named nested groups."@en .
-bddo:hasConditionalDataType rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The ordered list of conditional datatype rules used to select how a field is parsed."@en .
-bddo:hasConditionalEndianness rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:hasDispatchTable rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The keyed dispatch table that selects this field's effective type; exclusive with the ordered conditional datatype rules."@en .
-bddo:hasEnumValue rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "An enumeration member associating a raw value or mask with a symbol."@en .
-bddo:hasField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:hasFixedValue rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The literal a parsed field is required to equal, such as a signature or fixed discriminator."@en .
-bddo:int16 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 16-bit signed integer primitive datatype. Byte order is not fixed on this datatype; the field and processing context determine it."@en .
-bddo:int16be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 16-bit signed integer primitive datatype. Byte order is Big Endian."@en .
-bddo:int16le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 16-bit signed integer primitive datatype. Byte order is Little Endian."@en .
-bddo:int24 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 24-bit signed integer primitive datatype. Byte order is not fixed on this datatype; the field and processing context determine it."@en .
-bddo:int24be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 24-bit signed integer primitive datatype. Byte order is Big Endian."@en .
-bddo:int24le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 24-bit signed integer primitive datatype. Byte order is Little Endian."@en .
-bddo:int32 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 32-bit signed integer primitive datatype. Byte order is not fixed on this datatype; the field and processing context determine it."@en .
-bddo:int32be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 32-bit signed integer primitive datatype. Byte order is Big Endian."@en .
-bddo:int32le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 32-bit signed integer primitive datatype. Byte order is Little Endian."@en .
-bddo:int64 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 64-bit signed integer primitive datatype. Byte order is not fixed on this datatype; the field and processing context determine it."@en .
-bddo:int64be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 64-bit signed integer primitive datatype. Byte order is Big Endian."@en .
-bddo:int64le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 64-bit signed integer primitive datatype. Byte order is Little Endian."@en .
-bddo:int8 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "An 8-bit signed integer primitive datatype. Byte order is not fixed on this datatype; the field and processing context determine it."@en .
-bddo:isPresentIf rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A HEL boolean condition controlling whether a field occurs and consumes bytes in this instance."@en .
-bddo:isSigned rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Whether an integer representation includes negative values. This flag does not define byte order."@en .
-bddo:json rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:key rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:keyIsCaseInsensitive rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:keyValueSeparator rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:keyedGroup rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:latin1 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "ISO-8859-1 character encoding mapping each byte to the corresponding Latin-1 character value."@en .
-bddo:md5 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The MD5 message-digest identifier, producing a 128-bit digest; this term identifies a stored integrity algorithm and does not claim cryptographic security."@en .
-bddo:numericBase rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:offsetBase rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The origin used to interpret a field's explicit byte displacement; it is not a spatial reference or a calibration offset."@en .
-bddo:parentStart rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Offset reference at the beginning of the containing parsed structure."@en .
-bddo:quoteChar rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:recordDelimiter rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:regionScope rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Seek scope confining an offset-addressed read to the innermost bounded region; the default."@en .
-bddo:repeatCount rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The fixed number of occurrences of a repeated field. Zero denotes an empty repetition."@en .
-bddo:repeatCountFromExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The HEL expression that computes the number of occurrences of a repeated field."@en .
-bddo:repeatCountFromField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The already available field whose numeric value determines a repetition count."@en .
-bddo:repeatUntil rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A HEL termination condition for a repeated field, evaluated according to the processing model's repetition rules."@en .
-bddo:rootKeyFromField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:ruleDataType rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The datatype or structure selected when a conditional datatype rule matches."@en .
-bddo:ruleEndianness rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:sectionHeaded rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:seekScope rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Whether an offset-addressed read is confined to its bounded region or resolved against the whole stream."@en .
-bddo:separatedBy rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:sha1 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The SHA-1 message-digest identifier, producing a 160-bit digest; this term does not claim suitability for collision-resistant security uses."@en .
-bddo:sha256 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The SHA-256 message-digest identifier, producing a 256-bit digest of the covered byte sequence."@en .
-bddo:size rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A fixed byte extent declared for a field or bounded structure. This is a byte count, not a bit width or repetition count."@en .
-bddo:sizeFromExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A HEL expression whose result supplies the byte extent in the applicable parsing context."@en .
-bddo:sizeFromField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A reference to an already available field whose parsed numeric value supplies the byte extent."@en .
-bddo:sizeToEndOfStream rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "When true, consumes the remaining bytes of the applicable bounded stream region. It does not bypass an enclosing bound."@en .
-bddo:skipRecords rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:sqliteVarint rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:streamEnd rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Offset reference at the end of the applicable bounded stream; interpretation follows the offset rules of the processing model."@en .
-bddo:streamScope rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Seek scope resolving an offset-addressed read against the whole stream, suspending the region bound for that read."@en .
-bddo:streamStart rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Offset reference at the beginning of the applicable bounded stream."@en .
-bddo:string rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "Variable-length primitive text datatype; its byte extent and character encoding are supplied by the field/profile."@en .
-bddo:syncOnMarker rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A byte marker used to locate synchronization points when reading a repeated structured sequence."@en .
-bddo:terminator rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "The byte sequence that terminates a variable-length field. Delimiter handling follows the processing contract rather than an inferred text encoding."@en .
-bddo:trimNull rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:trimWhitespace rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:uint16 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 16-bit unsigned integer primitive datatype. Byte order is not fixed on this datatype; the field and processing context determine it."@en .
-bddo:uint16be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 16-bit unsigned integer primitive datatype. Byte order is Big Endian."@en .
-bddo:uint16le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 16-bit unsigned integer primitive datatype. Byte order is Little Endian."@en .
-bddo:uint24 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 24-bit unsigned integer primitive datatype. Byte order is not fixed on this datatype; the field and processing context determine it."@en .
-bddo:uint24be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 24-bit unsigned integer primitive datatype. Byte order is Big Endian."@en .
-bddo:uint24le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 24-bit unsigned integer primitive datatype. Byte order is Little Endian."@en .
-bddo:uint32 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 32-bit unsigned integer primitive datatype. Byte order is not fixed on this datatype; the field and processing context determine it."@en .
-bddo:uint32be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 32-bit unsigned integer primitive datatype. Byte order is Big Endian."@en .
-bddo:uint32le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 32-bit unsigned integer primitive datatype. Byte order is Little Endian."@en .
-bddo:uint64 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 64-bit unsigned integer primitive datatype. Byte order is not fixed on this datatype; the field and processing context determine it."@en .
-bddo:uint64be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 64-bit unsigned integer primitive datatype. Byte order is Big Endian."@en .
-bddo:uint64le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "A 64-bit unsigned integer primitive datatype. Byte order is Little Endian."@en .
-bddo:uint8 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "An 8-bit unsigned integer primitive datatype. Byte order is not fixed on this datatype; the field and processing context determine it."@en .
-bddo:utf16be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "UTF-16 character encoding with each 16-bit code unit stored in big-endian byte order."@en .
-bddo:utf16le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "UTF-16 character encoding with each 16-bit code unit stored in little-endian byte order."@en .
-bddo:utf8 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; ;
-    skos:definition "UTF-8 character encoding for textual bytes; a variable number of bytes may represent one Unicode scalar value."@en .
-bddo:validIf rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:valueFromExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:valuedGroup rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:varint rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:varuint rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:whitespaceSeparated rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:xml rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
-bddo:xsdType rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+# ---------- Term ownership ----------
+# rdfs:isDefinedBy for the terms whose declaration above does not state it. A new term states
+# its own; tools/test_term_reference.py requires it of every term this file defines.
+:ArgumentArityShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:ArgumentListShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:AsciiNumericWidthShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:BigEndian rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:ChecksumShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:ConditionalEndiannessShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:CustomCrcShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:CustomEncodingShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:DataTypeRuleShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:DataTypeShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:DelimitedRecordsShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:DelimitedTableShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:DerivedFieldShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:DispatchArmShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:DispatchKeyUniquenessShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:DispatchTableShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:EndiannessRuleShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:EnumValueShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:EnumerationShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:FieldOffsetShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:FieldRepetitionShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:FieldShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:FieldSizingShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:GroupedRecordsShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:KeyPathShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:KeyValueHeaderShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:LSBFirst rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:LittleEndian rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:LocalBindingShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:MSBFirst rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:NamespaceBindingShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:NodePathShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:NumericBaseShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:NumericRepresentationShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:PaddingShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:ParameterShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:ParameterisedStructShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:RecordGroupingShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:SeekScopeShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:StructShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:StructSizingShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:TreeDocumentShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:TreePrefixBindingShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:TypeSelectionExclusivityShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:VariableLengthFieldShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:VarintWidthShape rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:_prefixes rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:adler32 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:alignment rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:armDataType rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:armKey rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:armTable rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:ascii rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:asciiDecimal rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:asciiInteger rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:atOffset rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:atOffsetFromExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:atOffsetFromField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:baseBytes rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:baseFloat rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:baseInteger rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:baseString rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:baseType rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:bitLength rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:bitOrder rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:bitWidth rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:bytes rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:checksum rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:checksumAlgorithm rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:commentPrefix rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:condition rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:coversExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:coversFromExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:coversFromField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:coversToExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:coversToField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:crc16 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:crc16Arc rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:crc16Modbus rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:crc16X25 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:crc16Xmodem rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:crc32 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:crc32Bzip2 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:crc32Mpeg2 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:crc32c rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:crc64Ecma182 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:crc64Xz rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:crc8Smbus rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:currentPosition rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:dataType rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:dispatchDefault rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:dispatchOnExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:dispatchOnField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:encoding rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:endianness rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:enumIsFlags rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:enumRawValue rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:enumSymbol rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:enumeration rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:escapeChar rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:fieldDelimiter rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:float16 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:float16be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:float16le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:float32 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:float32be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:float32le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:float64 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:float64be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:float64le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:hasConditionalDataType rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:hasConditionalEndianness rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:hasDispatchTable rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:hasEnumValue rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:hasField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:hasFixedValue rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:int16 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:int16be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:int16le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:int24 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:int24be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:int24le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:int32 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:int32be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:int32le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:int64 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:int64be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:int64le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:int8 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:isPresentIf rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:isSigned rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:json rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:key rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:keyIsCaseInsensitive rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:keyValueSeparator rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:keyedGroup rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:latin1 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:md5 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:numericBase rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:offsetBase rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:parentStart rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:quoteChar rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:recordDelimiter rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:regionScope rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:repeatCount rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:repeatCountFromExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:repeatCountFromField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:repeatUntil rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:rootKeyFromField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:ruleDataType rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:ruleEndianness rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:sectionHeaded rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:seekScope rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:separatedBy rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:sha1 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:sha256 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:size rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:sizeFromExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:sizeFromField rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:sizeToEndOfStream rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:skipRecords rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:sqliteVarint rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:streamEnd rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:streamScope rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:streamStart rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:string rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:syncOnMarker rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:terminator rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:trimNull rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:trimWhitespace rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:uint16 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:uint16be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:uint16le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:uint24 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:uint24be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:uint24le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:uint32 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:uint32be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:uint32le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:uint64 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:uint64be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:uint64le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:uint8 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:utf16be rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:utf16le rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:utf8 rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:validIf rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:valueFromExpression rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:valuedGroup rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:varint rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:varuint rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:whitespaceSeparated rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:xml rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
+:xsdType rdfs:isDefinedBy &lt;https://hexplain.io/ns/bddo&gt; .
 </pre></section>
 
 

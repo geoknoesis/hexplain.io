@@ -1,7 +1,7 @@
 """Expand private authoring patterns; never introduce public helper shapes.
 
-The normative prefix comes from a template; the editorial annotation suffix stays
-owned by the existing term-documentation generator. Default mode checks only.
+A templated module is its expanded template, whole: generated editorial annotations live in
+the module's sibling <module>-doc.ttl, which this tool never reads. Default mode checks only.
 """
 
 from __future__ import annotations
@@ -64,15 +64,8 @@ def outputs() -> Any:
             raise ValueError(f"Duplicate output ownership: {target}")
         if not target.startswith("specification/") or not target.endswith(".ttl"):
             raise ValueError(f"Unexpected output: {target}")
-        current = path.read_text(encoding="utf-8")
-        marker = manifest["annotation_marker"]
-        if current.count(marker) > 1:
-            raise ValueError(f"Ambiguous annotation boundary: {target}")
-        suffix = marker + current.split(marker, 1)[1] if marker in current else ""
         template = within(AUTHORING, source).read_text(encoding="utf-8")
-        if marker in template:
-            raise ValueError(f"Template cannot own generated annotations: {source}")
-        result[path] = render(template, constraints, datatypes) + suffix
+        result[path] = render(template, constraints, datatypes)
     return result
 
 

@@ -15,7 +15,6 @@ counted as part of the ontology of the module directory it sits in.
 
 from __future__ import annotations
 
-import json
 import pathlib
 import re
 import sys
@@ -23,6 +22,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from typing import Any
 
+from _family import canonical_files
 from rdflib import OWL, RDF, Graph, Literal, URIRef
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -45,7 +45,7 @@ def _parse(path):
 
 def modules() -> dict[str, Any]:
     """ontology IRI -> (files, graph of those files)."""
-    files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
+    files = canonical_files(ROOT / "specification")
     # A file with its own owl:Ontology is its own module (a separate shapes document such as
     # conf/shapes.ttl declares <.../conf/shapes> and imports the vocabulary it validates); a
     # file without one belongs to the ontology of the module directory it sits in.

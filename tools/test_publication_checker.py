@@ -23,6 +23,8 @@ def main() -> int:
                 iri = str(ontology)
                 if iri.startswith("https://hexplain.io/ns/"):
                     routes[iri.removeprefix("https://hexplain.io")] = ("text/turtle", file.read_bytes())
+            if file.name.endswith("-doc.ttl"):
+                routes["/" + file.relative_to(root).as_posix()] = ("text/turtle", file.read_bytes())
     for file in (root / "releases").glob("*/manifest.json"):
         routes["/" + file.relative_to(root).as_posix()] = ("application/json", file.read_bytes())
 
