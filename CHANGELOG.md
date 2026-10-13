@@ -58,6 +58,47 @@ rewritten.
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### Writer class of the processor conformance suite (2026-10-13)
+
+The suite observes the write direction. No requirement text changed and no identifier was added,
+changed or withdrawn; module versions are unchanged.
+
+- **A sixth case class, `writer`.** `specification/conformance/writer/` holds 52 cases named
+  `w-*`. A case gives a writer under test a description (`description.ttl`), a root struct
+  (`root`) and a logical tree (`tree.json`, in the canonical JSON form of a parsed tree, named by
+  the manifest's `input`), and states exactly one of `expected.hex`, the exact bytes of the stream
+  (lower-case hexadecimal, white space ignored), and `expected-error.json`, the refusal the rules
+  require (`Validation` or `Unsupported`). 29 cases fix bytes and 23 a refusal. It is a class of
+  the suite, not a sixth conformance class of the Processing Model: every case requires the
+  optional feature `writer`, so the class is skipped for a processor that does not claim it.
+- **Every live serialisation requirement is cited** by at least one Writer case
+  (`req-pm-serialisation-1`, `-12`, `-14`, `-17`, `-18`, `-19`, `-20`, `-21`, `-22`, `-23`, `-24`,
+  `-25`): field order and a consistent tree, fixed values, presence, recomputed and bound lengths,
+  counts and checksums, regions and struct sizes, separated tokens, the bit cursor, alignment,
+  `bddo:padTo` with `bddo:padByte`, offset-addressed fields, text encodings and canonical text
+  numbers, byte order and type selection, encoded fields (`menc:Store`, `menc:Delta`, a codec
+  with no `hexplain:encodes`), checksum back-patching, and the constructs outside the Writer's
+  scope. The bytes compare exactly, so no case expects the output of a compressing encoder; the
+  codec vector suites' round trips remain the evidence for those.
+- **Runner, comparator, gates.** `run_suite.py` takes `--w-cmd`: the command is given
+  `{description}`, `{root}` and `{input}` (the tree) and writes the stream to `{out}` as the bytes
+  themselves, or `{"category": ...}` to `{err}`. `compare.py` compares bytes exactly
+  (`compare_bytes`). `test_conformance_suite.py` checks the class's structure (a JSON tree, exactly
+  one of the two expectations, well-formed hexadecimal, the `writer` feature required) and fails
+  when a live serialisation requirement is cited by no Writer case;
+  `test_conformance_comparator.py` tests the byte comparison. `.gitattributes` keeps the class
+  directory free of line-ending conversion, as the other five are.
+- **Conformance page.** A section *The Writer class* defines the class, its files and the
+  command-template contract; the coverage section counts the serialisation requirements
+  (12 of 12 MUSTs cited) and has the class's own tables, each serialisation requirement with its
+  cases and each case with the outcome it requires. `coverage.json` gains a `writer` member.
+- **Claiming `writer`.** The Processing Model's reference-implementation note, its symmetry
+  paragraph, the specification index and `reference-engine-claims.json` no longer say that the
+  feature cannot be observed: a processor may claim `writer` when it passes the Writer class.
+  The reference engine's claim stays `false`: its suite runner does not run the class yet, and
+  the claim follows its next published implementation report. The suite digest changes with the
+  new class, so the published report (suite `354e7441707e`, already superseded) stays as it is.
+
 ### Follow-up pass (2026-10-13)
 
 Nine points left open by the integration review. Module versions are unchanged: bddo 1.3 and

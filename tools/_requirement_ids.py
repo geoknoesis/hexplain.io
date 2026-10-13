@@ -80,7 +80,7 @@ PM_SECTION_CLASS = {
     "emission": "semantic-emitter",
     "multi-part-assets": "bundle-processor",
     "conformance-evaluation": "conformance-evaluator",
-    "serialisation": "writer",  # the optional Writer target, not a processor class
+    "serialisation": "writer",  # the optional Writer target: the suite's writer case class, not a processor class
 }
 
 #: Sentence-level class: a requirement whose sentence binds a class other than its section's.
