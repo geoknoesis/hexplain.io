@@ -1,0 +1,23 @@
+{
+  "id": "pp-limit-regex-idle-iterations",
+  "class": "physical-parser",
+  "title": "Iterations that consume no input are bounded: a huge empty repetition is true or a ResourceLimit error",
+  "description": "((){20000}){200000} asks for four thousand million iterations of a group that matches the empty string. The empty subject matches it, so a processor that does not perform the idle iterations answers true; one that performs them meets its match-cost limit, and one that refuses the pattern for its bounds (200,000 is above 65,535, and the product above 1,000,000) says so. Each is a ResourceLimit error or the value true; what no processor may do is run unbounded, or answer false.",
+  "requirements": [
+    "req-hel-ext-text-9",
+    "req-hel-ext-text-8",
+    "req-hel-ext-text-3"
+  ],
+  "sections": [
+    "processing#resource-limits",
+    "hel/index.html#ext-text"
+  ],
+  "root": "https://example.org/pp-limit-regex-idle-iterations#Root",
+  "input": "input.bin",
+  "features": {
+    "requires": [
+      "hel-ext-text"
+    ]
+  },
+  "orError": "ResourceLimit"
+}

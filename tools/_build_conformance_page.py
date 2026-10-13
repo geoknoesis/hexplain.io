@@ -32,6 +32,12 @@ CASE_CLASSES = (
 )
 #: The case class of the optional feature `writer`, and the registry class of the serialisation requirements.
 WRITER = "writer"
+#: The generated statement of what the round trip of each Physical Parser tree must do (tools/conformance/
+#: round_trip.py), and the requirement that mode observes: symmetry is a statement about every parsed tree, so no
+#: single case shows it, and it is cited by the mode instead of by cases.
+ROUND_TRIP_EXPECTATIONS = SUITE / WRITER / "round-trip-expectations.json"
+ROUND_TRIP_MODE = "round-trip mode"
+OBSERVED_BY_ROUND_TRIP = ("req-pm-serialisation-24",)
 REQUIREMENT_CLASSES = (
     ("physical-parser", "Physical Parser (Processing Model)"),
     ("hel", "HEL"),
@@ -101,16 +107,8 @@ NOT_SUITE_TESTABLE = {
     "ordinates unchanged, and the suite has no case format for interpretation.",
     "req-raster-document-3": "Binds a consumer that interprets a raster description; cell addressing is the data "
     "layout's (DLV), which the Physical Parser cases cover.",
-    "req-spatialref-document-2": "Binds a processor that evaluates spatial-reference transforms (the hxf function "
-    "library's world and cell functions), which the processor suite does not exercise.",
-    "req-spatialref-document-3": "Binds a processor that evaluates spatial-reference transforms (the hxf function "
-    "library's hxf:column and hxf:row), which the processor suite does not exercise.",
     "req-spatialref-document-4": "A documentation requirement on a floating-point implementation, checked by reading "
     "its documentation.",
-    "req-spatialref-document-10": "Binds a processor that evaluates rational polynomial transforms, which no processor "
-    "class of the Processing Model does.",
-    "req-spatialref-document-11": "Binds a processor that evaluates rational polynomial transforms, which no processor "
-    "class of the Processing Model does.",
     "req-pm-privacy-1": "The runner cannot tell a base IRI derived from the input's file name from any other base the "
     "processor reports; se-base-reported checks that the base is chosen and reported.",
     "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the "
@@ -119,15 +117,10 @@ NOT_SUITE_TESTABLE = {
     "req-pm-alignment-padding-3": "Verifying a fill byte is optional (a processor MAY compare the padding with "
     "bddo:padByte), so a case cannot tell a processor that does not verify from one that verified and agreed; the "
     "rule binds only what a verifying processor reports.",
-    "req-pm-data-layouts-3": "The key construction orders the chunk table, which only cell access reads; a parsed "
-    "tree holds the field's bytes and this version gives cells no output form, so no case observes which chunk a "
-    "key selects.",
     "req-pm-value-mapping-3": "Which scales beyond -4096..4096 a processor supports is its own: no case can name a "
     "scale that every conforming processor refuses. The supported range is asserted by req-pm-value-mapping-2.",
     "req-hel-ext-text-7": "A statement in the processor's claims or report environment, not a result of a parse; "
     "it is checked by reading the published report.",
-    "req-hel-ext-text-8": "The bound on a pattern's size and nesting is the implementation's own; a case would "
-    "need a pattern beyond every conforming evaluator's bound, and no size is.",
     "req-hdl-modules-3": "The import bounds are the compiler's own; a case would need an imported file larger "
     "than every "
     "conforming compiler's bound, and no size is.",
@@ -147,6 +140,8 @@ def writer_cases() -> list[dict[str, Any]]:
         man = json.loads(path.read_text(encoding="utf-8"))
         error = path.with_name("expected-error.json")
         outcome = json.loads(error.read_text(encoding="utf-8"))["category"] if error.is_file() else "bytes"
+        if man.get("verify") == "round-trip":
+            outcome = "round-trip"
         out.append(
             {"id": man["id"], "title": man["title"], "outcome": outcome, "requirements": sorted(man["requirements"])}
         )
@@ -160,6 +155,12 @@ def coverage() -> dict[str, Any]:
     for case in cases:
         for rid in case["requirements"]:
             citing[rid].append(case["id"])
+    round_trip = round_trip_expectations()
+    for rid in OBSERVED_BY_ROUND_TRIP:
+        if citing.get(rid):
+            raise SystemExit(f"{rid} is observed by the round-trip mode; no case cites it ({citing[rid]})")
+        if round_trip["trees"]:
+            citing[rid].append(ROUND_TRIP_MODE)
     classes = {}
     for cls, _ in REQUIREMENT_CLASSES:
         row = {}
@@ -196,6 +197,7 @@ def coverage() -> dict[str, Any]:
         "processorMust": processors,
         "requirements": classes,
         "writer": {
+            "roundTrip": round_trip,
             "cases": writer_cases(),
             "requirements": {
                 i: sorted(citing.get(i, []))
@@ -208,6 +210,14 @@ def coverage() -> dict[str, Any]:
         "reports": published_reports(),
         "sections": dict(sorted(sections.items())),
     }
+
+
+def round_trip_expectations() -> dict[str, Any]:
+    """The round-trip expectations summarised: how many trees, and how many of each required outcome."""
+    entries = (
+        json.loads(ROUND_TRIP_EXPECTATIONS.read_text(encoding="utf-8")) if ROUND_TRIP_EXPECTATIONS.is_file() else {}
+    )
+    return {"trees": len(entries), "outcomes": dict(sorted(Counter(entries.values()).items()))}
 
 
 def published_reports() -> Any:
@@ -343,12 +353,17 @@ def render_writer(writer: dict[str, Any]) -> list[str]:
     """The Writer class's own tables: each serialisation requirement with the cases that cite it, then each case
     with the outcome it requires."""
     link = PAGE_LINKS["specification/processing/index.html"]
-    refused = sum(1 for case in writer["cases"] if case["outcome"] != "bytes")
+    kinds = Counter("refusal" if c["outcome"] not in ("bytes", "round-trip") else c["outcome"] for c in writer["cases"])
+    trips = writer["roundTrip"]
+    outcomes = ", ".join(f"{n} <code>{html.escape(outcome)}</code>" for outcome, n in trips["outcomes"].items())
     parts = [
         '<h3 id="writer-coverage">Writer cases</h3><p>The cases of the <a href="#writer-class">Writer class</a>: '
-        f"{len(writer['cases'])} cases, {len(writer['cases']) - refused} that fix the bytes written and {refused} "
-        "that fix a refusal. Every live serialisation requirement is cited by at least one of them "
-        "(<code>tools/test_conformance_suite.py</code> fails otherwise).</p>"
+        f"{len(writer['cases'])} cases, {kinds['bytes']} that fix the bytes written, {kinds['refusal']} that fix a "
+        f"refusal and {kinds['round-trip']} verified by parsing the written stream back. Every live serialisation "
+        "requirement is cited by at least one of them (<code>tools/test_conformance_suite.py</code> fails "
+        "otherwise), except the symmetry requirement, which is a statement about every parsed tree and is observed "
+        f'by the <a href="#round-trip-mode">round-trip mode</a>: {trips["trees"]} trees, of which the rules '
+        f"require {outcomes}.</p>"
         '<div class="table"><table><thead><tr><th>Serialisation requirement</th><th>Writer cases</th></tr></thead>'
         "<tbody>"
     ]
@@ -360,7 +375,10 @@ def render_writer(writer: dict[str, Any]) -> list[str]:
         "<th>Required outcome</th></tr></thead><tbody>"
     )
     for case in writer["cases"]:
-        outcome = "the bytes of <code>expected.hex</code>" if case["outcome"] == "bytes" else f"{case['outcome']} error"
+        outcome = {
+            "bytes": "the bytes of <code>expected.hex</code>",
+            "round-trip": "a stream that parses back to <code>expected.json</code>",
+        }.get(case["outcome"], f"{case['outcome']} error")
         parts.append(
             f"<tr><td><code>{html.escape(case['id'])}</code></td><td>{html.escape(case['title'])}</td>"
             f"<td>{outcome}</td></tr>"

@@ -56,6 +56,10 @@ EXPECTED = (
 )
 #: The logical tree a Writer case gives the writer under test, in the canonical JSON form of a parsed tree.
 TREE = "tree.json"
+#: The manifest value of a Writer case whose stream is checked by parsing it back (its bytes are an encoder's own).
+ROUND_TRIP = "round-trip"
+#: The error categories a Writer case may expect (Processing Model, Serialisation, Refusals).
+WRITER_CATEGORIES = ("Validation", "Unsupported", "Description", "ResourceLimit")
 #: The error categories a conformance run's Parse finding names (a ResourceLimit is never a finding).
 FINDING_CATEGORIES = tuple(c for c in CATEGORIES if c != "ResourceLimit")
 #: The requirement identifiers every case of a class may cite without saying anything specific: a case
@@ -94,6 +98,25 @@ LIMITS = (
     "maxRegexSteps",
     "maxTriples",
     "maxFindings",
+)
+
+#: The registered text encodings (bddo:Encoding individuals), by local name: the five every Physical Parser
+#: decodes, then the twelve further encodings a processor claims in its claims statement's `encodings` member, by IRI.
+ENCODING_NAMESPACE = "https://hexplain.io/ns/bddo#"
+BASE_ENCODINGS = ("utf8", "ascii", "latin1", "utf16le", "utf16be")
+FURTHER_ENCODINGS = (
+    "utf32le",
+    "utf32be",
+    "ucs2le",
+    "ucs2be",
+    "windows1252",
+    "iso8859_2",
+    "iso8859_5",
+    "iso8859_7",
+    "iso8859_9",
+    "iso8859_15",
+    "ebcdic037",
+    "shiftJis",
 )
 
 PREFIXES = """@prefix bddo: <https://hexplain.io/ns/bddo#> .
@@ -145,6 +168,7 @@ class Case:
     claims: dict = None  # expected-claims.json: what a processor's claims statement must satisfy
     tree: object = None  # writer: the logical tree to serialise, as Python values (tree.json)
     expected_bytes: bytes = None  # writer: the exact bytes the specification requires (expected.hex)
+    reparsed: object = None  # writer: the tree the written stream must parse to ("verify": "round-trip")
 
     def artifacts(self) -> Any:
         """{file name: bytes} of the case directory."""
@@ -165,12 +189,18 @@ class Case:
             man["input"] = "input.bin"
             out["input.bin"] = bytes(self.input)
         if self.cls == "writer":
-            if (self.expected_bytes is None) == (self.error is None):
-                raise ValueError(f"{self.id}: a writer case states the bytes or an error category, never both")
+            stated = [v for v in (self.expected_bytes, self.error, self.reparsed) if v is not None]
+            if len(stated) != 1:
+                raise ValueError(f"{self.id}: a writer case states the bytes, an error category or the re-parsed tree")
+            if self.error is not None and self.error not in WRITER_CATEGORIES:
+                raise ValueError(f"{self.id}: {self.error} is not a category a Writer raises")
             man["input"] = TREE
             out[TREE] = canonical_json(self.tree)
             if self.expected_bytes is not None:
                 out["expected.hex"] = hex_lines(self.expected_bytes)
+            if self.reparsed is not None:
+                man["verify"] = ROUND_TRIP
+                out["expected.json"] = canonical_json(self.reparsed)
         man.update(self.manifest)
         if self.description is not None:
             out["description.ttl"] = turtle(self.id, self.description).encode("utf-8")

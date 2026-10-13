@@ -4,8 +4,11 @@ Checks that specification/conformance/<class>/ is exactly what tools/conformance
 that every case has a complete manifest, cites only registered requirement identifiers and
 sections the pages define, and has exactly one expected artifact; that every description,
 rule set and expected graph parses; that a Writer case gives a tree and states exactly one of
-the bytes and an error category, and that every live serialisation requirement is cited by a
-Writer case; and that the coverage section of the suite's page is current.
+the bytes, an error category a Writer raises and the tree its stream parses back to, and that
+every live serialisation requirement is cited by a Writer case, the symmetry requirement apart,
+which the round-trip mode observes: its expectations file names every Physical Parser case that
+states a tree, and the mode's comparison and verdicts are probed here; and that the coverage
+section of the suite's page is current.
 """
 
 from __future__ import annotations
@@ -25,15 +28,21 @@ sys.path.insert(0, str(HERE / "conformance"))
 
 import _build_conformance_page  # noqa: E402
 import generate_inputs  # noqa: E402
+import round_trip  # noqa: E402
 from suite import (  # noqa: E402
+    BASE_ENCODINGS,
     BLANKET,
     CATEGORIES,
     CLASSES,
+    ENCODING_NAMESPACE,
     EXPECTED,
+    FURTHER_ENCODINGS,
     LIMITS,
     PREFIX,
+    ROUND_TRIP,
     SUITE,
     TREE,
+    WRITER_CATEGORIES,
     feature_tokens,
     parse_hex,
 )
@@ -55,9 +64,20 @@ def writer_problems(case_dir: Any, man: Any, writer_requirements: Any) -> list[s
         json.loads((case_dir / TREE).read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         problems.append(f"{where}: {TREE} is not a JSON tree: {exc}")
-    stated = [name for name in ("expected.hex", "expected-error.json") if (case_dir / name).is_file()]
+    stated = [n for n in ("expected.hex", "expected-error.json", "expected.json") if (case_dir / n).is_file()]
     if len(stated) != 1:
-        problems.append(f"{where}: a Writer case states exactly one of expected.hex and expected-error.json ({stated})")
+        problems.append(
+            f"{where}: a Writer case states exactly one of expected.hex, expected-error.json and expected.json "
+            f"({stated})"
+        )
+    if (man.get("verify") == ROUND_TRIP) != (stated == ["expected.json"]):
+        problems.append(f'{where}: expected.json belongs to a Writer case with "verify": "{ROUND_TRIP}", and only it')
+    if man.get("verify") not in (None, ROUND_TRIP):
+        problems.append(f"{where}: unknown verify {man['verify']!r}")
+    if stated == ["expected-error.json"]:
+        category = json.loads((case_dir / "expected-error.json").read_text(encoding="utf-8")).get("category")
+        if category not in WRITER_CATEGORIES:
+            problems.append(f"{where}: {category!r} is not a category a Writer raises ({WRITER_CATEGORIES})")
     if (case_dir / "expected.hex").is_file():
         try:
             parse_hex((case_dir / "expected.hex").read_text(encoding="ascii"))
@@ -84,6 +104,141 @@ def context_problems(registry: dict[str, Any]) -> list[str]:
         if not entry.get("withdrawn") and (head or len(text) < SHORT_REQUIREMENT) and not entry.get("context"):
             problems.append(f"{rid}: a list head or short requirement without a context: {text[:70]!r}")
     return problems
+
+
+def gating_problems(case_dir: Path, man: dict[str, Any], cls: str) -> list[str]:
+    """The manifest members that gate a case on text encodings and that ask for a layout's cells."""
+    problems = []
+    registered = {ENCODING_NAMESPACE + name for name in BASE_ENCODINGS + FURTHER_ENCODINGS}
+    for kind, iris in man.get("encodings", {}).items():
+        if kind not in ("requires", "unclaimed"):
+            problems.append(f"unknown encodings member {kind}")
+        problems += [
+            f"encodings names {iri!r}, which is no registered bddo:Encoding" for iri in iris if iri not in registered
+        ]
+    description = case_dir / "description.ttl"
+    if description.is_file():
+        text = description.read_text(encoding="utf-8")
+        used = {ENCODING_NAMESPACE + name for name in FURTHER_ENCODINGS if re.search(rf"bddo:{name}\b", text)}
+        missing = sorted(used - set(man.get("encodings", {}).get("requires", [])))
+        if missing and cls == "physical-parser" and case_dir.name.startswith("pp-encoding-"):
+            problems.append(f"uses {missing} and does not require it")
+    if "cells" in man:
+        cells = man["cells"]
+        if cls != "physical-parser" or not (
+            isinstance(cells, list) and cells and all(isinstance(c, str) for c in cells)
+        ):
+            problems.append("cells is a non-empty list of layout field keys of a Physical Parser case")
+        elif (case_dir / "expected.json").is_file():
+            tree = json.loads((case_dir / "expected.json").read_text(encoding="utf-8"))
+            problems += [
+                f"cells names {c!r}, which is not an array in the expected tree"
+                for c in cells
+                if not isinstance(tree.get(c), list)
+            ]
+    return problems
+
+
+def round_trip_problems() -> list[str]:
+    """The round-trip expectations name exactly the Physical Parser cases that state a tree, each with a known
+    outcome, and the mode's comparison and verdicts hold on probes."""
+    problems = []
+    stated = round_trip.load_expectations()
+
+    def derived(case_id: str, description: Path) -> str:
+        return round_trip.expectation(case_id, description.read_bytes())[0]
+
+    cases = {case_dir.name: case_dir for case_dir in round_trip.tree_cases()}
+    for case_id in sorted(cases.keys() - stated.keys()):
+        problems.append(f"{round_trip.EXPECTATIONS}: no entry for {case_id}, which states a tree")
+    for case_id in sorted(stated.keys() - cases.keys()):
+        problems.append(f"{round_trip.EXPECTATIONS}: names {case_id}, which is no Physical Parser case with a tree")
+    for case_id, outcome in sorted(stated.items()):
+        if outcome not in round_trip.OUTCOMES:
+            problems.append(f"{round_trip.EXPECTATIONS}: {case_id} has the unknown outcome {outcome!r}")
+        elif case_id in cases and outcome != derived(case_id, cases[case_id] / "description.ttl"):
+            problems.append(f"{round_trip.EXPECTATIONS}: {case_id} is {outcome}, not what round_trip.py derives")
+    if len(set(stated.values())) < len(round_trip.OUTCOMES):
+        problems.append(f"{round_trip.EXPECTATIONS}: not every outcome of {round_trip.OUTCOMES} occurs")
+    iso, judge = round_trip.isomorphism_problems, round_trip.judge
+    tree = {"n": 3, "data": "0a0b", "items": [1.0, {"x": None}], "crc": 7}
+    probes = (
+        (iso(tree, json.loads(json.dumps(tree))) == [], "a tree is not isomorphic to itself"),
+        (iso(tree, dict(tree, n=4)) != [], "a changed value went unnoticed"),
+        (iso(tree, dict(tree, n=4), {"n"}) == [], "a recomputed derived value was compared"),
+        (iso(tree, dict(tree, n=None), {"n"}) != [], "a recomputed value unbound in one tree went unnoticed"),
+        (iso(tree, dict(tree, items=[1.0])) != [], "a shorter array went unnoticed"),
+        (iso(tree, dict(tree, items=[1, {"x": None}])) != [], "an Integer for a Float went unnoticed"),
+        (iso({"f": 0.0}, {"f": -0.0}) != [], "-0.0 was taken for 0.0"),
+        (iso({"f": float("nan")}, {"f": float("nan")}) == [], "a NaN is not equal to a NaN"),
+        (iso(tree, {k: v for k, v in tree.items() if k != "crc"}) != [], "a missing member went unnoticed"),
+        (judge("round-trip", None, []) == ("PASS", ""), "an isomorphic round trip failed"),
+        (judge("round-trip", None, ["$.n: 3 became 4"])[0] == "FAIL", "another tree passed"),
+        (judge("round-trip", "Validation", None)[0] == "FAIL", "a refusal of a writable tree passed"),
+        (judge("Unsupported", "Unsupported", None)[0] == "PASS", "the required refusal failed"),
+        (judge("Unsupported", "Validation", None)[0] == "FAIL", "a refusal in another category passed"),
+        (judge("Unsupported", None, [])[0] == "FAIL", "a stream where the rules refuse passed"),
+        (judge("Validation", "Validation", None)[0] == "PASS", "the stated validation refusal failed"),
+        (judge("Validation", None, [])[0] == "PASS", "an encoder that happens to fit failed"),
+        (judge("Validation", None, ["x"])[0] == "FAIL", "another tree passed where a refusal was the alternative"),
+    )
+    return problems + [f"round_trip.py: {what}" for ok, what in probes if not ok]
+
+
+def runner_problems() -> list[str]:
+    """The runner's round trips reach the verdicts the expectations call for, probed with a stand-in writer and
+    parser (tools/conformance/stub_processor.py) that produce each outcome on demand."""
+    import run_suite
+
+    stub = f'"{Path(sys.executable).as_posix()}" "{(HERE / "conformance/stub_processor.py").as_posix()}"'
+    write, parse = stub + " write {case} {out} {err}", stub + " parse {case} {out} {err}"
+    claims = {"classes": ["Physical Parser"], "optionalFeatures": sorted(feature_tokens()), "codecs": []}
+    parsers = SUITE / "physical-parser"
+
+    def trip(case: str, expected: str, writer: str = write, parser: str = parse, stated: Any = claims) -> str:
+        return run_suite.run_round_trip(parsers / case, writer, parser, stated, expected, 60)[0]
+
+    def verified(writer: str, parser: str | None) -> str:
+        case = SUITE / WRITER / "w-codec-compressor-round-trip"
+        return run_suite.run_case(case, writer, claims, 60, parser=parser)[0]
+
+    probes = (
+        (trip("pp-bits-lsb-first", "round-trip") == "PASS", "a stream that parses back to the tree failed"),
+        (trip("pp-bits-lsb-first", "round-trip", parser=parse + " --other-tree") == "FAIL", "another tree passed"),
+        (
+            trip("pp-bits-lsb-first", "round-trip", parser=parse + " --refuse Bounds") == "FAIL",
+            "an unparsable stream passed",
+        ),
+        (
+            trip("pp-bits-lsb-first", "round-trip", writer=write + " --refuse Validation") == "FAIL",
+            "a refused tree passed",
+        ),
+        (
+            trip("pp-kv-header", "Unsupported", writer=write + " --refuse Unsupported") == "PASS",
+            "the required refusal failed",
+        ),
+        (trip("pp-kv-header", "Unsupported") == "FAIL", "a stream passed where the rules refuse"),
+        (
+            trip("pp-textnum-decimals", "Validation", writer=write + " --refuse Validation") == "PASS",
+            "the stated refusal failed",
+        ),
+        (
+            trip("pp-textnum-decimals", "Validation", writer=write + " --refuse Unsupported") == "FAIL",
+            "another category passed",
+        ),
+        (
+            trip("pp-bits-lsb-first", "round-trip", stated=dict(claims, optionalFeatures=[])) == "SKIP",
+            "ran without the writer claim",
+        ),
+        (trip("pp-encoding-shift-jis-decodes", "round-trip") == "SKIP", "ran an encoding the claims do not list"),
+        (verified(write, parse) == "PASS", "a Writer case verified by round trip failed"),
+        (
+            verified(write, parse + " --other-tree") == "FAIL",
+            "a Writer case whose stream parses to another tree passed",
+        ),
+        (verified(write, None) == "SKIP", "a Writer case verified by round trip ran without a parser"),
+    )
+    return [f"run_suite.py: {what}" for ok, what in probes if not ok]
 
 
 def section_ids(document: Any) -> Any:
@@ -147,8 +302,8 @@ def main() -> int:
             if cls == WRITER:
                 problems += writer_problems(case_dir, man, writer_requirements)
                 writer_cited |= set(man.get("requirements", []))
-            elif (case_dir / "expected.hex").is_file() or (case_dir / TREE).is_file():
-                problems.append(f"{where}: {TREE} and expected.hex belong to a Writer case")
+            elif (case_dir / "expected.hex").is_file() or (case_dir / TREE).is_file() or "verify" in man:
+                problems.append(f"{where}: {TREE}, expected.hex and verify belong to a Writer case")
             expected = [name for name in EXPECTED if (case_dir / name).is_file()]
             if len(expected) != 1:
                 problems.append(f"{where}: {len(expected)} expected artifacts, want exactly one ({expected})")
@@ -205,6 +360,7 @@ def main() -> int:
                 for name in names:
                     if name not in features:
                         problems.append(f"{where}: claims withdraws {name!r}, which is not a feature token")
+            problems += [f"{where}: {p}" for p in gating_problems(case_dir, man, cls)]
             if "compareOntologyHeader" in man and (
                 cls != "hdl-compiler" or not isinstance(man["compareOntologyHeader"], bool)
             ):
@@ -222,8 +378,13 @@ def main() -> int:
                 problems.append(f"{where}: unknown check {man['check']!r}")
             if man.get("orError") and man["orError"] not in CATEGORIES:
                 problems.append(f"{where}: unknown orError category {man['orError']}")
-    for rid in sorted(writer_requirements - writer_cited):
+    by_mode = set(_build_conformance_page.OBSERVED_BY_ROUND_TRIP)
+    for rid in sorted(writer_requirements - writer_cited - by_mode):
         problems.append(f"{rid}: a live serialisation requirement no Writer case cites")
+    for rid in sorted(by_mode & writer_cited):
+        problems.append(f"{rid}: observed by the round-trip mode, which is its citation; no single case shows it")
+    problems += round_trip_problems()
+    problems += runner_problems()
     for cls, n in counts.items():
         if not n:
             problems.append(f"no {cls} cases")

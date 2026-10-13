@@ -13,7 +13,7 @@ from typing import Any
 
 from cases_hel import derived, hel, one
 from cases_physical import CASES, pp
-from suite import Case
+from suite import BASE_ENCODINGS, ENCODING_NAMESPACE, FURTHER_ENCODINGS, Case
 
 FIXED = "processing#fixed-values"
 CONFLICT = "processing#conflicting-forms"
@@ -620,7 +620,7 @@ CASES.append(
     Case(
         id="pp-claims-statement",
         cls="physical-parser",
-        title="A processor states the classes, the optional features and the codecs it claims",
+        title="A processor states the classes, the optional features, the codecs and the encodings it claims",
         intent="The runner asks the implementation for its claims statement (a JSON object listing its conformance "
         "classes, its "
         "optional features by feature token and the IRIs of the codecs it decodes). Every conforming "
@@ -628,12 +628,18 @@ CASES.append(
         "its classes and features come from the closed lists of the Processing Model, and its codecs include "
         "the minimum "
         "codec set.",
-        requirements=["req-pm-conformance-classes-5", "req-pm-optional-codecs-3"],
-        sections=["processing#conformance-classes", "processing#optional-features", "processing#optional-codecs"],
+        requirements=["req-pm-conformance-classes-5", "req-pm-optional-codecs-3", "req-pm-text-decoding-14"],
+        sections=[
+            "processing#conformance-classes",
+            "processing#optional-features",
+            "processing#optional-codecs",
+            "processing#claimed-encodings",
+        ],
         root=None,
         manifest={"check": "claims"},
         claims={
             "required": ["classes", "optionalFeatures", "codecs"],
+            "encodings": [ENCODING_NAMESPACE + name for name in BASE_ENCODINGS + FURTHER_ENCODINGS],
             "classes": [
                 "Physical Parser",
                 "Semantic Emitter",

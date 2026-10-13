@@ -106,6 +106,7 @@ DESCRIPTION_AUDIENCE = {
     "req-dlv-conditional-1",  # a more specific arm MUST precede a more general one
     "req-raster-document-4",  # calibration values MUST be finite
     "req-raster-document-5",  # axes MUST NOT be forced into X/Y/Z
+    "req-spatialref-document-2",  # a description MUST NOT use pixelRegistration to shift the affine
     "req-spatialref-document-7",  # a polynomialBasis IRI MUST identify a published contract
     "req-spatialref-document-8",  # coefficient orders MUST NOT be interchanged
     "req-spatialref-document-9",  # a profile MUST identify the complete contract

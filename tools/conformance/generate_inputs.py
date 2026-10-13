@@ -6,6 +6,7 @@
 Every case -- its description, its input bytes and its expected output -- is authored in the
 cases_*.py modules beside this file, so a binary input is reviewable as the Python that builds it
 and reproducible byte for byte. The class directories are generated: edit the modules, not them.
+writer/round-trip-expectations.json is generated with them, from round_trip.py.
 """
 
 from __future__ import annotations
@@ -28,6 +29,8 @@ MODULES = (
     "cases_selection",
     "cases_integrity",
     "cases_text",
+    "cases_encodings",
+    "cases_layout_cells",
     "cases_limits",
     "cases_hel",
     "cases_rules",
@@ -39,6 +42,7 @@ MODULES = (
     "cases_features_hdl",
     "cases_terms",
     "cases_writer",
+    "cases_writer_forms",
 )
 
 
@@ -62,11 +66,17 @@ def all_cases() -> Any:
 
 
 def expected_tree() -> Any:
-    """{relative path: bytes} of every generated file."""
+    """{relative path: bytes} of every generated file: the cases, and the round-trip expectations of the Physical
+    Parser cases that state a tree (round_trip.py)."""
+    import round_trip
+
     out = {}
-    for case in all_cases():
+    cases = all_cases()
+    for case in cases:
         for name, content in case.artifacts().items():
             out[f"{case.cls}/{case.id}/{name}"] = content
+    parsers = {case.id: case for case in cases if case.cls == "physical-parser" and case.description is not None}
+    out[round_trip.EXPECTATIONS] = round_trip.expectations_file(parsers)
     return out
 
 

@@ -68,6 +68,85 @@ rewritten.
   the sentence before it. No requirement text or hash changes. `test_conformance_suite.py` fails
   on a live entry of either kind without a context.
 
+- **Serialisation rules completed (N1).** Processing Model, Serialisation:
+  - *Extent inference has its own requirements.* Rule 3 is restated as requirement sentences
+    (req-pm-serialisation-26 to req-pm-serialisation-32): the extent of a field without a region
+    (bits, fixed width, the shortest varint); the separator byte; a literal region filled or
+    refused; an encoded field in a literal region (longer: validation error; shorter: written
+    only when the filled region decodes to the bytes that were encoded); a scalar under a bound
+    length; a terminated field; a to-end `repeatUntil` sequence not padded.
+  - *A scalar sized by a bound `bddo:sizeFromField`* (previously readable two ways): the bound
+    length is the region. A `bddo:trimNull` string is NUL-padded to it and a text number padded
+    as rule 5 states; any other value must be exactly that long, and a longer value is always a
+    validation error. An unbound length field is still filled with the value's own length.
+    req-pm-serialisation-23 (rule 5) says so for the `trimNull` string and adds that an infinite
+    Float in a text number is a validation error.
+  - *Numeric representations* (new rule 9, req-pm-serialisation-33 to req-pm-serialisation-38):
+    `bddo:ibmHexadecimal`, `bddo:vaxF` and `bddo:bfloat16` fields are written as the bit pattern
+    that reads back as the value, and a value with none is a validation error (NaN or an infinity
+    in IBM or VAX, a magnitude out of range, a negative zero in VAX, a significand the format
+    cannot carry, a binary32 with low bits set in bfloat16); a `bddo:bcd` field is written as
+    zero-padded digits, a negative value or one of too many digits being a validation error;
+    `bddo:fixedPointScale` changes nothing (the tree holds the raw integer, written unchanged);
+    an IEEE 754 field is written as the nearest value of its width, a finite value beyond the
+    width's range being a validation error. Scope is now rule 10.
+  - req-pm-serialisation-18 (rule 7): an encode output that exceeds the decoded-byte limit is a
+    resource-limit error; the Writer class admits the category.
+  - req-pm-serialisation-24 (symmetry): *isomorphic* is defined in its own paragraph
+    (`#tree-isomorphism`): the same keys, node kinds, array lengths and values, except a
+    recomputed derived value (the length of an encoded field, a checksum whose covered range
+    includes one), which must equal its recomputation over the written stream. The refusal
+    families are listed completely (`#write-refusals`): four validation families, Unsupported
+    feature, a description error and the resource-limit error, with the three a parsed tree can
+    meet.
+
+- **Writer class extended, and a round-trip mode (N2).** Thirty-four Writer cases
+  (`tools/conformance/cases_writer_forms.py`, 86 in the class): the shortest varint; a to-end
+  `repeatUntil` sequence not padded; a parameterised struct and a conditional data type (selected,
+  default, wrong members); LSB-first bit fields and a field-level `bddo:bitOrder`; IBM, VAX and
+  bfloat16 floats and packed decimal, each with its no-inverse refusals; a fixed-point field; a
+  terminator inside the value; an offset target before the stream; a pipeline whose kinds do not
+  connect (Description); an encode output beyond the decoded-byte limit (ResourceLimit: the class
+  now admits the four categories a Writer raises); an encoded field in a literal region (fits,
+  overflows, too short); a `trimNull` string under a bound, an unbound and a too-short length; an
+  infinite Float as text; and `w-codec-compressor-round-trip`, a Deflate field with
+  `"verify": "round-trip"`, whose stream is parsed back with `--pp-cmd` and compared with its
+  `expected.json` instead of with bytes. Existing cases cite the new extent requirements they
+  exercise (`w-region-filled`, `w-region-overflow`, `w-separated-tokens`,
+  `w-length-terminator-included`).
+  `run_suite.py --round-trip` runs the symmetry requirement over every Physical Parser case that
+  states a tree: the tree is written with `--w-cmd`, the stream parsed with `--pp-cmd`, and the
+  trees compared by the Processing Model's isomorphism (recomputed derived values exempt), against
+  `specification/conformance/writer/round-trip-expectations.json` (case to `round-trip`,
+  `Unsupported` or `Validation`), which is generated with the suite from
+  `tools/conformance/round_trip.py` and checked for completeness by `test_conformance_suite.py`.
+  req-pm-serialisation-24 is cited by that mode, no longer by two cases. The comparator keeps the
+  sign of a zero (`-0.0` is not `0.0`), and `orError` now applies to a Physical Parser case too.
+- **Text encodings are claimed and observed (N3).** Processing Model, Further encodings: the
+  list of well-formedness rules is governed by a requirement (req-pm-text-decoding-9, its items
+  req-pm-text-decoding-10 to req-pm-text-decoding-13), and a processor states the further
+  encodings it decodes in its claims statement, member `encodings`, an array of `bddo:Encoding`
+  IRIs (req-pm-text-decoding-14; req-pm-conformance-classes-5 names the member's subject). A case
+  manifest gates on `"encodings": {"requires": [...]}`. Thirty-three `pp-encoding-*` cases: a
+  decode of each of the twelve further encodings and every refusal point (UTF-32 surrogates,
+  values beyond U+10FFFF and partial code units in both byte orders; UCS-2 surrogates, paired and
+  lone; the five unassigned bytes of windows-1252 and the three of ISO-8859-7; a Shift_JIS lead
+  byte without a trail byte, a trail byte out of range, 7F, and an unassigned pair).
+  `reference-engine-claims.json` lists the engine's seventeen encodings.
+- **An observable for chunk order (F17).** A Physical Parser case may ask for the cells of a
+  layout field (`"cells": [...]` in the manifest, `{cells}` in the command template;
+  conformance page, Layout cells): the tree then gives the field as its cells in logical order,
+  each addressed through the chunk table. `pp-layout-cells-morton` and `pp-layout-cells-hilbert`
+  cite req-pm-data-layouts-3, which leaves the list of requirements no case can observe.
+- **Spatial-reference rules bound to no processor class (N6).** req-spatialref-document-2 now
+  binds the description (a description does not use `asref:pixelRegistration` to shift the
+  affine; audience `description`), with the evaluation rule a SHOULD on a consumer
+  (req-spatialref-document-12); req-spatialref-document-3, req-spatialref-document-10 and
+  req-spatialref-document-11 are SHOULDs on a consumer that evaluates the transforms, which no
+  conformance class of the Processing Model does (the hxf function library defines the affine
+  ones). Six entries leave the not-suite-testable list in all (these four,
+  req-pm-data-layouts-3 and req-hel-ext-text-8).
+
 ### The reference implementation claims `writer` (2026-10-13)
 
 No requirement text, case or identifier changed; the suite is the 803 cases of digest
