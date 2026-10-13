@@ -2080,7 +2080,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "For every tree T that a Physical Parser produced, without error and with no lenient-mode recovery, from a stream S with a description D and root R, a Writer MUST produce a stream S' such that parsing S' with D and R yields a tree isomorphic to T: the same keys bound node by node, the same values, the same array lengths, every derived value equal to its recomputation; and it MUST NOT produce a stream that fails to parse or parses to another tree.",
-   "sha256": "dbeaf6122d2a6d6d"
+   "sha256": "dbeaf6122d2a6d6d",
+   "withdrawn": true
   },
   "req-pm-serialisation-12": {
    "page": "specification/processing/index.html",
@@ -2100,7 +2101,8 @@
    "audience": "processor",
    "text": "A Writer MUST write the recomputed value; it fills the field when T leaves it unbound, and MUST raise a validation error when T binds it to a different value, so that a tree is never silently corrected.",
    "sha256": "b1a495cab2049e27",
-   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
+   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:",
+   "withdrawn": true
   },
   "req-pm-serialisation-14": {
    "page": "specification/processing/index.html",
@@ -2130,7 +2132,8 @@
    "audience": "processor",
    "text": "Text and text numbers. A string is encoded in its bddo:encoding; a character the encoding cannot represent is a validation error. A fixed-size bddo:string with bddo:trimNull true writes the value followed by NUL code units to its width; a value longer than the width is a validation error. A number written as text is rendered canonically: an Integer as its digits in radix bddo:numericBase (upper-case digits above 9), a - for a negative value and no +; a Float as the HEL canonical Float spelling, NaN as nan; in a field of literal size the digits are padded on the left with 0 after the sign to the field's width, and a rendering that does not fit is a validation error. A terminated, separated or to-end text number is not padded.",
    "sha256": "fbe2fa0eceb187ec",
-   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
+   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:",
+   "withdrawn": true
   },
   "req-pm-serialisation-17": {
    "page": "specification/processing/index.html",
@@ -2168,9 +2171,51 @@
    "cls": "writer",
    "level": "MUST",
    "audience": "processor",
-   "text": "A Writer MUST refuse, with Unsupported feature, a description that reaches a text container (Delimited, key/value and tree containers), a chunked layout's chunk table, or a construct of a class or optional feature it does not claim.",
-   "sha256": "b4a911de5ca9dbf2",
+   "text": "A Writer MUST refuse, with Unsupported feature, a description that reaches a text or tree container (a bddo:DelimitedRecords, a key/value header, a delimited table or a bddo:TreeDocument: Delimited, key/value and tree containers), a layout with a chunk table (dlv:chunkOffsetsFromField, dlv:chunkLengthsFromField), or a construct of a class or optional feature it does not claim.",
+   "sha256": "6c3a931c9a9279d7",
+   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:",
+   "history": [
+    "b4a911de5ca9dbf2"
+   ]
+  },
+  "req-pm-serialisation-21": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Writer MUST write the recomputed value, and fills the field when T leaves it unbound.",
+   "sha256": "73600fb7b5ba0cd7",
    "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
+  },
+  "req-pm-serialisation-22": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Every other bound dependent value — a length of bytes the tree itself determines, an element count, a checksum over such bytes — MUST equal its recomputation, and a Writer MUST raise a validation error when it differs, so that a tree is never silently corrected.",
+   "sha256": "90e6c66e216ba8ce",
+   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
+  },
+  "req-pm-serialisation-23": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Text and text numbers. A string is encoded in its bddo:encoding; a character the encoding cannot represent is a validation error. A fixed-size bddo:string with bddo:trimNull true writes the value followed by NUL code units to its width; a value longer than the width is a validation error. A number written as text is rendered canonically: an Integer as its digits in radix bddo:numericBase (upper-case digits above 9), a - for a negative value and no +; a Float as the HEL canonical Float spelling, NaN as nan; in a field of literal size, and in one whose width a bound field gives (the target of bddo:sizeFromField that T binds, whose value is then the width to write and is not recomputed from the rendering), the digits are padded on the left with 0 after the sign to the field's width, and a rendering that does not fit is a validation error. nan has no digits to pad: in a field wider than three bytes it is followed by spaces (0x20) to the field's width, which the parse rules remove. A terminated, separated or to-end text number is not padded.",
+   "sha256": "cd9633d8eac403c4",
+   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
+  },
+  "req-pm-serialisation-24": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "For every tree T that a Physical Parser produced, without error and with no lenient-mode recovery, from a stream S with a description D and root R, a Writer MUST either produce a stream S' such that parsing S' with D and R yields a tree isomorphic to T — the same keys bound node by node, the same values, the same array lengths, every derived value equal to its recomputation — or raise the error these rules require; it MUST NOT produce a stream that parses to a different tree or does not parse.",
+   "sha256": "d553d1122b365a93"
   },
   "req-pm-size-resolution-1": {
    "page": "specification/processing/index.html",

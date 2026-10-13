@@ -167,10 +167,33 @@ IRIs.
   `pp-hel-regex-hyphen-misplaced`, `pp-hel-regex-unknown-block` and
   `pp-hel-regex-quantifier-bound`. The reference parser `tools/conformance/hel.py` treated
   `param` as a field name and rendered `5e-324` as `5.0E-324`; both are fixed.
+- **Serialisation corrected against a working writer.** Symmetry as written was unachievable: a
+  writer cannot reproduce every parsed tree, because an encoded field in a region of literal size
+  may re-encode to another length and a text number's canonical rendering may not fit its fixed
+  width. `req-pm-serialisation-11` is withdrawn and `req-pm-serialisation-24` replaces it: a
+  Writer either produces a stream that parses to an isomorphic tree or raises the error the rules
+  require, and never a stream that parses to another tree or does not parse. Dependent values:
+  `req-pm-serialisation-13` is withdrawn for `req-pm-serialisation-21` and
+  `req-pm-serialisation-22`, under which a length or checksum that rests on codec-produced bytes
+  is recomputed even when the tree binds another value, and every other bound dependent value
+  that differs is a validation error. Text numbers: `req-pm-serialisation-16` is withdrawn for
+  `req-pm-serialisation-23`, which pads `nan` with spaces in a wider fixed field and zero-pads a
+  text number whose width a bound field gives. Without a change of identifier: a nested struct
+  whose region comes from a field or expression keeps the bound length and is filled to its end,
+  a to-end repeat-until sequence that ends early is not padded, a separated element is preceded
+  by a separator whenever the bytes before it are a rendered token, "another kind" in rule 1 is
+  the node kind, a fixed-value field is written as its constant and a tree that binds another
+  value is a validation error, and `req-pm-serialisation-20` names the containers and the chunk
+  table properties that are outside the Writer's scope (reworded, same rule).
+  `reference-engine-claims.json` still leaves `writer` unclaimed: the file and the Processing
+  Model's note give as the reason that the suite has no writer case to observe the claim, and
+  that has not changed.
+- **Gate manifest.** `test_vocab_shapes` is allowed an hour: it recorded 479 s on a loaded host,
+  and the manifest's rule is ten times the recorded duration, at most an hour.
 - **Suite corrections.** `hc-encoded-with-catalogue-codec` binds `menc:` with `use`, as
   `req-hdl-prefixes-1` requires, so its only possible diagnostic is the warning it tests;
   `pp-claims-statement` accepts the `writer` feature token. The suite has 744 cases and the
-  registry 453 requirements.
+  registry 457 entries, 449 of them live.
 - **PNG example** (`specification/hexplain/index.html`). The conditional mapping read the sibling
   `Keyword` as `instance.parent.Keyword`. In a `hexplain:condition` on a field's mapping rule
   `instance` is the struct containing the field, so the sibling is `instance.Keyword`; the size
