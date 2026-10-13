@@ -166,7 +166,9 @@ def definition(g,t):
         width=str(g.value(t,BDDO.bitWidth));base=g.value(t,BDDO.baseType);signed=g.value(t,BDDO.isSigned)
         flavor='floating-point' if base==BDDO.baseFloat else ('signed integer' if signed is not None and bool(signed.toPython()) else 'unsigned integer')
         end=g.value(t,BDDO.endianness)
-        return f'A {width}-bit {flavor} primitive datatype. '+('Byte order is '+label(g,end)+'.' if end else 'Byte order is not fixed on this datatype; the field and processing context determine it.')
+        # "an 8-bit", "an 11-bit", "an 18-bit": the article follows the spoken number.
+        article='An' if width.startswith(('8','11','18')) else 'A'
+        return f'{article} {width}-bit {flavor} primitive datatype. '+('Byte order is '+label(g,end)+'.' if end else 'Byte order is not fixed on this datatype; the field and processing context determine it.')
     if k=='Concept scheme':return f'The controlled concept scheme grouping {name.removesuffix(" Register").lower()} values. Membership identifies the applicable value set; raw format codes are defined by profiles rather than by this scheme.'
     if k=='Collection':return f'An editorial grouping of {name.lower()} concepts for navigation and selection. Collection membership does not assert a subclass or broader/narrower hierarchy.'
     if k=='Ontology':return f'The vocabulary module publishing {name} terms, its imports and associated validation declarations.'
