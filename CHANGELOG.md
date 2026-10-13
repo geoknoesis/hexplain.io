@@ -166,14 +166,21 @@ rewritten.
     only for a string key that spelt an integer, which let the string keys `"7"` and `"7.str"`
     share an IRI. `hc-dispatch-arm-iris` and its YAML mirror expect the new IRIs. **Breaking for
     compiled descriptions that name an arm of a string key.**
-  - *Modules.* Two different documents of one compilation with the same base namespace are an
-    ERROR on the import that brings in the later one (req-hdl-modules-5).
-  - *YAML Surface.* An unknown key is an ERROR in every mapping of the document
-    (req-hdl-yaml-6), and so is a listed key whose value is of the wrong kind (req-hdl-yaml-7).
+  - *Modules.* Two different documents of one compilation with the same ontology IRI (the base
+    namespace without one trailing `#` or `/`) are an ERROR on the import that brings in the
+    later one; a diamond import of one document is not (req-hdl-modules-5).
+  - *YAML Surface.* An unknown key is an ERROR in every mapping of the document, the nested
+    clause mappings listed by name, and so are a listed key that nothing reads where it stands
+    and a clause mapping without its defining key (req-hdl-yaml-6). A listed key whose value is
+    of the wrong kind is an ERROR (req-hdl-yaml-7): scalars are typed (strings, flags that take
+    `true` or `false` only, expressions), a null reads as the key left out where a scalar is
+    taken and is an ERROR where a mapping or sequence is required, and a value usable only
+    through its string form is refused. The key table's `sync` row agrees with the prose (an
+    unquoted hex scalar or `{ hex: }`).
   - *Semantic Mapping.* A name in the media-encoding register's namespace that is no concept of
     the register is an ERROR (req-hdl-semantic-2); the WARNING remains for a catalogue-only
     concept the register lists.
-  - Twenty-six `hc-` cases (`tools/conformance/cases_hdl_names.py`): `hc-mint-collision-*`,
+  - Thirty-one `hc-` cases (`tools/conformance/cases_hdl_names.py`): `hc-mint-collision-*`,
     `hc-shared-namespace-*`, `hc-yaml-unknown-key-*`, `hc-yaml-value-kind-*`,
     `hc-encoded-with-unknown-register-concept` and `hc-pipeline-unknown-register-concept`.
 

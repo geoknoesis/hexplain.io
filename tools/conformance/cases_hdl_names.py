@@ -389,11 +389,10 @@ value_kind(
 value_kind(
     "bit-length-sequence",
     "A sequence where bit-length takes a scalar is an ERROR",
-    "bit-length: [3] is a list; it is not coerced to its one element, and without the ERROR the field would be a "
-    "whole byte.",
+    "bit-length: [3] is a list where the width of a bits field is a scalar; it is not coerced to its one element.",
     """
         fields:
-          - { name: a, type: u8, bit-length: [3] }
+          - { name: a, type: bits, bit-length: [3] }
     """,
 )
 value_kind(
@@ -417,6 +416,83 @@ value_kind(
     format: t
     namespace: "{ns}"
     """,
+)
+
+value_kind(
+    "flag-string",
+    "A string where a flag key takes true or false is an ERROR",
+    'required is a flag: it takes true or false, and "yes" is a string, not a truth value to be guessed at.',
+    """
+    bundles:
+      Sidecar:
+        bound-by: naming-convention
+        parts:
+          - { extension: ".dat", role: Payload, required: "yes", primary: true }
+    """,
+    head="""
+    format: t
+    namespace: "{ns}"
+    """,
+)
+value_kind(
+    "null-for-mapping",
+    "A null where a mapping is required is an ERROR",
+    "layout: with nothing after it is a null. A null scalar reads as its key left out, but layout takes a "
+    "mapping, and an empty one is not a layout the author left out.",
+    """
+        fields:
+          - name: pixels
+            type: bytes
+            size: ".."
+            layout:
+    """,
+)
+value_kind(
+    "hex-number",
+    "A number where the hex mapping takes a string is an ERROR",
+    '{ hex: 16 } gives the integer sixteen where the byte string is spelt as a string, "0x10"; the number is not '
+    "read through its digits.",
+    """
+        fields:
+          - { name: magic, type: bytes, size: 1, fixed: { hex: 16 } }
+    """,
+)
+
+# ----------------------------------------------------------------- YAML: a listed key that nothing reads
+
+err(
+    "yaml-key-container-option-on-struct",
+    "A container option on a plain struct is an ERROR",
+    "separator is a key of a text container (a header, a table); Root is a plain struct, where nothing reads it.",
+    UNKNOWN_KEY,
+    ["yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        separator: 0x2C
+        fields:
+          - { name: a, type: u8 }
+    """,
+    yaml=True,
+)
+
+err(
+    "yaml-key-bit-length-on-byte-field",
+    "bit-length on a field whose type is not bits is an ERROR",
+    "a is a u8; bit-length belongs to a bits field, and on any other type nothing reads it.",
+    UNKNOWN_KEY,
+    ["yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        fields:
+          - { name: a, type: u8, bit-length: 3 }
+    """,
+    yaml=True,
 )
 
 # ----------------------------------------------------------------- a register name that is no concept
