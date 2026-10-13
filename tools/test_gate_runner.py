@@ -102,10 +102,18 @@ def check_concurrency(root: Path) -> None:
         gate.unlink()
     for name in ("test_c", "test_a", "test_b"):
         (tools / f"{name}.py").write_text(
+            # Each gate announces itself, then waits until all three have: a runner that ran them one
+            # after another would leave the first waiting for gates that cannot start, and it fails.
+            # Waiting on the others, rather than on a clock, keeps the check sound on a loaded host.
             "import time\n"
             "from pathlib import Path\n"
-            f"Path('.gate-results/{name}.started').write_text(str(time.monotonic()))\n"
-            "time.sleep(1.5)\n"
+            f"Path('.gate-results/{name}.started').write_text('started')\n"
+            "deadline = time.monotonic() + 120\n"
+            "names = ('test_a', 'test_b', 'test_c')\n"
+            "while not all(Path(f'.gate-results/{n}.started').exists() for n in names):\n"
+            "    if time.monotonic() > deadline:\n"
+            "        raise SystemExit(3)\n"
+            "    time.sleep(0.05)\n"
             f"print('PASS: {name}')\n",
             encoding="utf-8",
             newline="\n",
@@ -119,9 +127,8 @@ def check_concurrency(root: Path) -> None:
     assert [g["gate"] for g in saved["gates"]] == ["test_a", "test_b", "test_bad", "test_c"], saved["gates"]
     assert saved["counts"] == {"PASS": 3, "SKIP": 0, "FAIL": 1}
     assert saved["jobs"] == 3
-    # Three 1.5 s gates on three jobs: the whole run is shorter than running them one after another.
-    started = sorted(float((root / f".gate-results/{n}.started").read_text()) for n in ("test_a", "test_b", "test_c"))
-    assert started[-1] - started[0] < 1.5, started
+    # Each of the three passed only because it saw the other two start while it was still running.
+    assert all((root / f".gate-results/{n}.started").is_file() for n in ("test_a", "test_b", "test_c"))
     text = out.getvalue()
     assert text.count("RUN test_") == 4 and "PASS: test_a" in text and "FAIL test_bad" in text, text
 

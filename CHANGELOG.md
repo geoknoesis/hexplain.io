@@ -192,6 +192,8 @@ IRIs.
   and the manifest's rule is ten times the recorded duration, at most an hour.
   The runner retries the atomic replace of its run record, which a scanner holding the file
   open made fail with a PermissionError on Windows.
+  `test_gate_runner` proves concurrency by having each probe gate wait for the others to start,
+  instead of by a 1.5 s clock that a loaded host missed.
 - **Suite corrections.** `hc-encoded-with-catalogue-codec` binds `menc:` with `use`, as
   `req-hdl-prefixes-1` requires, so its only possible diagnostic is the warning it tests;
   `pp-claims-statement` accepts the `writer` feature token. The suite has 744 cases and the
