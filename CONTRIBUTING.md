@@ -63,7 +63,7 @@ Regenerate changed evidence rather than weakening freshness or coverage assertio
 
 Authored validation cases live in the `tools/_*_cases.py` libraries and share `tools/_cases.py`
 (`row()`, `Case`, `PREFIXES`). After changing them run
-`python tools/test_family_contract.py --write` (retained snapshot) and
+`python tools/_build_family_contracts.py --write` (retained snapshot) and
 `python tools/test_layout_competency.py --write` where applicable, then
 `python tools/_constraint_coverage.py` and `python tools/_render_constraint_coverage.py`,
 because the coverage ledger hashes the snapshots and the procedural gates. The GDAL evidence
