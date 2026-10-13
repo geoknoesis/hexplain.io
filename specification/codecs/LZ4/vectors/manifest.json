@@ -13,6 +13,12 @@
       "url": "https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md",
       "description": "Frames built byte by byte here from the LZ4 Frame Format Description 1.6.4 and RFC 8878 (Zstandard).",
       "licence": "CC0-1.0"
+    },
+    {
+      "id": "round-trip",
+      "url": "https://hexplain.io/specification/processing/#round-trip",
+      "description": "Round trips worked by hand from the codec's definition (a transform) or fed through the previous step's output (a compressor, whose encoded bytes are the implementation's own: the encode step expects success only, and the decode step reads its output back to the input).",
+      "licence": "CC0-1.0"
     }
   ],
   "vectors": [
@@ -291,6 +297,32 @@
           },
           "expect": {
             "hex": "616161616162"
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-trip",
+      "source": "round-trip",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {},
+          "input": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220"
           }
         }
       ]

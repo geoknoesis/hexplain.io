@@ -19,6 +19,12 @@
       "url": "https://github.com/geoknoesis/hexplain-tools",
       "description": "Inputs derived here (tools/codecs/_complete_vectors.py) from this suite's own vectors: truncations, single-byte corruptions, lowered output limits and parameter settings; the category or output of each was confirmed with hexplain-tools 97c952f24508 (hexplain-codec vector) before it was recorded, since no independent implementation of this codec was at hand.",
       "licence": "inputs as the vectors they derive from; expectations CC0-1.0"
+    },
+    {
+      "id": "round-trip",
+      "url": "https://hexplain.io/specification/processing/#round-trip",
+      "description": "Round trips worked by hand from the codec's definition (a transform) or fed through the previous step's output (a compressor, whose encoded bytes are the implementation's own: the encode step expects success only, and the decode step reads its output back to the input).",
+      "licence": "CC0-1.0"
     }
   ],
   "vectors": [
@@ -252,6 +258,32 @@
         }
       ],
       "source": "reference-engine"
+    },
+    {
+      "id": "round-trip",
+      "source": "round-trip",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {},
+          "input": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220"
+          }
+        }
+      ]
     }
   ]
 }

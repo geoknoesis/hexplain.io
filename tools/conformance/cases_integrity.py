@@ -492,6 +492,18 @@ pp(
 )
 
 pp(
+    "codec-delta-row-not-whole-pixels",
+    "Parameter values the contract admits and the codec cannot run together are a description error",
+    "elementSize 2 and rowBytes 3 are each a value the menc:Delta contract admits, and a row is a whole "
+    "number of pixels: the contract declares Description for it, and the bytes, four of them, are not at fault.",
+    ["req-pm-codec-contracts-6", "req-pm-minimum-codecs-7"],
+    ["codec-contracts", "delta-parameters"],
+    delta_field({"elementSize": 2, "rowBytes": 3}, 4),
+    bytes([0, 5, 0, 1]),
+    error="Description",
+)
+
+pp(
     "codec-pipeline-reverse-order",
     "Encoding steps are decoded in reverse list order",
     "The list says Delta then Zlib, the order the writer applied them; a reader inflates first and then "

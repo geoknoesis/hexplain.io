@@ -48,9 +48,15 @@ HAND_SOURCE = {
     "id": "round-trip",
     "url": "https://hexplain.io/specification/processing/#round-trip",
     "description": "Round trips worked by hand from the codec's definition (a transform) or fed through the previous "
-    "step's output (a compressor, encoded with zlib for the expectation-free encode step).",
+    "step's output (a compressor, whose encoded bytes are the implementation's own: the encode step expects success "
+    "only, and the decode step reads its output back to the input).",
     "licence": "CC0-1.0",
 }
+
+
+# The compressors whose contract encodes: their output is not canonical, so their round trip is the
+# {"previous": true} form. (The transforms that encode have one fixed encoding, asserted byte for byte.)
+COMPRESSORS = ("Deflate", "Zlib", "Gzip", "LZ4", "LZ4Block", "Zstd", "XZ", "LZW", "PackBits")
 
 
 class Engine:
@@ -208,6 +214,15 @@ def complete(name: str, manifest: Any, contract: Any, declared: Any, base: Any, 
             if propose(label, [s], "Unsupported"):
                 break
 
+    # Description: parameter values the contract admits one by one and the codec cannot run together
+    # (Processing Model, Codec contracts: the bytes are not at fault, the description is). Proposed even
+    # where a step already expects the category: an omitted required parameter is what the load-time
+    # check refuses, and this is the case only the running codec can see.
+    if "Description" in declared:
+        for label, params in description_candidates(name):
+            if propose(label, [with_input(ok_step, data, {"error": "Description"}, params=params)], "Description"):
+                break
+
     # Parameters the contract declares and no vector passes.
     for pname in sorted(set(contract["parameters"]) - params_used):
         for label, steps_ in parameter_candidates(name, pname, manifest, base, ok_step, data):
@@ -215,7 +230,7 @@ def complete(name: str, manifest: Any, contract: Any, declared: Any, base: Any, 
                 break
 
     # Round trips.
-    if "encode" in directions or name in ("Deflate", "Zlib", "Gzip"):
+    if "encode" in directions or name in COMPRESSORS:
         trip = round_trip(name, manifest)
         if trip and trip["id"] not in ids:
             result = engine.run(manifest["codec"], base, trip)
@@ -260,6 +275,13 @@ def unsupported_candidates(name: str, data: Any, ok_step: Any) -> Iterator[Any]:
             None,
         )
         yield "no-check", lzma.compress(raw, format=lzma.FORMAT_XZ, check=lzma.CHECK_NONE), None
+
+
+def description_candidates(name: str) -> Iterator[Any]:
+    if name == "Delta":
+        # rowBytes is any non-negative integer and elementSize any of 1, 2, 4, 8; a row is nonetheless a
+        # whole number of pixels, so a 3-byte row of 2-byte samples describes nothing.
+        yield "row-not-whole-pixels", {"elementSize": 2, "rowBytes": 3}
 
 
 def parameter_candidates(name: str, pname: Any, manifest: Any, base: Any, ok_step: Any, data: Any) -> Iterator[Any]:
@@ -315,13 +337,21 @@ def round_trip(name: str, manifest: Any) -> Any:
                 step(bytes.fromhex(encoded), {"hex": original}, params),
             ],
         }
-    if name in ("Deflate", "Zlib", "Gzip"):
+    if name in COMPRESSORS:
+        # A compressor's encoded bytes are its implementation's own (match search, block splitting, run
+        # packing), so the encode step expects only success and the decode step reads its output back.
         original = b"round trip through the compressor " * 4
-        decode = {"direction": "decode", "params": {}, "input": {"previous": True}, "expect": {"hex": original.hex()}}
+        params = {"decodedSize": len(original)} if name == "LZ4Block" else {}
+        decode = {
+            "direction": "decode",
+            "params": params,
+            "input": {"previous": True},
+            "expect": {"hex": original.hex()},
+        }
         return {
             "id": "round-trip",
             "source": "round-trip",
-            "steps": [step(original, {"ok": True}, direction="encode"), decode],
+            "steps": [step(original, {"ok": True}, params, direction="encode"), decode],
         }
     return None
 
