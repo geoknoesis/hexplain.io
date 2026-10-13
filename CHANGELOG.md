@@ -58,6 +58,138 @@ rewritten.
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### Review integration and follow-ups (2026-10-12)
+
+The tooling, ontology and normative review branches are merged, and the work each left for
+another owner is done here. Module versions are unchanged: the canonical graphs of bddo 1.3,
+dlv 1.3, core 1.3 and register/media-encoding 1.2 changed again under their unreleased version
+IRIs.
+
+- **Generated documentation leaves the canonical Turtle** (ontology finding L5). Each module's
+  `GENERATED TERM DOCUMENTATION` block is now a sibling annotation graph, `<module>-doc.ttl`
+  (`bddo/bddo-doc.ttl` beside `bddo/bddo.ttl`): `rdfs:label`, `skos:definition` and
+  `skos:scopeNote` only, no ontology of its own, written by
+  `tools/_build_term_reference.py --enrich`. `specification/family.json` lists the 39 new files
+  under `files`, so the family graph a consumer loads is the same graph as before, and maps each
+  module to its graph under the new `documentation` key, which `tools/_family.py` checks. The 622
+  generated `rdfs:isDefinedBy` statements moved into the canonical files (and the 13 authoring
+  templates) as a *Term ownership* section, and `--enrich` now refuses a term without one. No
+  generator writes a canonical file any more; the module pages embed the authored Turtle only and
+  link the annotation graph, which `deployment/publication.conf` serves as Turtle at its own
+  path. A consumer that copies single modules (rather than the family) copies the `-doc.ttl`
+  beside each to keep the generated labels and definitions.
+- **`hexplain:encodes`** (core 1.3). A boolean on the codec contract, checked by
+  `hexplain:CodecContractShape`, saying the contract covers the encode direction; stated on the
+  seven contracts whose suites hold encode steps (Store, Deflate, Zlib, Gzip, Delta,
+  FloatingPointPredictor, BitReverse). `tools/test_codec_vector_completeness.py` reads it instead
+  of inferring the direction from the suite, and fails an encode step under a contract that does
+  not state it.
+- **XZ no longer declares `Unsupported`** (register/media-encoding 1.2). No XZ stream raises it;
+  the contract's `hexplain:raisesCategory` and the suite's `unreached` record are withdrawn.
+- **Codec status wording.** `processing#codec-status`, the HDL page and the codec-vector page
+  said a concept's `hexplain:status` was `contracted` or `catalogue`. `hexplain:status` is the
+  register lifecycle status (`hexplain:statusValid` on all 49 media-encoding concepts);
+  *contracted* and *catalogue-only* are defined by the presence of `hexplain:codecContract`.
+  `req-hdl-semantic-1` reworded to say so (its rule is unchanged).
+- **`Description` as a codec error category.** The Processing Model's codec-contract section
+  lists it with the four others and says when a codec raises it: a parameter value the contract
+  admits but the codec cannot act on once it runs (new `req-pm-codec-contracts-6`; no contract
+  declares the category yet, so no case cites it).
+- **Alignment and padding** (bddo 1.3). New section `processing#alignment-padding`:
+  `bddo:alignment` on a struct aligns every instance before it starts (`req-pm-parsestruct-11`),
+  `bddo:padTo` pads a field after its value and a struct after its last member
+  (`req-pm-parsefield-31`, `req-pm-parsestruct-12`), both measured from the start of the current
+  stream, a skip past the region is a bounds error, and `bddo:padByte` is an optional check
+  (`req-pm-alignment-padding-1` to `req-pm-alignment-padding-5`). The comments of
+  `bddo:alignment` and `bddo:padTo` said "relative to the start of the enclosing region"; they now
+  state the stream origin the Processing Model and the existing alignment cases use. Cases
+  `pp-pad-field`, `pp-pad-field-on-boundary`, `pp-pad-repeated-field`, `pp-pad-struct-extent`,
+  `pp-pad-origin-is-the-stream`, `pp-pad-past-region`, `pp-pad-byte-without-pad-to`,
+  `pp-align-struct` and `pp-align-struct-each-instance`.
+- **Float formats, binary-coded decimal and fixed-point scale** (bddo 1.3). New section
+  `processing#numeric-representation` defines the bit layouts of `bddo:ibmHexadecimal`,
+  `bddo:vaxF` and `bddo:bfloat16` beside `bddo:ieee754`, their conversion to the IEEE 754 format
+  of the field's width, `bddo:bcd` and `bddo:fixedPointScale`
+  (`req-pm-numeric-representation-1` to `req-pm-numeric-representation-9`); a fixed-point field
+  is emitted as its scaled value in an `xsd:decimal` literal (`req-pm-value-mapping-1`). Cases
+  `pp-float-ibm-hexadecimal`, `pp-float-vax`, `pp-float-vax-reserved-operand`,
+  `pp-float-bfloat16`, `pp-float-format-on-data-type`, `pp-float-format-width`, `pp-bcd`,
+  `pp-bcd-invalid-nibble` and `se-fixed-point-scale`.
+- **Further encodings and `bddo:CustomEncoding`** (bddo 1.3). `processing#text-encodings` says
+  what is well-formed in the twelve encodings registered beyond the original five and in a custom
+  encoding named by `bddo:ianaCharset`. A Physical Parser need not decode them: a new refusal
+  case (e) and `req-pm-text-decoding-5` to `req-pm-text-decoding-7` make an encoding whose
+  character set the processor does not decode an Unsupported feature error, never text read some
+  other way. `req-pm-errors-10` reworded to list it. Cases `pp-encoding-custom-unsupported` and
+  `pp-encoding-custom-known-charset`.
+- **Computed layout extents and chunk-order keys** (dlv 1.3). `req-pm-data-layouts-1` reworded to
+  resolve `dlv:dimensionSizeFromExpression`, `dlv:chunkSizeFromExpression` and
+  `dlv:cellBitWidthFromExpression` with the stride's; new `req-pm-data-layouts-2` (resolved once,
+  before any cell) and `req-pm-data-layouts-3` (the Morton and Hilbert key construction DLV
+  defines is the order's meaning). The HEL name-binding table gains the three properties. Cases
+  `pp-layout-size-from-expression` and `pp-layout-size-expression-not-integer`.
+- **HDL: BDDO terms without a clause.** `hdl#terms-without-a-clause` gives the existing spelling
+  of each new term (`@prop` on a field, a `raw-turtle` triple on a struct) and says which are
+  RDF-only for now: the encodings beyond the five string types, `bddo:CustomEncoding`, and the
+  three computed layout extents. No syntax is added.
+- **Checksum fields.** `processing#checksum-field-kinds` states as one requirement
+  (`req-pm-parsefield-30`) that a checksum on a field that is not of its algorithm's kind and
+  width is a description error: a CRC, a digest, and now `bddo:adler32`, whose 32-bit integer
+  field the text described without requiring. `req-pm-parsefield-16` points at it and
+  `req-pm-errors-8` lists it, with the other new description errors. Case
+  `pp-checksum-adler32-field-width`.
+- **Negative offsets.** The rule sat in the `parentStart` paragraph and read as though it bound
+  every base. `processing#negative-offsets` states it generally: a negative value is a bounds
+  error with `streamStart`, `streamEnd` and `parentStart` (`req-pm-parsefield-32`), while
+  `currentPosition` accepts a negative relative offset whose target must still lie inside the
+  region (`req-pm-parsefield-33`). `req-pm-parsefield-29` reworded to the `parentStart` target
+  rule alone. Cases `pp-offset-negative-stream-start`, `pp-offset-negative-stream-end`,
+  `pp-offset-current-negative` and `pp-offset-current-negative-outside`.
+- **Enumerated field mapped both ways.** A field with an enumeration and both
+  `hexplain:mapsToProperty` and `hexplain:mapsToObjectProperty` emits the literal and the symbol
+  on the first and the symbol on the second (`req-pm-emission-13`); cases
+  `se-enum-both-properties` and `se-enum-both-properties-no-symbol`.
+- **HEL.** A key step on `stream`, `param` or `asset` records no holder, so
+  `stream.length.parent` is Null (`req-hel-reserved-roots-5`). Every root is reserved in every
+  position: `asset(1)`, `param()` and `x.param` are syntax errors (`req-hel-formal-grammar-4`).
+  HEL-RE: an unknown block or category name, a misplaced `-` in a character class and a
+  quantifier bound above 2^31-1 are argument errors, a pattern too large to compile is a
+  ResourceLimit error, and a processor states the Unicode version its classes follow
+  (`req-hel-ext-text-5` to `req-hel-ext-text-8`; the report environment gains the optional
+  member `unicode`). The math functions accept an unsigned 64-bit Integer above 2^63-1
+  (`req-hel-math-5`). Float rendering is defined without reference to a platform function
+  (`req-hel-math-6`), and its definition now includes the rule its own example needed: where one
+  digit would round-trip, the nearest two-digit string is written, so the smallest subnormal is
+  `4.9E-324`. Thirteen vector rows (`hel-vectors.tsv`, 247 rows), whose header also says that a
+  `self` string naming a node path denotes that node; cases `pp-hel-root-as-function-name`,
+  `pp-hel-root-as-key`, `pp-hel-stream-key-parent-is-null`, `pp-hel-math-unsigned-64`,
+  `pp-hel-math-tostring-shortest-digits`, `pp-hel-regex-hyphen-in-class`,
+  `pp-hel-regex-hyphen-misplaced`, `pp-hel-regex-unknown-block` and
+  `pp-hel-regex-quantifier-bound`. The reference parser `tools/conformance/hel.py` treated
+  `param` as a field name and rendered `5e-324` as `5.0E-324`; both are fixed.
+- **Suite corrections.** `hc-encoded-with-catalogue-codec` binds `menc:` with `use`, as
+  `req-hdl-prefixes-1` requires, so its only possible diagnostic is the warning it tests;
+  `pp-claims-statement` accepts the `writer` feature token. The suite has 744 cases and the
+  registry 453 requirements.
+- **PNG example** (`specification/hexplain/index.html`). The conditional mapping read the sibling
+  `Keyword` as `instance.parent.Keyword`. In a `hexplain:condition` on a field's mapping rule
+  `instance` is the struct containing the field, so the sibling is `instance.Keyword`; the size
+  expression's `sizeof` is corrected likewise, and `instance.parent.ChunkLength`, a field of the
+  enclosing chunk, is unchanged.
+- **Editorial definitions of `dlv:morton` and `dlv:hilbert`** defer to the terms' comments, which
+  now fix the key construction, instead of saying the profile and processor "must agree".
+- **Review archive.** `specification/ontology-review/index.html` no longer links
+  `ontology-review-candidate.zip`, which is not tracked or deployed: it says the archive is
+  produced by `python tools/_review_candidate.py --archive-only` and attached by the validation
+  workflow, with the tracked manifest as the reference. The link checker's exemption for that
+  file is removed.
+- **Tooling.** `ruff.toml` has no per-file exemptions: `_shape_text`, `_build_ontology_docs`,
+  `_requirement_ids`, `test_capabilities`, `tools/conformance/` and `tools/codecs/` are formatted
+  and annotated like the rest, with long data lines continued so that no published byte changes.
+  `tools/gates.json` declares `test_integer_value_shape` and `test_codec_vector_completeness`;
+  `test_capabilities` and `test_codec_vector_completeness` have a `main()` and an exit status;
+  `test_hel_vectors` no longer exempts `forward-reference`, which the struct-tree contexts raise.
+
 ### Normative review fixes (F1–F21)
 
 - **`bddo:parentStart`** (F1). The Processing Model's Addressing step names the fourth offset base,
