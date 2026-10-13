@@ -874,8 +874,9 @@ hc(
 pair(
     "dispatch-arm-iris",
     "The arms of a keyed dispatch are IRIs minted from the table and the key",
-    'T\'s arms are <base>T.arm.ftyp, <base>T.arm.7 for the integer key and <base>T.arm.7.str for the string "7", '
-    "never blank nodes; the lone sibling in on is bddo:dispatchOnField.",
+    "T's arms are <base>T.arm.ftyp.str and <base>T.arm.7.str for the string keys ftyp and 7, every string key "
+    "carrying the suffix .str, and <base>T.arm.7 for the integer key 7, which never does; none is a blank node, "
+    "and the lone sibling in on is bddo:dispatchOnField.",
     OK + ["req-hdl-modules-4"],
     ["modules", "iri-minting"],
     """
@@ -914,7 +915,7 @@ pair(
      ex:Root.kind a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:ascii ; bddo:size 4 .
      ex:Root.body a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ; bddo:hasDispatchTable ex:T .
      ex:T a bddo:DispatchTable ; bddo:dispatchOnField ex:Root.kind ; bddo:dispatchDefault ex:Blob .
-     ex:T.arm.ftyp a bddo:DispatchArm ; bddo:armTable ex:T ; bddo:armKey "ftyp" ; bddo:armDataType ex:A .
+     ex:T.arm.ftyp.str a bddo:DispatchArm ; bddo:armTable ex:T ; bddo:armKey "ftyp" ; bddo:armDataType ex:A .
      ex:T.arm.7 a bddo:DispatchArm ; bddo:armTable ex:T ; bddo:armKey 7 ; bddo:armDataType ex:B .
      ex:T.arm.7.str a bddo:DispatchArm ; bddo:armTable ex:T ; bddo:armKey "7" ; bddo:armDataType ex:A .
      ex:A a bddo:Struct ; bddo:hasField ( ex:A.a ) .

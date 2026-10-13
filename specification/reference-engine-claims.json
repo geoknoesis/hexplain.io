@@ -104,7 +104,7 @@
       "terms": [
         "Serialisation (write direction)"
       ],
-      "note": "The Writer conformance target, claimed on the evidence the suite defines for it: the engine's Metawriter passes every case of the Writer class of the processor conformance suite (specification/conformance/writer/), run by the engine's own suite runner and, through its hexplain-write command, by run_suite.py --w-cmd; the implementation report published under specification/conformance/reports/hexplain-tools/ for the current suite lists the class. A text container, a tree document and a chunk table are refused with Unsupported feature, as the serialisation rules require, and so is a field written through a codec whose contract defines no encode direction. Generated Kotlin writers follow the same rules or refuse; the claim is the Metawriter's."
+      "note": "The Writer conformance target, claimed on the evidence the suite defines for it: the engine's Metawriter passes every case of the Writer class of the processor conformance suite (specification/conformance/writer/), run by the engine's own suite runner and, through its hexplain-write command, by run_suite.py --w-cmd; the implementation report published under specification/conformance/reports/hexplain-tools/ (suite digest 529c1a9c7918, 52 Writer cases) lists the class. The Writer cases added since (86 in all) and the round-trip mode are not yet covered by a published report: the claim is to be re-confirmed by a report of the current suite. A text container, a tree document and a chunk table are refused with Unsupported feature, as the serialisation rules require, and so is a field written through a codec whose contract defines no encode direction. Generated Kotlin writers follow the same rules or refuse; the claim is the Metawriter's."
     }
   },
   "helExtensionGroups": [
@@ -191,6 +191,29 @@
       "Quantize": "codecs-array",
       "BitRound": "codecs-array"
     }
+  },
+  "encodings": {
+    "namespace": "https://hexplain.io/ns/bddo#",
+    "decoded": [
+      "utf8",
+      "ascii",
+      "latin1",
+      "utf16le",
+      "utf16be",
+      "utf32le",
+      "utf32be",
+      "ucs2le",
+      "ucs2be",
+      "windows1252",
+      "iso8859_2",
+      "iso8859_5",
+      "iso8859_7",
+      "iso8859_9",
+      "iso8859_15",
+      "ebcdic037",
+      "shiftJis"
+    ],
+    "note": "Every registered bddo:Encoding, by local name: the five every Physical Parser decodes (utf8, ascii, latin1, utf16le, utf16be) and the twelve further encodings, which a claims statement lists by IRI in its `encodings` member (Processing Model, Further encodings). The engine decodes them through its Java runtime's character sets (FieldFacetCompilers.kt, encodingCharsets), with its own UCS-2 decoders; ebcdic037 (IBM037) and shiftJis (Shift_JIS) are in the JDK's jdk.charsets module, and on a runtime image built without that module the engine refuses them with Unsupported feature when the description is loaded, as the Processing Model requires, and a deployment's claims statement then omits them. A bddo:CustomEncoding is decoded when the runtime has a decoder for its bddo:ianaCharset."
   },
   "limits": {
     "maxInputBytes": 268435456,

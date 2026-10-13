@@ -40,6 +40,7 @@ MODULES = (
     "cases_evaluator",
     "cases_features",
     "cases_features_hdl",
+    "cases_hdl_names",
     "cases_terms",
     "cases_writer",
     "cases_writer_forms",

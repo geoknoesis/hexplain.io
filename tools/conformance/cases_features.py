@@ -89,7 +89,7 @@ pp(
     "float16-normal-values",
     "bddo:float16 decodes binary16 values exactly, in both byte orders",
     "3C00 is 1.0, C000 is -2.0, 7BFF is the largest finite value 65504, and 3555 is 0.333251953125 exactly.",
-    WIDTHS + ["req-bddo-core-datatypes-4", "req-pm-byte-order-2"],
+    WIDTHS + ["req-bddo-core-datatypes-4", "req-pm-byte-order-2", "req-pm-numeric-representation-2"],
     ["bddo/index.html#odd-widths", "byte-order"],
     """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:one ex:minusTwo ex:max ex:third ex:thirdLe ) .

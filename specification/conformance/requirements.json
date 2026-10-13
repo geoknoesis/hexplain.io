@@ -3998,6 +3998,27 @@
    "text": "A NAME used as a field name or alias MUST additionally be a HEL identifier (§Lexical Structure).",
    "sha256": "dd604597eb2da83e"
   },
+  "req-hdl-iri-minting-1": {
+   "page": "specification/hdl/index.html",
+   "section": "iri-minting",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST report an ERROR when two declarations of one document mint the same IRI, whatever kinds they are — at the later of two declarations of one kind, and at either of two of different kinds: two structs, two top-level enums, two dispatch tables, two bundles or two assets of one name; two parameters of one struct of one name, or a parameter and a field or local binding of its struct; a struct, a top-level enum, a dispatch table, a bundle, an asset, an asset's part and a top-level field that share a name with one another (struct Grid and bundle Grid; asset roads with a part Grid); an as alias that spells any of these or another alias; and two arms of one table whose keys mint one IRI (the string keys \"a b\" and \"a%20b\", both <base>T.arm.a%20b.str).",
+   "sha256": "d40d2444e6bcecf3",
+   "history": [
+    "281c90de568f1c48"
+   ]
+  },
+  "req-hdl-iri-minting-2": {
+   "page": "specification/hdl/index.html",
+   "section": "iri-minting",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST NOT resolve the collision by renaming, by dropping one declaration or by merging the two.",
+   "sha256": "a7ce750de45fa091"
+  },
   "req-hdl-layout-1": {
    "page": "specification/hdl/index.html",
    "section": "layout",
@@ -4071,8 +4092,20 @@
    "cls": "hdl-compiler",
    "level": "MUST",
    "audience": "processor",
-   "text": "A compiler MUST emit each arm as an IRI, <ns#Table.arm.key> in the namespace of the document that declares the arm (an integer key as its decimal digits, a string key percent-encoded as a quoted key is, §IRI Minting, with the suffix .str when it spells an integer, so that 7 and \"7\" stay distinct; an imported table's alias:Table written alias.Table), never as a blank node, so an arm an extend dispatch contributes from another module has a name of its own.",
-   "sha256": "be72983f6b8617ef"
+   "text": "A compiler MUST emit each arm as an IRI, <ns#Table.arm.key> in the namespace of the document that declares the arm (an integer key as its decimal digits and nothing else; a string key percent-encoded as a quoted key is, §IRI Minting, followed by the suffix .str — every string key carries the suffix and no integer key does, so that 7 and \"7\" are T.arm.7 and T.arm.7.str, \"ftyp\" is T.arm.ftyp.str, and no string key, \"7.str\" included, can spell another key's IRI; an imported table's alias:Table written alias.Table), never as a blank node, so an arm an extend dispatch contributes from another module has a name of its own.",
+   "sha256": "d969da61b2345bdb",
+   "history": [
+    "be72983f6b8617ef"
+   ]
+  },
+  "req-hdl-modules-5": {
+   "page": "specification/hdl/index.html",
+   "section": "modules",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST report an ERROR, on the import line (or imports: entry) that brings in the later of them, when two different documents of one compilation have the same base namespace, whether it was declared with @namespace or derived from the format or module name: <ns>Box would then be whatever both documents declare under that name, merged, and no check within either document can see it.",
+   "sha256": "cf371e4455698beb"
   },
   "req-hdl-parameters-1": {
    "page": "specification/hdl/index.html",
@@ -4125,6 +4158,15 @@
    "history": [
     "65acb818e1b0f507"
    ]
+  },
+  "req-hdl-semantic-2": {
+   "page": "specification/hdl/index.html",
+   "section": "semantic",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST report an ERROR for a name in the media-encoding register's namespace that is no concept of the register (menc:Zlip), in any of those positions: a misspelt codec is not a codec nobody decodes yet, and compiled with a warning it would be a description that can never be read.",
+   "sha256": "5281f5eff9f3dcc1"
   },
   "req-hdl-types-1": {
    "page": "specification/hdl/index.html",
@@ -4188,6 +4230,24 @@
    "audience": "processor",
    "text": "A conforming YAML loader MUST report an ERROR for a quoted \"0x…\" in one of these positions, since they take bytes and it is a string (any quoted scalar is an ERROR for sync and terminator; a quoted delimiter that does not begin 0x is the UTF-8 bytes of its text).",
    "sha256": "841bd34fb13eb7f3"
+  },
+  "req-hdl-yaml-6": {
+   "page": "specification/hdl/index.html",
+   "section": "yaml",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST report an ERROR for a key that the table does not list for the mapping it appears in, in every mapping of the document: the top level, a struct, an enum, a field, and every mapping nested in them that the table names — a type, a switch, a dispatch, a checksum and its crc, a layout, an entry of dims, chunks, a pipeline step, a bundle, a part, an asset.",
+   "sha256": "441c26df38d9a1e9"
+  },
+  "req-hdl-yaml-7": {
+   "page": "specification/hdl/index.html",
+   "section": "yaml",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST likewise report an ERROR for a listed key whose value is not of the kind the key takes — a mapping or a sequence where a scalar is required (name: { a: 1 }, size: [4]), a scalar where a sequence or a mapping is required (fields: 3, layout: u8), a sequence where a mapping is required (structs: [ … ]) — and MUST NOT coerce the value, skip the key or read it as absent.",
+   "sha256": "819be21dc837961d"
   },
   "req-ce-conf-conformance-1": {
    "page": "specification/conf/index.html",

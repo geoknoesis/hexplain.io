@@ -3,7 +3,7 @@
   "physical-parser": 506,
   "semantic-emitter": 49,
   "bundle-processor": 13,
-  "hdl-compiler": 180,
+  "hdl-compiler": 206,
   "conformance-evaluator": 41,
   "writer": 86
  },
@@ -20,16 +20,14 @@
  "processorMust": {
   "Physical Parser": {
    "total": 276,
-   "covered": 271,
+   "covered": 272,
    "notSuiteTestable": {
     "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's shape gates (test_shapes, test_vocab_shapes) apply it.",
     "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the condition is asserted by the HEL vectors (validation/test/hel-vectors.tsv, req-hel-conformance-9).",
     "req-hel-ext-text-7": "A statement in the processor's claims or report environment, not a result of a parse; it is checked by reading the published report.",
     "req-pm-alignment-padding-3": "Verifying a fill byte is optional (a processor MAY compare the padding with bddo:padByte), so a case cannot tell a processor that does not verify from one that verified and agreed; the rule binds only what a verifying processor reports."
    },
-   "uncovered": [
-    "req-pm-text-decoding-9"
-   ]
+   "uncovered": []
   },
   "Semantic Emitter": {
    "total": 33,
@@ -51,8 +49,8 @@
    "uncovered": []
   },
   "HDL Compiler": {
-   "total": 56,
-   "covered": 55,
+   "total": 62,
+   "covered": 61,
    "notSuiteTestable": {
     "req-hdl-modules-3": "The import bounds are the compiler's own; a case would need an imported file larger than every conforming compiler's bound, and no size is."
    },
@@ -75,7 +73,7 @@
   "physical-parser": {
    "MUST": {
     "total": 201,
-    "covered": 198
+    "covered": 199
    },
    "SHOULD": {
     "total": 5,
@@ -124,8 +122,8 @@
   },
   "hdl-compiler": {
    "MUST": {
-    "total": 56,
-    "covered": 55
+    "total": 62,
+    "covered": 61
    },
    "SHOULD": {
     "total": 1,
@@ -1901,7 +1899,9 @@
    "pp-float-vax-reserved-operand"
   ],
   "req-pm-numeric-representation-2": [
-   "pp-float-bfloat16"
+   "pp-float-bfloat16",
+   "pp-float-ieee754",
+   "pp-float16-normal-values"
   ],
   "req-pm-numeric-representation-3": [
    "pp-float-format-on-data-type",
@@ -2661,7 +2661,41 @@
    "pp-encoding-custom-known-charset"
   ],
   "req-pm-text-decoding-8": [],
-  "req-pm-text-decoding-9": [],
+  "req-pm-text-decoding-9": [
+   "pp-encoding-ebcdic037-decodes",
+   "pp-encoding-iso8859-15-decodes",
+   "pp-encoding-iso8859-2-decodes",
+   "pp-encoding-iso8859-5-decodes",
+   "pp-encoding-iso8859-7-decodes",
+   "pp-encoding-iso8859-7-unassigned-ae",
+   "pp-encoding-iso8859-7-unassigned-d2",
+   "pp-encoding-iso8859-7-unassigned-ff",
+   "pp-encoding-iso8859-9-decodes",
+   "pp-encoding-shift-jis-decodes",
+   "pp-encoding-shift-jis-lead-without-trail",
+   "pp-encoding-shift-jis-trail-7f",
+   "pp-encoding-shift-jis-trail-out-of-range",
+   "pp-encoding-shift-jis-unassigned-pair",
+   "pp-encoding-ucs2be-decodes",
+   "pp-encoding-ucs2be-lone-surrogate",
+   "pp-encoding-ucs2be-surrogate-pair",
+   "pp-encoding-ucs2le-decodes",
+   "pp-encoding-ucs2le-surrogate-pair",
+   "pp-encoding-utf32be-byte-order-mark-is-content",
+   "pp-encoding-utf32be-decodes",
+   "pp-encoding-utf32be-out-of-range",
+   "pp-encoding-utf32be-surrogate",
+   "pp-encoding-utf32le-decodes",
+   "pp-encoding-utf32le-out-of-range",
+   "pp-encoding-utf32le-partial-code-unit",
+   "pp-encoding-utf32le-surrogate",
+   "pp-encoding-windows1252-decodes",
+   "pp-encoding-windows1252-unassigned-81",
+   "pp-encoding-windows1252-unassigned-8d",
+   "pp-encoding-windows1252-unassigned-8f",
+   "pp-encoding-windows1252-unassigned-90",
+   "pp-encoding-windows1252-unassigned-9d"
+  ],
   "req-pm-text-decoding-10": [
    "pp-encoding-utf32be-byte-order-mark-is-content",
    "pp-encoding-utf32be-decodes",
@@ -3199,6 +3233,7 @@
    "hc-count-and-until",
    "hc-derive-with-repeat",
    "hc-duplicate-struct",
+   "hc-encoded-with-unknown-register-concept",
    "hc-evaluation-instant-in-parse",
    "hc-fixed-boolean",
    "hc-fixed-curie",
@@ -3235,6 +3270,16 @@
    "hc-lone-surrogate",
    "hc-max-below-min",
    "hc-min-without-pattern",
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml",
    "hc-namespace-not-absolute",
    "hc-negative-count",
    "hc-negative-offset",
@@ -3258,6 +3303,7 @@
    "hc-param-unknown-type",
    "hc-pipeline-and-encoded-with",
    "hc-pipeline-duplicate-parameter",
+   "hc-pipeline-unknown-register-concept",
    "hc-prop-bare-name",
    "hc-quoted-key-without-alias",
    "hc-repeat-until-ambiguous",
@@ -3267,6 +3313,8 @@
    "hc-seek-without-at",
    "hc-self-outside-scope",
    "hc-self-reference",
+   "hc-shared-namespace-root-and-module",
+   "hc-shared-namespace-two-modules",
    "hc-size-zero",
    "hc-stride-zero",
    "hc-switch-and-dispatch",
@@ -3295,6 +3343,18 @@
    "hc-yaml-quoted-hex-terminator",
    "hc-yaml-seek-without-at",
    "hc-yaml-switch-and-dispatch",
+   "hc-yaml-unknown-key-bundle-part",
+   "hc-yaml-unknown-key-checksum",
+   "hc-yaml-unknown-key-dims-entry",
+   "hc-yaml-unknown-key-dispatch",
+   "hc-yaml-unknown-key-enum",
+   "hc-yaml-unknown-key-layout",
+   "hc-yaml-unknown-key-struct",
+   "hc-yaml-value-kind-fields-scalar",
+   "hc-yaml-value-kind-layout-scalar",
+   "hc-yaml-value-kind-name-mapping",
+   "hc-yaml-value-kind-size-sequence",
+   "hc-yaml-value-kind-structs-sequence",
    "hc-yaml-version-spelling"
   ],
   "req-hdl-conformance-section-1": [
@@ -3329,6 +3389,7 @@
    "hc-duplicate-struct",
    "hc-element-key",
    "hc-encoded-with-catalogue-codec",
+   "hc-encoded-with-unknown-register-concept",
    "hc-evaluation-instant-in-parse",
    "hc-field-and-expression-forms",
    "hc-field-and-expression-forms-yaml",
@@ -3378,6 +3439,16 @@
    "hc-lone-surrogate",
    "hc-max-below-min",
    "hc-min-without-pattern",
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml",
    "hc-namespace-not-absolute",
    "hc-negative-count",
    "hc-negative-offset",
@@ -3410,6 +3481,7 @@
    "hc-parent-path-several-containers",
    "hc-pipeline-and-encoded-with",
    "hc-pipeline-duplicate-parameter",
+   "hc-pipeline-unknown-register-concept",
    "hc-prop-bare-name",
    "hc-prop-iri",
    "hc-prop-values",
@@ -3436,6 +3508,8 @@
    "hc-self-reference",
    "hc-semantic-mapping",
    "hc-semantic-mapping-yaml",
+   "hc-shared-namespace-root-and-module",
+   "hc-shared-namespace-two-modules",
    "hc-size-zero",
    "hc-stride-zero",
    "hc-string-non-bmp",
@@ -3477,6 +3551,18 @@
    "hc-yaml-surface",
    "hc-yaml-surface-text",
    "hc-yaml-switch-and-dispatch",
+   "hc-yaml-unknown-key-bundle-part",
+   "hc-yaml-unknown-key-checksum",
+   "hc-yaml-unknown-key-dims-entry",
+   "hc-yaml-unknown-key-dispatch",
+   "hc-yaml-unknown-key-enum",
+   "hc-yaml-unknown-key-layout",
+   "hc-yaml-unknown-key-struct",
+   "hc-yaml-value-kind-fields-scalar",
+   "hc-yaml-value-kind-layout-scalar",
+   "hc-yaml-value-kind-name-mapping",
+   "hc-yaml-value-kind-size-sequence",
+   "hc-yaml-value-kind-structs-sequence",
    "hc-yaml-version-spelling"
   ],
   "req-hdl-conformance-section-2": [
@@ -3492,6 +3578,7 @@
    "hc-import-yaml-module",
    "hc-layout-cell-yaml",
    "hc-let-binding-yaml",
+   "hc-mint-collision-struct-enum-yaml",
    "hc-param-on-header",
    "hc-param-struct-yaml",
    "hc-param-switch-arms-yaml",
@@ -3708,6 +3795,7 @@
    "hc-count-and-until",
    "hc-derive-with-repeat",
    "hc-duplicate-struct",
+   "hc-encoded-with-unknown-register-concept",
    "hc-evaluation-instant-in-parse",
    "hc-fixed-boolean",
    "hc-fixed-curie",
@@ -3744,6 +3832,16 @@
    "hc-lone-surrogate",
    "hc-max-below-min",
    "hc-min-without-pattern",
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml",
    "hc-namespace-not-absolute",
    "hc-negative-count",
    "hc-negative-offset",
@@ -3767,6 +3865,7 @@
    "hc-param-unknown-type",
    "hc-pipeline-and-encoded-with",
    "hc-pipeline-duplicate-parameter",
+   "hc-pipeline-unknown-register-concept",
    "hc-prop-bare-name",
    "hc-quoted-key-without-alias",
    "hc-repeat-until-ambiguous",
@@ -3776,6 +3875,8 @@
    "hc-seek-without-at",
    "hc-self-outside-scope",
    "hc-self-reference",
+   "hc-shared-namespace-root-and-module",
+   "hc-shared-namespace-two-modules",
    "hc-size-zero",
    "hc-stride-zero",
    "hc-switch-and-dispatch",
@@ -3804,6 +3905,18 @@
    "hc-yaml-quoted-hex-terminator",
    "hc-yaml-seek-without-at",
    "hc-yaml-switch-and-dispatch",
+   "hc-yaml-unknown-key-bundle-part",
+   "hc-yaml-unknown-key-checksum",
+   "hc-yaml-unknown-key-dims-entry",
+   "hc-yaml-unknown-key-dispatch",
+   "hc-yaml-unknown-key-enum",
+   "hc-yaml-unknown-key-layout",
+   "hc-yaml-unknown-key-struct",
+   "hc-yaml-value-kind-fields-scalar",
+   "hc-yaml-value-kind-layout-scalar",
+   "hc-yaml-value-kind-name-mapping",
+   "hc-yaml-value-kind-size-sequence",
+   "hc-yaml-value-kind-structs-sequence",
    "hc-yaml-version-spelling"
   ],
   "req-hdl-conformance-section-8": [
@@ -3939,6 +4052,30 @@
   "req-hdl-grammar-lexical-1": [
    "hc-hyphenated-field-name"
   ],
+  "req-hdl-iri-minting-1": [
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml"
+  ],
+  "req-hdl-iri-minting-2": [
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml"
+  ],
   "req-hdl-layout-1": [
    "pp-hel-asset-outside-bundle"
   ],
@@ -3974,7 +4111,12 @@
   "req-hdl-modules-3": [],
   "req-hdl-modules-4": [
    "hc-dispatch-arm-iris",
-   "hc-dispatch-arm-iris-yaml"
+   "hc-dispatch-arm-iris-yaml",
+   "hc-mint-collision-dispatch-arms"
+  ],
+  "req-hdl-modules-5": [
+   "hc-shared-namespace-root-and-module",
+   "hc-shared-namespace-two-modules"
   ],
   "req-hdl-parameters-1": [
    "hc-let-binding",
@@ -4019,6 +4161,10 @@
   "req-hdl-semantic-1": [
    "hc-encoded-with-catalogue-codec"
   ],
+  "req-hdl-semantic-2": [
+   "hc-encoded-with-unknown-register-concept",
+   "hc-pipeline-unknown-register-concept"
+  ],
   "req-hdl-types-1": [
    "hc-bracket-size-after-u24",
    "hc-bracket-size-on-u32"
@@ -4043,6 +4189,22 @@
    "hc-yaml-quoted-hex-separator",
    "hc-yaml-quoted-hex-sync",
    "hc-yaml-quoted-hex-terminator"
+  ],
+  "req-hdl-yaml-6": [
+   "hc-yaml-unknown-key-bundle-part",
+   "hc-yaml-unknown-key-checksum",
+   "hc-yaml-unknown-key-dims-entry",
+   "hc-yaml-unknown-key-dispatch",
+   "hc-yaml-unknown-key-enum",
+   "hc-yaml-unknown-key-layout",
+   "hc-yaml-unknown-key-struct"
+  ],
+  "req-hdl-yaml-7": [
+   "hc-yaml-value-kind-fields-scalar",
+   "hc-yaml-value-kind-layout-scalar",
+   "hc-yaml-value-kind-name-mapping",
+   "hc-yaml-value-kind-size-sequence",
+   "hc-yaml-value-kind-structs-sequence"
   ],
   "req-ce-conf-conformance-1": [
    "ce-absent-optional-fires-nothing",
@@ -4351,7 +4513,8 @@
   "bddo/index.html#odd-widths": 7,
   "bddo/index.html#parameterised-structs": 9,
   "conf/index.html#conformance": 1,
-  "hdl/index.html#bundle-profile": 4,
+  "hdl/index.html#asset": 2,
+  "hdl/index.html#bundle-profile": 5,
   "hdl/index.html#checksums": 10,
   "hdl/index.html#clause-multiplicity": 13,
   "hdl/index.html#clauses": 19,
@@ -4370,23 +4533,23 @@
   "hdl/index.html#grammar-lexical": 5,
   "hdl/index.html#grammar-structs": 5,
   "hdl/index.html#import-resolution": 4,
-  "hdl/index.html#iri-minting": 9,
+  "hdl/index.html#iri-minting": 21,
   "hdl/index.html#layout": 5,
   "hdl/index.html#lexical": 20,
   "hdl/index.html#literal-datatypes": 2,
   "hdl/index.html#literal-values": 24,
-  "hdl/index.html#modules": 10,
-  "hdl/index.html#parameters": 26,
+  "hdl/index.html#modules": 14,
+  "hdl/index.html#parameters": 27,
   "hdl/index.html#prefixes": 7,
   "hdl/index.html#raw-hel": 2,
   "hdl/index.html#repeat-until-names": 4,
   "hdl/index.html#root-keys": 3,
   "hdl/index.html#scalar-keys": 3,
-  "hdl/index.html#semantic": 7,
+  "hdl/index.html#semantic": 9,
   "hdl/index.html#structure": 2,
   "hdl/index.html#types": 11,
   "hdl/index.html#versioning": 3,
-  "hdl/index.html#yaml": 44,
+  "hdl/index.html#yaml": 57,
   "hel/index.html#coercion": 9,
   "hel/index.html#conformance": 11,
   "hel/index.html#core-functions": 11,

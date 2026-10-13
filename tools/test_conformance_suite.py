@@ -139,6 +139,30 @@ def gating_problems(case_dir: Path, man: dict[str, Any], cls: str) -> list[str]:
     return problems
 
 
+def reference_encoding_problems() -> list[str]:
+    """The reference implementation's capability statement lists text encodings that are registered, the five every
+    Physical Parser decodes among them, and the Processing Model's note names exactly the further ones."""
+    claims = json.loads((ROOT / "specification/reference-engine-claims.json").read_text(encoding="utf-8"))
+    decoded = claims.get("encodings", {}).get("decoded")
+    if not isinstance(decoded, list):
+        return ["reference-engine-claims.json: no encodings.decoded list"]
+    problems = [
+        f"reference-engine-claims.json: {name!r} is no registered bddo:Encoding"
+        for name in decoded
+        if name not in BASE_ENCODINGS + FURTHER_ENCODINGS
+    ]
+    problems += [f"reference-engine-claims.json: {n} is not decoded" for n in BASE_ENCODINGS if n not in decoded]
+    page = (ROOT / "specification/processing/index.html").read_text(encoding="utf-8")
+    note = re.search(r'<span data-claim="encodings">(.*?)</span>', page, re.S)
+    stated = set(re.findall(r"bddo:(\w+)", note.group(1))) if note else set()
+    if stated != set(decoded) - set(BASE_ENCODINGS):
+        problems.append(
+            "processing/index.html#reference-implementation names other further encodings than the capability "
+            f"statement: {sorted(stated ^ (set(decoded) - set(BASE_ENCODINGS)))}"
+        )
+    return problems
+
+
 def round_trip_problems() -> list[str]:
     """The round-trip expectations name exactly the Physical Parser cases that state a tree, each with a known
     outcome, and the mode's comparison and verdicts hold on probes."""
@@ -384,6 +408,7 @@ def main() -> int:
     for rid in sorted(by_mode & writer_cited):
         problems.append(f"{rid}: observed by the round-trip mode, which is its citation; no single case shows it")
     problems += round_trip_problems()
+    problems += reference_encoding_problems()
     problems += runner_problems()
     for cls, n in counts.items():
         if not n:

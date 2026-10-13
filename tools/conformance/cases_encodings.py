@@ -16,8 +16,10 @@ from cases_physical import pp
 from suite import ENCODING_NAMESPACE
 
 SECTIONS = ["text-decoding"]
-#: The requirement of each family of further encodings (the items of the Further encodings list), and the two rules
-#: every refusal rests on: text that is not well-formed is a validation error, and is never replaced.
+#: The requirement that governs the Further encodings list (a processor that decodes one decodes it by its mapping
+#: and takes exactly these sequences as well-formed), the requirement of each family (the items of the list), and
+#: the two rules every refusal rests on: text that is not well-formed is a validation error, and is never replaced.
+DECODES = "req-pm-text-decoding-9"
 UTF32 = "req-pm-text-decoding-10"
 UCS2 = "req-pm-text-decoding-11"
 SINGLE_BYTE = "req-pm-text-decoding-12"
@@ -42,7 +44,7 @@ def encoded(
         f"encoding-{id}",
         title,
         intent,
-        [family] if text is not None else [family, REFUSED, NOT_REPLACED],
+        [DECODES, family] if text is not None else [DECODES, family, REFUSED, NOT_REPLACED],
         SECTIONS,
         f"""
    ex:Root a bddo:Struct ; bddo:hasField ( ex:s ) .

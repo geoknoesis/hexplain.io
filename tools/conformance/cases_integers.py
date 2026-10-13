@@ -110,7 +110,7 @@ pp(
     "float-ieee754",
     "Floats decode as IEEE 754 in the resolved byte order",
     "float32 and float64, big- and little-endian.",
-    ["req-pm-parsefield-11", "req-pm-byte-order-1"],
+    ["req-pm-parsefield-11", "req-pm-byte-order-1", "req-pm-numeric-representation-2"],
     ["byte-order", "value-mapping"],
     """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ex:c ex:d ) .

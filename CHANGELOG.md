@@ -147,6 +147,35 @@ rewritten.
   ones). Six entries leave the not-suite-testable list in all (these four,
   req-pm-data-layouts-3 and req-hel-ext-text-8).
 
+- **The cost of a regular-expression match (HEL-RE).** HEL, group `text`: a processor bounds
+  the cost of a match including the iterations that consume no input (req-hel-ext-text-9), may
+  refuse with a ResourceLimit error a pattern whose counted quantifier exceeds 65,535 or whose
+  nested bounds have a product above 1,000,000, and does not refuse a pattern within both for
+  its counted quantifiers (req-hel-ext-text-10). The Processing Model's match-cost row counts
+  idle iterations. Cases `pp-limit-regex-idle-iterations` (`((){20000}){200000}`: true or a
+  ResourceLimit error, by `orError`), `pp-limit-regex-counted-bound-above-cap` and
+  `pp-limit-regex-counted-within-caps`; four vector rows. req-hel-ext-text-8 is now cited by a
+  case. req-hel-conformance-9 says that a typed expectation of a vector row fixes the type.
+- **HDL: names that must stay apart, and exact YAML mappings.**
+  - *IRI Minting.* The table gains the rows for a top-level enum, a dispatch table, its arms, an
+    asset's part and a top-level field. Two declarations of one document that mint one IRI are
+    an ERROR (req-hdl-iri-minting-1), never renamed, dropped or merged (req-hdl-iri-minting-2).
+  - *Dispatch arms.* req-hdl-modules-4: every string-keyed arm carries the suffix `.str` and no
+    integer-keyed arm does (`T.arm.ftyp.str`, `T.arm.7.str`, `T.arm.7`); the suffix was written
+    only for a string key that spelt an integer, which let the string keys `"7"` and `"7.str"`
+    share an IRI. `hc-dispatch-arm-iris` and its YAML mirror expect the new IRIs. **Breaking for
+    compiled descriptions that name an arm of a string key.**
+  - *Modules.* Two different documents of one compilation with the same base namespace are an
+    ERROR on the import that brings in the later one (req-hdl-modules-5).
+  - *YAML Surface.* An unknown key is an ERROR in every mapping of the document
+    (req-hdl-yaml-6), and so is a listed key whose value is of the wrong kind (req-hdl-yaml-7).
+  - *Semantic Mapping.* A name in the media-encoding register's namespace that is no concept of
+    the register is an ERROR (req-hdl-semantic-2); the WARNING remains for a catalogue-only
+    concept the register lists.
+  - Twenty-six `hc-` cases (`tools/conformance/cases_hdl_names.py`): `hc-mint-collision-*`,
+    `hc-shared-namespace-*`, `hc-yaml-unknown-key-*`, `hc-yaml-value-kind-*`,
+    `hc-encoded-with-unknown-register-concept` and `hc-pipeline-unknown-register-concept`.
+
 ### The reference implementation claims `writer` (2026-10-13)
 
 No requirement text, case or identifier changed; the suite is the 803 cases of digest
