@@ -58,6 +58,29 @@ rewritten.
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### The reference implementation claims `writer` (2026-10-13)
+
+No requirement text, case or identifier changed; the suite is the 803 cases of digest
+`529c1a9c7918`, and module versions are unchanged.
+
+- **`writer` is claimed.** `reference-engine-claims.json` sets `optionalFeatures.writer.claimed`
+  to `true`, and the Processing Model's reference-implementation note lists `writer` among the
+  claimed features (`tools/test_reference_claims.py` ties the two). The evidence is the one the
+  conformance page defines: the engine's `Metawriter` passes every case of the Writer class, in
+  its own suite runner and, through its `hexplain-write` command, under
+  `run_suite.py --w-cmd "hexplain-write {description} {root} {input} --out {out} --error {err}"`.
+  No Writer case was changed to obtain this, and none contradicts the serialisation text.
+- **Implementation report of the current suite.**
+  `specification/conformance/reports/hexplain-tools/0.1.0-snapshot-529c1a9c7918.json`, a report of
+  format version 2 written by the engine's `conformanceReport` task at engine commit `43bf78d1`
+  (Windows 11, Eclipse Adoptium 21.0.7, Gradle 8.14.5, Kotlin 2.2.21, Unicode 15.0): 801 PASS,
+  0 FAIL, 2 SKIP over the 803 cases -- Physical Parser 466 PASS and 2 SKIP (the two cases that
+  check the refusal of `menc:Zstd`, which the engine decodes), Semantic Emitter 49, Bundle
+  Processor 13, HDL Compiler 180, Conformance Evaluator 41 and Writer 52, all PASS. The
+  conformance page's list of published reports and `coverage.json` carry it; the version-1 report
+  of suite `354e7441707e` stays published beside it. The suite digest covers the case directories
+  only, so publishing a report does not change it.
+
 ### Writer class of the processor conformance suite (2026-10-13)
 
 The suite observes the write direction. No requirement text changed and no identifier was added,
