@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # tools/shacl_check.py — validate a Hexplain TTL against the family's SHACL shapes.
 #
 # The aspect vocabularies and every concept register are loaded as context. Register
@@ -7,21 +9,21 @@
 # the concepts naming its parts were never loaded. Both shipped bundle profiles reported
 # false failures this way before the registers were added here.
 import sys
-from pyshacl import validate
+from typing import Any
 
 # Context and shapes both come from specgraph, so a newly added aspect or register is
 # picked up here without anyone remembering to edit a list. See tools/specgraph.py for why.
 import specgraph
+from pyshacl import validate
 
 
-def main(targets):
+def main(targets: Any) -> None:
     data = specgraph.ontologies(targets)
     shapes = specgraph.shapes()
-    conforms, _, report = validate(
-        data, shacl_graph=shapes, inference="none", advanced=True, meta_shacl=False
-    )
+    conforms, _, report = validate(data, shacl_graph=shapes, inference="none", advanced=True, meta_shacl=False)
     print(report)
     sys.exit(0 if conforms else 1)
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

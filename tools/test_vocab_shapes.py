@@ -22,18 +22,19 @@ allows none: every result must satisfy one of its expect lines, so a shape that 
 reporting something else on that fixture (a new target, a broken message) fails the gate
 instead of hiding behind the expected result.
 """
+
+from __future__ import annotations
+
 import functools
 import re
-import glob
-import os
-import pathlib
-import sys
 from concurrent.futures import ProcessPoolExecutor
-
-from pyshacl import validate
-from rdflib import Graph, Namespace, URIRef
+from pathlib import Path
+from typing import Any
 
 import specgraph
+from _gate_runner import gate_workers
+from pyshacl import validate
+from rdflib import Graph, Namespace, URIRef
 
 # Every vocabulary, aspect and register in the family. A fixture targets aspect properties
 # with hexplain:mapsToProperty and names register concepts (a codec in an encoding pipeline,
@@ -42,9 +43,10 @@ import specgraph
 CORE = specgraph.ontology_paths()
 
 load = specgraph.load
+ROOT = specgraph.ROOT
 
 
-def ontologies_for(fixture_path):
+def ontologies_for(fixture_path: Any) -> Any:
     """Core vocabularies plus the owning module's own vocabulary and shapes.
 
     A fixture lives in a `test/` directory beside the module it exercises, at either
@@ -54,10 +56,10 @@ def ontologies_for(fixture_path):
     beside it -- some modules keep their SHACL in the vocabulary file (bddo.ttl),
     others in a sibling shapes.ttl (conf, req).
     """
-    mod_dir = pathlib.Path(fixture_path).parent.parent
+    mod_dir = (ROOT / fixture_path).parent.parent
     paths = list(CORE)
     for extra in sorted(mod_dir.glob("*.ttl")):
-        s = extra.as_posix()
+        s = extra.relative_to(ROOT).as_posix()
         if s not in paths:
             paths.append(s)
     return paths
@@ -67,15 +69,17 @@ def ontologies_for(fixture_path):
 # one-level glob silently skipped every aspect and profile fixture -- they were written,
 # committed and never run.
 _PATTERNS = ("specification/*/test/", "specification/*/*/test/")
-fixtures = sorted(
-    f for pat in _PATTERNS for suffix in ("*-valid.ttl", "*-invalid.ttl")
-    for f in glob.glob(pat + suffix)
-)
-if not fixtures:
-    sys.exit("FAIL: no fixtures found (wrong working directory?)")
 
-@functools.lru_cache(maxsize=None)
-def shapes_for(ont):
+
+def fixture_paths() -> list[str]:
+    """Every -valid and -invalid fixture, as repository-relative paths in a stable order."""
+    return sorted(
+        f for pat in _PATTERNS for suffix in ("*-valid.ttl", "*-invalid.ttl") for f in specgraph.glob(pat + suffix)
+    )
+
+
+@functools.cache
+def shapes_for(ont: Any) -> Any:
     """One shapes graph per distinct ontology set, reused by every fixture of that module."""
     return load(list(ont))
 
@@ -84,20 +88,21 @@ SH = Namespace("http://www.w3.org/ns/shacl#")
 EXPECT = re.compile(r"^#\s*expect:\s*(\S+)\s+(\S+)(?:\s+(\S+))?\s*$", re.M)
 
 
-def expectations(path):
+def expectations(path: Path) -> list[Any]:
     """The (focus, shape, component) triples an -invalid fixture declares, as IRIs."""
-    text = pathlib.Path(path).read_text(encoding="utf-8")
+    text = (ROOT / path).read_text(encoding="utf-8")
     prefixes = Graph().parse(data=text, format="turtle").namespace_manager
     bound = dict(prefixes.namespaces())
     bound.setdefault("sh", URIRef(str(SH)))
 
-    def iri(curie):
+    def iri(curie: str) -> URIRef:
         if curie.startswith("<") and curie.endswith(">"):
             return URIRef(curie[1:-1])
         prefix, _, local = curie.partition(":")
         if prefix not in bound:
             raise ValueError(f"{path}: expect line uses unbound prefix '{prefix}:'")
         return URIRef(str(bound[prefix]) + local)
+
     return [(iri(f), iri(s), iri(c) if c else None) for f, s, c in EXPECT.findall(text)]
 
 
@@ -113,16 +118,16 @@ def _nested(shapes, node, seen=None):
     return seen
 
 
-def unmet(report, shapes, expected):
+def unmet(report: Graph, shapes: Graph, expected: bool) -> Any:
     """Expect lines no result satisfies."""
-    results = [(report.value(r, SH.focusNode), report.value(r, SH.sourceShape),
-                report.value(r, SH.sourceConstraintComponent))
-               for r in report.subjects(SH.resultSeverity, None)]
+    results = [
+        (report.value(r, SH.focusNode), report.value(r, SH.sourceShape), report.value(r, SH.sourceConstraintComponent))
+        for r in report.subjects(SH.resultSeverity, None)
+    ]
     missing = []
     for focus, shape, component in expected:
         family = _nested(shapes, shape)
-        if not any(f == focus and s in family and (component is None or c == component)
-                   for f, s, c in results):
+        if not any(f == focus and s in family and (component is None or c == component) for f, s, c in results):
             missing.append((focus, shape, component))
     return missing
 
@@ -130,19 +135,24 @@ def unmet(report, shapes, expected):
 EXPECT_ONLY = re.compile(r"^#\s*expect-only\s*$", re.M)
 
 
-def unexpected(report, shapes, expected):
+def unexpected(report: Graph, shapes: Graph, expected: bool) -> Any:
     """Results that no expect line accounts for (only checked under # expect-only)."""
     out = []
     for r in report.subjects(SH.resultSeverity, None):
-        f, s, c = (report.value(r, SH.focusNode), report.value(r, SH.sourceShape),
-                   report.value(r, SH.sourceConstraintComponent))
-        if not any(f == focus and s in _nested(shapes, shape) and (component is None or c == component)
-                   for focus, shape, component in expected):
+        f, s, c = (
+            report.value(r, SH.focusNode),
+            report.value(r, SH.sourceShape),
+            report.value(r, SH.sourceConstraintComponent),
+        )
+        if not any(
+            f == focus and s in _nested(shapes, shape) and (component is None or c == component)
+            for focus, shape, component in expected
+        ):
             out.append((f, s, c, report.value(r, SH.resultMessage)))
     return out
 
 
-def check(path):
+def check(path: str) -> Any:
     """Validate one fixture, returning a failure description or None."""
     should_conform = path.endswith("-valid.ttl")
     ont = ontologies_for(path)
@@ -162,7 +172,7 @@ def check(path):
     if missing:
         listed = "\n  ".join(" ".join(str(x) for x in m if x is not None) for m in missing)
         return f"{path}: expected results not reported:\n  {listed}\n{report}"
-    if EXPECT_ONLY.search(pathlib.Path(path).read_text(encoding="utf-8")):
+    if EXPECT_ONLY.search((ROOT / path).read_text(encoding="utf-8")):
         extra = unexpected(report_graph, shapes, expected)
         if extra:
             listed = "\n  ".join(" ".join(str(x) for x in m if x is not None) for m in extra)
@@ -170,19 +180,12 @@ def check(path):
     return None
 
 
-def workers():
-    """Bounded by default: an earlier concurrent run exhausted host memory."""
-    requested = os.environ.get("HEXPLAIN_GATE_WORKERS")
-    if requested:
-        count = int(requested)
-        if count < 1:
-            raise ValueError("HEXPLAIN_GATE_WORKERS must be at least 1")
-        return count
-    return max(1, min(os.cpu_count() or 1, 8))
-
-
-def main():
-    parallel = workers()
+def main() -> int:
+    fixtures = fixture_paths()
+    if not fixtures:
+        print("FAIL: no fixtures found under specification/")
+        return 1
+    parallel = gate_workers()
     print(f"Validating {len(fixtures)} vocabulary fixtures across {parallel} worker(s)", flush=True)
     # Fixtures sharing an ontology set are adjacent, so each worker reuses its cached shapes.
     if parallel == 1:
@@ -193,9 +196,10 @@ def main():
     failures = [failure for failure in results if failure]
     if failures:
         print("FAIL:\n" + "\n".join(failures))
-        sys.exit(1)
+        return 1
     print(f"PASS: {len(fixtures)} vocabulary fixtures behave as expected")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

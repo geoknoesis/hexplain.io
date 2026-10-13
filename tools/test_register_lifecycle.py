@@ -13,10 +13,15 @@ member of a current skos:Collection nor a top concept of its scheme (it stays sk
 The same rules are shapes of the core vocabulary (hexplain:RegisterStatusShape,
 hexplain:RegisterLifecycleShape), so a register published elsewhere is checked by SHACL alone.
 """
+
+from __future__ import annotations
+
 import json
 import sys
 import zipfile
+from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 from rdflib import OWL, RDF, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection
@@ -29,16 +34,16 @@ RETIRED = {HEX.statusDeprecated, HEX.statusSuperseded}
 STATUSES = RETIRED | {HEX.statusValid}
 
 
-def register_files():
+def register_files() -> list[Any]:
     files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
     return [f"specification/{f}" for f in files if f.startswith("register/")]
 
 
-def is_true(value):
+def is_true(value: Any) -> bool:
     return isinstance(value, Literal) and value.toPython() is True
 
 
-def check(path, g, failures):
+def check(path: Path, g: Graph, failures: list[Any]) -> Any:
     ontologies = set(g.subjects(RDF.type, OWL.Ontology))
     for s in set(g.subjects(OWL.versionInfo)) - ontologies:
         failures.append(f"{path}: {s} carries its own owl:versionInfo; only the register ontology is versioned")
@@ -86,7 +91,7 @@ def check(path, g, failures):
     return defined
 
 
-def snapshot_terms(paths):
+def snapshot_terms(paths: Iterable[Any]) -> tuple[Any, ...]:
     """Register IRIs defined by the newest pinned snapshot that contains these files."""
     manifests = sorted((ROOT / "releases").glob("*/manifest.json"))
     if not manifests:
@@ -104,21 +109,24 @@ def snapshot_terms(paths):
 
 def _self_test():
     """Each rule must notice its defect, or passing proves nothing."""
-    g = Graph().parse(format="turtle", data="""
+    g = Graph().parse(
+        format="turtle",
+        data="""
         @prefix skos: <http://www.w3.org/2004/02/skos/core#> . @prefix owl: <http://www.w3.org/2002/07/owl#> .
         @prefix h: <https://hexplain.io/ns/core#> . @prefix dct: <http://purl.org/dc/terms/> .
         <urn:S> a skos:ConceptScheme .
         <urn:valid> a skos:Concept ; skos:inScheme <urn:S> ; h:status h:statusValid ; owl:deprecated true .
         <urn:self> a skos:Concept ; skos:inScheme <urn:S> ; skos:topConceptOf <urn:S> ; owl:deprecated true ;
             h:status h:statusSuperseded ; dct:isReplacedBy <urn:self> ; skos:historyNote "x" .
-        <urn:C> a skos:Collection ; skos:member <urn:self> .""")
+        <urn:C> a skos:Collection ; skos:member <urn:self> .""",
+    )
     found = []
     check("probe", g, found)
     for needle in ("statusValid but owl:deprecated", "replaced by itself", "current collection", "still a top concept"):
         assert any(needle in f for f in found), (needle, found)
 
 
-def main():
+def main() -> None:
     _self_test()
     failures = []
     paths = register_files()
@@ -133,10 +141,15 @@ def main():
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures))
         sys.exit(1)
-    retired = sum(1 for p in paths for _ in Graph().parse(data=(ROOT / p).read_text(encoding="utf-8"),
-                  format="turtle").subject_objects(HEX.status))
-    print(f"PASS: {len(paths)} registers; {retired} entries state a lifecycle status; no scheme-level version; "
-          f"every register IRI of snapshot {release} is still defined")
+    retired = sum(
+        1
+        for p in paths
+        for _ in Graph().parse(data=(ROOT / p).read_text(encoding="utf-8"), format="turtle").subject_objects(HEX.status)
+    )
+    print(
+        f"PASS: {len(paths)} registers; {retired} entries state a lifecycle status; no scheme-level version; "
+        f"every register IRI of snapshot {release} is still defined"
+    )
 
 
 if __name__ == "__main__":

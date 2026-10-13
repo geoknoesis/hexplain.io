@@ -9,6 +9,9 @@ this gate fails on any eol=lf file whose working copy is CRLF or mixed, and on a
 committed with CRLF. Fix a stale checkout with `git rm --cached -r -q . && git reset --hard`
 (after committing your work) or by deleting and re-checking out the listed files.
 """
+
+from __future__ import annotations
+
 import subprocess
 import sys
 from pathlib import Path
@@ -16,9 +19,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def main():
-    out = subprocess.run(["git", "ls-files", "--eol"], cwd=ROOT, capture_output=True, text=True,
-                         encoding="utf-8", check=True).stdout
+def main() -> None:
+    out = subprocess.run(
+        ["git", "ls-files", "--eol"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True
+    ).stdout
     bad, checked = [], 0
     for line in out.splitlines():
         meta, _, path = line.partition("\t")

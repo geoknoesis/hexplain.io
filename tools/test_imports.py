@@ -12,21 +12,28 @@ mapping properties, rdfs:isDefinedBy and dcterms:isReplacedBy name a term withou
 its definition. A file without its own owl:Ontology (a module's separate shapes.ttl) is
 counted as part of the ontology of the module directory it sits in.
 """
+
+from __future__ import annotations
+
 import json
 import pathlib
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Iterable
+from typing import Any
 
 from rdflib import OWL, RDF, Graph, Literal, URIRef
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 VANN_URI = URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
 SKOS = "http://www.w3.org/2004/02/skos/core#"
-NON_USAGE = {URIRef("http://www.w3.org/2000/01/rdf-schema#seeAlso"),
-             URIRef("http://www.w3.org/2000/01/rdf-schema#isDefinedBy"),
-             URIRef("http://purl.org/dc/terms/isReplacedBy"),
-             *(URIRef(SKOS + p) for p in ("exactMatch", "closeMatch", "broadMatch", "narrowMatch", "relatedMatch"))}
+NON_USAGE = {
+    URIRef("http://www.w3.org/2000/01/rdf-schema#seeAlso"),
+    URIRef("http://www.w3.org/2000/01/rdf-schema#isDefinedBy"),
+    URIRef("http://purl.org/dc/terms/isReplacedBy"),
+    *(URIRef(SKOS + p) for p in ("exactMatch", "closeMatch", "broadMatch", "narrowMatch", "relatedMatch")),
+}
 PREFIXED = re.compile(r"(?<![\w:/#<])([A-Za-z][\w-]*):[A-Za-z_]")
 FULL = re.compile(r"<(https://hexplain\.io/ns/[^>\s]+)>")
 
@@ -36,7 +43,7 @@ def _parse(path):
     return text, Graph().parse(data=text, format="turtle")
 
 
-def modules():
+def modules() -> dict[str, Any]:
     """ontology IRI -> (files, graph of those files)."""
     files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
     # A file with its own owl:Ontology is its own module (a separate shapes document such as
@@ -56,7 +63,7 @@ def modules():
     return dict(out)
 
 
-def referenced(entries, namespaces, prefixes):
+def referenced(entries: Iterable[Any], namespaces: Iterable[Any], prefixes: Any) -> Any:
     used = set()
 
     def note(iri):
@@ -64,6 +71,7 @@ def referenced(entries, namespaces, prefixes):
             if iri.startswith(ns) and len(iri) > len(ns):
                 used.add(ns)
                 return
+
     for _path, _text, g in entries:
         for s, p, o in g:
             if p in NON_USAGE:
@@ -82,7 +90,7 @@ def referenced(entries, namespaces, prefixes):
     return used
 
 
-def main():
+def main() -> None:
     mods = modules()
     whole = Graph()
     for entries in mods.values():
@@ -101,7 +109,9 @@ def main():
             sys.exit(1)
         ns_of[ont] = str(uri)
     # The vocabulary, not its shapes document, is the namespace's owner.
-    ont_of = {ns: ont for ont, ns in sorted(ns_of.items(), key=lambda item: str(item[0]).endswith("/shapes"), reverse=True)}
+    ont_of = {
+        ns: ont for ont, ns in sorted(ns_of.items(), key=lambda item: str(item[0]).endswith("/shapes"), reverse=True)
+    }
     namespaces = sorted(ont_of, key=len, reverse=True)
     prefixes = {}
     for entries in mods.values():

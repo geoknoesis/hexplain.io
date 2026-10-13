@@ -17,6 +17,9 @@ be one of these executable codecs. Finally the runner is proven end to end:
 tools/codecs/_python_reference.py (Store, Deflate, Zlib, Gzip in plain Python) passes those four
 suites through tools/codecs/run_vectors.py.
 """
+
+from __future__ import annotations
+
 import json
 import pathlib
 import subprocess
@@ -36,36 +39,41 @@ REGISTER = ROOT / "specification/register/media-encoding/media-encoding.ttl"
 HX = Namespace("https://hexplain.io/ns/core#")
 
 
-def repeat_load_problems(text):
+def repeat_load_problems(text: str) -> list[str]:
     """Why [text] does not survive being parsed twice into one graph, if it does not."""
     graph = Graph().parse(data=text, format="turtle")
     once = len(graph)
     graph.parse(data=text, format="turtle")
-    problems = [f"{len(set(graph.subjects(p, None)) & set(owners))} subjects state a blank-node {p.fragment}"
-                for p in (HX.codecContract, HX.declaresParameter)
-                for owners in [[s for s, o in graph.subject_objects(p) if isinstance(o, BNode)]] if owners]
+    problems = [
+        f"{len(set(graph.subjects(p, None)) & set(owners))} subjects state a blank-node {p.fragment}"
+        for p in (HX.codecContract, HX.declaresParameter)
+        for owners in [[s for s, o in graph.subject_objects(p) if isinstance(o, BNode)]]
+        if owners
+    ]
     if len(graph) != once:
         problems.append(f"a second parse added {len(graph) - once} triples")
     return problems
 
 
-def main():
+def main() -> int:
     failures = []
     text = REGISTER.read_text(encoding="utf-8")
     register = Graph().parse(data=text, format="turtle")
-    probe = ("@prefix hexplain: <https://hexplain.io/ns/core#> . <urn:c> hexplain:codecContract "
-             "[ a hexplain:CodecContract ] .")
+    probe = (
+        "@prefix hexplain: <https://hexplain.io/ns/core#> . <urn:c> hexplain:codecContract "
+        "[ a hexplain:CodecContract ] ."
+    )
     assert repeat_load_problems(probe), "the repeated-load check no longer notices a blank-node contract"
     failures += [f"{REGISTER.relative_to(ROOT).as_posix()} loaded twice: {p}" for p in repeat_load_problems(text)]
     # The family with the register merged in a second time -- the union a processor validates when
     # it holds its bundled copy beside the published one -- must conform as the family alone does.
     family = specgraph.ontologies()
     family.parse(data=text, format="turtle")
-    conforms, _, report = validate(family, shacl_graph=specgraph.shapes(), inference="none",
-                                   allow_warnings=True)
+    conforms, _, report = validate(family, shacl_graph=specgraph.shapes(), inference="none", allow_warnings=True)
     if not conforms:
-        failures.append("the specification family, with the media-encoding register loaded twice, does not "
-                        "conform:\n" + report)
+        failures.append(
+            "the specification family, with the media-encoding register loaded twice, does not conform:\n" + report
+        )
     contracts = vectors.contracts(register)
     if not contracts:
         failures.append("no register concept carries hexplain:codecContract")
@@ -81,25 +89,45 @@ def main():
     for name in claimed.get("decoded", []):
         iri = claimed["register"] + name
         if iri not in contracts:
-            failures.append(f"reference-engine-claims.json claims {iri}, which has no hexplain:codecContract "
-                            f"(and so no vector suite)")
+            failures.append(
+                f"reference-engine-claims.json claims {iri}, which has no hexplain:codecContract "
+                f"(and so no vector suite)"
+            )
     suites = {p.parent.parent.name for p in (ROOT / "specification/codecs").glob("*/vectors/manifest.json")}
     for name in sorted(suites - {vectors.local_name(iri) for iri in contracts}):
         failures.append(f"specification/codecs/{name} has a vector suite but no register concept with a contract")
     python = pathlib.Path(sys.executable).as_posix()
     script = (ROOT / "tools/codecs/_python_reference.py").as_posix()
     reference = f'"{python}" "{script}" vector --manifest {{manifest}} --id {{id}}'
-    run = subprocess.run([sys.executable, str(ROOT / "tools/codecs/run_vectors.py"), "--command", reference,
-                          "--codec", "Store", "--codec", "Deflate", "--codec", "Zlib", "--codec", "Gzip"],
-                         capture_output=True, text=True)
+    run = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "tools/codecs/run_vectors.py"),
+            "--command",
+            reference,
+            "--codec",
+            "Store",
+            "--codec",
+            "Deflate",
+            "--codec",
+            "Zlib",
+            "--codec",
+            "Gzip",
+        ],
+        capture_output=True,
+        text=True,
+    )
     if run.returncode != 0:
         failures.append("the Python reference does not pass the minimum-set suites:\n" + run.stdout + run.stderr)
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures))
-        sys.exit(1)
-    print(f"PASS: {len(contracts)} executable codecs have a contract and a vector suite; the runner passes "
-          f"the Python reference")
+        return 1
+    print(
+        f"PASS: {len(contracts)} executable codecs have a contract and a vector suite; the runner passes "
+        f"the Python reference"
+    )
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

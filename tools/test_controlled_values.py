@@ -20,6 +20,9 @@ The gate checks every individual of a Hexplain class outside the registers (idio
 that every skos:Concept lives in a register (idiom C). Values that predate the policy and do not
 fit are listed in LEGACY with the reason they are kept; the list may shrink but must not grow.
 """
+
+from __future__ import annotations
+
 import json
 import sys
 from pathlib import Path
@@ -49,10 +52,11 @@ LEGACY = {
 }
 
 
-def main():
+def main() -> None:
     files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
-    graphs = {f: Graph().parse(data=(ROOT / "specification" / f).read_text(encoding="utf-8"), format="turtle")
-              for f in files}
+    graphs = {
+        f: Graph().parse(data=(ROOT / "specification" / f).read_text(encoding="utf-8"), format="turtle") for f in files
+    }
     whole = Graph()
     for g in graphs.values():
         whole += g
@@ -77,8 +81,10 @@ def main():
             if str(s) in LEGACY:
                 seen_legacy.add(str(s))
                 continue
-            failures.append(f"{f}: {s} is an individual of {cls} but is neither listed in an sh:in "
-                            f"(idiom A) nor of a class in OPEN_CLASSES (idiom B)")
+            failures.append(
+                f"{f}: {s} is an individual of {cls} but is neither listed in an sh:in "
+                f"(idiom A) nor of a class in OPEN_CLASSES (idiom B)"
+            )
     for stale in sorted(set(LEGACY) - seen_legacy):
         failures.append(f"LEGACY lists {stale}, which now follows an idiom or no longer exists (remove it)")
     for cls in sorted(OPEN_CLASSES):
@@ -87,8 +93,10 @@ def main():
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures))
         sys.exit(1)
-    print(f"PASS: {counted} vocabulary individuals follow idiom A or B ({len(LEGACY)} legacy exceptions); "
-          f"every skos:Concept is in a register")
+    print(
+        f"PASS: {counted} vocabulary individuals follow idiom A or B ({len(LEGACY)} legacy exceptions); "
+        f"every skos:Concept is in a register"
+    )
 
 
 if __name__ == "__main__":

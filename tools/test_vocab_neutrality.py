@@ -32,22 +32,32 @@ convenience at the time and as coupling a year later, so each is checked here:
 Profiles are deliberately NOT checked: a profile describing NITF is supposed to say NITF.
 """
 
-import glob
+from __future__ import annotations
+
 import pathlib
 import re
 import sys
+from typing import Any
 
 import rdflib
+from rdflib import Graph
 
+ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 SKOS = rdflib.Namespace("http://www.w3.org/2004/02/skos/core#")
 REGISTER_NS = "https://hexplain.io/ns/register/"
 ASPECT_NS = "https://hexplain.io/ns/aspect/"
 
+
 #: Vocabularies that must be format-neutral: the three foundations plus every aspect.
-def normative_files():
-    return ["specification/bddo/bddo.ttl", "specification/dlv/dlv.ttl",
-            "specification/hexplain/core.ttl"] + sorted(glob.glob("specification/aspect/*/*.ttl"))
+def repository_files(pattern: str) -> list[str]:
+    """Repository-relative POSIX paths matching ``pattern``, wherever the gate is started from."""
+    return sorted(p.relative_to(ROOT).as_posix() for p in ROOT.glob(pattern) if p.is_file())
+
+
+def normative_files() -> list[str]:
+    foundations = ["specification/bddo/bddo.ttl", "specification/dlv/dlv.ttl", "specification/hexplain/core.ttl"]
+    return foundations + repository_files("specification/aspect/*/*.ttl")
 
 
 #: Names that would betray a bias in a term. Matched against camelCase WORDS rather than as
@@ -60,38 +70,121 @@ def normative_files():
 #: list cannot be the whole defence, and the aspects themselves have to be designed so that a
 #: system's own categories arrive through a register rather than as properties.
 FORMAT_WORDS = {
-    "nitf", "tiff", "geotiff", "png", "jpeg", "jpg", "gif", "bmp", "webp", "exr", "dds",
-    "ktx", "avif", "heif", "jp2", "envi", "ehdr", "esri", "shapefile", "geopackage", "gpkg",
-    "mbtiles", "hdf", "hdf4", "hdf5", "netcdf", "grib", "zarr", "pds", "isis", "vicar",
-    "dted", "fits", "zip", "pdf", "dwg", "dxf", "gml", "kml", "csv", "geojson", "parquet",
-    "arrow", "protobuf", "mvt", "las", "laz", "e57", "sentinel", "landsat", "erdas",
-    "idrisi", "saga", "ilwis", "pcidsk", "s57", "bag", "mrsid", "ecw", "shp", "dbf",
+    "nitf",
+    "tiff",
+    "geotiff",
+    "png",
+    "jpeg",
+    "jpg",
+    "gif",
+    "bmp",
+    "webp",
+    "exr",
+    "dds",
+    "ktx",
+    "avif",
+    "heif",
+    "jp2",
+    "envi",
+    "ehdr",
+    "esri",
+    "shapefile",
+    "geopackage",
+    "gpkg",
+    "mbtiles",
+    "hdf",
+    "hdf4",
+    "hdf5",
+    "netcdf",
+    "grib",
+    "zarr",
+    "pds",
+    "isis",
+    "vicar",
+    "dted",
+    "fits",
+    "zip",
+    "pdf",
+    "dwg",
+    "dxf",
+    "gml",
+    "kml",
+    "csv",
+    "geojson",
+    "parquet",
+    "arrow",
+    "protobuf",
+    "mvt",
+    "las",
+    "laz",
+    "e57",
+    "sentinel",
+    "landsat",
+    "erdas",
+    "idrisi",
+    "saga",
+    "ilwis",
+    "pcidsk",
+    "s57",
+    "bag",
+    "mrsid",
+    "ecw",
+    "shp",
+    "dbf",
     # Jurisdictions, standards bodies and national policy identifiers.
-    "ism", "nato", "capco", "fips", "dod", "dni", "nga", "nist", "iso", "ogc", "w3c", "ieee",
-    "itu", "gsc", "tlp", "eo", "usa", "us", "uk", "eu", "nsa", "cia", "fbi", "ansi", "din",
-    "jis", "milstd", "stanag", "ccitt", "etsi", "oasis", "niso",
+    "ism",
+    "nato",
+    "capco",
+    "fips",
+    "dod",
+    "dni",
+    "nga",
+    "nist",
+    "iso",
+    "ogc",
+    "w3c",
+    "ieee",
+    "itu",
+    "gsc",
+    "tlp",
+    "eo",
+    "usa",
+    "us",
+    "uk",
+    "eu",
+    "nsa",
+    "cia",
+    "fbi",
+    "ansi",
+    "din",
+    "jis",
+    "milstd",
+    "stanag",
+    "ccitt",
+    "etsi",
+    "oasis",
+    "niso",
 }
 
 #: Exempt terms, each with the reason it is not a bias. An ALGORITHM named after its
 #: specifying document is not a format leaking in -- bddo already carries crc32, adler32, md5
 #: and sha256 on exactly that basis.
 EXEMPT = {
-    "sqliteVarint":
-        "An integer ENCODING, not a format. SQLite specifies it the way DWARF specifies "
-        "LEB128, and it is used across GeoPackage, MBTiles and Rasterlite rather than by one "
-        "format. Same category as bddo:crc32 / bddo:md5, which are also named for their "
-        "specifying documents. A descriptive rename (bigEndianVarint) would be LESS precise: "
-        "it would not distinguish this scheme's nine-byte rule from any other big-endian "
-        "varint.",
+    "sqliteVarint": "An integer ENCODING, not a format. SQLite specifies it the way DWARF specifies "
+    "LEB128, and it is used across GeoPackage, MBTiles and Rasterlite rather than by one "
+    "format. Same category as bddo:crc32 / bddo:md5, which are also named for their "
+    "specifying documents. A descriptive rename (bigEndianVarint) would be LESS precise: "
+    "it would not distinguish this scheme's nine-byte rule from any other big-endian "
+    "varint.",
 }
 
 
-def words(local_name):
+def words(local_name: Any) -> set[Any]:
     """camelCase / PascalCase / kebab split, lowercased."""
     return {w.lower() for w in re.findall(r"[A-Z]+(?![a-z])|[A-Z][a-z]*|[a-z]+|\d+", local_name)}
 
 
-def local_names(graph, ontology_iri):
+def local_names(graph: Graph, ontology_iri: Any) -> Any:
     out = set()
     for node in set(graph.subjects()):
         if isinstance(node, rdflib.URIRef) and str(node).startswith(ontology_iri + "#"):
@@ -99,13 +192,13 @@ def local_names(graph, ontology_iri):
     return out
 
 
-def main():
+def main() -> int:
     problems = []
     checked_terms = 0
 
     for path in normative_files():
         g = rdflib.Graph()
-        g.parse(data=pathlib.Path(path).read_text(encoding="utf-8"), format="turtle")
+        g.parse(data=(ROOT / path).read_text(encoding="utf-8"), format="turtle")
         ont = next((str(s) for s in g.subjects(rdflib.RDF.type, rdflib.OWL.Ontology)), None)
         if ont is None:
             problems.append(f"{path}: no owl:Ontology declaration, cannot scope its terms")
@@ -136,7 +229,7 @@ def main():
                     )
 
         # 4 -- aspects declare no concepts
-        if "/aspect/" in path.replace("\\", "/"):
+        if "/aspect/" in path:
             for kind in (SKOS.Concept, SKOS.ConceptScheme, SKOS.Collection):
                 for s in g.subjects(rdflib.RDF.type, kind):
                     problems.append(
@@ -146,9 +239,9 @@ def main():
                     )
 
     # 3 -- registers must not reference an aspect
-    for path in sorted(glob.glob("specification/register/*/*.ttl")):
+    for path in repository_files("specification/register/*/*.ttl"):
         g = rdflib.Graph()
-        g.parse(data=pathlib.Path(path).read_text(encoding="utf-8"), format="turtle")
+        g.parse(data=(ROOT / path).read_text(encoding="utf-8"), format="turtle")
         for s, p, o in g:
             for node in (s, p, o):
                 if isinstance(node, rdflib.URIRef) and str(node).startswith(ASPECT_NS):
@@ -159,15 +252,15 @@ def main():
                     )
 
     if checked_terms < 150:
-        problems.append(
-            f"only {checked_terms} terms checked -- the scan is not reaching the vocabularies"
-        )
+        problems.append(f"only {checked_terms} terms checked -- the scan is not reaching the vocabularies")
 
     if problems:
         print("FAIL:\n  " + "\n  ".join(problems))
         return 1
-    print(f"PASS: {checked_terms} normative terms name no format or jurisdiction; "
-          f"{len(EXEMPT)} reasoned exemption(s); register boundary holds both ways")
+    print(
+        f"PASS: {checked_terms} normative terms name no format or jurisdiction; "
+        f"{len(EXEMPT)} reasoned exemption(s); register boundary holds both ways"
+    )
     return 0
 
 

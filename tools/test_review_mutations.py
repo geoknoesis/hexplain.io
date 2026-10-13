@@ -7,22 +7,28 @@ rejected). `--root DIR` runs the probes against the shapes of another checkout a
 the ones it gets wrong instead of failing, which is how the review's before/after counts were
 measured; `--list` prints every probe.
 """
+
+from __future__ import annotations
+
 import argparse
 import sys
 from collections import Counter
+from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 from pyshacl import validate
 from rdflib import Graph, Namespace, URIRef
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _gate_runner import gate_workers  # noqa: E402
 from _review_mutation_cases import cases  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
 
-def load(root, paths):
+def load(root: Path, paths: Iterable[Any]) -> Any:
     g = Graph()
     for p in paths:
         path = root / p
@@ -51,23 +57,23 @@ def _check(task):
     return wrong
 
 
-def run(root, chunk=8):
+def run(root: Path, chunk: int = 8) -> tuple[Any, ...]:
     """Every probe, across worker processes (SPARQL-based shapes are slow in pySHACL)."""
-    import os
     from concurrent.futures import ProcessPoolExecutor
+
     rows = cases()
     indexed = list(enumerate(rows))
-    tasks = [(root, indexed[i:i + chunk]) for i in range(0, len(indexed), chunk)]
-    workers = max(1, min(os.cpu_count() or 1, int(os.environ.get("HEXPLAIN_GATE_WORKERS", "8"))))
+    tasks = [(root, indexed[i : i + chunk]) for i in range(0, len(indexed), chunk)]
+    workers = gate_workers()
     with ProcessPoolExecutor(max_workers=workers) as pool:
         wrong = sorted(w for result in pool.map(_check, tasks) for w in result)
     return rows, [(rows[i], text) for i, text in wrong]
 
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", help="measure another checkout's shapes instead of this one's")
-    parser.add_argument("--list", action="store_true")
+    parser.add_argument("--list", action="store_true", help="Print every probe and its outcome")
     args = parser.parse_args()
     root = Path(args.root) if args.root else ROOT
     rows, wrong = run(root)
@@ -81,11 +87,18 @@ def main():
         print(f"{len(rows) - len(wrong)}/{len(rows)} probes correct against {root}")
         return 0
     if wrong:
-        print("FAIL:\n  " + "\n  ".join(f"[{r['group']}] {r['name']}: expected "
-                                        f"{'conforms' if r['conforms'] else 'rejected'}\n{t[:1200]}" for r, t in wrong))
+        print(
+            "FAIL:\n  "
+            + "\n  ".join(
+                f"[{r['group']}] {r['name']}: expected {'conforms' if r['conforms'] else 'rejected'}\n{t[:1200]}"
+                for r, t in wrong
+            )
+        )
         return 1
-    print(f"PASS: {len(rows)} review mutation probes ({', '.join(f'{g} {n}' for g, n in groups.items())}) "
-          "reach the expected verdict")
+    print(
+        f"PASS: {len(rows)} review mutation probes ({', '.join(f'{g} {n}' for g, n in groups.items())}) "
+        "reach the expected verdict"
+    )
     return 0
 
 

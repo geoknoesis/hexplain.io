@@ -1,0 +1,28 @@
+# Interpreter contract for the specification tooling. There is no installable package here: the
+# gates are standalone scripts under tools/, and the dependencies are the hash-pinned locks
+# (requirements.txt, compiled for the 3.12 target). The floor is what tools/_gate_runner.py
+# asserts before running anything, and what CONTRIBUTING.md states.
+[project]
+name = "hexplain-specification-tools"
+version = "0"
+description = "Validation gates and generators for the Hexplain specification (proprietary; not distributed)"
+requires-python = ">=3.11,<3.13"
+license = { text = "Proprietary" }
+classifiers = ["Private :: Do Not Upload"]
+
+# Lint configuration lives in ruff.toml (shared verbatim with the profile library).
+
+# `pytest tools` runs each tools/test_*.py as one subprocess test through tools/conftest.py;
+# `-n auto` parallelises them when pytest-xdist is installed. Neither pytest nor xdist is in
+# the hash-pinned requirements: the acceptance command is `python tools/run_gates.py --strict`.
+[tool.pytest.ini_options]
+testpaths = ["tools"]
+# The default Python collector must match nothing: tools/conftest.py collects the gate scripts.
+python_files = ["__no_default_collection__.py"]
+addopts = "-p no:cacheprovider"
+
+[tool.mypy]
+python_version = "3.11"
+files = ["tools"]
+ignore_missing_imports = true
+check_untyped_defs = false

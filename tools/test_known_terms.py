@@ -7,48 +7,41 @@ file under specification/ (fixtures, examples, validation data) must be defined 
 be the subject of a statement -- in the family's canonical graph. Deprecated terms count as
 defined; they are declared precisely so that older data still resolves.
 """
+
+from __future__ import annotations
+
 import json
 import pathlib
 import sys
-
-from rdflib import Graph, Literal, URIRef
+from typing import Any
 
 import specgraph
+from _known_terms import owned_namespaces, unknown_terms
+from rdflib import Graph
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-VANN_URI = URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
 
 
-def owned_namespaces(g):
-    return sorted({str(o) for o in g.objects(None, VANN_URI)}, key=len, reverse=True)
-
-
-def unknown_terms(data, known, namespaces):
-    found = set()
-    for triple in data:
-        for term in triple:
-            if isinstance(term, Literal) or not isinstance(term, URIRef):
-                continue
-            iri = str(term)
-            if any(iri.startswith(ns) and len(iri) > len(ns) for ns in namespaces) and term not in known:
-                found.add(iri)
-    return sorted(found)
-
-
-def data_files():
-    family = {(ROOT / "specification" / f).resolve()
-              for f in json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]}
+def data_files() -> list[Any]:
+    family = {
+        (ROOT / "specification" / f).resolve()
+        for f in json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
+    }
     return sorted(p for p in (ROOT / "specification").rglob("*.ttl") if p.resolve() not in family)
 
 
-def main():
+def main() -> None:
     vocabulary = specgraph.ontologies()
     known = set(vocabulary.subjects())
     namespaces = owned_namespaces(vocabulary)
-    probe = Graph().parse(format="turtle", data="""@prefix bddo: <https://hexplain.io/ns/bddo#> .
-        <urn:x> bddo:sizeFromFeild <urn:y> ; bddo:size 1 .""")
-    assert unknown_terms(probe, known, namespaces) == ["https://hexplain.io/ns/bddo#sizeFromFeild"], \
+    probe = Graph().parse(
+        format="turtle",
+        data="""@prefix bddo: <https://hexplain.io/ns/bddo#> .
+        <urn:x> bddo:sizeFromFeild <urn:y> ; bddo:size 1 .""",
+    )
+    assert unknown_terms(probe, known, namespaces) == ["https://hexplain.io/ns/bddo#sizeFromFeild"], (
         "the lint no longer notices a misspelled BDDO predicate"
+    )
     failures = []
     files = data_files()
     for path in files:

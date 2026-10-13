@@ -10,34 +10,45 @@ Rows for aspects without a module (hx-style, hx-descriptive, ...) are left as wr
     python tools/_build_architecture_catalogue.py          # rewrite the page
     python tools/_build_architecture_catalogue.py --check  # fail if the page is stale
 """
+
+from __future__ import annotations
+
 import argparse
 import re
 import sys
-
-from rdflib import OWL, Literal, URIRef
+from typing import Any
 
 from _reference import ROOT, kind, load, local
+from rdflib import OWL, Literal, URIRef
 
 PAGE = ROOT / "specification/architecture/index.html"
-ROW = re.compile(r'<tr><td><code>hx-([a-z]+)</code> ✓</td>(.*?)</tr>')
+ROW = re.compile(r"<tr><td><code>hx-([a-z]+)</code> ✓</td>(.*?)</tr>")
 TABLE = re.compile(r'<table class="simple">\s*<thead><tr>(.*?)</tr></thead>(.*?)</table>', re.S)
 
 
-def module_terms(name):
+def module_terms(name: str) -> Any:
     path = ROOT / f"specification/aspect/{name}/{name}.ttl"
     if not path.exists():
         return None
     g = load([path.relative_to(ROOT)], base=True)
     ns = f"https://hexplain.io/ns/aspect/{name}#"
-    terms = sorted((t for t in set(g.subjects()) if isinstance(t, URIRef) and str(t).startswith(ns)
-                    and kind(g, t) in ("Class", "Object property", "Datatype property")
-                    and (t, OWL.deprecated, Literal(True)) not in g), key=lambda t: (kind(g, t) != "Class", local(t)))
+    terms = sorted(
+        (
+            t
+            for t in set(g.subjects())
+            if isinstance(t, URIRef)
+            and str(t).startswith(ns)
+            and kind(g, t) in ("Class", "Object property", "Datatype property")
+            and (t, OWL.deprecated, Literal(True)) not in g
+        ),
+        key=lambda t: (kind(g, t) != "Class", local(t)),
+    )
     ont = URIRef(ns[:-1])
     imports = sorted(str(i).rsplit("/", 1)[-1] for i in g.objects(ont, OWL.imports))
     return [local(t) for t in terms], imports
 
 
-def render(text):
+def render(text: str) -> Any:
     def table(m):
         headers = re.findall(r"<th>(.*?)</th>", m.group(1))
         body = m.group(2)
@@ -55,14 +66,16 @@ def render(text):
             cells[key_at - 1] = ", ".join(terms)
             if imports_at is not None:
                 cells[imports_at - 1] = ", ".join(imports) if imports else "—"
-            return f'<tr><td><code>hx-{r.group(1)}</code> ✓</td>' + "".join(f"<td>{c}</td>" for c in cells) + "</tr>"
+            return f"<tr><td><code>hx-{r.group(1)}</code> ✓</td>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>"
+
         return m.group(0).replace(body, ROW.sub(row, body))
+
     return TABLE.sub(table, text)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--check", action="store_true")
+    parser.add_argument("--check", action="store_true", help="Fail if the page differs; write nothing")
     args = parser.parse_args()
     text = PAGE.read_text(encoding="utf-8")
     expected = render(text)
