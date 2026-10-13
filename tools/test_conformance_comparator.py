@@ -15,6 +15,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from rdflib import Graph
+
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "conformance"))
 
@@ -28,16 +30,16 @@ PREFIXES = """@prefix bddo: <https://hexplain.io/ns/bddo#> . @prefix hexplain: <
 """
 
 
-def graph(body: str) -> Any:
+def graph(body: str) -> Graph:
     return compare.load_graph(PREFIXES + body)
 
 
-def check(condition: Any, message: str, failures: list[Any]) -> None:
+def check(condition: object, message: str, failures: list[str]) -> None:
     if not condition:
         failures.append(message)
 
 
-def hel_checks(failures: Any) -> None:
+def hel_checks(failures: list[str]) -> None:
     check(
         hel.canonical("Flags&0x01==1 and not(done)") == "((instance.Flags & 1) == 1) and not instance.done",
         "the HEL page's canonical-form example",
@@ -77,7 +79,7 @@ def hel_checks(failures: Any) -> None:
     )
 
 
-def tree_checks(failures: Any) -> None:
+def tree_checks(failures: list[str]) -> None:
     check(
         compare.compare_tree({"a": 1, "b": [2.5]}, {"b": [2.5], "a": 1}) == [], "member order does not matter", failures
     )
@@ -92,7 +94,7 @@ def tree_checks(failures: Any) -> None:
     )
 
 
-def graph_checks(failures: Any) -> None:
+def graph_checks(failures: list[str]) -> None:
     base = graph(
         'ex:f bddo:size "4"^^xsd:integer ; bddo:hasFixedValue "0A0B"^^xsd:hexBinary ; '
         'bddo:sizeFromExpression "instance.n * 2" .'
@@ -189,7 +191,7 @@ def graph_checks(failures: Any) -> None:
     )
 
 
-def writer_checks(failures: Any) -> None:
+def writer_checks(failures: list[str]) -> None:
     """A Writer case compares bytes exactly, and an error only with an error."""
     check(compare.compare_bytes(b"\x01\x02", b"\x01\x02") == [], "equal bytes match", failures)
     check(compare.compare_bytes(b"\x01\x02", b"\x01\x03") != [], "one differing byte fails", failures)
@@ -206,18 +208,18 @@ def writer_checks(failures: Any) -> None:
         bytes_case, error_case = SUITE / "writer/w-field-order", SUITE / "writer/w-tree-undeclared-key"
         written, error = Path(tmp) / "actual.bin", Path(tmp) / "error.json"
         written.write_bytes(bytes.fromhex("01ffd8020003"))
-        error.write_text(json.dumps({"category": "Validation"}), encoding="utf-8")
+        error.write_text(json.dumps({"category": "Validation"}), encoding="utf-8", newline="\n")
         check(compare.compare_case(bytes_case, written) == [], "the bytes a Writer case expects pass", failures)
         check(compare.compare_case(bytes_case, error) != [], "an error where bytes are expected fails", failures)
         check(compare.compare_case(error_case, error) == [], "the category a Writer case expects passes", failures)
         check(compare.compare_case(error_case, written) != [], "bytes where an error is expected fail", failures)
         written.write_bytes(bytes.fromhex("01ffd8020300"))
         check(compare.compare_case(bytes_case, written) != [], "the other byte order fails", failures)
-        error.write_text(json.dumps({"category": "Unsupported"}), encoding="utf-8")
+        error.write_text(json.dumps({"category": "Unsupported"}), encoding="utf-8", newline="\n")
         check(compare.compare_case(error_case, error) != [], "another category fails a Writer case", failures)
 
 
-def other_checks(failures: Any) -> None:
+def other_checks(failures: list[str]) -> None:
     check(
         compare.compare_error({"category": "Bounds"}, {"category": "Bounds"}) == [],
         "an error category matches",
@@ -246,7 +248,7 @@ def other_checks(failures: Any) -> None:
         "outcomes": {"R1": "Evaluated"},
         "findings": [{"kind": "Violation", "requirements": ["R1"]}],
     }
-    have = {
+    have: dict[str, Any] = {
         "verdict": "nonconformant",
         "outcomes": {"R1": "Evaluated", "R2": "NotExercised"},
         "findings": [{"kind": "Violation", "severity": "Violation", "requirements": ["R1"], "message": "m"}],
@@ -325,7 +327,7 @@ def other_checks(failures: Any) -> None:
     )
 
 
-def self_check(failures: list[Any]) -> Any:
+def self_check(failures: list[str]) -> int:
     """Every expected artifact, offered as the output, passes its own case."""
     n = 0
     with tempfile.TemporaryDirectory() as tmp:
@@ -364,7 +366,7 @@ def self_check(failures: list[Any]) -> Any:
 
 
 def main() -> int:
-    failures = []
+    failures: list[str] = []
     hel_checks(failures)
     tree_checks(failures)
     graph_checks(failures)

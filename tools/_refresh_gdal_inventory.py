@@ -28,7 +28,7 @@ families = {
 }
 
 
-def family_names(v: str) -> Any:
+def family_names(v: str) -> list[str]:
     return v.split("|") if "|" in v else v.split()
 
 
@@ -36,7 +36,7 @@ def family_names(v: str) -> Any:
 revision = "v3.13.3"
 base = f"https://raw.githubusercontent.com/OSGeo/gdal/{revision}/doc/source/drivers/"
 sources = []
-jobs = []
+jobs: list[tuple[str, str]] = []
 for kind in ["raster", "vector"]:
     url = base + kind + "/index.rst"
     raw = urllib.request.urlopen(url, timeout=60).read()
@@ -46,7 +46,7 @@ for kind in ["raster", "vector"]:
     jobs.extend((kind, page) for page in pages)
 
 
-def read_page(job: Any) -> dict[str, Any]:
+def read_page(job: tuple[str, str]) -> dict[str, Any]:
     kind, page = job
     url = base + kind + "/" + page + ".rst"
     raw = urllib.request.urlopen(url, timeout=60).read()

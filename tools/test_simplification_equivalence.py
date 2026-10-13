@@ -51,6 +51,7 @@ sh:in (1 2); sh:message "Keep diagnostic".""",
     changed = Graph() + original
     head = changed.value(EX.S, SH["in"])
     tail = changed.value(head, RDF.rest)
+    assert head is not None and tail is not None, "the probe shape lost its sh:in list"
     changed.set((head, RDF.first, Literal(2)))
     changed.set((tail, RDF.first, Literal(1)))
     assert not isomorphic(original, changed)

@@ -155,7 +155,7 @@ def unexpected(report: Graph, shapes: Graph, expected: bool) -> Any:
     return out
 
 
-def check(path: str) -> Any:
+def check(path: str) -> str | None:
     """Validate one fixture, returning a failure description or None."""
     should_conform = path.endswith("-valid.ttl")
     ont = ontologies_for(path)

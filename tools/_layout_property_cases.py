@@ -8,18 +8,24 @@ from __future__ import annotations
 
 from typing import Any
 
-from _cases import row
+from _cases import prefix_block, row
 
-PREFIX = """@prefix ex:<urn:hexplain:competency:> .
-@prefix dlv:<https://hexplain.io/ns/dlv#> .
-@prefix b:<https://hexplain.io/ns/bddo#> .
-@prefix a:<https://hexplain.io/ns/aspect/bundle#> .
-@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .
-@prefix skos:<http://www.w3.org/2004/02/skos/core#> .
-@prefix dct:<http://purl.org/dc/terms/> .
-b:uint8 a b:DataType . ex:axis a dlv:Axis . ex:f a b:Field .
+PREFIX = (
+    prefix_block(
+        {
+            "ex": "urn:hexplain:competency:",
+            "dlv": "dlv",
+            "b": "bddo",
+            "a": "bundle",
+            "xsd": "xsd",
+            "skos": "skos",
+            "dct": "dct",
+        }
+    )
+    + """b:uint8 a b:DataType . ex:axis a dlv:Axis . ex:f a b:Field .
 ex:role a skos:Concept .
 """
+)
 #: One layout with one dimension; the base most layout cases mutate.
 LAYOUT = (
     "ex:l a dlv:DataLayout; dlv:cellDataType b:uint8; dlv:hasDimension (ex:d). ex:d a dlv:Dimension; dlv:hasAxis "
@@ -31,6 +37,7 @@ MODULE = "dlv/dlv.ttl"
 
 def cases() -> list[dict[str, Any]]:
     rows = []
+    value: str | None
     prefix = PREFIX + "ex:f2 a b:Field. ex:order a dlv:ChunkOrder. ex:order2 a dlv:ChunkOrder. b:uint16 a b:DataType. "
 
     def add(name: str, base: str, owner: str, prop: str, value: str | None, ok: bool) -> None:

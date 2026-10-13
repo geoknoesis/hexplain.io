@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from pyshacl import validate
-from rdflib import BNode, Graph, Namespace
+from rdflib import BNode, Graph, Literal, Namespace
 
 SH = Namespace("http://www.w3.org/ns/shacl#")
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 COMPARED = (SH.focusNode, SH.resultPath, SH.sourceConstraintComponent, SH.resultSeverity, SH.value)
 
 
-def normalize(graph: Graph) -> tuple[Any, ...]:
+def normalize(graph: Graph) -> tuple[Counter[tuple[str, ...]], int]:
     """Multiset of comparable diagnostic fields, plus the unresolvable source-shape count.
 
     sh:sourceShape is usually a blank node in the shapes graph, and the exported Jena
@@ -58,7 +58,7 @@ def main() -> None:
     parser.add_argument("reports", type=Path, help="Directory holding the validators' raw SHACL reports")
     parser.add_argument("--output", type=Path, required=True, help="Where to write the comparison evidence")
     args = parser.parse_args()
-    evidence = dict(
+    evidence: dict[str, Any] = dict(
         schema_version=2,
         status="running",
         started_utc=datetime.now(UTC).isoformat(),
@@ -70,7 +70,7 @@ def main() -> None:
         "nested structure or engine-authored messages",
     )
 
-    def save():
+    def save() -> None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         temporary = args.output.with_suffix(args.output.suffix + ".tmp")
         temporary.write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8", newline="\n")
@@ -118,7 +118,8 @@ def compare(args: argparse.Namespace, evidence: dict[str, Any]) -> None:
             jena_file = args.reports / f"{suite}-{index}.ttl"
             jena = Graph().parse(jena_file)
             assert bool(conforms) == (expected == "true"), name
-            assert bool(next(jena.objects(None, SH.conforms)).toPython()) == bool(conforms), name
+            stated = next(jena.objects(None, SH.conforms))
+            assert isinstance(stated, Literal) and bool(stated.toPython()) == bool(conforms), name
             (a, a_anonymous), (b, b_anonymous) = normalize(report), normalize(jena)
             assert a == b, (suite, name, "pySHACL", a, "Jena", b)
             assert a_anonymous == b_anonymous, (suite, name, "anonymous source shapes", a_anonymous, b_anonymous)

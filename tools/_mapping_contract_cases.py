@@ -5,16 +5,18 @@ from __future__ import annotations
 from itertools import combinations
 from typing import Any
 
-from _cases import row, term
+from _cases import prefix_block, row, term
 
-PREFIX = """@prefix ex:<urn:mapping-contract:> . @prefix h:<https://hexplain.io/ns/core#> .
-@prefix b:<https://hexplain.io/ns/bddo#> . @prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix owl:<http://www.w3.org/2002/07/owl#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .
-ex:f a b:Field . ex:other a b:Field . ex:struct a b:Struct . ex:Class a owl:Class . ex:OtherClass a owl:Class .
+#: The prefixes alone: BDDO-scoped cases avoid unrelated bare Field/Struct targets.
+PREFIXES_ONLY = prefix_block(
+    {"ex": "urn:mapping-contract:", "h": "hexplain", "b": "bddo", "rdf": "rdf", "owl": "owl", "xsd": "xsd"}
+)
+PREFIX = (
+    PREFIXES_ONLY
+    + """ex:f a b:Field . ex:other a b:Field . ex:struct a b:Struct . ex:Class a owl:Class . ex:OtherClass a owl:Class .
 ex:p a rdf:Property . ex:op a owl:ObjectProperty . ex:dp a owl:DatatypeProperty . ex:ap a owl:AnnotationProperty .
 """
-#: The prefixes alone: BDDO-scoped cases avoid unrelated bare Field/Struct targets.
-PREFIXES_ONLY = PREFIX[: PREFIX.index("ex:f a b:Field")]
+)
 BDDO = "bddo/bddo.ttl"
 
 
@@ -146,6 +148,12 @@ def cases() -> list[dict[str, Any]]:
                 "" if ok else term("bddo", "enumIsFlags"),
             )
         )
+    return rows + _physical_cases()
+
+
+def _physical_cases() -> list[dict[str, Any]]:
+    """BDDO sizing, derivation, extent and node-path alternatives, each reported by its own shape."""
+    rows: list[dict[str, Any]] = []
     physical = PREFIXES_ONLY + "b:uint8 a b:DataType . b:bytes a b:DataType .\nex:count a b:Field; b:dataType b:uint8 ."
 
     def physical_case(name: str, body: str, ok: bool, shape: str) -> None:

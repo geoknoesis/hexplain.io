@@ -38,11 +38,11 @@ def main() -> None:
         for a, b in g.subject_objects(SKOS.exactMatch)
         if b in algorithms or a in algorithms
     ]
-    for alg in sorted(algorithms):
+    for alg in sorted(algorithms, key=str):
         linked = matches[alg] & concepts
         if len(linked) != 1:
             failures.append(f"{alg} matches {len(linked)} checksum-register concepts, expected 1")
-    for concept in sorted(concepts):
+    for concept in sorted(concepts, key=str):
         linked = matches[concept] & algorithms
         if len(linked) != 1:
             failures.append(f"{concept} matches {len(linked)} bddo checksum algorithms, expected 1")

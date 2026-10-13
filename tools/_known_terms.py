@@ -6,6 +6,8 @@ tools/test_strict_profile.py (an engine checkout's format descriptions).
 
 from __future__ import annotations
 
+from collections.abc import Container
+
 from rdflib import Graph, Literal, URIRef
 
 VANN_URI = URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
@@ -16,7 +18,7 @@ def owned_namespaces(g: Graph) -> list[str]:
     return sorted({str(o) for o in g.objects(None, VANN_URI)}, key=len, reverse=True)
 
 
-def unknown_terms(data: Graph, known: set[object], namespaces: list[str]) -> list[str]:
+def unknown_terms(data: Graph, known: Container[object], namespaces: list[str]) -> list[str]:
     """IRIs in ``data`` under an owned namespace that are not in ``known`` (the family's subjects)."""
     found = set()
     for triple in data:

@@ -4,7 +4,7 @@ import re
 
 import specgraph
 from pyshacl import validate
-from rdflib import OWL, RDF, RDFS, Namespace, URIRef
+from rdflib import OWL, RDF, RDFS, Graph, Namespace, URIRef
 
 
 def main() -> int:
@@ -27,7 +27,7 @@ def main() -> int:
     )
     MAPPINGS = [SKOS.closeMatch, SKOS.exactMatch, SKOS.broadMatch, SKOS.narrowMatch, SKOS.relatedMatch]
 
-    def mapping_problems(graph):
+    def mapping_problems(graph: Graph) -> list[str]:
         found = []
         for pred in MAPPINGS:
             for subject, target in graph.subject_objects(pred):
@@ -40,8 +40,6 @@ def main() -> int:
                             f"SKOS concept mapping {pred.split('#')[-1]} targets {end}, a term of an OWL ontology"
                         )
         return found
-
-    from rdflib import Graph
 
     _probe = Graph().parse(
         format="turtle",

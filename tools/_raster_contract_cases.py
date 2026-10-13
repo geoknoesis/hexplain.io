@@ -4,12 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from _cases import row, term
+from _cases import prefix_block, row, term
 
-PREFIX = (
-    "@prefix r:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:raster-contract:> . "
-    "@prefix xsd:<http://www.w3.org/2001/XMLSchema#> . "
-)
+PREFIX = prefix_block({"r": "raster", "ex": "urn:raster-contract:", "xsd": "xsd"}, " ")
 MODULE = "aspect/raster/raster.ttl"
 
 

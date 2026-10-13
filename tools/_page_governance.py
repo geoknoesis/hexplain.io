@@ -27,24 +27,24 @@ LAYOUT_CORPUS = ROOT / "specification/validation/test/layout-competency.tsv"
 HISTORICAL_MARKERS = ("historical", "superseded")
 
 
-def visible_text(page: Path) -> Any:
+def visible_text(page: Path) -> str:
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", page.read_text(encoding="utf-8"))))
 
 
-def review_resources() -> Any:
+def review_resources() -> int:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))["resources"]
 
 
-def review_modules() -> Any:
+def review_modules() -> int:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))["modules"]
 
 
-def layout_cases() -> Any:
+def layout_cases() -> int:
     lines = LAYOUT_CORPUS.read_text(encoding="utf-8").splitlines()
     return sum(1 for line in lines if line.strip() and not line.startswith("#"))
 
 
-def vocabulary_modules() -> Any:
+def vocabulary_modules() -> int:
     """Family modules other than the shapes documents of conf and req (the homepage said "16+")."""
     files = canonical_files(ROOT / "specification")
     return sum(1 for f in files if not f.endswith("/shapes.ttl"))
@@ -59,7 +59,7 @@ QUANTITIES = {
 }
 
 
-def registry() -> Any:
+def registry() -> dict[str, Any]:
     return json.loads(REGISTRY.read_text(encoding="utf-8"))
 
 
@@ -67,7 +67,7 @@ def registered_pages() -> dict[str, Any]:
     return {p: entry for p, entry in registry()["pages"].items()}
 
 
-def problems() -> Any:
+def problems() -> list[str]:
     """Every registration and quantity mismatch, as reportable strings."""
     found = []
     declared = registered_pages()

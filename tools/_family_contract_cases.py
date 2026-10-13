@@ -4,25 +4,43 @@ from __future__ import annotations
 
 from typing import Any
 
-from _cases import row, term
+from _cases import prefix_block, row, term
 
-PREFIX = """@prefix ex:<urn:family-contract:> .
-@prefix a:<https://hexplain.io/ns/audio#> . @prefix d:<https://hexplain.io/ns/docfont#> .
-@prefix i:<https://hexplain.io/ns/image#> . @prefix ar:<https://hexplain.io/ns/archive#> .
-@prefix g:<https://hexplain.io/ns/geo#> . @prefix r:<https://hexplain.io/ns/aspect/raster#> .
-@prefix v:<https://hexplain.io/ns/video#> . @prefix net:<https://hexplain.io/ns/aspect/networkflow#> .
-@prefix s:<https://hexplain.io/ns/aspect/sampling#> . @prefix sig:<https://hexplain.io/ns/aspect/signal#> .
-@prefix t:<https://hexplain.io/ns/aspect/time#> . @prefix enc:<https://hexplain.io/ns/aspect/encoding#> .
-@prefix fs:<https://hexplain.io/ns/aspect/fsmeta#> . @prefix integ:<https://hexplain.io/ns/aspect/integrity#> .
-@prefix pack:<https://hexplain.io/ns/aspect/packaging#> . @prefix sr:<https://hexplain.io/ns/aspect/spatialref#> .
-@prefix pc:<https://hexplain.io/ns/aspect/pointcloud#> . @prefix prov:<https://hexplain.io/ns/aspect/provenance#> .
-@prefix geom:<https://hexplain.io/ns/aspect/geometry#> . @prefix col:<https://hexplain.io/ns/aspect/color#> .
-@prefix asec:<https://hexplain.io/ns/aspect/security#> .
-@prefix b:<https://hexplain.io/ns/bddo#> . @prefix skos:<http://www.w3.org/2004/02/skos/core#> .
-@prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix dc:<http://purl.org/dc/terms/> .
-ex:c a skos:Concept . ex:c2 a skos:Concept . ex:box a d:BoundingBox . ex:struct a b:Struct .
+#: The local prefix each family and aspect namespace is bound to in the authored bodies.
+BINDINGS = {
+    "ex": "urn:family-contract:",
+    "a": "audio",
+    "d": "docfont",
+    "i": "image",
+    "ar": "archive",
+    "g": "geo",
+    "r": "raster",
+    "v": "video",
+    "net": "networkflow",
+    "s": "sampling",
+    "sig": "signal",
+    "t": "time",
+    "enc": "encoding",
+    "fs": "fsmeta",
+    "integ": "integrity",
+    "pack": "packaging",
+    "sr": "spatialref",
+    "pc": "pointcloud",
+    "prov": "provenance",
+    "geom": "geometry",
+    "col": "color",
+    "asec": "security",
+    "b": "bddo",
+    "skos": "skos",
+    "xsd": "xsd",
+    "dc": "dct",
+}
+PREFIX = (
+    prefix_block(BINDINGS)
+    + """ex:c a skos:Concept . ex:c2 a skos:Concept . ex:box a d:BoundingBox . ex:struct a b:Struct .
 ex:entry a ar:ArchiveEntry .
 """
+)
 # Two distinct conforming values and an independently chosen invalid value.
 KINDS = {
     "string": ('"text"', '"other"', "1"),
@@ -249,7 +267,7 @@ def authored_cases() -> list[dict[str, Any]]:
     )
     # The native-function contract, both ways. A caller reading an unbound result needs to know
     # whether that outcome is described or a defect, so a native function must say which.
-    fnp = "@prefix hxf:<https://hexplain.io/ns/fn#> . @prefix ex:<urn:family-contract:> . "
+    fnp = prefix_block({"hxf": "hxf", "ex": BINDINGS["ex"]}, " ")
     for name, body, ok in [
         (
             "fn native function states when it is unbound",

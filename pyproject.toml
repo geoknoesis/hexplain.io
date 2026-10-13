@@ -21,8 +21,27 @@ testpaths = ["tools"]
 python_files = ["__no_default_collection__.py"]
 addopts = "-p no:cacheprovider"
 
+# Type checking: `python -m mypy tools` (tools/test_types.py is the gate). The tools are scripts,
+# not a package: every directory is an import root, because a script puts its own directory --
+# and some a sibling one -- on sys.path. The bases say so, most specific first, which is what
+# lets a module in tools/conformance be both checked and imported under its one top-level name.
 [tool.mypy]
 python_version = "3.11"
 files = ["tools"]
+explicit_package_bases = true
+mypy_path = ["tools/conformance", "tools/codecs", "tools"]
+# pyshacl, psutil, pytest and Playwright ship no usable types or are optional installs.
 ignore_missing_imports = true
-check_untyped_defs = false
+no_implicit_optional = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_return_any = false
+
+# One codec script imports a conformance module by its package path (`conformance.lz4frames`)
+# while every other importer uses the top-level name; following both would give one file two
+# module names, which mypy refuses. The package-path import is left unfollowed.
+[[tool.mypy.overrides]]
+module = ["conformance.*"]
+follow_imports = "skip"

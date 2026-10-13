@@ -8,7 +8,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import Error, sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / ".gate-results/browser"
@@ -20,6 +20,11 @@ class Handler(SimpleHTTPRequestHandler):
         pass
 
 
+def record(sink: list[str], error: Error) -> None:
+    """Keep a page error for the assertion that follows the navigation."""
+    sink.append(str(error))
+
+
 server = ThreadingHTTPServer(("127.0.0.1", 0), partial(Handler, directory=str(ROOT)))
 Thread(target=server.serve_forever, daemon=True).start()
 checks = []
@@ -28,8 +33,8 @@ try:
         browser = play.chromium.launch()
         for width in [375, 768, 1440]:
             page = browser.new_page(viewport={"width": width, "height": 1000}, reduced_motion="reduce")
-            errors = []
-            page.on("pageerror", lambda error, sink=errors: sink.append(str(error)))
+            errors: list[str] = []
+            page.on("pageerror", partial(record, errors))
             page.goto(f"http://127.0.0.1:{server.server_port}/", wait_until="networkidle")
             assert not errors, errors
             assert page.locator("main").count() == 1
@@ -66,7 +71,7 @@ try:
             "        }"
         )
 
-        def luminance(hexcolor):
+        def luminance(hexcolor: str) -> float:
             values = [int(hexcolor[i : i + 2], 16) / 255 for i in (1, 3, 5)]
             linear = [v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4 for v in values]
             return sum(v * w for v, w in zip(linear, [0.2126, 0.7152, 0.0722], strict=True))

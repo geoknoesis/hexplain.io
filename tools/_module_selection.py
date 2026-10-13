@@ -10,7 +10,10 @@ one of the case's nodes is still there:
 2. *Aim*: the modules with a shape aimed at something the case states -- ``sh:targetClass`` of a
    class the case types a node with (or a superclass of it), ``sh:targetSubjectsOf`` /
    ``sh:targetObjectsOf`` of a property the case uses, ``sh:targetNode`` of a node it mentions,
-   and an implicit class target likewise. The family's only custom (SPARQL) targets are the
+   and an implicit class target likewise. A term of the family that the case mentions (a
+   register concept, a class) keeps the types the family gives it, so a shape aimed at one of
+   those classes is kept too: the case may be saying something about that term. The family's only
+   custom (SPARQL) targets are the
    register-binding shapes, which select the subjects of a property that some
    ``hexplain:RegisterBinding`` binds; a case using a bound property therefore brings in the
    module that binds it, the module that holds those shapes, and the home of the bound register.
@@ -69,6 +72,8 @@ class Index:
     #: Files holding a shape with a custom (SPARQL) target.
     custom: set[str] = field(default_factory=set)
     superclasses: dict[Node, set[Node]] = field(default_factory=dict)
+    #: Term -> the classes the family types it with.
+    types: dict[Node, set[Node]] = field(default_factory=dict)
 
     def read(self, path: str, graph: Graph) -> None:
         """Record one module file."""
@@ -97,6 +102,8 @@ class Index:
             registers.update(r for r in graph.objects(binding, HEXPLAIN.register) if isinstance(r, URIRef))
         for sub, sup in graph.subject_objects(RDFS.subClassOf):
             self.superclasses.setdefault(sub, set()).add(sup)
+        for instance, cls in graph.subject_objects(RDF.type):
+            self.types.setdefault(instance, set()).add(cls)
 
     def homes(self, namespaces: Iterable[str]) -> set[URIRef]:
         """The ontologies claiming ``namespaces``."""
@@ -139,6 +146,8 @@ class Index:
                     types.add(o)
                 elif p == RDFS.subClassOf:
                     local.setdefault(s, set()).add(o)
+        for term in terms:
+            types |= self.types.get(term, set())
         todo = list(types)
         while todo:
             cls = todo.pop()

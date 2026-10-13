@@ -18,7 +18,7 @@ EVIDENCE = ROOT / "specification/coverage/gdal-tests"
 CONTRACT_FIELDS = ["name", "implementation", "scope", "range", "evidence", "limits"]
 
 
-def read(name: str) -> Any:
+def read(name: str) -> dict[str, Any]:
     return json.loads((EVIDENCE / name).read_text(encoding="utf-8"))
 
 

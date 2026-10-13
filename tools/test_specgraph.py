@@ -73,9 +73,20 @@ def one_triple(s: Node, p: Node, o: Node) -> Graph:
     return graph
 
 
+def about(node: Node) -> Graph:
+    """A case that states something of ``node``."""
+    return one_triple(node, EX.p, EX.o)
+
+
+def referring(node: Node) -> Graph:
+    """A case in which ``node`` is the value of a statement."""
+    return one_triple(EX.s, EX.p, node)
+
+
 def check_targets() -> int:
     """Every explicit target of every module selects that module for a case the target would reach."""
     checked = 0
+    family = specgraph.shapes_of(specgraph.ontology_paths())
     for path in selection.canonical_paths():
         module = Graph().parse(specgraph.ROOT / path, format="turtle")
         probes: list[tuple[str, Graph]] = []
@@ -93,6 +104,10 @@ def check_targets() -> int:
             local = one_triple(EX.s, RDF.type, EX.Local)
             local.add((EX.Local, RDFS.subClassOf, target))
             probes.append((f"instance of a case-local subclass of {target}", local))
+            # ... and a term the family itself types with the target, once a case says anything of it.
+            for instance in sorted(family.subjects(RDF.type, target), key=str)[:3]:
+                probes.append((f"statement about {instance}, which the family types {target}", about(instance)))
+                probes.append((f"reference to {instance}, which the family types {target}", referring(instance)))
         for shape in module.subjects(RDF.type, SH.NodeShape):
             if (shape, RDF.type, RDFS.Class) in module or (shape, RDF.type, OWL.Class) in module:
                 probes.append((f"instance of {shape}, a shape that is a class", one_triple(EX.s, RDF.type, shape)))

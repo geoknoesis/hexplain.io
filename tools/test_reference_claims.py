@@ -44,32 +44,31 @@ MINIMUM_LIMITS = {
 MINIMUM_CODECS = {"Store", "Deflate", "Zlib", "Gzip", "Delta"}
 
 
-def split_list(text: str) -> set[Any]:
+def split_list(text: str) -> set[str]:
     text = html.unescape(re.sub(r"<[^>]+>", "", text))
     parts = re.split(r",\s*|\s+and\s+", text)
     return {p.strip() for p in parts if p.strip()}
 
 
-def main() -> None:
-    claims = json.loads((ROOT / "specification/reference-engine-claims.json").read_text(encoding="utf-8"))
-    page = (ROOT / "specification/processing/index.html").read_text(encoding="utf-8")
-    failures = []
+def _span(page: str, name: str, failures: list[str]) -> set[str]:
+    """The items the note's ``data-claim`` span ``name`` lists; a missing span is a failure."""
+    m = re.search(rf'<span data-claim="{name}">(.*?)</span>', page, re.S)
+    if not m:
+        failures.append(f'processing/index.html#reference-implementation has no data-claim="{name}" span')
+        return set()
+    return split_list(m.group(1))
 
-    def span(name):
-        m = re.search(rf'<span data-claim="{name}">(.*?)</span>', page, re.S)
-        if not m:
-            failures.append(f'processing/index.html#reference-implementation has no data-claim="{name}" span')
-            return set()
-        return split_list(m.group(1))
 
+def _class_and_feature_checks(claims: dict[str, Any], page: str, failures: list[str]) -> None:
+    """The claimed classes and optional features against the note and the Processing Model's lists."""
     classes = set(claims["conformanceClasses"])
     features = claims["optionalFeatures"]
     claimed = {k for k, v in features.items() if v["claimed"]}
     unclaimed = set(features) - claimed
     for name, stated, owned in [
-        ("classes", span("classes"), classes),
-        ("features", span("features"), claimed),
-        ("unclaimed", span("unclaimed"), unclaimed),
+        ("classes", _span(page, "classes", failures), classes),
+        ("features", _span(page, "features", failures), claimed),
+        ("unclaimed", _span(page, "unclaimed", failures), unclaimed),
     ]:
         if stated != owned:
             failures.append(
@@ -86,6 +85,9 @@ def main() -> None:
             f"closed list {sorted(listed)}"
         )
 
+
+def _codec_checks(claims: dict[str, Any], page: str, failures: list[str]) -> None:
+    """The decoded codecs against the minimum set, the register's contracts and the note."""
     codecs = claims["codecs"]
     decoded = set(codecs["decoded"])
     for c in sorted(MINIMUM_CODECS - decoded):
@@ -103,17 +105,23 @@ def main() -> None:
         failures.append(f"codecs.modules names {sorted(modules)}, not exactly the decoded codecs {sorted(decoded)}")
     if "codecs-beyond-minimum" in claims["optionalFeatures"]:
         failures.append("codecs-beyond-minimum is no longer a feature token: codecs are claimed one IRI at a time")
-    stated_codecs = span("codecs")
+    stated_codecs = _span(page, "codecs", failures)
     if stated_codecs != {f"menc:{c}" for c in decoded - MINIMUM_CODECS}:
         failures.append(
             f"the note's codecs {sorted(stated_codecs)} differ from the decoded codecs beyond the minimum set"
         )
 
+
+def _limit_checks(claims: dict[str, Any], failures: list[str]) -> None:
+    """The default limits against the minimums the Processing Model requires."""
     for key, minimum in MINIMUM_LIMITS.items():
         value = claims["limits"].get(key)
         if not isinstance(value, int) or value < minimum:
             failures.append(f"default limit {key}={value} is below the Processing Model's minimum {minimum}")
 
+
+def _hel_checks(claims: dict[str, Any], page: str, failures: list[str]) -> None:
+    """The HEL version and extension groups against the HEL specification and the note."""
     hel_version = claims.get("helVersion")
     hel_defined = re.search(
         r"This document defines <b>HEL (\d+)\.(\d+)</b>",
@@ -130,7 +138,7 @@ def main() -> None:
                 f"helVersion {hel_version} is not a HEL version the specification defines "
                 f"(HEL {hel_defined.group(1)}.{hel_defined.group(2)})"
             )
-    if span("helVersion") != ({hel_version} if isinstance(hel_version, str) else set()):
+    if _span(page, "helVersion", failures) != ({hel_version} if isinstance(hel_version, str) else set()):
         failures.append(f"the note's HEL version differs from reference-engine-claims.json ({hel_version})")
 
     groups = set(claims["helExtensionGroups"])
@@ -139,6 +147,16 @@ def main() -> None:
         if f'id="ext-{g}"' not in hel:
             failures.append(f"HEL extension group '{g}' is not defined by the HEL specification")
 
+
+def main() -> None:
+    claims = json.loads((ROOT / "specification/reference-engine-claims.json").read_text(encoding="utf-8"))
+    page = (ROOT / "specification/processing/index.html").read_text(encoding="utf-8")
+    failures: list[str] = []
+    _class_and_feature_checks(claims, page, failures)
+    _codec_checks(claims, page, failures)
+    _limit_checks(claims, failures)
+    _hel_checks(claims, page, failures)
+
     index = (ROOT / "specification/index.html").read_text(encoding="utf-8")
     if "reference-engine-claims.json" not in index:
         failures.append("specification/index.html does not link the capability statement")
@@ -146,10 +164,12 @@ def main() -> None:
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures))
         sys.exit(1)
+    features = claims["optionalFeatures"]
+    claimed = [k for k, v in features.items() if v["claimed"]]
     print(
         f"PASS: the reference-implementation note restates reference-engine-claims.json "
-        f"({len(classes)} classes, {len(claimed)} of {len(features)} optional features, HEL {hel_version}, "
-        f"{len(decoded)} codecs)"
+        f"({len(set(claims['conformanceClasses']))} classes, {len(claimed)} of {len(features)} optional features, "
+        f"HEL {claims.get('helVersion')}, {len(set(claims['codecs']['decoded']))} codecs)"
     )
 
 

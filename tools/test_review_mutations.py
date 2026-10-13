@@ -28,7 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
 
-def load(root: Path, paths: Iterable[Any]) -> Any:
+def load(root: Path, paths: Iterable[str]) -> Graph:
     g = Graph()
     for p in paths:
         path = root / p
@@ -37,10 +37,11 @@ def load(root: Path, paths: Iterable[Any]) -> Any:
     return g
 
 
-def _check(task):
+def _check(task: tuple[Path, list[tuple[int, dict[str, Any]]]]) -> list[tuple[int, str]]:
     """Validate one chunk of probes against their shapes; return the wrong ones as (index, report)."""
     root, items = task
-    shapes, wrong = {}, []
+    shapes: dict[tuple[str, ...], Graph] = {}
+    wrong: list[tuple[int, str]] = []
     for index, row in items:
         key = tuple(row["shapes"])
         if key not in shapes:
@@ -57,7 +58,7 @@ def _check(task):
     return wrong
 
 
-def run(root: Path, chunk: int = 8) -> tuple[Any, ...]:
+def run(root: Path, chunk: int = 8) -> tuple[list[dict[str, Any]], list[tuple[dict[str, Any], str]]]:
     """Every probe, across worker processes (SPARQL-based shapes are slow in pySHACL)."""
     from concurrent.futures import ProcessPoolExecutor
 

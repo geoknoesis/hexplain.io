@@ -43,7 +43,9 @@ def main() -> int:
         return 1
 
     # Apply the rule: run the CONSTRUCT and merge results back in ($this acts as a free var).
-    for triple in g.query(construct):
+    lifted = g.query(construct).graph
+    assert lifted is not None, "the lift rule is not a CONSTRUCT query"
+    for triple in lifted:
         g.add(triple)
 
     asset = rdflib.URIRef("https://example.org/spec/bundle#sample")
@@ -57,7 +59,7 @@ def main() -> int:
     # value comparison is the robust check that the facet lifted.
     def lifted_int(pred: rdflib.URIRef) -> int | None:
         v = g.value(asset, pred)
-        return None if v is None else int(v.toPython())
+        return int(v.toPython()) if isinstance(v, rdflib.Literal) else None
 
     problems = []
     if lifted_int(ARASTER.width) != 256:

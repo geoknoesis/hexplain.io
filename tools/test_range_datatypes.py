@@ -19,7 +19,7 @@ from _range_datatypes import problems
 from rdflib import Graph
 
 
-def _self_test():
+def _self_test() -> None:
     """The detector must notice a missing and an incompatible datatype, or it proves nothing."""
     g = Graph().parse(
         format="turtle",

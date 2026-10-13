@@ -11,7 +11,6 @@ skos:notation and sh:message are not prose annotations and are not checked.
 from __future__ import annotations
 
 import sys
-from typing import Any
 
 import specgraph
 from rdflib import RDFS, Graph, Literal, Namespace, URIRef
@@ -32,7 +31,7 @@ PROSE = (
 HX = "https://hexplain.io/ns/"
 
 
-def problems(g: Graph) -> list[Any]:
+def problems(g: Graph) -> list[str]:
     found = []
     for predicate in PROSE:
         for term, value in g.subject_objects(predicate):

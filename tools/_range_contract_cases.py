@@ -10,12 +10,14 @@ does not depend on the subject's type.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 from _cases import row
 from _family import canonical_files
 from rdflib import RDFS, Graph, URIRef
+from rdflib.term import Node
 
 ROOT = Path(__file__).resolve().parents[1]
 XSD = "http://www.w3.org/2001/XMLSchema#"
@@ -67,12 +69,17 @@ UNION_LITERALS = {
 }
 
 
-def _routes() -> tuple[dict[URIRef, str], set[tuple[object, str]]]:
+#: ``add(name, module, property, value, expected)``: record one single-triple case.
+Add = Callable[[str, str, Node, object, bool], None]
+
+
+def _routes() -> tuple[dict[Node, str], set[tuple[Node | None, str]]]:
     """property -> module file whose subjects-of shape states its datatype."""
     from _range_datatypes import SH, allowed_datatypes
 
     files = canonical_files(ROOT / "specification")
-    routes, narrowed = {}, set()
+    routes: dict[Node, str] = {}
+    narrowed: set[tuple[Node | None, str]] = set()
     for rel in files:
         g = Graph().parse(data=(ROOT / "specification" / rel).read_text(encoding="utf-8"), format="turtle")
         for shape, prop in g.subject_objects(SH.targetSubjectsOf):
@@ -98,83 +105,91 @@ def _routes() -> tuple[dict[URIRef, str], set[tuple[object, str]]]:
     return routes, narrowed
 
 
+def _union_cases(g: Graph, add: Add, label: str, module: str, prop: Node, members: list[Node]) -> None:
+    """A union range: a value of each member conforms, a value of none does not."""
+    names = [str(m)[len(XSD) :] if str(m).startswith(XSD) else str(m) for m in members]
+    for name in names:
+        good = LITERALS[name][0] if name in LITERALS else UNION_LITERALS[name]
+        add(
+            f"{label} accepts "
+            f"{g.namespace_manager.normalizeUri(URIRef(XSD + name) if name in LITERALS else URIRef(name))}",
+            module,
+            prop,
+            good,
+            True,
+        )
+    # The first member's usual counter-example (a decimal for xsd:double), which no member admits.
+    add(
+        f"{label} rejects another datatype",
+        module,
+        prop,
+        LITERALS[names[0]][1] if names[0] in LITERALS else "1",
+        False,
+    )
+
+
+def _integer_cases(add: Add, label: str, module: str, prop: Node, kind: str) -> bool:
+    """An integer range: in-range, wrong-kind and out-of-bounds values; True when 1 lies in the range."""
+    low, high = BOUNDS.get(kind, (None, None))
+    admits_one = (low is None or low <= 1) and (high is None or high >= 1)
+    add(f"{label} accepts an integer", module, prop, 1 if admits_one else low, True)
+    add(f"{label} rejects a string", module, prop, '"x"', False)
+    add(f"{label} rejects a decimal", module, prop, "1.5", False)
+    if low is not None:
+        add(f"{label} rejects {low - 1}", module, prop, low - 1, False)
+    if high is not None:
+        add(f"{label} rejects {high + 1}", module, prop, high + 1, False)
+    return admits_one
+
+
+def _literal_cases(add: Add, label: str, module: str, prop: Node, kind: str) -> bool:
+    """A non-integer range: its own datatype and an unrelated one; True when integers are values of it."""
+    good, bad = LITERALS[kind]
+    add(f"{label} accepts xsd:{kind}", module, prop, good, True)
+    add(f"{label} rejects another datatype", module, prop, bad, False)
+    if kind != "decimal":
+        return False
+    add(f"{label} accepts an integer", module, prop, 2, True)
+    return True
+
+
 def cases() -> list[dict[str, Any]]:
+    """Every range case, property by property in the order of the ontology's rdfs:range axioms."""
     import specgraph
 
     g = specgraph.ontologies()
     routes, narrowed = _routes()
-    rows = []
+    rows: list[dict[str, Any]] = []
 
-    def add(name: str, module: str, prop: URIRef, value: object, expected: bool) -> None:
+    def add(name: str, module: str, prop: Node, value: object, expected: bool) -> None:
         if expected and (prop, module) in narrowed:
             return
         rows.append(
             row("range " + name, module, f"{SUBJECT} <{prop}> {value} .", expected, "" if expected else str(prop))
         )
 
-    witnessed = set()
+    witnessed: set[str] = set()
     from _range_datatypes import union_members
 
     for prop, range_ in sorted(g.subject_objects(RDFS.range)):
         members = union_members(g, range_)
-        if (
-            len(members) > 1
-            and prop in routes
-            and all(str(m) in UNION_LITERALS or str(m).startswith(XSD) for m in members)
-        ):
-            # A union range: a value of each member conforms, a value of none does not.
-            module, label = routes[prop], g.namespace_manager.normalizeUri(prop)
-            names = [str(m)[len(XSD) :] if str(m).startswith(XSD) else str(m) for m in members]
-            for name in names:
-                good = LITERALS[name][0] if name in LITERALS else UNION_LITERALS[name]
-                add(
-                    f"{label} accepts "
-                    f"{g.namespace_manager.normalizeUri(URIRef(XSD + name) if name in LITERALS else URIRef(name))}",
-                    module,
-                    prop,
-                    good,
-                    True,
-                )
-            # The first member's usual counter-example (a decimal for xsd:double), which no member admits.
-            add(
-                f"{label} rejects another datatype",
-                module,
-                prop,
-                LITERALS[names[0]][1] if names[0] in LITERALS else "1",
-                False,
-            )
+        if prop not in routes:
             continue
-        if not str(range_).startswith(XSD) or prop not in routes:
+        module, label = routes[prop], g.namespace_manager.normalizeUri(str(prop))
+        if len(members) > 1 and all(str(m) in UNION_LITERALS or str(m).startswith(XSD) for m in members):
+            _union_cases(g, add, label, module, prop, members)
             continue
-        module, kind, label = routes[prop], str(range_)[len(XSD) :], g.namespace_manager.normalizeUri(prop)
+        if not str(range_).startswith(XSD):
+            continue
+        kind = str(range_)[len(XSD) :]
+        # Each integer-family alternative once per module, on the first property that admits integers.
+        integers = False
         if kind in INTEGER_RANGES:
-            low, high = BOUNDS.get(kind, (None, None))
-            good = 1 if (low is None or low <= 1) and (high is None or high >= 1) else low
-            add(f"{label} accepts an integer", module, prop, good, True)
-            add(f"{label} rejects a string", module, prop, '"x"', False)
-            add(f"{label} rejects a decimal", module, prop, "1.5", False)
-            if low is not None:
-                add(f"{label} rejects {low - 1}", module, prop, low - 1, False)
-            if high is not None:
-                add(f"{label} rejects {high + 1}", module, prop, high + 1, False)
-            # Each integer-family alternative once per module, on the first integer property.
-            if (
-                module not in witnessed
-                and (prop, module) not in narrowed
-                and (low is None or low <= 1)
-                and (high is None or high >= 1)
-            ):
-                witnessed.add(module)
-                for datatype in FAMILY:
-                    add(f"{label} accepts xsd:{datatype}", module, prop, f'"1"^^<{XSD}{datatype}>', True)
+            integers = _integer_cases(add, label, module, prop, kind)
         elif kind in LITERALS:
-            good, bad = LITERALS[kind]
-            add(f"{label} accepts xsd:{kind}", module, prop, good, True)
-            add(f"{label} rejects another datatype", module, prop, bad, False)
-            if kind == "decimal":
-                add(f"{label} accepts an integer", module, prop, 2, True)
-                if module not in witnessed and (prop, module) not in narrowed:
-                    witnessed.add(module)
-                    for datatype in FAMILY:
-                        add(f"{label} accepts xsd:{datatype}", module, prop, f'"1"^^<{XSD}{datatype}>', True)
+            integers = _literal_cases(add, label, module, prop, kind)
+        if integers and module not in witnessed and (prop, module) not in narrowed:
+            witnessed.add(module)
+            for datatype in FAMILY:
+                add(f"{label} accepts xsd:{datatype}", module, prop, f'"1"^^<{XSD}{datatype}>', True)
     return rows

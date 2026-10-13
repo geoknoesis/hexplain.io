@@ -8,7 +8,6 @@ route: it is published at its own path under /specification/, served as Turtle.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from _family import family_paths, is_documentation
 from rdflib import OWL, RDF, Graph
@@ -16,8 +15,8 @@ from rdflib import OWL, RDF, Graph
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def routes() -> Any:
-    result = {}
+def routes() -> dict[str, Path]:
+    result: dict[str, Path] = {}
     for path in family_paths(ROOT / "specification"):
         file = Path(path)
         graph = Graph().parse(file, format="turtle")

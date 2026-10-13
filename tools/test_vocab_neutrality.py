@@ -37,7 +37,6 @@ from __future__ import annotations
 import pathlib
 import re
 import sys
-from typing import Any
 
 import rdflib
 from _family import is_documentation
@@ -196,17 +195,80 @@ EXEMPT = {
 }
 
 
-def words(local_name: Any) -> set[Any]:
+def words(local_name: str) -> set[str]:
     """camelCase / PascalCase / kebab split, lowercased."""
     return {w.lower() for w in re.findall(r"[A-Z]+(?![a-z])|[A-Z][a-z]*|[a-z]+|\d+", local_name)}
 
 
-def local_names(graph: Graph, ontology_iri: Any) -> Any:
+def local_names(graph: Graph, ontology_iri: str) -> set[str]:
     out = set()
     for node in set(graph.subjects()):
         if isinstance(node, rdflib.URIRef) and str(node).startswith(ontology_iri + "#"):
             out.add(str(node).split("#", 1)[1])
     return out
+
+
+def _format_name_problems(path: str, g: Graph, ont: str) -> tuple[int, list[str]]:
+    """Rule 1, format names in term names: the number of terms checked and the offending ones."""
+    checked, problems = 0, []
+    for name in sorted(local_names(g, ont)):
+        if name in EXEMPT:
+            continue
+        checked += 1
+        hit = words(name) & FORMAT_WORDS
+        if hit:
+            problems.append(
+                f"{path}: term '{name}' names a format or jurisdiction "
+                f"({', '.join(sorted(hit))}). A normative vocabulary serves any format and "
+                f"any authority's rules, not one. Either rename it, move it to a profile "
+                f"or register, or add it to EXEMPT with the reason."
+            )
+    return checked, problems
+
+
+def _register_reference_problems(path: str, g: Graph) -> list[str]:
+    """Rule 2: normative vocabularies must not reference a register."""
+    problems = []
+    for s, _p, o in g:
+        for node, role in ((s, "subject"), (o, "object")):
+            if isinstance(node, rdflib.URIRef) and str(node).startswith(REGISTER_NS):
+                problems.append(
+                    f"{path}: references register term <{node}> as a {role}. Aspects do "
+                    f"not import registers -- that absence is what lets a profile bind a "
+                    f"different one."
+                )
+    return problems
+
+
+def _aspect_concept_problems(path: str, g: Graph) -> list[str]:
+    """Rule 4: aspects declare no concepts."""
+    problems = []
+    if "/aspect/" in path:
+        for kind in (SKOS.Concept, SKOS.ConceptScheme, SKOS.Collection):
+            for s in g.subjects(rdflib.RDF.type, kind):
+                problems.append(
+                    f"{path}: declares {str(kind).split('#')[-1]} <{s}>. Concepts belong "
+                    f"in a register under specification/register/, so a profile can bind "
+                    f"a different set of values."
+                )
+    return problems
+
+
+def _aspect_reference_problems() -> list[str]:
+    """Rule 3: registers must not reference an aspect."""
+    problems = []
+    for path in repository_files("specification/register/*/*.ttl"):
+        g = rdflib.Graph()
+        g.parse(data=(ROOT / path).read_text(encoding="utf-8"), format="turtle")
+        for s, p, o in g:
+            for node in (s, p, o):
+                if isinstance(node, rdflib.URIRef) and str(node).startswith(ASPECT_NS):
+                    problems.append(
+                        f"{path}: references aspect term <{node}>. The dependency runs one "
+                        f"way; a register that names the property it serves cannot be reused "
+                        f"by another."
+                    )
+    return problems
 
 
 def main() -> int:
@@ -220,53 +282,11 @@ def main() -> int:
         if ont is None:
             problems.append(f"{path}: no owl:Ontology declaration, cannot scope its terms")
             continue
+        checked, named = _format_name_problems(path, g, ont)
+        checked_terms += checked
+        problems += named + _register_reference_problems(path, g) + _aspect_concept_problems(path, g)
 
-        # 1 -- format names in term names
-        for name in sorted(local_names(g, ont)):
-            if name in EXEMPT:
-                continue
-            checked_terms += 1
-            hit = words(name) & FORMAT_WORDS
-            if hit:
-                problems.append(
-                    f"{path}: term '{name}' names a format or jurisdiction "
-                    f"({', '.join(sorted(hit))}). A normative vocabulary serves any format and "
-                    f"any authority's rules, not one. Either rename it, move it to a profile "
-                    f"or register, or add it to EXEMPT with the reason."
-                )
-
-        # 2 -- normative vocabularies must not reference a register
-        for s, _p, o in g:
-            for node, role in ((s, "subject"), (o, "object")):
-                if isinstance(node, rdflib.URIRef) and str(node).startswith(REGISTER_NS):
-                    problems.append(
-                        f"{path}: references register term <{node}> as a {role}. Aspects do "
-                        f"not import registers -- that absence is what lets a profile bind a "
-                        f"different one."
-                    )
-
-        # 4 -- aspects declare no concepts
-        if "/aspect/" in path:
-            for kind in (SKOS.Concept, SKOS.ConceptScheme, SKOS.Collection):
-                for s in g.subjects(rdflib.RDF.type, kind):
-                    problems.append(
-                        f"{path}: declares {str(kind).split('#')[-1]} <{s}>. Concepts belong "
-                        f"in a register under specification/register/, so a profile can bind "
-                        f"a different set of values."
-                    )
-
-    # 3 -- registers must not reference an aspect
-    for path in repository_files("specification/register/*/*.ttl"):
-        g = rdflib.Graph()
-        g.parse(data=(ROOT / path).read_text(encoding="utf-8"), format="turtle")
-        for s, p, o in g:
-            for node in (s, p, o):
-                if isinstance(node, rdflib.URIRef) and str(node).startswith(ASPECT_NS):
-                    problems.append(
-                        f"{path}: references aspect term <{node}>. The dependency runs one "
-                        f"way; a register that names the property it serves cannot be reused "
-                        f"by another."
-                    )
+    problems += _aspect_reference_problems()
 
     if checked_terms < 150:
         problems.append(f"only {checked_terms} terms checked -- the scan is not reaching the vocabularies")

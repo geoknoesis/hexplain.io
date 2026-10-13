@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any
+from pathlib import Path
 
 from _capabilities import COVERAGE, EVIDENCE, ROOT, TARGET, build
 
 
-def digest(path: Any) -> Any:
+def digest(path: Path) -> str:
     """SHA-256 of the evidence with its line endings normalised to LF first, so a CRLF checkout of a text file
     (autocrlf, an editor that rewrote it) hashes as the LF file the matrix recorded."""
     return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")).hexdigest()

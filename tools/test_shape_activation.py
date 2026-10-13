@@ -19,10 +19,10 @@ the gate until it gains a property target or a stated reason.
 from __future__ import annotations
 
 import sys
-from typing import Any
 
 import specgraph
 from rdflib import Graph, Namespace, URIRef
+from rdflib.term import Node
 
 SH = Namespace("http://www.w3.org/ns/shacl#")
 NEUTRAL = {SH.path, SH.message, SH.severity, SH.name, SH.description, SH.order, SH.group}
@@ -133,24 +133,24 @@ CLASS_ONLY.update(
 PROPERTY_TARGETS = (SH.targetSubjectsOf, SH.targetObjectsOf, SH.target, SH.targetNode)
 
 
-def _conditional(g, pshape):
+def _conditional(g: Graph, pshape: Node) -> bool:
     """True when the property shape only states what the triggering property implies."""
     for p, o in g.predicate_objects(pshape):
         if p in NEUTRAL or p == SH.minCount or p == SH.hasValue:
             continue
-        if p == SH.maxCount and int(o) == 0:
+        if p == SH.maxCount and int(str(o)) == 0:
             continue
         return False
     return True
 
 
-def _module(term):
+def _module(term: object) -> str:
     return str(term).rsplit("#", 1)[0]
 
 
-def gaps(g: Graph) -> Any:
+def gaps(g: Graph) -> list[str]:
     out = []
-    for shape in sorted(set(g.subjects(SH.targetSubjectsOf, None))):
+    for shape in sorted(set(g.subjects(SH.targetSubjectsOf, None)), key=str):
         targets = set(g.objects(shape, SH.targetSubjectsOf))
         modules = {_module(t) for t in targets} | {_module(shape)}
         for pshape in g.objects(shape, SH.property):
@@ -164,11 +164,11 @@ def gaps(g: Graph) -> Any:
     return out
 
 
-def class_only(g: Graph) -> Any:
+def class_only(g: Graph) -> list[str]:
     """Class-targeted shapes with no property activation and no stated reason, and stale reasons."""
     out = []
     only = {s for s in set(g.subjects(SH.targetClass, None)) if not any((s, p, None) in g for p in PROPERTY_TARGETS)}
-    for shape in sorted(only):
+    for shape in sorted(only, key=str):
         if str(shape) not in CLASS_ONLY:
             out.append(f"{shape} is activated only by sh:targetClass; omitting rdf:type bypasses it")
     for name in sorted(set(CLASS_ONLY) - {str(s) for s in only}):

@@ -38,7 +38,11 @@ KNOWN_VIOLATIONS = {
 }
 
 
-def snapshot_graphs() -> Iterator[Any]:
+#: Where a graph was read (a release identifier or the working tree), its path and the graph.
+Source = tuple[str, str, Graph]
+
+
+def snapshot_graphs() -> Iterator[Source]:
     """(release, path, graph) for every Turtle file of every snapshot."""
     for manifest_path in sorted(RELEASES.glob("*/manifest.json")):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -49,14 +53,14 @@ def snapshot_graphs() -> Iterator[Any]:
                     yield manifest["releaseId"], item["path"], Graph().parse(data=data, format="turtle")
 
 
-def working_graphs() -> Iterator[Any]:
+def working_graphs() -> Iterator[Source]:
     for path in specgraph.ontology_paths():
         yield "working tree", path, Graph().parse(data=(ROOT / path).read_text(encoding="utf-8"), format="turtle")
 
 
-def versions(sources: Iterable[Any]) -> Any:
+def versions(sources: Iterable[Source]) -> defaultdict[str, list[Source]]:
     """version IRI -> [(where, path, graph)]"""
-    out = defaultdict(list)
+    out: defaultdict[str, list[Source]] = defaultdict(list)
     for where, path, g in sources:
         for ontology in g.subjects(RDF.type, OWL.Ontology):
             version = g.value(ontology, OWL.versionIRI)
@@ -65,14 +69,15 @@ def versions(sources: Iterable[Any]) -> Any:
     return out
 
 
-def differing(entries: Any) -> set[Any]:
+def differing(entries: list[Source]) -> set[str]:
     """The places whose graph differs from the first place's (the earliest snapshot)."""
     first = to_isomorphic(entries[0][2])
     return {where for where, _, g in entries[1:] if not isomorphic(first, g)}
 
 
-def check(by_version: dict[str, Any], known: dict[str, Any]) -> Any:
-    problems, seen = [], set()
+def check(by_version: dict[str, list[Source]], known: dict[str, tuple[set[str], str]]) -> list[str]:
+    problems: list[str] = []
+    seen: set[str] = set()
     for version, entries in sorted(by_version.items()):
         diff = differing(entries)
         if not diff:
@@ -122,7 +127,7 @@ def self_test() -> None:
 LINEAGE = RELEASES / "lineage.json"
 #: Frozen versions whose stated owl:priorVersion is wrong (ERRATA.md E3, E4): version IRI ->
 #: (erratum, the predecessor to read instead, or None when the version is its module's first).
-CORRECTED_PRIORS = {
+CORRECTED_PRIORS: dict[str, tuple[str | None, str | None]] = {
     "https://hexplain.io/ns/aspect/raster/1.1": ("E3", None),
     "https://hexplain.io/ns/aspect/spatialref/1.1": ("E3", None),
     "https://hexplain.io/ns/aspect/geometry/1.1": ("E3", None),
@@ -135,7 +140,7 @@ CORRECTED_PRIORS = {
 }
 
 
-def _git(*args):
+def _git(*args: str) -> bytes | None:
     import subprocess
 
     try:
@@ -144,7 +149,7 @@ def _git(*args):
         return None
 
 
-def snapshot_commit(release: Any) -> Any:
+def snapshot_commit(release: str) -> str | None:
     """The commit that added the snapshot's manifest, or None without git history."""
     out = _git("log", "--diff-filter=A", "--format=%H", "--", f"releases/{release}/manifest.json")
     return out.decode().split()[-1] if out and out.split() else None
@@ -152,7 +157,8 @@ def snapshot_commit(release: Any) -> Any:
 
 def lineage() -> dict[str, Any]:
     """Snapshots with their commits, and every module's versions in the order they were frozen."""
-    snapshots, modules = [], defaultdict(dict)
+    snapshots: list[dict[str, Any]] = []
+    modules: defaultdict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
     for manifest_path in sorted(RELEASES.glob("*/manifest.json")):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         release = manifest["releaseId"]
@@ -173,6 +179,19 @@ def lineage() -> dict[str, Any]:
             )
             if where != "working tree" and where not in entry["snapshots"]:
                 entry["snapshots"].append(where)
+    return {
+        "schemaVersion": 1,
+        "description": "Snapshots with the commit that added each, and every module version in the order the "
+        "snapshots froze "
+        "it; priorVersion is the stated owl:priorVersion, corrected where releases/ERRATA.md says so. Versions "
+        "with unreleased true are in the working tree only.",
+        "snapshots": snapshots,
+        "modules": _chains(modules),
+    }
+
+
+def _chains(modules: dict[str, dict[str, dict[str, Any]]]) -> dict[str, list[dict[str, Any]]]:
+    """Each module's versions in the order the snapshots froze them, with corrected prior versions."""
     out = {}
     for ontology, versions_ in sorted(modules.items()):
         chain, previous = [], None
@@ -193,18 +212,10 @@ def lineage() -> dict[str, Any]:
             chain.append(version)
             previous = version["versionIri"]
         out[ontology] = chain
-    return {
-        "schemaVersion": 1,
-        "description": "Snapshots with the commit that added each, and every module version in the order the "
-        "snapshots froze "
-        "it; priorVersion is the stated owl:priorVersion, corrected where releases/ERRATA.md says so. Versions "
-        "with unreleased true are in the working tree only.",
-        "snapshots": snapshots,
-        "modules": out,
-    }
+    return out
 
 
-def check_lineage(write: Any) -> Any:
+def check_lineage(write: bool) -> list[str]:
     computed = lineage()
     expected = json.dumps(computed, indent=1, ensure_ascii=False) + "\n"
     if write:

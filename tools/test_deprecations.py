@@ -10,7 +10,6 @@ and what a description should do.
 from __future__ import annotations
 
 import sys
-from typing import Any
 
 import specgraph
 from rdflib import OWL, Graph, Literal, Namespace, URIRef
@@ -19,7 +18,7 @@ DCTERMS = Namespace("http://purl.org/dc/terms/")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 
 
-def problems(g: Graph) -> Any:
+def problems(g: Graph) -> list[str]:
     found = []
     for term in sorted(set(g.subjects(OWL.deprecated, Literal(True))), key=str):
         if not isinstance(term, URIRef) or not str(term).startswith("https://hexplain.io/ns/"):

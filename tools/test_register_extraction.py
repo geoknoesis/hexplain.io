@@ -59,6 +59,7 @@ import sys
 from pathlib import Path
 
 import rdflib
+from rdflib.term import Node
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -153,7 +154,7 @@ def main() -> int:
         (rdflib.URIRef(_UNS + "HandlingCaveats"), SKOS.member, rdflib.URIRef(_UNS + "Fouo")),
     }
 
-    def original(aspect):
+    def original(aspect: str) -> rdflib.Graph:
         blob = subprocess.run(
             ["git", "show", f"{PRE_MIGRATION_SHA}:specification/aspect/{aspect}/{aspect}.ttl"],
             capture_output=True,
@@ -177,7 +178,7 @@ def main() -> int:
         a_ns = f"https://hexplain.io/ns/aspect/{aspect}#"
         r_ns = f"https://hexplain.io/ns/register/{reg}#"
 
-        def rewrite(t):
+        def rewrite(t: tuple[Node, ...]) -> tuple[Node, ...]:
             return tuple(rdflib.URIRef(str(x).replace(a_ns, r_ns)) if isinstance(x, rdflib.URIRef) else x for x in t)
 
         # Entities that actually migrate: concepts, schemes, and collections (per the docstring's
@@ -193,7 +194,7 @@ def main() -> int:
 
         # Documentation literals were later tagged @en across the family (tools/test_language_tags.py):
         # the same text with a language tag is the same annotation, not a lost one.
-        def untagged(t):
+        def untagged(t: tuple[Node, ...]) -> tuple[Node, ...]:
             return tuple(
                 rdflib.Literal(str(x)) if isinstance(x, rdflib.Literal) and x.language == "en" else x for x in t
             )

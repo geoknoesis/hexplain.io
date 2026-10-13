@@ -21,10 +21,10 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
-from typing import Any
 
 from _family import canonical_files
 from rdflib import Graph, Namespace, URIRef
+from rdflib.term import Node
 
 ROOT = Path(__file__).resolve().parents[1]
 SH = Namespace("http://www.w3.org/ns/shacl#")
@@ -32,7 +32,7 @@ TARGETS = (SH.targetClass, SH.targetSubjectsOf, SH.targetObjectsOf, SH.targetNod
 PLACEHOLDER = re.compile(r"\{[?$][A-Za-z_]\w*\}")
 
 
-def reported(g: Graph, pshape: Any, seen: frozenset[Any] | set[Any] = frozenset()) -> bool:
+def reported(g: Graph, pshape: Node, seen: frozenset[Node] = frozenset()) -> bool:
     """True when a validator reports [pshape]'s results with [pshape] as their source shape."""
     if pshape in seen:
         return False
@@ -44,7 +44,7 @@ def reported(g: Graph, pshape: Any, seen: frozenset[Any] | set[Any] = frozenset(
     return False
 
 
-def problems(g: Graph, where: Any) -> Any:
+def problems(g: Graph, where: str) -> list[str]:
     found = []
     for pshape in sorted(set(g.objects(None, SH.property)), key=str):
         if not reported(g, pshape):

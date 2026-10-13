@@ -25,18 +25,25 @@ from rdflib.compare import isomorphic
 class Page(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
-        self.ids = []
-        self.terms = []
-        self.links = []
+        self.ids: list[str] = []
+        self.terms: list[str] = []
+        self.links: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         a = dict(attrs)
         if "id" in a:
-            self.ids.append(a["id"])
+            self.ids.append(self.stated(a, "id"))
         if "data-term-iri" in a:
-            self.terms.append(a["data-term-iri"])
+            self.terms.append(self.stated(a, "data-term-iri"))
         if tag == "a":
-            self.links.append(a.get("href", ""))
+            self.links.append(self.stated(a, "href") if "href" in a else "")
+
+    @staticmethod
+    def stated(attrs: dict[str, str | None], name: str) -> str:
+        """The value of an attribute the page states; one written without a value is a defect."""
+        value = attrs[name]
+        assert value is not None, f"a generated page has a {name} attribute without a value"
+        return value
 
 
 def main() -> int:

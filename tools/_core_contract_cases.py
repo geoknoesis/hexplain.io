@@ -4,16 +4,26 @@ from __future__ import annotations
 
 from typing import Any
 
-from _cases import row, term
+from _cases import prefix_block, row, term
 
-PREFIX = """@prefix c:<https://hexplain.io/ns/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .
-@prefix d:<https://hexplain.io/ns/dlv#> . @prefix ex:<urn:core-contract:> .
-@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix owl:<http://www.w3.org/2002/07/owl#> .
-@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .
-ex:codec a skos:Concept . ex:codec2 a skos:Concept . ex:layout a d:DataLayout . ex:layout2 a d:DataLayout .
+PREFIX = (
+    prefix_block(
+        {
+            "c": "hexplain",
+            "b": "bddo",
+            "d": "dlv",
+            "ex": "urn:core-contract:",
+            "skos": "skos",
+            "owl": "owl",
+            "rdf": "rdf",
+            "xsd": "xsd",
+        }
+    )
+    + """ex:codec a skos:Concept . ex:codec2 a skos:Concept . ex:layout a d:DataLayout . ex:layout2 a d:DataLayout .
 ex:step a c:EncodingStep; c:codec ex:codec . ex:step2 a c:EncodingStep; c:codec ex:codec2 .
 ex:param a c:CodecParameter; c:parameterName "level"; c:parameterValue 1 .
 """
+)
 MODULE = "hexplain/core.ttl"
 
 

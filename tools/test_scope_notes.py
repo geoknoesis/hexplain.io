@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import sys
 from collections import Counter
-from typing import Any
 
 import specgraph
 from _reference import PATH_NOTE, SCOPE, SH, SKOS, SUBCLASS_NOTE, TERM_SCOPED, kind
@@ -40,7 +39,7 @@ CLAIMS = {
 }
 
 
-def problems(g: Graph) -> Any:
+def problems(g: Graph) -> list[str]:
     found = []
     for t, note in g.subject_objects(SKOS.scopeNote):
         if not isinstance(t, URIRef) or not str(t).startswith("https://hexplain.io/ns/"):

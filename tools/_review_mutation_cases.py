@@ -9,24 +9,28 @@ review's findings, not read off the shapes; tools/test_review_mutations.py runs 
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
-from _cases import probe
+from _cases import prefix_block, probe
 
-P = """@prefix conf: <https://hexplain.io/ns/conf#> .
-@prefix req: <https://hexplain.io/ns/req#> .
-@prefix bddo: <https://hexplain.io/ns/bddo#> .
-@prefix hexplain: <https://hexplain.io/ns/core#> .
-@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
-@prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-@prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix ex: <urn:review-probe:> .
-"""
+P = prefix_block(
+    {
+        "conf": "conf",
+        "req": "req",
+        "bddo": "bddo",
+        "hexplain": "hexplain",
+        "abnd": "bundle",
+        "sh": "sh",
+        "owl": "owl",
+        "rdf": "rdf",
+        "rdfs": "rdfs",
+        "skos": "skos",
+        "dcterms": "dct",
+        "xsd": "xsd",
+        "ex": "urn:review-probe:",
+    }
+)
 
 CONF_SHAPES = ["specification/conf/shapes.ttl", "specification/req/shapes.ttl"]
 REQ_SHAPES = ["specification/req/shapes.ttl"]
@@ -74,12 +78,30 @@ def _sub(text: str, *pairs: tuple[str, str]) -> str:
     return text
 
 
-def conf_cases() -> list[dict[str, Any]]:
-    c = []
+# The report with its parse finding moved to a category no attribution names.
+UNATTRIBUTED = _sub(
+    REPORT,
+    (
+        "conf:errorCategory conf:BoundsError ; conf:findingRequirement ex:req2 ;",
+        "conf:errorCategory conf:DispatchError ;",
+    ),
+)
+
+
+def _conf_probes(rows: list[dict[str, Any]]) -> Callable[[str, str, bool], None]:
+    """An ``add(name, data, verdict)`` that appends one conformance-report probe to ``rows``."""
 
     def add(name: str, data: str, ok: bool) -> None:
-        c.append(probe("conf report", name, CONF_SHAPES, P + data, ok))
+        """Append the probe ``name`` over ``data`` with the verdict ``ok``."""
+        rows.append(probe("conf report", name, CONF_SHAPES, P + data, ok))
 
+    return add
+
+
+def _run_state_cases() -> list[dict[str, Any]]:
+    """The verdict, the truncation flag and version scoping of a run."""
+    c: list[dict[str, Any]] = []
+    add = _conf_probes(c)
     add("valid report", REPORT, True)
     add("valid conformant report", CLEAN, True)
     add("run without a verdict", _sub(REPORT, ("conf:verdict conf:NonConformant ;", "")), False)
@@ -136,6 +158,13 @@ def conf_cases() -> list[dict[str, Any]]:
         _sub(REPORT, ("conf:versionScopingApplied false", "conf:versionScopingApplied true")),
         False,
     )
+    return c
+
+
+def _run_property_cases() -> list[dict[str, Any]]:
+    """The single-valued properties of a run and the kinds of value they take."""
+    c: list[dict[str, Any]] = []
+    add = _conf_probes(c)
     add("profile given as a literal", _sub(REPORT, ("conf:profile ex:profile", 'conf:profile "profile.ttl"')), False)
     add("rule set given as a literal", _sub(REPORT, ("conf:ruleSet ex:rules", 'conf:ruleSet "rules.ttl"')), False)
     add("input given as an IRI", _sub(REPORT, ('conf:input "input.bin"', "conf:input ex:input")), True)
@@ -171,6 +200,13 @@ def conf_cases() -> list[dict[str, Any]]:
         _sub(REPORT, ("conf:truncated false", 'conf:truncated true ; conf:truncationReason "a" , "b"')),
         False,
     )
+    return c
+
+
+def _outcome_cases() -> list[dict[str, Any]]:
+    """Findings linked to their run, and one outcome per requirement."""
+    c: list[dict[str, Any]] = []
+    add = _conf_probes(c)
     add("finding not linked to the run", _sub(REPORT, ("conf:finding ex:f1 , ex:f2 .", "conf:finding ex:f1 .")), False)
     add(
         "finding linked by two runs",
@@ -230,6 +266,13 @@ def conf_cases() -> list[dict[str, Any]]:
         _sub(scoped, ('req:appliesToVersion "2.0"', 'req:appliesToVersion "2.0" , "1.0"')),
         False,
     )
+    return c
+
+
+def _verdict_cases() -> list[dict[str, Any]]:
+    """The verdict against the findings, and each finding's severity against its source."""
+    c: list[dict[str, Any]] = []
+    add = _conf_probes(c)
     add(
         "conformant verdict with a violation finding",
         _sub(REPORT, ("conf:verdict conf:NonConformant", "conf:verdict conf:Conformant")),
@@ -289,6 +332,13 @@ def conf_cases() -> list[dict[str, Any]]:
         ),
         False,
     )
+    return c
+
+
+def _parse_requirement_cases() -> list[dict[str, Any]]:
+    """The requirement a Parse finding cites."""
+    c: list[dict[str, Any]] = []
+    add = _conf_probes(c)
     # A Parse finding cites exactly the requirement its category's attribution names.
     add(
         "attributed parse finding citing no requirement",
@@ -312,18 +362,11 @@ def conf_cases() -> list[dict[str, Any]]:
         ),
         False,
     )
-    unattributed = _sub(
-        REPORT,
-        (
-            "conf:errorCategory conf:BoundsError ; conf:findingRequirement ex:req2 ;",
-            "conf:errorCategory conf:DispatchError ;",
-        ),
-    )
-    add("unattributed parse finding citing no requirement", unattributed, True)
+    add("unattributed parse finding citing no requirement", UNATTRIBUTED, True)
     add(
         "unattributed parse finding citing a requirement",
         _sub(
-            unattributed,
+            UNATTRIBUTED,
             (
                 "conf:errorCategory conf:DispatchError ;",
                 "conf:errorCategory conf:DispatchError ; conf:findingRequirement ex:req2 ;",
@@ -331,6 +374,13 @@ def conf_cases() -> list[dict[str, Any]]:
         ),
         False,
     )
+    return c
+
+
+def _category_naming_cases() -> list[dict[str, Any]]:
+    """Error categories named by a deprecated or unknown string."""
+    c: list[dict[str, Any]] = []
+    add = _conf_probes(c)
     add(
         "parse finding naming its category by the deprecated string",
         _sub(
@@ -359,7 +409,7 @@ def conf_cases() -> list[dict[str, Any]]:
     )
     add(
         "parse finding naming ResourceLimit",
-        _sub(unattributed, ("conf:errorCategory conf:DispatchError ;", 'conf:errorCategory "ResourceLimit" ;')),
+        _sub(UNATTRIBUTED, ("conf:errorCategory conf:DispatchError ;", 'conf:errorCategory "ResourceLimit" ;')),
         False,
     )
     add(
@@ -377,6 +427,13 @@ def conf_cases() -> list[dict[str, Any]]:
         ),
         True,
     )
+    return c
+
+
+def _category_placement_cases() -> list[dict[str, Any]]:
+    """Where an error category may appear and what it may name."""
+    c: list[dict[str, Any]] = []
+    add = _conf_probes(c)
     add(
         "error category on a violation finding",
         _sub(
@@ -425,6 +482,13 @@ def conf_cases() -> list[dict[str, Any]]:
         ),
         False,
     )
+    return c
+
+
+def _attribution_cases() -> list[dict[str, Any]]:
+    """Untyped and repeated attributions, and the disjoint kinds of report resource."""
+    c: list[dict[str, Any]] = []
+    add = _conf_probes(c)
     # An attribution without rdf:type is still an attribution.
     add(
         "untyped attribution citing a literal",
@@ -468,6 +532,20 @@ def conf_cases() -> list[dict[str, Any]]:
         False,
     )
     return c
+
+
+def conf_cases() -> list[dict[str, Any]]:
+    """Every conformance-report probe, group by group in the authored order."""
+    return (
+        _run_state_cases()
+        + _run_property_cases()
+        + _outcome_cases()
+        + _verdict_cases()
+        + _parse_requirement_cases()
+        + _category_naming_cases()
+        + _category_placement_cases()
+        + _attribution_cases()
+    )
 
 
 REQUIREMENT = (

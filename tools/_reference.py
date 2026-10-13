@@ -7,14 +7,14 @@ import re
 from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any
 
 import specgraph
 from _family import documentation_name
 from _shape_text import PLACEHOLDER, Unhandled, constrains_value, value_phrase
 from _shape_text import message as shape_message
 from _term_editorial import DEFINITIONS, SCOPE_NOTES
-from rdflib import OWL, RDF, RDFS, BNode, Graph, Namespace, URIRef
+from rdflib import OWL, RDF, RDFS, BNode, Graph, Literal, Namespace, URIRef
+from rdflib.term import Node
 
 ROOT = Path(__file__).resolve().parent.parent
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
@@ -35,20 +35,20 @@ TARGETS = {
 }
 
 
-def modules() -> dict[str, Any]:
-    out = defaultdict(list)
+def modules() -> dict[Path, list[Path]]:
+    out: defaultdict[Path, list[Path]] = defaultdict(list)
     for path in specgraph.ontology_paths():
         out[Path(path).parent].append(Path(path))
     return dict(sorted(out.items(), key=lambda x: str(x[0])))
 
 
-def documentation_path(path: Any) -> Path:
+def documentation_path(path: str | Path) -> Path:
     """The generated annotation graph beside a canonical module file (same root-relativity as ``path``)."""
     path = Path(path)
     return path.with_name(documentation_name(path.name))
 
 
-def load(paths: Iterable[Any], base: bool = False) -> Any:
+def load(paths: Iterable[str | Path], base: bool = False) -> Graph:
     """The graph of the canonical module files ``paths``, with their generated annotations unless ``base``.
 
     ``base=True`` is the module as authored: what a version IRI names, and what the generated
@@ -63,34 +63,34 @@ def load(paths: Iterable[Any], base: bool = False) -> Any:
     return g
 
 
-def owned(g: Graph) -> list[Any]:
+def owned(g: Graph) -> list[URIRef]:
     return sorted(
         s for s in set(g.subjects()) if isinstance(s, URIRef) and str(s).startswith("https://hexplain.io/ns/")
     )
 
 
-def local(term: URIRef) -> Any:
+def local(term: Node | None) -> str:
     return str(term).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
 
 
-def owner(term: URIRef) -> Any:
+def owner(term: URIRef) -> URIRef:
     return URIRef(str(term).split("#")[0])
 
 
-def label(g: Graph, term: URIRef) -> Any:
+def label(g: Graph, term: Node | None) -> str:
     labels = list(g.objects(term, SKOS.prefLabel)) + list(g.objects(term, RDFS.label))
     if not labels and (term, RDF.type, HX.CodecContract) in g:
         return label(g, g.value(None, HX.codecContract, term)) + " codec contract"
     if not labels and (term, RDF.type, HX.CodecParameterSpec) in g:
         return label(g, g.value(None, HX.declaresParameter, term)) + " parameter " + str(g.value(term, HX.parameterKey))
     return (
-        str(sorted(labels, key=lambda x: (x.language != "en", str(x)))[0])
+        str(sorted(labels, key=lambda x: (getattr(x, "language", None) != "en", str(x)))[0])
         if labels
         else re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", local(term)).replace("_", " ").strip()
     )
 
 
-def compact(g: Graph, term: URIRef) -> Any:
+def compact(g: Graph, term: Node | None) -> str:
     if not isinstance(term, URIRef):
         return str(term)
     ns = str(term).split("#")[0]
@@ -100,7 +100,7 @@ def compact(g: Graph, term: URIRef) -> Any:
     return g.namespace_manager.normalizeUri(term)
 
 
-def kind(g: Graph, t: URIRef) -> Any:
+def kind(g: Graph, t: Node) -> str:
     types = set(g.objects(t, RDF.type))
     for typ, title in [
         (OWL.Ontology, "Ontology"),
@@ -122,10 +122,10 @@ def kind(g: Graph, t: URIRef) -> Any:
     return "Named individual"
 
 
-def closure(g: Graph, node: URIRef) -> Any:
+def closure(g: Graph, node: Node) -> set[Node]:
     """Blank-node closure only: named references remain explicit reusable references."""
-    seen = set()
-    stack = [node]
+    seen: set[Node] = set()
+    stack: list[Node] = [node]
     while stack:
         s = stack.pop()
         if s in seen:
@@ -183,7 +183,7 @@ def codec_contract_scope(g: Graph, t: URIRef) -> str | None:
     return None
 
 
-def stated_definition(g: Graph, t: URIRef) -> Any:
+def stated_definition(g: Graph, t: URIRef) -> Node | None:
     """The definition a term's documentation gives: its skos:definition, else its rdfs:comment.
 
     One rule for the whole family: rdfs:comment is the author's definition where the source gives
@@ -194,7 +194,7 @@ def stated_definition(g: Graph, t: URIRef) -> Any:
     return g.value(t, SKOS.definition) or g.value(t, RDFS.comment)
 
 
-def _prefixes(g):
+def _prefixes(g: Graph) -> dict[str, str]:
     out = {p: str(n) for p, n in g.namespace_manager.namespaces() if p}
     for ontology in g.subjects(VANN.preferredNamespacePrefix, None):
         prefix = str(g.value(ontology, VANN.preferredNamespacePrefix))
@@ -205,7 +205,7 @@ def _prefixes(g):
     return out
 
 
-def shape_definition(g: Graph, t: URIRef) -> Any:
+def shape_definition(g: Graph, t: URIRef) -> str:
     """A definition for a shape whose source gives none, built from what the shape checks.
 
     Sentences come from the shape's own validation messages and, for a value shape, from its
@@ -218,9 +218,9 @@ def shape_definition(g: Graph, t: URIRef) -> Any:
             "inference operation, not a validation constraint; see the executable rule and activation scope below."
         )
     prefixes = _prefixes(g)
-    sentences = []
+    sentences: list[str] = []
 
-    def add(text):
+    def add(text: object) -> None:
         text = str(text).strip()
         if text and not PLACEHOLDER.search(text) and text not in sentences:
             sentences.append(text)
@@ -263,7 +263,7 @@ def shape_definition(g: Graph, t: URIRef) -> Any:
     return opening + " " + " ".join(sentences)
 
 
-def definition(g: Graph, t: URIRef) -> Any:
+def definition(g: Graph, t: URIRef) -> str | None:
     """The skos:definition to generate for [t], or None when the source already defines it."""
     key = compact(g, t)
     name = label(g, t)
@@ -290,7 +290,7 @@ def definition(g: Graph, t: URIRef) -> Any:
         flavor = (
             "floating-point"
             if base == BDDO.baseFloat
-            else ("signed integer" if signed is not None and bool(signed.toPython()) else "unsigned integer")
+            else ("signed integer" if isinstance(signed, Literal) and bool(signed.toPython()) else "unsigned integer")
         )
         end = g.value(t, BDDO.endianness)
         # "an 8-bit", "an 11-bit", "an 18-bit": the article follows the spoken number.
@@ -430,17 +430,17 @@ def has_hierarchy(g: Graph, t: URIRef) -> bool:
     return (t, RDFS.subClassOf, None) in g or (None, RDFS.subClassOf, t) in g
 
 
-_FAMILY = []
+_FAMILY: list[Graph] = []
 
 
-def family_graph() -> Any:
+def family_graph() -> Graph:
     """Every module of the family without its generated documentation, loaded once."""
     if not _FAMILY:
         _FAMILY.append(load(specgraph.ontology_paths(), base=True))
     return _FAMILY[0]
 
 
-def constrained(g: Graph, t: URIRef) -> Any:
+def constrained(g: Graph, t: URIRef) -> bool:
     """True when a shape anywhere in the family uses the property as a path or targets its subjects or objects."""
     f = family_graph()
     return any((None, p, t) in f for p in (SH.path, SH.targetSubjectsOf, SH.targetObjectsOf))
@@ -459,7 +459,7 @@ def kind_sentence(g: Graph, t: URIRef, k: str) -> str:
     return ""
 
 
-def scope(g: Graph, t: URIRef) -> Any:
+def scope(g: Graph, t: URIRef) -> str | None:
     """The skos:scopeNote to generate for [t], or None.
 
     Only notes that say something about the term itself are generated: the module's note on its
