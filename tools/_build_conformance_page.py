@@ -111,6 +111,8 @@ NOT_SUITE_TESTABLE = {
     "req-pm-data-layouts-3": "The key construction orders the chunk table, which only cell access reads; a parsed "
     "tree holds the field's bytes and this version gives cells no output form, so no case observes which chunk a "
     "key selects.",
+    "req-pm-value-mapping-3": "Which scales beyond -4096..4096 a processor supports is its own: no case can name a "
+    "scale that every conforming processor refuses. The supported range is asserted by req-pm-value-mapping-2.",
     "req-hel-ext-text-7": "A statement in the processor's claims or report environment, not a result of a parse; "
     "it is checked by reading the published report.",
     "req-hel-ext-text-8": "The bound on a pattern's size and nesting is the implementation's own; a case would "

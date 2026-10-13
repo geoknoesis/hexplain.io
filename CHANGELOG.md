@@ -58,6 +58,69 @@ rewritten.
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### Follow-up pass (2026-10-13)
+
+Nine points left open by the integration review. Module versions are unchanged: bddo 1.3 and
+register/media-encoding 1.2 changed again under their unreleased version IRIs.
+
+- **Every contract whose reference implementation encodes says so.** `menc:LZ4`,
+  `menc:LZ4Block`, `menc:Zstd`, `menc:XZ`, `menc:LZW` and `menc:PackBits` now state
+  `hexplain:encodes true`, beside Store, Deflate, Zlib, Gzip, Delta, FloatingPointPredictor and
+  BitReverse: thirteen of the 34 contracts. The other 21 stay decode-only, which is what the
+  reference engine implements (the array transforms Shuffle, TypedDelta, FixedScaleOffset,
+  Quantize and BitRound, Blosc and BloscLZ, the colour conversions, the CCITT, NeXT, ThunderScan
+  and RLE decoders, and the image codecs). Each of the six suites gains a `round-trip` vector. A
+  compressor's encoded bytes are its implementation's own, so the encode step expects success
+  only and the decode step reads `{"previous": true}` back to the input; LZ4Block passes its
+  required `decodedSize` on both steps. `tools/codecs/_complete_vectors.py` builds them.
+- **`Description` is declared where a codec raises it.** `menc:Delta` refuses a `rowBytes` that
+  is not a whole number of pixels (`elementSize` 2, `rowBytes` 3): each value is one its
+  parameter admits, so the load-time check cannot refuse the pair, and the bytes are not at
+  fault. Its contract now lists `Description` under `hexplain:raisesCategory`, its suite has the
+  vector `row-not-whole-pixels`, and `pp-codec-delta-row-not-whole-pixels` cites
+  `req-pm-codec-contracts-6`, which no case cited.
+- **UCS-2 byte order.** `bddo:ucs2le` and `bddo:ucs2be` no longer share
+  `bddo:ianaCharset "ISO-10646-UCS-2"`, a registry name that determines no byte order and so
+  could not tell the two apart: they state none, and their comments say the term gives the byte
+  order. A custom encoding has no term to give one, so its `bddo:ianaCharset` MUST name a
+  character set that determines byte order (`UTF-16BE`, never `UTF-16` or `ISO-10646-UCS-2`):
+  `req-pm-text-decoding-8` in the Processing Model (Further encodings), a rule on a description's author,
+  restated in the comments of `bddo:CustomEncoding`, `bddo:ianaCharset` and
+  `bddo:CustomEncodingShape`. No shape states it: a pattern over registry names and their aliases
+  cannot decide it.
+- **A Writer writes the pad byte.** The padding of a `bddo:padTo` is written as the
+  `bddo:padByte` declared beside it, and as `0x00` when none is declared; every other fill byte
+  stays `0x00`. Serialisation said only that a fill byte is `0x00`, so a Writer following it
+  produced padding that a reader verifying `bddo:padByte` refuses. `req-pm-serialisation-15` is
+  withdrawn and `req-pm-serialisation-25` replaces it, also saying where `bddo:padTo` padding is written; The
+  fill byte (Alignment and padding) and the comment of `bddo:padByte` say the same.
+- **Padding of an offset-addressed field.** `req-pm-parsefield-34`: `bddo:padTo` on an offset-addressed field
+  applies at the field's target, after its value is read and its checks are made there and
+  before the saved cursor is restored; with `bddo:currentPosition`, which restores nothing, the
+  cursor is left after the padding. The Addressing step of ParseField and the comment of
+  `bddo:padTo` say so. Cases `pp-pad-field-at-offset` and `pp-pad-field-at-offset-checks-first`
+  (a failing check is reported, not the padding that would run past the end).
+- **Range of `bddo:fixedPointScale`.** A Semantic Emitter MUST support every scale from −4096
+  to 4096 (`req-pm-value-mapping-2`, case `se-fixed-point-scale-range`), and a processor MUST raise a
+  description error for a scale outside the range it supports rather than emit an approximation
+  (`req-pm-value-mapping-3`, which no portable case can observe: the range beyond ±4096 is the processor's
+  own). The comment of `bddo:fixedPointScale` says the same. No shape bounds the property: a
+  larger scale is not invalid, only not portable.
+- **A packed width on a non-integer cell type, whatever its source.** `req-pm-data-layouts-4` makes the rule
+  a requirement: a description error raised at load for a literal `dlv:cellBitWidth`, and when
+  the layout is resolved for `dlv:cellBitWidthFromField` and `dlv:cellBitWidthFromExpression`,
+  never a validation error. Cases `pp-layout-packed-float` (now citing it) and the new
+  `pp-layout-packed-float-from-field`.
+- **`req-hel-ext-text-7`** gives a neutral example of the Unicode version a processor states
+  (`for example 15.0`), and the implementation-report section of the conformance page uses the
+  same wording; the requirement itself is unchanged.
+- **HDL: a negative literal offset from the cursor.** `@at -2 from current` is accepted, as the
+  Processing Model permits a negative offset from `bddo:currentPosition`, and is emitted as
+  `bddo:atOffsetFromExpression "-2"`, since `bddo:atOffset` is not negative (`req-hdl-clauses-8`, case
+  `hc-negative-offset-from-current`). A negative literal offset from any other base is still an
+  `ERROR` (case `hc-negative-offset-from-stream-end`): `req-hdl-clauses-4` is withdrawn and
+  `req-hdl-clauses-7` replaces it, and the eight cases that cited it cite the replacement.
+
 ### Review integration and follow-ups (2026-10-12)
 
 The tooling, ontology and normative review branches are merged, and the work each left for

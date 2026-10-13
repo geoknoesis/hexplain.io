@@ -1,9 +1,9 @@
 {
  "cases": {
-  "physical-parser": 464,
-  "semantic-emitter": 48,
+  "physical-parser": 468,
+  "semantic-emitter": 49,
   "bundle-processor": 13,
-  "hdl-compiler": 178,
+  "hdl-compiler": 180,
   "conformance-evaluator": 41
  },
  "excluded": {
@@ -18,8 +18,8 @@
  },
  "processorMust": {
   "Physical Parser": {
-   "total": 266,
-   "covered": 259,
+   "total": 268,
+   "covered": 262,
    "notSuiteTestable": {
     "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's shape gates (test_shapes, test_vocab_shapes) apply it.",
     "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the condition is asserted by the HEL vectors (validation/test/hel-vectors.tsv, req-hel-conformance-9).",
@@ -28,17 +28,16 @@
     "req-pm-alignment-padding-3": "Verifying a fill byte is optional (a processor MAY compare the padding with bddo:padByte), so a case cannot tell a processor that does not verify from one that verified and agreed; the rule binds only what a verifying processor reports.",
     "req-pm-data-layouts-3": "The key construction orders the chunk table, which only cell access reads; a parsed tree holds the field's bytes and this version gives cells no output form, so no case observes which chunk a key selects."
    },
-   "uncovered": [
-    "req-pm-codec-contracts-6"
-   ]
+   "uncovered": []
   },
   "Semantic Emitter": {
-   "total": 35,
-   "covered": 26,
+   "total": 37,
+   "covered": 27,
    "notSuiteTestable": {
     "req-core-punning-1": "Whether a processor relies on a DL entailment is not observable from its output: a case cannot tell a processor that did not reason from one whose reasoning happened to agree.",
     "req-geometry-document-1": "Binds a consumer that interprets lifted geometry; a Semantic Emitter emits the mapped ordinates unchanged, and the suite has no case format for interpretation.",
     "req-pm-privacy-1": "The runner cannot tell a base IRI derived from the input's file name from any other base the processor reports; se-base-reported checks that the base is chosen and reported.",
+    "req-pm-value-mapping-3": "Which scales beyond -4096..4096 a processor supports is its own: no case can name a scale that every conforming processor refuses. The supported range is asserted by req-pm-value-mapping-2.",
     "req-raster-document-3": "Binds a consumer that interprets a raster description; cell addressing is the data layout's (DLV), which the Physical Parser cases cover.",
     "req-spatialref-document-10": "Binds a processor that evaluates rational polynomial transforms, which no processor class of the Processing Model does.",
     "req-spatialref-document-11": "Binds a processor that evaluates rational polynomial transforms, which no processor class of the Processing Model does.",
@@ -55,8 +54,8 @@
    "uncovered": []
   },
   "HDL Compiler": {
-   "total": 55,
-   "covered": 54,
+   "total": 56,
+   "covered": 55,
    "notSuiteTestable": {
     "req-hdl-modules-3": "The import bounds are the compiler's own; a case would need an imported file larger than every conforming compiler's bound, and no size is."
    },
@@ -72,8 +71,8 @@
  "requirements": {
   "physical-parser": {
    "MUST": {
-    "total": 193,
-    "covered": 189
+    "total": 195,
+    "covered": 192
    },
    "SHOULD": {
     "total": 5,
@@ -92,8 +91,8 @@
   },
   "semantic-emitter": {
    "MUST": {
-    "total": 35,
-    "covered": 26
+    "total": 37,
+    "covered": 27
    },
    "SHOULD": {
     "total": 1,
@@ -122,8 +121,8 @@
   },
   "hdl-compiler": {
    "MUST": {
-    "total": 55,
-    "covered": 54
+    "total": 56,
+    "covered": 55
    },
    "SHOULD": {
     "total": 1,
@@ -136,6 +135,7 @@
    "pp-align-struct",
    "pp-align-struct-each-instance",
    "pp-pad-field",
+   "pp-pad-field-at-offset",
    "pp-pad-field-on-boundary",
    "pp-pad-origin-is-the-stream",
    "pp-pad-repeated-field",
@@ -232,7 +232,9 @@
   "req-pm-codec-contracts-5": [
    "hc-encoded-with-catalogue-codec"
   ],
-  "req-pm-codec-contracts-6": [],
+  "req-pm-codec-contracts-6": [
+   "pp-codec-delta-row-not-whole-pixels"
+  ],
   "req-pm-codec-selection-1": [
    "pp-codec-selection-duplicate-candidates",
    "pp-codec-selection-unclaimed-candidate"
@@ -395,6 +397,7 @@
   ],
   "req-pm-data-layouts-1": [
    "pp-layout-conditional-cell-no-arm",
+   "pp-layout-packed-float-from-field",
    "pp-layout-read-as-bytes",
    "pp-layout-size-expression-not-integer",
    "pp-layout-size-from-expression",
@@ -405,6 +408,10 @@
    "pp-layout-size-from-expression"
   ],
   "req-pm-data-layouts-3": [],
+  "req-pm-data-layouts-4": [
+   "pp-layout-packed-float",
+   "pp-layout-packed-float-from-field"
+  ],
   "req-pm-delimited-records-1": [
    "pp-records-bom-crlf-comments",
    "pp-table-csv"
@@ -734,6 +741,7 @@
    "pp-hel-duplicate-local-name",
    "pp-hel-version-malformed",
    "pp-layout-packed-float",
+   "pp-layout-packed-float-from-field",
    "pp-let-in-header",
    "pp-let-name-clash",
    "pp-pad-byte-without-pad-to",
@@ -834,6 +842,7 @@
    "se-enum-symbol-with-literal",
    "se-enum-value-without-symbol",
    "se-fixed-point-scale",
+   "se-fixed-point-scale-range",
    "se-key-percent-encoding",
    "se-key-percent-sign",
    "se-language-tags",
@@ -885,6 +894,7 @@
    "se-enum-symbol-with-literal",
    "se-enum-value-without-symbol",
    "se-fixed-point-scale",
+   "se-fixed-point-scale-range",
    "se-key-percent-encoding",
    "se-key-percent-sign",
    "se-language-tags",
@@ -963,6 +973,7 @@
    "pp-codec-delta-partial-sample",
    "pp-codec-delta-predictor-1",
    "pp-codec-delta-row-bytes",
+   "pp-codec-delta-row-not-whole-pixels",
    "pp-codec-delta-samples-per-pixel",
    "pp-codec-pipeline-reverse-order"
   ],
@@ -1159,7 +1170,8 @@
    "pp-offset-stream-end-in-region",
    "pp-offset-stream-end-nested-region",
    "pp-offset-stream-end-substream",
-   "pp-offset-stream-scope"
+   "pp-offset-stream-scope",
+   "pp-pad-field-at-offset"
   ],
   "req-pm-parsefield-8": [
    "pp-int24-repeated",
@@ -1312,6 +1324,7 @@
   ],
   "req-pm-parsefield-31": [
    "pp-pad-field",
+   "pp-pad-field-at-offset-checks-first",
    "pp-pad-field-on-boundary",
    "pp-pad-repeated-field"
   ],
@@ -1322,6 +1335,10 @@
   "req-pm-parsefield-33": [
    "pp-offset-current-negative",
    "pp-offset-current-negative-outside"
+  ],
+  "req-pm-parsefield-34": [
+   "pp-pad-field-at-offset",
+   "pp-pad-field-at-offset-checks-first"
   ],
   "req-pm-parsestruct-1": [
    "pp-members-in-list-order"
@@ -1465,7 +1482,6 @@
   "req-pm-serialisation-1": [],
   "req-pm-serialisation-12": [],
   "req-pm-serialisation-14": [],
-  "req-pm-serialisation-15": [],
   "req-pm-serialisation-17": [],
   "req-pm-serialisation-18": [],
   "req-pm-serialisation-19": [],
@@ -1474,6 +1490,7 @@
   "req-pm-serialisation-22": [],
   "req-pm-serialisation-23": [],
   "req-pm-serialisation-24": [],
+  "req-pm-serialisation-25": [],
   "req-pm-size-resolution-1": [],
   "req-pm-size-resolution-2": [
    "pp-hel-size-result-type",
@@ -1593,6 +1610,7 @@
   "req-pm-text-decoding-7": [
    "pp-encoding-custom-known-charset"
   ],
+  "req-pm-text-decoding-8": [],
   "req-pm-text-numbers-1": [
    "pp-separated-multibyte-encoding"
   ],
@@ -1623,8 +1641,13 @@
    "pp-kv-non-number"
   ],
   "req-pm-value-mapping-1": [
-   "se-fixed-point-scale"
+   "se-fixed-point-scale",
+   "se-fixed-point-scale-range"
   ],
+  "req-pm-value-mapping-2": [
+   "se-fixed-point-scale-range"
+  ],
+  "req-pm-value-mapping-3": [],
   "req-hel-coercion-1": [
    "pp-hel-null-arithmetic",
    "pp-valid-if-evaluation-failure"
@@ -2023,16 +2046,6 @@
    "hc-pipeline-and-encoded-with",
    "hc-yaml-duplicate-struct-key"
   ],
-  "req-hdl-clauses-4": [
-   "hc-float-count",
-   "hc-float-offset",
-   "hc-float-size",
-   "hc-negative-count",
-   "hc-negative-offset",
-   "hc-negative-size",
-   "hc-size-zero",
-   "hc-stride-zero"
-  ],
   "req-hdl-clauses-5": [
    "hc-fixed-boolean",
    "hc-fixed-curie",
@@ -2050,6 +2063,20 @@
   ],
   "req-hdl-clauses-6": [
    "hc-bit-order-field"
+  ],
+  "req-hdl-clauses-7": [
+   "hc-float-count",
+   "hc-float-offset",
+   "hc-float-size",
+   "hc-negative-count",
+   "hc-negative-offset",
+   "hc-negative-offset-from-stream-end",
+   "hc-negative-size",
+   "hc-size-zero",
+   "hc-stride-zero"
+  ],
+  "req-hdl-clauses-8": [
+   "hc-negative-offset-from-current"
   ],
   "req-hdl-compilation-model-1": [
    "hc-aspect-prefix-not-predeclared",
@@ -2105,6 +2132,7 @@
    "hc-namespace-not-absolute",
    "hc-negative-count",
    "hc-negative-offset",
+   "hc-negative-offset-from-stream-end",
    "hc-negative-size",
    "hc-non-ascii-align",
    "hc-non-ascii-digit",
@@ -2247,6 +2275,8 @@
    "hc-namespace-not-absolute",
    "hc-negative-count",
    "hc-negative-offset",
+   "hc-negative-offset-from-current",
+   "hc-negative-offset-from-stream-end",
    "hc-negative-size",
    "hc-non-ascii-align",
    "hc-non-ascii-digit",
@@ -2417,6 +2447,7 @@
    "hc-let-binding-yaml",
    "hc-let-reads-parameter",
    "hc-namespace-not-absolute",
+   "hc-negative-offset-from-current",
    "hc-param-element-scope",
    "hc-param-nested-arguments",
    "hc-param-recursion",
@@ -2516,6 +2547,7 @@
    "hc-let-binding",
    "hc-let-binding-yaml",
    "hc-let-reads-parameter",
+   "hc-negative-offset-from-current",
    "hc-param-element-scope",
    "hc-param-nested-arguments",
    "hc-param-recursion",
@@ -2609,6 +2641,7 @@
    "hc-namespace-not-absolute",
    "hc-negative-count",
    "hc-negative-offset",
+   "hc-negative-offset-from-stream-end",
    "hc-negative-size",
    "hc-non-ascii-align",
    "hc-non-ascii-digit",
@@ -3175,11 +3208,13 @@
  "withdrawn": [
   "req-ce-conf-conformance-11",
   "req-ce-conf-conformance-12",
+  "req-hdl-clauses-4",
   "req-hel-ext-text-2",
   "req-pm-conformance-classes-9",
   "req-pm-errors-15",
   "req-pm-serialisation-11",
   "req-pm-serialisation-13",
+  "req-pm-serialisation-15",
   "req-pm-serialisation-16"
  ],
  "reports": [
@@ -3207,7 +3242,7 @@
   "hdl/index.html#escape-hatch": 8,
   "hdl/index.html#expressions": 21,
   "hdl/index.html#field-bit-order": 1,
-  "hdl/index.html#form-rule": 8,
+  "hdl/index.html#form-rule": 9,
   "hdl/index.html#forward-references": 15,
   "hdl/index.html#grammar-common": 1,
   "hdl/index.html#grammar-document": 1,
@@ -3222,7 +3257,7 @@
   "hdl/index.html#layout": 5,
   "hdl/index.html#lexical": 20,
   "hdl/index.html#literal-datatypes": 2,
-  "hdl/index.html#literal-values": 22,
+  "hdl/index.html#literal-values": 24,
   "hdl/index.html#modules": 10,
   "hdl/index.html#parameters": 26,
   "hdl/index.html#prefixes": 7,
@@ -3261,11 +3296,11 @@
   "hel/index.html#undefined-names": 10,
   "hel/index.html#version-marker": 4,
   "hel/index.html#versioning": 5,
-  "processing#algorithm": 114,
-  "processing#alignment-padding": 9,
+  "processing#algorithm": 116,
+  "processing#alignment-padding": 11,
   "processing#bit-cursor": 10,
   "processing#byte-order": 14,
-  "processing#codec-contracts": 5,
+  "processing#codec-contracts": 6,
   "processing#codec-selection": 9,
   "processing#codec-sessions": 1,
   "processing#codec-status": 1,
@@ -3274,12 +3309,12 @@
   "processing#conformance-classes": 4,
   "processing#conformance-evaluation": 41,
   "processing#context": 6,
-  "processing#data-layouts": 7,
+  "processing#data-layouts": 8,
   "processing#delimited-records": 8,
   "processing#delimited-tables": 7,
-  "processing#delta-parameters": 10,
+  "processing#delta-parameters": 11,
   "processing#emission": 26,
-  "processing#errors": 75,
+  "processing#errors": 77,
   "processing#evaluation-time": 4,
   "processing#fixed-values": 13,
   "processing#framing-parameters": 5,
@@ -3290,7 +3325,7 @@
   "processing#minimum-codecs": 30,
   "processing#multi-part-assets": 15,
   "processing#negative-offsets": 4,
-  "processing#numeric-representation": 9,
+  "processing#numeric-representation": 10,
   "processing#optional-codecs": 23,
   "processing#optional-features": 1,
   "processing#parameter-expressions": 6,
@@ -3311,7 +3346,7 @@
   "processing#text-numbers": 12,
   "processing#tree-documents": 9,
   "processing#typed-cells": 3,
-  "processing#value-mapping": 9,
+  "processing#value-mapping": 10,
   "req/index.html#conformance": 3
  }
 }

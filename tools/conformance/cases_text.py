@@ -593,7 +593,7 @@ pp(
     "layout-packed-float",
     "A packed width on a non-integer cell type is a description error",
     "cellBitWidth 4 on float32 cells.",
-    ["req-pm-errors-8"],
+    ["req-pm-data-layouts-4", "req-pm-errors-8"],
     ["data-layouts"],
     LAYOUT_HEAD
     + """
@@ -601,6 +601,23 @@ pp(
 ex:DimX ) .
    """,
     b"\x02\x02B" + b"\x01\x02",
+    error="Description",
+)
+
+pp(
+    "layout-packed-float-from-field",
+    "A packed width read from a field on a non-integer cell type is a description error",
+    "The width comes from the field h, which holds 4, on float32 cells: no load-time check can see it, so it is "
+    "raised when the layout is resolved, and as a description error, since it is the description that pairs a float "
+    "cell with a width a stream may make packed.",
+    ["req-pm-data-layouts-4", "req-pm-data-layouts-1", "req-pm-errors-8"],
+    ["data-layouts", "errors"],
+    LAYOUT_HEAD
+    + """
+   ex:Layout a dlv:DataLayout ; dlv:cellDataType bddo:float32 ; dlv:cellBitWidthFromField ex:h ;
+       dlv:hasDimension ( ex:DimX ) .
+   """,
+    b"\x02\x04B" + b"\x01\x02",
     error="Description",
 )
 

@@ -1628,7 +1628,7 @@ err(
     "negative-size",
     "A negative literal size is an ERROR",
     "bytes[-1].",
-    ["req-hdl-clauses-4"],
+    ["req-hdl-clauses-7"],
     ["literal-values"],
     """
     format t @namespace "{ns}"
@@ -1643,7 +1643,7 @@ err(
     "negative-count",
     "A negative literal repeat count is an ERROR",
     "repeat -2.",
-    ["req-hdl-clauses-4"],
+    ["req-hdl-clauses-7"],
     ["literal-values"],
     """
     format t @namespace "{ns}"
@@ -1658,7 +1658,7 @@ err(
     "negative-offset",
     "A negative literal offset is an ERROR",
     "@at -4.",
-    ["req-hdl-clauses-4"],
+    ["req-hdl-clauses-7"],
     ["literal-values"],
     """
     format t @namespace "{ns}"
@@ -1669,11 +1669,50 @@ err(
     line=3,
 )
 
+hc(
+    "negative-offset-from-current",
+    "A negative literal offset from current is accepted and emitted in the expression form",
+    "@at -2 from current moves backward from the cursor, which the Processing Model permits; bddo:atOffset is never "
+    "negative, so the offset is emitted as bddo:atOffsetFromExpression.",
+    OK + ["req-hdl-clauses-8"],
+    ["literal-values", "form-rule"],
+    """
+   format t @namespace "{ns}"
+   struct Root {
+     a : u8
+     b : u8
+     p : u8 @at -2 from current
+   }
+   """,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.a ex:Root.b ex:Root.p ) .
+   ex:Root.a a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Root.b a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Root.p a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffsetFromExpression "-2" ;
+       bddo:offsetBase bddo:currentPosition .
+   """,
+)
+
+err(
+    "negative-offset-from-stream-end",
+    "A negative literal offset from a base other than current is an ERROR",
+    "@at -2 from stream-end: only an offset from the cursor may move backward.",
+    ["req-hdl-clauses-7"],
+    ["literal-values"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      a : u8 @at -2 from stream-end
+    }
+    """,
+    line=3,
+)
+
 err(
     "stride-zero",
     "stride 0 is an ERROR",
     "A zero stride would address every cell at one place.",
-    ["req-hdl-clauses-4"],
+    ["req-hdl-clauses-7"],
     ["literal-values", "layout"],
     """
     format t @namespace "{ns}"
@@ -1689,7 +1728,7 @@ err(
     "float-count",
     "A float literal as a repeat count is an ERROR",
     "repeat 2.0: an integral float is not an integer.",
-    ["req-hdl-clauses-4"],
+    ["req-hdl-clauses-7"],
     ["literal-values"],
     """
     format t @namespace "{ns}"
@@ -1704,7 +1743,7 @@ err(
     "float-size",
     "A float literal as a size is an ERROR",
     "bytes[1.5].",
-    ["req-hdl-clauses-4"],
+    ["req-hdl-clauses-7"],
     ["literal-values"],
     """
     format t @namespace "{ns}"
@@ -2107,7 +2146,7 @@ err(
     "size-zero",
     "A literal size of 0 is an ERROR",
     "bytes[0]: a size is at least 1.",
-    ["req-hdl-clauses-4"],
+    ["req-hdl-clauses-7"],
     ["literal-values"],
     """
     format t @namespace "{ns}"
@@ -2122,7 +2161,7 @@ err(
     "float-offset",
     "A float literal as an offset is an ERROR",
     "@at 1e0 is the Float 1.0, not the offset 1.",
-    ["req-hdl-clauses-4"],
+    ["req-hdl-clauses-7"],
     ["literal-values"],
     """
     format t @namespace "{ns}"

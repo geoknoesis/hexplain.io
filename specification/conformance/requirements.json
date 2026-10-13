@@ -638,6 +638,18 @@
    "text": "A processor that claims chunk-order-other MUST order the chunk table of a dlv:morton or dlv:hilbert layout by the key DLV constructs for that order and no other: the bit-interleaved Morton key and the Hilbert index of Skilling's algorithm, over the chunk indices in declared dimension order, each dimension's chunk count padded to the next power of two and the keys of cells outside the real counts skipped (dlv:morton, dlv:hilbert; J.",
    "sha256": "9f086cf4069ab50a"
   },
+  "req-pm-data-layouts-4": {
+   "page": "specification/processing/index.html",
+   "section": "data-layouts",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST raise this description error when the description is loaded where the width is a literal, and when the layout is resolved, before any cell is addressed, where the width comes from a field (dlv:cellBitWidthFromField) or is computed (dlv:cellBitWidthFromExpression) and the value it then has is not a multiple of 8: it is the description that pairs a cell type with a width it cannot have, whatever the stream supplied, so the error is never a validation error.",
+   "sha256": "7b60d4917855d7f8",
+   "history": [
+    "6cf23b69f3e48a5a"
+   ]
+  },
   "req-pm-delimited-records-1": {
    "page": "specification/processing/index.html",
    "section": "delimited-records",
@@ -1551,11 +1563,12 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Addressing. If an offset property is present, compute the target offset from bddo:atOffset / atOffsetFromField / atOffsetFromExpression, relative to bddo:offsetBase: streamStart (the default) counts from the start of the current stream, streamEnd counts backward from |S|, the length of the current stream, currentPosition from the cursor, and parentStart from the start offset of the containing struct node — the node node this field is bound into, whose start ParseStruct recorded in step 2, after any bddo:syncOnMarker seek (Bit-level fields (the bit cursor)). The current stream is the input stream or, inside a field decoded by hexplain:isEncodedWith and re-parsed as a struct, the decoded sub-stream (Stream metadata); a bounded region is not a stream, so streamEnd inside one still counts from the end of the stream that holds it. Save the current cursor — the byte position and any partially consumed byte of the bit cursor — seek to the target, parse, then restore the saved cursor, bit position included (an offset field does not advance sibling parsing and does not disturb a run of bit fields) unless offsetBase is currentPosition. A target outside the innermost bounded region raises a bounds error, unless the field declares bddo:seekScope bddo:streamScope: then the target is resolved against the whole stream [0, |S|) and the region bound is suspended for the duration of this one read (and restored before the cursor is).",
-   "sha256": "f9ca73521c3c5c1c",
+   "text": "Addressing. If an offset property is present, compute the target offset from bddo:atOffset / atOffsetFromField / atOffsetFromExpression, relative to bddo:offsetBase: streamStart (the default) counts from the start of the current stream, streamEnd counts backward from |S|, the length of the current stream, currentPosition from the cursor, and parentStart from the start offset of the containing struct node — the node node this field is bound into, whose start ParseStruct recorded in step 2, after any bddo:syncOnMarker seek (Bit-level fields (the bit cursor)). The current stream is the input stream or, inside a field decoded by hexplain:isEncodedWith and re-parsed as a struct, the decoded sub-stream (Stream metadata); a bounded region is not a stream, so streamEnd inside one still counts from the end of the stream that holds it. Save the current cursor — the byte position and any partially consumed byte of the bit cursor — seek to the target, parse — the steps below, the field's bddo:padTo included, are all carried out at the target (Padding) —, then restore the saved cursor, bit position included (an offset field does not advance sibling parsing and does not disturb a run of bit fields) unless offsetBase is currentPosition. A target outside the innermost bounded region raises a bounds error, unless the field declares bddo:seekScope bddo:streamScope: then the target is resolved against the whole stream [0, |S|) and the region bound is suspended for the duration of this one read (and restored before the cursor is).",
+   "sha256": "27c1bbd27367bf15",
    "context": "A Physical Parser MUST parse a field by these steps, in this order; a step whose property the field does not declare does nothing:",
    "history": [
-    "86d8e34170e64e1f"
+    "86d8e34170e64e1f",
+    "f9ca73521c3c5c1c"
    ]
   },
   "req-pm-parsefield-8": {
@@ -1813,6 +1826,15 @@
    "audience": "processor",
    "text": "bddo:currentPosition is the one relative base: its value MAY be negative, which moves backward from the cursor, and for it a processor MUST NOT refuse the value for its sign but MUST raise a bounds error when the target lies outside the innermost bounded region (or, with bddo:seekScope bddo:streamScope, outside the stream), exactly as for a positive value.",
    "sha256": "5fa0428fc3f352a0"
+  },
+  "req-pm-parsefield-34": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "For an offset-addressed field a processor MUST apply the padding at the field's target, not at the saved cursor: after the value has been read there and the field's checks made, and before the saved cursor is restored, so that the padding is measured where the value ends and never moves the cursor from which the field's siblings are parsed.",
+   "sha256": "3fed06b793f33466"
   },
   "req-pm-parsestruct-1": {
    "page": "specification/processing/index.html",
@@ -2122,7 +2144,8 @@
    "audience": "processor",
    "text": "Padding, alignment and offsets. A fill byte is 0x00; the unused low-order bits of a partial byte the bit cursor leaves at a realignment point are 0. bddo:alignment writes fill bytes to the next multiple of the alignment, measured from the start of the current stream as at parse. An offset-addressed field (bddo:atOffset and its forms, with its bddo:offsetBase) is written at its target, the cursor restored afterwards as at parse: the output is addressable, the bytes between the cursor and a target not yet written are fill bytes, and a target already written with different bytes, or a target before the start of the stream, is a validation error. Offset values are taken from T (the offset field's value or the expression's result); this version does not derive offset tables.",
    "sha256": "b58d8b10038fb08a",
-   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
+   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:",
+   "withdrawn": true
   },
   "req-pm-serialisation-16": {
    "page": "specification/processing/index.html",
@@ -2216,6 +2239,16 @@
    "audience": "processor",
    "text": "For every tree T that a Physical Parser produced, without error and with no lenient-mode recovery, from a stream S with a description D and root R, a Writer MUST either produce a stream S' such that parsing S' with D and R yields a tree isomorphic to T — the same keys bound node by node, the same values, the same array lengths, every derived value equal to its recomputation — or raise the error these rules require; it MUST NOT produce a stream that parses to a different tree or does not parse.",
    "sha256": "d553d1122b365a93"
+  },
+  "req-pm-serialisation-25": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Padding, alignment and offsets. A fill byte is 0x00, with one exception: the padding of a bddo:padTo is filled with the bddo:padByte declared beside it, and with 0x00 when none is declared (The fill byte). The unused low-order bits of a partial byte the bit cursor leaves at a realignment point are 0. bddo:alignment writes fill bytes to the next multiple of the alignment, measured from the start of the current stream as at parse, and bddo:padTo writes its fill from the end of the field's value, or of the struct's last member, to the next multiple of its boundary, measured from the same origin. An offset-addressed field (bddo:atOffset and its forms, with its bddo:offsetBase) is written at its target, its bddo:padTo padding after its value there, and the cursor restored afterwards as at parse: the output is addressable, the bytes between the cursor and a target not yet written are fill bytes, and a target already written with different bytes, or a target before the start of the stream, is a validation error. Offset values are taken from T (the offset field's value or the expression's result); this version does not derive offset tables.",
+   "sha256": "9cb23f1ba4d1ddc4",
+   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
   },
   "req-pm-size-resolution-1": {
    "page": "specification/processing/index.html",
@@ -2463,6 +2496,15 @@
    "text": "A processor that decodes the character set of a bddo:CustomEncoding MUST decode it exactly as it would a registered encoding of that set, so that ex:Latin2 with bddo:ianaCharset \"ISO-8859-2\" and bddo:iso8859_2 read the same bytes as the same text.",
    "sha256": "7fb88b4db7a708ab"
   },
+  "req-pm-text-decoding-8": {
+   "page": "specification/processing/index.html",
+   "section": "text-decoding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "description",
+   "text": "The bddo:ianaCharset of a custom encoding MUST name a character set that determines the byte order of its code units (UTF-16BE, never UTF-16 or ISO-10646-UCS-2): a custom encoding has no term of its own to give one, and the name is all a processor has to decode the bytes with.",
+   "sha256": "9fa821c9a8001cd3"
+  },
   "req-pm-text-numbers-1": {
    "page": "specification/processing/index.html",
    "section": "text-numbers",
@@ -2537,6 +2579,24 @@
    "audience": "processor",
    "text": "A Semantic Emitter MUST emit a mapped field that declares bddo:fixedPointScale k, itself or through its data type, as the number the integer stands for, the integer read times 2^k, in an xsd:decimal literal, which holds every such value exactly: the Q16.16 field holding 00 01 80 00 is emitted \"1.5\"^^xsd:decimal, and a scale of 2 on the integer 3 is emitted \"12\"^^xsd:decimal.",
    "sha256": "c8cb98efb338a3cb"
+  },
+  "req-pm-value-mapping-2": {
+   "page": "specification/processing/index.html",
+   "section": "value-mapping",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Semantic Emitter MUST support every scale from −4096 to 4096, so that a description whose scales stay within that range is portable.",
+   "sha256": "808b043b13f55aee"
+  },
+  "req-pm-value-mapping-3": {
+   "page": "specification/processing/index.html",
+   "section": "value-mapping",
+   "cls": "semantic-emitter",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST raise a description error for a bddo:fixedPointScale outside the range it supports, when the description is loaded or, at the latest, when the field is emitted; it MUST NOT emit an approximation of the scaled value or the integer unscaled.",
+   "sha256": "8ae53c75d2045e29"
   },
   "req-hel-coercion-1": {
    "page": "specification/hel/index.html",
@@ -2855,8 +2915,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "The characters that \\p{…}, \\P{…}, \\w, \\W, \\d and the block names denote are those of one version of the Unicode Standard, the version of the implementation's platform: a processor that implements this group MUST state that Unicode version in its claims statement or in the environment of its implementation report (member unicode), so that two reports that disagree on a pattern over a recently assigned character can be told apart by it.",
-   "sha256": "95fb927772feb401"
+   "text": "The characters that \\p{…}, \\P{…}, \\w, \\W, \\d and the block names denote are those of one version of the Unicode Standard, the version of the implementation's platform: a processor that implements this group MUST state that Unicode version, for example 15.0, in its claims statement or in the environment of its implementation report (member unicode), so that two reports that disagree on a pattern over a recently assigned character can be told apart by it.",
+   "sha256": "ad238469a35c82c5",
+   "history": [
+    "95fb927772feb401"
+   ]
   },
   "req-hel-ext-text-8": {
    "page": "specification/hel/index.html",
@@ -3366,7 +3429,8 @@
    "level": "MUST",
    "audience": "processor",
    "text": "A compiler MUST report an ERROR for a literal outside the range of its position — a field size or struct @size below 1 (bytes[0], bytes[-3]), a repeat count or offset below 0 (repeat -2, @at -2), a stride below 1 (stride 0) — and for a FLOAT literal in any of these positions (bytes[2.0], repeat 1.5, @at 1e0): they take integers, and an integral float is not one.",
-   "sha256": "0528766a462f226c"
+   "sha256": "0528766a462f226c",
+   "withdrawn": true
   },
   "req-hdl-clauses-5": {
    "page": "specification/hdl/index.html",
@@ -3385,6 +3449,24 @@
    "audience": "processor",
    "text": "A compiler MUST emit the field's own bddo:bitOrder for a field-level @bit-order and MUST NOT fold it into the struct's or into the neighbouring fields', since two adjacent bit fields with different orders are read under their own orders (a change of order starts a new byte).",
    "sha256": "c048c186a1c49681"
+  },
+  "req-hdl-clauses-7": {
+   "page": "specification/hdl/index.html",
+   "section": "clauses",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST report an ERROR for a literal outside the range of its position — a field size or struct @size below 1 (bytes[0], bytes[-3]), a repeat count below 0 (repeat -2), an offset below 0 from any base but current (@at -2, @at -2 from stream-end), a stride below 1 (stride 0) — and for a FLOAT literal in any of these positions (bytes[2.0], repeat 1.5, @at 1e0): they take integers, and an integral float is not one.",
+   "sha256": "23087cf0a49bbc91"
+  },
+  "req-hdl-clauses-8": {
+   "page": "specification/hdl/index.html",
+   "section": "clauses",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A negative literal offset from current is in range, because the Processing Model lets an offset from the cursor move backward (Negative offsets): a compiler MUST accept @at -2 from current and MUST emit it in the expression form, bddo:atOffsetFromExpression \"-2\" beside bddo:offsetBase bddo:currentPosition, never as a bddo:atOffset, whose value is not negative.",
+   "sha256": "90f05182041b29b7"
   },
   "req-hdl-compilation-model-1": {
    "page": "specification/hdl/index.html",

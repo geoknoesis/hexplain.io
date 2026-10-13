@@ -112,6 +112,7 @@ DESCRIPTION_AUDIENCE = {
     "req-bddo-parameterised-structs-2",  # a parameter MUST NOT share its name with another member
     "req-bddo-parameterised-structs-4",  # a text container MUST NOT declare parameters
     "req-hel-expression-literals-2",  # authoring tools SHOULD type expressions bddo:HelExpression
+    "req-pm-text-decoding-8",  # a custom encoding's ianaCharset MUST determine the byte order
 }
 _B, _D, _C = "https://hexplain.io/ns/bddo#", "https://hexplain.io/ns/dlv#", "https://hexplain.io/ns/core#"
 _SR, _R = "https://hexplain.io/ns/aspect/spatialref#", "https://hexplain.io/ns/aspect/raster#"

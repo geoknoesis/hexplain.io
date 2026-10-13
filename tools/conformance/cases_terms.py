@@ -118,6 +118,38 @@ pp(
     error="Bounds",
 )
 
+PAD_AT_OFFSET = """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:p ex:q ) .
+   ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:p a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 4 ; bddo:padTo 4 {more}.
+   ex:q a bddo:Field ; bddo:dataType bddo:uint8 .
+"""
+
+pp(
+    "pad-field-at-offset",
+    "bddo:padTo on an offset-addressed field pads at the target and leaves the saved cursor alone",
+    "p is read at offset 4 and padded there, to offset 8; the cursor is then restored to offset 1, where q is read. "
+    "Padding applied at the saved cursor instead would move q to offset 4.",
+    PAD + ["req-pm-parsefield-34", "req-pm-parsefield-7"],
+    ["algorithm", "alignment-padding"],
+    PAD_AT_OFFSET.format(more=""),
+    b"\x01\x02\xee\xee\x05\xee\xee\xee",
+    {"n": 1, "p": 5, "q": 2},
+)
+
+pp(
+    "pad-field-at-offset-checks-first",
+    "An offset-addressed field's checks are made before its padding is applied",
+    "p is read at offset 4 of a six-byte stream: its fixed value does not match, and its padding to offset 8 would "
+    "pass the end of the stream. The checks come first, so the error is the validation error, not the bounds error "
+    "of the padding.",
+    ["req-pm-parsefield-34", "req-pm-parsefield-31"],
+    ["algorithm", "alignment-padding", "errors"],
+    PAD_AT_OFFSET.format(more="; bddo:hasFixedValue 9 "),
+    b"\x01\x02\xee\xee\x05\xee",
+    error="Validation",
+)
+
 pp(
     "pad-byte-without-pad-to",
     "bddo:padByte without bddo:padTo is a description error",
@@ -478,6 +510,23 @@ se(
    """,
     bytes.fromhex("0001800003"),
     f'{SE_ROOT} a ex:Rec ; ex:gain "1.5"^^xsd:decimal ; ex:step "12"^^xsd:decimal .',
+)
+
+se(
+    "fixed-point-scale-range",
+    "The scales -4096 and 4096 are supported and emitted exactly",
+    "The integer 1 with scale -4096 is 2^-4096, a decimal of 4096 fraction digits, and with scale 4096 it is 2^4096, "
+    "an integer of 1234 digits: every Semantic Emitter supports the whole range, and an xsd:decimal holds both "
+    "exactly.",
+    MINT + ["req-pm-value-mapping-2", "req-pm-value-mapping-1"],
+    ["value-mapping", "numeric-representation"],
+    """
+   ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Rec ; bddo:hasField ( ex:tiny ex:huge ) .
+   ex:tiny a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:fixedPointScale -4096 ; hexplain:mapsToProperty ex:tiny .
+   ex:huge a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:fixedPointScale 4096 ; hexplain:mapsToProperty ex:huge .
+   """,
+    b"\x01\x01",
+    f'{SE_ROOT} a ex:Rec ; ex:tiny "0.{str(5**4096).zfill(4096)}"^^xsd:decimal ; ex:huge "{2**4096}"^^xsd:decimal .',
 )
 
 ENUM_BOTH = """
