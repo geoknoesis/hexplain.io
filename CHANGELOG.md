@@ -9,8 +9,8 @@ snapshots are recorded under `releases/`.
 ### Module versions
 
 Every module whose canonical Turtle differs from snapshot 2026-09-24.2 has a new version IRI
-naming the version that snapshot froze as `owl:priorVersion`, and `dcterms:modified` (2026-09-27
-for every module since the review fixes below). Most changed only in their generated
+naming the version that snapshot froze as `owl:priorVersion`, and a `dcterms:modified` of the day
+its canonical Turtle last changed (2026-10-13 for every module). Most changed only in their generated
 documentation (below); `owl:versionInfo` is now the bare version number everywhere, and the three
 working drafts say so with `schema:creativeWorkStatus "working draft"`. aspect/color,
 aspect/encoding, aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security and
@@ -29,6 +29,7 @@ rewritten.
 | aspect/networkflow | 1.2 | 1.3 |
 | aspect/packaging | 1.1 | 1.2 |
 | aspect/pointcloud | 1.1 | 1.2 |
+| aspect/protection | (new) | 1.0 |
 | aspect/provenance | 1.2 | 1.3 |
 | aspect/raster | 1.2 working draft | 1.3 (working draft) |
 | aspect/sampling | 1.1 | 1.2 |
@@ -53,8 +54,10 @@ rewritten.
 | register/geometry-type | 1.2 | 1.3 |
 | register/media-encoding | 1.1 | 1.2 |
 | register/part-role | 1.0 | 1.1 |
+| register/protection | (new) | 1.0 |
 | register/us-nato-security | 1.2 | 1.3 |
 | req | 1.2 | 1.3 |
+| req/requirements | (new) | 1.0 |
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
@@ -294,6 +297,84 @@ is the constraint ledger and its page, the retained family contracts and the rev
   the HEL vectors predates the typed rows. Its own symmetry test agrees with
   `round-trip-expectations.json` entry for entry.
 
+### Ontology re-review fixes (2026-10-13)
+
+The findings of the second ontology review (N1 to N11 and the modelling gaps left open by M8).
+Module versions are unchanged: every module changed again under its unreleased version IRI, and
+every canonical module's `dcterms:modified` is 2026-10-13. Two modules are new: aspect/protection
+1.0 and register/protection 1.0.
+
+- **`req/requirements.ttl` is generated** (N1). `tools/_build_shape_requirements.py` writes one
+  `reqs:ShapeRequirement` per named node shape of every module (203, where the hand-maintained
+  file covered 81 of 179): the statement is the shape's documented definition, `req:fromStandard`
+  the module's label without its version, `req:requirementId` `req-shape-<prefix>-<Local>` always
+  with the prefix, and `req:discrepancyType` `req:Syntactic` or `req:Semantic` by the shape's
+  constraints (a shape that relates properties or nodes to one another is semantic). The 81
+  identifiers minted on 2026-10-12 are replaced; none had been published in a snapshot.
+  `tools/test_shape_requirements.py` holds shapes and requirements in bijection.
+- **Severity is asserted** (N2). A description is valid when validation yields no result of
+  severity `sh:Violation`; `sh:Warning` and `sh:Info` results do not make it invalid
+  (Validation contracts, `#description-validity`). A fixture's `# expect:` line takes a severity
+  as its last token, a `-valid` fixture declares every advisory result it produces and an
+  `-invalid` fixture needs a Violation. `encoding-invalid.ttl` no longer lists an accepted custom
+  encoding; `encoding-custom-valid.ttl` uses one and expects exactly the warning.
+- **Static errors of the numeric terms are shapes** (N3). `bddo:FloatFormatWidthShape`
+  (`bfloat16` at 16 bits, `ibmHexadecimal` at 32 or 64, `vaxF` at 32 or its deprecated 64,
+  `vaxD` and `vaxG` at 64), `bddo:BcdShape` (not with `bddo:bitLength`, not on a varint or a text
+  number, only on an unsigned type; the `bddo:bcd` comment says so),
+  `bddo:FixedPointScaleRangeShape` (outside -4096..4096 is a Warning), and
+  `bddo:DerivedFieldShape` now refuses `bddo:alignment` and `bddo:padTo` on a derived field.
+- **Every module links its annotation graph** (N4) with `rdfs:seeAlso` on its `owl:Ontology`,
+  and each `-doc.ttl` header names `tools/_term_editorial.py` as the source to change. **A
+  register is self-describing**: 137 concept definitions moved from the registers' annotation
+  graphs into the registers, and the generator no longer defines a register concept.
+- **One spelling of the integer family** (N5). Twenty inline unions became
+  `sh:node <prefix>:IntegerValueShape` with their bounds; net, video, aspect/raster and
+  aspect/sampling carry the shape; `araster:ExtentShape` accepts the same eleven datatypes as
+  `araster:PositiveCountShape`; `vdv:audioChannels`, `vdv:frameCount` and the frame-rate terms
+  accept every integer datatype within their bounds. `tools/test_integer_value_shape.py` rejects
+  an inline integer-family union.
+- **New terms** (N6, M8). `bddo:alignmentOrigin` with `bddo:streamOrigin` (the default) and
+  `bddo:structOrigin`; `bddo:fieldStart` with `bddo:offsetBaseField`, an offset counted from the
+  start of an earlier sibling; `bddo:vaxD` and `bddo:vaxG` beside `bddo:vaxF`, which is now the
+  32-bit F_floating and keeps its D_floating reading at 64 bits as a deprecated spelling.
+  `hexplain:encodes` is required on every codec contract, like `hexplain:keepsSession`; the 21
+  decode-only contracts state `false`. **aspect/protection** (`aprot:EncryptedRegion`,
+  `aprot:Signature`, `aprot:ErrorCorrection`, `aprot:ByteRange`) and **register/protection**
+  (four ciphers, five signature and authentication algorithms, three error-correcting code
+  families) describe protection metadata; a processor is not required to decrypt, verify or
+  correct anything.
+- **Generated sentences** (N7). A negated conjunction reads "not both ... and ..."; an exclusive
+  choice reads "a node that states exactly one of: ...".
+- **Single-purpose node shapes** (N8). Eleven shapes carried several node-level constraints
+  under one message. The constraints moved to shapes of their own
+  (`bddo:SeparatedFieldExtentShape`, `bddo:ChecksumRangeStartShape`,
+  `bddo:ChecksumRangeEndShape`, `bddo:CustomEncodingIdentityShape`, `bddo:LocalBindingKindShape`,
+  `dlv:CellTypeChoiceShape`, `dlv:DimensionOrderChoiceShape`, `dlv:DimensionExtentShape`,
+  `dlv:DimensionChunkExtentShape`), became one constraint (`abnd:PartSpecShape` states one
+  `sh:xone`; the value shapes of raster, sampling and spatialref one `sh:and`), or lost a message
+  that had no constraint (`bddo:PaddingShape`). `tools/test_shape_messages.py` now refuses a node
+  shape with more than one node-level constraint. Results that named `bddo:FieldShape`,
+  `bddo:ChecksumShape`, `bddo:LocalBindingShape`, `dlv:DataLayoutShape` or `dlv:DimensionShape`
+  as the source of those constraints name the new shape.
+- **Codec parameters say what they mean** (N9). Each of the 80 parameter specs of the
+  media-encoding register states an `rdfs:comment`; a contract's generated definition lists its
+  kind, session, direction, parameters and error categories; the scope note repeated on 114
+  contract resources is stated once, on `hexplain:CodecContract` and `hexplain:CodecParameterSpec`.
+- **Registered encodings are listed once** (N11). The three `sh:in` lists expand from one
+  authoring fragment and `tools/test_encoding_register.py` holds them to the individuals.
+  `bddo:CustomEncodingCharsetShape` warns about a custom encoding whose charset is a registered
+  encoding's or does not determine a byte order (UTF-16, UTF-32, ISO-10646-UCS-2, UCS-2).
+- **`req:RequirementIdentityShape` selects its focus nodes** (req/shapes 1.3). With 203 shape
+  requirements in the family graph, comparing every pair of requirements took a minute per
+  validation. The shape now has a SPARQL target (`sh:target`) selecting the requirements that
+  can share a normalised pair with another: those whose identifier another requirement states
+  verbatim, and, when any identifier holds a character the normalisation changes, all of them.
+  The constraint and what it reports are unchanged.
+- **Stale text** (N10). The architecture page states the number of SHACL-SPARQL constraints,
+  which `tools/test_page_governance.py` now checks against the modules; its "Not yet modelled"
+  section lists what remains (protection processing, a HEL `offsetof`).
+
 ### The reference implementation claims `writer` (2026-10-13)
 
 No requirement text, case or identifier changed; the suite is the 803 cases of digest
@@ -436,8 +517,10 @@ IRIs.
   under `files`, so the family graph a consumer loads is the same graph as before, and maps each
   module to its graph under the new `documentation` key, which `tools/_family.py` checks. The 622
   generated `rdfs:isDefinedBy` statements moved into the canonical files (and the 13 authoring
-  templates) as a *Term ownership* section, and `--enrich` now refuses a term without one. No
-  generator writes a canonical file any more; the module pages embed the authored Turtle only and
+  templates) as a *Term ownership* section, and `--enrich` now refuses a term without one. The
+  documentation generator writes no canonical file any more (the template expander still writes
+  the templated modules, and `req/requirements.ttl` has since become generated); the module
+  pages embed the authored Turtle only and
   link the annotation graph, which `deployment/publication.conf` serves as Turtle at its own
   path. A consumer that copies single modules (rather than the family) copies the `-doc.ttl`
   beside each to keep the generated labels and definitions.

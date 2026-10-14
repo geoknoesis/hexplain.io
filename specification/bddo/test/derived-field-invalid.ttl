@@ -1,0 +1,13 @@
+# expect: ex:AlignedDerived bddo:DerivedFieldShape sh:SPARQLConstraintComponent
+# expect: ex:PaddedDerived bddo:DerivedFieldShape sh:SPARQLConstraintComponent
+# expect: ex:TypedDerived bddo:DerivedFieldShape sh:SPARQLConstraintComponent
+# A derived field occupies no bytes: it has no start to align, no end to pad and no type to read.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/derived#> .
+
+ex:AlignedDerived a bddo:Field ; bddo:valueFromExpression "a + b" ; bddo:alignment 4 .
+ex:PaddedDerived a bddo:Field ; bddo:valueFromExpression "a + b" ; bddo:padTo 8 .
+ex:TypedDerived a bddo:Field ; bddo:valueFromExpression "a + b" ; bddo:dataType bddo:uint8 .

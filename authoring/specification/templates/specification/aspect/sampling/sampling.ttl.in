@@ -13,8 +13,9 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/aspect/sampling> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/aspect/sampling/sampling-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/aspect/sampling/1.2> ; owl:versionInfo "1.2" ;
-    dcterms:modified "2026-10-12"^^xsd:date ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
     owl:priorVersion <https://hexplain.io/ns/aspect/sampling/1.1> ;
     rdfs:label "Hexplain Aspect — Sampling (hx-sampling)"@en ;
     rdfs:comment "Base aspect for quantised sample values (bit depth, component count, sample format). Shared by raster, signal, and point-cloud representations."@en ;
@@ -34,10 +35,17 @@
 
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 # Optional properties: declaring one activates value checks, not a completeness requirement.
+# One copy per module, byte-identical to bddo:IntegerValueShape (the master; template in
+# specification/shared-patterns/integer-value-shape.ttl.template): shapes are validated module by
+# module, and a sh:node into another module's graph is silently satisfied when that module is not loaded.
+asamp:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ;
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
+    {{constraint:pattern_237}} .
 :PositiveIntegerShape a sh:NodeShape ; rdfs:label "Positive sample count"@en ;
     skos:definition "A positive integral quantity using an XML Schema integer-family datatype. Fractional values and numeric strings are not counts."@en ;
     sh:message "A sample count is a positive integer literal (an XSD integer-family datatype, greater than 0)." ;
-    {{constraint:pattern_237}} ; sh:minExclusive 0 .
+    sh:and ( asamp:IntegerValueShape [ sh:minExclusive 0 ] ) .
 :SamplingShape a sh:NodeShape ; rdfs:label "Sampling values"@en ;
     skos:definition "Validates optional sample precision, component count and numeric interpretation wherever those sampling properties occur."@en ;
     sh:targetSubjectsOf :bitDepth, :componentCount, :sampleFormat ;

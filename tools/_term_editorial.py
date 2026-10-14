@@ -1,6 +1,10 @@
 """Editorial definitions for terms whose original vocabulary supplied only a label.
 
 Existing definitions remain canonical. These annotations do not add OWL restrictions.
+
+Register concepts are not defined here: a register states each concept's skos:definition itself,
+so that it can be read without the generated annotation graph beside it
+(tools/test_documentation_annotations.py).
 """
 
 from __future__ import annotations
@@ -427,91 +431,6 @@ group(
 pointCount|The declared number of points in an unstructured point collection, including zero for an empty collection.
 """,
 )
-group(
-    "rpr",
-    "\n"
-    "Payload|A member carrying the principal data values or encoded content of a compound asset.\n"
-    "Metadata|A member carrying descriptive information about another member or the asset as a whole.\n"
-    "SpatialReference|A member carrying coordinate-reference or georeferencing information needed to interpret "
-    "spatial content.\n"
-    "AttributeTable|A member carrying non-geometric records or attributes associated with the asset's features.\n"
-    "GeometryCarrier|A member carrying the explicit geometries associated with the asset's features.\n"
-    "SpatialIndex|A member carrying an index for locating spatial content efficiently; it is distinct from the "
-    "content itself.\n"
-    "CharacterEncoding|A member identifying how textual bytes in the asset are decoded into characters.\n"
-    "Checksum|A member carrying integrity values used to check one or more other members.\n"
-    "Thumbnail|A member carrying a reduced preview intended for visual recognition of the asset.\n"
-    "Manifest|A member identifying the asset's constituent members and their organization or references.\n"
-    "Sidecar|An accompanying member associated with a primary resource by the bundle's binding convention.\n"
-    "Segment|One ordered portion of an asset distributed across multiple members.\n",
-)
-group(
-    "rgeo",
-    """
-Point|A geometry consisting of a single coordinate position.
-LineString|A geometry consisting of an ordered sequence of positions joined by line segments.
-Polygon|A planar surface geometry bounded by an exterior ring and optionally interior rings.
-MultiPoint|A geometry collection whose members are points.
-MultiLineString|A geometry collection whose members are line strings.
-MultiPolygon|A geometry collection whose members are polygons.
-""",
-)
-group(
-    "menc",
-    "\n"
-    "H264|Identifier for the H.264/AVC video coding family. Profiles must identify applicable bitstream framing "
-    "and configuration.\n"
-    "HEVC|Identifier for the H.265/HEVC video coding family. Container framing is specified separately.\n"
-    "ProRes|Identifier for the ProRes video coding family; the concrete variant belongs to the format/profile "
-    "metadata.\n"
-    "AV1|Identifier for the AV1 video coding format; container and configuration details remain separate.\n"
-    "VP9|Identifier for the VP9 video coding format; container framing remains separate.\n"
-    "AAC|Identifier for the Advanced Audio Coding family; profiles specify the object type and framing when "
-    "required.\n"
-    "MP3|Identifier for MPEG audio Layer III coded audio, distinct from a file's metadata-tag container.\n"
-    "FLAC|Identifier for Free Lossless Audio Codec data, whose purpose is lossless audio representation.\n"
-    "Opus|Identifier for Opus coded audio; transport/container framing is not implied by this concept alone.\n"
-    "PCM|Identifier for linearly quantized pulse-code-modulated samples; width, signedness, channel organization "
-    "and byte order must be specified separately.\n"
-    "Store|Identity encoding: bytes are stored without a compression transform.\n"
-    "Deflate|Identifier for the DEFLATE compression format. A gzip or zlib wrapper must not be inferred from "
-    "this identifier alone.\n"
-    "Gzip|Identifier for gzip-framed compressed data, distinct from an unwrapped DEFLATE bitstream.\n"
-    "BZip2|Identifier for bzip2 compressed data; the profile must identify framing and relevant options when "
-    "they affect interpretation.\n"
-    "LZMA|Identifier for the LZMA compression family; framing, dictionary and variant information must be "
-    "supplied where required.\n"
-    "Zstd|Identifier for data in the Zstandard frame format (one or more concatenated frames); dictionary "
-    "requirements belong to the profile.\n"
-    "Snappy|Identifier for Snappy compression; raw versus framed representation must be determined by the "
-    "profile.\n"
-    "LZ4|Identifier for data in the LZ4 Frame format, the self-describing framed representation of LZ4 "
-    "compression; the raw block representation is menc:LZ4Block.\n"
-    "LZ4Block|Identifier for a single raw LZ4 compressed block, which carries no length of its own: the decoded "
-    "size must be supplied by the profile.\n"
-    "RunLength|An encoding that represents repeated values as runs; the profile must identify the actual "
-    "run/count representation.\n"
-    "Blosc|Identifier for the Blosc compression framework, which combines an inner compressor with configurable "
-    "preprocessing and block settings.\n"
-    "Delta|A predictive transform that represents values by differences from preceding or predicted values; the "
-    "variant and arithmetic are profile parameters.\n"
-    "Shuffle|A reversible transform grouping corresponding bytes of successive fixed-width values to prepare "
-    "them for compression.\n"
-    "BitShuffle|A reversible transform grouping corresponding bits of successive values to prepare them for "
-    "compression; element/block parameters belong to the profile.\n",
-)
-group(
-    "rcol",
-    "\n"
-    "sRGB|Identifier for the sRGB color-space convention. Channel coding and embedding of any color profile "
-    "remain format-specific.\n"
-    "BT601|Identifier for color interpretation associated with the BT.601 television-system convention; the "
-    "profile must supply the applicable variant and signal range.\n"
-    "BT709|Identifier for color interpretation associated with the BT.709 high-definition television convention; "
-    "transfer and range details must be retained by the profile.\n"
-    "BT2020|Identifier for color interpretation associated with the BT.2020 ultra-high-definition television "
-    "convention; this does not by itself choose an HDR transfer function.\n",
-)
 ALGORITHMS = {
     "crc16": "The CRC-16/CCITT-FALSE integrity check: polynomial 0x1021, initial value 0xFFFF, no input or output "
     "reflection and final XOR 0x0000 (check value 0x29B1 over the ASCII bytes 123456789). Other CRC-16 variants, "
@@ -556,25 +475,6 @@ ALGORITHMS = {
 }
 for term, definition in ALGORITHMS.items():
     DEFINITIONS["bddo:" + term] = definition
-for term, key in [
-    ("CRC16", "crc16"),
-    ("CRC32", "crc32"),
-    ("Adler32", "adler32"),
-    ("MD5", "md5"),
-    ("SHA1", "sha1"),
-    ("SHA256", "sha256"),
-    ("CRC8SMBus", "crc8Smbus"),
-    ("CRC16ARC", "crc16Arc"),
-    ("CRC16XMODEM", "crc16Xmodem"),
-    ("CRC16MODBUS", "crc16Modbus"),
-    ("CRC16X25", "crc16X25"),
-    ("CRC32C", "crc32c"),
-    ("CRC32BZIP2", "crc32Bzip2"),
-    ("CRC32MPEG2", "crc32Mpeg2"),
-    ("CRC64ECMA182", "crc64Ecma182"),
-    ("CRC64XZ", "crc64Xz"),
-]:
-    DEFINITIONS["rck:" + term] = ALGORITHMS[key]
 
 # Term-specific usage notes (skos:scopeNote). A term listed here gets exactly this note; a term of
 # a module in _reference.TERM_SCOPED that is not listed and states no note of its own gets only
@@ -596,6 +496,13 @@ notes(
     "ClassMappingRule|Assert on each member of a hexplain:hasConditionalClassMapping list, with one hexplain:condition "
     "and one hexplain:semanticClass. Rules are tried in list order; the first whose condition holds decides the "
     "struct's class.\n"
+    "CodecContract|Assert on the resource a register concept names with hexplain:codecContract, one per "
+    "executable codec. Read by processors and conformance tools to bind and check the hexplain:codecParameter values "
+    "of an encoding step that names the concept. A contract is not a controlled value: profiles name the concept, "
+    "never its contract.\n"
+    "CodecParameterSpec|Assert on each object of hexplain:declaresParameter, with the parameter's key, type and "
+    "permitted values, and an rdfs:comment saying what the parameter means. Read with its contract; a profile never "
+    "names a parameter spec, it states the parameter by its key on a hexplain:CodecParameter.\n"
     "CodecParameter|Assert on each object of hexplain:codecParameter, with exactly one hexplain:parameterName, spelt "
     "as the codec itself names the setting, and exactly one of hexplain:parameterValue or hexplain:parameterExpression "
     "as its value.\n"

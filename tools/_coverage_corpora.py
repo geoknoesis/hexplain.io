@@ -273,7 +273,16 @@ class Corpora:
                 shapes = Graph() + shapes
                 for extra in foreign:
                     shapes.parse(ROOT / extra)
-            self.check(tracer, relative, self.context(files) + fixture, shapes, file.name.endswith("-valid.ttl"))
+            # A fixture is valid when no result is a Violation (tools/test_vocab_shapes.py), so a
+            # -valid fixture may carry the advisory results it declares.
+            self.check(
+                tracer,
+                relative,
+                self.context(files) + fixture,
+                shapes,
+                file.name.endswith("-valid.ttl"),
+                allow_warnings=True,
+            )
 
     def procedural(self, tracer: Tracer, task: Task) -> None:
         """Run one procedural gate with its validation calls traced and its shapes the canonical graphs."""

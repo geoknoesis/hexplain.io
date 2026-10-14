@@ -1,0 +1,19 @@
+# expect: ex:reUtf8 bddo:CustomEncodingCharsetShape sh:NotConstraintComponent sh:Warning
+# expect: ex:reLatin1 bddo:CustomEncodingCharsetShape sh:NotConstraintComponent sh:Warning
+# expect: ex:utf16 bddo:CustomEncodingCharsetShape sh:NotConstraintComponent sh:Warning
+# expect: ex:ucs2 bddo:CustomEncodingCharsetShape sh:NotConstraintComponent sh:Warning
+# Custom encodings a profile should not have minted. Each is still a valid description (no
+# Violation): the charset is one a processor may know. The author is advised, at sh:Warning,
+# that the first two re-spell a registered encoding (names are compared ignoring case) and that
+# the last two name 16-bit code units without saying which byte comes first.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/enc#> .
+
+ex:reUtf8 a bddo:CustomEncoding ; bddo:ianaCharset "utf-8" .
+ex:reLatin1 a bddo:CustomEncoding ; bddo:ianaCharset "ISO-8859-1" .
+ex:utf16 a bddo:CustomEncoding ; bddo:ianaCharset "UTF-16" .
+ex:ucs2 a bddo:CustomEncoding ; bddo:ianaCharset "ISO-10646-UCS-2" .
+
+# A byte-ordered charset this vocabulary does not register draws no advice.
+ex:utf16leBom a bddo:CustomEncoding ; bddo:ianaCharset "x-UTF-16LE-BOM" .

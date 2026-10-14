@@ -65,6 +65,11 @@ NODE_PHRASES = {
 }
 
 
+#: How an exclusive choice among property-stating branches opens ("Each focus node is a node that
+#: states exactly one of: A; B; C").
+EXACTLY_ONE = "a node that states exactly one of: "
+
+
 class Unhandled(Exception):
     pass
 
@@ -230,20 +235,84 @@ def branch_phrase(g: Graph, shape: Node, prefixes: Prefixes) -> str:
     return value_phrase(g, shape, prefixes)
 
 
-def value_phrase(g: Graph, shape: Node, prefixes: Prefixes, allow_count: bool = False) -> str:
-    """A noun phrase describing an acceptable value; raises Unhandled for what it cannot say."""
-    return _ValuePhrase(g, shape, prefixes, allow_count).phrase()
+#: Constraint parameters that state one thing together, and are therefore one conjunct of a negation.
+CONJUNCT_GROUPS = (
+    frozenset({SH.datatype, SH["class"], SH.nodeKind}),
+    frozenset({SH.minInclusive, SH.minExclusive, SH.maxInclusive, SH.maxExclusive}),
+    frozenset({SH.pattern, SH.flags}),
+    frozenset({SH.minLength, SH.maxLength}),
+)
+
+
+def conjuncts(g: Graph, shape: Node) -> list[frozenset[Node]]:
+    """The constraints of a value shape as the separate things it demands, in a stable order."""
+    stated = {
+        p
+        for p in g.predicates(shape, None)
+        if p not in IGNORED and p not in NODE_LEVEL and p != SH.path and not str(p).startswith(SKOS_NS)
+    }
+    groups = [group & stated for group in CONJUNCT_GROUPS if group & stated]
+    grouped: set[Node] = set().union(*groups) if groups else set()
+    return groups + [frozenset({p}) for p in sorted(stated - grouped, key=str)]
+
+
+def negation(g: Graph, shape: Node, prefixes: Prefixes) -> str:
+    """What sh:not of a value shape demands.
+
+    A shape with several constraints is their conjunction, and its negation forbids only their
+    holding TOGETHER: "not both an instance of X and one of A, B or C". Rendering the conjunction
+    as one phrase and prefixing "not" read as "not an instance of X one of A, B or C".
+    """
+    parts = [value_phrase(g, shape, prefixes, only=group) for group in conjuncts(g, shape)]
+    if len(parts) < 2:
+        return "not " + value_phrase(g, shape, prefixes)
+    return "not " + ("both " if len(parts) == 2 else "all of ") + join(parts, "and")
+
+
+def conjunction(g: Graph, shapes: list[Node], prefixes: Prefixes) -> str:
+    """sh:and of value shapes: the first says what the value is, the others qualify it.
+
+    ( x:IntegerValueShape [ sh:minExclusive 0 ] ) reads "an integer (of any XSD integer datatype)
+    greater than 0". A later member must be a pure qualification ("a number ...", "a value ...").
+    """
+    phrases = []
+    for member in shapes:
+        known = NODE_PHRASES.get(str(member).rsplit("#", 1)[-1]) if isinstance(member, URIRef) else None
+        phrases.append(known or value_phrase(g, member, prefixes))
+    head, rest = phrases[0], []
+    for phrase in phrases[1:]:
+        for opener in ("a number ", "a value "):
+            if phrase.startswith(opener):
+                rest.append(phrase[len(opener) :])
+                break
+        else:
+            raise Unhandled("sh:and member that is not a qualification")
+    return head + (" " + ", ".join(rest) if rest else "")
+
+
+def value_phrase(
+    g: Graph, shape: Node, prefixes: Prefixes, allow_count: bool = False, only: frozenset[Node] | None = None
+) -> str:
+    """A noun phrase describing an acceptable value; raises Unhandled for what it cannot say.
+
+    ``only`` restricts the phrase to those constraint parameters of the shape (one conjunct).
+    """
+    return _ValuePhrase(g, shape, prefixes, allow_count, only).phrase()
 
 
 class _ValuePhrase:
     """The noun phrase of one shape's value constraints: a base noun phrase and the qualifications after it, built
     constraint by constraint; each component is consumed from [po] as it is said, and one left over is Unhandled."""
 
-    def __init__(self, g: Graph, shape: Node, prefixes: Prefixes, allow_count: bool) -> None:
+    def __init__(
+        self, g: Graph, shape: Node, prefixes: Prefixes, allow_count: bool, only: frozenset[Node] | None = None
+    ) -> None:
         self.g, self.prefixes = g, prefixes
         self.po: dict[Node, list[Node]] = {}
         for p, o in g.predicate_objects(shape):
             if p in IGNORED or p in NODE_LEVEL or p == SH.path or str(p).startswith(SKOS_NS):
+                continue
+            if only is not None and p not in only:
                 continue
             if p in (SH.minCount, SH.maxCount) and allow_count:
                 continue
@@ -265,7 +334,8 @@ class _ValuePhrase:
         datatypes = [self.c(x) for x in self.po.pop(SH.datatype, [])]
         classes = [self.c(x) for x in self.po.pop(SH["class"], [])]
         kinds = self.po.pop(SH.nodeKind, [])
-        alternatives = self.alternatives(datatypes, classes) + self.conjunctions()
+        alternatives = self.alternatives(datatypes, classes)
+        conjunctions = self.conjunctions(alternatives)
         if datatypes:
             self.base = datatype_phrase(datatypes)
         cl = self.classes(classes)
@@ -281,9 +351,14 @@ class _ValuePhrase:
             self.quals.append(f"including {self.c(hv)}")
         for alt in alternatives:
             if self.base is None:
-                self.base = ("either " + alt) if " or " in alt and not alt.startswith("exactly one of") else alt
+                self.base = ("either " + alt) if " or " in alt and not alt.startswith(EXACTLY_ONE) else alt
             else:
                 self.quals.append(f"and {alt}")
+        for phrase in conjunctions:
+            if self.base is None:
+                self.base = phrase
+            else:
+                self.quals.append(f"and {phrase}")
         self.finite()
         numeric = any(p in self.po for p in (SH.minInclusive, SH.minExclusive, SH.maxInclusive, SH.maxExclusive))
         self.lexical()
@@ -314,22 +389,26 @@ class _ValuePhrase:
                 phrases = [branch_phrase(self.g, b, self.prefixes) for b in branches]
                 # An exclusive choice among property-stating branches is said as such.
                 if kind == "xone" and len(phrases) > 1 and all(p.startswith("a node that states ") for p in phrases):
-                    alternatives.append("exactly one of these: " + "; ".join(p[len("a node that ") :] for p in phrases))
+                    alternatives.append(EXACTLY_ONE + "; ".join(p[len("a node that states ") :] for p in phrases))
                 else:
                     alternatives.append(join(phrases))
         return alternatives
 
-    def conjunctions(self) -> list[str]:
-        """sh:and of property-stating branches: everything they state, together."""
+    def conjunctions(self, alternatives: list[str]) -> list[str]:
+        """sh:and. Of property-stating branches: everything they state together, appended to [alternatives]. Of
+        value shapes: the conjunction's phrase, returned."""
         out = []
         for lst in self.po.pop(SH["and"], []):
-            collected = []
-            for member in members(self.g, lst):
+            branches = members(self.g, lst)
+            collected: list[str] = []
+            for member in branches:
                 inner = property_parts(self.g, member, self.prefixes)
                 if inner is None:
-                    raise Unhandled("sh:and of value shapes")
+                    out.append(conjunction(self.g, branches, self.prefixes))
+                    break
                 collected.extend(inner)
-            out.append("a node that states " + join(collected, "and"))
+            else:
+                alternatives.append("a node that states " + join(collected, "and"))
         return out
 
     def classes(self, classes: list[str]) -> str | None:
@@ -420,7 +499,7 @@ class _ValuePhrase:
                 if self.base is None:
                     self.base = "a node"
             else:
-                self.quals.append("not " + value_phrase(self.g, v, self.prefixes))
+                self.quals.append(negation(self.g, v, self.prefixes))
 
     def finish(self, numeric: bool) -> str:
         base = self.base
@@ -429,10 +508,14 @@ class _ValuePhrase:
                 base = "a number"
             elif self.quals and self.quals[0].startswith("conforming to "):
                 return "a value " + ", ".join(self.quals)
+            elif self.quals and all(q.startswith("not ") for q in self.quals):
+                # Nothing but prohibitions: "is not an instance of X", never "is a value not an instance of X".
+                return " and ".join(self.quals)
             else:
                 base = "a value"
+        quals = ["that is " + q if q.startswith("not ") else q for q in self.quals]
         sep = ", " if base.startswith("either ") else " "
-        return base + (sep + ", ".join(self.quals) if self.quals else "")
+        return base + (sep + ", ".join(quals) if quals else "")
 
 
 def datatype_phrase(datatypes: list[str]) -> str:

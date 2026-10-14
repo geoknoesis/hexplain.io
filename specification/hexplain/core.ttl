@@ -14,9 +14,10 @@
 @prefix vann:     <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/core> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/hexplain/core-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/core/1.3> ; owl:versionInfo "1.3" ;
     owl:priorVersion <https://hexplain.io/ns/core/1.2> ;
-    dcterms:modified "2026-10-12"^^xsd:date ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/bddo> , <https://hexplain.io/ns/dlv> ;
     rdfs:label "Hexplain Core Ontology"@en ;
     rdfs:comment "Properties linking the physical, layout, and semantic layers of the Hexplain framework."@en ;
@@ -112,7 +113,7 @@
 :keepsSession a owl:DatatypeProperty ; rdfs:label "keeps session"@en ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "True when the codec keeps state across blocks (JPEG tables, a CCITT reference line across strips). The processor creates the session at a scope a later profile property declares, and passes it to every call."@en .
 :encodes a owl:DatatypeProperty ; rdfs:label "encodes"@en ; rdfs:range xsd:boolean ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
-    rdfs:comment "True when the contract covers the encode direction as well as decode: the codec's normative vector suite then holds encode steps and at least one round trip (an encode step whose output the next decode step reads back to the encode step's input), and a writer may select the codec. Absent or false, the contract is decode-only: its suite holds no encode step, and a processor asked to encode with the codec raises an Unsupported error."@en .
+    rdfs:comment "True when the contract covers the encode direction as well as decode: the codec's normative vector suite then holds encode steps and at least one round trip (an encode step whose output the next decode step reads back to the encode step's input), and a writer may select the codec. False, the contract is decode-only: its suite holds no encode step, and a processor asked to encode with the codec raises an Unsupported error. Stated exactly once on every codec contract, like hexplain:keepsSession: a contract that leaves the direction unsaid is refused, so that decode-only is a statement and never an omission."@en .
 :raisesCategory a owl:DatatypeProperty ; rdfs:label "raises category"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
     rdfs:comment "A Processing Model error category the codec may raise while it runs, by its conformance-suite notation: Validation, Checksum, Unsupported, ResourceLimit or Description (a parameter value the contract admits but the codec cannot act on, found only when the step runs)."@en .
 :CodecParameterSpec a owl:Class ; rdfs:label "Codec Parameter Spec"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/core> ;
@@ -346,8 +347,8 @@ hexplain:CodecContractShape a sh:NodeShape ;
         sh:message "A codec contract states exactly one hexplain:codecKind." ] ;
     sh:property [ sh:path hexplain:keepsSession ; sh:datatype xsd:boolean ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "A codec contract states hexplain:keepsSession once, as a boolean." ] ;
-    sh:property [ sh:path hexplain:encodes ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
-        sh:message "hexplain:encodes takes at most one value, an xsd:boolean literal." ] ;
+    sh:property [ sh:path hexplain:encodes ; sh:datatype xsd:boolean ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A codec contract states hexplain:encodes once, as a boolean: true when it covers encoding, false when it is decode-only." ] ;
     sh:property [ sh:path hexplain:raisesCategory ; sh:datatype xsd:string ;
         sh:in ( "Validation" "Checksum" "Unsupported" "ResourceLimit" "Description" ) ;
         sh:message "hexplain:raisesCategory is one of Validation, Checksum, Unsupported, ResourceLimit and Description." ] ;

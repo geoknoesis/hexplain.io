@@ -9,14 +9,17 @@ that several pages restate about one shared source.
 
 from __future__ import annotations
 
+import functools
 import html
 import json
 import re
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 from _family import canonical_files
 from _site_inventory import ROOT, pages
+from rdflib import Graph, URIRef
 
 REGISTRY = ROOT / "specification/page-governance.json"
 MANIFEST = ROOT / "specification/ontology-review/review-manifest.json"
@@ -50,8 +53,20 @@ def vocabulary_modules() -> int:
     return sum(1 for f in files if not f.endswith("/shapes.ttl"))
 
 
+@functools.cache
+def sparql_constraints() -> int:
+    """SHACL-SPARQL constraints (sh:sparql) stated by the canonical modules of the family."""
+    shacl_sparql = URIRef("http://www.w3.org/ns/shacl#sparql")
+    total = 0
+    for name in canonical_files(ROOT / "specification"):
+        graph = Graph().parse(data=(ROOT / "specification" / name).read_text(encoding="utf-8"), format="turtle")
+        total += len(list(graph.subject_objects(shacl_sparql)))
+    return total
+
+
 # Phrase a page uses for a quantity, and the authority that quantity comes from.
-QUANTITIES = {
+QUANTITIES: dict[str, tuple[str, Callable[[], int]]] = {
+    "sparql_constraints": (r"(\d[\d,]*)\s+SHACL-SPARQL constraints", sparql_constraints),
     "vocabulary_modules": (r"(\d[\d,]*)\s+vocabulary modules", vocabulary_modules),
     "review_resources": (r"(\d[\d,]*)\s+resources", review_resources),
     "review_modules": (r"(\d[\d,]*)\s+modules", review_modules),

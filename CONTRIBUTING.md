@@ -140,7 +140,25 @@ notes are written by `python tools/_build_term_reference.py --enrich` to the mod
 annotation graph, `<module>-doc.ttl`, which `family.json` lists under `files` and maps under
 `documentation`; never edit one by hand, and never paste generated prose into a canonical file.
 State each new term's `rdfs:isDefinedBy` where you declare it: the generator refuses a term
-without one.
+without one. Every module's `owl:Ontology` names its annotation graph with `rdfs:seeAlso`. A
+register is the exception to generated definitions: each `skos:Concept` states its own
+`skos:definition`, and each codec parameter spec an `rdfs:comment` saying what it means, in the
+register file (`tools/test_documentation_annotations.py`).
+
+The builders, in the order a change to a shape needs them (each has a check mode a gate runs):
+
+| Builder | Writes | Check |
+|---|---|---|
+| `tools/_expand_specification_patterns.py --write` | the templated canonical modules | default mode |
+| `tools/_build_authoring_inventory.py` | `authoring/specification/constraint-inventory.json` | `test_specification_patterns.py` |
+| `tools/_build_term_reference.py --enrich` | every `<module>-doc.ttl` and the term reference pages | `--check` |
+| `tools/_build_shape_requirements.py --write` | `specification/req/requirements.ttl`, one `reqs:ShapeRequirement` per node shape | `--check` (default), `test_shape_requirements.py` |
+| `tools/_build_term_reference.py --enrich` (again) | `requirements-doc.ttl` and the req page | `--check` |
+| `tools/_build_architecture_catalogue.py` | the aspect catalogue cells of the architecture page | `--check` |
+
+A fixture under `specification/**/test/` is valid when validation reports no `sh:Violation`;
+`# expect:` lines name each result it must produce, with `sh:Warning` or `sh:Info` as a last
+token for an advisory one (`tools/test_vocab_shapes.py`).
 Add positive and negative semantic cases, including activation, result path and numeric edges.
 Regenerate changed evidence rather than weakening freshness or coverage assertions.
 

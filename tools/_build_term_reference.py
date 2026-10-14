@@ -210,7 +210,9 @@ def doc_header(path: Path, ontology: Node | None) -> str:
     subject = f"<{ontology}>" if ontology is not None else path.name
     return (
         f"# Generated term documentation for {subject} ({path.as_posix()}).\n"
-        "# Written by tools/_build_term_reference.py --enrich; do not edit. Editorial annotations only\n"
+        "# Generated; do not edit. Written by tools/_build_term_reference.py --enrich from the module's own\n"
+        "# statements, the editorial definitions and scope notes in tools/_term_editorial.py (the source to\n"
+        "# change) and the sentences tools/_shape_text.py derives from each shape. Editorial annotations only\n"
         "# (rdfs:label, skos:definition, skos:scopeNote) on terms the module declares: no OWL axiom and no\n"
         "# SHACL constraint is stated here, and the module validates identically without this file.\n"
     )

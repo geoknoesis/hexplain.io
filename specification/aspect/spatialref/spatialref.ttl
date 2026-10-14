@@ -13,10 +13,11 @@
 @prefix vann:    <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/aspect/spatialref> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/aspect/spatialref/spatialref-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/aspect/spatialref/1.4> ; owl:versionInfo "1.4" ;
     <http://schema.org/creativeWorkStatus> "working draft" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/spatialref/1.3> ;
-    dcterms:modified "2026-10-12"^^xsd:date ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Spatial Reference (hx-spatialref)"@en ;
     rdfs:comment "Aspect for georeferencing: coordinate reference systems, geotransforms, registration. Shared by geospatial raster and vector data."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -93,7 +94,11 @@
 # datatype shape already accepted it, so an affine read from a float32 field conformed there and
 # failed here. The ranges above say the same: each is the union of the two XSD datatypes, whose
 # value spaces are disjoint, so a plain xsd:double range made every float literal inconsistent.
-:FiniteDoubleShape a sh:NodeShape ; sh:message "A finite number is an xsd:double or xsd:float literal that is not NaN or infinite." ; sh:or ( [ sh:datatype xsd:double ] [ sh:datatype xsd:float ] ) ; sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] .
+# One conjunction, so that the shape's one message states the one thing it checks: the datatype,
+# and within it the finite values.
+:FiniteDoubleShape a sh:NodeShape ; sh:message "A finite number is an xsd:double or xsd:float literal that is not NaN or infinite." ;
+    sh:and ( :FloatValueShape
+             [ sh:minExclusive "-INF"^^xsd:double ; sh:maxExclusive "INF"^^xsd:double ; sh:not [ sh:pattern "^(nan|[+-]?inf)$" ; sh:flags "i" ] ] ) .
 :CRSShape a sh:NodeShape ; sh:targetClass :CoordinateReferenceSystem ; sh:targetObjectsOf :hasCRS, :groundControlPointCRS ;
     sh:message "A coordinate reference system is a resource (an IRI or a blank node), not a literal." ;
     sh:nodeKind sh:BlankNodeOrIRI ;
