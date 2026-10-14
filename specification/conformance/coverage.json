@@ -1,11 +1,11 @@
 {
  "cases": {
-  "physical-parser": 506,
+  "physical-parser": 517,
   "semantic-emitter": 49,
   "bundle-processor": 13,
   "hdl-compiler": 211,
   "conformance-evaluator": 41,
-  "writer": 86
+  "writer": 88
  },
  "excluded": {
   "blanket": [
@@ -19,8 +19,8 @@
  },
  "processorMust": {
   "Physical Parser": {
-   "total": 276,
-   "covered": 272,
+   "total": 284,
+   "covered": 280,
    "notSuiteTestable": {
     "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's shape gates (test_shapes, test_vocab_shapes) apply it.",
     "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the condition is asserted by the HEL vectors (validation/test/hel-vectors.tsv, req-hel-conformance-9).",
@@ -72,8 +72,8 @@
  "requirements": {
   "physical-parser": {
    "MUST": {
-    "total": 201,
-    "covered": 199
+    "total": 209,
+    "covered": 207
    },
    "SHOULD": {
     "total": 5,
@@ -143,11 +143,11 @@
  },
  "writer": {
   "roundTrip": {
-   "trees": 242,
+   "trees": 249,
    "outcomes": {
     "Unsupported": 17,
     "Validation": 7,
-    "round-trip": 218
+    "round-trip": 225
    }
   },
   "cases": [
@@ -601,6 +601,14 @@
     ]
    },
    {
+    "id": "w-pad-to-struct-origin",
+    "title": "bddo:padTo under bddo:structOrigin is written relative to the struct's own start",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
     "id": "w-parameterised-struct",
     "title": "A node under a parameterised struct is serialised with the arguments its field names",
     "outcome": "bytes",
@@ -670,6 +678,14 @@
     "outcome": "bytes",
     "requirements": [
      "req-pm-serialisation-32"
+    ]
+   },
+   {
+    "id": "w-separated-region-start",
+    "title": "The first token of a region is preceded by nothing, so tokens of adjacent regions abut",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-27"
     ]
    },
    {
@@ -942,7 +958,8 @@
     "w-offset-addressed",
     "w-offset-before-stream-start",
     "w-offset-conflict",
-    "w-pad-to-pad-byte"
+    "w-pad-to-pad-byte",
+    "w-pad-to-struct-origin"
    ],
    "req-pm-serialisation-26": [
     "w-bits-field-order-overrides-struct",
@@ -950,6 +967,7 @@
     "w-varint-shortest"
    ],
    "req-pm-serialisation-27": [
+    "w-separated-region-start",
     "w-separated-tokens"
    ],
    "req-pm-serialisation-28": [
@@ -1004,6 +1022,8 @@
   "req-pm-alignment-padding-1": [
    "pp-align-struct",
    "pp-align-struct-each-instance",
+   "pp-align-struct-origin-field",
+   "pp-align-struct-origin-padding",
    "pp-pad-field",
    "pp-pad-field-at-offset",
    "pp-pad-field-on-boundary",
@@ -1020,6 +1040,13 @@
   ],
   "req-pm-alignment-padding-5": [
    "pp-pad-byte-without-pad-to"
+  ],
+  "req-pm-alignment-padding-6": [
+   "pp-align-struct-origin-field",
+   "pp-align-struct-origin-padding"
+  ],
+  "req-pm-alignment-padding-7": [
+   "pp-align-derived-field"
   ],
   "req-pm-bit-cursor-1": [
    "pp-bits-lsb-first",
@@ -1271,7 +1298,8 @@
    "pp-layout-read-as-bytes",
    "pp-layout-size-expression-not-integer",
    "pp-layout-size-from-expression",
-   "pp-layout-size-not-integer"
+   "pp-layout-size-not-integer",
+   "pp-layout-stride-from-field-zero"
   ],
   "req-pm-data-layouts-2": [
    "pp-layout-size-expression-not-integer",
@@ -1284,6 +1312,9 @@
   "req-pm-data-layouts-4": [
    "pp-layout-packed-float",
    "pp-layout-packed-float-from-field"
+  ],
+  "req-pm-data-layouts-5": [
+   "pp-layout-stride-from-field-zero"
   ],
   "req-pm-delimited-records-1": [
    "pp-records-bom-crlf-comments",
@@ -1699,6 +1730,10 @@
   "req-pm-inputs-outputs-1": [
    "pp-hel-stream-length-before-first-field"
   ],
+  "req-pm-inputs-outputs-2": [
+   "pp-float-vax-f-64-deprecated",
+   "pp-valid-despite-warning"
+  ],
   "req-pm-introduction-1": [],
   "req-pm-iri-minting-1": [
    "se-base-reported",
@@ -1896,6 +1931,8 @@
    "pp-float-format-on-data-type",
    "pp-float-ibm-hexadecimal",
    "pp-float-vax",
+   "pp-float-vax-d-g",
+   "pp-float-vax-f-64-deprecated",
    "pp-float-vax-reserved-operand"
   ],
   "req-pm-numeric-representation-2": [
@@ -1909,6 +1946,7 @@
   ],
   "req-pm-numeric-representation-4": [
    "pp-float-vax",
+   "pp-float-vax-f-64-deprecated",
    "pp-float-vax-reserved-operand"
   ],
   "req-pm-numeric-representation-5": [
@@ -1916,7 +1954,8 @@
   ],
   "req-pm-numeric-representation-6": [
    "pp-float-ibm-hexadecimal",
-   "pp-float-vax"
+   "pp-float-vax",
+   "pp-float-vax-d-g"
   ],
   "req-pm-numeric-representation-7": [
    "pp-float-format-width"
@@ -1926,6 +1965,13 @@
   ],
   "req-pm-numeric-representation-9": [
    "pp-bcd-invalid-nibble"
+  ],
+  "req-pm-numeric-representation-10": [
+   "pp-float-vax-d-g",
+   "pp-float-vax-f-64-deprecated"
+  ],
+  "req-pm-numeric-representation-11": [
+   "pp-float-vax-d-g"
   ],
   "req-pm-optional-codecs-1": [
    "pp-codec-lz4-block-bad-offset",
@@ -2038,6 +2084,7 @@
    "pp-bits-offset-read-restores-bit-cursor",
    "pp-offset-current-negative",
    "pp-offset-current-position",
+   "pp-offset-field-start",
    "pp-offset-from-field-and-expression",
    "pp-offset-literal-restores-cursor",
    "pp-offset-parent-start",
@@ -2214,6 +2261,13 @@
   "req-pm-parsefield-34": [
    "pp-pad-field-at-offset",
    "pp-pad-field-at-offset-checks-first"
+  ],
+  "req-pm-parsefield-35": [
+   "pp-offset-field-start",
+   "pp-offset-field-start-outside"
+  ],
+  "req-pm-parsefield-36": [
+   "pp-offset-field-start-absent-base"
   ],
   "req-pm-parsestruct-1": [
    "pp-members-in-list-order"
@@ -2445,7 +2499,8 @@
    "w-offset-addressed",
    "w-offset-before-stream-start",
    "w-offset-conflict",
-   "w-pad-to-pad-byte"
+   "w-pad-to-pad-byte",
+   "w-pad-to-struct-origin"
   ],
   "req-pm-serialisation-26": [
    "w-bits-field-order-overrides-struct",
@@ -2453,6 +2508,7 @@
    "w-varint-shortest"
   ],
   "req-pm-serialisation-27": [
+   "w-separated-region-start",
    "w-separated-tokens"
   ],
   "req-pm-serialisation-28": [
@@ -2517,6 +2573,7 @@
    "pp-bits-msb-first"
   ],
   "req-pm-size-resolution-6": [
+   "pp-separated-abutting-regions",
    "pp-separated-tokens"
   ],
   "req-pm-size-resolution-7": [
@@ -2658,7 +2715,8 @@
    "pp-encoding-custom-unsupported"
   ],
   "req-pm-text-decoding-7": [
-   "pp-encoding-custom-known-charset"
+   "pp-encoding-custom-known-charset",
+   "pp-valid-despite-warning"
   ],
   "req-pm-text-decoding-8": [],
   "req-pm-text-decoding-9": [
@@ -2744,6 +2802,7 @@
    "pp-separated-multibyte-encoding"
   ],
   "req-pm-text-numbers-2": [
+   "pp-separated-abutting-regions",
    "pp-separated-tokens"
   ],
   "req-pm-text-numbers-3": [
@@ -4596,8 +4655,9 @@
   "hel/index.html#undefined-names": 10,
   "hel/index.html#version-marker": 4,
   "hel/index.html#versioning": 5,
-  "processing#algorithm": 139,
-  "processing#alignment-padding": 13,
+  "processing#algorithm": 140,
+  "processing#alignment-origin": 1,
+  "processing#alignment-padding": 17,
   "processing#bit-cursor": 13,
   "processing#byte-order": 20,
   "processing#claimed-encodings": 1,
@@ -4610,13 +4670,14 @@
   "processing#conformance-classes": 6,
   "processing#conformance-evaluation": 41,
   "processing#context": 6,
-  "processing#data-layouts": 11,
+  "processing#data-layouts": 12,
   "processing#delimited-records": 8,
   "processing#delimited-tables": 8,
   "processing#delta-parameters": 11,
   "processing#emission": 26,
   "processing#errors": 78,
   "processing#evaluation-time": 4,
+  "processing#field-start": 3,
   "processing#fixed-values": 13,
   "processing#framing-parameters": 5,
   "processing#inputs-outputs": 1,
@@ -4626,7 +4687,7 @@
   "processing#minimum-codecs": 38,
   "processing#multi-part-assets": 15,
   "processing#negative-offsets": 4,
-  "processing#numeric-representation": 22,
+  "processing#numeric-representation": 24,
   "processing#optional-codecs": 24,
   "processing#optional-features": 1,
   "processing#parameter-expressions": 6,
@@ -4639,16 +4700,17 @@
   "processing#round-trip": 2,
   "processing#security-decompression": 4,
   "processing#security-resources": 1,
-  "processing#serialisation": 86,
-  "processing#size-resolution": 39,
+  "processing#serialisation": 88,
+  "processing#size-resolution": 41,
   "processing#stream-metadata": 8,
   "processing#struct-size": 10,
   "processing#terminators": 10,
   "processing#text-containers": 5,
-  "processing#text-decoding": 53,
-  "processing#text-numbers": 19,
+  "processing#text-decoding": 54,
+  "processing#text-numbers": 21,
   "processing#tree-documents": 10,
   "processing#typed-cells": 3,
+  "processing#valid-description": 2,
   "processing#value-mapping": 10,
   "req/index.html#conformance": 3
  }

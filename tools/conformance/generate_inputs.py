@@ -30,6 +30,7 @@ MODULES = (
     "cases_text",
     "cases_encodings",
     "cases_layout_cells",
+    "cases_origins",
     "cases_limits",
     "cases_hel",
     "cases_rules",

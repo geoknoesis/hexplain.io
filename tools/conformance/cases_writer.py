@@ -472,6 +472,24 @@ w(
     b"1 2 33 4",
 )
 
+w(
+    "separated-region-start",
+    "The first token of a region is preceded by nothing, so tokens of adjacent regions abut",
+    "Each one-byte box holds one separated token. The second token starts its own region, so no separator precedes "
+    "it although a token was written just before: '12', which the parse rules read back as 1 and 2.",
+    [SEPARATOR],
+    ["size-resolution", "text-numbers"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:first ex:second ) .
+   ex:first a bddo:Field ; bddo:dataType ex:Box .
+   ex:second a bddo:Field ; bddo:dataType ex:Box .
+   ex:Box a bddo:Struct ; bddo:size 1 ; bddo:hasField ( ex:v ) .
+   ex:v a bddo:Field ; bddo:dataType bddo:asciiInteger ; bddo:separatedBy "whitespace" .
+   """,
+    {"first": {"v": 1}, "second": {"v": 2}},
+    b"12",
+)
+
 # ----------------------------------------------------------------- rule 4: padding, alignment and offsets
 
 w(
@@ -521,6 +539,25 @@ w(
    """,
     {"a": 1, "rec": {"b": 2}, "tail": 9},
     bytes.fromhex("01 2a2a2a 02 000000 09"),
+)
+
+w(
+    "pad-to-struct-origin",
+    "bddo:padTo under bddo:structOrigin is written relative to the struct's own start",
+    "Rec starts at offset 6 and pads to 4 from its first byte: its member 07, then three fill bytes 00 to offset 10, "
+    "where after is written. The stream origin would have stopped the padding at offset 8.",
+    [PADDING],
+    ["alignment-padding", "alignment-origin"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:pad ex:rec ex:after ) .
+   ex:pad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 6 .
+   ex:rec a bddo:Field ; bddo:dataType ex:Rec .
+   ex:Rec a bddo:Struct ; bddo:padTo 4 ; bddo:alignmentOrigin bddo:structOrigin ; bddo:hasField ( ex:a ) .
+   ex:a a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:after a bddo:Field ; bddo:dataType bddo:uint8 .
+   """,
+    {"pad": b"\x00" * 6, "rec": {"a": 7}, "after": 0x42},
+    bytes.fromhex("000000000000 07 000000 42"),
 )
 
 w(

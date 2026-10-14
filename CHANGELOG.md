@@ -61,6 +61,35 @@ rewritten.
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### Integration of round 2: the forthcoming terms are normative (2026-10-14)
+
+The Processing Model's informative note on forthcoming terms (`#forthcoming-terms`) is gone: the
+ontology terms it announced exist, and each point now stands in the section it named, behind
+requirement identifiers.
+
+- **What makes a description valid** (`#valid-description`, Inputs and Outputs). A description
+  is valid when validation yields no `sh:Violation`; a processor must not refuse a description,
+  or report it invalid, for `sh:Warning` or `sh:Info` results alone.
+- **The alignment origin** (`#alignment-origin`). `bddo:alignmentOrigin` selects
+  `bddo:streamOrigin` (the default) or `bddo:structOrigin` for a subject's `bddo:alignment` and
+  `bddo:padTo`; the Writer's padding rule (req-pm-serialisation-25) measures from the same
+  origin. `bddo:alignment` or `bddo:padTo` on a derived field is a description error.
+- **Three VAX formats** (`#float-formats`). `bddo:vaxF` is the 32-bit F_floating
+  (req-pm-numeric-representation-4); `bddo:vaxD` and `bddo:vaxG` are the 64-bit D_floating and
+  G_floating; a 64-bit `bddo:vaxF` is the deprecated spelling of `bddo:vaxD`, read as it is and
+  reported at `sh:Warning`. The conversion rule (req-pm-numeric-representation-6), the width rule
+  (req-pm-numeric-representation-7) and the Writer's VAX rules (req-pm-serialisation-34,
+  req-pm-serialisation-36) cover the three. `bddo:bcd` on a signed type is a description error.
+- **Offsets from a sibling** (`#field-start`). `bddo:offsetBase bddo:fieldStart` with
+  `bddo:offsetBaseField` counts from the start of an earlier sibling; it is a fixed-origin base
+  for the negative-value rule (req-pm-parsefield-32, req-pm-parsefield-7), a target outside the
+  region is a bounds error, and a base field not read before the offset is a description error.
+- **Protection is a non-goal** (`#non-goal-protection`): the protection aspect describes and
+  obliges no processing.
+- **Every codec contract states `hexplain:encodes`** (`#codec-contracts`), true or false.
+- **A non-positive stride** that a field or an expression supplies is a description error when
+  the layout is resolved (`#data-layouts`).
+
 ### Gate tooling: second review pass (2026-10-13)
 
 No vocabulary, shape or published document changes. The validation evidence that is regenerated

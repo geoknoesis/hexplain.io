@@ -47,6 +47,24 @@
    "text": "A bddo:padByte without a bddo:padTo on the same field or struct describes no padding and is refused by bddo:PaddingShape; a processor that meets one MUST raise a description error.",
    "sha256": "6e8489064038a02b"
   },
+  "req-pm-alignment-padding-6": {
+   "page": "specification/processing/index.html",
+   "section": "alignment-padding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Physical Parser MUST measure each boundary from the origin its subject selects.",
+   "sha256": "cf40732ba0ad90ba"
+  },
+  "req-pm-alignment-padding-7": {
+   "page": "specification/processing/index.html",
+   "section": "alignment-padding",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A bddo:alignment or bddo:padTo on a derived field (bddo:valueFromExpression), which occupies no bytes, is refused by bddo:DerivedFieldShape, and a processor that meets one MUST raise a description error when the description is loaded.",
+   "sha256": "66f331490808a7c9"
+  },
   "req-pm-bit-cursor-1": {
    "page": "specification/processing/index.html",
    "section": "bit-cursor",
@@ -655,6 +673,15 @@
     "6cf23b69f3e48a5a"
    ]
   },
+  "req-pm-data-layouts-5": {
+   "page": "specification/processing/index.html",
+   "section": "data-layouts",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A stride that resolves to an integer that is not positive (dlv:dimensionStrideFromField reading 0 or a negative value, or dlv:dimensionStrideFromExpression yielding one) is a description error, which a processor MUST raise when the layout is resolved, before any cell is addressed: a literal stride is held positive by the DLV shapes, and one the stream supplies cannot address a cell either; an arm whose condition fails to evaluate is also an error, never an arm that is merely false.",
+   "sha256": "01e344d2a72f94e8"
+  },
   "req-pm-delimited-records-1": {
    "page": "specification/processing/index.html",
    "section": "delimited-records",
@@ -1118,6 +1145,15 @@
     "5a4015899f4c1c36"
    ]
   },
+  "req-pm-inputs-outputs-2": {
+   "page": "specification/processing/index.html",
+   "section": "inputs-outputs",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST NOT refuse a description, or report it invalid, for results of severity sh:Warning or sh:Info alone; it MAY report them beside its output.",
+   "sha256": "fd8c56c707a7661f"
+  },
   "req-pm-introduction-1": {
    "page": "specification/processing/index.html",
    "section": "introduction",
@@ -1328,7 +1364,7 @@
    "audience": "processor",
    "text": "A Physical Parser MUST decode each as follows, the field's value being an IEEE 754 value in every case:",
    "sha256": "aa15d49e6d298cfa",
-   "context": "Introduces: bddo:ieee754: binary16, binary32 or binary64 by the data type's width, in the byte order in force. | bddo:ibmHexadecimal, for a 32- or 64-bit data type: read in the byte order in force, the most significant bit is the sign s, the next seven bits the exponent e… | bddo:vaxF, for a 32-bit data type (F_floating) or a 64-bit one (D_floating): the bytes are two or four 16-bit words, each stored least significant byte first,… | bddo:bfloat16, for a 16-bit data type: read in the byte order in force, a sign bit, an eight-bit exponent and a seven-bit fraction, which are the sixteen most…"
+   "context": "Introduces: bddo:ieee754: binary16, binary32 or binary64 by the data type's width, in the byte order in force. | bddo:ibmHexadecimal, for a 32- or 64-bit data type: read in the byte order in force, the most significant bit is the sign s, the next seven bits the exponent e… | bddo:vaxF, for a 32-bit data type (F_floating): the bytes are two 16-bit words, each stored least significant byte first, the first word the most significant;… | bddo:vaxD, for a 64-bit data type (D_floating): four 16-bit words in the word order of bddo:vaxF; in the 64 bits so assembled the sign s, an eight-bit exponent… | bddo:vaxG, for a 64-bit data type (G_floating): four 16-bit words in the word order of bddo:vaxF; in the 64 bits so assembled the sign s, an eleven-bit exponen… | bddo:bfloat16, for a 16-bit data type: read in the byte order in force, a sign bit, an eight-bit exponent and a seven-bit fraction, which are the sixteen most…"
   },
   "req-pm-numeric-representation-2": {
    "page": "specification/processing/index.html",
@@ -1356,9 +1392,12 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "bddo:vaxF, for a 32-bit data type (F_floating) or a 64-bit one (D_floating): the bytes are two or four 16-bit words, each stored least significant byte first, the first word the most significant; this order is the format's own, and the byte order in force is not consulted. In the 32 or 64 bits so assembled the most significant bit is the sign s, the next eight the exponent e and the remaining 23 or 55 the fraction f. With e ≠ 0 the number is (−1)^s × (0.5 + f / 2^24) × 2^e − 128 for 32 bits and (−1)^s × (0.5 + f / 2^56) × 2^e − 128 for 64 bits; with e = 0 and s = 0 it is zero, whatever the fraction; e = 0 with s = 1 is VAX's reserved operand, which is no number, and is a validation error.",
-   "sha256": "eb0131eb7b20b6db",
-   "context": "A Physical Parser MUST decode each as follows, the field's value being an IEEE 754 value in every case:"
+   "text": "bddo:vaxF, for a 32-bit data type (F_floating): the bytes are two 16-bit words, each stored least significant byte first, the first word the most significant; this word order is the format's own, and the byte order in force is not consulted. In the 32 bits so assembled the most significant bit is the sign s, the next eight the exponent e and the remaining 23 the fraction f. With e ≠ 0 the number is (−1)^s × (0.5 + f / 2^24) × 2^e − 128; with e = 0 and s = 0 it is zero, whatever the fraction; e = 0 with s = 1 is VAX's reserved operand, which is no number, and is a validation error. On a 64-bit data type bddo:vaxF is the deprecated spelling of bddo:vaxD, what it meant before the VAX formats had a term each, and is read exactly as bddo:vaxD is; bddo:FloatFormatWidthShape reports it at sh:Warning, so the description stays valid (Valid description).",
+   "sha256": "2251d12c3f397c40",
+   "context": "A Physical Parser MUST decode each as follows, the field's value being an IEEE 754 value in every case:",
+   "history": [
+    "eb0131eb7b20b6db"
+   ]
   },
   "req-pm-numeric-representation-5": {
    "page": "specification/processing/index.html",
@@ -1376,8 +1415,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "The number an bddo:ibmHexadecimal or bddo:vaxF field holds MUST be converted to the IEEE 754 format of the field's own width, binary32 or binary64, rounding to nearest with ties to even; a magnitude beyond that format's largest finite value becomes the infinity of its sign, and one below its smallest subnormal becomes zero of its sign.",
-   "sha256": "096249627c7621e8"
+   "text": "The number an bddo:ibmHexadecimal, bddo:vaxF, bddo:vaxD or bddo:vaxG field holds MUST be converted to the IEEE 754 format of the field's own width, binary32 or binary64, rounding to nearest with ties to even; a magnitude beyond that format's largest finite value becomes the infinity of its sign, and one below its smallest subnormal becomes zero of its sign.",
+   "sha256": "f7f8e2c7c5779357",
+   "history": [
+    "096249627c7621e8"
+   ]
   },
   "req-pm-numeric-representation-7": {
    "page": "specification/processing/index.html",
@@ -1385,8 +1427,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "A processor MUST raise a description error, when the description is loaded, for a float format on a width it is not defined for: bddo:ibmHexadecimal or bddo:vaxF on a 16-bit type, bddo:bfloat16 on a 32- or 64-bit one.",
-   "sha256": "dcc8d94c622c3bb8"
+   "text": "A processor MUST raise a description error, when the description is loaded, for a float format on a width it is not defined for (bddo:FloatFormatWidthShape): bddo:ibmHexadecimal or bddo:vaxF on a 16-bit type, bddo:vaxD or bddo:vaxG on a 16- or 32-bit one, bddo:bfloat16 on a 32- or 64-bit one.",
+   "sha256": "9c6503fa6aba5aa6",
+   "history": [
+    "dcc8d94c622c3bb8"
+   ]
   },
   "req-pm-numeric-representation-8": {
    "page": "specification/processing/index.html",
@@ -1405,6 +1450,26 @@
    "audience": "processor",
    "text": "A nibble above 9 is no digit: a processor MUST raise a validation error for it, the field's extent being known, so the cursor is sound.",
    "sha256": "f6ef888a129eed1d"
+  },
+  "req-pm-numeric-representation-10": {
+   "page": "specification/processing/index.html",
+   "section": "numeric-representation",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "bddo:vaxD, for a 64-bit data type (D_floating): four 16-bit words in the word order of bddo:vaxF; in the 64 bits so assembled the sign s, an eight-bit exponent e and a 55-bit fraction f. With e ≠ 0 the number is (−1)^s × (0.5 + f / 2^56) × 2^e − 128; zero and the reserved operand are as for bddo:vaxF.",
+   "sha256": "4fb1413006196b48",
+   "context": "A Physical Parser MUST decode each as follows, the field's value being an IEEE 754 value in every case:"
+  },
+  "req-pm-numeric-representation-11": {
+   "page": "specification/processing/index.html",
+   "section": "numeric-representation",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "bddo:vaxG, for a 64-bit data type (G_floating): four 16-bit words in the word order of bddo:vaxF; in the 64 bits so assembled the sign s, an eleven-bit exponent e and a 52-bit fraction f. With e ≠ 0 the number is (−1)^s × (0.5 + f / 2^53) × 2^e − 1024; zero and the reserved operand are as for bddo:vaxF.",
+   "sha256": "adc1e21b79dc6ff1",
+   "context": "A Physical Parser MUST decode each as follows, the field's value being an IEEE 754 value in every case:"
   },
   "req-pm-optional-codecs-1": {
    "page": "specification/processing/index.html",
@@ -1575,12 +1640,13 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Addressing. If an offset property is present, compute the target offset from bddo:atOffset / atOffsetFromField / atOffsetFromExpression, relative to bddo:offsetBase: streamStart (the default) counts from the start of the current stream, streamEnd counts backward from |S|, the length of the current stream, currentPosition from the cursor, and parentStart from the start offset of the containing struct node — the node node this field is bound into, whose start ParseStruct recorded in step 2, after any bddo:syncOnMarker seek (Bit-level fields (the bit cursor)). The current stream is the input stream or, inside a field decoded by hexplain:isEncodedWith and re-parsed as a struct, the decoded sub-stream (Stream metadata); a bounded region is not a stream, so streamEnd inside one still counts from the end of the stream that holds it. Save the current cursor — the byte position and any partially consumed byte of the bit cursor — seek to the target, parse — the steps below, the field's bddo:padTo included, are all carried out at the target (Padding) —, then restore the saved cursor, bit position included (an offset field does not advance sibling parsing and does not disturb a run of bit fields) unless offsetBase is currentPosition. A target outside the innermost bounded region raises a bounds error, unless the field declares bddo:seekScope bddo:streamScope: then the target is resolved against the whole stream [0, |S|) and the region bound is suspended for the duration of this one read (and restored before the cursor is).",
-   "sha256": "27c1bbd27367bf15",
+   "text": "Addressing. If an offset property is present, compute the target offset from bddo:atOffset / atOffsetFromField / atOffsetFromExpression, relative to bddo:offsetBase: streamStart (the default) counts from the start of the current stream, streamEnd counts backward from |S|, the length of the current stream, currentPosition from the cursor, fieldStart from the start of the sibling field bddo:offsetBaseField names (Offsets from a sibling), and parentStart from the start offset of the containing struct node — the node node this field is bound into, whose start ParseStruct recorded in step 2, after any bddo:syncOnMarker seek (Bit-level fields (the bit cursor)). The current stream is the input stream or, inside a field decoded by hexplain:isEncodedWith and re-parsed as a struct, the decoded sub-stream (Stream metadata); a bounded region is not a stream, so streamEnd inside one still counts from the end of the stream that holds it. Save the current cursor — the byte position and any partially consumed byte of the bit cursor — seek to the target, parse — the steps below, the field's bddo:padTo included, are all carried out at the target (Padding) —, then restore the saved cursor, bit position included (an offset field does not advance sibling parsing and does not disturb a run of bit fields) unless offsetBase is currentPosition. A target outside the innermost bounded region raises a bounds error, unless the field declares bddo:seekScope bddo:streamScope: then the target is resolved against the whole stream [0, |S|) and the region bound is suspended for the duration of this one read (and restored before the cursor is).",
+   "sha256": "f75228cc4b903eb8",
    "context": "A Physical Parser MUST parse a field by these steps, in this order; a step whose property the field does not declare does nothing:",
    "history": [
     "86d8e34170e64e1f",
-    "f9ca73521c3c5c1c"
+    "f9ca73521c3c5c1c",
+    "27c1bbd27367bf15"
    ]
   },
   "req-pm-parsefield-8": {
@@ -1828,8 +1894,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "A processor MUST raise a bounds error for a negative value with any of these three bases, whether the value is a literal, read from a field or computed: a negative distance names no position, and it is never reinterpreted as counting the other way.",
-   "sha256": "40068f05b180509b"
+   "text": "A processor MUST raise a bounds error for a negative value with any of these four bases, whether the value is a literal, read from a field or computed: a negative distance names no position, and it is never reinterpreted as counting the other way.",
+   "sha256": "bb6a9bb9f6238b28",
+   "history": [
+    "40068f05b180509b"
+   ]
   },
   "req-pm-parsefield-33": {
    "page": "specification/processing/index.html",
@@ -1848,6 +1917,24 @@
    "audience": "processor",
    "text": "For an offset-addressed field a processor MUST apply the padding at the field's target, not at the saved cursor: after the value has been read there and the field's checks made, and before the saved cursor is restored, so that the padding is measured where the value ends and never moves the cursor from which the field's siblings are parsed.",
    "sha256": "3fed06b793f33466"
+  },
+  "req-pm-parsefield-35": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST resolve such an offset from the start of the base field in the current stream and MUST raise a bounds error when the target lies outside the innermost bounded region (or, with bddo:seekScope bddo:streamScope, outside the stream).",
+   "sha256": "f0cf4a7466c4068a"
+  },
+  "req-pm-parsefield-36": {
+   "page": "specification/processing/index.html",
+   "section": "parsefield",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST raise a description error when the base field is not read before the offset-addressed field: when bddo:offsetBaseField names no earlier member of the same struct, or appears without bddo:fieldStart (both refused by bddo:OffsetBaseFieldShape, and raised when the description is loaded), and when the base field is absent, its bddo:isPresentIf having evaluated to false (raised when the offset is resolved).",
+   "sha256": "5435034b0b187c4e"
   },
   "req-pm-parsestruct-1": {
    "page": "specification/processing/index.html",
@@ -2271,9 +2358,12 @@
    "cls": "writer",
    "level": "MUST",
    "audience": "processor",
-   "text": "Padding, alignment and offsets. A fill byte is 0x00, with one exception: the padding of a bddo:padTo is filled with the bddo:padByte declared beside it, and with 0x00 when none is declared (The fill byte). The unused low-order bits of a partial byte the bit cursor leaves at a realignment point are 0. bddo:alignment writes fill bytes to the next multiple of the alignment, measured from the start of the current stream as at parse, and bddo:padTo writes its fill from the end of the field's value, or of the struct's last member, to the next multiple of its boundary, measured from the same origin. An offset-addressed field (bddo:atOffset and its forms, with its bddo:offsetBase) is written at its target, its bddo:padTo padding after its value there, and the cursor restored afterwards as at parse: the output is addressable, the bytes between the cursor and a target not yet written are fill bytes, and a target already written with different bytes, or a target before the start of the stream, is a validation error. Offset values are taken from T (the offset field's value or the expression's result); this version does not derive offset tables.",
-   "sha256": "9cb23f1ba4d1ddc4",
-   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
+   "text": "Padding, alignment and offsets. A fill byte is 0x00, with one exception: the padding of a bddo:padTo is filled with the bddo:padByte declared beside it, and with 0x00 when none is declared (The fill byte). The unused low-order bits of a partial byte the bit cursor leaves at a realignment point are 0. bddo:alignment writes fill bytes to the next multiple of the alignment, measured from the alignment origin as at parse, and bddo:padTo writes its fill from the end of the field's value, or of the struct's last member, to the next multiple of its boundary, measured from the same origin. An offset-addressed field (bddo:atOffset and its forms, with its bddo:offsetBase) is written at its target, its bddo:padTo padding after its value there, and the cursor restored afterwards as at parse: the output is addressable, the bytes between the cursor and a target not yet written are fill bytes, and a target already written with different bytes, or a target before the start of the stream, is a validation error. Offset values are taken from T (the offset field's value or the expression's result); this version does not derive offset tables.",
+   "sha256": "79ae71afceaf433a",
+   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:",
+   "history": [
+    "9cb23f1ba4d1ddc4"
+   ]
   },
   "req-pm-serialisation-26": {
    "page": "specification/processing/index.html",
@@ -2361,9 +2451,12 @@
    "cls": "writer",
    "level": "MUST",
    "audience": "processor",
-   "text": "A Writer MUST write a bddo:vaxF field as the F_floating or D_floating number equal to the value, in the format's own word order, and a positive zero as all-zero bytes.",
-   "sha256": "5cb09da2a0971e1a",
-   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
+   "text": "A Writer MUST write a bddo:vaxF, bddo:vaxD or bddo:vaxG field as the F_floating, D_floating or G_floating number equal to the value (a 64-bit bddo:vaxF as D_floating), in the format's own word order, and a positive zero as all-zero bytes.",
+   "sha256": "7d5c100938029237",
+   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:",
+   "history": [
+    "5cb09da2a0971e1a"
+   ]
   },
   "req-pm-serialisation-35": {
    "page": "specification/processing/index.html",
@@ -2381,9 +2474,12 @@
    "cls": "writer",
    "level": "MUST",
    "audience": "processor",
-   "text": "A Writer MUST raise a validation error, and write nothing for the field, when the bits so chosen would not read back as the value by the parse rule: a NaN or an infinity in an IBM or a VAX field; a magnitude outside the format's range (an IBM exponent above 127 or below 0, a VAX exponent outside 1 to 255); a negative zero in a VAX field, whose sign bit with a zero exponent is the reserved operand; a significand the format cannot carry exactly; and a binary32 value whose sixteen low bits are not zero in a bddo:bfloat16 field.",
-   "sha256": "e80a6b301021db7f",
-   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
+   "text": "A Writer MUST raise a validation error, and write nothing for the field, when the bits so chosen would not read back as the value by the parse rule: a NaN or an infinity in an IBM or a VAX field; a magnitude outside the format's range (an IBM exponent above 127 or below 0, a VAX exponent outside 1 to 255, or 1 to 2047 for G_floating); a negative zero in a VAX field, whose sign bit with a zero exponent is the reserved operand; a significand the format cannot carry exactly; and a binary32 value whose sixteen low bits are not zero in a bddo:bfloat16 field.",
+   "sha256": "a3cedb522bd26d7d",
+   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:",
+   "history": [
+    "e80a6b301021db7f"
+   ]
   },
   "req-pm-serialisation-37": {
    "page": "specification/processing/index.html",
