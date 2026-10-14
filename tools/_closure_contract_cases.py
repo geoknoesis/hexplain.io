@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from _cases import row, term
+from _cases import prefix_block, row, term
 from _layout_property_cases import LAYOUT
 from _layout_property_cases import PREFIX as LP
 from _physical_property_cases import PREFIX as PHYSICAL
@@ -100,7 +100,7 @@ def cases() -> list[dict[str, Any]]:
         "dlv/dlv.ttl",
         LP + 'ex:r a dlv:DimensionOrderRule; b:condition "true"; dlv:ruleDimensionOrder (ex:unknown).',
     )
-    rp = "@prefix r:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:closure-raster:> . "
+    rp = prefix_block({"r": "raster", "ex": "urn:closure-raster:"}, " ")
     for name, body, path in [
         ("literal band", 'ex:f r:hasBand "band".', "hasBand"),
         ("literal dimension member", 'ex:f a r:SampleArray; r:dimensions ("dimension").', ""),
@@ -115,7 +115,7 @@ def cases() -> list[dict[str, Any]]:
     add(
         "unknown bundle binding",
         "aspect/bundle/bundle.ttl",
-        "@prefix a:<https://hexplain.io/ns/aspect/bundle#> . <urn:f> a a:Asset; a:boundBy <urn:unknown>.",
+        prefix_block({"a": "bundle"}, " ") + "<urn:f> a a:Asset; a:boundBy <urn:unknown>.",
         path=term("bundle", "boundBy"),
     )
     add(
@@ -127,9 +127,8 @@ def cases() -> list[dict[str, Any]]:
     add(
         "reused encoding shape without shorthand",
         "hexplain/core.ttl",
-        "@prefix c:<https://hexplain.io/ns/core#> . @prefix ex:<urn:closure:> . @prefix "
-        "skos:<http://www.w3.org/2004/02/skos/core#> .\n"
-        "ex:f c:hasEncodingStep (ex:step). ex:step a c:EncodingStep; c:codec ex:codec. ex:codec a skos:Concept.",
+        prefix_block({"c": "hexplain", "ex": "urn:closure:", "skos": "skos"})
+        + "ex:f c:hasEncodingStep (ex:step). ex:step a c:EncodingStep; c:codec ex:codec. ex:codec a skos:Concept.",
         True,
         target_shape=term("hexplain", "IsEncodedWithShape"),
         target_node="urn:closure:f",

@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "specification/validation"
 
 
-def build() -> tuple[Any, ...]:
+def build() -> tuple[str, str]:
     modules = json.loads((ROOT / "specification/reference/manifest.json").read_text(encoding="utf-8"))
     terms = {
         iri: dict(iri=iri, module=m["module"], positive=[], negative=[], result_path=[])
@@ -53,7 +53,7 @@ def build() -> tuple[Any, ...]:
         mentioned=sum(bool(r["positive"] or r["negative"]) for r in rows),
         with_asserted_result_path=sum(bool(r["result_path"]) for r in rows),
     )
-    result = dict(
+    result: dict[str, Any] = dict(
         hash_policy="SHA-256 of UTF-8 corpus text with universal-newline normalization to LF; immutable archives "
         "retain "
         "their original byte hashes.",

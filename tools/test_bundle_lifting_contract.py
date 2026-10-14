@@ -49,6 +49,7 @@ e:value r:isDefinedBy e:aspect .
         before = set(data)
         result = data.query(query, initBindings={"this": URIRef("urn:test:asset")}).graph
         exact = {(URIRef("urn:test:asset"), URIRef("urn:test:value"), Literal(v)) for v in expected}
+        assert result is not None, name
         assert set(result) == exact, (name, list(result))
         assert set(data) == before, name
     print(f"PASS: {len(cases)} bundle lifting competency cases, exact output graphs, no inference")

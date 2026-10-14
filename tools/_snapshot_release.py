@@ -9,7 +9,6 @@ import json
 import re
 import zipfile
 from pathlib import Path
-from typing import Any
 
 import specgraph
 from rdflib import OWL, RDF, Graph
@@ -17,7 +16,7 @@ from rdflib import OWL, RDF, Graph
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def snapshot(release_id: Any) -> None:
+def snapshot(release_id: str) -> None:
     assert re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}\.[1-9][0-9]*", release_id), "Use YYYY-MM-DD.N"
     out = ROOT / "releases" / release_id
     assert not out.exists(), "Immutable snapshot already exists; choose a new revision"

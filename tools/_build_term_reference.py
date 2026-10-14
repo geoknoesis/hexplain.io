@@ -17,7 +17,7 @@ from collections.abc import Iterable
 from functools import cache
 from html import escape as e
 from pathlib import Path
-from typing import Any
+from typing import TypedDict
 
 from _reference import (
     ANNOTATIONS,
@@ -41,6 +41,7 @@ from _reference import (
     stated_definition,
 )
 from rdflib import OWL, RDF, RDFS, BNode, Graph, Literal, URIRef
+from rdflib.term import Node
 
 START = "<!-- BEGIN GENERATED TERM REFERENCE -->"
 END = "<!-- END GENERATED TERM REFERENCE -->"
@@ -106,7 +107,7 @@ STYLE = (
     "#078779;outline-offset:3px}@media(max-width:650px){.term-reference article{padding:1rem}}@media "
     "print{.term-reference article{break-inside:avoid}.term-reference details{display:block}}\n"
 )
-PREDICATES = {
+PREDICATES: dict[Node, str] = {
     SH.property: "Property constraint",
     SH.path: "Value path",
     SH.targetClass: "Target class",
@@ -165,7 +166,7 @@ PREDICATES = {
 
 
 @cache
-def file_subjects(path: Path) -> set[Any]:
+def file_subjects(path: Path) -> set[Node]:
     return set(load([path], base=True).subjects())
 
 
@@ -173,7 +174,7 @@ LOCAL = re.compile(r"[A-Za-z_][A-Za-z0-9_-]*")
 BLOCK_PREFIXES = {"rdfs": str(RDFS), "skos": str(SKOS)}
 
 
-def block_turtle(rows: list[dict[str, Any]], namespaces: Any) -> Any:
+def block_turtle(rows: list[tuple[URIRef, URIRef, Literal]], namespaces: dict[str, str]) -> str:
     """The generated annotations as readable Turtle: prefixed names, one subject per statement.
 
     The text carries its own @prefix lines: it is the body of the module's annotation graph
@@ -181,7 +182,7 @@ def block_turtle(rows: list[dict[str, Any]], namespaces: Any) -> Any:
     prefixes = dict(BLOCK_PREFIXES)
     prefixes.update(namespaces)
 
-    def name(node):
+    def name(node: Node) -> str:
         if isinstance(node, Literal):
             return node.n3()
         for p, ns in sorted(prefixes.items(), key=lambda x: -len(x[1])):
@@ -190,10 +191,10 @@ def block_turtle(rows: list[dict[str, Any]], namespaces: Any) -> Any:
         return node.n3()
 
     order = {RDFS.label: 0, SKOS.definition: 2, SKOS.scopeNote: 3}
-    by_subject = defaultdict(list)
+    by_subject: defaultdict[URIRef, list[tuple[URIRef, Literal]]] = defaultdict(list)
     for s, p, o in rows:
         by_subject[s].append((p, o))
-    used = set()
+    used: set[Node] = set()
     statements = []
     for s in sorted(by_subject, key=str):
         pairs = sorted(by_subject[s], key=lambda x: (order[x[0]], str(x[1])))
@@ -204,7 +205,7 @@ def block_turtle(rows: list[dict[str, Any]], namespaces: Any) -> Any:
     return head + ("\n" if head else "") + "\n".join(statements) + ("\n" if statements else "")
 
 
-def doc_header(path: Path, ontology: Any) -> str:
+def doc_header(path: Path, ontology: Node | None) -> str:
     """The comment that opens a module's annotation graph: what it is, and that it is generated."""
     subject = f"<{ontology}>" if ontology is not None else path.name
     return (
@@ -257,7 +258,7 @@ def enrich() -> None:
         p.write_text(text, encoding="utf-8", newline="\n")
 
 
-def sortkey(g: Graph, node: URIRef, seen: set[str] = frozenset()) -> str:
+def sortkey(g: Graph, node: Node, seen: frozenset[Node] = frozenset()) -> str:
     if not isinstance(node, BNode):
         return str(node)
     if node in seen:
@@ -268,12 +269,12 @@ def sortkey(g: Graph, node: URIRef, seen: set[str] = frozenset()) -> str:
 
 
 class Renderer:
-    def __init__(self, g: Graph, registry: Any, doc: Any) -> None:
+    def __init__(self, g: Graph, registry: dict[Node, Path], doc: Path) -> None:
         self.g = g
         self.registry = registry
         self.doc = doc
 
-    def link(self, node: Any) -> str:
+    def link(self, node: Node) -> str:
         if isinstance(node, Literal):
             return "<code>" + e(node.n3()) + "</code>"
         if node == RDF.nil:
@@ -289,10 +290,10 @@ class Renderer:
         )
         return f'<a href="{e(href, quote=True)}"><code>{e(label)}</code></a>'
 
-    def values(self, vals: Iterable[Any]) -> str:
+    def values(self, vals: Iterable[Node]) -> str:
         return ", ".join(self.link(v) for v in sorted(vals, key=lambda x: sortkey(self.g, x)))
 
-    def node(self, node: Any, seen: frozenset[Any] = frozenset()) -> str:
+    def node(self, node: Node, seen: frozenset[Node] = frozenset()) -> str:
         if not isinstance(node, BNode):
             return self.link(node)
         if node in seen:
@@ -300,8 +301,8 @@ class Renderer:
         seen = seen | {node}
         if (node, RDF.first, None) in self.g:
             vals = []
-            current = node
-            cells = set()
+            current: Node = node
+            cells: set[Node] = set()
             while current != RDF.nil:
                 if current in cells:
                     return "<em>Cyclic RDF list; inspect canonical Turtle.</em>"
@@ -315,7 +316,7 @@ class Renderer:
             return "<ol>" + "".join("<li>" + v + "</li>" for v in vals) + "</ol>"
         return self.constraints(node, seen)
 
-    def constraints(self, node: Any, seen: frozenset[Any] = frozenset()) -> str:
+    def constraints(self, node: Node, seen: frozenset[Node] = frozenset()) -> str:
         rows = []
         for p, o in sorted(self.g.predicate_objects(node), key=lambda x: (str(x[0]), sortkey(self.g, x[1]))):
             if p in ANNOTATIONS or p == RDFS.comment:
@@ -326,8 +327,8 @@ class Renderer:
         return '<ul class="constraint">' + "".join(rows) + "</ul>"
 
 
-def related_shapes(g: Graph) -> Any:
-    use = defaultdict(set)
+def related_shapes(g: Graph) -> defaultdict[URIRef, set[URIRef]]:
+    use: defaultdict[URIRef, set[URIRef]] = defaultdict(set)
     for shape in sorted(set(g.subjects(RDF.type, SH.NodeShape)) | set(g.subjects(RDF.type, SH.PropertyShape)), key=str):
         if not isinstance(shape, URIRef):
             continue
@@ -344,15 +345,20 @@ def related_shapes(g: Graph) -> Any:
 
 
 def reference_section(
-    g: Graph, terms: Iterable[Any], doc: Path, registry: Any, used: dict[str, Any], existing: str = ""
-) -> Any:
+    g: Graph,
+    terms: list[URIRef],
+    doc: Path,
+    registry: dict[Node, Path],
+    used: dict[URIRef, set[URIRef]],
+    existing: str = "",
+) -> str:
     render = Renderer(g, registry, doc)
     toc = (
         '<nav class="term-toc" aria-label="Term reference">'
         + "".join(f'<a href="#term-{e(local(t))}">{e(compact(g, t))}</a>' for t in terms)
         + "</nav>"
     )
-    scopes = defaultdict(int)
+    scopes: defaultdict[str, int] = defaultdict(int)
     for t in terms:
         scopes[str(g.value(t, SKOS.scopeNote))] += 1
     shared = {
@@ -386,7 +392,7 @@ def reference_section(
             else f'<span id="{e(local(t))}"></span>'
         )
 
-        def row(title, value):
+        def row(title: str, value: str) -> str:
             return f"<dt>{e(title)}</dt><dd>{value}</dd>"
 
         metadata = row("Label", e(name)) + row("Definition", e(str(definition_text)))
@@ -522,7 +528,7 @@ def reference_section(
     )
 
 
-def replace_normative(text: str, paths: Any) -> Any:
+def replace_normative(text: str, paths: Iterable[Path]) -> str:
     source = "\n".join((ROOT / p).read_text(encoding="utf-8").rstrip() for p in paths) + "\n"
     section = (
         '<section id="normative-owl"><h2>Canonical vocabulary and shapes</h2><pre class="nohighlight">'
@@ -542,7 +548,7 @@ LEAD = re.compile(
 )
 
 
-def lead_text(module_graph: Graph) -> tuple[Any, ...]:
+def lead_text(module_graph: Graph) -> tuple[str, str]:
     """The page lead: the first paragraph of the module ontology's rdfs:comment."""
     ontology = next(iter(sorted(module_graph.subjects(RDF.type, OWL.Ontology), key=lambda o: len(str(o)))), None)
     comment = (
@@ -553,7 +559,7 @@ def lead_text(module_graph: Graph) -> tuple[Any, ...]:
     return label(module_graph, ontology) if ontology else "", comment.replace("\r\n", "\n").split("\n\n")[0].strip()
 
 
-def refresh_lead(text: str, module_graph: Any) -> Any:
+def refresh_lead(text: str, module_graph: Graph) -> str:
     """Generated module pages restate the ontology's label and comment; keep them equal."""
     title, lead = lead_text(module_graph)
     if not title:
@@ -561,20 +567,30 @@ def refresh_lead(text: str, module_graph: Any) -> Any:
     return LEAD.sub(lambda m: m[1] + e(title) + m[3] + e(lead) + m[5], text, count=1)
 
 
-def build(check: bool = False) -> Any:
+class ManifestEntry(TypedDict):
+    """One module's row of specification/reference/manifest.json."""
+
+    module: str
+    page: str
+    terms: int
+    shapes: int
+    iris: list[str]
+
+
+def build(check: bool = False) -> list[ManifestEntry]:
     file_subjects.cache_clear()
     mods = modules()
     g = load([p for paths in mods.values() for p in paths])
-    registry = {}
-    termsets = {}
+    registry: dict[Node, Path] = {}
+    termsets: dict[Path, list[URIRef]] = {}
     for directory, paths in mods.items():
         terms = owned(load(paths))
         termsets[directory] = terms
         for t in terms:
             registry[t] = ROOT / directory / "index.html"
     used = related_shapes(g)
-    failures = []
-    manifest = []
+    failures: list[str] = []
+    manifest: list[ManifestEntry] = []
     for directory, paths in mods.items():
         doc = ROOT / directory / "index.html"
         terms = termsets[directory]

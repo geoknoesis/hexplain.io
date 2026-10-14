@@ -21,8 +21,8 @@ def main() -> int:
         except Exception as error:  # noqa: BLE001 - report any parse failure
             failures.append((file.relative_to(ROOT).as_posix(), str(error)))
     if failures:
-        for path, error in failures:
-            print("FAIL", path, "->", error)
+        for path, reason in failures:
+            print("FAIL", path, "->", reason)
         return 1
     print(f"PASS: all {len(files)} ttl files parse")
     return 0

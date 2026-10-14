@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from html import escape
 from pathlib import Path
+from typing import Any
 
 from _site_inventory import with_print_link
 
@@ -16,7 +17,7 @@ def build(check: bool = False) -> int:
     contracts = json.loads((source / "processing-contracts.json").read_text(encoding="utf-8"))
     catalog = json.loads((source / "primitive-types.json").read_text(encoding="utf-8"))
 
-    def detail(c):
+    def detail(c: dict[str, Any]) -> str:
         procedure = (
             "<ol>" + "".join("<li>" + escape(x) + "</li>" for x in c.get("procedure", [])) + "</ol>"
             if c.get("procedure")

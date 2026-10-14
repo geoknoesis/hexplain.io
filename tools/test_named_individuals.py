@@ -14,7 +14,6 @@ specification/ontology-design (Naming) states the convention for new ones.
 from __future__ import annotations
 
 import sys
-from typing import Any
 
 import specgraph
 from rdflib import OWL, RDF, Graph, Namespace, URIRef
@@ -23,7 +22,7 @@ SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 HX = "https://hexplain.io/ns/"
 
 
-def problems(g: Graph) -> list[Any]:
+def problems(g: Graph) -> list[str]:
     classes = {c for c in g.subjects(RDF.type, OWL.Class) if str(c).startswith(HX)}
     found = set()
     for term, cls in g.subject_objects(RDF.type):

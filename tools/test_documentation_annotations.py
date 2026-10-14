@@ -28,7 +28,6 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any
 
 from rdflib import RDFS, Graph, Namespace, URIRef
 
@@ -49,7 +48,7 @@ TEMPLATE_NOTES = (
 NTRIPLE = re.compile(r"^<[^>\s]+>\s+<[^>\s]+>\s", re.M)
 
 
-def problems(g: Graph) -> Any:
+def problems(g: Graph) -> list[str]:
     found = []
     for predicate in PROSE:
         for term, text in g.subject_objects(predicate):

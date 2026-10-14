@@ -35,13 +35,13 @@ import sys
 from collections import defaultdict
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
 
 import specgraph
 from _known_terms import owned_namespaces, unknown_terms
 from pyshacl import validate
 from rdflib import OWL, RDF, RDFS, BNode, Graph, Namespace, URIRef
 from rdflib.collection import Collection
+from rdflib.term import Node
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / "specification/validation/test/strict-profile-shapes.ttl"
@@ -98,13 +98,14 @@ EXTRA = {
 }
 
 
-def _iri(name, default=BDDO):
+def _iri(name: str, default: str = BDDO) -> URIRef:
     return URIRef(name if name.startswith("https://") else default + name)
 
 
-def _node_level(g, shape):
+def _node_level(g: Graph, shape: Node) -> list[Node]:
     """The shape and the shapes its logical combinators name, without entering property shapes."""
-    out, stack = [], [shape]
+    out: list[Node] = []
+    stack: list[Node] = [shape]
     while stack:
         node = stack.pop()
         if node in out:
@@ -117,8 +118,8 @@ def _node_level(g, shape):
     return out
 
 
-def _paths(g, shape):
-    found = set()
+def _paths(g: Graph, shape: Node) -> set[Node]:
+    found: set[Node] = set()
     for node in _node_level(g, shape):
         for pshape in g.objects(node, SH.property):
             path = g.value(pshape, SH.path)
@@ -131,14 +132,18 @@ def _paths(g, shape):
     return found
 
 
-def _focus_classes(g, shape):
+def _focus_classes(g: Graph, shape: Node) -> set[Node]:
     classes = set(g.objects(shape, SH.targetClass))
     for node in _node_level(g, shape):
         classes |= set(g.objects(node, SH["class"]))
     return classes
 
 
-def vocabulary(family: Graph) -> tuple[Any, ...]:
+#: class -> a set of properties or of related classes.
+ClassSets = dict[Node, set[Node]]
+
+
+def vocabulary(family: Graph) -> tuple[set[Node], ClassSets, ClassSets, ClassSets]:
     """(properties, class -> own properties, class -> superclasses, class -> subclasses)."""
     props = {
         p
@@ -146,7 +151,7 @@ def vocabulary(family: Graph) -> tuple[Any, ...]:
         for p in family.subjects(RDF.type, t)
         if any(str(p).startswith(n) for n in NAMESPACES)
     }
-    own = defaultdict(set)
+    own: defaultdict[Node, set[Node]] = defaultdict(set)
     for shape in set(family.subjects(RDF.type, SH.NodeShape)):
         used = (_paths(family, shape) | set(family.objects(shape, SH.targetSubjectsOf))) & props
         for cls in _focus_classes(family, shape):
@@ -157,26 +162,21 @@ def vocabulary(family: Graph) -> tuple[Any, ...]:
     for cls in list(own):
         for instance in family.subjects(RDF.type, cls):
             own[cls] |= set(family.predicates(instance, None)) & props
-    for cls, names in EXTRA.items():
-        own[URIRef(cls)] |= {_iri(n) for n in names}
+    for extra_class, names in EXTRA.items():
+        own[URIRef(extra_class)] |= {_iri(n) for n in names}
     missing = {p for names in EXTRA.values() for p in map(_iri, names)} - props
     assert not missing, f"EXTRA names properties the family does not define: {sorted(missing)}"
-    supers = {c: set(family.transitive_objects(c, RDFS.subClassOf)) - {c} for c in own}
+    supers = {c: {s for s in family.transitive_objects(c, RDFS.subClassOf) if s is not None} - {c} for c in own}
     subs = {c: {d for d in own if c in supers[d]} for c in own}
     return props, own, supers, subs
 
 
-def allowed(own: dict[URIRef, set[URIRef]], supers: dict[URIRef, set[URIRef]], cls: URIRef) -> set[URIRef]:
+def allowed(own: ClassSets, supers: ClassSets, cls: Node) -> set[Node]:
     """The properties a class accepts: its own plus those of its superclasses."""
     return set(own[cls]).union(*(own.get(s, set()) for s in supers[cls]))
 
 
-def characteristic(
-    own: dict[URIRef, set[URIRef]],
-    supers: dict[URIRef, set[URIRef]],
-    subs: dict[URIRef, set[URIRef]],
-    cls: URIRef,
-) -> list[URIRef]:
+def characteristic(own: ClassSets, supers: ClassSets, subs: ClassSets, cls: Node) -> list[Node]:
     """Properties of the class that no class outside its own line of descent uses."""
     line = {cls} | supers[cls] | subs[cls]
     others = set().union(*(allowed(own, supers, d) for d in own if d not in line))
@@ -235,7 +235,7 @@ def render(family: Graph) -> str:
 SKIPPED_DIRS = {"build", "build-root", ".gradle", "node_modules", "out", ".git"}
 
 
-def _tracked(root):
+def _tracked(root: Path) -> list[Path]:
     """The Turtle files git tracks under [root], or every one when it is not a git checkout."""
     import subprocess
 
@@ -250,7 +250,7 @@ def _tracked(root):
         return sorted(root.rglob("*.ttl"))
 
 
-def engine_profiles(root: Path, family_ontologies: Any) -> Iterator[Any]:
+def engine_profiles(root: Path, family_ontologies: set[Node]) -> Iterator[tuple[Path, Graph | Exception]]:
     """Every tracked Turtle file of the engine checkout that describes a format, parsed.
 
     Found by content, not by name: a file that uses the bddo namespace describes a format, whatever

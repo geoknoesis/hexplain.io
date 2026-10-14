@@ -13,7 +13,6 @@ from __future__ import annotations
 import json
 import pathlib
 import sys
-from typing import Any
 
 import specgraph
 from _known_terms import owned_namespaces, unknown_terms
@@ -22,7 +21,7 @@ from rdflib import Graph
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
-def data_files() -> list[Any]:
+def data_files() -> list[pathlib.Path]:
     family = {
         (ROOT / "specification" / f).resolve()
         for f in json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]

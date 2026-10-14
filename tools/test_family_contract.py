@@ -4,21 +4,27 @@ Each case validates one small data graph against one module's shapes and is inde
 every other case, so the cases are checked across worker processes. Verdicts, result paths
 and source shapes are collected and reported in authored order, which keeps a failure
 message identical to the sequential form regardless of completion order.
+
+The gate only checks. The retained snapshot (family-contracts.json) is written by
+``python tools/_build_family_contracts.py --write``; here the authored cases are compared with
+it as graphs, since RDF blank-node identifiers and Turtle spelling are immaterial.
 """
 
 from __future__ import annotations
 
-import argparse
 import json
+import sys
 from collections.abc import Iterator
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from typing import Any
 
+from _build_family_contracts import RETAINED
 from _family_contract_cases import cases
 from _gate_runner import gate_workers
 from pyshacl import validate
 from rdflib import Graph, Namespace, URIRef
+from rdflib.compare import isomorphic
 
 ROOT = Path(__file__).resolve().parents[1]
 SH = Namespace("http://www.w3.org/ns/shacl#")
@@ -28,11 +34,19 @@ SH = Namespace("http://www.w3.org/ns/shacl#")
 CHUNK = 24
 
 
-def check(task: Any) -> Any:
-    """Validate one module's chunk, returning (index, name, reason) for each failure."""
+#: An authored case as the retained file holds it.
+Row = dict[str, Any]
+#: One module's chunk of cases, each with its position in authored order.
+Task = tuple[str, list[tuple[int, Row]]]
+#: A failed case: (authored index, name, reason, validation report).
+Failure = tuple[int, str, str, str]
+
+
+def check(task: Task) -> list[Failure]:
+    """Validate one module's chunk, returning (index, name, reason, report) for each failure."""
     module, items = task
     shapes = Graph().parse(ROOT / module)
-    failures = []
+    failures: list[Failure] = []
     for index, row in items:
         selected = shapes
         if row.get("targetShape"):
@@ -61,8 +75,9 @@ def check(task: Any) -> Any:
     return failures
 
 
-def tasks(rows: list[dict[str, Any]]) -> Iterator[Any]:
-    grouped = {}
+def tasks(rows: list[Row]) -> Iterator[Task]:
+    """The cases grouped by module and cut into chunks, in authored order."""
+    grouped: dict[str, list[tuple[int, Row]]] = {}
     for index, row in enumerate(rows):
         grouped.setdefault(row["module"], []).append((index, row))
     for module, items in grouped.items():
@@ -70,21 +85,34 @@ def tasks(rows: list[dict[str, Any]]) -> Iterator[Any]:
             yield module, items[start : start + CHUNK]
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument(
-        "--write",
-        action="store_true",
-        help="Regenerate specification/validation/test/family-contracts.json from the authored cases (then rerun "
-        "tools/_constraint_coverage.py, which hashes it)",
+def compare_retained(rows: list[Row]) -> None:
+    """The retained snapshot holds exactly the authored cases, compared field by field and graph by graph."""
+    relative = RETAINED.relative_to(ROOT).as_posix()
+    retained = json.loads(RETAINED.read_text(encoding="utf-8"))
+    stale = (
+        f"{relative} differs from the authored cases; review the change, then run "
+        "`python tools/_build_family_contracts.py --write` and `python tools/_constraint_coverage.py`"
     )
-    args = parser.parse_args()
+    assert len(rows) == len(retained), stale
+    for a, b in zip(rows, retained, strict=True):
+        assert {k: v for k, v in a.items() if k != "data"} == {k: v for k, v in b.items() if k != "data"}, stale
+        assert isomorphic(
+            Graph().parse(data=a["data"], format="turtle"), Graph().parse(data=b["data"], format="turtle")
+        ), stale
+
+
+def main() -> int:
+    # The old `--write` habit must not look like a pass that regenerated something.
+    assert len(sys.argv) == 1, (
+        "this gate takes no arguments and writes nothing; the retained file is written by "
+        "`python tools/_build_family_contracts.py --write`"
+    )
     rows = cases()
     assert len({row["name"] for row in rows}) == len(rows), "Case names must be unique evidence identifiers"
 
     queue = list(tasks(rows))
     parallel = gate_workers()
-    failures = []
+    failures: list[Failure] = []
     completed = 0
     print(f"Validating {len(rows)} family contracts in {len(queue)} tasks across {parallel} worker(s)", flush=True)
     with ProcessPoolExecutor(max_workers=parallel) as pool:
@@ -97,27 +125,7 @@ def main() -> int:
     assert not failures, "Family contract failures:\n" + "\n".join(
         f"  {name}: {reason}\n{detail}" for _, name, reason, detail in failures[:5]
     )
-
-    p = ROOT / "specification/validation/test/family-contracts.json"
-    # RDF blank-node identifiers are immaterial; compare graphs when checking retained cases.
-    if args.write:
-        p.write_text(json.dumps(rows, indent=2) + "\n", encoding="utf-8", newline="\n")
-        print(f"Wrote {len(rows)} cases to {p.relative_to(ROOT).as_posix()}; rerun tools/_constraint_coverage.py")
-        return 0
-    else:
-        from rdflib.compare import isomorphic
-
-        retained = json.loads(p.read_text(encoding="utf-8"))
-        stale = (
-            f"{p.relative_to(ROOT).as_posix()} differs from the authored cases; review the change, then run "
-            "`python tools/test_family_contract.py --write` and `python tools/_constraint_coverage.py`"
-        )
-        assert len(rows) == len(retained), stale
-        for a, b in zip(rows, retained, strict=True):
-            assert {k: v for k, v in a.items() if k != "data"} == {k: v for k, v in b.items() if k != "data"}, stale
-            assert isomorphic(
-                Graph().parse(data=a["data"], format="turtle"), Graph().parse(data=b["data"], format="turtle")
-            )
+    compare_retained(rows)
     print(f"PASS: {len(rows)} authored module contracts with result-path assertions")
     return 0
 

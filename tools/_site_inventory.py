@@ -6,7 +6,6 @@ import os
 import re
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any
 from urllib.parse import unquote, urlsplit
 from xml.sax.saxutils import escape
 
@@ -15,20 +14,21 @@ ORIGIN = "https://hexplain.io"
 
 
 class Page(HTMLParser):
-    def __init__(self, path):
+    def __init__(self, path: Path) -> None:
         super().__init__()
-        self.ids, self.links = set(), []
+        self.ids: set[str | None] = set()
+        self.links: list[str | None] = []
         self.feed(path.read_text(encoding="utf-8"))
 
-    def handle_starttag(self, tag: str, attrs: Any) -> None:
-        attrs = dict(attrs)
-        if "id" in attrs:
-            self.ids.add(attrs["id"])
-        if tag == "a" and "href" in attrs:
-            self.links.append(attrs["href"])
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        found = dict(attrs)
+        if "id" in found:
+            self.ids.add(found["id"])
+        if tag == "a" and "href" in found:
+            self.links.append(found["href"])
 
 
-def pages() -> list[Any]:
+def pages() -> list[Path]:
     # The snapshot index is public too: it is where a pinned version is downloaded from.
     return [ROOT / "index.html", ROOT / "releases/index.html", *sorted((ROOT / "specification").rglob("*.html"))]
 
@@ -38,7 +38,7 @@ def print_link(page: Path) -> str:
     return f'<link rel="stylesheet" href="{href}" media="print">'
 
 
-def with_print_link(page: Path, source: str) -> Any:
+def with_print_link(page: Path, source: str) -> str:
     # Generated pages apply this themselves so their output already carries the link;
     # otherwise the page-equality gates and this sync pass contradict each other.
     link = print_link(page)
@@ -72,13 +72,16 @@ def sitemap() -> str:
     )
 
 
-def broken_links() -> Any:
+def broken_links() -> list[tuple[str, str, str]]:
     parsed = {p.resolve(): Page(p) for p in pages()}
     broken = []
     for path, page in list(parsed.items()):
         for link in page.links:
+            # An href without a value is no link at all.
+            if not link:
+                continue
             url = urlsplit(link)
-            if url.scheme or url.netloc or not link:
+            if url.scheme or url.netloc:
                 continue
             target = (
                 (

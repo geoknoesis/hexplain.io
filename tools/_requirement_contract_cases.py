@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
-from _cases import row, term
+from _cases import prefix_block, row, term
 
 CONF = "conf/shapes.ttl"
 CONF_NS = "https://hexplain.io/ns/conf#"
@@ -33,12 +34,9 @@ def class_cases() -> list[dict[str, Any]]:
             {"scope": '"field"', "assertion": "1", "satisfies": "ex:untyped", "message": "1"},
         ),
     ]:
-        prefix = (
-            f"@prefix p:<https://hexplain.io/ns/{module}#> . @prefix ex:<urn:requirement-case:> . "
-            "ex:requirement a <https://hexplain.io/ns/req#Requirement> ."
-        )
-        if module == "req":
-            prefix = prefix.split("ex:requirement a")[0]
+        prefix = prefix_block({"p": module, "ex": "urn:requirement-case:"}, " ")
+        if module != "req":
+            prefix += "ex:requirement a <https://hexplain.io/ns/req#Requirement> ."
         # A constraint's scope is a bddo:Struct or bddo:Field; the valid scope is typed as one.
         if module == "conf":
             prefix += " ex:field a <https://hexplain.io/ns/bddo#Field> ."
@@ -87,9 +85,8 @@ def finding_cases() -> list[dict[str, Any]]:
     """Findings: what an evaluation reports, and each way a malformed one is caught."""
     rows: list[dict[str, Any]] = []
     conf = (
-        "@prefix c:<https://hexplain.io/ns/conf#> . @prefix r:<https://hexplain.io/ns/req#> . "
-        "@prefix h:<https://hexplain.io/ns/core#> . @prefix sh:<http://www.w3.org/ns/shacl#> . "
-        "@prefix ex:<urn:requirement-case:> . ex:req a r:Requirement . ex:req2 a r:Requirement . "
+        prefix_block({"c": "conf", "r": "req", "h": "hexplain", "sh": "sh", "ex": "urn:requirement-case:"}, " ")
+        + "ex:req a r:Requirement . ex:req2 a r:Requirement . "
         "ex:field a <https://hexplain.io/ns/bddo#Field> . "
         'ex:con a c:Constraint ; c:scope ex:field ; c:assertion "true" ; c:satisfies ex:req ; c:message "m" . '
         'ex:con2 a c:Constraint ; c:scope ex:field ; c:assertion "true" ; c:satisfies ex:req ; c:message "m" . '
@@ -104,7 +101,7 @@ def finding_cases() -> list[dict[str, Any]]:
     located = {"h:byteOffset": "0", "h:byteLength": "4"}
 
     def finding_case(
-        name: str, changed: dict[str, str | None], expected: bool, path: str = "", extra: str = ""
+        name: str, changed: Mapping[str, str | None], expected: bool, path: str = "", extra: str = ""
     ) -> None:
         body = (
             "ex:fd a c:Finding . "
@@ -268,8 +265,8 @@ def finding_cases() -> list[dict[str, Any]]:
     ]:
         rows.append(row("conf " + name, CONF, conf + body, ok, CONF_NS + path if path else ""))
     rq = (
-        "@prefix r:<https://hexplain.io/ns/req#> . @prefix ex:<urn:requirement-case:> . "
-        'ex:f a r:Requirement ; r:requirementId "R01" ; r:fromStandard "format specification" ; '
+        prefix_block({"r": "req", "ex": "urn:requirement-case:"}, " ")
+        + 'ex:f a r:Requirement ; r:requirementId "R01" ; r:fromStandard "format specification" ; '
         'r:statement "Must have a header" ; r:discrepancyType r:Syntactic ; r:appliesToVersion '
     )
     rows.append(row("req version empty", "req/shapes.ttl", rq + '"" .', False, term("req", "appliesToVersion")))

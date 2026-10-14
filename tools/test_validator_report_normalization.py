@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from _compare_validator_reports import normalize
 from rdflib import RDF, BNode, Graph, Namespace, URIRef
+from rdflib.term import Node
 
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
@@ -16,9 +15,9 @@ def report(
     component: str = "MinCountConstraintComponent",
     severity: str = "Violation",
     count: int = 1,
-    value: str = "urn:v",
-    shape: str = "urn:s",
-) -> Any:
+    value: str | Node | None = "urn:v",
+    shape: str | Node | None = "urn:s",
+) -> Graph:
     graph = Graph()
     for _ in range(count):
         node = BNode()
@@ -31,11 +30,11 @@ def report(
             (SH.resultSeverity, SH[severity]),
         ]:
             graph.add((node, predicate, term))
-        # rdflib terms subclass str, so only a plain str is an IRI to construct.
+        # An rdflib term is used as given; a plain str is an IRI to construct.
         if value is not None:
-            graph.add((node, SH.value, URIRef(value) if type(value) is str else value))
+            graph.add((node, SH.value, value if isinstance(value, Node) else URIRef(value)))
         if shape is not None:
-            graph.add((node, SH.sourceShape, URIRef(shape) if type(shape) is str else shape))
+            graph.add((node, SH.sourceShape, shape if isinstance(shape, Node) else URIRef(shape)))
     return graph
 
 
@@ -93,7 +92,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as directory:
         output = Path(directory) / "result.json"
         output.write_text('{"status":"complete","cases":["stale"]}', encoding="utf-8", newline="\n")
-        result = subprocess.run(
+        completed = subprocess.run(
             [
                 sys.executable,
                 str(Path(__file__).with_name("_compare_validator_reports.py")),
@@ -104,7 +103,7 @@ def main() -> int:
             capture_output=True,
             timeout=30,
         )
-        assert result.returncode != 0
+        assert completed.returncode != 0
         evidence = json.loads(output.read_text())
         assert evidence["status"] == "failed" and evidence["cases"] == []
         assert evidence["versions"]["pyshacl"]

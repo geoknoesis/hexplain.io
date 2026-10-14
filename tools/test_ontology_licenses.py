@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any
 
 from _family import canonical_files
 from rdflib import OWL, RDF, Graph, Namespace, URIRef
@@ -24,7 +23,7 @@ CC_BY = URIRef("https://creativecommons.org/licenses/by/4.0/")
 CREATOR = URIRef("https://geoknoesis.com")
 
 
-def problems(g: Graph, where: Any) -> Any:
+def problems(g: Graph, where: str) -> list[str]:
     found = []
     ontologies = list(g.subjects(RDF.type, OWL.Ontology))
     if not ontologies:

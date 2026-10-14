@@ -60,7 +60,7 @@ def _contract(root: Path, manifest: Path | None = None) -> dict[str, Any]:
     return contract
 
 
-def family_paths(root: Path, manifest: Path | None = None) -> list[Any]:
+def family_paths(root: Path, manifest: Path | None = None) -> list[str]:
     """Every family file, canonical modules and their annotation graphs, as absolute paths."""
     root = Path(root).resolve()
     return [str(root / name) for name in _contract(root, manifest)["files"]]
@@ -76,7 +76,7 @@ def documentation_files(root: Path, manifest: Path | None = None) -> dict[str, s
     return dict(_contract(root, manifest)["documentation"])
 
 
-def load(paths: Iterable[Any]) -> Any:
+def load(paths: Iterable[str | Path]) -> Graph:
     graph = Graph()
     for path in paths:
         graph.parse(data=Path(path).read_text(encoding="utf-8"), format="turtle")

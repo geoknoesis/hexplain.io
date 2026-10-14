@@ -20,10 +20,10 @@ import re
 import sys
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Any
 
 from _family import canonical_files
 from rdflib import OWL, RDF, Graph, Literal, URIRef
+from rdflib.term import Node
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 VANN_URI = URIRef("http://purl.org/vocab/vann/preferredNamespaceUri")
@@ -38,18 +38,23 @@ PREFIXED = re.compile(r"(?<![\w:/#<])([A-Za-z][\w-]*):[A-Za-z_]")
 FULL = re.compile(r"<(https://hexplain\.io/ns/[^>\s]+)>")
 
 
-def _parse(path):
+#: One file of a module: its path, its text and its graph.
+Entry = tuple[pathlib.Path, str, Graph]
+
+
+def _parse(path: pathlib.Path) -> tuple[str, Graph]:
     text = path.read_text(encoding="utf-8")
     return text, Graph().parse(data=text, format="turtle")
 
 
-def modules() -> dict[str, Any]:
+def modules() -> dict[Node, list[Entry]]:
     """ontology IRI -> (files, graph of those files)."""
     files = canonical_files(ROOT / "specification")
     # A file with its own owl:Ontology is its own module (a separate shapes document such as
     # conf/shapes.ttl declares <.../conf/shapes> and imports the vocabulary it validates); a
     # file without one belongs to the ontology of the module directory it sits in.
-    parsed, owner = [], {}
+    parsed: list[tuple[pathlib.Path, str, Graph, Node | None]] = []
+    owner: dict[pathlib.Path, Node] = {}
     for f in files:
         path = ROOT / "specification" / f
         text, g = _parse(path)
@@ -57,16 +62,16 @@ def modules() -> dict[str, Any]:
         parsed.append((path, text, g, own))
         if own is not None and path.stem == path.parent.name or own is not None and path.parent not in owner:
             owner[path.parent] = own
-    out = defaultdict(list)
+    out: defaultdict[Node, list[Entry]] = defaultdict(list)
     for path, text, g, own in parsed:
         out[own if own is not None else owner[path.parent]].append((path, text, g))
     return dict(out)
 
 
-def referenced(entries: Iterable[Any], namespaces: Iterable[Any], prefixes: Any) -> Any:
-    used = set()
+def referenced(entries: Iterable[Entry], namespaces: list[str], prefixes: dict[str, str]) -> set[str]:
+    used: set[str] = set()
 
-    def note(iri):
+    def note(iri: str) -> None:
         for ns in namespaces:
             if iri.startswith(ns) and len(iri) > len(ns):
                 used.add(ns)
@@ -74,9 +79,7 @@ def referenced(entries: Iterable[Any], namespaces: Iterable[Any], prefixes: Any)
 
     for _path, _text, g in entries:
         for s, p, o in g:
-            if p in NON_USAGE:
-                o = None
-            for term in (s, p, o):
+            for term in (s, p) if p in NON_USAGE else (s, p, o):
                 if isinstance(term, URIRef):
                     note(str(term))
                 elif isinstance(term, Literal) and isinstance(term.value, str) and ":" in term:
@@ -90,12 +93,8 @@ def referenced(entries: Iterable[Any], namespaces: Iterable[Any], prefixes: Any)
     return used
 
 
-def main() -> None:
-    mods = modules()
-    whole = Graph()
-    for entries in mods.values():
-        for _p, _t, g in entries:
-            whole += g
+def _namespaces(mods: dict[Node, list[Entry]], whole: Graph) -> dict[Node, str]:
+    """ontology IRI -> the namespace it owns, or (a shapes document) shares with its vocabulary."""
     ns_of = {}
     for ont in mods:
         uri = whole.value(ont, VANN_URI)
@@ -108,33 +107,52 @@ def main() -> None:
             print(f"FAIL: {ont} declares no vann:preferredNamespaceUri")
             sys.exit(1)
         ns_of[ont] = str(uri)
+    return ns_of
+
+
+def _prefixes(mods: dict[Node, list[Entry]], owned: Iterable[str]) -> dict[str, str]:
+    """prefix -> namespace, for every prefix a module binds to one of the ``owned`` namespaces."""
+    owned = set(owned)
+    prefixes: dict[str, str] = {}
+    for entries in mods.values():
+        for _p, _t, g in entries:
+            for prefix, ns in g.namespace_manager.namespaces():
+                if str(ns) in owned:
+                    prefixes.setdefault(prefix, str(ns))
+    return prefixes
+
+
+def _closure(whole: Graph, ont: Node, seen: set[Node] | None = None) -> set[Node]:
+    """Every ontology ``ont`` imports, directly or transitively."""
+    seen = set() if seen is None else seen
+    for imp in whole.objects(ont, OWL.imports):
+        if imp not in seen:
+            seen.add(imp)
+            _closure(whole, imp, seen)
+    return seen
+
+
+def main() -> None:
+    mods = modules()
+    whole = Graph()
+    for entries in mods.values():
+        for _p, _t, g in entries:
+            whole += g
+    ns_of = _namespaces(mods, whole)
     # The vocabulary, not its shapes document, is the namespace's owner.
     ont_of = {
         ns: ont for ont, ns in sorted(ns_of.items(), key=lambda item: str(item[0]).endswith("/shapes"), reverse=True)
     }
     namespaces = sorted(ont_of, key=len, reverse=True)
-    prefixes = {}
-    for entries in mods.values():
-        for _p, _t, g in entries:
-            for prefix, ns in g.namespace_manager.namespaces():
-                if str(ns) in ont_of:
-                    prefixes.setdefault(prefix, str(ns))
-
-    def closure(ont, seen=None):
-        seen = set() if seen is None else seen
-        for imp in whole.objects(ont, OWL.imports):
-            if imp not in seen:
-                seen.add(imp)
-                closure(imp, seen)
-        return seen
+    prefixes = _prefixes(mods, ont_of)
 
     failures = []
-    for ont, entries in sorted(mods.items()):
+    for ont, entries in sorted(mods.items(), key=lambda item: str(item[0])):
         used = referenced(entries, namespaces, prefixes) - {ns_of[ont]}
-        reachable = {ns_of[i] for i in closure(ont) if i in ns_of}
+        reachable = {ns_of[i] for i in _closure(whole, ont) if i in ns_of}
         for ns in sorted(used - reachable):
             failures.append(f"{ont} uses {ont_of[ns]} without importing it (directly or transitively)")
-        for imp in sorted(whole.objects(ont, OWL.imports)):
+        for imp in sorted(whole.objects(ont, OWL.imports), key=str):
             # A shapes document shares its vocabulary's namespace; importing it is its use.
             if imp in ns_of and ns_of[imp] not in used and ns_of[imp] != ns_of[ont]:
                 failures.append(f"{ont} imports {imp} but uses none of its terms")

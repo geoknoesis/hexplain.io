@@ -5,7 +5,7 @@ Existing definitions remain canonical. These annotations do not add OWL restrict
 
 from __future__ import annotations
 
-DEFINITIONS = {}
+DEFINITIONS: dict[str, str] = {}
 
 
 def group(prefix: str, text: str) -> None:
@@ -581,7 +581,7 @@ for term, key in [
 # the sentences that are true of it. The module sentence of _reference.SCOPE is NOT prefixed to
 # these: "Use when linking a physical format description to semantic RDF output" was wrong for
 # hexplain:RegisterStatus, hexplain:status and hexplain:correspondsTo, which concern registers.
-SCOPE_NOTES = {}
+SCOPE_NOTES: dict[str, str] = {}
 
 
 def notes(prefix: str, text: str) -> None:

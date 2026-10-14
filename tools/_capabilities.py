@@ -42,16 +42,16 @@ def build() -> str:
     coverage = json.loads(COVERAGE.read_text(encoding="utf-8"))
     competency = json.loads(COMPETENCY.read_text(encoding="utf-8"))
 
-    obligations = defaultdict(int)
-    two_sided = defaultdict(int)
+    obligations: defaultdict[str, int] = defaultdict(int)
+    two_sided: defaultdict[str, int] = defaultdict(int)
     for constraint in coverage["constraints"]:
         module = module_of(constraint["source"])
         obligations[module] += 1
         two_sided[module] += bool(constraint["two_sided_evaluation"])
 
-    described = defaultdict(int)
-    exercised = defaultdict(int)
-    with_result_path = defaultdict(int)
+    described: defaultdict[str, int] = defaultdict(int)
+    exercised: defaultdict[str, int] = defaultdict(int)
+    with_result_path: defaultdict[str, int] = defaultdict(int)
     for resource in competency["resources"]:
         module = resource["module"]
         described[module] += 1

@@ -91,9 +91,9 @@ def main() -> None:
             )
     for stale in sorted(set(LEGACY) - seen_legacy):
         failures.append(f"LEGACY lists {stale}, which now follows an idiom or no longer exists (remove it)")
-    for cls in sorted(OPEN_CLASSES):
-        if URIRef(cls) not in classes:
-            failures.append(f"OPEN_CLASSES lists {cls}, which is not a Hexplain class")
+    for open_class in sorted(OPEN_CLASSES):
+        if URIRef(open_class) not in classes:
+            failures.append(f"OPEN_CLASSES lists {open_class}, which is not a Hexplain class")
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures))
         sys.exit(1)

@@ -16,7 +16,6 @@ from __future__ import annotations
 import argparse
 import re
 import sys
-from typing import Any
 
 from _reference import ROOT, kind, load, local
 from rdflib import OWL, Literal, URIRef
@@ -26,7 +25,7 @@ ROW = re.compile(r"<tr><td><code>hx-([a-z]+)</code> ✓</td>(.*?)</tr>")
 TABLE = re.compile(r'<table class="simple">\s*<thead><tr>(.*?)</tr></thead>(.*?)</table>', re.S)
 
 
-def module_terms(name: str) -> Any:
+def module_terms(name: str) -> tuple[list[str], list[str]] | None:
     path = ROOT / f"specification/aspect/{name}/{name}.ttl"
     if not path.exists():
         return None
@@ -48,8 +47,8 @@ def module_terms(name: str) -> Any:
     return [local(t) for t in terms], imports
 
 
-def render(text: str) -> Any:
-    def table(m):
+def render(text: str) -> str:
+    def table(m: re.Match[str]) -> str:
         headers = re.findall(r"<th>(.*?)</th>", m.group(1))
         body = m.group(2)
         if "Key terms" not in headers:
@@ -57,7 +56,7 @@ def render(text: str) -> Any:
         key_at = headers.index("Key terms")
         imports_at = headers.index("Imports") if "Imports" in headers else None
 
-        def row(r):
+        def row(r: re.Match[str]) -> str:
             found = module_terms(r.group(1))
             if found is None:
                 return r.group(0)

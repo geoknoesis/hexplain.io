@@ -1,5 +1,6 @@
 """Authoring expansion must be deterministic, complete and fail closed."""
 
+from collections.abc import Callable
 from copy import deepcopy
 
 from _expand_specification_patterns import AUTHORING, load_catalogs, outputs, render, run, within
@@ -10,7 +11,8 @@ def main() -> int:
     assert outputs() == outputs()
     count, changed = run()
     assert changed == 0
-    used_constraints, used_types = set(), set()
+    used_constraints: set[str] = set()
+    used_types: set[str] = set()
     from _expand_specification_patterns import TOKEN
 
     for source in manifest["templates"].values():
@@ -19,7 +21,7 @@ def main() -> int:
     assert used_constraints == set(constraints)
     assert used_types == set(datatypes["presets"])
 
-    def rejects(action):
+    def rejects(action: Callable[[], object]) -> None:
         try:
             action()
         except (ValueError, KeyError):

@@ -1,15 +1,30 @@
-"""Require a fresh ledger and two-sided evidence for every inventoried component."""
+"""Require a fresh ledger and two-sided evidence for every inventoried component.
+
+The ledger must be in the builder's stored form, and the published coverage page must be that
+ledger rendered.
+"""
 
 import hashlib
 import json
 
-from _constraint_coverage import OUT, ROOT, SH, inventory, trace, two_sided
+from _constraint_coverage import LEDGER, ROOT, SH, inventory, read_ledger, serialise, trace, two_sided
+from _coverage_corpora import Rows
+from _render_constraint_coverage import PAGE, render
 from pyshacl import validate
 from rdflib import Graph, Namespace
 
 
 def main() -> int:
-    evidence = json.loads((OUT / "constraint-coverage.json").read_text(encoding="utf-8"))
+    evidence = read_ledger()
+    stored = LEDGER.read_text(encoding="utf-8")
+    # The file is exactly what the builder writes for this content: compact, one obligation per
+    # line, cases as indices. A hand edit or a reformat is not the ledger any more.
+    assert serialise(read_ledger()) == stored, "constraint-coverage.json is not in the builder's stored form"
+    assert json.loads(stored)["case_names"] == sorted(set(json.loads(stored)["case_names"]))
+    # The published page is this ledger rendered, not an earlier one.
+    assert PAGE.read_text(encoding="utf-8") == render(), (
+        "constraint-coverage.html is stale; run python tools/_render_constraint_coverage.py"
+    )
     graphs, rows = inventory()
     expected = {r["id"]: r for r in rows.values()}
     actual = {r["id"]: r for r in evidence["constraints"]}
@@ -43,7 +58,7 @@ def main() -> int:
 """,
         format="turtle",
     )
-    observed = {
+    observed: Rows = {
         (str(EX.P), str(SH[c + "ConstraintComponent"])): {"passed": [], "failed": [], "empty_value_passes": []}
         for c in ["Datatype", "MinCount", "MaxCount"]
     }

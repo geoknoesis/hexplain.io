@@ -32,7 +32,7 @@ VANN = Namespace("http://purl.org/vocab/vann/")
 PAGE = ROOT / "specification/ontology-design/index.html"
 
 
-def declared(files: Iterable[Any]) -> Any:
+def declared(files: Iterable[str]) -> list[tuple[str, str, str, str]]:
     """(file, ontology, prefix, namespace) for every module that claims a prefix."""
     out = []
     for rel in files:
@@ -47,7 +47,7 @@ def declared(files: Iterable[Any]) -> Any:
     return out
 
 
-def problems(rows: list[dict[str, Any]], modules: Iterable[Any], page: Path) -> Any:
+def problems(rows: list[dict[str, Any]], modules: list[tuple[str, str, str, str]], page: str) -> list[str]:
     found = []
     for key in ("prefix", "namespace", "ontology"):
         values = [r[key] for r in rows]

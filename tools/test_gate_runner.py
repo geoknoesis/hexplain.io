@@ -7,12 +7,31 @@ import hashlib
 import io
 import json
 import os
+import subprocess
 import sys
 import tempfile
+from collections.abc import Iterator
 from pathlib import Path
 
-from _gate_runner import SKIP_EXIT, gate_workers, load_gate_manifest, run_gate
+from _gate_process import SKIP_EXIT, kill_tree_windows, run_gate
+from _gate_runner import WORKER_CAP, gate_workers, load_gate_manifest
 from _gate_runner import main as run_gates
+from _gate_schedule import MEMORY_ENV
+
+
+@contextlib.contextmanager
+def environment(**values: str) -> Iterator[None]:
+    """Set environment variables for a block and restore whatever was there before."""
+    saved = {name: os.environ.get(name) for name in values}
+    os.environ.update(values)
+    try:
+        yield
+    finally:
+        for name, value in saved.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
 
 
 def check_outcomes(root: Path) -> None:
@@ -120,7 +139,10 @@ def check_concurrency(root: Path) -> None:
         )
     (tools / "test_bad.py").write_text("raise SystemExit(2)\n", encoding="utf-8", newline="\n")
     out = io.StringIO()
-    with contextlib.redirect_stdout(out):
+    # The budget is pinned: read from the host it would depend on what else the machine is doing,
+    # and three default-sized estimates (1.5 GiB) do not fit a host with less than that free --
+    # the probes then ran one at a time and each timed out waiting for the others.
+    with contextlib.redirect_stdout(out), environment(**{MEMORY_ENV: "65536"}):
         code = run_gates(root, set(), ["--jobs", "3"])
     assert code == 1
     saved = json.loads((root / ".gate-results/summary.json").read_text())
@@ -131,6 +153,95 @@ def check_concurrency(root: Path) -> None:
     assert all((root / f".gate-results/{n}.started").is_file() for n in ("test_a", "test_b", "test_c"))
     text = out.getvalue()
     assert text.count("RUN test_") == 4 and "PASS: test_a" in text and "FAIL test_bad" in text, text
+
+
+def check_tight_budget_serialises(root: Path) -> None:
+    """A memory budget smaller than two estimates runs the gates one at a time, whatever --jobs says."""
+    tools = root / "tools"
+    for gate in tools.glob("test_*.py"):
+        gate.unlink()
+    for name in ("test_a", "test_b", "test_c"):
+        (tools / f"{name}.py").write_text(
+            # Each gate fails if another is running beside it: it holds a marker for its whole
+            # life and looks for anyone else's. The pause gives an overlapping gate time to appear.
+            "import time\n"
+            "from pathlib import Path\n"
+            f"mine = Path('.gate-results/{name}.alone')\n"
+            "mine.write_text('running')\n"
+            "time.sleep(0.4)\n"
+            "others = [p.name for p in Path('.gate-results').glob('*.alone') if p != mine]\n"
+            "mine.unlink()\n"
+            "raise SystemExit(4 if others else 0)\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+    out = io.StringIO()
+    # 600 MiB holds one unrecorded gate (512 MiB estimated) and never two.
+    with contextlib.redirect_stdout(out), environment(**{MEMORY_ENV: "600"}):
+        assert run_gates(root, set(), ["--jobs", "3"]) == 0, out.getvalue()
+    saved = json.loads((root / ".gate-results/summary.json").read_text())
+    assert saved["counts"] == {"PASS": 3, "SKIP": 0, "FAIL": 0}, saved["counts"]
+    assert saved["memory_budget"] == "fixed at 600 MiB", saved["memory_budget"]
+    # The same gates under a budget that holds all three do overlap, so the probe can tell.
+    with contextlib.redirect_stdout(out), environment(**{MEMORY_ENV: "65536"}):
+        assert run_gates(root, set(), ["--jobs", "3"]) == 1, "the overlap probe did not detect concurrent gates"
+    for bad in ("0", "-5", "lots"):
+        with environment(**{MEMORY_ENV: bad}):
+            try:
+                run_gates(root, set(), [])
+                raise AssertionError(f"accepted {MEMORY_ENV}={bad}")
+            except SystemExit as refused:
+                assert refused.code == 2, refused.code
+
+
+def check_effective_procs(root: Path) -> None:
+    """A gate is told to use exactly the processes the budget counted for it."""
+    tools = root / "tools"
+    for gate in tools.glob("test_*.py"):
+        gate.unlink()
+    (tools / "_check_docker.py").unlink(missing_ok=True)
+    expected = max(1, min(WORKER_CAP, (os.cpu_count() or 1) // 2))
+    for name in ("test_fan", "test_single"):
+        (tools / f"{name}.py").write_text(
+            "import os\nprint('WORKERS=' + os.environ['HEXPLAIN_GATE_WORKERS'])\n", encoding="utf-8", newline="\n"
+        )
+    (tools / "gates.json").write_text(
+        json.dumps(
+            dict(
+                schema_version=1,
+                gates=[dict(name="test_fan", timeout=30, procs=64), dict(name="test_single", timeout=30)],
+            )
+        ),
+        encoding="utf-8",
+        newline="\n",
+    )
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out), environment(**{MEMORY_ENV: "65536"}):
+        assert run_gates(root, set(), ["--strict", "--jobs", "2"]) == 0, out.getvalue()
+    rows = {r["gate"]: r for r in json.loads((root / ".gate-results/summary.json").read_text())["gates"]}
+    # Declared 64, but the gate's share of the machine at two jobs and the worker cap both bind;
+    # the budget's number and the gate's HEXPLAIN_GATE_WORKERS are the same number.
+    assert rows["test_fan"]["procs"] == expected, rows["test_fan"]
+    assert rows["test_fan"]["output"].strip() == f"WORKERS={expected}", rows["test_fan"]["output"]
+    assert rows["test_single"]["procs"] == 1 and rows["test_single"]["output"].strip() == "WORKERS=1", rows
+    # An explicit HEXPLAIN_GATE_WORKERS in the caller's environment is a further cap, never a raise.
+    with contextlib.redirect_stdout(out), environment(**{MEMORY_ENV: "65536", "HEXPLAIN_GATE_WORKERS": "1"}):
+        assert run_gates(root, set(), ["--strict", "--jobs", "2"]) == 0, out.getvalue()
+    rows = {r["gate"]: r for r in json.loads((root / ".gate-results/summary.json").read_text())["gates"]}
+    assert rows["test_fan"]["procs"] == 1 and rows["test_fan"]["output"].strip() == "WORKERS=1", rows["test_fan"]
+    (tools / "gates.json").unlink()
+
+
+def check_kill_fallback() -> None:
+    """A tree kill that hangs or cannot start degrades to killing the gate; it never raises."""
+    for failure in (subprocess.TimeoutExpired("taskkill", 10), FileNotFoundError("taskkill")):
+        proc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"], text=True)
+
+        def unavailable(*_args: object, _failure: BaseException = failure, **_kwargs: object) -> None:
+            raise _failure
+
+        kill_tree_windows(proc, run=unavailable)
+        assert proc.wait(timeout=30) != 0, "the gate survived a failed tree kill"
 
 
 def check_manifest(root: Path) -> None:
@@ -154,7 +265,7 @@ def check_manifest(root: Path) -> None:
         encoding="utf-8",
         newline="\n",
     )
-    assert set(load_gate_manifest(root)) == {"test_listed", "_check_docker"}
+    assert set(load_gate_manifest(root) or {}) == {"test_listed", "_check_docker"}
     assert run_gates(root, set(), ["--strict"]) == 0
     saved = json.loads((root / ".gate-results/summary.json").read_text())
     assert saved["selected_gates"] == ["test_listed"], saved["selected_gates"]
@@ -181,9 +292,13 @@ def check_workers() -> None:
     """The shared worker-count helper validates HEXPLAIN_GATE_WORKERS and bounds the default."""
     saved = os.environ.pop("HEXPLAIN_GATE_WORKERS", None)
     try:
-        assert 1 <= gate_workers() <= 8
+        assert 1 <= gate_workers() <= WORKER_CAP
         os.environ["HEXPLAIN_GATE_WORKERS"] = "3"
         assert gate_workers() == 3
+        # The cap holds on the environment path too: the variable narrows a gate, it never widens it.
+        os.environ["HEXPLAIN_GATE_WORKERS"] = "64"
+        assert gate_workers() == WORKER_CAP, gate_workers()
+        assert gate_workers(default_cap=2) == 2
         for bad in ("0", "-1", "many"):
             os.environ["HEXPLAIN_GATE_WORKERS"] = bad
             try:
@@ -233,19 +348,38 @@ def check_memory_sampling(root: Path) -> None:
 
 def main() -> int:
     quiet = io.StringIO()
-    with contextlib.redirect_stdout(quiet), contextlib.redirect_stderr(quiet), tempfile.TemporaryDirectory() as temp:
-        root = Path(temp)
-        check_outcomes(root)
-        check_runner(root)
-        check_concurrency(root)
-        check_manifest(root)
-        check_workers()
-        check_memory_sampling(root)
+    # Under the runner this gate is itself handed a worker count; the runs it starts must be
+    # planned as a standalone run would be, not capped by what the outer run gave this gate.
+    inherited = os.environ.pop("HEXPLAIN_GATE_WORKERS", None)
+    try:
+        with (
+            tempfile.TemporaryDirectory() as temp,
+            contextlib.redirect_stdout(quiet),
+            contextlib.redirect_stderr(quiet),
+        ):
+            run_checks(Path(temp))
+    finally:
+        if inherited is not None:
+            os.environ["HEXPLAIN_GATE_WORKERS"] = inherited
     print(
-        "PASS: exit-status outcomes, timeout, strict rejection, concurrent scheduling, the gate manifest, "
-        "the worker helper and sampled memory"
+        "PASS: exit-status outcomes, timeout, strict rejection, concurrent scheduling, a tight memory budget "
+        "serialising, the gate manifest, effective process counts, the worker helper, the tree-kill fallback "
+        "and sampled memory"
     )
     return 0
+
+
+def run_checks(root: Path) -> None:
+    """Every check, in the order they build on the shared tree."""
+    check_outcomes(root)
+    check_runner(root)
+    check_concurrency(root)
+    check_tight_budget_serialises(root)
+    check_manifest(root)
+    check_effective_procs(root)
+    check_workers()
+    check_kill_fallback()
+    check_memory_sampling(root)
 
 
 if __name__ == "__main__":

@@ -15,26 +15,27 @@ import base64
 import json
 import re
 from pathlib import Path
-from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 VECTORS = ROOT / "specification/validation/test/hel-vectors.tsv"
 HEL = ROOT / "specification/hel/index.html"
 
 
-def conditions() -> Any:
+def conditions() -> list[str]:
     return re.findall(r'<tr data-condition="([a-z-]+)">', HEL.read_text(encoding="utf-8"))
 
 
-def check(text: str, defined: Any) -> tuple[Any, ...]:
-    problems, used, rows = [], set(), 0
+def check(text: str, defined: list[str]) -> tuple[int, list[str]]:
+    problems: list[str] = []
+    used: set[str] = set()
+    rows = 0
     for number, line in enumerate(text.split("\n"), 1):
         if not line.strip() or line.startswith("#"):
             continue
         rows += 1
         cols = line.split("\t")
         kind = cols[2] if len(cols) > 2 else None
-        want = {"value": 5, "error": 6}.get(kind)
+        want = {"value": 5, "error": 6}.get(kind or "")
         if want is None:
             problems.append(f"line {number}: expectation {kind!r} is neither value nor error")
             continue

@@ -12,9 +12,9 @@ import html
 import re
 import sys
 from pathlib import Path
-from typing import Any
 
 from rdflib import RDF, RDFS, Graph, Namespace, URIRef
+from rdflib.term import Node
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = ROOT / "specification/fn/index.html"
@@ -22,7 +22,7 @@ HXF = Namespace("https://hexplain.io/ns/fn#")
 SECTION = re.compile(r'<section id="catalogue">.*?</section>', re.S)
 
 
-def curie(g: Graph, term: URIRef) -> Any:
+def curie(g: Graph, term: Node) -> str:
     return g.namespace_manager.normalizeUri(term) if isinstance(term, URIRef) else str(term)
 
 
@@ -32,7 +32,9 @@ def render() -> str:
     # Catalogue order: by layer, then as the vocabulary declares them (source order is not kept
     # by RDF, so by the signature's position in the file).
     source = (ROOT / "specification/fn/fn.ttl").read_text(encoding="utf-8")
-    functions.sort(key=lambda f: (int(g.value(f, HXF.layer) or 0), source.find(":" + str(f).split("#")[1] + " a ")))
+    functions.sort(
+        key=lambda f: (int(str(g.value(f, HXF.layer) or 0)), source.find(":" + str(f).split("#")[1] + " a "))
+    )
     rows = []
     for f in functions:
         kind = str(g.value(f, HXF.kind)).split("#")[-1]

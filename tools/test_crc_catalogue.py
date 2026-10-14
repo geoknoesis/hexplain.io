@@ -41,10 +41,11 @@ def main() -> int:
         if missing:
             failures.append(f"bddo:{name} states some CRC parameters but not {missing}")
             continue
-        if any(not isinstance(v, Literal) for v in values.values()):
+        literals = [v for v in values.values() if isinstance(v, Literal)]
+        if len(literals) != len(values):
             failures.append(f"bddo:{name}: a CRC parameter is not a literal")
             continue
-        width, poly, init, refin, refout, xorout, check = (values[p].toPython() for p in PARAMETERS)
+        width, poly, init, refin, refout, xorout, check = (v.toPython() for v in literals)
         try:
             computed = crc.crc(crc.CHECK_INPUT, width, poly, init, refin, refout, xorout)
         except ValueError as exc:

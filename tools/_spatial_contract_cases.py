@@ -4,12 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from _cases import row, term
+from _cases import prefix_block, row, term
 
-PREFIX = """@prefix ex:<urn:spatial-contract:> .
-@prefix s:<https://hexplain.io/ns/aspect/spatialref#> .
-@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .
-"""
+PREFIX = prefix_block({"ex": "urn:spatial-contract:", "s": "spatialref", "xsd": "xsd"})
 MODULE = "aspect/spatialref/spatialref.ttl"
 OFFSETS = "lineOffset sampleOffset latitudeOffset longitudeOffset heightOffset"
 SCALES = "lineScale sampleScale latitudeScale longitudeScale heightScale"
@@ -58,16 +55,16 @@ def cases() -> list[dict[str, Any]]:
         if cls == "CubicRationalTransform":
             for prop in VECTORS.split() + ["polynomialBasis"]:
                 duplicate = "ex:other" if prop == "polynomialBasis" else "(" + " ".join(['"2"^^xsd:double'] * 20) + ")"
-                for label, value in [
+                for label, given in [
                     ("missing", None),
                     ("literal", '"bad"'),
                     ("duplicate", base[prop] + "," + duplicate),
                 ]:
                     changed = dict(base)
-                    if value is None:
+                    if given is None:
                         del changed[prop]
                     else:
-                        changed[prop] = value
+                        changed[prop] = given
                     add(cls + " " + prop + " " + label, body(changed), False, prop)
     for prop, valid, bad in [
         ("wktString", '"GEOGCRS[...]"', "1"),

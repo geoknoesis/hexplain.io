@@ -17,22 +17,25 @@ AUTHORING = ROOT / "authoring/specification"
 TOKEN = re.compile(r"\{\{(constraint|datatype):([a-zA-Z0-9_]+)\}\}")
 
 
-def load_catalogs() -> tuple[Any, ...]:
-    return tuple(
-        json.loads((AUTHORING / p).read_text(encoding="utf-8"))
-        for p in ["manifest.json", "constraint-patterns.json", "primitive-types.json"]
-    )
+def _catalog(name: str) -> dict[str, Any]:
+    """One authoring catalogue, a JSON object."""
+    return json.loads((AUTHORING / name).read_text(encoding="utf-8"))
 
 
-def within(root: Path, relative: Any) -> Any:
+def load_catalogs() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """The template manifest, the constraint patterns and the primitive datatype presets."""
+    return _catalog("manifest.json"), _catalog("constraint-patterns.json"), _catalog("primitive-types.json")
+
+
+def within(root: Path, relative: str) -> Path:
     path = (root / relative).resolve()
     if not path.is_relative_to(root.resolve()):
         raise ValueError(f"Path outside authoring workspace: {relative}")
     return path
 
 
-def render(template: Any, constraints: Any, datatypes: dict[str, Any]) -> Any:
-    def expand(match):
+def render(template: str, constraints: dict[str, Any], datatypes: dict[str, Any]) -> str:
+    def expand(match: re.Match[str]) -> str:
         kind, name = match.groups()
         if kind == "constraint":
             text = constraints[name]["text"]
@@ -55,9 +58,9 @@ def render(template: Any, constraints: Any, datatypes: dict[str, Any]) -> Any:
     return expanded
 
 
-def outputs() -> Any:
+def outputs() -> dict[Path, str]:
     manifest, constraints, datatypes = load_catalogs()
-    result = {}
+    result: dict[Path, str] = {}
     for target, source in manifest["templates"].items():
         path = within(ROOT, target)
         if path in result:
@@ -69,7 +72,7 @@ def outputs() -> Any:
     return result
 
 
-def run(write: bool = False) -> tuple[Any, ...]:
+def run(write: bool = False) -> tuple[int, int]:
     rendered = outputs()  # Resolve every input before writing any output.
     changed = [p for p, text in rendered.items() if p.read_text(encoding="utf-8") != text]
     if changed and not write:

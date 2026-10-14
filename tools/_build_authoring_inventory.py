@@ -11,9 +11,9 @@ from rdflib import Graph, Namespace
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
 
-def build(check: bool = False) -> Any:
+def build(check: bool = False) -> dict[str, Any]:
     manifest, patterns, types = load_catalogs()
-    consumers = {name: [] for name in patterns}
+    consumers: dict[str, list[str]] = {name: [] for name in patterns}
     modules = []
     for target, template in manifest["templates"].items():
         text = (AUTHORING / template).read_text(encoding="utf-8")

@@ -4,17 +4,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from _cases import row, term
+from _cases import prefix_block, row, term
 
-PREFIX = """@prefix ex:<urn:physical-property:> . @prefix b:<https://hexplain.io/ns/bddo#> .
-@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .
-b:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .
+PREFIX = (
+    prefix_block({"ex": "urn:physical-property:", "b": "bddo", "xsd": "xsd"})
+    + """b:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .
 ex:other a b:Field; b:dataType b:uint8 .
 ex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .
 ex:enum2 a b:Enumeration; b:hasEnumValue ex:v .
 ex:check a b:Checksum; b:checksumAlgorithm b:crc32; b:coversFromField ex:count; b:coversToField ex:other .
 ex:check2 a b:Checksum; b:checksumAlgorithm b:sha256; b:coversFromField ex:count; b:coversToField ex:other .
 """
+)
 VALUES = {
     "positive": ("1", "2", "0"),
     "nonnegative": ("0", "1", "-1"),

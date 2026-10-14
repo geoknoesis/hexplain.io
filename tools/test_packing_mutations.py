@@ -5,6 +5,7 @@ from pathlib import Path
 
 from pyshacl import validate
 from rdflib import Graph, Namespace, URIRef
+from rdflib.term import Node
 
 ROOT = Path(__file__).resolve().parents[1]
 SH = Namespace("http://www.w3.org/ns/shacl#")
@@ -31,7 +32,7 @@ def main() -> int:
         conforms, report, _ = validate(data, shacl_graph=original, inference="none")
         assert not conforms and URIRef(row[2]) in report.objects(None, SH.resultPath), name
         mutant = Graph() + original
-        removed = []
+        removed: list[tuple[Node, Node, Node]] = []
         for prop in mutant.subjects(SH.path, path):
             removed.extend(mutant.triples((prop, predicate, None)))
         assert len(removed) == 1, (name, removed)

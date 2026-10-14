@@ -36,7 +36,7 @@ STYLE = (
 )
 
 
-def page(title: str, body: Any, rootlink: Any, status: Any) -> str:
+def page(title: str, body: str, rootlink: str, status: str) -> str:
     return (
         f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" '
         f'content="width=device-width,initial-scale=1"><title>{esc(title)} · '
@@ -48,7 +48,7 @@ def page(title: str, body: Any, rootlink: Any, status: Any) -> str:
 DCT_MODIFIED = URIRef("http://purl.org/dc/terms/modified")
 
 
-def status_of(module: Any) -> Any:
+def status_of(module: str) -> tuple[str, str]:
     """Version and modification date of an aspect, read from its canonical Turtle."""
     g = Graph().parse(
         data=(ROOT / "specification/aspect" / module / (module + ".ttl")).read_text(encoding="utf-8"), format="turtle"
@@ -413,7 +413,7 @@ families = [
 table = "".join("<tr>" + "".join("<td>" + esc(x) + "</td>" for x in row) + "</tr>" for row in families)
 
 
-def profile_cell(r: Any) -> Any:
+def profile_cell(r: dict[str, Any]) -> str:
     ps = r.get("profiles", [])
     if not ps:
         return '<span class="muted">—</span>'
@@ -422,7 +422,7 @@ def profile_cell(r: Any) -> Any:
     )
 
 
-def search_key(r: Any) -> Any:
+def search_key(r: dict[str, Any]) -> str:
     """The lower-cased text a driver row is found by: its name, key, capability families and profiles."""
     words = [
         r["name"],

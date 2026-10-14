@@ -21,7 +21,6 @@ from __future__ import annotations
 import pathlib
 import re
 import sys
-from typing import Any
 
 import rdflib
 
@@ -80,7 +79,7 @@ def repository_files(pattern: str) -> list[str]:
     return sorted(p.relative_to(ROOT).as_posix() for p in ROOT.glob(pattern) if p.is_file())
 
 
-def defined_terms() -> Any:
+def defined_terms() -> set[str]:
     """Every subject IRI declared anywhere in the specification, excluding fixtures."""
     out = set()
     for path in repository_files("specification/**/*.ttl"):

@@ -4,20 +4,29 @@ from __future__ import annotations
 
 from typing import Any
 
-from _cases import row, term
+from _cases import PREFIXES, prefix_block, row, term
 
-PREFIX = """@prefix ex:<urn:remaining-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> .
-@prefix skos:<http://www.w3.org/2004/02/skos/core#> . @prefix b:<https://hexplain.io/ns/bddo#> .
-@prefix enc:<https://hexplain.io/ns/aspect/encoding#> . @prefix color:<https://hexplain.io/ns/aspect/color#> .
-ex:a a skos:Concept . ex:b a skos:Concept . ex:s a b:Struct . ex:s2 a b:Struct .
+PREFIX = (
+    prefix_block(
+        {
+            "ex": "urn:remaining-contract:",
+            "xsd": "xsd",
+            "skos": "skos",
+            "b": "bddo",
+            "enc": "encoding",
+            "color": "color",
+        }
+    )
+    + """ex:a a skos:Concept . ex:b a skos:Concept . ex:s a b:Struct . ex:s2 a b:Struct .
 """
+)
 
 
 def cases() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
 
     def add(name: str, module: str, ns: str, body: str, ok: bool, path: str = "") -> None:
-        data = PREFIX + "@prefix p:<https://hexplain.io/ns/" + ns + "#> . " + body
+        data = PREFIX + prefix_block({"p": PREFIXES[ns.rsplit("/", 1)[-1]]}, " ") + body
         rows.append(row("remaining " + name, module, data, ok, path))
 
     for module, ns, cls, prop in [

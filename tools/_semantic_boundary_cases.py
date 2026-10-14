@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from _cases import row
+from _cases import PREFIXES, prefix_block, row
 
 TYPES = [
     "integer",
@@ -26,10 +26,8 @@ def cases() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
 
     def add(name: str, module: str, ns: str, body: str, ok: bool, path: str = "") -> None:
-        prefix = (
-            f"@prefix p:<https://hexplain.io/ns/{ns}#> . @prefix ex:<urn:semantic-boundary:> . "
-            "@prefix xsd:<http://www.w3.org/2001/XMLSchema#> . "
-        )
+        namespace = PREFIXES[ns.rsplit("/", 1)[-1]]
+        prefix = prefix_block({"p": namespace, "ex": "urn:semantic-boundary:", "xsd": "xsd"}, " ")
         rows.append(
             row(
                 "semantic " + name,
