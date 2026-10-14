@@ -24,11 +24,12 @@ import re
 import struct
 import sys
 from collections.abc import Iterator
-from typing import Any
+from dataclasses import dataclass
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import _tiff  # noqa: E402
-from vectors import sha256, step, write_suite  # noqa: E402
+from _tiff import Tags  # noqa: E402
+from vectors import Json, sha256, step, write_suite  # noqa: E402
 
 GDAL = {
     "id": "gdal-3.13.3",
@@ -51,17 +52,17 @@ TIFF_CODECS = {
 BITS = {2: 1, 32771: 1, 3: 1, 4: 1, 32766: 2, 32809: 4}
 
 
-def rows(path: Any) -> Iterator[Any]:
+def rows(path: pathlib.Path) -> Iterator[list[str]]:
     for line in pathlib.Path(path).read_text(encoding="utf-8").splitlines():
         if line and not line.startswith("#"):
             yield line.split("\t")
 
 
-def vector_id(name: str, suffix: str = "") -> Any:
+def vector_id(name: str, suffix: str = "") -> str:
     return re.sub(r"[^A-Za-z0-9]+", "-", name.rsplit("/", 1)[-1]).strip("-") + suffix
 
 
-def tiff_params(compression: Any, tags: Any, width: Any, count: Any) -> dict[str, Any]:
+def tiff_params(compression: int, tags: Tags, width: int, count: int) -> Json:
     fill = _tiff.scalar(tags, 266, 1)
     if compression in (2, 32771):
         return {"columns": width, "rows": count, "fillOrder": fill, "rowAlignment": 8 if compression == 2 else 16}
@@ -72,7 +73,7 @@ def tiff_params(compression: Any, tags: Any, width: Any, count: Any) -> dict[str
     return {"columns": width, "rowBytes": (width * BITS[compression] + 7) // 8, "rows": count}
 
 
-def tiff_family_file(name: str, data: Any) -> Any:
+def tiff_family_file(name: str, data: bytes) -> tuple[Tags, int] | None:
     """(tags, compression) for a stripped single-sample TIFF of a TIFF-family codec, else None."""
     if data[:2] not in (b"II", b"MM"):
         return None
@@ -90,7 +91,7 @@ def tiff_family_file(name: str, data: Any) -> Any:
     return tags, compression
 
 
-def strip_steps(data: Any, tags: Any, compression: Any, fail_at: Any = None) -> Any:
+def strip_steps(data: bytes, tags: Tags, compression: int, fail_at: int | None = None) -> list[Json]:
     width, height = tags[256][0], tags[257][0]
     per = _tiff.scalar(tags, 278, height)
     steps = []
@@ -111,9 +112,9 @@ def strip_steps(data: Any, tags: Any, compression: Any, fail_at: Any = None) -> 
     return steps
 
 
-def tiff_family(engine: Any) -> None:
+def tiff_family(engine: pathlib.Path) -> None:
     resources = engine / "core/src/test/resources"
-    suites = {name: [] for name in sorted(set(TIFF_CODECS.values()))}
+    suites: dict[str, list[Json]] = {name: [] for name in sorted(set(TIFF_CODECS.values()))}
     for row in rows(resources / "gdal-codec-vectors.tsv"):
         name, pixels, data = row[0], row[6], base64.b64decode(row[7])
         found = tiff_family_file(name, data)
@@ -153,9 +154,10 @@ DEFINITION = {"id": "definition", "description": "Computed by hand from the code
 SAMPLE_TYPES = {8: "uint8", 16: "uint16"}
 
 
-def tiff_lzw(data: Any) -> Any:
+def tiff_lzw(data: bytes) -> bytes | None:
     """TIFF 6.0 LZW, to recover the sampling units a YCbCr strip stores; None when the strip ends early."""
-    table, out, bit, width, prev = [bytes([i]) for i in range(256)] + [b"", b""], bytearray(), 0, 9, None
+    table, out, bit, width = [bytes([i]) for i in range(256)] + [b"", b""], bytearray(), 0, 9
+    prev: bytes | None = None
     while True:
         if bit + width > len(data) * 8:
             return None
@@ -183,7 +185,7 @@ def tiff_lzw(data: Any) -> Any:
         prev = entry
 
 
-def jpeg_frame(data: Any) -> Any:
+def jpeg_frame(data: bytes) -> tuple[int, int] | None:
     """(width, height) of the first SOF0/1/2 frame header in a JPEG stream, or None."""
     at = 2
     while at + 4 <= len(data):
@@ -196,21 +198,21 @@ def jpeg_frame(data: Any) -> Any:
     return None
 
 
-def stripped(tags: Any) -> Any:
+def stripped(tags: Tags) -> bool:
     return 324 not in tags and _tiff.scalar(tags, 284, 1) == 1
 
 
-def strip_rows(tags: Any) -> list[Any]:
+def strip_rows(tags: Tags) -> list[int]:
     height = tags[257][0]
     per = _tiff.scalar(tags, 278, height)
     return [min(per, height - i * per) for i in range((height + per - 1) // per)]
 
 
-def samples_input(data: Any, width: Any, rows: Any, bands: Any) -> dict[str, Any]:
+def samples_input(data: bytes, width: int, rows: int, bands: int) -> Json:
     return {"samples": {"width": width, "height": rows, "bands": bands, "sampleType": "uint8", "hex": data.hex()}}
 
 
-def unique_id(suite_list: Any, base: Any) -> Any:
+def unique_id(suite_list: list[Json], base: str) -> str:
     """[base], or [base]-2, -3, ... when [suite_list] already has a vector with that id (two source
     TSVs can each hold a file with the same basename but different bytes)."""
     ids = {v["id"] for v in suite_list}
@@ -222,37 +224,131 @@ def unique_id(suite_list: Any, base: Any) -> Any:
     return f"{base}-{n}"
 
 
-def image_family(engine: Any) -> None:
-    resources = engine / "core/src/test/resources"
-    suites = {
-        name: []
-        for name in ("JPEG", "WebP", "JPEGXL", "YCbCrToRGB", "CIELabToRGB", "CMYKToRGB", "SGILogRLE", "MicrosoftRLE")
+IMAGE_CODECS = ("JPEG", "WebP", "JPEGXL", "YCbCrToRGB", "CIELabToRGB", "CMYKToRGB", "SGILogRLE", "MicrosoftRLE")
+
+
+@dataclass
+class ColorTiff:
+    """A stripped TIFF of a colour codec: its tags and strips, and the expectation over all of them."""
+
+    tags: Tags
+    compression: int
+    photometric: int
+    width: int
+    spp: int
+    bps: int
+    strips: list[bytes]
+    counts: list[int]
+    whole: Json
+
+
+def color_tiff(pixels: str, data: bytes) -> ColorTiff | None:
+    """The stripped TIFF [data] whose decoded pixels hash to [pixels], or None when it is tiled."""
+    tags, _ = _tiff.first_ifd(data)
+    if not stripped(tags):
+        return None
+    compression, photometric = _tiff.scalar(tags, 259, 1), _tiff.scalar(tags, 262, 1)
+    width, spp, bps = tags[256][0], _tiff.scalar(tags, 277, 1), _tiff.scalar(tags, 258, 8)
+    item = 2 if bps == 16 or bps == 12 else 1
+    whole = {
+        "sha256": pixels,
+        "deinterleave": {"bands": spp if photometric not in (5, 8) else 4, "sampleBytes": item},
     }
-    tiffs = []  # (name, pixels, data)
+    strips, counts = _tiff.strips(data, tags), strip_rows(tags)
+    return ColorTiff(tags, compression, photometric, width, spp, bps, strips, counts, whole)
+
+
+def jpeg_tiff_vector(image: ColorTiff) -> Json | None:
+    """A JPEG-in-TIFF's strips, one session, or None when a strip's frame does not cover its rows."""
+    params: Json = {
+        "precision": image.bps,
+        "colorTransform": "ycbcr-to-rgb" if image.photometric == 6 else "none",
+    }
+    if 347 in image.tags:
+        params["tables"] = {"hex": bytes(image.tags[347]).hex()}
+    for s, n in zip(image.strips, image.counts, strict=True):
+        frame = jpeg_frame(s)
+        if frame is None or frame[0] != image.width or frame[1] < n:
+            return None
+    steps = [step(s, {"ok": True}, dict(params, rows=n)) for s, n in zip(image.strips, image.counts, strict=True)]
+    return {"session": True, "expectAll": image.whole, "steps": steps}
+
+
+def ycbcr_tiff_vector(image: ColorTiff) -> Json | None:
+    """An uncompressed or LZW YCbCr TIFF's sampling units, or None when a strip ends early."""
+    units = [s if image.compression == 1 else tiff_lzw(s) for s in image.strips]
+    if any(u is None for u in units):
+        return None
+    tags = image.tags
+    hs, vs = (tags.get(530) or [2, 2])[:2]
+    params: Json = {"layout": "units", "subsampling": [hs, vs]}
+    if 529 in tags and len(tags[529]) == 3:
+        params["coefficients"] = tags[529]
+    if 532 in tags and len(tags[532]) == 6:
+        params["referenceBlackWhite"] = tags[532]
+    steps = [
+        dict(step(b"", {"ok": True}, params), input=samples_input(u, image.width, n, 3))
+        for u, n in zip(units, image.counts, strict=True)
+        if u is not None
+    ]
+    return {"expectAll": image.whole, "steps": steps}
+
+
+def separated_tiff_vector(image: ColorTiff) -> tuple[str, Json]:
+    """An uncompressed CMYK or CIE L*a*b* TIFF's samples, with the codec that converts them."""
+    codec, params = ("CMYKToRGB", {"alpha": True}) if image.photometric == 5 else ("CIELabToRGB", {"alpha": True})
+    if image.photometric == 8 and 318 in image.tags:
+        params["whitePoint"] = image.tags[318]
+    steps = [
+        dict(step(b"", {"ok": True}, params), input=samples_input(s, image.width, n, image.spp))
+        for s, n in zip(image.strips, image.counts, strict=True)
+    ]
+    return codec, {"expectAll": image.whole, "steps": steps}
+
+
+def color_tiff_vector(image: ColorTiff) -> tuple[str, Json | None] | None:
+    """The codec a colour TIFF exercises and its vector (no id yet; None when the file does not make one), or None
+    when no codec of this family reads it."""
+    compression, photometric, bps = image.compression, image.photometric, image.bps
+    if compression == 7 and not (bps == 12 and (image.width * image.spp) % 2):
+        return "JPEG", jpeg_tiff_vector(image)
+    if compression == 50001:
+        return "WebP", {
+            "expectAll": image.whole,
+            "steps": [step(s, {"ok": True}, {"bands": image.spp}) for s in image.strips],
+        }
+    if compression in (50002, 52546):
+        return "JPEGXL", {"expectAll": image.whole, "steps": [step(s, {"ok": True}) for s in image.strips]}
+    if compression == 34676:
+        steps = [
+            step(s, {"ok": True}, {"columns": image.width, "rows": n})
+            for s, n in zip(image.strips, image.counts, strict=True)
+        ]
+        return "SGILogRLE", {"expectAll": {"sha256": image.whole["sha256"]}, "steps": steps}
+    if compression in (1, 5) and photometric == 6 and bps == 8:
+        return "YCbCrToRGB", ycbcr_tiff_vector(image)
+    if compression == 1 and photometric in (5, 8) and bps == 8:
+        return separated_tiff_vector(image)
+    return None
+
+
+def color_rows(resources: pathlib.Path, suites: dict[str, list[Json]]) -> list[tuple[str, str, bytes]]:
+    """The JPEG files and JPEG XL refusals of the colour TSV, added to [suites]; its other files and the lossy TSV's,
+    as (name, pixels, data), for the TIFF pass."""
+    tiffs = []
     for row in rows(resources / "gdal-color-codec-vectors.tsv"):
         kind, name, bands, pixels, data = row[0], row[1], int(row[4]), row[6], base64.b64decode(row[7])
         if kind == "jpeg":
-            suites["JPEG"].append(
-                {
-                    "id": vector_id(name),
-                    "steps": [
-                        step(
-                            data,
-                            {
-                                "samples": {
-                                    "width": int(row[2]),
-                                    "height": int(row[3]),
-                                    "bands": bands,
-                                    "sampleType": "uint8",
-                                    "sha256": pixels,
-                                    "order": "band",
-                                }
-                            },
-                            {"colorTransform": "ycbcr-to-rgb"} if bands == 3 else {},
-                        )
-                    ],
-                }
-            )
+            samples = {
+                "width": int(row[2]),
+                "height": int(row[3]),
+                "bands": bands,
+                "sampleType": "uint8",
+                "sha256": pixels,
+                "order": "band",
+            }
+            params = {"colorTransform": "ycbcr-to-rgb"} if bands == 3 else {}
+            suites["JPEG"].append({"id": vector_id(name), "steps": [step(data, {"samples": samples}, params)]})
         elif kind == "refused" and name.startswith("jxl"):
             tags, _ = _tiff.first_ifd(data)
             suites["JPEGXL"].append(
@@ -265,165 +361,75 @@ def image_family(engine: Any) -> None:
             tiffs.append((name, pixels, data))
     for row in rows(resources / "gdal-color-lossy-vectors.tsv"):
         tiffs.append((row[0], row[6], base64.b64decode(row[7])))
-    for name, pixels, data in tiffs:
-        tags, _ = _tiff.first_ifd(data)
-        if not stripped(tags):
-            continue
-        compression, photometric = _tiff.scalar(tags, 259, 1), _tiff.scalar(tags, 262, 1)
-        width, spp, bps = tags[256][0], _tiff.scalar(tags, 277, 1), _tiff.scalar(tags, 258, 8)
-        strips, counts = _tiff.strips(data, tags), strip_rows(tags)
-        item = 2 if bps == 16 or bps == 12 else 1
-        whole = {
-            "sha256": pixels,
-            "deinterleave": {"bands": spp if photometric not in (5, 8) else 4, "sampleBytes": item},
-        }
-        if compression == 7 and not (bps == 12 and (width * spp) % 2):
-            params = {"precision": bps, "colorTransform": "ycbcr-to-rgb" if photometric == 6 else "none"}
-            if 347 in tags:
-                params["tables"] = {"hex": bytes(tags[347]).hex()}
-            if any(
-                jpeg_frame(s) is None or jpeg_frame(s)[0] != width or jpeg_frame(s)[1] < n
-                for s, n in zip(strips, counts, strict=True)
-            ):
-                continue
-            suites["JPEG"].append(
-                {
-                    "id": unique_id(suites["JPEG"], vector_id(name)),
-                    "session": True,
-                    "expectAll": whole,
-                    "steps": [step(s, {"ok": True}, dict(params, rows=n)) for s, n in zip(strips, counts, strict=True)],
-                }
-            )
-        elif compression == 50001:
-            suites["WebP"].append(
-                {
-                    "id": unique_id(suites["WebP"], vector_id(name)),
-                    "expectAll": whole,
-                    "steps": [step(s, {"ok": True}, {"bands": spp}) for s in strips],
-                }
-            )
-        elif compression in (50002, 52546):
-            suites["JPEGXL"].append(
-                {
-                    "id": unique_id(suites["JPEGXL"], vector_id(name)),
-                    "expectAll": whole,
-                    "steps": [step(s, {"ok": True}) for s in strips],
-                }
-            )
-        elif compression == 34676:
-            suites["SGILogRLE"].append(
-                {
-                    "id": unique_id(suites["SGILogRLE"], vector_id(name)),
-                    "expectAll": {"sha256": pixels},
-                    "steps": [
-                        step(s, {"ok": True}, {"columns": width, "rows": n})
-                        for s, n in zip(strips, counts, strict=True)
-                    ],
-                }
-            )
-        elif compression in (1, 5) and photometric == 6 and bps == 8:
-            units = [s if compression == 1 else tiff_lzw(s) for s in strips]
-            if any(u is None for u in units):
-                continue
-            hs, vs = (tags.get(530) or [2, 2])[:2]
-            params = {"layout": "units", "subsampling": [hs, vs]}
-            if 529 in tags and len(tags[529]) == 3:
-                params["coefficients"] = tags[529]
-            if 532 in tags and len(tags[532]) == 6:
-                params["referenceBlackWhite"] = tags[532]
-            suites["YCbCrToRGB"].append(
-                {
-                    "id": unique_id(suites["YCbCrToRGB"], vector_id(name)),
-                    "expectAll": whole,
-                    "steps": [
-                        dict(step(b"", {"ok": True}, params), input=samples_input(u, width, n, 3))
-                        for u, n in zip(units, counts, strict=True)
-                    ],
-                }
-            )
-        elif compression == 1 and photometric in (5, 8) and bps == 8:
-            codec, params = ("CMYKToRGB", {"alpha": True}) if photometric == 5 else ("CIELabToRGB", {"alpha": True})
-            if photometric == 8 and 318 in tags:
-                params["whitePoint"] = tags[318]
-            suites[codec].append(
-                {
-                    "id": unique_id(suites[codec], vector_id(name)),
-                    "expectAll": whole,
-                    "steps": [
-                        dict(step(b"", {"ok": True}, params), input=samples_input(s, width, n, spp))
-                        for s, n in zip(strips, counts, strict=True)
-                    ],
-                }
-            )
+    return tiffs
+
+
+def neutral_chroma_vector() -> Json:
+    """YCbCr with neutral chroma is grey: a vector worked from the definition."""
     gray = bytes(v for y in (0, 64, 128, 255) for v in (y, 128, 128))
-    suites["YCbCrToRGB"].append(
-        {
-            "id": "neutral-chroma-is-grey",
-            "source": "definition",
-            "steps": [
-                dict(
-                    step(
-                        b"",
-                        {
-                            "samples": {
-                                "width": 4,
-                                "height": 1,
-                                "bands": 3,
-                                "sampleType": "uint8",
-                                "sha256": sha256(bytes(v for y in (0, 64, 128, 255) for v in (y, y, y))),
-                                "order": "pixel",
-                            }
-                        },
-                    ),
-                    input=samples_input(gray, 4, 1, 3),
-                )
-            ],
-        }
+    samples = {
+        "width": 4,
+        "height": 1,
+        "bands": 3,
+        "sampleType": "uint8",
+        "sha256": sha256(bytes(v for y in (0, 64, 128, 255) for v in (y, y, y))),
+        "order": "pixel",
+    }
+    return {
+        "id": "neutral-chroma-is-grey",
+        "source": "definition",
+        "steps": [dict(step(b"", {"samples": samples}), input=samples_input(gray, 4, 1, 3))],
+    }
+
+
+def bmp_geometry(data: bytes) -> tuple[int, int, int, int]:
+    """(pixel data offset, width, height, bits per pixel) of a BMP file."""
+    offset, width, height = (
+        struct.unpack("<I", data[10:14])[0],
+        struct.unpack("<i", data[18:22])[0],
+        abs(struct.unpack("<i", data[22:26])[0]),
     )
+    return offset, width, height, struct.unpack("<H", data[28:30])[0]
+
+
+def bmp_vectors(resources: pathlib.Path) -> list[Json]:
+    """The run-length-encoded BMP files of the codec TSV, then the BMP files GDAL refuses."""
+    out = []
     for row in rows(resources / "gdal-codec-vectors.tsv"):
         name, pixels, data = row[0], row[6], base64.b64decode(row[7])
         if data[:2] != b"BM":
             continue
-        offset, width, height = (
-            struct.unpack("<I", data[10:14])[0],
-            struct.unpack("<i", data[18:22])[0],
-            abs(struct.unpack("<i", data[22:26])[0]),
-        )
-        bits, compression = struct.unpack("<H", data[28:30])[0], struct.unpack("<I", data[30:34])[0]
+        offset, width, height, bits = bmp_geometry(data)
+        compression = struct.unpack("<I", data[30:34])[0]
         if (compression, bits) in ((1, 8), (2, 4)):
-            suites["MicrosoftRLE"].append(
-                {
-                    "id": vector_id(name),
-                    "steps": [
-                        step(
-                            data[offset:],
-                            {"sha256": pixels, "size": width * height},
-                            {"bitsPerPixel": bits, "width": width, "height": height},
-                        )
-                    ],
-                }
-            )
+            params = {"bitsPerPixel": bits, "width": width, "height": height}
+            expect = {"sha256": pixels, "size": width * height}
+            out.append({"id": vector_id(name), "steps": [step(data[offset:], expect, params)]})
     for row in rows(resources / "gdal-codec-refusals.tsv"):
         name, data = row[0], base64.b64decode(row[2])
         if data[:2] == b"BM":
-            offset, width, height = (
-                struct.unpack("<I", data[10:14])[0],
-                struct.unpack("<i", data[18:22])[0],
-                abs(struct.unpack("<i", data[22:26])[0]),
+            offset, width, height, bits = bmp_geometry(data)
+            params = {"bitsPerPixel": bits, "width": width, "height": height}
+            out.append(
+                {"id": vector_id(name, "-refused"), "steps": [step(data[offset:], {"error": "Validation"}, params)]}
             )
-            bits = struct.unpack("<H", data[28:30])[0]
-            suites["MicrosoftRLE"].append(
-                {
-                    "id": vector_id(name, "-refused"),
-                    "steps": [
-                        step(
-                            data[offset:],
-                            {"error": "Validation"},
-                            {"bitsPerPixel": bits, "width": width, "height": height},
-                        )
-                    ],
-                }
-            )
+    return out
+
+
+def image_family(engine: pathlib.Path) -> None:
+    resources = engine / "core/src/test/resources"
+    suites: dict[str, list[Json]] = {name: [] for name in IMAGE_CODECS}
+    for name, pixels, data in color_rows(resources, suites):
+        image = color_tiff(pixels, data)
+        found = color_tiff_vector(image) if image is not None else None
+        if found is None:
+            continue
+        codec, vector = found
+        if vector is None:
+            continue
+        suites[codec].append({"id": unique_id(suites[codec], vector_id(name)), **vector})
+    suites["YCbCrToRGB"].append(neutral_chroma_vector())
+    suites["MicrosoftRLE"] += bmp_vectors(resources)
     for codec, vector_list in suites.items():
         if not vector_list:
             raise SystemExit(f"FAIL: no GDAL vector for {codec}")

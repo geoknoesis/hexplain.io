@@ -23,12 +23,12 @@ MENC = "https://hexplain.io/ns/register/media-encoding#"
 
 
 class CodecError(Exception):
-    def __init__(self, category: Any, message: str) -> None:
+    def __init__(self, category: str, message: str) -> None:
         super().__init__(message)
         self.category = category
 
 
-def _level(params, allowed):
+def _level(params: dict[str, Any], allowed: set[str]) -> str:
     for name in params:
         if name not in allowed:
             raise CodecError("Description", f"unknown parameter {name}")
@@ -41,7 +41,7 @@ def _level(params, allowed):
     return trailing
 
 
-def _inflate(data, wbits, limit, trailing):
+def _inflate(data: bytes, wbits: int, limit: int, trailing: str) -> tuple[bytes, bytes]:
     d = zlib.decompressobj(wbits)
     try:
         out = d.decompress(data, limit + 1)
@@ -54,7 +54,7 @@ def _inflate(data, wbits, limit, trailing):
     return out, d.unused_data
 
 
-def _encode(name, params, data, limit):
+def _encode(name: str, params: dict[str, Any], data: bytes, limit: int) -> bytes:
     """The encode direction of the four codecs, through zlib: raw DEFLATE, a zlib stream or one gzip member."""
     level = params.get("level", -1)
     if name == "Deflate":
@@ -76,7 +76,7 @@ def _encode(name, params, data, limit):
     return out
 
 
-def apply(codec: Any, direction: Any, params: Any, data: Any, limit: Any) -> Any:
+def apply(codec: str, direction: str, params: dict[str, Any], data: bytes, limit: int) -> bytes:
     name = codec[len(MENC) :]
     if name == "Store":
         if params:
@@ -101,25 +101,30 @@ def apply(codec: Any, direction: Any, params: Any, data: Any, limit: Any) -> Any
             raise CodecError("Validation", "trailing bytes")
         return out
     if name == "Gzip":
-        for p in params:
-            if p != "trailing":
-                raise CodecError("Description", f"unknown parameter {p}")
-        trailing = params.get("trailing", "refuse")
-        if trailing not in ("refuse", "ignore"):
-            raise CodecError("Description", f"trailing {trailing!r}")
-        out, rest, members = b"", data, 0
-        while rest:
-            if len(rest) < 10 or rest[:2] != b"\x1f\x8b":
-                if members and trailing == "ignore":
-                    break
-                raise CodecError("Validation", "not a gzip member")
-            part, rest = _inflate(rest, 31, limit - len(out), "refuse")
-            out += part
-            members += 1
-        if not members:
-            raise CodecError("Validation", "empty gzip stream")
-        return out
+        return _gunzip(params, data, limit)
     raise CodecError("Unsupported", f"{codec} is not implemented here")
+
+
+def _gunzip(params: dict[str, Any], data: bytes, limit: int) -> bytes:
+    """The decode direction of Gzip: every member, and what follows the last one as the trailing parameter says."""
+    for p in params:
+        if p != "trailing":
+            raise CodecError("Description", f"unknown parameter {p}")
+    trailing = params.get("trailing", "refuse")
+    if trailing not in ("refuse", "ignore"):
+        raise CodecError("Description", f"trailing {trailing!r}")
+    out, rest, members = b"", data, 0
+    while rest:
+        if len(rest) < 10 or rest[:2] != b"\x1f\x8b":
+            if members and trailing == "ignore":
+                break
+            raise CodecError("Validation", "not a gzip member")
+        part, rest = _inflate(rest, 31, limit - len(out), "refuse")
+        out += part
+        members += 1
+    if not members:
+        raise CodecError("Validation", "empty gzip stream")
+    return out
 
 
 def main() -> None:
@@ -131,7 +136,8 @@ def main() -> None:
     path = pathlib.Path(args.manifest)
     manifest = vectors.load(path)
     vector = next(v for v in manifest["vectors"] if v["id"] == args.id)
-    steps, outputs = [], []
+    steps: list[dict[str, Any]] = []
+    outputs: list[bytes] = []
     for step in vector["steps"]:
         try:
             data = apply(
@@ -146,7 +152,7 @@ def main() -> None:
             break
         outputs.append(data)
         steps.append({"ok": True, "size": len(data), "sha256": hashlib.sha256(data).hexdigest()})
-    result = {"steps": steps}
+    result: dict[str, Any] = {"steps": steps}
     if "expectAll" in vector:
         joined = b"".join(outputs)
         result["all"] = {"sha256": hashlib.sha256(joined).hexdigest(), "size": len(joined)}

@@ -35,7 +35,7 @@ PM_SOURCE = {
 }
 
 
-def flip(data: Any, at: Any) -> Any:
+def flip(data: bytes, at: int) -> bytes:
     b = bytearray(data)
     b[at] ^= 0x01
     return bytes(b)
@@ -45,7 +45,7 @@ def ok_payload() -> dict[str, Any]:
     return {"sha256": hashlib.sha256(PAYLOAD).hexdigest(), "size": len(PAYLOAD)}
 
 
-def main() -> None:
+def main() -> int:
     store = [
         {"id": "identity", "steps": [step(bytes([0, 1, 255]), {"hex": "0001ff"})]},
         {"id": "empty", "steps": [step(b"", {"hex": ""})]},
@@ -159,6 +159,7 @@ def main() -> None:
         ],
     )
     print("PASS: wrote Store, Deflate, Zlib, Gzip and Delta suites")
+    return 0
 
 
 if __name__ == "__main__":
