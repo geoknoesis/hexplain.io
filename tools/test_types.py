@@ -29,8 +29,6 @@ SKIP_EXIT = 77
 PENDING = (
     "tools/_requirement_ids.py",
     "tools/_shape_text.py",
-    "tools/_build_conformance_page.py",
-    "tools/test_codec_vector_completeness.py",
     "tools/test_vocab_shapes.py",
 )
 #: Ceiling on ``-> Any`` return annotations outside the pending modules.

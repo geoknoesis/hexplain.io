@@ -63,7 +63,7 @@ PAGE_LINKS = {
 }
 
 
-def manifests() -> Any:
+def manifests() -> list[dict[str, Any]]:
     out = []
     for cls in CASE_CLASSES:
         for path in sorted((SUITE / cls).glob("*/manifest.json")):
@@ -71,7 +71,7 @@ def manifests() -> Any:
     return out
 
 
-def registry() -> Any:
+def registry() -> dict[str, dict[str, Any]]:
     return json.loads((SUITE / "requirements.json").read_text(encoding="utf-8"))["requirements"]
 
 
@@ -127,7 +127,7 @@ NOT_SUITE_TESTABLE = {
 }
 
 
-def counted(entry: dict[str, Any], rid: Any) -> bool:
+def counted(entry: dict[str, Any], rid: str) -> bool:
     """Whether a requirement counts toward coverage: live, not blanket, and binding a processor (a requirement whose
     registry audience is description binds only the author of a description, which no processor case can observe)."""
     return not entry.get("withdrawn") and rid not in BLANKET and entry.get("audience", "processor") != "description"
@@ -174,7 +174,7 @@ def coverage() -> dict[str, Any]:
             covered = [i for i in ids if citing.get(i)]
             row[level] = {"total": len(ids), "covered": len(covered)}
         classes[cls] = row
-    kinds = Counter()
+    kinds: Counter[str] = Counter()
     for case in cases:
         kinds[case["class"]] += 1
     sections = Counter(s for case in cases for s in case["sections"])
@@ -220,7 +220,7 @@ def round_trip_expectations() -> dict[str, Any]:
     return {"trees": len(entries), "outcomes": dict(sorted(Counter(entries.values()).items()))}
 
 
-def published_reports() -> Any:
+def published_reports() -> list[dict[str, Any]]:
     """The implementation reports under specification/conformance/reports/, summarised for the page."""
     out = []
     for path in sorted((SUITE / "reports").glob("*/*.json")):
@@ -239,7 +239,7 @@ def published_reports() -> Any:
     return out
 
 
-def percent(covered: Any, total: Any) -> Any:
+def percent(covered: int, total: int) -> str:
     return f"{100 * covered / total:.0f}%" if total else "&ndash;"
 
 
@@ -387,12 +387,12 @@ def render_writer(writer: dict[str, Any]) -> list[str]:
     return parts
 
 
-def expected_page(source: str) -> Any:
+def expected_page(source: str) -> str:
     start, end = source.index(BEGIN), source.index(END) + len(END)
     return source[:start] + render(coverage()) + source[end:]
 
 
-def main(argv: list[str] | None) -> int:
+def main(argv: list[str]) -> int:
     source = PAGE.read_text(encoding="utf-8")
     page = expected_page(source)
     data = json.dumps(coverage(), indent=1, ensure_ascii=False) + "\n"

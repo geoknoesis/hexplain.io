@@ -323,7 +323,7 @@ def runner_problems() -> list[str]:
     return [f"run_suite.py: {what}" for ok, what in probes if not ok]
 
 
-def section_ids(document: Any) -> Any:
+def section_ids(document: str) -> set[str] | None:
     """The element ids of a page named as a case's section document (`processing`, `hel/index.html`)."""
     path = ROOT / "specification" / (document if "/" in document else f"{document}/index.html")
     if not path.is_file():
@@ -339,12 +339,17 @@ class Known:
     live: set[str]
     writer_requirements: set[str]
     features: set[str]
-    pages: dict[str, Any] = field(default_factory=dict)
+    pages: dict[str, set[str] | None] = field(default_factory=dict)
 
 
 def member_problems(cls: str, man: dict[str, Any], known: Known) -> list[str]:
     """The optional manifest members that steer a run: limits, features, codecs, withdrawn claims and the flags of
     particular classes."""
+    return listed_member_problems(man, known) + flag_problems(cls, man)
+
+
+def listed_member_problems(man: dict[str, Any], known: Known) -> list[str]:
+    """The members that list names: limits, features, codecs and withdrawn claims."""
     problems = []
     for limit in man.get("limits", {}):
         if limit not in LIMITS:
@@ -367,6 +372,12 @@ def member_problems(cls: str, man: dict[str, Any], known: Known) -> list[str]:
         for name in names:
             if name not in known.features:
                 problems.append(f"claims withdraws {name!r}, which is not a feature token")
+    return problems
+
+
+def flag_problems(cls: str, man: dict[str, Any]) -> list[str]:
+    """The members that set one value, some of them for particular classes only."""
+    problems = []
     if "compareOntologyHeader" in man and (cls != "hdl-compiler" or not isinstance(man["compareOntologyHeader"], bool)):
         problems.append("compareOntologyHeader is a Boolean of an HDL Compiler case")
     if "base" in man and man["base"] is None and cls != "semantic-emitter":
@@ -388,6 +399,16 @@ def member_problems(cls: str, man: dict[str, Any], known: Known) -> list[str]:
 def case_problems(cls: str, case_dir: Path, man: dict[str, Any], known: Known) -> list[str]:
     """Everything wrong with one case: its manifest, the files it names, and its expected artifact."""
     where = f"{cls}/{case_dir.name}"
+    problems = citation_problems(where, cls, case_dir, man, known)
+    problems += file_problems(where, cls, case_dir, man, known)
+    problems += parse_problems(where, cls, case_dir, man)
+    problems += [f"{where}: {p}" for p in member_problems(cls, man, known)]
+    problems += [f"{where}: {p}" for p in gating_problems(case_dir, man, cls)]
+    return problems
+
+
+def citation_problems(where: str, cls: str, case_dir: Path, man: dict[str, Any], known: Known) -> list[str]:
+    """The manifest's required members, its identity, and the requirements and sections it cites."""
     problems = []
     for key in REQUIRED:
         if not man.get(key):
@@ -403,8 +424,15 @@ def case_problems(cls: str, case_dir: Path, man: dict[str, Any], known: Known) -
         document, _, anchor = section.partition("#")
         if document not in known.pages:
             known.pages[document] = section_ids(document)
-        if known.pages[document] is None or anchor not in known.pages[document]:
+        ids = known.pages[document]
+        if ids is None or anchor not in ids:
             problems.append(f"{where}: section {section} does not exist")
+    return problems
+
+
+def file_problems(where: str, cls: str, case_dir: Path, man: dict[str, Any], known: Known) -> list[str]:
+    """The Writer case's own rules, the one expected artifact, and the files the manifest names."""
+    problems = []
     if cls == WRITER:
         problems += writer_problems(case_dir, man, known.writer_requirements)
     elif (case_dir / "expected.hex").is_file() or (case_dir / TREE).is_file() or "verify" in man:
@@ -419,6 +447,12 @@ def case_problems(cls: str, case_dir: Path, man: dict[str, Any], known: Known) -
     for name in filter(None, files):
         if not (case_dir / name).is_file():
             problems.append(f"{where}: manifest names {name}, which does not exist")
+    return problems
+
+
+def parse_problems(where: str, cls: str, case_dir: Path, man: dict[str, Any]) -> list[str]:
+    """Every Turtle file parses, and every JSON expectation parses and names what its class allows."""
+    problems = []
     for name in ["description.ttl", "rules.ttl", "expected.ttl", "expected-report.ttl"] + list(
         man.get("registers", [])
     ):
@@ -438,8 +472,6 @@ def case_problems(cls: str, case_dir: Path, man: dict[str, Any], known: Known) -
                 problems.append(f"{where}: unknown error category {value.get('category')!r}")
             if name == "expected-error.json" and cls == "hdl-compiler" and value.get("severity") != "ERROR":
                 problems.append(f"{where}: an HDL Compiler error names severity ERROR")
-    problems += [f"{where}: {p}" for p in member_problems(cls, man, known)]
-    problems += [f"{where}: {p}" for p in gating_problems(case_dir, man, cls)]
     return problems
 
 
