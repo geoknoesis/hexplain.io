@@ -30,7 +30,6 @@ SKIP_EXIT = 77
 #: Text writes without ``newline=``, by module, that predate the rule and await their owner.
 PENDING_TEXT_WRITES = {
     "tools/codecs/_complete_vectors.py": 1,
-    "tools/conformance/run_suite.py": 2,
 }
 
 

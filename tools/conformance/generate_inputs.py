@@ -14,12 +14,11 @@ from __future__ import annotations
 import shutil
 import sys
 from pathlib import Path
-from typing import Any
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from suite import CLASSES, PREFIX, SUITE  # noqa: E402
+from suite import CLASSES, PREFIX, SUITE, Case  # noqa: E402
 
 #: Case modules. The physical-parser modules after cases_physical add to its CASES list.
 MODULES = (
@@ -47,8 +46,8 @@ MODULES = (
 )
 
 
-def all_cases() -> Any:
-    lists = []
+def all_cases() -> list[Case]:
+    lists: list[list[Case]] = []
     for module in [__import__(name) for name in MODULES]:
         own = getattr(module, "CASES", None)
         if own is not None and not any(own is seen for seen in lists):
@@ -66,7 +65,7 @@ def all_cases() -> Any:
     return cases
 
 
-def expected_tree() -> Any:
+def expected_tree() -> dict[str, bytes]:
     """{relative path: bytes} of every generated file: the cases, and the round-trip expectations of the Physical
     Parser cases that state a tree (round_trip.py)."""
     import round_trip
@@ -81,7 +80,7 @@ def expected_tree() -> Any:
     return out
 
 
-def on_disk() -> Any:
+def on_disk() -> dict[str, bytes]:
     out = {}
     for cls in CLASSES:
         base = SUITE / cls

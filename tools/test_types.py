@@ -27,7 +27,6 @@ ROOT = Path(__file__).resolve().parents[1]
 SKIP_EXIT = 77
 #: Modules whose findings are reported, not failed on (repository-relative glob patterns).
 PENDING = (
-    "tools/conformance/*.py",
     "tools/codecs/*.py",
     "tools/_requirement_ids.py",
     "tools/_shape_text.py",

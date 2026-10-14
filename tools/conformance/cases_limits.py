@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from cases_physical import pp
 
 NESTED = """
@@ -13,9 +11,9 @@ NESTED = """
 """
 
 
-def nested(depth: Any) -> Any:
+def nested(depth: int) -> dict[str, object]:
     """The tree of a Root nested `depth` deep: the innermost has v 0 and no child."""
-    node = {"v": 0, "child": None}
+    node: dict[str, object] = {"v": 0, "child": None}
     for _ in range(depth - 1):
         node = {"v": 1, "child": node}
     return node

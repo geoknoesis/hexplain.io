@@ -15,7 +15,7 @@ from typing import Any
 from cases_physical import pp
 
 
-def crc16_ccitt_false(data: Any) -> Any:
+def crc16_ccitt_false(data: bytes) -> int:
     """CRC-16/CCITT-FALSE: polynomial 0x1021, initial value 0xFFFF, no reflection, no final XOR."""
     crc = 0xFFFF
     for byte in data:
@@ -28,7 +28,7 @@ def crc16_ccitt_false(data: Any) -> Any:
 assert crc16_ccitt_false(b"123456789") == 0x29B1  # the catalogue check value
 
 
-def inflate(data: Any, wbits: Any) -> Any:
+def inflate(data: bytes, wbits: int) -> bytes:
     out = zlib.decompressobj(wbits)
     return out.decompress(data) + out.flush()
 
@@ -225,14 +225,14 @@ def codec_field(codec_turtle: Any, size: Any) -> str:
    """
 
 
-def delta_params(params: Any) -> Any:
+def delta_params(params: dict[str, Any]) -> str:
     return ", ".join(
         f'[ a hexplain:CodecParameter ; hexplain:parameterName "{k}" ; hexplain:parameterValue {v} ]'
         for k, v in params.items()
     )
 
 
-def delta_field(params: Any, size: Any) -> Any:
+def delta_field(params: dict[str, Any], size: Any) -> str:
     listed = delta_params(params)
     parameter = f" ; hexplain:codecParameter {listed}" if listed else ""
     return codec_field(

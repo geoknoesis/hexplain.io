@@ -13,12 +13,10 @@ depends on a table or a third-party package.
 
 from __future__ import annotations
 
-from typing import Any
-
 CHECK_INPUT = b"123456789"
 
 
-def reflect(value: Any, width: Any) -> Any:
+def reflect(value: int, width: int) -> int:
     """`value`'s low `width` bits in reverse order."""
     out = 0
     for _ in range(width):
@@ -27,7 +25,7 @@ def reflect(value: Any, width: Any) -> Any:
     return out
 
 
-def crc(data: Any, width: Any, poly: Any, init: Any, refin: Any, refout: Any, xorout: Any) -> Any:
+def crc(data: bytes, width: int, poly: int, init: int, refin: bool, refout: bool, xorout: int) -> int:
     """The CRC of `data` under the Rocksoft model."""
     if not 8 <= width <= 64:
         raise ValueError("width is 8..64")
@@ -77,7 +75,7 @@ NAMED = {
 }
 
 
-def named(name: str, data: Any) -> Any:
+def named(name: str, data: bytes) -> int:
     """The CRC of `data` under the named algorithm `name` (a BDDO individual's local name)."""
     _hdl, _label, width, poly, init, refin, refout, xorout, _check = NAMED[name]
     return crc(data, width, poly, init, refin, refout, xorout)

@@ -14,6 +14,8 @@ skip keys (those of a chunk index 3) and neither coincides with row- or column-m
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from cases_physical import pp
 
 ROWS, COLUMNS, CHUNK_COLUMNS = 3, 6, 2
@@ -61,7 +63,7 @@ def hilbert_key(chunk: tuple[int, ...]) -> int:
     return key
 
 
-def table(key: object) -> list[int]:
+def table(key: Callable[[tuple[int, ...]], int]) -> list[int]:
     """The chunk offsets in ascending key over the padded 4 x 4 grid, the keys of chunks outside the real 3 x 3
     skipped. Chunk (y, x) is stored at TABLE_BYTES + 2 * (3 * y + x), from the start of the stream."""
     padded = [(y, x) for y in range(1 << BITS) for x in range(1 << BITS)]
@@ -69,7 +71,7 @@ def table(key: object) -> list[int]:
     return [TABLE_BYTES + CHUNK_COLUMNS * (CHUNKS_X * y + x) for y, x in ordered]
 
 
-def _is_curve(key: object) -> bool:
+def _is_curve(key: Callable[[tuple[int, ...]], int]) -> bool:
     """A Hilbert curve visits every cell of the padded grid once, each step to an adjacent cell."""
     cells = sorted(((y, x) for y in range(1 << BITS) for x in range(1 << BITS)), key=key)
     steps = zip(cells, cells[1:], strict=False)

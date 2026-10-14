@@ -380,7 +380,7 @@ hel(
 # These cases state bddo:helVersion on the description's owl:Ontology (HEL, Version marker).
 
 
-def versioned(case_id: Any, version: Any, expr: Any) -> Any:
+def versioned(case_id: str, version: str, expr: str) -> str:
     return one(
         expr,
         preamble=f"<https://example.org/pp-hel-{case_id}> a <http://www.w3.org/2002/07/owl#Ontology> ; "

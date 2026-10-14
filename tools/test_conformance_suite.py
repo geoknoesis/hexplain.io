@@ -227,7 +227,7 @@ def comparator_problems() -> list[str]:
 
         def output(name: str, value: Any) -> Path:
             path = Path(tmp) / name
-            path.write_text(json.dumps(value), encoding="utf-8")
+            path.write_text(json.dumps(value), encoding="utf-8", newline="\n")
             return path
 
         tree = json.loads((regex / "expected.json").read_text(encoding="utf-8"))

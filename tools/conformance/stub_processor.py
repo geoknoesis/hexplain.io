@@ -22,14 +22,16 @@ def main(argv: list[str]) -> int:
     case_dir = Path(case)
     if "--refuse" in options:
         category = options[options.index("--refuse") + 1]
-        Path(err).write_text(json.dumps({"category": category}), encoding="utf-8")
+        Path(err).write_text(json.dumps({"category": category}), encoding="utf-8", newline="\n")
         return 1
     if mode == "write":
         source = case_dir / "input.bin"
         Path(out).write_bytes((source if source.is_file() else case_dir / "tree.json").read_bytes())
         return 0
     tree = json.loads((case_dir / "expected.json").read_text(encoding="utf-8"))
-    Path(out).write_text(json.dumps({"other": tree} if "--other-tree" in options else tree), encoding="utf-8")
+    Path(out).write_text(
+        json.dumps({"other": tree} if "--other-tree" in options else tree), encoding="utf-8", newline="\n"
+    )
     return 0
 
 

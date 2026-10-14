@@ -14,18 +14,18 @@ and the xxHash specification (Cyan4973/xxHash, doc/xxhash_spec.md).
 from __future__ import annotations
 
 import struct
-from typing import Any
+from collections.abc import Iterable
 
 MASK32 = 0xFFFFFFFF
 P1, P2, P3, P4, P5 = 2654435761, 2246822519, 3266489917, 668265263, 374761393
 FRAME_MAGIC = b"\x04\x22\x4d\x18"
 
 
-def _rotl(x, r):
+def _rotl(x: int, r: int) -> int:
     return ((x << r) | (x >> (32 - r))) & MASK32
 
 
-def xxh32(data: Any, seed: int = 0) -> Any:
+def xxh32(data: bytes, seed: int = 0) -> int:
     """xxHash-32 of `data`."""
     n = len(data)
     i = 0
@@ -59,7 +59,7 @@ def xxh32(data: Any, seed: int = 0) -> Any:
 assert xxh32(b"") == 0x02CC5D05  # the specification's test value for the empty input
 
 
-def _length(n):
+def _length(n: int) -> bytes:
     """The 255-run extension bytes of a literal or match length beyond its 4-bit field."""
     out = bytearray()
     while n >= 255:
@@ -69,7 +69,7 @@ def _length(n):
     return bytes(out)
 
 
-def _sequence(literals, offset=None, match=0):
+def _sequence(literals: bytes, offset: int | None = None, match: int = 0) -> bytes:
     lit = len(literals)
     token_lit = min(lit, 15)
     if offset is None:
@@ -81,14 +81,14 @@ def _sequence(literals, offset=None, match=0):
     return out + (_length(m - 15) if m >= 15 else b"")
 
 
-def compress_block(data: Any) -> Any:
+def compress_block(data: bytes) -> bytes:
     """One LZ4 block: greedy 4-byte matching, honouring the end-of-block rules (the last five bytes
     are literals, and no match starts in the last twelve)."""
     n = len(data)
     out = bytearray()
     anchor = i = 0
     last_match_start = n - 12
-    table = {}
+    table: dict[bytes, int] = {}
     while i < last_match_start:
         key = data[i : i + 4]
         candidate = table.get(key)
@@ -112,7 +112,19 @@ class Malformed(ValueError):
     """Not a well-formed LZ4 block."""
 
 
-def decompress_block(block: Any, size: Any) -> Any:
+def _extended_length(block: bytes, i: int, value: int, inside: str) -> tuple[int, int]:
+    """Add the 255-run extension bytes at `i` to a length field's `value`; the length and the next index."""
+    while True:
+        if i >= len(block):
+            raise Malformed(f"block ends inside a {inside}")
+        b = block[i]
+        i += 1
+        value += b
+        if b != 255:
+            return value, i
+
+
+def decompress_block(block: bytes, size: int) -> bytes:
     """Decode one LZ4 block that must yield exactly `size` bytes."""
     out = bytearray()
     i = 0
@@ -123,14 +135,7 @@ def decompress_block(block: Any, size: Any) -> Any:
         i += 1
         lit = token >> 4
         if lit == 15:
-            while True:
-                if i >= len(block):
-                    raise Malformed("block ends inside a literal length")
-                b = block[i]
-                i += 1
-                lit += b
-                if b != 255:
-                    break
+            lit, i = _extended_length(block, i, lit, "literal length")
         if i + lit > len(block):
             raise Malformed("literals run past the block")
         out += block[i : i + lit]
@@ -145,14 +150,7 @@ def decompress_block(block: Any, size: Any) -> Any:
             raise Malformed(f"match offset {offset} reaches before the output")
         match = (token & 15) + 4
         if token & 15 == 15:
-            while True:
-                if i >= len(block):
-                    raise Malformed("block ends inside a match length")
-                b = block[i]
-                i += 1
-                match += b
-                if b != 255:
-                    break
+            match, i = _extended_length(block, i, match, "match length")
         for _ in range(match):
             out.append(out[-offset])
         if len(out) > size:
@@ -163,12 +161,12 @@ def decompress_block(block: Any, size: Any) -> Any:
 
 
 def frame(
-    content: Any,
+    content: bytes,
     block_checksum: bool = False,
     content_checksum: bool = True,
     content_size: bool = False,
-    blocks: Any = None,
-) -> Any:
+    blocks: Iterable[int] | None = None,
+) -> bytes:
     """An LZ4 frame holding `content`: linked blocks of at most 64 KiB, each compressed (or stored
     when compression does not help), with the checksums asked for."""
     flg = 0x40 | 0x20  # version 01, blocks independent
