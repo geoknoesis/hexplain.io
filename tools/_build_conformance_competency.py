@@ -185,7 +185,7 @@ def cases() -> list[Case]:
 def render(rows: list[Case]) -> str:
     """The corpus file: two comment lines, then one tab-separated line per case."""
     lines = [
-        "# Conformance, requirement and function competency cases (tools/test_conformance_competency.py --write).",
+        "# Conformance, requirement and function competency cases (tools/_build_conformance_competency.py --write).",
         "# name\tconforms\texpected-path\tbase64 Turtle",
     ]
     for name, ok, path, body in rows:
