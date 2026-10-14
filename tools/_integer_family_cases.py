@@ -72,4 +72,65 @@ def cases() -> list[dict[str, Any]]:
                 "npv/net.ttl",
                 f'<urn:packet> <{term("networkflow", prop)}> "1"^^<{term("xsd", datatype)}>.',
             )
+    # The video module's own integer shape: every datatype of the family, on a count and on a rate term.
+    for prop in ["audioChannels", "frameCount"]:
+        for datatype in NAMES:
+            add(
+                "video " + prop + " " + datatype,
+                "vdv/video.ttl",
+                f'<urn:stream> <{term("video", prop)}> "1"^^<{term("xsd", datatype)}>.',
+            )
+    add(
+        "video audioChannels decimal is not an integer",
+        "vdv/video.ttl",
+        f"<urn:stream> <{term('video', 'audioChannels')}> 1.0 .",
+        False,
+        term("video", "audioChannels"),
+    )
+    rows.extend(advisory_cases())
     return rows
+
+
+def advisory_cases() -> list[dict[str, Any]]:
+    """Shapes that only advise: without allow_warnings their result fails the run, at sh:Warning."""
+    bddo, warning = "bddo/bddo.ttl", term("sh", "Warning")
+    head = f"@prefix b:<{term('bddo', '')}> . @prefix ex:<urn:ex:> . "
+    return [
+        row(
+            "fixed-point scale beyond the portable range is advised against",
+            bddo,
+            head + "ex:f b:fixedPointScale 5000 .",
+            False,
+            term("bddo", "fixedPointScale"),
+            severity=warning,
+            allow_warnings=False,
+        ),
+        row(
+            "fixed-point scale within the portable range draws no advice",
+            bddo,
+            head + "ex:f b:fixedPointScale -16 .",
+        ),
+        row(
+            "custom encoding with a byte-order-ambiguous charset is advised against",
+            bddo,
+            head + 'ex:e a b:CustomEncoding ; b:ianaCharset "UTF-16" .',
+            False,
+            term("bddo", "ianaCharset"),
+            severity=warning,
+            allow_warnings=False,
+        ),
+        row(
+            "custom encoding re-spelling a registered charset is advised against",
+            bddo,
+            head + 'ex:e a b:CustomEncoding ; b:ianaCharset "shift_jis" .',
+            False,
+            term("bddo", "ianaCharset"),
+            severity=warning,
+            allow_warnings=False,
+        ),
+        row(
+            "custom encoding with an unregistered byte-ordered charset draws no advice",
+            bddo,
+            head + 'ex:e a b:CustomEncoding ; b:ianaCharset "IBM437" .',
+        ),
+    ]
