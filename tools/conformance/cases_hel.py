@@ -50,7 +50,7 @@ TYPE_ERROR = "req-pm-errors-6"
 SYNTAX = ["req-pm-errors-16", "req-hel-conformance-1", "req-hel-conformance-2"]
 
 
-def derived(fields: Any, exprs: Any, preamble: str = "") -> Any:
+def derived(fields: list[str], exprs: dict[str, str], preamble: str = "") -> str:
     """A Root with the given physical fields (Turtle lines) then one derived field per expression."""
     names = [line.split()[0][3:] for line in fields] + list(exprs)
     lines = [f"ex:Root a bddo:Struct ; bddo:hasField ( {' '.join('ex:' + n for n in names)} ) ."]
@@ -59,7 +59,7 @@ def derived(fields: Any, exprs: Any, preamble: str = "") -> Any:
     return "\n".join(lines) + ("\n" + preamble if preamble else "") + "\n"
 
 
-def one(expr: Any, fields: Sequence[Any] = (), preamble: str = "") -> Any:
+def one(expr: str, fields: Sequence[str] = (), preamble: str = "") -> str:
     return derived(list(fields), {"d": expr}, preamble)
 
 

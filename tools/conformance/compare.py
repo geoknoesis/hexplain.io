@@ -35,6 +35,7 @@ import rdflib
 from rdflib import BNode, Literal, URIRef
 from rdflib.compare import graph_diff, to_isomorphic
 from rdflib.namespace import RDF, XSD
+from rdflib.term import Node
 
 # A Semantic Emitter's literals compare by lexical form (the Processing Model requires the canonical one, Semantic
 # Triple Emission, lexical forms), so rdflib must keep the form it parsed rather than rewrite it by value.
@@ -122,10 +123,16 @@ class Mismatch(Exception):
     pass
 
 
+#: A triple of an rdflib graph.
+Triple = tuple[Node, Node, Node]
+#: A blank node of an expected run report bound to a node of the actual report.
+Binding = dict[Node, Node]
+
+
 # ----------------------------------------------------------------------------------------------- parsed trees
 
 
-def compare_tree(expected: Any, actual: Any, path: str = "$") -> Any:
+def compare_tree(expected: Any, actual: Any, path: str = "$") -> list[str]:
     """Differences between an expected canonical tree and an actual one, both as parsed JSON (int and float kept apart:
     json.loads reads 1 as int and 1.0 as float, which is the canonical form's distinction). [] when they match."""
     if expected is None:
@@ -135,7 +142,7 @@ def compare_tree(expected: Any, actual: Any, path: str = "$") -> Any:
             return [f"{path}: expected a struct, got {actual!r}"]
         if set(expected) != set(actual):
             return [f"{path}: expected members {sorted(expected)}, got {sorted(actual)}"]
-        out = []
+        out: list[str] = []
         for k in expected:
             out += compare_tree(expected[k], actual[k], f"{path}.{k}")
         return out
@@ -167,7 +174,7 @@ def compare_tree(expected: Any, actual: Any, path: str = "$") -> Any:
 # ----------------------------------------------------------------------------------------------- graphs
 
 
-def load_graph(path_or_text: Any, base: str = "urn:example:base") -> Any:
+def load_graph(path_or_text: Path | str, base: str = "urn:example:base") -> rdflib.Graph:
     g = rdflib.Graph()
     text = Path(path_or_text).read_text(encoding="utf-8") if isinstance(path_or_text, Path) else path_or_text
     fmt = "nt" if isinstance(path_or_text, Path) and path_or_text.suffix == ".nt" else "turtle"
@@ -175,9 +182,10 @@ def load_graph(path_or_text: Any, base: str = "urn:example:base") -> Any:
     return g
 
 
-def _argument_cells(g):
+def _argument_cells(g: rdflib.Graph) -> set[Node]:
     """The rdf:List cells of every bddo:hasArgument list: their rdf:first members are HEL expressions."""
-    cells, pending = set(), list(g.objects(None, HAS_ARGUMENT))
+    cells: set[Node] = set()
+    pending = list(g.objects(None, HAS_ARGUMENT))
     while pending:
         cell = pending.pop()
         if cell in cells or cell == RDF.nil:
@@ -187,7 +195,7 @@ def _argument_cells(g):
     return cells
 
 
-def _canonical_literal(p, o, hel_bearing=False, by_value=False):
+def _canonical_literal(p: Node, o: Node, hel_bearing: bool = False, by_value: bool = False) -> Node:
     if not isinstance(o, Literal):
         return o
     # A HEL expression typed bddo:HelExpression is the same expression as the xsd:string one (HEL, expression
@@ -204,15 +212,23 @@ def _canonical_literal(p, o, hel_bearing=False, by_value=False):
         return o
 
 
-def normalise_graph(g: Any, *, cls=None, manifest: Any = None, reported_base: Any = None, header: Any = None) -> Any:
+def normalise_graph(
+    g: rdflib.Graph,
+    *,
+    cls: str | None = None,
+    manifest: dict[str, Any] | None = None,
+    reported_base: str | None = None,
+    header: bool | None = None,
+) -> rdflib.Graph:
     """The graph a case compares: extents removed, the bundle profile's closure removed (Bundle Processor), the
     ontology header removed (HDL Compiler, unless the case compares it), the reported base rewritten to the
     placeholder, typed literals as written (by value for an HDL Compiler graph, whose datatypes alone are fixed),
     HEL literals canonical."""
     manifest = manifest or {}
-    drop = set()
+    drop: set[Triple] = set()
     if cls == "bundle-processor" and manifest.get("bundleProfile"):
-        pending, closure = [URIRef(manifest["bundleProfile"])], set()
+        pending: list[Node] = [URIRef(manifest["bundleProfile"])]
+        closure: set[Node] = set()
         while pending:
             node = pending.pop()
             if node in closure:
@@ -238,7 +254,7 @@ def normalise_graph(g: Any, *, cls=None, manifest: Any = None, reported_base: An
     return out
 
 
-def _rebase(term, base):
+def _rebase(term: Node, base: str) -> Node:
     if isinstance(term, URIRef):
         text = str(term)
         stem = base.split("#")[0]
@@ -247,7 +263,7 @@ def _rebase(term, base):
     return term
 
 
-def compare_graph(expected: Any, actual: Any, **kw: Any) -> Any:
+def compare_graph(expected: rdflib.Graph, actual: rdflib.Graph, **kw: Any) -> list[str]:
     """Differences between two graphs (rdflib Graphs) after normalise_graph; [] when isomorphic."""
     base = kw.pop("reported_base", None)
     e = normalise_graph(expected, **kw)
@@ -262,16 +278,17 @@ def compare_graph(expected: Any, actual: Any, **kw: Any) -> Any:
     return lines
 
 
-def _nt(g):
+def _nt(g: rdflib.Graph) -> list[str]:
     return [f"{s.n3()} {p.n3()} {o.n3()}" for s, p, o in g]
 
 
 # ----------------------------------------------------------------------------------------------- errors
 
 
-def compare_error(expected: Any, actual: Any, category_map: Any = None) -> Any:
+def compare_error(expected: dict[str, Any], actual: Any, category_map: dict[str, str] | None = None) -> list[str]:
+    names: dict[Any, str] = category_map or {}
     got = (actual or {}).get("category")
-    got = (category_map or {}).get(got, got)
+    got = names.get(got, got)
     if got not in CATEGORIES:
         return [f"expected a {expected['category']} error, got {actual!r}"]
     return [] if got == expected["category"] else [f"expected a {expected['category']} error, got {got}"]
@@ -290,7 +307,7 @@ def compare_bytes(expected: bytes, actual: bytes) -> list[str]:
     ]
 
 
-def compare_hdl_error(expected: Any, actual: Any) -> Any:
+def compare_hdl_error(expected: dict[str, Any], actual: Any) -> list[str]:
     """An HDL Compiler error case: at least one ERROR diagnostic (at the stated line, when the case states one) and no
     compiled output."""
     diags = [d for d in (actual or {}).get("diagnostics", []) if str(d.get("severity", "")).upper() == "ERROR"]
@@ -307,7 +324,7 @@ def compare_hdl_error(expected: Any, actual: Any) -> Any:
 # ----------------------------------------------------------------------------------------------- run reports
 
 
-def compare_report_json(expected: Any, actual: Any) -> Any:
+def compare_report_json(expected: dict[str, Any], actual: dict[str, Any]) -> list[str]:
     """The summary comparison: verdict, truncation, scoping and every listed outcome equal; findings one for one, each
     on the members the expected finding states."""
     out = []
@@ -331,13 +348,13 @@ def compare_report_json(expected: Any, actual: Any) -> Any:
     return out
 
 
-def _finding_member(key, want, got):
+def _finding_member(key: str, want: Any, got: Any) -> bool:
     if key == "requirements":
         return sorted(want) == sorted(got or [])
     return want == got
 
 
-def _report_graph(g):
+def _report_graph(g: rdflib.Graph) -> rdflib.Graph:
     """A report graph with conf:errorCategory strings read as the category individuals they name."""
     out = rdflib.Graph()
     for s, p, o in g:
@@ -347,7 +364,7 @@ def _report_graph(g):
     return out
 
 
-def compare_report_ttl(expected: Any, actual: Any) -> Any:
+def compare_report_ttl(expected: rdflib.Graph, actual: rdflib.Graph) -> list[str]:
     """The expected run report maps into the actual one: each blank node of the expected graph is a variable, bound
     injectively to a node of the actual graph so that every expected triple is an actual triple. The actual run must
     have exactly as many conf:finding values as the expected run, unless the expected run is truncated."""
@@ -374,25 +391,25 @@ def compare_report_ttl(expected: Any, actual: Any) -> Any:
     return out
 
 
-def _triple_in(t, g):
+def _triple_in(t: Triple, g: rdflib.Graph) -> bool:
     s, p, o = (None if isinstance(x, BNode) else x for x in t)
     return any(True for _ in g.triples((s, p, o)))
 
 
-def _embed(triples, g, binding):
+def _embed(triples: list[Triple], g: rdflib.Graph, binding: Binding) -> Binding | None:
     """A mapping of the blank nodes of [triples] into g's nodes, extending [binding], under which every triple is in g;
     None when there is none. Backtracking, most-constrained triple first."""
     if not triples:
         return binding
 
-    def unbound(t):
+    def unbound(t: Triple) -> int:
         return sum(1 for x in (t[0], t[2]) if isinstance(x, BNode) and x not in binding)
 
     triples = sorted(triples, key=unbound)
     s, p, o = triples[0]
     rest = triples[1:]
 
-    def resolve(x):
+    def resolve(x: Node) -> Node | None:
         return binding.get(x) if isinstance(x, BNode) else x
 
     for cs, _, co in g.triples((resolve(s), p, resolve(o))):
@@ -413,7 +430,7 @@ def _embed(triples, g, binding):
     return None
 
 
-def report_shape_violations(report: Any) -> list[Any]:
+def report_shape_violations(report: rdflib.Graph) -> list[str]:
     """The SHACL results of a run report validated on its own against the conf and req shapes (the report carries the
     requirement and constraint descriptions it cites). Uses pyshacl, a dependency of the specification tooling."""
     from pyshacl import validate  # imported here: only the RDF report cases need it
@@ -437,7 +454,7 @@ def report_shape_violations(report: Any) -> list[Any]:
 # ----------------------------------------------------------------------------------------------- claims
 
 
-def compare_claims(expected: Any, actual: Any) -> Any:
+def compare_claims(expected: dict[str, Any], actual: dict[str, Any]) -> list[str]:
     out = []
     for key in expected.get("required", []):
         if key not in actual:
@@ -469,7 +486,7 @@ def compare_claims(expected: Any, actual: Any) -> Any:
     return out + claimed_encoding_problems(expected, actual)
 
 
-def claimed_encoding_problems(expected: Any, actual: Any) -> list[str]:
+def claimed_encoding_problems(expected: dict[str, Any], actual: dict[str, Any]) -> list[str]:
     """The `encodings` member of a claims statement, where it is present: an array of the IRIs of registered
     bddo:Encoding individuals (the case's `encodings` is the registered set)."""
     stated = actual.get("encodings", [])
@@ -482,7 +499,7 @@ def claimed_encoding_problems(expected: Any, actual: Any) -> list[str]:
 # ----------------------------------------------------------------------------------------------- one case
 
 
-def expected_artifact(case_dir: Any) -> Any:
+def expected_artifact(case_dir: Path) -> str:
     for name in (
         "expected.json",
         "expected.ttl",
@@ -497,58 +514,82 @@ def expected_artifact(case_dir: Any) -> Any:
     raise Mismatch(f"{case_dir}: no expected artifact")
 
 
-def compare_case(case_dir: Any, actual_path: Any, reported_base: Any = None, category_map: Any = None) -> Any:
+def compare_case(
+    case_dir: Path | str,
+    actual_path: Path | str,
+    reported_base: str | None = None,
+    category_map: dict[str, str] | None = None,
+) -> list[str]:
     """Differences between the output at [actual_path] and the expectation of the case at [case_dir]."""
     case_dir, actual_path = Path(case_dir), Path(actual_path)
     manifest = json.loads((case_dir / "manifest.json").read_text(encoding="utf-8"))
-    cls = manifest["class"]
     name = expected_artifact(case_dir)
-    if cls == "writer":
-        # A writer's output is bytes or an error: the file is read as JSON only when it is named as one (error.json).
-        if not actual_path.is_file():
-            return [f"no output at {actual_path}"]
-        read = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.suffix == ".json" else None
-        # A JSON output is an error, except for a case verified by round trip, whose JSON output is the re-parsed
-        # tree unless it is the runner's error file.
-        error = read if name != "expected.json" or actual_path.name == ERROR_FILE else None
-        if name == "expected.hex":
-            if error is not None:
-                return [f"expected bytes, got {error!r}"]
-            return compare_bytes(parse_hex((case_dir / name).read_text(encoding="ascii")), actual_path.read_bytes())
-        expected = json.loads((case_dir / name).read_text(encoding="utf-8"))
-        if name == "expected.json":
-            # "verify": "round-trip": the runner parsed the written stream back; [actual_path] is that tree, or the
-            # error the writer or the parser raised.
-            if error is not None or actual_path.suffix != ".json":
-                return [f"expected a stream that parses back to the tree, got {error or 'unparsed bytes'!r}"]
-            return round_trip.isomorphism_problems(expected, read, round_trip.recomputed_keys(case_dir / DESCRIPTION))
-        if error is None:
-            return [f"expected a {expected['category']} error, got {actual_path.stat().st_size} bytes"]
-        return compare_error(expected, error, category_map)
+    if manifest["class"] == "writer":
+        return _compare_writer(case_dir, name, actual_path, category_map)
     if name.endswith(".json"):
-        expected = json.loads((case_dir / name).read_text(encoding="utf-8"))
-        actual = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.is_file() else None
-        if name == "expected.json":
-            if actual_path.name == ERROR_FILE and manifest.get("orError"):
-                # An error category that is an equally conforming outcome (a limit a processor may apply).
-                return compare_error({"category": manifest["orError"]}, actual, category_map)
-            return compare_tree(expected, actual)
-        if name == "expected-error.json":
-            if cls == "hdl-compiler":
-                return compare_hdl_error(expected, actual)
-            if (
-                isinstance(actual, dict)
-                and "category" not in actual
-                and cls == "conformance-evaluator"
-                and manifest.get("orError")
-            ):
-                return [f"expected a {expected['category']} error, got a report"]
-            return compare_error(expected, actual, category_map)
-        if name == "expected-report.json":
-            if isinstance(actual, dict) and "category" in actual:
-                return [] if actual["category"] == manifest.get("orError") else [f"expected a report, got {actual}"]
-            return compare_report_json(expected, actual or {})
-        return compare_claims(expected, actual or {})
+        return _compare_json(case_dir, name, manifest, actual_path, category_map)
+    return _compare_graphs(case_dir, name, manifest, actual_path, reported_base)
+
+
+def _compare_writer(case_dir: Path, name: str, actual_path: Path, category_map: dict[str, str] | None) -> list[str]:
+    """A Writer case: the bytes written, the tree they parse back to, or the error raised."""
+    # A writer's output is bytes or an error: the file is read as JSON only when it is named as one (error.json).
+    if not actual_path.is_file():
+        return [f"no output at {actual_path}"]
+    read = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.suffix == ".json" else None
+    # A JSON output is an error, except for a case verified by round trip, whose JSON output is the re-parsed
+    # tree unless it is the runner's error file.
+    error = read if name != "expected.json" or actual_path.name == ERROR_FILE else None
+    if name == "expected.hex":
+        if error is not None:
+            return [f"expected bytes, got {error!r}"]
+        return compare_bytes(parse_hex((case_dir / name).read_text(encoding="ascii")), actual_path.read_bytes())
+    expected = json.loads((case_dir / name).read_text(encoding="utf-8"))
+    if name == "expected.json":
+        # "verify": "round-trip": the runner parsed the written stream back; [actual_path] is that tree, or the
+        # error the writer or the parser raised.
+        if error is not None or actual_path.suffix != ".json":
+            return [f"expected a stream that parses back to the tree, got {error or 'unparsed bytes'!r}"]
+        return round_trip.isomorphism_problems(expected, read, round_trip.recomputed_keys(case_dir / DESCRIPTION))
+    if error is None:
+        return [f"expected a {expected['category']} error, got {actual_path.stat().st_size} bytes"]
+    return compare_error(expected, error, category_map)
+
+
+def _compare_json(
+    case_dir: Path, name: str, manifest: dict[str, Any], actual_path: Path, category_map: dict[str, str] | None
+) -> list[str]:
+    """A case whose expected artifact is JSON: a tree, an error, a run summary or a claims statement."""
+    cls = manifest["class"]
+    expected = json.loads((case_dir / name).read_text(encoding="utf-8"))
+    actual = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.is_file() else None
+    if name == "expected.json":
+        if actual_path.name == ERROR_FILE and manifest.get("orError"):
+            # An error category that is an equally conforming outcome (a limit a processor may apply).
+            return compare_error({"category": manifest["orError"]}, actual, category_map)
+        return compare_tree(expected, actual)
+    if name == "expected-error.json":
+        if cls == "hdl-compiler":
+            return compare_hdl_error(expected, actual)
+        if (
+            isinstance(actual, dict)
+            and "category" not in actual
+            and cls == "conformance-evaluator"
+            and manifest.get("orError")
+        ):
+            return [f"expected a {expected['category']} error, got a report"]
+        return compare_error(expected, actual, category_map)
+    if name == "expected-report.json":
+        if isinstance(actual, dict) and "category" in actual:
+            return [] if actual["category"] == manifest.get("orError") else [f"expected a report, got {actual}"]
+        return compare_report_json(expected, actual or {})
+    return compare_claims(expected, actual or {})
+
+
+def _compare_graphs(
+    case_dir: Path, name: str, manifest: dict[str, Any], actual_path: Path, reported_base: str | None
+) -> list[str]:
+    """A case whose expected artifact is a graph: an emitted or compiled graph, or a run report as RDF."""
     expected_graph = load_graph(case_dir / name)
     if not actual_path.is_file():
         return [f"no output at {actual_path}"]
@@ -563,6 +604,7 @@ def compare_case(case_dir: Any, actual_path: Any, reported_base: Any = None, cat
         if manifest.get("reportConformsToShapes"):
             problems += report_shape_violations(actual_graph)
         return problems
+    cls = manifest["class"]
     return compare_graph(expected_graph, actual_graph, cls=cls, manifest=manifest, reported_base=reported_base)
 
 

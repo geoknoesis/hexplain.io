@@ -1,7 +1,7 @@
 # Shared lint contract. The profile library adopted this file's rule selection before ANN and
 # C901 were added here; it takes those two over when its modules meet them, and until then
-# everything above them is one convention for both repositories. The per-file entries at the
-# end are this repository's own.
+# everything above them is one convention for both repositories. No module is exempt from any
+# rule: a per-file entry is not added (tools/test_lint.py fails on one).
 #
 # Defect rules (undefined and unused names, syntax errors, the bugbear checks) and the style
 # rules the specification tooling is written to: 120-column lines, no statement chaining
@@ -29,17 +29,3 @@ ignore = [
 [lint.mccabe]
 # A function with more than fifteen decision points is split.
 max-complexity = 15
-
-# Modules that do not meet ANN and C901 yet. Each belongs to work in progress elsewhere (the
-# conformance suite, the codec vector tooling, the requirement registry, the shape-text
-# renderer) and was not edited when the two rules were adopted; tools/test_lint.py fails when
-# an entry no longer has a finding, so the list can only shrink. Remove an entry with the
-# change that brings its module into line; add none.
-[lint.per-file-ignores]
-"tools/conformance/*.py" = ["ANN", "C901"]
-"tools/codecs/*.py" = ["ANN", "C901"]
-"tools/_requirement_ids.py" = ["ANN", "C901"]
-"tools/_shape_text.py" = ["ANN", "C901"]
-"tools/test_codec_vector_completeness.py" = ["ANN"]
-"tools/test_conformance_suite.py" = ["C901"]
-"tools/test_vocab_shapes.py" = ["ANN"]

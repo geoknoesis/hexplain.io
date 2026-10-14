@@ -120,16 +120,14 @@ the line ending to the platform) and resolve paths from the module's `ROOT`, nev
 working directory.
 
 Every module under `tools/`, the conformance suite (`tools/conformance/`) and the codec vector
-tooling (`tools/codecs/`) included, is formatted and linted alike. ANN, C901, the type gate and
-the line-ending rule were adopted while some modules were being changed elsewhere; those modules
-are listed -- the per-file entries of `ruff.toml`, `PENDING` in `tools/test_types.py` and
-`PENDING_TEXT_WRITES` in `tools/test_lint.py` -- and each gate fails when a listed module no
-longer has a finding, so an entry is removed with the change that fixes its module and none is
-added. The case modules hold Turtle, HDL and HTML whose bytes are published, so a data
-line that would exceed 120 columns is continued rather than rewrapped: a single-line literal is
-split into adjacent literals, and a line inside a triple-quoted string ends in a backslash, which
-joins it to the next line without changing the string. After touching a case module, confirm
-with `python tools/conformance/generate_inputs.py --check` that the suite on disk is unchanged.
+tooling (`tools/codecs/`) included, is formatted, linted and type-checked alike, with no
+exemption: `ruff.toml` has no per-file entries (`tools/test_lint.py` fails on one), every mypy
+finding fails `tools/test_types.py`, and every text write states its line ending. The case
+modules hold Turtle, HDL and HTML whose bytes are published, so a data line that would exceed
+120 columns is continued rather than rewrapped: a single-line literal is split into adjacent
+literals, and a line inside a triple-quoted string ends in a backslash, which joins it to the
+next line without changing the string. After touching a case module, confirm with
+`python tools/conformance/generate_inputs.py --check` that the suite on disk is unchanged.
 
 ## Authoring
 

@@ -390,7 +390,7 @@ NATURAL = MINT + ["req-pm-emission-5", "req-pm-computed-values-1"]
 TYPED = MINT + ["req-pm-emission-5", "req-pm-computed-values-2"]
 
 
-def computed(expr: Any, fields: Any, datatype: Any = None, extra: str = "") -> Any:
+def computed(expr: str, fields: list[str], datatype: str | None = None, extra: str = "") -> str:
     """A mapped root with the given physical fields (Turtle lines) and a field ex:out, a copy of the first physical
     field's bytes, whose value is computed by `expr` and emitted as ex:value."""
     typed = f" ; hexplain:valueDatatype {datatype}" if datatype else ""

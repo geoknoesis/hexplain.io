@@ -16,10 +16,9 @@ import json
 import pathlib
 import struct
 import sys
-from typing import Any
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from vectors import sha256, step, write_suite  # noqa: E402
+from vectors import Json, sha256, step, write_suite  # noqa: E402
 
 NUMCODECS = {
     "id": "numcodecs",
@@ -37,7 +36,7 @@ FILTERS = {
 }
 
 
-def filter_params(config: Any) -> dict[str, Any]:
+def filter_params(config: Json) -> Json:
     kind = config["id"]
     if kind == "delta":
         return {"dtype": config["dtype"], "astype": config["astype"]}
@@ -62,7 +61,7 @@ def main() -> None:
     source = json.loads((engine / "core/src/test/resources/zarr/numcodecs-vectors.json").read_text(encoding="utf-8"))[
         "vectors"
     ]
-    suites = {name: [] for name in ("Blosc", "BloscLZ", *FILTERS.values())}
+    suites: dict[str, list[Json]] = {name: [] for name in ("Blosc", "BloscLZ", *FILTERS.values())}
     for v in source:
         encoded, decoded = bytes.fromhex(v["encoded"]), bytes.fromhex(v["decoded"])
         vid = v["name"].replace(" ", "-").replace("=", "-").replace("<", "le").replace(">", "be").replace("|", "")

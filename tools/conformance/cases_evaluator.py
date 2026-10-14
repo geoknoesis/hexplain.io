@@ -45,10 +45,10 @@ def requirement(name: str, extra: str = "") -> str:
 REQS = requirement("R1") + requirement("R2") + requirement("R3")
 
 
-def with_messages(rules: Any) -> Any:
+def with_messages(rules: str) -> str:
     """conf:message is required on every constraint; one that states none reports its focus path."""
 
-    def add(match):
+    def add(match: re.Match[str]) -> str:
         statement = match.group(0)
         return (
             statement
@@ -865,7 +865,7 @@ ce(
 # holds data with an undefined term.
 
 
-def conf_run_terms_declared() -> Any:
+def conf_run_terms_declared() -> bool:
     from suite import ROOT
 
     conf = (ROOT / "specification/conf/conf.ttl").read_text(encoding="utf-8")

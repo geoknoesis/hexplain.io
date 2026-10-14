@@ -55,9 +55,11 @@ import base64
 import hashlib
 import json
 import pathlib
-from typing import Any
+from typing import Any, TypedDict
 
-from rdflib import URIRef
+import rdflib
+from rdflib import Literal, URIRef
+from rdflib.term import Node
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 HX = "https://hexplain.io/ns/core#"
@@ -71,56 +73,96 @@ TYPES = {
     HX + "IriParameterType": "iri",
     HX + "FloatParameterType": "float",
 }
+#: A manifest, a vector, a step, a step's input or expectation, or an implementation's result, as parsed JSON.
+Json = dict[str, Any]
 
 
-def local_name(iri: str) -> Any:
+class ParameterSpec(TypedDict):
+    """A parameter a contract declares."""
+
+    type: str | None
+    list: bool
+    length: int | None
+    required: bool
+    minimum: float | None
+    maximum: float | None
+    allowed: list[Any]
+
+
+class Contract(TypedDict):
+    """A codec contract: its version, its vector suite's version, its kind, whether it keeps a session, and its
+    parameters by key."""
+
+    version: int
+    suite: int
+    kind: str
+    session: bool
+    parameters: dict[str, ParameterSpec]
+
+
+def local_name(iri: str) -> str:
     return iri.rsplit("#", 1)[-1]
 
 
-def suite_path(iri: str) -> Any:
+def suite_path(iri: str) -> pathlib.Path:
     return ROOT / "specification" / "codecs" / local_name(iri) / "vectors" / "manifest.json"
 
 
-def load(path: Any) -> Any:
+def load(path: pathlib.Path | str) -> Json:
     return json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
 
 
-def _number(literal):
-    return float(literal.toPython()) if literal is not None else None
+def _literal(node: Node | None) -> Literal:
+    """[node], which the contract shapes require to be a literal."""
+    if not isinstance(node, Literal):
+        raise ValueError(f"a codec contract states a literal here, not {node!r}")
+    return node
 
 
-def contracts(graph: Any) -> Any:
+def _number(literal: Node | None) -> float | None:
+    return float(_literal(literal).toPython()) if literal is not None else None
+
+
+def _flag(graph: rdflib.Graph, subject: Node, name: str) -> bool:
+    """Whether [subject] states the boolean [name] true."""
+    node = graph.value(subject, URIRef(HX + name))
+    return bool(node and _literal(node).toPython())
+
+
+def _parameter(graph: rdflib.Graph, spec: Node) -> ParameterSpec:
+    """The declaration [spec] of a contract's parameter."""
+    hx = lambda name: URIRef(HX + name)  # noqa: E731
+    length = graph.value(spec, hx("listLength"))
+    return {
+        "type": TYPES.get(str(graph.value(spec, hx("parameterType")))),
+        "list": _flag(graph, spec, "listValued"),
+        "length": _literal(length).toPython() if length else None,
+        "required": _flag(graph, spec, "requiredParameter"),
+        "minimum": _number(graph.value(spec, hx("minimumValue"))),
+        "maximum": _number(graph.value(spec, hx("maximumValue"))),
+        "allowed": [_literal(v).toPython() for v in graph.objects(spec, hx("allowedValue"))],
+    }
+
+
+def contracts(graph: rdflib.Graph) -> dict[str, Contract]:
     """Every contract of [graph] as {concept IRI: {"version", "suite", "kind", "session", "parameters"}}."""
-    out = {}
+    out: dict[str, Contract] = {}
     hx = lambda name: URIRef(HX + name)  # noqa: E731
     for concept, contract in graph.subject_objects(hx("codecContract")):
         parameters = {}
         for spec in graph.objects(contract, hx("declaresParameter")):
-            name = str(graph.value(spec, hx("parameterKey")))
-            parameters[name] = {
-                "type": TYPES.get(str(graph.value(spec, hx("parameterType")))),
-                "list": bool(graph.value(spec, hx("listValued")) and graph.value(spec, hx("listValued")).toPython()),
-                "length": graph.value(spec, hx("listLength")).toPython()
-                if graph.value(spec, hx("listLength"))
-                else None,
-                "required": bool(
-                    graph.value(spec, hx("requiredParameter")) and graph.value(spec, hx("requiredParameter")).toPython()
-                ),
-                "minimum": _number(graph.value(spec, hx("minimumValue"))),
-                "maximum": _number(graph.value(spec, hx("maximumValue"))),
-                "allowed": [v.toPython() for v in graph.objects(spec, hx("allowedValue"))],
-            }
+            parameters[str(graph.value(spec, hx("parameterKey")))] = _parameter(graph, spec)
         out[str(concept)] = {
-            "version": graph.value(contract, hx("contractVersion")).toPython(),
-            "suite": graph.value(contract, hx("vectorSuiteVersion")).toPython(),
+            "version": _literal(graph.value(contract, hx("contractVersion"))).toPython(),
+            "suite": _literal(graph.value(contract, hx("vectorSuiteVersion"))).toPython(),
             "kind": local_name(str(graph.value(contract, hx("codecKind")))),
-            "session": bool(graph.value(contract, hx("keepsSession")).toPython()),
+            "session": bool(_literal(graph.value(contract, hx("keepsSession"))).toPython()),
             "parameters": parameters,
         }
     return out
 
 
-def _decode_bytes(spec):
+def _decode_bytes(spec: Json) -> bytes:
     if "hex" in spec:
         return bytes.fromhex(spec["hex"])
     if "base64" in spec:
@@ -128,7 +170,7 @@ def _decode_bytes(spec):
     raise ValueError(f"no hex or base64 in {spec}")
 
 
-def input_bytes(spec: Any, base: Any, previous: Any = None) -> Any:
+def input_bytes(spec: Json, base: pathlib.Path | str, previous: bytes | None = None) -> bytes:
     """The bytes of a step's input (for samples, their data; for {"previous": true}, [previous], the output of the
     step before it, which a static reader passes as None)."""
     if "file" in spec:
@@ -142,7 +184,7 @@ def input_bytes(spec: Any, base: Any, previous: Any = None) -> Any:
     return _decode_bytes(spec)
 
 
-def _item_problem(name, value, spec):
+def _item_problem(name: str, value: Any, spec: ParameterSpec) -> str | None:
     kind = spec["type"]
     if kind == "integer" and (not isinstance(value, int) or isinstance(value, bool)):
         return f"parameter {name} is not an integer: {value!r}"
@@ -166,7 +208,7 @@ def _item_problem(name, value, spec):
     return None
 
 
-def parameter_problems(params: Any, contract: Any) -> Any:
+def parameter_problems(params: Json, contract: Contract) -> list[str]:
     problems = []
     declared = contract["parameters"]
     for name in params:
@@ -192,7 +234,7 @@ def parameter_problems(params: Any, contract: Any) -> Any:
     return problems
 
 
-def problems(manifest: Any, contract: Any, base: Any) -> Any:
+def problems(manifest: Json, contract: Contract, base: pathlib.Path | str) -> list[str]:
     """Everything wrong with [manifest] against [contract]; empty when it is well formed."""
     out = []
     if manifest.get("suiteVersion") != contract["suite"]:
@@ -206,92 +248,81 @@ def problems(manifest: Any, contract: Any, base: Any) -> Any:
     for sid, source in sources.items():
         if not source.get("description") or not source.get("licence"):
             out.append(f"source {sid} lacks a description (provenance) or a licence")
-    ids = set()
-    decoded = False
+    ids: set[Any] = set()
     for vector in manifest.get("vectors", []):
-        vid = vector.get("id")
-        if not vid or vid in ids:
-            out.append(f"vector id {vid!r} is missing or repeated")
-        ids.add(vid)
-        if vector.get("source") not in sources:
-            out.append(f"vector {vid} names an unknown source {vector.get('source')!r}")
-        steps = vector.get("steps") or []
-        if not steps:
-            out.append(f"vector {vid} has no steps")
-        for i, step in enumerate(steps):
-            where = f"vector {vid} step {i}"
-            if step.get("direction") not in ("decode", "encode", "describe"):
-                out.append(f"{where}: direction {step.get('direction')!r}")
-            expect = step.get("expect") or {}
-            if not expect:
-                out.append(f"{where}: no expect")
-            if "error" in expect and expect["error"] not in CATEGORIES:
-                out.append(f"{where}: unknown error category {expect['error']!r}")
-            if expect.get("error") != "Description":
-                out += [f"{where}: {p}" for p in parameter_problems(step.get("params", {}), contract)]
-            spec = step.get("input", {})
-            if spec.get("previous") is True:
-                if i == 0 or "error" in (steps[i - 1].get("expect") or {}):
-                    out.append(f"{where}: reads the previous step's output, and no previous step succeeds")
-            else:
-                try:
-                    input_bytes(spec, base)
-                except (OSError, ValueError, KeyError) as e:
-                    out.append(f"{where}: unreadable input: {e}")
-            samples = expect.get("samples")
-            if samples and samples.get("sampleType") not in SAMPLE_TYPES:
-                out.append(f"{where}: unknown sampleType {samples.get('sampleType')!r}")
-            if step.get("direction") == "decode" and "error" not in expect:
-                decoded = True
-    if not decoded:
+        out += _vector_problems(vector, sources, ids, contract, base)
+    if not any(_decodes(vector) for vector in manifest.get("vectors", [])):
         out.append("no decoding vector that succeeds")
     return out
 
 
-def sha256(data: Any) -> Any:
+def _decodes(vector: Json) -> bool:
+    """Whether [vector] has a decoding step that is expected to succeed."""
+    steps = vector.get("steps") or []
+    return any(step.get("direction") == "decode" and "error" not in (step.get("expect") or {}) for step in steps)
+
+
+def _vector_problems(
+    vector: Json, sources: dict[Any, Json], ids: set[Any], contract: Contract, base: pathlib.Path | str
+) -> list[str]:
+    """What is wrong with one vector: its id (recorded in [ids]), its source and its steps."""
+    out = []
+    vid = vector.get("id")
+    if not vid or vid in ids:
+        out.append(f"vector id {vid!r} is missing or repeated")
+    ids.add(vid)
+    if vector.get("source") not in sources:
+        out.append(f"vector {vid} names an unknown source {vector.get('source')!r}")
+    steps = vector.get("steps") or []
+    if not steps:
+        out.append(f"vector {vid} has no steps")
+    for i, step in enumerate(steps):
+        out += _step_problems(f"vector {vid} step {i}", step, steps[i - 1] if i else None, contract, base)
+    return out
+
+
+def _step_problems(
+    where: str, step: Json, before: Json | None, contract: Contract, base: pathlib.Path | str
+) -> list[str]:
+    """What is wrong with one step, [before] being the step before it (None for the first)."""
+    out = []
+    if step.get("direction") not in ("decode", "encode", "describe"):
+        out.append(f"{where}: direction {step.get('direction')!r}")
+    expect = step.get("expect") or {}
+    if not expect:
+        out.append(f"{where}: no expect")
+    if "error" in expect and expect["error"] not in CATEGORIES:
+        out.append(f"{where}: unknown error category {expect['error']!r}")
+    if expect.get("error") != "Description":
+        out += [f"{where}: {p}" for p in parameter_problems(step.get("params", {}), contract)]
+    spec = step.get("input", {})
+    if spec.get("previous") is True:
+        if before is None or "error" in (before.get("expect") or {}):
+            out.append(f"{where}: reads the previous step's output, and no previous step succeeds")
+    else:
+        try:
+            input_bytes(spec, base)
+        except (OSError, ValueError, KeyError) as e:
+            out.append(f"{where}: unreadable input: {e}")
+    samples = expect.get("samples")
+    if samples and samples.get("sampleType") not in SAMPLE_TYPES:
+        out.append(f"{where}: unknown sampleType {samples.get('sampleType')!r}")
+    return out
+
+
+def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def compare(vector: Any, result: Any) -> Any:
+def compare(vector: Json, result: Json) -> list[str]:
     """Differences between what [vector] expects and what an implementation reported."""
-    out = []
+    out: list[str] = []
     reported = result.get("steps", [])
     for i, step in enumerate(vector["steps"]):
-        expect = step["expect"]
         if i >= len(reported):
             out.append(f"step {i}: not run")
             break
-        got = reported[i]
-        if "error" in expect:
-            if got.get("ok") or got.get("category") != expect["error"]:
-                out.append(f"step {i}: expected a {expect['error']} error, got {got}")
-            continue
-        if not got.get("ok"):
-            out.append(f"step {i}: expected success, got {got.get('category')}: {got.get('message')}")
-            continue
-        if "hex" in expect or "base64" in expect:
-            want = _decode_bytes(expect)
-            if got.get("sha256") != sha256(want) or got.get("size") != len(want):
-                out.append(
-                    f"step {i}: output {got.get('size')} bytes {got.get('sha256')}, expected {len(want)} "
-                    f"bytes {sha256(want)}"
-                )
-        elif "sha256" in expect:
-            if got.get("sha256") != expect["sha256"] or ("size" in expect and got.get("size") != expect["size"]):
-                out.append(f"step {i}: output {got.get('size')} bytes {got.get('sha256')}, expected {expect}")
-        elif "samples" in expect:
-            want = expect["samples"]
-            geometry = got.get("geometry") or {}
-            for key in ("width", "height", "bands", "sampleType"):
-                if key in want and geometry.get(key) != want[key]:
-                    out.append(f"step {i}: {key} {geometry.get(key)}, expected {want[key]}")
-            digest = got.get("sha256Band") if want.get("order", "pixel") == "band" else got.get("sha256")
-            if "sha256" in want and digest != want["sha256"]:
-                out.append(
-                    f"step {i}: samples {digest}, expected {want['sha256']} ({want.get('order', 'pixel')} order)"
-                )
-        if "validitySha256" in expect and got.get("validitySha256") != expect["validitySha256"]:
-            out.append(f"step {i}: validity masks {got.get('validitySha256')}, expected {expect['validitySha256']}")
+        out += _step_differences(i, step["expect"], reported[i])
     if "expectAll" in vector and not out:
         want, got = vector["expectAll"], result.get("all") or {}
         if got.get("sha256") != want["sha256"] or ("size" in want and got.get("size") != want["size"]):
@@ -299,7 +330,48 @@ def compare(vector: Any, result: Any) -> Any:
     return out
 
 
-def unpack(data: Any, bits: Any, width: Any) -> Any:
+def _step_differences(i: int, expect: Json, got: Json) -> list[str]:
+    """Differences between what step [i] expects and what the implementation reported for it."""
+    if "error" in expect:
+        if got.get("ok") or got.get("category") != expect["error"]:
+            return [f"step {i}: expected a {expect['error']} error, got {got}"]
+        return []
+    if not got.get("ok"):
+        return [f"step {i}: expected success, got {got.get('category')}: {got.get('message')}"]
+    out = _output_differences(i, expect, got)
+    if "validitySha256" in expect and got.get("validitySha256") != expect["validitySha256"]:
+        out.append(f"step {i}: validity masks {got.get('validitySha256')}, expected {expect['validitySha256']}")
+    return out
+
+
+def _output_differences(i: int, expect: Json, got: Json) -> list[str]:
+    """Differences between the output step [i] expects (bytes, a digest or samples) and the one reported."""
+    out = []
+    if "hex" in expect or "base64" in expect:
+        want = _decode_bytes(expect)
+        if got.get("sha256") != sha256(want) or got.get("size") != len(want):
+            out.append(
+                f"step {i}: output {got.get('size')} bytes {got.get('sha256')}, expected {len(want)} "
+                f"bytes {sha256(want)}"
+            )
+    elif "sha256" in expect:
+        if got.get("sha256") != expect["sha256"] or ("size" in expect and got.get("size") != expect["size"]):
+            out.append(f"step {i}: output {got.get('size')} bytes {got.get('sha256')}, expected {expect}")
+    elif "samples" in expect:
+        samples = expect["samples"]
+        geometry = got.get("geometry") or {}
+        for key in ("width", "height", "bands", "sampleType"):
+            if key in samples and geometry.get(key) != samples[key]:
+                out.append(f"step {i}: {key} {geometry.get(key)}, expected {samples[key]}")
+        digest = got.get("sha256Band") if samples.get("order", "pixel") == "band" else got.get("sha256")
+        if "sha256" in samples and digest != samples["sha256"]:
+            out.append(
+                f"step {i}: samples {digest}, expected {samples['sha256']} ({samples.get('order', 'pixel')} order)"
+            )
+    return out
+
+
+def unpack(data: bytes, bits: int, width: int) -> bytes:
     """Rows of [width] samples of [bits] bits (MSB first, rows padded to a byte) as one byte per sample."""
     row_bytes = (width * bits + 7) // 8
     out = bytearray()
@@ -315,7 +387,7 @@ def unpack(data: Any, bits: Any, width: Any) -> Any:
     return bytes(out)
 
 
-def deinterleave(data: Any, bands: Any, item: int = 1) -> Any:
+def deinterleave(data: bytes, bands: int, item: int = 1) -> bytes:
     """Pixel-interleaved samples of [bands] bands (each [item] bytes) rewritten band-sequentially."""
     pixels = len(data) // (bands * item)
     out = bytearray(len(data))
@@ -331,10 +403,15 @@ MENC = "https://hexplain.io/ns/register/media-encoding#"
 
 
 def step(
-    data: Any, expect: Any, params: Any = None, direction: str = "decode", max_output: Any = None, file: Any = None
-) -> Any:
+    data: bytes,
+    expect: Json,
+    params: Json | None = None,
+    direction: str = "decode",
+    max_output: int | None = None,
+    file: str | None = None,
+) -> Json:
     """One vector step over [data] (inline hex), or over [file] beside the manifest when given."""
-    s = {
+    s: Json = {
         "direction": direction,
         "params": params or {},
         "input": {"file": file} if file else {"hex": data.hex()},
@@ -345,7 +422,7 @@ def step(
     return s
 
 
-def write_suite(name: str, sources: Any, vector_list: Any, files: Any = None) -> None:
+def write_suite(name: str, sources: list[Json], vector_list: list[Json], files: dict[str, bytes] | None = None) -> None:
     """Write specification/codecs/<name>/vectors/manifest.json and the binary [files] beside it."""
     directory = ROOT / "specification" / "codecs" / name / "vectors"
     directory.mkdir(parents=True, exist_ok=True)

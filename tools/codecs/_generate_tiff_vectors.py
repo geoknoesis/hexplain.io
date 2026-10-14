@@ -11,7 +11,7 @@ from __future__ import annotations
 import pathlib
 import struct
 import sys
-from typing import Any
+from collections.abc import Iterable
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from vectors import step, write_suite  # noqa: E402
@@ -33,7 +33,7 @@ TN3 = {
 DEFINITION = {"id": "definition", "description": "Computed by hand from the codec's definition.", "licence": "CC0-1.0"}
 
 
-def pack_codes(codes: Any, width: int = 9) -> Any:
+def pack_codes(codes: Iterable[int], width: int = 9) -> bytes:
     bits, used, out = 0, 0, bytearray()
     for code in codes:
         bits = (bits << width) | code
@@ -46,7 +46,7 @@ def pack_codes(codes: Any, width: int = 9) -> Any:
     return bytes(out)
 
 
-def fp_encode(row: Any, element: Any, stride: Any) -> Any:
+def fp_encode(row: bytes, element: int, stride: int) -> bytes:
     """TN3 on one row of little-endian samples: planes, most significant byte first, then byte differences."""
     count = len(row) // element
     planes = bytearray(len(row))

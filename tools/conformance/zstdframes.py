@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import hashlib
 import struct
-from typing import Any
 
 M64 = (1 << 64) - 1
 Q1, Q2, Q3, Q4, Q5 = (
@@ -28,21 +27,21 @@ Q1, Q2, Q3, Q4, Q5 = (
 MAGIC = b"\x28\xb5\x2f\xfd"
 
 
-def _rotl(x, r):
+def _rotl(x: int, r: int) -> int:
     return ((x << r) | (x >> (64 - r))) & M64
 
 
-def _round(acc, lane):
+def _round(acc: int, lane: int) -> int:
     acc = (acc + lane * Q2) & M64
     return (_rotl(acc, 31) * Q1) & M64
 
 
-def _merge(acc, val):
+def _merge(acc: int, val: int) -> int:
     acc ^= _round(0, val)
     return (acc * Q1 + Q4) & M64
 
 
-def xxh64(data: Any, seed: int = 0) -> Any:
+def xxh64(data: bytes, seed: int = 0) -> int:
     """XXH64 of `data` (xxHash specification, doc/xxhash_spec.md)."""
     n = len(data)
     i = 0
@@ -92,7 +91,7 @@ FRAMES = {
 }
 
 
-def frame(content: Any) -> Any:
+def frame(content: bytes) -> bytes:
     """The pre-made frame of `content`, after checking its pin, magic and checksum trailer."""
     hexed, pin = FRAMES[content]
     data = bytes.fromhex(hexed)
@@ -107,7 +106,7 @@ def frame(content: Any) -> Any:
     return data
 
 
-def content_size_mismatch_frame(content: Any) -> Any:
+def content_size_mismatch_frame(content: bytes) -> bytes:
     """The pre-made frame of `content` with its Frame_Content_Size one larger than the content. The frame is
     single-segment with a one-byte content size (Frame_Header_Descriptor 0x24: Single_Segment_flag and
     Content_Checksum_flag), so the size is the byte after the descriptor; the window is that size, so the block
@@ -118,7 +117,7 @@ def content_size_mismatch_frame(content: Any) -> Any:
     return bytes(data)
 
 
-def dictionary_frame(content: Any, dictionary_id: Any) -> Any:
+def dictionary_frame(content: bytes, dictionary_id: int) -> bytes:
     """A single-segment frame of one raw block that names a dictionary: Frame_Header_Descriptor
     0x21 (Single_Segment_flag, a one-byte Dictionary_ID, a one-byte Frame_Content_Size, no
     checksum), then the dictionary ID, the content size, and a last raw block."""

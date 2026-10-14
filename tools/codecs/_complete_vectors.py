@@ -32,7 +32,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import vectors  # noqa: E402
 from rdflib import Graph, Namespace, URIRef  # noqa: E402
-from vectors import ROOT, step  # noqa: E402
+from vectors import ROOT, Json, step  # noqa: E402
 
 HX = Namespace("https://hexplain.io/ns/core#")
 ENGINE_SOURCE = {
@@ -61,17 +61,17 @@ COMPRESSORS = ("Deflate", "Zlib", "Gzip", "LZ4", "LZ4Block", "Zstd", "XZ", "LZW"
 
 
 class Engine:
-    def __init__(self, cli: Any, java_home: Any) -> None:
+    def __init__(self, cli: str, java_home: str | None) -> None:
         self.cli, self.java_home = cli, java_home
         self.tmp = pathlib.Path(tempfile.mkdtemp(prefix="hexplain-vectors-"))
 
-    def run(self, codec: Any, base: Any, vector: Any) -> Any:
+    def run(self, codec: str, base: pathlib.Path, vector: Json) -> Json:
         """The engine's result for [vector], a vector of the suite whose manifest lives at [base]."""
         directory = self.tmp / vectors.local_name(codec)
         if not directory.is_dir():
             shutil.copytree(base, directory)
         manifest = {"codec": codec, "suiteVersion": 1, "sources": [], "vectors": [vector]}
-        (directory / "probe.json").write_text(json.dumps(manifest), encoding="utf-8")
+        (directory / "probe.json").write_text(json.dumps(manifest), encoding="utf-8", newline="\n")
         env = dict(os.environ)
         if self.java_home:
             env["JAVA_HOME"] = self.java_home
@@ -83,23 +83,24 @@ class Engine:
             timeout=300,
         )
         try:
-            return json.loads(run.stdout)
+            result: Json = json.loads(run.stdout)
         except json.JSONDecodeError:
             return {"steps": [{"ok": False, "category": "CRASH", "message": (run.stdout + run.stderr)[-400:]}]}
+        return result
 
 
-def category(result: Any) -> Any:
+def category(result: Json) -> str | None:
     last = result.get("steps", [])[-1] if result.get("steps") else {}
     return None if last.get("ok") else last.get("category")
 
 
-def flip(data: Any, at: Any) -> Any:
+def flip(data: bytes, at: int) -> bytes:
     b = bytearray(data)
     b[at % len(b)] ^= 0x01
     return bytes(b)
 
 
-def first_success(manifest: Any, base: Any) -> Any:
+def first_success(manifest: Json, base: pathlib.Path) -> tuple[Json, Json]:
     for v in manifest["vectors"]:
         s = v["steps"][0]
         if s["direction"] == "decode" and "error" not in s["expect"]:
@@ -107,11 +108,11 @@ def first_success(manifest: Any, base: Any) -> Any:
     raise ValueError("no successful vector")
 
 
-def input_of(s: Any, base: Any) -> Any:
+def input_of(s: Json, base: pathlib.Path) -> bytes:
     return vectors.input_bytes(s["input"], base)
 
 
-def with_input(s: Any, data: Any, expect: Any, **extra: Any) -> Any:
+def with_input(s: Json, data: bytes, expect: Json | None, **extra: Any) -> Json:
     """A copy of step [s] over [data] (inline hex, samples kept) expecting [expect]."""
     out = {"direction": s["direction"], "params": dict(s.get("params", {})), "expect": expect}
     if "samples" in s["input"]:
@@ -123,7 +124,7 @@ def with_input(s: Any, data: Any, expect: Any, **extra: Any) -> Any:
     return out
 
 
-def expected_size(s: Any) -> Any:
+def expected_size(s: Json) -> int | None:
     e = s["expect"]
     if "hex" in e:
         return len(e["hex"]) // 2
@@ -132,32 +133,37 @@ def expected_size(s: Any) -> Any:
     return None
 
 
-def complete(name: str, manifest: Any, contract: Any, declared: Any, base: Any, engine: Any, log: Any) -> Any:
-    added = []
-    ids = {v["id"] for v in manifest["vectors"]}
-    expected_cats, params_used, directions = set(), set(), set()
-    for v in manifest["vectors"]:
-        for s in v["steps"]:
-            directions.add(s["direction"])
-            if "error" in s["expect"]:
-                expected_cats.add(s["expect"]["error"])
-            params_used |= set(s.get("params", {}))
-    ok_vector, ok_step = first_success(manifest, base)
-    data = input_of(ok_step, base)
-    session = ok_vector.get("session", False)
+class Completion:
+    """The vectors added to one suite: each candidate is run on the engine and kept when it raises the category
+    wanted (or, wanting none, succeeds), its id being new to the suite."""
 
-    def propose(vid, steps, want, source="reference-engine", keep_session=True):
-        if vid in ids:
+    def __init__(self, name: str, manifest: Json, base: pathlib.Path, engine: Engine, log: list[str]) -> None:
+        self.name, self.manifest, self.base, self.engine, self.log = name, manifest, base, engine, log
+        self.ids = {v["id"] for v in manifest["vectors"]}
+        self.added: list[str] = []
+        self.session = False
+
+    def propose(
+        self,
+        vid: str,
+        steps: list[Json],
+        want: str | None,
+        source: str = "reference-engine",
+        keep_session: bool = True,
+    ) -> bool:
+        """Add the vector [vid] of [steps] when the engine raises [want] on it, or, [want] being None, succeeds (its
+        output then recorded as the expectation)."""
+        if vid in self.ids:
             return False
-        vector = {"id": vid, "steps": steps, "source": source}
-        if session and keep_session:
+        vector: Json = {"id": vid, "steps": steps, "source": source}
+        if self.session and keep_session:
             vector["session"] = True
-        result = engine.run(manifest["codec"], base, vector)
+        result = self.engine.run(self.manifest["codec"], self.base, vector)
         got = category(result)
         if want is None:
             last = result["steps"][-1]
             if not last.get("ok"):
-                log.append(f"{name}/{vid}: engine refused ({got}: {last.get('message', '')[:120]})")
+                self.log.append(f"{self.name}/{vid}: engine refused ({got}: {last.get('message', '')[:120]})")
                 return False
             # Record what the engine produced where no independent oracle exists.
             expect = {"sha256": last["sha256"], "size": last["size"]}
@@ -165,107 +171,147 @@ def complete(name: str, manifest: Any, contract: Any, declared: Any, base: Any, 
                 expect = {"samples": dict(last["geometry"], sha256=last["sha256"])}
             steps[-1]["expect"] = expect
         elif got != want:
-            log.append(f"{name}/{vid}: wanted {want}, engine says {got}")
+            self.log.append(f"{self.name}/{vid}: wanted {want}, engine says {got}")
             return False
-        manifest["vectors"].append(vector)
-        ids.add(vid)
-        added.append(vid)
+        self.manifest["vectors"].append(vector)
+        self.ids.add(vid)
+        self.added.append(vid)
         return True
 
-    # ResourceLimit: the first successful step under a limit of 0 bytes.
-    if "ResourceLimit" in declared and "ResourceLimit" not in expected_cats:
-        size = expected_size(ok_step)
-        limit = 0 if size is None else max(0, size - 1)
-        propose(
-            "over-bound", [with_input(ok_step, data, {"error": "ResourceLimit"}, maxOutputBytes=limit)], "ResourceLimit"
-        )
-
-    # Validation: truncations and corruptions of the first successful input.
-    if "Validation" in declared and "Validation" not in expected_cats:
-        candidates = []
-        if "samples" in ok_step["input"]:
-            candidates.append(("partial-pixel", data[:-1]))
-            candidates.append(("partial-pixel", data[: len(data) // 2 + 1]))
+    def round_trip(self, trip: Json) -> None:
+        """Add the round trip [trip] when its id is new and every step of it succeeds on the engine."""
+        if trip["id"] in self.ids:
+            return
+        result = self.engine.run(self.manifest["codec"], self.base, trip)
+        if category(result) is None and all(st.get("ok") for st in result["steps"]):
+            self.manifest["vectors"].append(trip)
+            self.added.append(trip["id"])
+            self.ids.add(trip["id"])
         else:
-            candidates += [
-                ("truncated", data[: len(data) // 2]),
-                ("truncated", data[:-1]),
-                ("truncated", data[: max(1, len(data) // 4)]),
-            ]
-            candidates += [("corrupted", flip(data, i)) for i in (0, 1, 2, 3, 4, 5, 8, len(data) // 2, len(data) - 1)]
-            candidates += [("partial-element", data[:-1]), ("trailing-byte", data + b"\x00")]
-        for label, d in candidates:
-            if propose(label, [with_input(ok_step, d, {"error": "Validation"})], "Validation"):
-                break
+            self.log.append(f"{self.name}/{trip['id']}: round trip refused by the engine: {result}")
 
-    # Checksum: flip bytes near the end of the first successful input (where the checks sit).
-    if "Checksum" in declared and "Checksum" not in expected_cats:
-        for i in range(1, min(len(data), 48)):
-            if propose(
-                "checksum-mismatch", [with_input(ok_step, flip(data, len(data) - i), {"error": "Checksum"})], "Checksum"
-            ):
-                break
 
-    # Unsupported: a coding feature the contract names as refused.
-    if "Unsupported" in declared and "Unsupported" not in expected_cats:
-        for label, d, params in unsupported_candidates(name, data, ok_step):
-            s = with_input(ok_step, d, {"error": "Unsupported"})
-            if params is not None:
-                s["params"] = params
-            if propose(label, [s], "Unsupported"):
-                break
+def _covered(manifest: Json) -> tuple[set[str], set[str], set[str]]:
+    """The error categories the suite's steps expect, the parameters they pass and the directions they run."""
+    expected_cats: set[str] = set()
+    params_used: set[str] = set()
+    directions: set[str] = set()
+    for v in manifest["vectors"]:
+        for s in v["steps"]:
+            directions.add(s["direction"])
+            if "error" in s["expect"]:
+                expected_cats.add(s["expect"]["error"])
+            params_used |= set(s.get("params", {}))
+    return expected_cats, params_used, directions
 
+
+def complete(
+    name: str,
+    manifest: Json,
+    contract: vectors.Contract,
+    declared: set[str],
+    base: pathlib.Path,
+    engine: Engine,
+    log: list[str],
+) -> list[str]:
+    completion = Completion(name, manifest, base, engine, log)
+    expected_cats, params_used, directions = _covered(manifest)
+    ok_vector, ok_step = first_success(manifest, base)
+    data = input_of(ok_step, base)
+    completion.session = ok_vector.get("session", False)
+    missing = {c for c in declared if c not in expected_cats}
+    if "ResourceLimit" in missing:
+        _propose_resource_limit(completion, ok_step, data)
+    if "Validation" in missing:
+        _propose_validation(completion, ok_step, data)
+    if "Checksum" in missing:
+        _propose_checksum(completion, ok_step, data)
+    if "Unsupported" in missing:
+        _propose_unsupported(completion, ok_step, data)
     # Description: parameter values the contract admits one by one and the codec cannot run together
     # (Processing Model, Codec contracts: the bytes are not at fault, the description is). Proposed even
     # where a step already expects the category: an omitted required parameter is what the load-time
     # check refuses, and this is the case only the running codec can see.
     if "Description" in declared:
         for label, params in description_candidates(name):
-            if propose(label, [with_input(ok_step, data, {"error": "Description"}, params=params)], "Description"):
+            if completion.propose(
+                label, [with_input(ok_step, data, {"error": "Description"}, params=params)], "Description"
+            ):
                 break
-
     # Parameters the contract declares and no vector passes.
     for pname in sorted(set(contract["parameters"]) - params_used):
         for label, steps_ in parameter_candidates(name, pname, manifest, base, ok_step, data):
-            if propose(label, steps_, None):
+            if completion.propose(label, steps_, None):
                 break
-
-    # Round trips.
     if "encode" in directions or name in COMPRESSORS:
         trip = round_trip(name, manifest)
-        if trip and trip["id"] not in ids:
-            result = engine.run(manifest["codec"], base, trip)
-            if category(result) is None and all(st.get("ok") for st in result["steps"]):
-                manifest["vectors"].append(trip)
-                added.append(trip["id"])
-                ids.add(trip["id"])
-            else:
-                log.append(f"{name}/{trip['id']}: round trip refused by the engine: {result}")
-
+        if trip:
+            completion.round_trip(trip)
     # An encode-only parameter (the compression level) is shown honoured only by an encode step that succeeds.
     for trip in level_round_trips(name, contract):
-        if trip["id"] in ids:
-            continue
-        result = engine.run(manifest["codec"], base, trip)
-        if category(result) is None and all(st.get("ok") for st in result["steps"]):
-            manifest["vectors"].append(trip)
-            added.append(trip["id"])
-            ids.add(trip["id"])
-        else:
-            log.append(f"{name}/{trip['id']}: round trip refused by the engine: {result}")
-    return added
+        completion.round_trip(trip)
+    return completion.added
 
 
-def level_round_trips(name: str, contract: Any) -> list[Any]:
+def _propose_resource_limit(completion: Completion, ok_step: Json, data: bytes) -> None:
+    """ResourceLimit: the first successful step under a limit of 0 bytes."""
+    size = expected_size(ok_step)
+    limit = 0 if size is None else max(0, size - 1)
+    completion.propose(
+        "over-bound", [with_input(ok_step, data, {"error": "ResourceLimit"}, maxOutputBytes=limit)], "ResourceLimit"
+    )
+
+
+def _propose_validation(completion: Completion, ok_step: Json, data: bytes) -> None:
+    """Validation: truncations and corruptions of the first successful input."""
+    candidates = []
+    if "samples" in ok_step["input"]:
+        candidates.append(("partial-pixel", data[:-1]))
+        candidates.append(("partial-pixel", data[: len(data) // 2 + 1]))
+    else:
+        candidates += [
+            ("truncated", data[: len(data) // 2]),
+            ("truncated", data[:-1]),
+            ("truncated", data[: max(1, len(data) // 4)]),
+        ]
+        candidates += [("corrupted", flip(data, i)) for i in (0, 1, 2, 3, 4, 5, 8, len(data) // 2, len(data) - 1)]
+        candidates += [("partial-element", data[:-1]), ("trailing-byte", data + b"\x00")]
+    for label, d in candidates:
+        if completion.propose(label, [with_input(ok_step, d, {"error": "Validation"})], "Validation"):
+            break
+
+
+def _propose_checksum(completion: Completion, ok_step: Json, data: bytes) -> None:
+    """Checksum: flip bytes near the end of the first successful input (where the checks sit)."""
+    for i in range(1, min(len(data), 48)):
+        corrupted = with_input(ok_step, flip(data, len(data) - i), {"error": "Checksum"})
+        if completion.propose("checksum-mismatch", [corrupted], "Checksum"):
+            break
+
+
+def _propose_unsupported(completion: Completion, ok_step: Json, data: bytes) -> None:
+    """Unsupported: a coding feature the contract names as refused."""
+    for label, d, params in unsupported_candidates(completion.name, data, ok_step):
+        s = with_input(ok_step, d, {"error": "Unsupported"})
+        if params is not None:
+            s["params"] = params
+        if completion.propose(label, [s], "Unsupported"):
+            break
+
+
+def level_round_trips(name: str, contract: vectors.Contract) -> list[Json]:
     """Round trips of a compressor whose contract declares `level`, at the lowest and the highest explicit level
     (0, where the contract's range reaches it, and the maximum): the encode step passes the level and expects
     success, the encoded bytes being the implementation's own, and the decode step reads them back."""
     spec = contract["parameters"].get("level")
     if name not in COMPRESSORS or spec is None:
         return []
+    lowest, highest = spec["minimum"], spec["maximum"]
+    if lowest is None or highest is None:
+        raise ValueError(f"{name}: the level parameter states no range")
     original = b"round trip through the compressor at a stated level " * 4
     trips = []
-    for level in sorted({max(int(spec["minimum"]), 0), int(spec["maximum"])}):
+    for level in sorted({max(int(lowest), 0), int(highest)}):
         decode = {"direction": "decode", "params": {}, "input": {"previous": True}, "expect": {"hex": original.hex()}}
         trips.append(
             {
@@ -277,7 +323,7 @@ def level_round_trips(name: str, contract: Any) -> list[Any]:
     return trips
 
 
-def unsupported_candidates(name: str, data: Any, ok_step: Any) -> Iterator[Any]:
+def unsupported_candidates(name: str, data: bytes, ok_step: Json) -> Iterator[tuple[str, bytes, Json | None]]:
     if name == "JPEG":
         yield "arithmetic-coding", data.replace(b"\xff\xc0", b"\xff\xc9", 1), None
         yield "lossless-process", data.replace(b"\xff\xc0", b"\xff\xc3", 1), None
@@ -311,20 +357,22 @@ def unsupported_candidates(name: str, data: Any, ok_step: Any) -> Iterator[Any]:
         yield "no-check", lzma.compress(raw, format=lzma.FORMAT_XZ, check=lzma.CHECK_NONE), None
 
 
-def description_candidates(name: str) -> Iterator[Any]:
+def description_candidates(name: str) -> Iterator[tuple[str, Json]]:
     if name == "Delta":
         # rowBytes is any non-negative integer and elementSize any of 1, 2, 4, 8; a row is nonetheless a
         # whole number of pixels, so a 3-byte row of 2-byte samples describes nothing.
         yield "row-not-whole-pixels", {"elementSize": 2, "rowBytes": 3}
 
 
-def parameter_candidates(name: str, pname: Any, manifest: Any, base: Any, ok_step: Any, data: Any) -> Iterator[Any]:
+def parameter_candidates(
+    name: str, pname: str, manifest: Json, base: pathlib.Path, ok_step: Json, data: bytes
+) -> Iterator[tuple[str, list[Json]]]:
     params = dict(ok_step.get("params", {}))
     if name == "Blosc":
         header = data[:16]
         typesize = header[3]
         shuffle = bool(header[2] & 0x01)
-        values = {"cname": "blosclz", "clevel": 5, "shuffle": shuffle, "typesize": typesize, "blocksize": 0}
+        values: Json = {"cname": "blosclz", "clevel": 5, "shuffle": shuffle, "typesize": typesize, "blocksize": 0}
         yield f"parameter-{pname}", [with_input(ok_step, data, None, params={pname: values[pname]})]
     elif name == "CCITTGroup3" and pname == "noEol":
         for v in manifest["vectors"]:
@@ -353,8 +401,8 @@ def parameter_candidates(name: str, pname: Any, manifest: Any, base: Any, ok_ste
         yield "tiff-layout-char", [with_input(ok_step, data, None, params=geometry)]
 
 
-def round_trip(name: str, manifest: Any) -> Any:
-    def hexes(v):
+def round_trip(name: str, manifest: Json) -> Json | None:
+    def hexes(v: Json) -> tuple[str, str, Json]:
         return v["steps"][0]["input"]["hex"], v["steps"][0]["expect"]["hex"], v["steps"][0].get("params", {})
 
     encode = next(
@@ -374,18 +422,18 @@ def round_trip(name: str, manifest: Any) -> Any:
     if name in COMPRESSORS:
         # A compressor's encoded bytes are its implementation's own (match search, block splitting, run
         # packing), so the encode step expects only success and the decode step reads its output back.
-        original = b"round trip through the compressor " * 4
-        params = {"decodedSize": len(original)} if name == "LZ4Block" else {}
+        through = b"round trip through the compressor " * 4
+        params = {"decodedSize": len(through)} if name == "LZ4Block" else {}
         decode = {
             "direction": "decode",
             "params": params,
             "input": {"previous": True},
-            "expect": {"hex": original.hex()},
+            "expect": {"hex": through.hex()},
         }
         return {
             "id": "round-trip",
             "source": "round-trip",
-            "steps": [step(original, {"ok": True}, params, direction="encode"), decode],
+            "steps": [step(through, {"ok": True}, params, direction="encode"), decode],
         }
     return None
 
@@ -400,7 +448,8 @@ def main(argv: list[str] | None = None) -> int:
     engine = Engine(args.engine, args.java_home)
     register = Graph().parse(ROOT / "specification/register/media-encoding/media-encoding.ttl", format="turtle")
     contracts = vectors.contracts(register)
-    log, total = [], 0
+    log: list[str] = []
+    total = 0
     for iri, contract in sorted(contracts.items()):
         name = vectors.local_name(iri)
         if args.codec and name not in args.codec:

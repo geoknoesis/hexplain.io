@@ -25,14 +25,18 @@ from __future__ import annotations
 import json
 import pathlib
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Graph, Literal, Namespace, URIRef
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools" / "codecs"))
 
 import vectors  # noqa: E402
+from vectors import Contract, Json, ParameterSpec  # noqa: E402
+
+if TYPE_CHECKING:
+    import jsonschema
 
 REGISTER = ROOT / "specification/register/media-encoding/media-encoding.ttl"
 SCHEMA = ROOT / "specification/codecs/vector-manifest.schema.json"
@@ -42,7 +46,7 @@ HX = Namespace("https://hexplain.io/ns/core#")
 ENCODE_ONLY = frozenset({"level"})
 
 
-def _bytes(spec):
+def _bytes(spec: object) -> bytes | None:
     """The bytes of an inline hex or base64 spec, or None for a file or samples input."""
     if not isinstance(spec, dict) or "file" in spec or "samples" in spec:
         return None
@@ -52,7 +56,7 @@ def _bytes(spec):
         return None
 
 
-def round_trips(manifest: Any) -> Any:
+def round_trips(manifest: Json) -> list[str]:
     """The ids of the vectors that hold a round trip."""
     found = []
     for vector in manifest.get("vectors", []):
@@ -76,7 +80,7 @@ def round_trips(manifest: Any) -> Any:
     return found
 
 
-def schema_validator() -> Any:
+def schema_validator() -> jsonschema.Draft202012Validator:
     """A validator of the published manifest schema."""
     import jsonschema
 
@@ -85,21 +89,22 @@ def schema_validator() -> Any:
     return jsonschema.Draft202012Validator(schema)
 
 
-def admitted(value: Any, spec: dict[str, Any]) -> bool:
+def admitted(value: Any, spec: ParameterSpec) -> bool:
     """Whether a step's parameter value lies inside what the contract's parameter specification admits (its
     allowed values and its bounds; the loader checks the type)."""
+    lowest, highest = spec.get("minimum"), spec.get("maximum")
     for v in value if isinstance(value, list) else [value]:
         if spec.get("allowed") and v not in spec["allowed"]:
             return False
         if isinstance(v, (int, float)) and not isinstance(v, bool):
-            if spec.get("minimum") is not None and v < spec["minimum"]:
+            if lowest is not None and v < lowest:
                 return False
-            if spec.get("maximum") is not None and v > spec["maximum"]:
+            if highest is not None and v > highest:
                 return False
     return True
 
 
-def parameter_problems(manifest: Any, contract: Any) -> list[str]:
+def parameter_problems(manifest: Json, contract: Contract) -> list[str]:
     """The declared parameters no succeeding step passes with an admitted value in the direction it applies."""
     shown = set()
     for vector in manifest.get("vectors", []):
@@ -120,9 +125,16 @@ def parameter_problems(manifest: Any, contract: Any) -> list[str]:
     return out
 
 
-def problems(manifest: Any, contract: Any, declared_categories: Any, encodes: Any, warnings: Any = None) -> Any:
+def problems(
+    manifest: Json,
+    contract: Contract,
+    declared_categories: set[str],
+    encodes: bool,
+    warnings: list[str] | None = None,
+) -> list[str]:
     out = []
-    expected, directions = set(), set()
+    expected: set[str] = set()
+    directions: set[str] = set()
     for vector in manifest.get("vectors", []):
         for step in vector.get("steps") or []:
             directions.add(step.get("direction"))
@@ -159,15 +171,28 @@ def problems(manifest: Any, contract: Any, declared_categories: Any, encodes: An
     return out
 
 
-LEVEL = {"minimum": -1, "maximum": 9, "allowed": []}
+LEVEL: ParameterSpec = {
+    "type": "integer",
+    "list": False,
+    "length": None,
+    "required": False,
+    "minimum": -1,
+    "maximum": 9,
+    "allowed": [],
+}
 
 
-def self_test(validator: Any) -> None:
+def probe_contract(parameters: dict[str, ParameterSpec]) -> Contract:
+    """A contract declaring [parameters], for the self-test."""
+    return {"version": 1, "suite": 1, "kind": "compression", "session": False, "parameters": parameters}
+
+
+def self_test(validator: jsonschema.Draft202012Validator) -> None:
     """The gate notices what it is for."""
     decode = {"direction": "decode", "params": {}, "input": {"hex": "00"}, "expect": {"hex": "00"}}
     probe = {"vectors": [{"id": "x", "steps": [decode]}]}
     gap = "the contract declares the parameter level, and no succeeding encode step passes an admitted value of it"
-    assert problems(probe, {"parameters": {"level": LEVEL}}, {"Validation"}, True) == [
+    assert problems(probe, probe_contract({"level": LEVEL}), {"Validation"}, True) == [
         "the contract declares hexplain:raisesCategory Validation, and no step expects it",
         gap,
         "the codec encodes, and no vector holds a round trip (an encode step whose expected output the next decode "
@@ -185,14 +210,14 @@ def self_test(validator: Any) -> None:
         ]
     }
     assert round_trips(trip) == ["rt"], "the round-trip check no longer recognises one"
-    assert problems(trip, {"parameters": {}}, set(), True) == [], "a round trip of an encoding contract was refused"
-    assert len(problems(trip, {"parameters": {}}, set(), False)) == 1, (
+    assert problems(trip, probe_contract({}), set(), True) == [], "a round trip of an encoding contract was refused"
+    assert len(problems(trip, probe_contract({}), set(), False)) == 1, (
         "an encode step under a contract that does not state hexplain:encodes went unnoticed"
     )
 
     def passing(direction: str, value: int, expect: dict[str, Any]) -> list[str]:
         step = dict(decode, direction=direction, params={"level": value}, expect=expect)
-        return parameter_problems({"vectors": [{"id": "p", "steps": [step]}]}, {"parameters": {"level": LEVEL}})
+        return parameter_problems({"vectors": [{"id": "p", "steps": [step]}]}, probe_contract({"level": LEVEL}))
 
     assert passing("decode", 10, {"error": "Description"}) == [gap], "a refused value counted as passing a parameter"
     assert passing("decode", 6, {"hex": "00"}) == [gap], "an encode-only parameter counted on a decode step"
@@ -204,12 +229,14 @@ def self_test(validator: Any) -> None:
 def main() -> int:
     register = Graph().parse(REGISTER, format="turtle")
     contracts = vectors.contracts(register)
-    failures, warnings, trips = [], [], 0
+    failures: list[str] = []
+    warnings: list[str] = []
+    trips = 0
     validator = schema_validator()
     for iri, contract in sorted(contracts.items()):
         node = URIRef(iri + ".contract")
         declared = {str(o) for o in register.objects(node, HX.raisesCategory)}
-        encodes = any(o.toPython() is True for o in register.objects(node, HX.encodes))
+        encodes = any(isinstance(o, Literal) and o.toPython() is True for o in register.objects(node, HX.encodes))
         path = vectors.suite_path(iri)
         if not path.is_file():
             continue  # test_codec_contracts reports the missing suite

@@ -30,11 +30,12 @@ from __future__ import annotations
 import functools
 import json
 import math
+from collections.abc import Set
 from pathlib import Path
 from typing import Any
 
 import rdflib
-from rdflib import RDF, URIRef
+from rdflib import RDF, Literal, URIRef
 from suite import ROOT, SUITE, dump
 
 EXPECTATIONS = "writer/round-trip-expectations.json"
@@ -73,7 +74,7 @@ def tree_cases(suite: Path = SUITE) -> list[Path]:
     return out
 
 
-_ENCODING = None
+_ENCODING: set[str] | None = None
 
 
 def encoding_codecs() -> set[str]:
@@ -86,7 +87,7 @@ def encoding_codecs() -> set[str]:
         _ENCODING = {
             str(concept)
             for concept, node in graph.subject_objects(contract)
-            if any(o.toPython() is True for o in graph.objects(node, encodes))
+            if any(isinstance(o, Literal) and o.toPython() is True for o in graph.objects(node, encodes))
         }
     return _ENCODING
 
@@ -175,7 +176,7 @@ def same_value(expected: Any, actual: Any) -> bool:
     return expected == actual
 
 
-def isomorphism_problems(expected: Any, actual: Any, exempt: set[str] = frozenset(), path: str = "$") -> list[str]:
+def isomorphism_problems(expected: Any, actual: Any, exempt: Set[str] = frozenset(), path: str = "$") -> list[str]:
     """Why two canonical trees are not isomorphic (processing/index.html#tree-isomorphism); [] when they are.
     A member whose key is in [exempt] is a recomputed derived value: bound in one tree it is bound in the other,
     and its value is not compared."""

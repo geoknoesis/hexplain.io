@@ -81,7 +81,7 @@ pp(
 )
 
 
-def half(bits: Any) -> Any:
+def half(bits: int) -> float:
     return struct.unpack(">e", bits.to_bytes(2, "big"))[0]
 
 
@@ -406,7 +406,7 @@ def encoded(codec_turtle: Any, size: Any) -> str:
    """
 
 
-def lz4_block(size_param: Any, length: Any) -> Any:
+def lz4_block(size_param: int | str | None, length: int | str) -> str:
     parameter = (
         ""
         if size_param is None

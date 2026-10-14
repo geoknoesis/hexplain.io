@@ -31,9 +31,10 @@ import html
 import json
 import re
 import sys
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "specification/conformance/requirements.json"
@@ -198,41 +199,41 @@ class Sentence:
     section: str
     text: str
     start: int  # source offset of its first character
-    anchors: list = field(default_factory=list)  # IDs of anchors inside it
-    inherited: str = None  # level of the "...MUST:" sentence that introduces this item
-    context: str = None  # what the sentence needs to be read alone: see `sentences` and `standalone`
-    block: Any = None  # the Block the sentence was split from
-    items: list = field(default_factory=list)  # the items of the list or table this sentence introduces
+    anchors: list[str] = field(default_factory=list)  # IDs of anchors inside it
+    inherited: str | None = None  # level of the "...MUST:" sentence that introduces this item
+    context: str | None = None  # what the sentence needs to be read alone: see `sentences` and `standalone`
+    block: Block | None = None  # the Block the sentence was split from
+    items: list[str] = field(default_factory=list)  # the items of the list or table this sentence introduces
 
     @property
-    def keywords(self) -> list[Any]:
+    def keywords(self) -> list[str]:
         return [m.group(1) for m in KEYWORD.finditer(self.text)]
 
     @property
-    def is_requirement(self) -> Any:
+    def is_requirement(self) -> bool:
         return (bool(self.keywords) or self.inherited is not None) and BOILERPLATE not in self.text
 
     @property
-    def level(self) -> Any:
+    def level(self) -> str:
         if self.inherited:
             return self.inherited
         return "MUST" if MUST_LEVEL & set(self.keywords) else "SHOULD"
 
     @property
-    def introduces_items(self) -> Any:
+    def introduces_items(self) -> bool:
         """A requirement ending in a colon ("A conforming evaluator MUST:") governs the next list or table."""
         return bool(self.keywords) and self.text.rstrip().endswith(":")
 
 
-def normalise(text: str) -> Any:
+def normalise(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def text_hash(text: str) -> Any:
+def text_hash(text: str) -> str:
     return hashlib.sha256(normalise(text).encode("utf-8")).hexdigest()[:16]
 
 
-def slug(text: str) -> Any:
+def slug(text: str) -> str:
     head = text.split("(")[0]
     words = re.findall(r"[a-z0-9]+", head.lower())[:3]
     return "-".join(words) or "section"
@@ -241,8 +242,8 @@ def slug(text: str) -> Any:
 @dataclass
 class Block:
     section: str
-    chars: list  # [(char, source offset)]
-    anchors: list  # [(plain offset, anchor id)]
+    chars: list[tuple[str, int]]  # [(char, source offset)]
+    anchors: list[tuple[int, str]]  # [(plain offset, anchor id)]
     kind: str  # the element holding the text: li, td, p, ...
     element: int  # a number identifying that element
     container: int  # the innermost list or table around it (0 for none)
@@ -252,13 +253,13 @@ class Block:
 HEADING = re.compile(r"<h[1-6][^>]*>(.*?)</h[1-6]>", re.S)
 
 
-def link_titles(page: Any, source: Any) -> Any:
+def link_titles(page: str, source: str) -> dict[str, str]:
     """What an empty link renders as: ReSpec fills <a href="#x"></a> with the title of section x.
 
     The registry records a sentence as a reader sees it, so an empty link reads as its target's
     title rather than as nothing ("(see )" was the text of ten entries).
     """
-    titles = {}
+    titles: dict[str, str] = {}
     for match in re.finditer(r'<a\s[^>]*href="([^"]*)"[^>]*></a>', source):
         href = match.group(1)
         target, _, fragment = href.partition("#")
@@ -277,134 +278,187 @@ def link_titles(page: Any, source: Any) -> Any:
     return titles
 
 
-def _blocks(source, only_section, titles=None, terms=None):
+def _blocks(
+    source: str, only_section: str | None, titles: dict[str, str] | None = None, terms: dict[int, str] | None = None
+) -> Iterator[Block]:
     """Yield one Block per run of text between block-level tags. `terms`, when given, is filled with what names
     a block from outside it: {table row: its header cells' text} and {dd element: the text of its dt}."""
-    titles = titles or {}
-    terms = {} if terms is None else terms
-    header, last_dt = [], ""
-    sections = []  # stack of [id-or-None, heading-slug-or-None]
-    elements = []  # stack of (tag, number) of open block elements
-    containers = [0]
-    counter = [0]
-    row = 0
-    skip = excluded = 0
-    chars, anchors = [], []
-    in_scope = only_section is None
-    scope_depth = None
-    heading_open, heading_text = None, []
+    return _BlockReader(source, only_section, titles or {}, {} if terms is None else terms).blocks()
 
-    def number():
-        counter[0] += 1
-        return counter[0]
 
-    def current_section():
-        for sid, heading in reversed(sections):
+class _BlockReader:
+    """The state of one pass over a page's markup: the open sections, elements, lists and tables, the text of the
+    block being read, and whether it is in scope."""
+
+    def __init__(self, source: str, only_section: str | None, titles: dict[str, str], terms: dict[int, str]) -> None:
+        self.source, self.only_section, self.titles, self.terms = source, only_section, titles, terms
+        self.header: list[list[str]] = []
+        self.last_dt = ""
+        self.sections: list[list[str | None]] = []  # stack of [id-or-None, heading-slug-or-None]
+        self.elements: list[tuple[str, int]] = []  # stack of (tag, number) of open block elements
+        self.containers = [0]
+        self.counter = 0
+        self.row = 0
+        self.skip = self.excluded = 0
+        self.chars: list[tuple[str, int]] = []
+        self.anchors: list[tuple[int, str]] = []
+        self.in_scope = only_section is None
+        self.scope_depth: int | None = None
+        self.heading_open: str | None = None
+        self.heading_text: list[str] = []
+
+    def blocks(self) -> Iterator[Block]:
+        pos = 0
+        for match in TAG.finditer(self.source):
+            self.text(self.source[pos : match.start()], pos)
+            pos = match.end()
+            yield from self.tag(match)
+        yield from self.flush()
+
+    def number(self) -> int:
+        self.counter += 1
+        return self.counter
+
+    def current_section(self) -> str:
+        for sid, heading in reversed(self.sections):
             if sid:
                 return sid
             if heading:
                 return heading
         return "document"
 
-    def flush():
-        nonlocal chars, anchors
-        if chars and in_scope and "".join(c for c, _ in chars).strip():
-            kind, element = elements[-1] if elements else ("body", 0)
-            yield Block(current_section(), chars, anchors, kind, element, containers[-1], row)
-        chars, anchors = [], []
+    def flush(self) -> list[Block]:
+        """The block read so far, if it has text in scope; the next block starts empty."""
+        out = []
+        if self.chars and self.in_scope and "".join(c for c, _ in self.chars).strip():
+            kind, element = self.elements[-1] if self.elements else ("body", 0)
+            out.append(
+                Block(self.current_section(), self.chars, self.anchors, kind, element, self.containers[-1], self.row)
+            )
+        self.chars, self.anchors = [], []
+        return out
 
-    pos = 0
-    for match in TAG.finditer(source):
-        text = source[pos : match.start()]
-        if text and not skip:
-            if heading_open:
-                heading_text.append(text)
-            if header:
-                header[-1].append(text)
-            if not excluded:
-                for piece in re.finditer(r"&[#A-Za-z0-9]+;|[^&]+|&", text):
-                    raw = piece.group()
-                    if raw.startswith("&"):
-                        chars.extend((ch, pos + piece.start()) for ch in html.unescape(raw))
-                    else:
-                        chars.extend((ch, pos + piece.start() + i) for i, ch in enumerate(raw))
-        pos = match.end()
+    def text(self, text: str, pos: int) -> None:
+        """The text between two tags, at source offset [pos]."""
+        if not text or self.skip:
+            return
+        if self.heading_open:
+            self.heading_text.append(text)
+        if self.header:
+            self.header[-1].append(text)
+        if self.excluded:
+            return
+        for piece in re.finditer(r"&[#A-Za-z0-9]+;|[^&]+|&", text):
+            raw = piece.group()
+            if raw.startswith("&"):
+                self.chars.extend((ch, pos + piece.start()) for ch in html.unescape(raw))
+            else:
+                self.chars.extend((ch, pos + piece.start() + i) for i, ch in enumerate(raw))
+
+    def tag(self, match: re.Match[str]) -> list[Block]:
+        """One tag: the block it ends, if any."""
         if match.group(0).startswith("<!--"):
-            continue
+            return []
         closing, name, attrs = match.group(1), match.group(2).lower(), match.group(3)
         if name in SKIPPED:
-            skip += -1 if closing else 1
-            continue
-        if skip:
-            continue
+            self.skip += -1 if closing else 1
+            return []
+        if self.skip or self.inline(match, name, closing, attrs):
+            return []
+        if name not in BLOCK and name not in EXCLUDED_BLOCK:
+            return []
+        if name == "dt" and closing and self.chars:
+            self.last_dt = normalise("".join(c for c, _ in self.chars))
+        out = self.flush()
+        if name == "th":
+            self.header_cell(closing)
+        if closing:
+            self.close(name)
+        else:
+            self.open(name)
+        if name == "section":
+            self.section(closing, attrs)
+        if name in EXCLUDED_BLOCK:
+            self.excluded_block(name, closing)
+        return out
+
+    def inline(self, match: re.Match[str], name: str, closing: str, attrs: str) -> bool:
+        """Whether the tag is one read inside a block's text (an anchor, a break, an empty link, a superscript)."""
         if name == "span" and not closing and 'class="req"' in attrs:
             anchor = ANCHOR.match(match.group(0))
             if anchor:
-                anchors.append((len(chars), anchor.group(1)))
-            continue
+                self.anchors.append((len(self.chars), anchor.group(1)))
+            return True
         if name == "br":
-            if chars:
-                chars.append((" ", match.start()))
-            continue
-        if name == "a" and not closing and not excluded and source.startswith("</a>", match.end()):
+            if self.chars:
+                self.chars.append((" ", match.start()))
+            return True
+        if name == "a" and not closing and not self.excluded and self.source.startswith("</a>", match.end()):
             href = re.search(r'href="([^"]*)"', attrs)
-            chars.extend((ch, match.start()) for ch in titles.get(href.group(1), "") if href)
-            continue
-        if name == "sup" and not closing and not excluded:
-            chars.append(("^", match.start()))  # 2<sup>63</sup> reads as 2^63
-            continue
-        if name not in BLOCK and name not in EXCLUDED_BLOCK:
-            continue
-        if name == "dt" and closing and chars:
-            last_dt = normalise("".join(c for c, _ in chars))
-        yield from flush()
-        if name == "th":
-            if closing and header:
-                cell = normalise(html.unescape(re.sub(r"<[^>]+>", "", "".join(header.pop()))))
-                terms[row] = " | ".join(p for p in (terms.get(row, ""), cell) if p)
-            elif not closing:
-                header.append([])
+            if href:
+                self.chars.extend((ch, match.start()) for ch in self.titles.get(href.group(1), ""))
+            return True
+        if name == "sup" and not closing and not self.excluded:
+            self.chars.append(("^", match.start()))  # 2<sup>63</sup> reads as 2^63
+            return True
+        return False
+
+    def header_cell(self, closing: str) -> None:
+        if closing and self.header:
+            cell = normalise(html.unescape(re.sub(r"<[^>]+>", "", "".join(self.header.pop()))))
+            self.terms[self.row] = " | ".join(p for p in (self.terms.get(self.row, ""), cell) if p)
+        elif not closing:
+            self.header.append([])
+
+    def close(self, name: str) -> None:
+        while self.elements and self.elements[-1][0] != name:
+            self.elements.pop()
+        if self.elements:
+            self.elements.pop()
+        if name in ("ul", "ol", "table") and len(self.containers) > 1:
+            self.containers.pop()
+
+    def open(self, name: str) -> None:
+        self.elements.append((name, self.number()))
+        if name in ("ul", "ol", "table"):
+            self.containers.append(self.elements[-1][1])
+        if name == "tr":
+            self.row = self.elements[-1][1]
+        if name == "dd":
+            self.terms[self.elements[-1][1]] = self.last_dt
+
+    def section(self, closing: str, attrs: str) -> None:
         if closing:
-            while elements and elements[-1][0] != name:
-                elements.pop()
-            if elements:
-                elements.pop()
-            if name in ("ul", "ol", "table") and len(containers) > 1:
-                containers.pop()
+            if self.sections:
+                self.sections.pop()
+            if self.scope_depth is not None and len(self.sections) < self.scope_depth:
+                self.in_scope, self.scope_depth = False, None
         else:
-            elements.append((name, number()))
-            if name in ("ul", "ol", "table"):
-                containers.append(elements[-1][1])
-            if name == "tr":
-                row = elements[-1][1]
-            if name == "dd":
-                terms[elements[-1][1]] = last_dt
-        if name == "section":
-            if closing:
-                if sections:
-                    sections.pop()
-                if scope_depth is not None and len(sections) < scope_depth:
-                    in_scope, scope_depth = False, None
-            else:
-                sid = re.search(r'\bid="([^"]+)"', attrs)
-                sections.append([sid.group(1) if sid else None, None])
-                if only_section and sid and sid.group(1) == only_section:
-                    in_scope, scope_depth = True, len(sections)
-        if name in EXCLUDED_BLOCK:
-            if closing:
-                excluded = max(0, excluded - 1)
-                if name.startswith("h") and heading_open == name:
-                    heading_open = None
-                    if sections and sections[-1][1] is None:
-                        sections[-1][1] = slug("".join(heading_text))
-            else:
-                excluded += 1
-                if name.startswith("h"):
-                    heading_open, heading_text = name, []
-    yield from flush()
+            sid = re.search(r'\bid="([^"]+)"', attrs)
+            self.sections.append([sid.group(1) if sid else None, None])
+            if self.only_section and sid and sid.group(1) == self.only_section:
+                self.in_scope, self.scope_depth = True, len(self.sections)
+
+    def excluded_block(self, name: str, closing: str) -> None:
+        if closing:
+            self.excluded = max(0, self.excluded - 1)
+            if name.startswith("h") and self.heading_open == name:
+                self.heading_open = None
+                if self.sections and self.sections[-1][1] is None:
+                    self.sections[-1][1] = slug("".join(self.heading_text))
+        else:
+            self.excluded += 1
+            if name.startswith("h"):
+                self.heading_open, self.heading_text = name, []
 
 
-def _split(page, block, inherited=None, text_override=None, context=None):
+def _split(
+    page: str,
+    block: Block,
+    inherited: str | None = None,
+    text_override: str | None = None,
+    context: str | None = None,
+) -> list[Sentence]:
     chars, anchors = block.chars, block.anchors
     plain = "".join(c for c, _ in chars)
     if inherited:
@@ -437,7 +491,46 @@ def _split(page, block, inherited=None, text_override=None, context=None):
     return out
 
 
-def sentences(page: Any, source: Any) -> Any:
+class Governing(NamedTuple):
+    """A requirement ending in a colon and the list or table it governs: its level, the container (of the
+    sentence while the list is pending, of the list once it is read), its text, and the sentence itself."""
+
+    level: str
+    container: int
+    text: str
+    sentence: Sentence
+
+
+def _plain(block: Block) -> str:
+    return "".join(c for c, _ in block.chars)
+
+
+def _governing(
+    block: Block, pending: Governing | None, governed: Governing | None
+) -> tuple[Governing | None, Governing | None]:
+    """(pending, governed) once [block] is reached: only a list or table that directly follows the introducing
+    sentence is governed by it, and the governed list ends at the first block outside it that is not an item."""
+    if pending:
+        if block.container not in (0, pending.container):
+            governed = pending._replace(container=block.container)
+        return None, governed
+    if governed and block.container != governed.container and block.kind not in ("li", "td"):
+        return None, None
+    return None, governed
+
+
+def _inheritance(block: Block, governed: Governing, rows: dict[int, list[Block]]) -> tuple[str | None, str | None]:
+    """(level, text) an item of a governed list or table takes from the sentence introducing it: a list item, or a
+    table row's first cell (the row is the item), that states no keyword of its own."""
+    plain = _plain(block)
+    if block.kind == "li" and not KEYWORD.search(plain):
+        return governed.level, None
+    if block.kind == "td" and rows[block.row][0] is block and not KEYWORD.search(plain):
+        return governed.level, " | ".join(normalise(_plain(b)) for b in rows[block.row])
+    return None, None
+
+
+def sentences(page: str, source: str) -> list[Sentence]:
     """Every sentence of the page's normative text, in document order.
 
     A requirement that ends in a colon ("A conforming HEL 1.0 evaluator MUST:") governs the list or
@@ -449,54 +542,48 @@ def sentences(page: Any, source: Any) -> Any:
     # A generated region restates other sources (the term reference restates the RDF); blank it
     # out, keeping every offset, so its sentences are neither anchored nor registered.
     source = GENERATED.sub(lambda m: " " * len(m.group(0)), source)
-    terms = {}
+    terms: dict[int, str] = {}
     blocks = list(_blocks(source, PAGES[page][1], titles, terms))
-    rows = {}
+    rows: dict[int, list[Block]] = {}
     for block in blocks:
         if block.kind == "td":
             rows.setdefault(block.row, []).append(block)
-    out = []
-    pending = None  # (level, container of the introducing sentence, its text, the sentence)
-    governed = None  # (level, container, introducing text, the sentence) of the list or table being read
-    seen = set()
+    out: list[Sentence] = []
+    pending: Governing | None = None
+    governed: Governing | None = None
+    seen: set[int] = set()
     for block in blocks:
-        if pending:
-            # Only a list or table that directly follows the introducing sentence is governed by it.
-            if block.container not in (0, pending[1]):
-                governed = (pending[0], block.container, pending[2], pending[3])
-            pending = None
-        elif governed and block.container != governed[1] and block.kind not in ("li", "td"):
-            governed = None
+        pending, governed = _governing(block, pending, governed)
         inherit = override = None
-        in_governed = governed is not None and block.container == governed[1]
-        if in_governed and block.element not in seen:
-            plain = "".join(c for c, _ in block.chars)
-            if block.kind == "li" and not KEYWORD.search(plain):
-                inherit = governed[0]
-            elif block.kind == "td" and rows[block.row][0] is block and not KEYWORD.search(plain):
-                inherit = governed[0]
-                override = " | ".join(normalise("".join(c for c, _ in b.chars)) for b in rows[block.row])
-        if in_governed and block.element not in seen and block.kind in ("li", "td"):
-            governed[3].items.append(normalise("".join(c for c, _ in block.chars)))
+        first = governed is not None and block.container == governed.container and block.element not in seen
+        if governed is not None and first:
+            inherit, override = _inheritance(block, governed, rows)
+            if block.kind in ("li", "td"):
+                governed.sentence.items.append(normalise(_plain(block)))
         seen.add(block.element)
         # An item of a governed list or table is a fragment on its own ("Integer | An xsd:long literal ..."):
         # the registry records the sentence that introduces the list with it, so the entry stands alone.
-        items = _split(page, block, inherit, override, normalise(governed[2]) if inherit else None)
-        if in_governed and block.kind in ("li", "td"):
+        context = normalise(governed.text) if governed is not None and inherit else None
+        items = _split(page, block, inherit, override, context)
+        if governed is not None and block.container == governed.container and block.kind in ("li", "td"):
             for s in items:
                 if s.is_requirement and not s.inherited:
-                    s.context = normalise(governed[2])
+                    s.context = normalise(governed.text)
         for s in items:
             if s.introduces_items and not inherit:
-                pending = (s.level, block.container, s.text, s)
+                pending = Governing(s.level, block.container, s.text, s)
         out.extend(items)
-    # A sentence that opens with a pronoun ("It MUST be raised ...") names its subject in the sentence
-    # before it; the registry records that sentence too, so an entry read on its own keeps its subject.
+    _anaphora(out)
+    standalone(out, rows, terms, source)
+    return out
+
+
+def _anaphora(out: list[Sentence]) -> None:
+    """A sentence that opens with a pronoun ("It MUST be raised ...") names its subject in the sentence before it;
+    the registry records that sentence too, so an entry read on its own keeps its subject."""
     for before, s in zip(out, out[1:], strict=False):
         if s.is_requirement and not s.inherited and ANAPHOR.match(s.text):
             s.context = normalise(before.text)
-    standalone(out, rows, terms, source)
-    return out
 
 
 #: A requirement shorter than this names its subject elsewhere ("Value MUST be a bddo:DataType.").
@@ -529,6 +616,7 @@ def surroundings(s: Sentence, before: Sentence | None, rows: dict[int, list[Bloc
     """The subject of a short requirement: the rest of its table row (its header cell first), or the term a
     definition belongs to, then the sentence before it."""
     block, parts = s.block, []
+    assert block is not None, "a registered sentence is split from a block"
     if block.kind == "td":
         parts = [terms.get(block.row, "")]
         parts += [normalise("".join(c for c, _ in b.chars)) for b in rows[block.row] if b is not block]
@@ -554,19 +642,19 @@ def standalone(out: list[Sentence], rows: dict[int, list[Block]], terms: dict[in
         before = s
 
 
-def read(page: Any) -> Any:
+def read(page: str) -> str:
     """The page's text with its line endings as they are on disk, so a rewrite changes only anchors."""
     with open(ROOT / page, encoding="utf-8", newline="") as stream:
         return stream.read()
 
 
-def load_registry() -> Any:
+def load_registry() -> dict[str, Any]:
     if REGISTRY.is_file():
         return json.loads(REGISTRY.read_text(encoding="utf-8"))
     return {"schema": 1, "requirements": {}}
 
 
-def requirement_class(page: Any, section: Any, identifier: Any = None) -> Any:
+def requirement_class(page: str, section: str, identifier: str | None = None) -> str:
     if identifier in CLASS_OVERRIDE:
         return CLASS_OVERRIDE[identifier]
     prefix = PAGES[page][0]
@@ -577,14 +665,15 @@ def requirement_class(page: Any, section: Any, identifier: Any = None) -> Any:
     return {"hel": "hel", "hdl": "hdl-compiler"}.get(prefix, "conformance-evaluator")
 
 
-def audience(identifier: Any) -> Any:
+def audience(identifier: str) -> str:
     """processor, or description for a rule on a description's author (a shape-backed one included)."""
     return "description" if identifier in DESCRIPTION_AUDIENCE or identifier in SHAPE_BACKED else "processor"
 
 
-def scan() -> Any:
+def scan() -> tuple[dict[str, list[Sentence]], list[str]]:
     """(sentences per page, problems) for the pages as they are on disk."""
-    found, problems = {}, []
+    found: dict[str, list[Sentence]] = {}
+    problems: list[str] = []
     for page in PAGES:
         source = read(page)
         found[page] = sentences(page, source)
@@ -598,13 +687,13 @@ def scan() -> Any:
     return found, problems
 
 
-def entries(found: Any) -> Any:
+def entries(found: dict[str, list[Sentence]]) -> dict[str, dict[str, Any]]:
     out = {}
     for page, items in found.items():
         for s in items:
             if s.is_requirement and len(s.anchors) == 1:
                 identifier = s.anchors[0]
-                entry = dict(
+                entry: dict[str, Any] = dict(
                     page=page,
                     section=s.section,
                     cls=requirement_class(page, s.section, identifier),
@@ -621,7 +710,7 @@ def entries(found: Any) -> Any:
     return out
 
 
-def assign(write: Any) -> Any:
+def assign(write: bool) -> tuple[int, list[str]]:
     """Anchor every unanchored requirement sentence; return the number of anchors added."""
     found, problems = scan()
     registry = load_registry()["requirements"]
@@ -666,7 +755,7 @@ ID_PATTERN = re.compile(
 )
 
 
-def pending_changes(changelog: Any) -> Any:
+def pending_changes(changelog: str) -> str:
     """The CHANGELOG section that records changes not yet in a snapshot.
 
     A changed or withdrawn requirement must be named where its change is recorded -- the
@@ -680,12 +769,14 @@ def pending_changes(changelog: Any) -> Any:
     return sections[0] if sections else ""
 
 
-def names(text: str, identifier: Any) -> bool:
+def names(text: str, identifier: str) -> bool:
     """True when [text] names [identifier] as a whole word: req-pm-errors-1 is not in req-pm-errors-10."""
     return re.search(r"(?<![A-Za-z0-9-])" + re.escape(identifier) + r"(?![A-Za-z0-9-])", text) is not None
 
 
-def reconcile(current: Any, old: Any, changelog: Any) -> Any:
+def reconcile(
+    current: dict[str, dict[str, Any]], old: dict[str, dict[str, Any]], changelog: str
+) -> tuple[dict[str, dict[str, Any]], list[str]]:
     """The registry that follows from the pages ([current]) and the previous registry ([old]).
 
     An ID never changes meaning silently: when its sentence's text changes, the old hash is kept in
@@ -693,7 +784,8 @@ def reconcile(current: Any, old: Any, changelog: Any) -> Any:
     needs an entry in the pending section of CHANGELOG.md that names the ID exactly; without one
     this returns a problem instead.
     """
-    merged, problems = {}, []
+    merged: dict[str, dict[str, Any]] = {}
+    problems: list[str] = []
     for identifier, entry in current.items():
         before = old.get(identifier)
         history = list(before.get("history", [])) if before else []
@@ -756,7 +848,7 @@ def main(argv: list[str]) -> int:
     return 0
 
 
-def sort_key(identifier: Any) -> Any:
+def sort_key(identifier: str) -> tuple[int, str, int]:
     order = {p[0]: n for n, p in enumerate(PAGES.values())}
     stem, _, number = identifier.rpartition("-")
     prefix = next((p for p in sorted(order, key=len, reverse=True) if identifier.startswith(f"req-{p}-")), "")

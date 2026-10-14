@@ -33,14 +33,16 @@ REVISION = re.compile(r"^(?:[0-9a-f]{7,40}|[a-z][a-z0-9+.-]*:[^\s]+)$")
 #: A version that names no fixed build: admissible only because the revision does.
 PRERELEASE = re.compile(r"snapshot|dev|rc|alpha|beta|\+", re.I)
 ENVIRONMENT = ("os", "jvm", "toolchain")
+#: An implementation report, as parsed JSON.
+Report = dict[str, Any]
 
 
-def suite_cases(suite: Any = SUITE) -> dict[str, Any]:
+def suite_cases(suite: Path | str = SUITE) -> dict[str, str]:
     """{case id: class} of every case of the suite on disk."""
     return {p.parent.name: cls for cls in CLASSES for p in sorted((Path(suite) / cls).glob("*/manifest.json"))}
 
 
-def suite_digest(suite: Any = SUITE) -> Any:
+def suite_digest(suite: Path | str = SUITE) -> str:
     """SHA-256 over every case file of the suite, by relative path, so a report names the exact suite it ran."""
     h = hashlib.sha256()
     for cls in CLASSES:
@@ -51,17 +53,17 @@ def suite_digest(suite: Any = SUITE) -> Any:
     return h.hexdigest()
 
 
-def claims_digest(claims: Any) -> Any:
+def claims_digest(claims: object) -> str:
     """SHA-256 of the claims statement's canonical JSON: keys sorted, no whitespace, non-ASCII unescaped, UTF-8."""
     canonical = json.dumps(claims, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def safe_name(text: str) -> Any:
+def safe_name(text: str) -> str:
     return re.sub(r"[^a-z0-9.-]", "-", str(text).lower())
 
 
-def report_path(report: Any) -> str:
+def report_path(report: Report) -> str:
     """The path, relative to specification/conformance/, a report is published at."""
     impl = report.get("implementation", {})
     digest = str(report.get("suite", {}).get("digest", ""))[:12]
@@ -69,8 +71,13 @@ def report_path(report: Any) -> str:
 
 
 def build(
-    results: Any, implementation: Any, claims: Any, suite: Any = SUITE, date: Any = None, environment: Any = None
-) -> dict[str, Any]:
+    results: list[dict[str, Any]],
+    implementation: dict[str, Any],
+    claims: object,
+    suite: Path | str = SUITE,
+    date: str | None = None,
+    environment: dict[str, str] | None = None,
+) -> Report:
     counts = {s: sum(1 for r in results if r["status"] == s) for s in STATUSES}
     return {
         "format": FORMAT,
@@ -89,14 +96,14 @@ def build(
     }
 
 
-def complete(report: Any, revision: Any, environment: Any) -> Any:
+def complete(report: Report, revision: str, environment: dict[str, str]) -> Report:
     """[report] with the revision, environment, claims digest and format version a runner left out, in place."""
     report.setdefault("implementation", {})["revision"] = revision
     report["environment"] = dict(environment)
     if "claims" in report:
         report["claimsDigest"] = claims_digest(report["claims"])
     report["formatVersion"] = FORMAT_VERSION
-    ordered = {}
+    ordered: Report = {}
     for key in (
         "format",
         "formatVersion",
@@ -117,7 +124,7 @@ def complete(report: Any, revision: Any, environment: Any) -> Any:
     return report
 
 
-def _version_problems(report, historical):
+def _version_problems(report: Report, historical: bool) -> list[str]:
     """The format-version-2 members: required of every report of the current suite; a version-1 report (one that
     predates revision, environment and claimsDigest) stays published only for a suite that is no longer current."""
     problems = []
@@ -131,7 +138,8 @@ def _version_problems(report, historical):
         return problems
     if version != FORMAT_VERSION:
         problems.append(f"formatVersion is {version!r}, not {FORMAT_VERSION}")
-    impl = report.get("implementation") if isinstance(report.get("implementation"), dict) else {}
+    stated = report.get("implementation")
+    impl = stated if isinstance(stated, dict) else {}
     revision = impl.get("revision")
     if not isinstance(revision, str) or not REVISION.match(revision):
         problems.append(
@@ -142,14 +150,14 @@ def _version_problems(report, historical):
                 f"version {impl['version']!r} names no fixed build and is not admissible without a revision"
             )
     env = report.get("environment")
-    if not isinstance(env, dict) or not all(isinstance(env.get(k), str) and env.get(k).strip() for k in ENVIRONMENT):
+    if not isinstance(env, dict) or not all(isinstance(v := env.get(k), str) and v.strip() for k in ENVIRONMENT):
         problems.append("environment must state os, jvm (or none) and toolchain, each a non-empty string")
     if isinstance(report.get("claims"), dict) and report.get("claimsDigest") != claims_digest(report["claims"]):
         problems.append("claimsDigest is not the SHA-256 of the claims statement's canonical JSON")
     return problems
 
 
-def check(report: Any, suite: Any = SUITE, path: Any = None) -> Any:
+def check(report: Report, suite: Path | str = SUITE, path: Path | str | None = None) -> list[str]:
     """The problems of a report, [] when it follows the format and covers the suite it names.
 
     [path], when given, is where the report is published (any path ending in reports/<implementation>/<file>.json):
@@ -167,25 +175,9 @@ def check(report: Any, suite: Any = SUITE, path: Any = None) -> Any:
     problems += _version_problems(report, historical=not current)
     cases = suite_cases(suite)
     if current:
-        seen = {}
-        for r in report.get("results", []):
-            seen[r.get("case")] = seen.get(r.get("case"), 0) + 1
-        missing = sorted(set(cases) - set(seen))
-        extra = sorted(c for c in seen if c not in cases)
-        twice = sorted(c for c, n in seen.items() if n > 1)
-        for label, ids in (("missing", missing), ("not in the suite", extra), ("listed twice", twice)):
-            if ids:
-                problems.append(f"cases {label}: {', '.join(ids[:10])}")
+        problems += _coverage_problems(report, cases)
     for r in report.get("results", []):
-        case = r.get("case")
-        if r.get("status") not in STATUSES:
-            problems.append(f"{case}: status {r.get('status')!r}")
-        if current and case in cases and r.get("class") != cases[case]:
-            problems.append(f"{case}: class {r.get('class')!r}, the suite says {cases[case]}")
-        if r.get("category") not in (None,) + CATEGORIES:
-            problems.append(f"{case}: category {r.get('category')!r} is not a Processing Model category")
-        if r.get("status") in ("FAIL", "SKIP") and not r.get("detail"):
-            problems.append(f"{case}: a {r.get('status')} result states why (detail)")
+        problems += _result_problems(r, cases if current else None)
     counts = report.get("counts", {})
     for s in STATUSES:
         if counts.get(s) != sum(1 for r in report.get("results", []) if r.get("status") == s):
@@ -198,7 +190,38 @@ def check(report: Any, suite: Any = SUITE, path: Any = None) -> Any:
     return problems
 
 
-def published() -> list[Any]:
+def _coverage_problems(report: Report, cases: dict[str, str]) -> list[str]:
+    """The cases of the suite a report of it misses, lists that are not in it, or lists twice."""
+    problems = []
+    seen: dict[Any, int] = {}
+    for r in report.get("results", []):
+        seen[r.get("case")] = seen.get(r.get("case"), 0) + 1
+    missing = sorted(set(cases) - set(seen))
+    extra = sorted(c for c in seen if c not in cases)
+    twice = sorted(c for c, n in seen.items() if n > 1)
+    for label, ids in (("missing", missing), ("not in the suite", extra), ("listed twice", twice)):
+        if ids:
+            problems.append(f"cases {label}: {', '.join(ids[:10])}")
+    return problems
+
+
+def _result_problems(r: dict[str, Any], cases: dict[str, str] | None) -> list[str]:
+    """The problems of one result: its status, category and detail, and, against the [cases] of the suite the
+    report names when that suite is current, its class."""
+    problems = []
+    case = r.get("case")
+    if r.get("status") not in STATUSES:
+        problems.append(f"{case}: status {r.get('status')!r}")
+    if cases is not None and case in cases and r.get("class") != cases[case]:
+        problems.append(f"{case}: class {r.get('class')!r}, the suite says {cases[case]}")
+    if r.get("category") not in (None,) + CATEGORIES:
+        problems.append(f"{case}: category {r.get('category')!r} is not a Processing Model category")
+    if r.get("status") in ("FAIL", "SKIP") and not r.get("detail"):
+        problems.append(f"{case}: a {r.get('status')} result states why (detail)")
+    return problems
+
+
+def published() -> list[tuple[Path, Report]]:
     """Every published report, as (path, report)."""
     return [(p, json.loads(p.read_text(encoding="utf-8"))) for p in sorted(REPORTS.glob("*/*.json"))]
 
