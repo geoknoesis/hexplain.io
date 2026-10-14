@@ -40,11 +40,14 @@ def check(task: Any) -> Any:
             selected.add((URIRef(row["targetShape"]), SH.targetNode, URIRef(row["targetNode"])))
         # allow_warnings distinguishes advisory results from violations: pySHACL otherwise reports
         # conforms=false for a warning-only report, which would make sh:severity unobservable and
-        # every advisory constraint indistinguishable from an error.
+        # every advisory constraint indistinguishable from an error. advanced=True, as the coverage
+        # ledger measures these same cases: a shape whose focus nodes a SPARQL target selects
+        # (sh:target, SHACL Advanced Features) is otherwise never applied.
         ok, report, detail = validate(
             Graph().parse(data=row["data"], format="turtle"),
             shacl_graph=selected,
             inference="none",
+            advanced=True,
             allow_warnings=bool(row.get("allowWarnings")),
         )
         if bool(ok) != row["expected"]:

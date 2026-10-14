@@ -129,6 +129,12 @@ every canonical module's `dcterms:modified` is 2026-10-13. Two modules are new: 
   authoring fragment and `tools/test_encoding_register.py` holds them to the individuals.
   `bddo:CustomEncodingCharsetShape` warns about a custom encoding whose charset is a registered
   encoding's or does not determine a byte order (UTF-16, UTF-32, ISO-10646-UCS-2, UCS-2).
+- **`req:RequirementIdentityShape` selects its focus nodes** (req/shapes 1.3). With 203 shape
+  requirements in the family graph, comparing every pair of requirements took a minute per
+  validation. The shape now has a SPARQL target (`sh:target`) selecting the requirements that
+  can share a normalised pair with another: those whose identifier another requirement states
+  verbatim, and, when any identifier holds a character the normalisation changes, all of them.
+  The constraint and what it reports are unchanged.
 - **Stale text** (N10). The architecture page states the number of SHACL-SPARQL constraints,
   which `tools/test_page_governance.py` now checks against the modules; its "Not yet modelled"
   section lists what remains (protection processing, a HEL `offsetof`).
