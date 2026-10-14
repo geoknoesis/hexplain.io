@@ -5,9 +5,8 @@ signatures and the complexity bound) and `ruff format --check` fails on a module
 would change, so a reformat is never left to the next contributor. tools/conformance/ and
 tools/codecs/ are checked with the gates.
 
-The per-file entries of ruff.toml (ANN, C901) name modules that do not meet a newer rule yet,
-and the list can only shrink: an entry whose module no longer has a finding fails this gate, so
-it is removed with the change that fixes the module, and no entry is added.
+No module is exempt: a per-file entry in ruff.toml fails this gate, so a module that breaks a
+rule is brought into line rather than listed.
 
 Every text file the tooling writes states its line ending: a ``write_text`` or a text-mode
 ``open`` for writing without ``newline=`` takes the platform's, and a generator run on Windows
@@ -17,8 +16,6 @@ then rewrites a tracked LF file as CRLF.
 from __future__ import annotations
 
 import ast
-import fnmatch
-import json
 import subprocess
 import sys
 import tomllib
@@ -39,39 +36,11 @@ def ruff(*arguments: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def stale_exemptions() -> list[str]:
-    """Per-file entries of ruff.toml that exempt a rule their files no longer break."""
+def exemptions() -> list[str]:
+    """The per-file entries of ruff.toml, as ``pattern: codes``: every one exempts modules from the contract."""
     config = tomllib.loads((ROOT / "ruff.toml").read_text(encoding="utf-8"))["lint"]
-    exemptions: dict[str, list[str]] = config.get("per-file-ignores", {})
-    if not exemptions:
-        return []
-    # The same rules with the exemptions lifted: what each exempted module still breaks.
-    lifted = ruff(
-        "check",
-        "tools",
-        "--no-cache",
-        "--output-format",
-        "json",
-        "--select",
-        ",".join(sorted({code for codes in exemptions.values() for code in codes})),
-        "--ignore",
-        ",".join(config.get("ignore", [])),
-        "--config",
-        "lint.per-file-ignores = {}",
-        "--config",
-        f"lint.mccabe.max-complexity = {config['mccabe']['max-complexity']}",
-    )
-    broken: dict[str, set[str]] = {}
-    for finding in json.loads(lifted.stdout or "[]"):
-        path = Path(finding["filename"]).resolve().relative_to(ROOT).as_posix()
-        broken.setdefault(path, set()).add(finding["code"])
-    stale = []
-    for pattern, codes in exemptions.items():
-        found = set().union(*(found for path, found in broken.items() if fnmatch.fnmatchcase(path, pattern)))
-        for code in codes:
-            if not any(rule.startswith(code) for rule in found):
-                stale.append(f"{pattern}: {code}")
-    return stale
+    entries: dict[str, list[str]] = config.get("per-file-ignores", {})
+    return [f"{pattern}: {', '.join(codes)}" for pattern, codes in entries.items()]
 
 
 def _write_mode(call: ast.Call) -> str | None:
@@ -112,8 +81,8 @@ def main() -> int:
     assert check.returncode == 0, (check.stdout or "") + (check.stderr or "")
     formatted = ruff("format", "--check", "tools", "--no-cache")
     assert formatted.returncode == 0, "run `ruff format tools`:\n" + (formatted.stdout or "") + (formatted.stderr or "")
-    stale = stale_exemptions()
-    assert not stale, "ruff.toml per-file entries that are no longer needed; remove them: " + "; ".join(stale)
+    exempt = exemptions()
+    assert not exempt, "ruff.toml exempts modules from the contract; bring them into line instead: " + "; ".join(exempt)
     check_text_writes()
     count = len(list((ROOT / "tools").rglob("*.py")))
     print(
