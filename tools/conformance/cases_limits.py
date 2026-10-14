@@ -196,3 +196,69 @@ pp(
     error="ResourceLimit",
     manifest={"limits": {"maxRegexSteps": 10}, "features": {"requires": ["hel-ext-text"]}},
 )
+
+# ----------------------------------------------------------------- the cost of a pattern's counted quantifiers
+
+#: A match is bounded including its idle iterations; a pattern too large to compile is a ResourceLimit error; a
+#: pattern within the two figures is not refused for its counted quantifiers.
+IDLE_BOUNDED, TOO_LARGE, WITHIN_CAPS = "req-hel-ext-text-9", "req-hel-ext-text-8", "req-hel-ext-text-10"
+TEXT_GROUP = {"features": {"requires": ["hel-ext-text"]}}
+EMPTY_SUBJECT = """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:d ) .
+   ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:d a bddo:Field ; bddo:valueFromExpression "matches('', '{pattern}')" .
+   """
+
+pp(
+    "limit-regex-idle-iterations",
+    "Iterations that consume no input are bounded: a huge empty repetition is true or a ResourceLimit error",
+    "((){20000}){200000} asks for four thousand million iterations of a group that matches the empty string. "
+    "The empty subject matches it, so a processor that does not perform the idle iterations answers true; one "
+    "that performs them meets its match-cost limit, and one that refuses the pattern for its bounds (200,000 is "
+    "above 65,535, and the product above 1,000,000) says so. Each is a ResourceLimit error or the value true; "
+    "what no processor may do is run unbounded, or answer false.",
+    [IDLE_BOUNDED, TOO_LARGE, "req-hel-ext-text-3"],
+    ["resource-limits", "hel/index.html#ext-text"],
+    EMPTY_SUBJECT.replace("{pattern}", "((){20000}){200000}"),
+    b"\x00",
+    {"n": 0, "d": True},
+    manifest=dict(TEXT_GROUP, orError="ResourceLimit"),
+)
+
+pp(
+    "limit-regex-counted-bound-above-cap",
+    "A counted quantifier above 65,535 may be refused, and is otherwise matched correctly",
+    "a{65536} is a HEL-RE expression (the bound is below 2^31), so it is no argument error. A processor MAY "
+    "refuse it with a ResourceLimit error; one that compiles it finds that the one-character subject does not "
+    "match.",
+    [TOO_LARGE],
+    ["hel/index.html#ext-text"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:s ex:d ) .
+   ex:s a bddo:Field ; bddo:dataType bddo:string ; bddo:size 1 ; bddo:encoding bddo:ascii .
+   ex:d a bddo:Field ; bddo:valueFromExpression "matches(s, 'a{65536}')" .
+   """,
+    b"a",
+    {"s": "a", "d": False},
+    manifest=dict(TEXT_GROUP, orError="ResourceLimit"),
+)
+
+pp(
+    "limit-regex-counted-within-caps",
+    "A pattern within both figures is not refused for its counted quantifiers",
+    "(a{10}){10} has bounds of 10 and a nested product of 100, and ((){100}){100} a product of 10,000: both "
+    "are within 65,535 and 1,000,000, so neither is refused. A hundred a's match the first, and the empty "
+    "subject matches the second, whose ten thousand idle iterations are far below the least match-cost limit a "
+    "processor has by default.",
+    [WITHIN_CAPS, IDLE_BOUNDED],
+    ["resource-limits", "hel/index.html#ext-text"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:s ex:d ex:e ) .
+   ex:s a bddo:Field ; bddo:dataType bddo:string ; bddo:size 100 ; bddo:encoding bddo:ascii .
+   ex:d a bddo:Field ; bddo:valueFromExpression "matches(s, '(a{10}){10}')" .
+   ex:e a bddo:Field ; bddo:valueFromExpression "matches('', '((){100}){100}')" .
+   """,
+    b"a" * 100,
+    {"s": "a" * 100, "d": True, "e": True},
+    manifest=TEXT_GROUP,
+)

@@ -27,8 +27,10 @@ SCOPE = "req-pm-serialisation-20"
 RECOMPUTED = "req-pm-serialisation-21"
 CONSISTENT = "req-pm-serialisation-22"
 TEXT = "req-pm-serialisation-23"
-SYMMETRY = "req-pm-serialisation-24"
 PADDING = "req-pm-serialisation-25"
+SEPARATOR = "req-pm-serialisation-27"
+LITERAL_REGION = "req-pm-serialisation-28"
+TERMINATED = "req-pm-serialisation-31"
 
 
 def w(
@@ -245,7 +247,7 @@ w(
     "length-terminator-included",
     "A recomputed length counts the terminator",
     "box holds the string 'hi' and its terminator 00: three serialised bytes, so n, the length of box, is 3.",
-    [RECOMPUTED],
+    [RECOMPUTED, TERMINATED],
     ["size-resolution", "terminators"],
     """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:box ) .
@@ -394,7 +396,7 @@ w(
     "A region of literal size is filled to its end after a shorter value",
     "box is a region of four bytes and its struct takes two: 00 07, then two fill bytes 00, then tail. The stream "
     "reads back as the same tree, whatever the stream it was parsed from held in those two bytes.",
-    [ORDER, SYMMETRY],
+    [LITERAL_REGION],
     ["size-resolution"],
     """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:box ex:tail ) .
@@ -411,7 +413,7 @@ w(
     "region-overflow",
     "A value longer than its region of literal size is refused",
     "data is five bytes and its region is four.",
-    [ORDER],
+    [LITERAL_REGION],
     ["size-resolution"],
     """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:data ex:tail ) .
@@ -458,7 +460,7 @@ w(
     "A separated token is preceded by one space when a token precedes it",
     "Two separated scalars and a separated array: the first token is preceded by nothing, every later one by one "
     "0x20, so the tokens do not run together: '1 2 33 4'.",
-    [ORDER],
+    [SEPARATOR],
     ["size-resolution", "text-numbers"],
     """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ex:vals ) .
@@ -649,7 +651,7 @@ w(
     "A text number whose rendering does not fit its width is refused",
     "1234567 is seven digits in a width of five. A refusal is a conforming outcome here even for a parsed tree; "
     "a stream that reads back as another number is not.",
-    [TEXT, SYMMETRY],
+    [TEXT],
     ["text-numbers"],
     """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:n ) .
@@ -840,7 +842,7 @@ w(
     error="Unsupported",
 )
 
-# ----------------------------------------------------------------- rule 9: scope
+# ----------------------------------------------------------------- rule 10: scope
 
 w(
     "container-key-value",

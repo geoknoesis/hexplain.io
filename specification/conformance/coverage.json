@@ -1,11 +1,11 @@
 {
  "cases": {
-  "physical-parser": 468,
+  "physical-parser": 506,
   "semantic-emitter": 49,
   "bundle-processor": 13,
-  "hdl-compiler": 180,
+  "hdl-compiler": 211,
   "conformance-evaluator": 41,
-  "writer": 52
+  "writer": 86
  },
  "excluded": {
   "blanket": [
@@ -19,20 +19,18 @@
  },
  "processorMust": {
   "Physical Parser": {
-   "total": 268,
-   "covered": 262,
+   "total": 276,
+   "covered": 272,
    "notSuiteTestable": {
     "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's shape gates (test_shapes, test_vocab_shapes) apply it.",
     "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the condition is asserted by the HEL vectors (validation/test/hel-vectors.tsv, req-hel-conformance-9).",
     "req-hel-ext-text-7": "A statement in the processor's claims or report environment, not a result of a parse; it is checked by reading the published report.",
-    "req-hel-ext-text-8": "The bound on a pattern's size and nesting is the implementation's own; a case would need a pattern beyond every conforming evaluator's bound, and no size is.",
-    "req-pm-alignment-padding-3": "Verifying a fill byte is optional (a processor MAY compare the padding with bddo:padByte), so a case cannot tell a processor that does not verify from one that verified and agreed; the rule binds only what a verifying processor reports.",
-    "req-pm-data-layouts-3": "The key construction orders the chunk table, which only cell access reads; a parsed tree holds the field's bytes and this version gives cells no output form, so no case observes which chunk a key selects."
+    "req-pm-alignment-padding-3": "Verifying a fill byte is optional (a processor MAY compare the padding with bddo:padByte), so a case cannot tell a processor that does not verify from one that verified and agreed; the rule binds only what a verifying processor reports."
    },
    "uncovered": []
   },
   "Semantic Emitter": {
-   "total": 37,
+   "total": 33,
    "covered": 27,
    "notSuiteTestable": {
     "req-core-punning-1": "Whether a processor relies on a DL entailment is not observable from its output: a case cannot tell a processor that did not reason from one whose reasoning happened to agree.",
@@ -40,10 +38,6 @@
     "req-pm-privacy-1": "The runner cannot tell a base IRI derived from the input's file name from any other base the processor reports; se-base-reported checks that the base is chosen and reported.",
     "req-pm-value-mapping-3": "Which scales beyond -4096..4096 a processor supports is its own: no case can name a scale that every conforming processor refuses. The supported range is asserted by req-pm-value-mapping-2.",
     "req-raster-document-3": "Binds a consumer that interprets a raster description; cell addressing is the data layout's (DLV), which the Physical Parser cases cover.",
-    "req-spatialref-document-10": "Binds a processor that evaluates rational polynomial transforms, which no processor class of the Processing Model does.",
-    "req-spatialref-document-11": "Binds a processor that evaluates rational polynomial transforms, which no processor class of the Processing Model does.",
-    "req-spatialref-document-2": "Binds a processor that evaluates spatial-reference transforms (the hxf function library's world and cell functions), which the processor suite does not exercise.",
-    "req-spatialref-document-3": "Binds a processor that evaluates spatial-reference transforms (the hxf function library's hxf:column and hxf:row), which the processor suite does not exercise.",
     "req-spatialref-document-4": "A documentation requirement on a floating-point implementation, checked by reading its documentation."
    },
    "uncovered": []
@@ -55,8 +49,8 @@
    "uncovered": []
   },
   "HDL Compiler": {
-   "total": 56,
-   "covered": 55,
+   "total": 62,
+   "covered": 61,
    "notSuiteTestable": {
     "req-hdl-modules-3": "The import bounds are the compiler's own; a case would need an imported file larger than every conforming compiler's bound, and no size is."
    },
@@ -69,8 +63,8 @@
    "uncovered": []
   },
   "Writer": {
-   "total": 12,
-   "covered": 12,
+   "total": 25,
+   "covered": 25,
    "notSuiteTestable": {},
    "uncovered": []
   }
@@ -78,8 +72,8 @@
  "requirements": {
   "physical-parser": {
    "MUST": {
-    "total": 195,
-    "covered": 192
+    "total": 201,
+    "covered": 199
    },
    "SHOULD": {
     "total": 5,
@@ -88,8 +82,8 @@
   },
   "hel": {
    "MUST": {
-    "total": 73,
-    "covered": 70
+    "total": 75,
+    "covered": 73
    },
    "SHOULD": {
     "total": 1,
@@ -98,11 +92,11 @@
   },
   "semantic-emitter": {
    "MUST": {
-    "total": 37,
+    "total": 33,
     "covered": 27
    },
    "SHOULD": {
-    "total": 1,
+    "total": 5,
     "covered": 0
    }
   },
@@ -128,8 +122,8 @@
   },
   "hdl-compiler": {
    "MUST": {
-    "total": 56,
-    "covered": 55
+    "total": 62,
+    "covered": 61
    },
    "SHOULD": {
     "total": 1,
@@ -138,8 +132,8 @@
   },
   "writer": {
    "MUST": {
-    "total": 12,
-    "covered": 12
+    "total": 25,
+    "covered": 25
    },
    "SHOULD": {
     "total": 0,
@@ -148,6 +142,14 @@
   }
  },
  "writer": {
+  "roundTrip": {
+   "trees": 242,
+   "outcomes": {
+    "Unsupported": 17,
+    "Validation": 7,
+    "round-trip": 218
+   }
+  },
   "cases": [
    {
     "id": "w-alignment",
@@ -158,11 +160,62 @@
     ]
    },
    {
+    "id": "w-bcd",
+    "title": "Packed decimal is written two digits to a byte, zero-padded, in the byte order in force",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-37"
+    ]
+   },
+   {
+    "id": "w-bcd-negative",
+    "title": "A negative number has no packed-decimal form",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-37"
+    ]
+   },
+   {
+    "id": "w-bcd-too-many-digits",
+    "title": "A number of more digits than the field holds is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-37"
+    ]
+   },
+   {
     "id": "w-bit-field-realigned",
     "title": "The unused bits of a partial byte are written 0",
     "outcome": "bytes",
     "requirements": [
      "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-bits-field-order-overrides-struct",
+    "title": "A field's own bit order is the effective one, and a change of order starts a new byte",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-25",
+     "req-pm-serialisation-26"
+    ]
+   },
+   {
+    "id": "w-bits-lsb-first",
+    "title": "Bit fields are packed least-significant bit first under bddo:LSBFirst",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17",
+     "req-pm-serialisation-26"
+    ]
+   },
+   {
+    "id": "w-bound-length-not-padded-without-trim-null",
+    "title": "A string without trimNull must be exactly its bound length",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-22",
+     "req-pm-serialisation-30"
     ]
    },
    {
@@ -231,9 +284,25 @@
     ]
    },
    {
+    "id": "w-codec-compressor-round-trip",
+    "title": "A compressed field parses back to the tree it was written from",
+    "outcome": "round-trip",
+    "requirements": [
+     "req-pm-serialisation-18"
+    ]
+   },
+   {
     "id": "w-codec-delta-step",
     "title": "An encoding step is encoded by its codec's contract with the step's parameters",
     "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-18"
+    ]
+   },
+   {
+    "id": "w-codec-encode-exceeds-limit",
+    "title": "An encode output beyond the decoded-byte limit is a resource-limit error",
+    "outcome": "ResourceLimit",
     "requirements": [
      "req-pm-serialisation-18"
     ]
@@ -248,9 +317,42 @@
     ]
    },
    {
+    "id": "w-codec-literal-region-fits",
+    "title": "An encoding that fills its literal region is written",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-18",
+     "req-pm-serialisation-29"
+    ]
+   },
+   {
+    "id": "w-codec-literal-region-overflow",
+    "title": "An encoding longer than its literal region is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-29"
+    ]
+   },
+   {
+    "id": "w-codec-literal-region-short",
+    "title": "An encoding shorter than its literal region is refused when its codec would read the fill",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-29"
+    ]
+   },
+   {
     "id": "w-codec-no-encode-direction",
     "title": "A codec whose contract defines no encode direction is refused with Unsupported feature",
     "outcome": "Unsupported",
+    "requirements": [
+     "req-pm-serialisation-18"
+    ]
+   },
+   {
+    "id": "w-codec-pipeline-kinds-disconnected",
+    "title": "A pipeline whose kinds do not connect is a description error, whatever the tree",
+    "outcome": "Description",
     "requirements": [
      "req-pm-serialisation-18"
     ]
@@ -262,6 +364,31 @@
     "requirements": [
      "req-pm-serialisation-18",
      "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-conditional-data-type-default",
+    "title": "A field whose rules all fail is written in its declared data type",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-conditional-data-type-selected",
+    "title": "A conditional data type is evaluated over the fields written so far",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17",
+     "req-pm-serialisation-28"
+    ]
+   },
+   {
+    "id": "w-conditional-data-type-wrong-members",
+    "title": "A node that is not of the selected type is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-17"
     ]
    },
    {
@@ -329,6 +456,14 @@
     ]
    },
    {
+    "id": "w-fixed-point-raw-integer",
+    "title": "A fixed-point scale changes nothing a Writer does",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-38"
+    ]
+   },
+   {
     "id": "w-fixed-value-filled",
     "title": "A fixed-value field the tree leaves unbound is written as its constant",
     "outcome": "bytes",
@@ -342,6 +477,70 @@
     "outcome": "Validation",
     "requirements": [
      "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-float-bfloat16",
+    "title": "A bfloat16 is the sixteen high bits of the binary32 value, the infinities included",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-35"
+    ]
+   },
+   {
+    "id": "w-float-bfloat16-low-bits",
+    "title": "A binary32 value with low bits set has no bfloat16 form",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-36"
+    ]
+   },
+   {
+    "id": "w-float-ibm-hexadecimal",
+    "title": "An IBM hexadecimal float is written as the normalised number of the format",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-33"
+    ]
+   },
+   {
+    "id": "w-float-ibm-nan",
+    "title": "A NaN has no IBM hexadecimal form",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-36"
+    ]
+   },
+   {
+    "id": "w-float-ibm-significand-not-exact",
+    "title": "A value whose significand the IBM format cannot carry is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-36"
+    ]
+   },
+   {
+    "id": "w-float-vax",
+    "title": "A VAX float is written in the format's own word order",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-34"
+    ]
+   },
+   {
+    "id": "w-float-vax-infinity",
+    "title": "An infinity has no VAX form",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-36"
+    ]
+   },
+   {
+    "id": "w-float-vax-negative-zero",
+    "title": "A negative zero has no VAX form",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-36"
     ]
    },
    {
@@ -365,13 +564,22 @@
     "title": "A recomputed length counts the terminator",
     "outcome": "bytes",
     "requirements": [
-     "req-pm-serialisation-21"
+     "req-pm-serialisation-21",
+     "req-pm-serialisation-31"
     ]
    },
    {
     "id": "w-offset-addressed",
     "title": "An offset-addressed field is written at its target and the cursor restored",
     "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-offset-before-stream-start",
+    "title": "An offset target before the start of the stream is refused",
+    "outcome": "Validation",
     "requirements": [
      "req-pm-serialisation-25"
     ]
@@ -390,6 +598,22 @@
     "outcome": "bytes",
     "requirements": [
      "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-parameterised-struct",
+    "title": "A node under a parameterised struct is serialised with the arguments its field names",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-parameterised-struct-argument-mismatch",
+    "title": "A size the arguments give that the node does not serialise to is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-17"
     ]
    },
    {
@@ -429,8 +653,7 @@
     "title": "A region of literal size is filled to its end after a shorter value",
     "outcome": "bytes",
     "requirements": [
-     "req-pm-serialisation-1",
-     "req-pm-serialisation-24"
+     "req-pm-serialisation-28"
     ]
    },
    {
@@ -438,7 +661,15 @@
     "title": "A value longer than its region of literal size is refused",
     "outcome": "Validation",
     "requirements": [
-     "req-pm-serialisation-1"
+     "req-pm-serialisation-28"
+    ]
+   },
+   {
+    "id": "w-repeat-until-to-end-not-padded",
+    "title": "A to-end sequence that its condition ends is written as its elements, with no padding",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-32"
     ]
    },
    {
@@ -446,7 +677,7 @@
     "title": "A separated token is preceded by one space when a token precedes it",
     "outcome": "bytes",
     "requirements": [
-     "req-pm-serialisation-1"
+     "req-pm-serialisation-27"
     ]
    },
    {
@@ -474,6 +705,14 @@
     ]
    },
    {
+    "id": "w-terminator-in-value",
+    "title": "A value in which its terminator occurs is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-31"
+    ]
+   },
+   {
     "id": "w-text-encodings",
     "title": "A string is encoded in its bddo:encoding",
     "outcome": "bytes",
@@ -498,6 +737,14 @@
     ]
    },
    {
+    "id": "w-text-number-infinity",
+    "title": "An infinite Float has no text-number spelling",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
     "id": "w-text-number-integers",
     "title": "An Integer written as text is rendered canonically and zero-padded to a literal width",
     "outcome": "bytes",
@@ -510,8 +757,7 @@
     "title": "A text number whose rendering does not fit its width is refused",
     "outcome": "Validation",
     "requirements": [
-     "req-pm-serialisation-23",
-     "req-pm-serialisation-24"
+     "req-pm-serialisation-23"
     ]
    },
    {
@@ -569,6 +815,39 @@
     "requirements": [
      "req-pm-serialisation-1"
     ]
+   },
+   {
+    "id": "w-trim-null-bound-length-padded",
+    "title": "A trimNull string under a bound length is NUL-padded to that length",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-23",
+     "req-pm-serialisation-30"
+    ]
+   },
+   {
+    "id": "w-trim-null-bound-length-too-long",
+    "title": "A value longer than its bound length is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-30"
+    ]
+   },
+   {
+    "id": "w-trim-null-unbound-length-filled",
+    "title": "A trimNull string under an unbound length is written at its own length",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-varint-shortest",
+    "title": "A varint is written in the shortest encoding of its value",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-26"
+    ]
    }
   ],
   "requirements": {
@@ -576,9 +855,6 @@
     "w-field-order",
     "w-fixed-value-filled",
     "w-fixed-value-mismatch",
-    "w-region-filled",
-    "w-region-overflow",
-    "w-separated-tokens",
     "w-size-expression-mismatch",
     "w-tree-required-unbound",
     "w-tree-scalar-for-repeated",
@@ -596,16 +872,26 @@
     "w-struct-size-overflow"
    ],
    "req-pm-serialisation-17": [
+    "w-bits-lsb-first",
     "w-byte-order",
     "w-byte-order-conditional-big",
     "w-byte-order-conditional-little",
+    "w-conditional-data-type-default",
+    "w-conditional-data-type-selected",
+    "w-conditional-data-type-wrong-members",
     "w-dispatch-selected",
-    "w-dispatch-wrong-members"
+    "w-dispatch-wrong-members",
+    "w-parameterised-struct",
+    "w-parameterised-struct-argument-mismatch"
    ],
    "req-pm-serialisation-18": [
+    "w-codec-compressor-round-trip",
     "w-codec-delta-step",
+    "w-codec-encode-exceeds-limit",
     "w-codec-length-recomputed",
+    "w-codec-literal-region-fits",
     "w-codec-no-encode-direction",
+    "w-codec-pipeline-kinds-disconnected",
     "w-codec-substream-struct"
    ],
    "req-pm-serialisation-19": [
@@ -625,9 +911,11 @@
     "w-codec-substream-struct",
     "w-count-filled",
     "w-length-filled",
-    "w-length-terminator-included"
+    "w-length-terminator-included",
+    "w-trim-null-unbound-length-filled"
    ],
    "req-pm-serialisation-22": [
+    "w-bound-length-not-padded-without-trim-null",
     "w-checksum-inconsistent",
     "w-count-inconsistent",
     "w-length-inconsistent"
@@ -636,22 +924,79 @@
     "w-text-encodings",
     "w-text-number-bound-width",
     "w-text-number-floats",
+    "w-text-number-infinity",
     "w-text-number-integers",
     "w-text-number-overflow",
     "w-text-too-long",
     "w-text-trim-null-padded",
-    "w-text-unrepresentable"
+    "w-text-unrepresentable",
+    "w-trim-null-bound-length-padded"
    ],
    "req-pm-serialisation-24": [
-    "w-region-filled",
-    "w-text-number-overflow"
+    "round-trip mode"
    ],
    "req-pm-serialisation-25": [
     "w-alignment",
     "w-bit-field-realigned",
+    "w-bits-field-order-overrides-struct",
     "w-offset-addressed",
+    "w-offset-before-stream-start",
     "w-offset-conflict",
     "w-pad-to-pad-byte"
+   ],
+   "req-pm-serialisation-26": [
+    "w-bits-field-order-overrides-struct",
+    "w-bits-lsb-first",
+    "w-varint-shortest"
+   ],
+   "req-pm-serialisation-27": [
+    "w-separated-tokens"
+   ],
+   "req-pm-serialisation-28": [
+    "w-conditional-data-type-selected",
+    "w-region-filled",
+    "w-region-overflow"
+   ],
+   "req-pm-serialisation-29": [
+    "w-codec-literal-region-fits",
+    "w-codec-literal-region-overflow",
+    "w-codec-literal-region-short"
+   ],
+   "req-pm-serialisation-30": [
+    "w-bound-length-not-padded-without-trim-null",
+    "w-trim-null-bound-length-padded",
+    "w-trim-null-bound-length-too-long"
+   ],
+   "req-pm-serialisation-31": [
+    "w-length-terminator-included",
+    "w-terminator-in-value"
+   ],
+   "req-pm-serialisation-32": [
+    "w-repeat-until-to-end-not-padded"
+   ],
+   "req-pm-serialisation-33": [
+    "w-float-ibm-hexadecimal"
+   ],
+   "req-pm-serialisation-34": [
+    "w-float-vax"
+   ],
+   "req-pm-serialisation-35": [
+    "w-float-bfloat16"
+   ],
+   "req-pm-serialisation-36": [
+    "w-float-bfloat16-low-bits",
+    "w-float-ibm-nan",
+    "w-float-ibm-significand-not-exact",
+    "w-float-vax-infinity",
+    "w-float-vax-negative-zero"
+   ],
+   "req-pm-serialisation-37": [
+    "w-bcd",
+    "w-bcd-negative",
+    "w-bcd-too-many-digits"
+   ],
+   "req-pm-serialisation-38": [
+    "w-fixed-point-raw-integer"
    ]
   }
  },
@@ -932,7 +1277,10 @@
    "pp-layout-size-expression-not-integer",
    "pp-layout-size-from-expression"
   ],
-  "req-pm-data-layouts-3": [],
+  "req-pm-data-layouts-3": [
+   "pp-layout-cells-hilbert",
+   "pp-layout-cells-morton"
+  ],
   "req-pm-data-layouts-4": [
    "pp-layout-packed-float",
    "pp-layout-packed-float-from-field"
@@ -1551,7 +1899,9 @@
    "pp-float-vax-reserved-operand"
   ],
   "req-pm-numeric-representation-2": [
-   "pp-float-bfloat16"
+   "pp-float-bfloat16",
+   "pp-float-ieee754",
+   "pp-float16-normal-values"
   ],
   "req-pm-numeric-representation-3": [
    "pp-float-format-on-data-type",
@@ -2008,9 +2358,6 @@
    "w-field-order",
    "w-fixed-value-filled",
    "w-fixed-value-mismatch",
-   "w-region-filled",
-   "w-region-overflow",
-   "w-separated-tokens",
    "w-size-expression-mismatch",
    "w-tree-required-unbound",
    "w-tree-scalar-for-repeated",
@@ -2028,16 +2375,26 @@
    "w-struct-size-overflow"
   ],
   "req-pm-serialisation-17": [
+   "w-bits-lsb-first",
    "w-byte-order",
    "w-byte-order-conditional-big",
    "w-byte-order-conditional-little",
+   "w-conditional-data-type-default",
+   "w-conditional-data-type-selected",
+   "w-conditional-data-type-wrong-members",
    "w-dispatch-selected",
-   "w-dispatch-wrong-members"
+   "w-dispatch-wrong-members",
+   "w-parameterised-struct",
+   "w-parameterised-struct-argument-mismatch"
   ],
   "req-pm-serialisation-18": [
+   "w-codec-compressor-round-trip",
    "w-codec-delta-step",
+   "w-codec-encode-exceeds-limit",
    "w-codec-length-recomputed",
+   "w-codec-literal-region-fits",
    "w-codec-no-encode-direction",
+   "w-codec-pipeline-kinds-disconnected",
    "w-codec-substream-struct"
   ],
   "req-pm-serialisation-19": [
@@ -2057,9 +2414,11 @@
    "w-codec-substream-struct",
    "w-count-filled",
    "w-length-filled",
-   "w-length-terminator-included"
+   "w-length-terminator-included",
+   "w-trim-null-unbound-length-filled"
   ],
   "req-pm-serialisation-22": [
+   "w-bound-length-not-padded-without-trim-null",
    "w-checksum-inconsistent",
    "w-count-inconsistent",
    "w-length-inconsistent"
@@ -2068,22 +2427,79 @@
    "w-text-encodings",
    "w-text-number-bound-width",
    "w-text-number-floats",
+   "w-text-number-infinity",
    "w-text-number-integers",
    "w-text-number-overflow",
    "w-text-too-long",
    "w-text-trim-null-padded",
-   "w-text-unrepresentable"
+   "w-text-unrepresentable",
+   "w-trim-null-bound-length-padded"
   ],
   "req-pm-serialisation-24": [
-   "w-region-filled",
-   "w-text-number-overflow"
+   "round-trip mode"
   ],
   "req-pm-serialisation-25": [
    "w-alignment",
    "w-bit-field-realigned",
+   "w-bits-field-order-overrides-struct",
    "w-offset-addressed",
+   "w-offset-before-stream-start",
    "w-offset-conflict",
    "w-pad-to-pad-byte"
+  ],
+  "req-pm-serialisation-26": [
+   "w-bits-field-order-overrides-struct",
+   "w-bits-lsb-first",
+   "w-varint-shortest"
+  ],
+  "req-pm-serialisation-27": [
+   "w-separated-tokens"
+  ],
+  "req-pm-serialisation-28": [
+   "w-conditional-data-type-selected",
+   "w-region-filled",
+   "w-region-overflow"
+  ],
+  "req-pm-serialisation-29": [
+   "w-codec-literal-region-fits",
+   "w-codec-literal-region-overflow",
+   "w-codec-literal-region-short"
+  ],
+  "req-pm-serialisation-30": [
+   "w-bound-length-not-padded-without-trim-null",
+   "w-trim-null-bound-length-padded",
+   "w-trim-null-bound-length-too-long"
+  ],
+  "req-pm-serialisation-31": [
+   "w-length-terminator-included",
+   "w-terminator-in-value"
+  ],
+  "req-pm-serialisation-32": [
+   "w-repeat-until-to-end-not-padded"
+  ],
+  "req-pm-serialisation-33": [
+   "w-float-ibm-hexadecimal"
+  ],
+  "req-pm-serialisation-34": [
+   "w-float-vax"
+  ],
+  "req-pm-serialisation-35": [
+   "w-float-bfloat16"
+  ],
+  "req-pm-serialisation-36": [
+   "w-float-bfloat16-low-bits",
+   "w-float-ibm-nan",
+   "w-float-ibm-significand-not-exact",
+   "w-float-vax-infinity",
+   "w-float-vax-negative-zero"
+  ],
+  "req-pm-serialisation-37": [
+   "w-bcd",
+   "w-bcd-negative",
+   "w-bcd-too-many-digits"
+  ],
+  "req-pm-serialisation-38": [
+   "w-fixed-point-raw-integer"
   ],
   "req-pm-size-resolution-1": [],
   "req-pm-size-resolution-2": [
@@ -2166,6 +2582,26 @@
    "pp-term-not-found"
   ],
   "req-pm-text-decoding-1": [
+   "pp-encoding-iso8859-7-unassigned-ae",
+   "pp-encoding-iso8859-7-unassigned-d2",
+   "pp-encoding-iso8859-7-unassigned-ff",
+   "pp-encoding-shift-jis-lead-without-trail",
+   "pp-encoding-shift-jis-trail-7f",
+   "pp-encoding-shift-jis-trail-out-of-range",
+   "pp-encoding-shift-jis-unassigned-pair",
+   "pp-encoding-ucs2be-lone-surrogate",
+   "pp-encoding-ucs2be-surrogate-pair",
+   "pp-encoding-ucs2le-surrogate-pair",
+   "pp-encoding-utf32be-out-of-range",
+   "pp-encoding-utf32be-surrogate",
+   "pp-encoding-utf32le-out-of-range",
+   "pp-encoding-utf32le-partial-code-unit",
+   "pp-encoding-utf32le-surrogate",
+   "pp-encoding-windows1252-unassigned-81",
+   "pp-encoding-windows1252-unassigned-8d",
+   "pp-encoding-windows1252-unassigned-8f",
+   "pp-encoding-windows1252-unassigned-90",
+   "pp-encoding-windows1252-unassigned-9d",
    "pp-hel-bytes-malformed-argument",
    "pp-hel-bytes-vs-string",
    "pp-str-ascii-high-byte",
@@ -2179,6 +2615,26 @@
   ],
   "req-pm-text-decoding-2": [
    "ce-recovery-malformed-text",
+   "pp-encoding-iso8859-7-unassigned-ae",
+   "pp-encoding-iso8859-7-unassigned-d2",
+   "pp-encoding-iso8859-7-unassigned-ff",
+   "pp-encoding-shift-jis-lead-without-trail",
+   "pp-encoding-shift-jis-trail-7f",
+   "pp-encoding-shift-jis-trail-out-of-range",
+   "pp-encoding-shift-jis-unassigned-pair",
+   "pp-encoding-ucs2be-lone-surrogate",
+   "pp-encoding-ucs2be-surrogate-pair",
+   "pp-encoding-ucs2le-surrogate-pair",
+   "pp-encoding-utf32be-out-of-range",
+   "pp-encoding-utf32be-surrogate",
+   "pp-encoding-utf32le-out-of-range",
+   "pp-encoding-utf32le-partial-code-unit",
+   "pp-encoding-utf32le-surrogate",
+   "pp-encoding-windows1252-unassigned-81",
+   "pp-encoding-windows1252-unassigned-8d",
+   "pp-encoding-windows1252-unassigned-8f",
+   "pp-encoding-windows1252-unassigned-90",
+   "pp-encoding-windows1252-unassigned-9d",
    "pp-str-ascii-high-byte",
    "pp-str-trim-null-value-malformed",
    "pp-str-utf16-lone-surrogate",
@@ -2205,6 +2661,85 @@
    "pp-encoding-custom-known-charset"
   ],
   "req-pm-text-decoding-8": [],
+  "req-pm-text-decoding-9": [
+   "pp-encoding-ebcdic037-decodes",
+   "pp-encoding-iso8859-15-decodes",
+   "pp-encoding-iso8859-2-decodes",
+   "pp-encoding-iso8859-5-decodes",
+   "pp-encoding-iso8859-7-decodes",
+   "pp-encoding-iso8859-7-unassigned-ae",
+   "pp-encoding-iso8859-7-unassigned-d2",
+   "pp-encoding-iso8859-7-unassigned-ff",
+   "pp-encoding-iso8859-9-decodes",
+   "pp-encoding-shift-jis-decodes",
+   "pp-encoding-shift-jis-lead-without-trail",
+   "pp-encoding-shift-jis-trail-7f",
+   "pp-encoding-shift-jis-trail-out-of-range",
+   "pp-encoding-shift-jis-unassigned-pair",
+   "pp-encoding-ucs2be-decodes",
+   "pp-encoding-ucs2be-lone-surrogate",
+   "pp-encoding-ucs2be-surrogate-pair",
+   "pp-encoding-ucs2le-decodes",
+   "pp-encoding-ucs2le-surrogate-pair",
+   "pp-encoding-utf32be-byte-order-mark-is-content",
+   "pp-encoding-utf32be-decodes",
+   "pp-encoding-utf32be-out-of-range",
+   "pp-encoding-utf32be-surrogate",
+   "pp-encoding-utf32le-decodes",
+   "pp-encoding-utf32le-out-of-range",
+   "pp-encoding-utf32le-partial-code-unit",
+   "pp-encoding-utf32le-surrogate",
+   "pp-encoding-windows1252-decodes",
+   "pp-encoding-windows1252-unassigned-81",
+   "pp-encoding-windows1252-unassigned-8d",
+   "pp-encoding-windows1252-unassigned-8f",
+   "pp-encoding-windows1252-unassigned-90",
+   "pp-encoding-windows1252-unassigned-9d"
+  ],
+  "req-pm-text-decoding-10": [
+   "pp-encoding-utf32be-byte-order-mark-is-content",
+   "pp-encoding-utf32be-decodes",
+   "pp-encoding-utf32be-out-of-range",
+   "pp-encoding-utf32be-surrogate",
+   "pp-encoding-utf32le-decodes",
+   "pp-encoding-utf32le-out-of-range",
+   "pp-encoding-utf32le-partial-code-unit",
+   "pp-encoding-utf32le-surrogate"
+  ],
+  "req-pm-text-decoding-11": [
+   "pp-encoding-ucs2be-decodes",
+   "pp-encoding-ucs2be-lone-surrogate",
+   "pp-encoding-ucs2be-surrogate-pair",
+   "pp-encoding-ucs2le-decodes",
+   "pp-encoding-ucs2le-surrogate-pair"
+  ],
+  "req-pm-text-decoding-12": [
+   "pp-encoding-ebcdic037-decodes",
+   "pp-encoding-iso8859-15-decodes",
+   "pp-encoding-iso8859-2-decodes",
+   "pp-encoding-iso8859-5-decodes",
+   "pp-encoding-iso8859-7-decodes",
+   "pp-encoding-iso8859-7-unassigned-ae",
+   "pp-encoding-iso8859-7-unassigned-d2",
+   "pp-encoding-iso8859-7-unassigned-ff",
+   "pp-encoding-iso8859-9-decodes",
+   "pp-encoding-windows1252-decodes",
+   "pp-encoding-windows1252-unassigned-81",
+   "pp-encoding-windows1252-unassigned-8d",
+   "pp-encoding-windows1252-unassigned-8f",
+   "pp-encoding-windows1252-unassigned-90",
+   "pp-encoding-windows1252-unassigned-9d"
+  ],
+  "req-pm-text-decoding-13": [
+   "pp-encoding-shift-jis-decodes",
+   "pp-encoding-shift-jis-lead-without-trail",
+   "pp-encoding-shift-jis-trail-7f",
+   "pp-encoding-shift-jis-trail-out-of-range",
+   "pp-encoding-shift-jis-unassigned-pair"
+  ],
+  "req-pm-text-decoding-14": [
+   "pp-claims-statement"
+  ],
   "req-pm-text-numbers-1": [
    "pp-separated-multibyte-encoding"
   ],
@@ -2380,6 +2915,7 @@
    "pp-hel-text-pattern-not-string"
   ],
   "req-hel-ext-text-3": [
+   "pp-limit-regex-idle-iterations",
    "pp-limit-regex-steps"
   ],
   "req-hel-ext-text-4": [
@@ -2403,7 +2939,17 @@
    "pp-hel-regex-hyphen-misplaced"
   ],
   "req-hel-ext-text-7": [],
-  "req-hel-ext-text-8": [],
+  "req-hel-ext-text-8": [
+   "pp-limit-regex-counted-bound-above-cap",
+   "pp-limit-regex-idle-iterations"
+  ],
+  "req-hel-ext-text-9": [
+   "pp-limit-regex-counted-within-caps",
+   "pp-limit-regex-idle-iterations"
+  ],
+  "req-hel-ext-text-10": [
+   "pp-limit-regex-counted-within-caps"
+  ],
   "req-hel-extension-groups-1": [
    "pp-hel-extension-group-unclaimed",
    "pp-hel-unknown-function"
@@ -2687,6 +3233,7 @@
    "hc-count-and-until",
    "hc-derive-with-repeat",
    "hc-duplicate-struct",
+   "hc-encoded-with-unknown-register-concept",
    "hc-evaluation-instant-in-parse",
    "hc-fixed-boolean",
    "hc-fixed-curie",
@@ -2723,6 +3270,16 @@
    "hc-lone-surrogate",
    "hc-max-below-min",
    "hc-min-without-pattern",
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml",
    "hc-namespace-not-absolute",
    "hc-negative-count",
    "hc-negative-offset",
@@ -2746,6 +3303,7 @@
    "hc-param-unknown-type",
    "hc-pipeline-and-encoded-with",
    "hc-pipeline-duplicate-parameter",
+   "hc-pipeline-unknown-register-concept",
    "hc-prop-bare-name",
    "hc-quoted-key-without-alias",
    "hc-repeat-until-ambiguous",
@@ -2755,6 +3313,8 @@
    "hc-seek-without-at",
    "hc-self-outside-scope",
    "hc-self-reference",
+   "hc-shared-namespace-root-and-module",
+   "hc-shared-namespace-two-modules",
    "hc-size-zero",
    "hc-stride-zero",
    "hc-switch-and-dispatch",
@@ -2777,12 +3337,29 @@
    "hc-yaml-duplicate-struct-key",
    "hc-yaml-format-and-module",
    "hc-yaml-import-key",
+   "hc-yaml-key-bit-length-on-byte-field",
+   "hc-yaml-key-container-option-on-struct",
    "hc-yaml-null-list-entry",
    "hc-yaml-quoted-hex-separator",
    "hc-yaml-quoted-hex-sync",
    "hc-yaml-quoted-hex-terminator",
    "hc-yaml-seek-without-at",
    "hc-yaml-switch-and-dispatch",
+   "hc-yaml-unknown-key-bundle-part",
+   "hc-yaml-unknown-key-checksum",
+   "hc-yaml-unknown-key-dims-entry",
+   "hc-yaml-unknown-key-dispatch",
+   "hc-yaml-unknown-key-enum",
+   "hc-yaml-unknown-key-layout",
+   "hc-yaml-unknown-key-struct",
+   "hc-yaml-value-kind-alias-mapping",
+   "hc-yaml-value-kind-bit-length-sequence",
+   "hc-yaml-value-kind-fields-scalar",
+   "hc-yaml-value-kind-flag-string",
+   "hc-yaml-value-kind-hex-number",
+   "hc-yaml-value-kind-layout-scalar",
+   "hc-yaml-value-kind-null-for-mapping",
+   "hc-yaml-value-kind-structs-sequence",
    "hc-yaml-version-spelling"
   ],
   "req-hdl-conformance-section-1": [
@@ -2817,6 +3394,7 @@
    "hc-duplicate-struct",
    "hc-element-key",
    "hc-encoded-with-catalogue-codec",
+   "hc-encoded-with-unknown-register-concept",
    "hc-evaluation-instant-in-parse",
    "hc-field-and-expression-forms",
    "hc-field-and-expression-forms-yaml",
@@ -2866,6 +3444,16 @@
    "hc-lone-surrogate",
    "hc-max-below-min",
    "hc-min-without-pattern",
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml",
    "hc-namespace-not-absolute",
    "hc-negative-count",
    "hc-negative-offset",
@@ -2898,6 +3486,7 @@
    "hc-parent-path-several-containers",
    "hc-pipeline-and-encoded-with",
    "hc-pipeline-duplicate-parameter",
+   "hc-pipeline-unknown-register-concept",
    "hc-prop-bare-name",
    "hc-prop-iri",
    "hc-prop-values",
@@ -2924,6 +3513,8 @@
    "hc-self-reference",
    "hc-semantic-mapping",
    "hc-semantic-mapping-yaml",
+   "hc-shared-namespace-root-and-module",
+   "hc-shared-namespace-two-modules",
    "hc-size-zero",
    "hc-stride-zero",
    "hc-string-non-bmp",
@@ -2957,6 +3548,8 @@
    "hc-yaml-format-and-module",
    "hc-yaml-hex-mapping",
    "hc-yaml-import-key",
+   "hc-yaml-key-bit-length-on-byte-field",
+   "hc-yaml-key-container-option-on-struct",
    "hc-yaml-null-list-entry",
    "hc-yaml-quoted-hex-separator",
    "hc-yaml-quoted-hex-sync",
@@ -2965,6 +3558,21 @@
    "hc-yaml-surface",
    "hc-yaml-surface-text",
    "hc-yaml-switch-and-dispatch",
+   "hc-yaml-unknown-key-bundle-part",
+   "hc-yaml-unknown-key-checksum",
+   "hc-yaml-unknown-key-dims-entry",
+   "hc-yaml-unknown-key-dispatch",
+   "hc-yaml-unknown-key-enum",
+   "hc-yaml-unknown-key-layout",
+   "hc-yaml-unknown-key-struct",
+   "hc-yaml-value-kind-alias-mapping",
+   "hc-yaml-value-kind-bit-length-sequence",
+   "hc-yaml-value-kind-fields-scalar",
+   "hc-yaml-value-kind-flag-string",
+   "hc-yaml-value-kind-hex-number",
+   "hc-yaml-value-kind-layout-scalar",
+   "hc-yaml-value-kind-null-for-mapping",
+   "hc-yaml-value-kind-structs-sequence",
    "hc-yaml-version-spelling"
   ],
   "req-hdl-conformance-section-2": [
@@ -2980,6 +3588,7 @@
    "hc-import-yaml-module",
    "hc-layout-cell-yaml",
    "hc-let-binding-yaml",
+   "hc-mint-collision-struct-enum-yaml",
    "hc-param-on-header",
    "hc-param-struct-yaml",
    "hc-param-switch-arms-yaml",
@@ -3196,6 +3805,7 @@
    "hc-count-and-until",
    "hc-derive-with-repeat",
    "hc-duplicate-struct",
+   "hc-encoded-with-unknown-register-concept",
    "hc-evaluation-instant-in-parse",
    "hc-fixed-boolean",
    "hc-fixed-curie",
@@ -3232,6 +3842,16 @@
    "hc-lone-surrogate",
    "hc-max-below-min",
    "hc-min-without-pattern",
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml",
    "hc-namespace-not-absolute",
    "hc-negative-count",
    "hc-negative-offset",
@@ -3255,6 +3875,7 @@
    "hc-param-unknown-type",
    "hc-pipeline-and-encoded-with",
    "hc-pipeline-duplicate-parameter",
+   "hc-pipeline-unknown-register-concept",
    "hc-prop-bare-name",
    "hc-quoted-key-without-alias",
    "hc-repeat-until-ambiguous",
@@ -3264,6 +3885,8 @@
    "hc-seek-without-at",
    "hc-self-outside-scope",
    "hc-self-reference",
+   "hc-shared-namespace-root-and-module",
+   "hc-shared-namespace-two-modules",
    "hc-size-zero",
    "hc-stride-zero",
    "hc-switch-and-dispatch",
@@ -3286,12 +3909,29 @@
    "hc-yaml-duplicate-struct-key",
    "hc-yaml-format-and-module",
    "hc-yaml-import-key",
+   "hc-yaml-key-bit-length-on-byte-field",
+   "hc-yaml-key-container-option-on-struct",
    "hc-yaml-null-list-entry",
    "hc-yaml-quoted-hex-separator",
    "hc-yaml-quoted-hex-sync",
    "hc-yaml-quoted-hex-terminator",
    "hc-yaml-seek-without-at",
    "hc-yaml-switch-and-dispatch",
+   "hc-yaml-unknown-key-bundle-part",
+   "hc-yaml-unknown-key-checksum",
+   "hc-yaml-unknown-key-dims-entry",
+   "hc-yaml-unknown-key-dispatch",
+   "hc-yaml-unknown-key-enum",
+   "hc-yaml-unknown-key-layout",
+   "hc-yaml-unknown-key-struct",
+   "hc-yaml-value-kind-alias-mapping",
+   "hc-yaml-value-kind-bit-length-sequence",
+   "hc-yaml-value-kind-fields-scalar",
+   "hc-yaml-value-kind-flag-string",
+   "hc-yaml-value-kind-hex-number",
+   "hc-yaml-value-kind-layout-scalar",
+   "hc-yaml-value-kind-null-for-mapping",
+   "hc-yaml-value-kind-structs-sequence",
    "hc-yaml-version-spelling"
   ],
   "req-hdl-conformance-section-8": [
@@ -3427,6 +4067,30 @@
   "req-hdl-grammar-lexical-1": [
    "hc-hyphenated-field-name"
   ],
+  "req-hdl-iri-minting-1": [
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml"
+  ],
+  "req-hdl-iri-minting-2": [
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml"
+  ],
   "req-hdl-layout-1": [
    "pp-hel-asset-outside-bundle"
   ],
@@ -3462,7 +4126,12 @@
   "req-hdl-modules-3": [],
   "req-hdl-modules-4": [
    "hc-dispatch-arm-iris",
-   "hc-dispatch-arm-iris-yaml"
+   "hc-dispatch-arm-iris-yaml",
+   "hc-mint-collision-dispatch-arms"
+  ],
+  "req-hdl-modules-5": [
+   "hc-shared-namespace-root-and-module",
+   "hc-shared-namespace-two-modules"
   ],
   "req-hdl-parameters-1": [
    "hc-let-binding",
@@ -3507,6 +4176,10 @@
   "req-hdl-semantic-1": [
    "hc-encoded-with-catalogue-codec"
   ],
+  "req-hdl-semantic-2": [
+   "hc-encoded-with-unknown-register-concept",
+   "hc-pipeline-unknown-register-concept"
+  ],
   "req-hdl-types-1": [
    "hc-bracket-size-after-u24",
    "hc-bracket-size-on-u32"
@@ -3531,6 +4204,27 @@
    "hc-yaml-quoted-hex-separator",
    "hc-yaml-quoted-hex-sync",
    "hc-yaml-quoted-hex-terminator"
+  ],
+  "req-hdl-yaml-6": [
+   "hc-yaml-key-bit-length-on-byte-field",
+   "hc-yaml-key-container-option-on-struct",
+   "hc-yaml-unknown-key-bundle-part",
+   "hc-yaml-unknown-key-checksum",
+   "hc-yaml-unknown-key-dims-entry",
+   "hc-yaml-unknown-key-dispatch",
+   "hc-yaml-unknown-key-enum",
+   "hc-yaml-unknown-key-layout",
+   "hc-yaml-unknown-key-struct"
+  ],
+  "req-hdl-yaml-7": [
+   "hc-yaml-value-kind-alias-mapping",
+   "hc-yaml-value-kind-bit-length-sequence",
+   "hc-yaml-value-kind-fields-scalar",
+   "hc-yaml-value-kind-flag-string",
+   "hc-yaml-value-kind-hex-number",
+   "hc-yaml-value-kind-layout-scalar",
+   "hc-yaml-value-kind-null-for-mapping",
+   "hc-yaml-value-kind-structs-sequence"
   ],
   "req-ce-conf-conformance-1": [
    "ce-absent-optional-fires-nothing",
@@ -3797,7 +4491,8 @@
   "req-spatialref-document-8": [],
   "req-spatialref-document-9": [],
   "req-spatialref-document-10": [],
-  "req-spatialref-document-11": []
+  "req-spatialref-document-11": [],
+  "req-spatialref-document-12": []
  },
  "withdrawn": [
   "req-ce-conf-conformance-11",
@@ -3838,7 +4533,8 @@
   "bddo/index.html#odd-widths": 7,
   "bddo/index.html#parameterised-structs": 9,
   "conf/index.html#conformance": 1,
-  "hdl/index.html#bundle-profile": 4,
+  "hdl/index.html#asset": 2,
+  "hdl/index.html#bundle-profile": 5,
   "hdl/index.html#checksums": 10,
   "hdl/index.html#clause-multiplicity": 13,
   "hdl/index.html#clauses": 19,
@@ -3857,23 +4553,23 @@
   "hdl/index.html#grammar-lexical": 5,
   "hdl/index.html#grammar-structs": 5,
   "hdl/index.html#import-resolution": 4,
-  "hdl/index.html#iri-minting": 9,
+  "hdl/index.html#iri-minting": 21,
   "hdl/index.html#layout": 5,
   "hdl/index.html#lexical": 20,
   "hdl/index.html#literal-datatypes": 2,
   "hdl/index.html#literal-values": 24,
-  "hdl/index.html#modules": 10,
-  "hdl/index.html#parameters": 26,
+  "hdl/index.html#modules": 14,
+  "hdl/index.html#parameters": 27,
   "hdl/index.html#prefixes": 7,
   "hdl/index.html#raw-hel": 2,
   "hdl/index.html#repeat-until-names": 4,
   "hdl/index.html#root-keys": 3,
   "hdl/index.html#scalar-keys": 3,
-  "hdl/index.html#semantic": 7,
+  "hdl/index.html#semantic": 9,
   "hdl/index.html#structure": 2,
   "hdl/index.html#types": 11,
   "hdl/index.html#versioning": 3,
-  "hdl/index.html#yaml": 44,
+  "hdl/index.html#yaml": 62,
   "hel/index.html#coercion": 9,
   "hel/index.html#conformance": 11,
   "hel/index.html#core-functions": 11,
@@ -3884,7 +4580,7 @@
   "hel/index.html#ext-quantifiers": 5,
   "hel/index.html#ext-register": 1,
   "hel/index.html#ext-temporal": 3,
-  "hel/index.html#ext-text": 16,
+  "hel/index.html#ext-text": 19,
   "hel/index.html#extension-groups": 2,
   "hel/index.html#float-remainder": 1,
   "hel/index.html#float-rendering": 1,
@@ -3900,25 +4596,26 @@
   "hel/index.html#undefined-names": 10,
   "hel/index.html#version-marker": 4,
   "hel/index.html#versioning": 5,
-  "processing#algorithm": 133,
+  "processing#algorithm": 139,
   "processing#alignment-padding": 13,
-  "processing#bit-cursor": 11,
-  "processing#byte-order": 18,
-  "processing#codec-contracts": 8,
+  "processing#bit-cursor": 13,
+  "processing#byte-order": 20,
+  "processing#claimed-encodings": 1,
+  "processing#codec-contracts": 9,
   "processing#codec-selection": 9,
   "processing#codec-sessions": 1,
   "processing#codec-status": 1,
   "processing#computed-values": 19,
   "processing#conflicting-forms": 5,
-  "processing#conformance-classes": 4,
+  "processing#conformance-classes": 6,
   "processing#conformance-evaluation": 41,
   "processing#context": 6,
-  "processing#data-layouts": 9,
+  "processing#data-layouts": 11,
   "processing#delimited-records": 8,
   "processing#delimited-tables": 8,
   "processing#delta-parameters": 11,
   "processing#emission": 26,
-  "processing#errors": 77,
+  "processing#errors": 78,
   "processing#evaluation-time": 4,
   "processing#fixed-values": 13,
   "processing#framing-parameters": 5,
@@ -3926,10 +4623,10 @@
   "processing#iri-minting": 13,
   "processing#key-value": 5,
   "processing#lz4-parameters": 4,
-  "processing#minimum-codecs": 33,
+  "processing#minimum-codecs": 38,
   "processing#multi-part-assets": 15,
   "processing#negative-offsets": 4,
-  "processing#numeric-representation": 10,
+  "processing#numeric-representation": 22,
   "processing#optional-codecs": 24,
   "processing#optional-features": 1,
   "processing#parameter-expressions": 6,
@@ -3938,17 +4635,18 @@
   "processing#recovery": 8,
   "processing#refusal": 2,
   "processing#repeat-until-bindings": 5,
-  "processing#resource-limits": 17,
+  "processing#resource-limits": 20,
+  "processing#round-trip": 2,
   "processing#security-decompression": 4,
   "processing#security-resources": 1,
-  "processing#serialisation": 52,
-  "processing#size-resolution": 29,
+  "processing#serialisation": 86,
+  "processing#size-resolution": 39,
   "processing#stream-metadata": 8,
   "processing#struct-size": 10,
-  "processing#terminators": 9,
+  "processing#terminators": 10,
   "processing#text-containers": 5,
-  "processing#text-decoding": 18,
-  "processing#text-numbers": 17,
+  "processing#text-decoding": 53,
+  "processing#text-numbers": 19,
   "processing#tree-documents": 10,
   "processing#typed-cells": 3,
   "processing#value-mapping": 10,

@@ -14,6 +14,7 @@
   * pp-claims-statement        the processor's claims statement, JSON
 (expected-claims.json)
   * writer, success            the bytes written, as they are (a binary file)                    (expected.hex)
+  * writer, round trip         the tree the written stream parses back to, canonical JSON         (expected.json)
 
 The comparison follows specification/conformance/index.html#canonicalisation; this module is the reference
 reading of that section, and the gate tools/test_conformance_comparator.py tests it. It uses only the standard
@@ -26,6 +27,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from math import copysign
 from pathlib import Path
 from typing import Any
 
@@ -45,7 +47,11 @@ BY_VALUE = {"hdl-compiler", "conformance-evaluator"}
 sys.path.insert(0, str(HERE))
 
 import hel  # noqa: E402
+import round_trip  # noqa: E402
 from suite import CATEGORIES, REPORTED_BASE, parse_hex  # noqa: E402
+
+#: The file a runner writes an error category to, and a case's description.
+ERROR_FILE, DESCRIPTION = "error.json", "description.ttl"
 
 BDDO = "https://hexplain.io/ns/bddo#"
 CORE = "https://hexplain.io/ns/core#"
@@ -148,7 +154,8 @@ def compare_tree(expected: Any, actual: Any, path: str = "$") -> Any:
         ok = isinstance(actual, int) and not isinstance(actual, bool) and actual == expected
         return [] if ok else [f"{path}: expected the integer {expected}, got {actual!r}"]
     if isinstance(expected, float):
-        ok = isinstance(actual, float) and actual == expected
+        # -0.0 is not 0.0: the Processing Model keeps the sign of a zero (a zero "of its sign", the bits of -0.0).
+        ok = isinstance(actual, float) and actual == expected and copysign(1.0, actual) == copysign(1.0, expected)
         return [] if ok else [f"{path}: expected the float {expected!r}, got {actual!r}"]
     return (
         []
@@ -459,7 +466,17 @@ def compare_claims(expected: Any, actual: Any) -> Any:
     for iri in expected.get("mustInclude", {}).get("codecs", []):
         if iri not in stated_codecs:
             out.append(f"codecs: a conforming processor decodes {iri!r}")
-    return out
+    return out + claimed_encoding_problems(expected, actual)
+
+
+def claimed_encoding_problems(expected: Any, actual: Any) -> list[str]:
+    """The `encodings` member of a claims statement, where it is present: an array of the IRIs of registered
+    bddo:Encoding individuals (the case's `encodings` is the registered set)."""
+    stated = actual.get("encodings", [])
+    if not isinstance(stated, list) or not all(isinstance(iri, str) for iri in stated):
+        return ["encodings: the claims statement's encodings member is not an array of bddo:Encoding IRIs"]
+    registered = set(expected.get("encodings", []))
+    return [f"encodings: {iri!r} is not a registered bddo:Encoding" for iri in sorted(set(stated) - registered)]
 
 
 # ----------------------------------------------------------------------------------------------- one case
@@ -490,12 +507,21 @@ def compare_case(case_dir: Any, actual_path: Any, reported_base: Any = None, cat
         # A writer's output is bytes or an error: the file is read as JSON only when it is named as one (error.json).
         if not actual_path.is_file():
             return [f"no output at {actual_path}"]
-        error = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.suffix == ".json" else None
+        read = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.suffix == ".json" else None
+        # A JSON output is an error, except for a case verified by round trip, whose JSON output is the re-parsed
+        # tree unless it is the runner's error file.
+        error = read if name != "expected.json" or actual_path.name == ERROR_FILE else None
         if name == "expected.hex":
             if error is not None:
                 return [f"expected bytes, got {error!r}"]
             return compare_bytes(parse_hex((case_dir / name).read_text(encoding="ascii")), actual_path.read_bytes())
         expected = json.loads((case_dir / name).read_text(encoding="utf-8"))
+        if name == "expected.json":
+            # "verify": "round-trip": the runner parsed the written stream back; [actual_path] is that tree, or the
+            # error the writer or the parser raised.
+            if error is not None or actual_path.suffix != ".json":
+                return [f"expected a stream that parses back to the tree, got {error or 'unparsed bytes'!r}"]
+            return round_trip.isomorphism_problems(expected, read, round_trip.recomputed_keys(case_dir / DESCRIPTION))
         if error is None:
             return [f"expected a {expected['category']} error, got {actual_path.stat().st_size} bytes"]
         return compare_error(expected, error, category_map)
@@ -503,6 +529,9 @@ def compare_case(case_dir: Any, actual_path: Any, reported_base: Any = None, cat
         expected = json.loads((case_dir / name).read_text(encoding="utf-8"))
         actual = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.is_file() else None
         if name == "expected.json":
+            if actual_path.name == ERROR_FILE and manifest.get("orError"):
+                # An error category that is an equally conforming outcome (a limit a processor may apply).
+                return compare_error({"category": manifest["orError"]}, actual, category_map)
             return compare_tree(expected, actual)
         if name == "expected-error.json":
             if cls == "hdl-compiler":

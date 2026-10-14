@@ -127,6 +127,173 @@ is the constraint ledger and its page, the retained family contracts and the rev
   `test_family_contract`, which only checks. The family pickle cache keeps its three newest
   entries and a failed write leaves no temporary file.
 
+### Second re-review of the normative documents (2026-10-13)
+
+- **Registry entries read alone (F16).** `tools/_requirement_ids.py` gives a `context` to every
+  requirement that cannot be read on its own: a list head (a sentence ending in a colon or in
+  "as follows.") records what it introduces -- the items of the list or table it governs, the
+  grammar after it, or the rules that follow in its paragraph -- and a sentence shorter than 60
+  characters records its table row (header cell first) or the term its definition belongs to, and
+  the sentence before it. No requirement text or hash changes. `test_conformance_suite.py` fails
+  on a live entry of either kind without a context.
+
+- **Serialisation rules completed (N1).** Processing Model, Serialisation:
+  - *Extent inference has its own requirements.* Rule 3 is restated as requirement sentences
+    (req-pm-serialisation-26 to req-pm-serialisation-32): the extent of a field without a region
+    (bits, fixed width, the shortest varint); the separator byte; a literal region filled or
+    refused; an encoded field in a literal region (longer: validation error; shorter: written
+    only when the filled region decodes to the bytes that were encoded); a scalar under a bound
+    length; a terminated field; a to-end `repeatUntil` sequence not padded.
+  - *A scalar sized by a bound `bddo:sizeFromField`* (previously readable two ways): the bound
+    length is the region. A `bddo:trimNull` string is NUL-padded to it and a text number padded
+    as rule 5 states; any other value must be exactly that long, and a longer value is always a
+    validation error. An unbound length field is still filled with the value's own length.
+    req-pm-serialisation-23 (rule 5) says so for the `trimNull` string and adds that an infinite
+    Float in a text number is a validation error.
+  - *Numeric representations* (new rule 9, req-pm-serialisation-33 to req-pm-serialisation-38):
+    `bddo:ibmHexadecimal`, `bddo:vaxF` and `bddo:bfloat16` fields are written as the bit pattern
+    that reads back as the value, and a value with none is a validation error (NaN or an infinity
+    in IBM or VAX, a magnitude out of range, a negative zero in VAX, a significand the format
+    cannot carry, a binary32 with low bits set in bfloat16); a `bddo:bcd` field is written as
+    zero-padded digits, a negative value or one of too many digits being a validation error;
+    `bddo:fixedPointScale` changes nothing (the tree holds the raw integer, written unchanged);
+    an IEEE 754 field is written as the nearest value of its width, a finite value beyond the
+    width's range being a validation error. Scope is now rule 10.
+  - req-pm-serialisation-18 (rule 7): an encode output that exceeds the decoded-byte limit is a
+    resource-limit error; the Writer class admits the category.
+  - req-pm-serialisation-24 (symmetry): *isomorphic* is defined in its own paragraph
+    (`#tree-isomorphism`): the same keys, node kinds, array lengths and values, except a
+    recomputed derived value (the length of an encoded field, a checksum whose covered range
+    includes one), which must equal its recomputation over the written stream. The refusal
+    families are listed completely (`#write-refusals`): four validation families, Unsupported
+    feature, a description error and the resource-limit error, with the three a parsed tree can
+    meet.
+
+- **Writer class extended, and a round-trip mode (N2).** Thirty-four Writer cases
+  (`tools/conformance/cases_writer_forms.py`, 86 in the class): the shortest varint; a to-end
+  `repeatUntil` sequence not padded; a parameterised struct and a conditional data type (selected,
+  default, wrong members); LSB-first bit fields and a field-level `bddo:bitOrder`; IBM, VAX and
+  bfloat16 floats and packed decimal, each with its no-inverse refusals; a fixed-point field; a
+  terminator inside the value; an offset target before the stream; a pipeline whose kinds do not
+  connect (Description); an encode output beyond the decoded-byte limit (ResourceLimit: the class
+  now admits the four categories a Writer raises); an encoded field in a literal region (fits,
+  overflows, too short); a `trimNull` string under a bound, an unbound and a too-short length; an
+  infinite Float as text; and `w-codec-compressor-round-trip`, a Deflate field with
+  `"verify": "round-trip"`, whose stream is parsed back with `--pp-cmd` and compared with its
+  `expected.json` instead of with bytes. Existing cases cite the new extent requirements they
+  exercise (`w-region-filled`, `w-region-overflow`, `w-separated-tokens`,
+  `w-length-terminator-included`).
+  `run_suite.py --round-trip` runs the symmetry requirement over every Physical Parser case that
+  states a tree: the tree is written with `--w-cmd`, the stream parsed with `--pp-cmd`, and the
+  trees compared by the Processing Model's isomorphism (recomputed derived values exempt), against
+  `specification/conformance/writer/round-trip-expectations.json` (case to `round-trip`,
+  `Unsupported` or `Validation`), which is generated with the suite from
+  `tools/conformance/round_trip.py` and checked for completeness by `test_conformance_suite.py`.
+  req-pm-serialisation-24 is cited by that mode, no longer by two cases, and a processor may
+  claim `writer` when the class passes and the mode reports no failure. The comparator keeps the
+  sign of a zero (`-0.0` is not `0.0`), and `orError` now applies to a Physical Parser case too.
+- **Text encodings are claimed and observed (N3).** Processing Model, Further encodings: the
+  list of well-formedness rules is governed by a requirement (req-pm-text-decoding-9, its items
+  req-pm-text-decoding-10 to req-pm-text-decoding-13), and a processor states the further
+  encodings it decodes in its claims statement, member `encodings`, an array of `bddo:Encoding`
+  IRIs (req-pm-text-decoding-14; req-pm-conformance-classes-5 names the member's subject). A case
+  manifest gates on `"encodings": {"requires": [...]}`. Thirty-three `pp-encoding-*` cases: a
+  decode of each of the twelve further encodings and every refusal point (UTF-32 surrogates,
+  values beyond U+10FFFF and partial code units in both byte orders; UCS-2 surrogates, paired and
+  lone; the five unassigned bytes of windows-1252 and the three of ISO-8859-7; a Shift_JIS lead
+  byte without a trail byte, a trail byte out of range, 7F, and an unassigned pair).
+  `reference-engine-claims.json` lists the engine's seventeen encodings.
+- **An observable for chunk order (F17).** A Physical Parser case may ask for the cells of a
+  layout field (`"cells": [...]` in the manifest, `{cells}` in the command template;
+  conformance page, Layout cells): the tree then gives the field as its cells in logical order,
+  each addressed through the chunk table. `pp-layout-cells-morton` and `pp-layout-cells-hilbert`
+  cite req-pm-data-layouts-3, which leaves the list of requirements no case can observe.
+- **Spatial-reference rules bound to no processor class (N6).** req-spatialref-document-2 now
+  binds the description (a description does not use `asref:pixelRegistration` to shift the
+  affine; audience `description`), with the evaluation rule a SHOULD on a consumer
+  (req-spatialref-document-12); req-spatialref-document-3, req-spatialref-document-10 and
+  req-spatialref-document-11 are SHOULDs on a consumer that evaluates the transforms, which no
+  conformance class of the Processing Model does (the hxf function library defines the affine
+  ones). Six entries leave the not-suite-testable list in all (these four,
+  req-pm-data-layouts-3 and req-hel-ext-text-8).
+
+- **The cost of a regular-expression match (HEL-RE).** HEL, group `text`: a processor bounds
+  the cost of a match including the iterations that consume no input (req-hel-ext-text-9), may
+  refuse with a ResourceLimit error a pattern whose counted quantifier exceeds 65,535 or whose
+  nested bounds have a product above 1,000,000, and does not refuse a pattern within both for
+  its counted quantifiers (req-hel-ext-text-10). The Processing Model's match-cost row counts
+  idle iterations. Cases `pp-limit-regex-idle-iterations` (`((){20000}){200000}`: true or a
+  ResourceLimit error, by `orError`), `pp-limit-regex-counted-bound-above-cap` and
+  `pp-limit-regex-counted-within-caps`; four vector rows. req-hel-ext-text-8 is now cited by a
+  case. req-hel-conformance-9 says that a typed expectation of a vector row fixes the type.
+- **HDL: names that must stay apart, and exact YAML mappings.**
+  - *IRI Minting.* The table gains the rows for a top-level enum, a dispatch table, its arms, an
+    asset's part and a top-level field. Two declarations of one document that mint one IRI are
+    an ERROR (req-hdl-iri-minting-1), never renamed, dropped or merged (req-hdl-iri-minting-2).
+  - *Dispatch arms.* req-hdl-modules-4: every string-keyed arm carries the suffix `.str` and no
+    integer-keyed arm does (`T.arm.ftyp.str`, `T.arm.7.str`, `T.arm.7`); the suffix was written
+    only for a string key that spelt an integer, which let the string keys `"7"` and `"7.str"`
+    share an IRI. `hc-dispatch-arm-iris` and its YAML mirror expect the new IRIs. **Breaking for
+    compiled descriptions that name an arm of a string key.**
+  - *Modules.* Two different documents of one compilation with the same ontology IRI (the base
+    namespace without one trailing `#` or `/`) are an ERROR on the import that brings in the
+    later one; a diamond import of one document is not (req-hdl-modules-5).
+  - *YAML Surface.* An unknown key is an ERROR in every mapping of the document, the nested
+    clause mappings listed by name, and so are a listed key that nothing reads where it stands
+    and a clause mapping without its defining key (req-hdl-yaml-6). A listed key whose value is
+    of the wrong kind is an ERROR (req-hdl-yaml-7): scalars are typed (strings, flags that take
+    `true` or `false` only, expressions), a null reads as the key left out where a scalar is
+    taken and is an ERROR where a mapping or sequence is required, and a value usable only
+    through its string form is refused. The key table's `sync` row agrees with the prose (an
+    unquoted hex scalar or `{ hex: }`).
+  - *Semantic Mapping.* A name in the media-encoding register's namespace that is no concept of
+    the register is an ERROR (req-hdl-semantic-2); the WARNING remains for a catalogue-only
+    concept the register lists.
+  - Thirty-one `hc-` cases (`tools/conformance/cases_hdl_names.py`): `hc-mint-collision-*`,
+    `hc-shared-namespace-*`, `hc-yaml-unknown-key-*`, `hc-yaml-value-kind-*`,
+    `hc-encoded-with-unknown-register-concept` and `hc-pipeline-unknown-register-concept`.
+
+- **Scope and non-goals in one place (N4).** Processing Model, new informative section
+  `#scope-non-goals`, linked from the specification index: streaming; decryption, signature
+  verification and error correction (description-only terms may exist and direct no processor);
+  speculative or backtracking choice; byte-wise obfuscation transforms, for which a codec
+  contract is the extension point; the limits of the Writer; Zstandard dictionaries. The section
+  ends with an informative note of four *forthcoming terms*, described ahead of the vocabulary
+  revision that adds them and behind no requirement until then: a description is valid when
+  validation yields no `sh:Violation` (a Warning or an Info does not invalidate it); an origin
+  selector for alignment and padding (the stream's start, the default, or the containing
+  struct's); `bddo:vaxF` and two new terms, `vaxD` and `vaxG`, named apart; and `fieldStart`, an
+  offset base counting from a sibling field's start.
+- **Codec vectors: a parameter is shown by a step that succeeds (N5).**
+  `test_codec_vector_completeness.py` counts a declared parameter only when a succeeding step
+  passes a value the contract admits, in the direction the parameter applies (the compression
+  `level` on an encode step); a step expecting the parameter's refusal no longer counts. Deflate,
+  Zlib and XZ gain `round-trip-level-0` and `round-trip-level-9`
+  (`tools/codecs/_complete_vectors.py`, confirmed with hexplain-tools 490ff48d). No expectation
+  changes, so no suite version is raised.
+- **Codec manifests, the lock and typed HEL expectations (N8).** The codecs page states the
+  manifest's five members, `unreached` optional, as the schema does. `jsonschema` 4.25.1 is a
+  pinned requirement (`requirements.in`; `requirements.txt` regenerated with the documented
+  `uv pip compile` command, which also moved `wcwidth` from 0.9.1 to 0.9.2), so every manifest is
+  validated against the published schema on every run and the conditional skip is gone.
+  `hel-vectors.tsv`: an expected value may state its type (`int:3`, `float:2`), the tree context
+  gains `instant` and `asset`, and rows are added for the result types of `abs`, `min` and `max`
+  over mixed Integer and Float arguments, for `evaluationInstant()` and for `partExtension()`;
+  `test_hel_vectors.py` reads the typed form, checks the tree-context members and requires those
+  rows.
+- **Reference implementation.** `reference-engine-claims.json` gains `encodings` (the seventeen
+  registered encodings the engine decodes) and says that its published report covers the 52
+  Writer cases of the earlier suite; the Processing Model's note says the same. Run against this
+  suite, hexplain-tools 490ff48d fails ten of the new cases, each an intended change it has not
+  made yet: `.str` on every string-keyed arm (2), the shared-namespace ERROR (2), the
+  unknown-register-concept ERROR (2), a YAML value of the wrong kind in an optional position
+  (`hc-yaml-value-kind-alias-mapping`, `hc-yaml-value-kind-bit-length-sequence`), and two Writer
+  cases its runner cannot yet run (`w-codec-compressor-round-trip`, whose `verify` it does not
+  read, and `w-codec-encode-exceeds-limit`, whose `limits` it does not pass to the writer). It
+  skips the two layout-cell cases with the features it does not claim, and its vendored copy of
+  the HEL vectors predates the typed rows. Its own symmetry test agrees with
+  `round-trip-expectations.json` entry for entry.
+
 ### The reference implementation claims `writer` (2026-10-13)
 
 No requirement text, case or identifier changed; the suite is the 803 cases of digest

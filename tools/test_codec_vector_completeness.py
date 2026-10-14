@@ -4,7 +4,10 @@ tools/test_codec_contracts.py checks that a suite is well formed; this gate chec
 (specification/codecs/index.html#completeness). For each register concept with a hexplain:codecContract:
   * every category the contract declares with hexplain:raisesCategory is expected by at least one step
     (a limit, a truncation or corruption, a flipped check, a refused coding feature);
-  * every parameter the contract declares is passed by at least one step;
+  * every parameter the contract declares is passed, with a value the contract admits, by at least one step that
+    succeeds, and in the direction the parameter applies: a parameter that only steers encoding (ENCODE_ONLY, the
+    compression `level`) by an encode step, every other one by a step of either direction the contract covers. A
+    step that expects the parameter's refusal shows that a bad value is refused, not that a good one is honoured;
   * a codec whose contract encodes (hexplain:encodes true on the contract) has at least one round trip: an
     encode step followed, in the same vector, by a decode step whose input is the encode step's expected
     output and whose expected output is the encode step's input (Processing Model, Serialisation, symmetry);
@@ -13,11 +16,13 @@ tools/test_codec_contracts.py checks that a suite is well formed; this gate chec
 A declared category that no input of any known implementation raises is a defect of the contract, not of
 the suite: the manifest records it under "unreached" with the reason, this gate reports it as a WARN line
 rather than a failure, and the register is to withdraw the category (none is recorded today). Nothing else
-is exempt.
+is exempt. Every manifest is also validated against the published schema (vector-manifest.schema.json); the
+jsonschema package is one of the pinned requirements, so the check always runs.
 """
 
 from __future__ import annotations
 
+import json
 import pathlib
 import sys
 from typing import Any
@@ -32,6 +37,9 @@ import vectors  # noqa: E402
 REGISTER = ROOT / "specification/register/media-encoding/media-encoding.ttl"
 SCHEMA = ROOT / "specification/codecs/vector-manifest.schema.json"
 HX = Namespace("https://hexplain.io/ns/core#")
+#: Parameters that steer only the encoder: a decoder reads the same bytes whatever value it is given, so only an
+#: encode step shows the parameter honoured.
+ENCODE_ONLY = frozenset({"level"})
 
 
 def _bytes(spec):
@@ -69,28 +77,57 @@ def round_trips(manifest: Any) -> Any:
 
 
 def schema_validator() -> Any:
-    """A validator of the published manifest schema, or None where the jsonschema package is not installed (it is
-    not one of the pinned requirements, so the schema check runs where it is available and is reported either way)."""
-    import json
+    """A validator of the published manifest schema."""
+    import jsonschema
 
-    try:
-        import jsonschema
-    except ImportError:
-        return None
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     jsonschema.Draft202012Validator.check_schema(schema)
     return jsonschema.Draft202012Validator(schema)
 
 
+def admitted(value: Any, spec: dict[str, Any]) -> bool:
+    """Whether a step's parameter value lies inside what the contract's parameter specification admits (its
+    allowed values and its bounds; the loader checks the type)."""
+    for v in value if isinstance(value, list) else [value]:
+        if spec.get("allowed") and v not in spec["allowed"]:
+            return False
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            if spec.get("minimum") is not None and v < spec["minimum"]:
+                return False
+            if spec.get("maximum") is not None and v > spec["maximum"]:
+                return False
+    return True
+
+
+def parameter_problems(manifest: Any, contract: Any) -> list[str]:
+    """The declared parameters no succeeding step passes with an admitted value in the direction it applies."""
+    shown = set()
+    for vector in manifest.get("vectors", []):
+        for step in vector.get("steps") or []:
+            if "error" in step.get("expect", {}):
+                continue
+            for name, value in step.get("params", {}).items():
+                spec = contract["parameters"].get(name)
+                applies = step.get("direction") == "encode" if name in ENCODE_ONLY else True
+                if spec is not None and applies and admitted(value, spec):
+                    shown.add(name)
+    out = []
+    for name in sorted(set(contract["parameters"]) - shown):
+        where = "encode step" if name in ENCODE_ONLY else "step"
+        out.append(
+            f"the contract declares the parameter {name}, and no succeeding {where} passes an admitted value of it"
+        )
+    return out
+
+
 def problems(manifest: Any, contract: Any, declared_categories: Any, encodes: Any, warnings: Any = None) -> Any:
     out = []
-    expected, params, directions = set(), set(), set()
+    expected, directions = set(), set()
     for vector in manifest.get("vectors", []):
         for step in vector.get("steps") or []:
             directions.add(step.get("direction"))
             if "error" in step.get("expect", {}):
                 expected.add(step["expect"]["error"])
-            params |= set(step.get("params", {}))
     unreached = manifest.get("unreached") or {}
     for category, reason in sorted(unreached.items()):
         if (
@@ -108,8 +145,7 @@ def problems(manifest: Any, contract: Any, declared_categories: Any, encodes: An
             )
     for category in sorted(declared_categories - expected - set(unreached)):
         out.append(f"the contract declares hexplain:raisesCategory {category}, and no step expects it")
-    for name in sorted(set(contract["parameters"]) - params):
-        out.append(f"the contract declares the parameter {name}, and no step passes it")
+    out += parameter_problems(manifest, contract)
     if "encode" in directions and not encodes:
         out.append(
             "a step encodes, and the contract does not state hexplain:encodes true (the register says which "
@@ -123,42 +159,17 @@ def problems(manifest: Any, contract: Any, declared_categories: Any, encodes: An
     return out
 
 
-def main() -> int:
-    register = Graph().parse(REGISTER, format="turtle")
-    contracts = vectors.contracts(register)
-    failures, warnings, trips = [], [], 0
-    validator = schema_validator()
-    for iri, contract in sorted(contracts.items()):
-        node = URIRef(iri + ".contract")
-        declared = {str(o) for o in register.objects(node, HX.raisesCategory)}
-        encodes = any(o.toPython() is True for o in register.objects(node, HX.encodes))
-        path = vectors.suite_path(iri)
-        if not path.is_file():
-            continue  # test_codec_contracts reports the missing suite
-        manifest = vectors.load(path)
-        found = problems(manifest, contract, declared, encodes, warnings)
-        if validator is not None:
-            found += [
-                f"not valid against vector-manifest.schema.json at /{'/'.join(map(str, e.absolute_path))}: "
-                f"{e.message[:160]}"
-                for e in list(validator.iter_errors(manifest))[:3]
-            ]
-        failures += [f"{path.relative_to(ROOT).as_posix()}: {p}" for p in found]
-        trips += len(round_trips(manifest))
-    for w in warnings:
-        print("WARN: " + w)
-    # The gate notices what it is for.
-    probe = {
-        "vectors": [
-            {
-                "id": "x",
-                "steps": [{"direction": "decode", "params": {}, "input": {"hex": "00"}, "expect": {"hex": "00"}}],
-            }
-        ]
-    }
-    assert problems(probe, {"parameters": {"level": {}}}, {"Validation"}, True) == [
+LEVEL = {"minimum": -1, "maximum": 9, "allowed": []}
+
+
+def self_test(validator: Any) -> None:
+    """The gate notices what it is for."""
+    decode = {"direction": "decode", "params": {}, "input": {"hex": "00"}, "expect": {"hex": "00"}}
+    probe = {"vectors": [{"id": "x", "steps": [decode]}]}
+    gap = "the contract declares the parameter level, and no succeeding encode step passes an admitted value of it"
+    assert problems(probe, {"parameters": {"level": LEVEL}}, {"Validation"}, True) == [
         "the contract declares hexplain:raisesCategory Validation, and no step expects it",
-        "the contract declares the parameter level, and no step passes it",
+        gap,
         "the codec encodes, and no vector holds a round trip (an encode step whose expected output the next decode "
         "step reads back to the encode step's input)",
     ], "the completeness check no longer notices a gap"
@@ -178,17 +189,49 @@ def main() -> int:
     assert len(problems(trip, {"parameters": {}}, set(), False)) == 1, (
         "an encode step under a contract that does not state hexplain:encodes went unnoticed"
     )
+
+    def passing(direction: str, value: int, expect: dict[str, Any]) -> list[str]:
+        step = dict(decode, direction=direction, params={"level": value}, expect=expect)
+        return parameter_problems({"vectors": [{"id": "p", "steps": [step]}]}, {"parameters": {"level": LEVEL}})
+
+    assert passing("decode", 10, {"error": "Description"}) == [gap], "a refused value counted as passing a parameter"
+    assert passing("decode", 6, {"hex": "00"}) == [gap], "an encode-only parameter counted on a decode step"
+    assert passing("encode", 10, {"ok": True}) == [gap], "a value outside the contract counted as passing a parameter"
+    assert passing("encode", 6, {"ok": True}) == [], "an admitted value on a succeeding encode step was not counted"
+    assert list(validator.iter_errors(probe)), "the schema check accepts a manifest without a codec or sources"
+
+
+def main() -> int:
+    register = Graph().parse(REGISTER, format="turtle")
+    contracts = vectors.contracts(register)
+    failures, warnings, trips = [], [], 0
+    validator = schema_validator()
+    for iri, contract in sorted(contracts.items()):
+        node = URIRef(iri + ".contract")
+        declared = {str(o) for o in register.objects(node, HX.raisesCategory)}
+        encodes = any(o.toPython() is True for o in register.objects(node, HX.encodes))
+        path = vectors.suite_path(iri)
+        if not path.is_file():
+            continue  # test_codec_contracts reports the missing suite
+        manifest = vectors.load(path)
+        found = problems(manifest, contract, declared, encodes, warnings)
+        found += [
+            f"not valid against vector-manifest.schema.json at /{'/'.join(map(str, e.absolute_path))}: "
+            f"{e.message[:160]}"
+            for e in list(validator.iter_errors(manifest))[:3]
+        ]
+        failures += [f"{path.relative_to(ROOT).as_posix()}: {p}" for p in found]
+        trips += len(round_trips(manifest))
+    for w in warnings:
+        print("WARN: " + w)
+    self_test(validator)
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures))
         return 1
     print(
         f"PASS: {len(contracts)} codec vector suites expect every declared category, pass every declared parameter "
-        f"and hold {trips} round trips; "
-        + (
-            "every manifest is valid against the published schema"
-            if validator is not None
-            else "schema validation not run (jsonschema is not installed)"
-        )
+        f"in a succeeding step of its direction and hold {trips} round trips; every manifest is valid against the "
+        "published schema"
     )
     return 0
 

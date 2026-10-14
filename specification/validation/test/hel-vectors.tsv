@@ -17,8 +17,14 @@
 # value null is a declared optional field that is absent (it reads as Null); a name that is
 # not a key is UNDECLARED and must raise an undefined-name error. A runner therefore passes
 # the context's key set as the struct's declared schema. JSON whole numbers are Integers and
-# numbers with a fraction are Floats, so an integral Float cannot be written as an expected
-# value; the rows avoid needing one.
+# numbers with a fraction are Floats.
+#
+# TYPED EXPECTATIONS. A JSON number cannot say that a result is the Float 2.0 rather than the
+# Integer 2, so a value row may state the type of a numeric result: its fourth column is then
+# int:<JSON number> or float:<JSON number> (int:3, float:2, float:2.5) instead of a JSON literal.
+# int:N is met only by the Integer N and float:X only by the Float equal to X, so float:2 is met
+# by 2.0 and not by 2. An untyped JSON number keeps its meaning (a whole number an Integer, one
+# with a fraction a Float); the typed form is required wherever the expected Float is integral.
 #
 # NaN has no JSON spelling, so NaN rows build it in the expression: 1e308 * 10.0 overflows to
 # Infinity, and Infinity - Infinity is NaN.
@@ -35,11 +41,17 @@
 # (reading one is a forward-reference error; a declared field that is null and not listed here is
 # an absent optional field, Null); "extents", node path to [start, end) byte offsets for sizeof;
 # and "registers", scheme IRI to the notations of its concepts, the run's register source for
-# inRegister(). A runner binds instance, parent (the struct node holding the instance, by path),
-# root, self, stream and param from these and evaluates as the name-binding table states.
+# inRegister(); "instant", the run's evaluation instant in seconds since 1970-01-01T00:00:00 UTC
+# (evaluationInstant() reads it; a context without the member, a flat context included, is a run
+# that supplies none); and "asset", the asset the description is being parsed as part of: part
+# name to the file names matched to that part, each part located by abnd:pathPattern, so that
+# partExtension(asset.<Part>) is the lower-cased name of its one file from the last "." (a
+# context without the member, a flat context included, is a parse outside any asset). A runner
+# binds instance, parent (the struct node holding the instance, by path), root, self, stream and
+# param from these and evaluates as the name-binding table states.
 #
-# NOT COVERED HERE: evaluationInstant() needs a reference instant, partExtension() and asset.*
-# need an asset. Bytes values (and so the Bytes-vs-String comparison rules) and uint64 values
+# NOT COVERED HERE: the parsed tree of another part (asset.<Part>.<field>) needs a second
+# description and its parse. Bytes values (and so the Bytes-vs-String comparison rules) and uint64 values
 # above 2^63-1 have no JSON spelling that survives the runner's conversion (a JSON number
 # becomes a signed 64-bit Integer), so they are not covered either; the literal-range rows cover
 # the part of the uint64 rule that a literal can reach. Load-time rejection of an unsupported
@@ -306,3 +318,28 @@ an unknown block name is an argument error	matches('a', '\\p{IsNoSuchBlock}')	er
 a quantifier bound above 2^31-1	matches('a', 'a{2147483648}')	error	"argument"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=	"2147483648"
 toString of the smallest subnormal is its shortest digits	toString(5e-324)	value	"4.9E-324"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
 toString writes one digit where one round-trips	toString(1e23)	value	"1.0E23"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtM30=
+max selects an integral Float above an Integer	max(2, 3.0)	value	float:3	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtMywgInhzIjogWzAsIDEsIDEsIDBdLCAieXMiOiBbMCwgMCwgMSwgMV0sICJieCI6IFswLCAxLCAxLCAwXSwgImJ5IjogWzAsIDEsIDAsIDFdLCAicyI6ICJhYmMifQ==
+min selects an integral Float below an Integer	min(3, 2.0)	value	float:2	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtMywgInhzIjogWzAsIDEsIDEsIDBdLCAieXMiOiBbMCwgMCwgMSwgMV0sICJieCI6IFswLCAxLCAxLCAwXSwgImJ5IjogWzAsIDEsIDAsIDFdLCAicyI6ICJhYmMifQ==
+max selects the Integer above a Float	max(2.0, 3)	value	int:3	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtMywgInhzIjogWzAsIDEsIDEsIDBdLCAieXMiOiBbMCwgMCwgMSwgMV0sICJieCI6IFswLCAxLCAxLCAwXSwgImJ5IjogWzAsIDEsIDAsIDFdLCAicyI6ICJhYmMifQ==
+min selects the Integer below a Float	min(2, 3.0)	value	int:2	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtMywgInhzIjogWzAsIDEsIDEsIDBdLCAieXMiOiBbMCwgMCwgMSwgMV0sICJieCI6IFswLCAxLCAxLCAwXSwgImJ5IjogWzAsIDEsIDAsIDFdLCAicyI6ICJhYmMifQ==
+max of equal values selects the first, a Float	max(1.0, 1)	value	float:1	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtMywgInhzIjogWzAsIDEsIDEsIDBdLCAieXMiOiBbMCwgMCwgMSwgMV0sICJieCI6IFswLCAxLCAxLCAwXSwgImJ5IjogWzAsIDEsIDAsIDFdLCAicyI6ICJhYmMifQ==
+max of equal values selects the first, an Integer	max(1, 1.0)	value	int:1	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtMywgInhzIjogWzAsIDEsIDEsIDBdLCAieXMiOiBbMCwgMCwgMSwgMV0sICJieCI6IFswLCAxLCAxLCAwXSwgImJ5IjogWzAsIDEsIDAsIDFdLCAicyI6ICJhYmMifQ==
+min of equal values selects the first, a Float	min(1.0, 1)	value	float:1	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtMywgInhzIjogWzAsIDEsIDEsIDBdLCAieXMiOiBbMCwgMCwgMSwgMV0sICJieCI6IFswLCAxLCAxLCAwXSwgImJ5IjogWzAsIDEsIDAsIDFdLCAicyI6ICJhYmMifQ==
+min of equal values selects the first, an Integer	min(1, 1.0)	value	int:1	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtMywgInhzIjogWzAsIDEsIDEsIDBdLCAieXMiOiBbMCwgMCwgMSwgMV0sICJieCI6IFswLCAxLCAxLCAwXSwgImJ5IjogWzAsIDEsIDAsIDFdLCAicyI6ICJhYmMifQ==
+abs of an integral Float is a Float	abs(-2.0)	value	float:2	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtMywgInhzIjogWzAsIDEsIDEsIDBdLCAieXMiOiBbMCwgMCwgMSwgMV0sICJieCI6IFswLCAxLCAxLCAwXSwgImJ5IjogWzAsIDEsIDAsIDFdLCAicyI6ICJhYmMifQ==
+abs of an Integer is an Integer	abs(-2)	value	int:2	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtMywgInhzIjogWzAsIDEsIDEsIDBdLCAieXMiOiBbMCwgMCwgMSwgMV0sICJieCI6IFswLCAxLCAxLCAwXSwgImJ5IjogWzAsIDEsIDAsIDFdLCAicyI6ICJhYmMifQ==
+abs of a Float field keeps the type	abs(f - 4.5)	value	float:2	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtMywgInhzIjogWzAsIDEsIDEsIDBdLCAieXMiOiBbMCwgMCwgMSwgMV0sICJieCI6IFswLCAxLCAxLCAwXSwgImJ5IjogWzAsIDEsIDAsIDFdLCAicyI6ICJhYmMifQ==
+evaluationInstant is the run's instant	evaluationInstant()	value	int:1767225600	eyIkdHJlZSI6IHsicm9vdCI6IHsibiI6IDF9LCAiaW5zdGFuY2UiOiAicm9vdCIsICJpbnN0YW50IjogMTc2NzIyNTYwMH19
+evaluationInstant agrees with datetime	evaluationInstant() - datetime('2026-01-01 00:00:00', 'yyyy-MM-dd HH:mm:ss')	value	0	eyIkdHJlZSI6IHsicm9vdCI6IHsibiI6IDF9LCAiaW5zdGFuY2UiOiAicm9vdCIsICJpbnN0YW50IjogMTc2NzIyNTYwMH19
+evaluationInstant is the same at every call	evaluationInstant() == evaluationInstant()	value	true	eyIkdHJlZSI6IHsicm9vdCI6IHsibiI6IDF9LCAiaW5zdGFuY2UiOiAicm9vdCIsICJpbnN0YW50IjogMTc2NzIyNTYwMH19
+evaluationInstant without a run instant	evaluationInstant()	error	"argument"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtMywgInhzIjogWzAsIDEsIDEsIDBdLCAieXMiOiBbMCwgMCwgMSwgMV0sICJieCI6IFswLCAxLCAxLCAwXSwgImJ5IjogWzAsIDEsIDAsIDFdLCAicyI6ICJhYmMifQ==	"instant"
+partExtension lower-cases the extension	partExtension(asset.Raster)	value	".flt"	eyIkdHJlZSI6IHsicm9vdCI6IHsibiI6IDF9LCAiaW5zdGFuY2UiOiAicm9vdCIsICJhc3NldCI6IHsiUmFzdGVyIjogWyJERU0uRkxUIl0sICJIZWFkZXIiOiBbImRlbS5oZHIiXSwgIlBsYWluIjogWyJSRUFETUUiXSwgIkFyY2hpdmUiOiBbInRpbGVzLnRhci5HWiJdfX19
+partExtension keeps the leading dot	partExtension(asset.Header) == '.hdr'	value	true	eyIkdHJlZSI6IHsicm9vdCI6IHsibiI6IDF9LCAiaW5zdGFuY2UiOiAicm9vdCIsICJhc3NldCI6IHsiUmFzdGVyIjogWyJERU0uRkxUIl0sICJIZWFkZXIiOiBbImRlbS5oZHIiXSwgIlBsYWluIjogWyJSRUFETUUiXSwgIkFyY2hpdmUiOiBbInRpbGVzLnRhci5HWiJdfX19
+partExtension of a name without one is empty	partExtension(asset.Plain)	value	""	eyIkdHJlZSI6IHsicm9vdCI6IHsibiI6IDF9LCAiaW5zdGFuY2UiOiAicm9vdCIsICJhc3NldCI6IHsiUmFzdGVyIjogWyJERU0uRkxUIl0sICJIZWFkZXIiOiBbImRlbS5oZHIiXSwgIlBsYWluIjogWyJSRUFETUUiXSwgIkFyY2hpdmUiOiBbInRpbGVzLnRhci5HWiJdfX19
+partExtension reads from the last dot	partExtension(asset.Archive)	value	".gz"	eyIkdHJlZSI6IHsicm9vdCI6IHsibiI6IDF9LCAiaW5zdGFuY2UiOiAicm9vdCIsICJhc3NldCI6IHsiUmFzdGVyIjogWyJERU0uRkxUIl0sICJIZWFkZXIiOiBbImRlbS5oZHIiXSwgIlBsYWluIjogWyJSRUFETUUiXSwgIkFyY2hpdmUiOiBbInRpbGVzLnRhci5HWiJdfX19
+partExtension of a part the asset does not have	partExtension(asset.Missing)	error	"undefined-name"	eyIkdHJlZSI6IHsicm9vdCI6IHsibiI6IDF9LCAiaW5zdGFuY2UiOiAicm9vdCIsICJhc3NldCI6IHsiUmFzdGVyIjogWyJERU0uRkxUIl0sICJIZWFkZXIiOiBbImRlbS5oZHIiXSwgIlBsYWluIjogWyJSRUFETUUiXSwgIkFyY2hpdmUiOiBbInRpbGVzLnRhci5HWiJdfX19	"Missing"
+partExtension outside an asset	partExtension(asset.Raster)	error	"undefined-name"	eyJhIjogNywgImIiOiAyLCAiYmlnIjogNDI5NDk2NzI5NSwgImYiOiAyLjUsICJuZWciOiAtMywgInhzIjogWzAsIDEsIDEsIDBdLCAieXMiOiBbMCwgMCwgMSwgMV0sICJieCI6IFswLCAxLCAxLCAwXSwgImJ5IjogWzAsIDEsIDAsIDFdLCAicyI6ICJhYmMifQ==	"asset"
+matches a nested counted group	matches(s, '(a{2}){2}')	value	true	eyJzIjogImFhYWEifQ==
+matches counts every repetition	matches(s, '(a{2}){3}')	value	false	eyJzIjogImFhYWEifQ==
+matches an empty group repeated	matches('', '((){100}){100}')	value	true	eyJzIjogImFhYWEifQ==
+matches an optional group repeated over nothing	matches('', '(a?)*')	value	true	eyJzIjogImFhYWEifQ==
