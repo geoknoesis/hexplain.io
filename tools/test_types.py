@@ -28,8 +28,6 @@ SKIP_EXIT = 77
 #: Modules whose findings are reported, not failed on (repository-relative glob patterns).
 PENDING = (
     "tools/_requirement_ids.py",
-    "tools/_shape_text.py",
-    "tools/test_vocab_shapes.py",
 )
 #: Ceiling on ``-> Any`` return annotations outside the pending modules.
 ANY_RETURNS = 10

@@ -26,15 +26,13 @@ instead of hiding behind the expected result.
 from __future__ import annotations
 
 import functools
-import re
 from concurrent.futures import ProcessPoolExecutor
-from pathlib import Path
-from typing import Any
 
 import specgraph
+from _fixture_expectations import expect_only, expectations, unexpected, unmet
 from _gate_runner import gate_workers
 from pyshacl import validate
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Graph
 
 load = specgraph.load
 ROOT = specgraph.ROOT
@@ -87,74 +85,6 @@ def shapes_for(ont: tuple[str, ...]) -> Graph:
     return load(list(ont))
 
 
-SH = Namespace("http://www.w3.org/ns/shacl#")
-EXPECT = re.compile(r"^#\s*expect:\s*(\S+)\s+(\S+)(?:\s+(\S+))?\s*$", re.M)
-
-
-def expectations(path: Path) -> list[Any]:
-    """The (focus, shape, component) triples an -invalid fixture declares, as IRIs."""
-    text = (ROOT / path).read_text(encoding="utf-8")
-    prefixes = Graph().parse(data=text, format="turtle").namespace_manager
-    bound = dict(prefixes.namespaces())
-    bound.setdefault("sh", URIRef(str(SH)))
-
-    def iri(curie: str) -> URIRef:
-        if curie.startswith("<") and curie.endswith(">"):
-            return URIRef(curie[1:-1])
-        prefix, _, local = curie.partition(":")
-        if prefix not in bound:
-            raise ValueError(f"{path}: expect line uses unbound prefix '{prefix}:'")
-        return URIRef(str(bound[prefix]) + local)
-
-    return [(iri(f), iri(s), iri(c) if c else None) for f, s, c in EXPECT.findall(text)]
-
-
-def _nested(shapes, node, seen=None):
-    """A node shape and every shape reachable from it through blank-node constraint structure."""
-    seen = set() if seen is None else seen
-    if node in seen:
-        return seen
-    seen.add(node)
-    for _p, o in shapes.predicate_objects(node):
-        if not isinstance(o, URIRef):
-            _nested(shapes, o, seen)
-    return seen
-
-
-def unmet(report: Graph, shapes: Graph, expected: bool) -> Any:
-    """Expect lines no result satisfies."""
-    results = [
-        (report.value(r, SH.focusNode), report.value(r, SH.sourceShape), report.value(r, SH.sourceConstraintComponent))
-        for r in report.subjects(SH.resultSeverity, None)
-    ]
-    missing = []
-    for focus, shape, component in expected:
-        family = _nested(shapes, shape)
-        if not any(f == focus and s in family and (component is None or c == component) for f, s, c in results):
-            missing.append((focus, shape, component))
-    return missing
-
-
-EXPECT_ONLY = re.compile(r"^#\s*expect-only\s*$", re.M)
-
-
-def unexpected(report: Graph, shapes: Graph, expected: bool) -> Any:
-    """Results that no expect line accounts for (only checked under # expect-only)."""
-    out = []
-    for r in report.subjects(SH.resultSeverity, None):
-        f, s, c = (
-            report.value(r, SH.focusNode),
-            report.value(r, SH.sourceShape),
-            report.value(r, SH.sourceConstraintComponent),
-        )
-        if not any(
-            f == focus and s in _nested(shapes, shape) and (component is None or c == component)
-            for focus, shape, component in expected
-        ):
-            out.append((f, s, c, report.value(r, SH.resultMessage)))
-    return out
-
-
 def check(path: str) -> str | None:
     """Validate one fixture, returning a failure description or None."""
     should_conform = path.endswith("-valid.ttl")
@@ -166,7 +96,7 @@ def check(path: str) -> str | None:
     )
     if should_conform:
         return None if conforms else f"{path}: expected to conform, but did not:\n{report}"
-    expected = expectations(path)
+    expected = expectations(ROOT / path)
     if not expected:
         return f"{path}: an -invalid fixture must declare '# expect: <focus> <shape> [<component>]'"
     if conforms:
@@ -175,7 +105,7 @@ def check(path: str) -> str | None:
     if missing:
         listed = "\n  ".join(" ".join(str(x) for x in m if x is not None) for m in missing)
         return f"{path}: expected results not reported:\n  {listed}\n{report}"
-    if EXPECT_ONLY.search((ROOT / path).read_text(encoding="utf-8")):
+    if expect_only(ROOT / path):
         extra = unexpected(report_graph, shapes, expected)
         if extra:
             listed = "\n  ".join(" ".join(str(x) for x in m if x is not None) for m in extra)
