@@ -1,64 +1,37 @@
-"""Transport integer boundaries, including RFC 768's absent-source-port encoding."""
+"""Transport integer boundaries, including RFC 768's absent-source-port encoding.
 
-import base64
+Each case of tools/_build_network_competency.py is validated against net.ttl alone, so each
+property independently activates validation, and the retained corpus
+(specification/validation/test/network-competency.tsv) must be what the cases render to. The
+gate only checks; the corpus is written by ``python tools/_build_network_competency.py --write``.
+"""
+
 import sys
-from pathlib import Path
 
+from _build_network_competency import CORPUS, ROOT, cases, render
 from pyshacl import validate
 from rdflib import Graph, Namespace, URIRef
 
-ROOT = Path(__file__).resolve().parents[1]
 SH = Namespace("http://www.w3.org/ns/shacl#")
-NS = "https://hexplain.io/ns/aspect/networkflow#"
 
 
 def main() -> int:
+    # The old `--write` habit must not look like a pass that regenerated something.
+    assert len(sys.argv) == 1, (
+        "this gate takes no arguments and writes nothing; the corpus is written by "
+        "`python tools/_build_network_competency.py --write`"
+    )
     shapes = Graph().parse(ROOT / "specification/npv/net.ttl")
-    rows = ["# name\tconforms\texpected-path\tbase64 Turtle"]
-    for field, maximum in [
-        ("sourcePort", 65535),
-        ("destinationPort", 65535),
-        ("sequenceNumber", 4294967295),
-        ("acknowledgmentNumber", 4294967295),
-    ]:
-        values = [
-            ("zero", "0", True),
-            ("maximum", str(maximum), True),
-            ("overflow", str(maximum + 1), False),
-            ("negative", "-1", False),
-            ("fraction", "1.5", False),
-            ("decimal integer", "1.0", False),
-            ("string", '"1"', False),
-            ("typed integer", '"1"^^<http://www.w3.org/2001/XMLSchema#unsignedShort>', True),
-            ("nonfinite", '"INF"^^<http://www.w3.org/2001/XMLSchema#double>', False),
-            ("two values", "1, 2", False),
-        ]
-        for label, value, expected in values:
-            name = field + " " + label
-            source = f"<urn:packet> <{NS + field}> {value} ."
-            ok, report, detail = validate(
-                Graph().parse(data=source, format="turtle"), shacl_graph=shapes, inference="none"
-            )
-            assert bool(ok) == expected, (name, detail)
-            if not expected:
-                assert URIRef(NS + field) in report.objects(None, SH.resultPath), (name, detail)
-            rows.append(
-                "\t".join(
-                    [
-                        name,
-                        str(expected).lower(),
-                        NS + field if not expected else "",
-                        base64.b64encode(source.encode()).decode(),
-                    ]
-                )
-            )
-    rendered = "\n".join(rows) + "\n"
-    p = ROOT / "specification/validation/test/network-competency.tsv"
-    if "--write" in sys.argv:
-        p.write_text(rendered, encoding="utf-8", newline="\n")
-    else:
-        assert p.read_text(encoding="utf-8") == rendered
-    print("PASS: 40 transport boundary contracts; each property independently activates validation")
+    rows = cases()
+    for name, source, expected, path in rows:
+        ok, report, detail = validate(Graph().parse(data=source, format="turtle"), shacl_graph=shapes, inference="none")
+        assert bool(ok) == expected, (name, detail)
+        if not expected:
+            assert URIRef(path) in report.objects(None, SH.resultPath), (name, detail)
+    assert CORPUS.read_text(encoding="utf-8") == render(rows), (
+        f"{CORPUS.relative_to(ROOT).as_posix()} is stale; run `python tools/_build_network_competency.py --write`"
+    )
+    print(f"PASS: {len(rows)} transport boundary contracts; each property independently activates validation")
     return 0
 
 

@@ -12,50 +12,29 @@ snapshots are never rewritten; they are listed in KNOWN_VIOLATIONS with the snap
 and the erratum that records them (releases/ERRATA.md). The list may only shrink: a new
 violation fails, and so does a listed one that no longer occurs or that spreads to a snapshot
 not listed.
+
+The gate also requires releases/lineage.json to be current and every module's frozen versions to
+name their predecessors. It only checks: the lineage is written by
+``python tools/_build_lineage.py --write``.
 """
 
 from __future__ import annotations
 
 import json
 import sys
-import zipfile
 from collections import defaultdict
-from collections.abc import Iterable, Iterator
-from pathlib import Path
-from typing import Any
+from collections.abc import Iterable
 
-import specgraph
+from _build_lineage import RELEASES, ROOT, Source, git, is_current, lineage, render, snapshot_graphs, working_graphs
 from rdflib import OWL, RDF, Graph, URIRef
 from rdflib.compare import isomorphic, to_isomorphic
 
-ROOT = Path(__file__).resolve().parents[1]
-RELEASES = ROOT / "releases"
 ERRATA = "releases/ERRATA.md"
 #: version IRI -> (the snapshots whose content differs from the earliest one, erratum anchor)
 KNOWN_VIOLATIONS = {
     "https://hexplain.io/ns/bddo/1.0": ({"2026-09-08.1", "2026-09-08.2"}, "E1"),
     "https://hexplain.io/ns/aspect/bundle/1.2": ({"2026-09-08.1", "2026-09-08.2"}, "E2"),
 }
-
-
-#: Where a graph was read (a release identifier or the working tree), its path and the graph.
-Source = tuple[str, str, Graph]
-
-
-def snapshot_graphs() -> Iterator[Source]:
-    """(release, path, graph) for every Turtle file of every snapshot."""
-    for manifest_path in sorted(RELEASES.glob("*/manifest.json")):
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        with zipfile.ZipFile(manifest_path.parent / manifest["archive"]) as archive:
-            for item in manifest["files"]:
-                if item["path"].endswith(".ttl"):
-                    data = archive.read(item["path"]).decode("utf-8")
-                    yield manifest["releaseId"], item["path"], Graph().parse(data=data, format="turtle")
-
-
-def working_graphs() -> Iterator[Source]:
-    for path in specgraph.ontology_paths():
-        yield "working tree", path, Graph().parse(data=(ROOT / path).read_text(encoding="utf-8"), format="turtle")
 
 
 def versions(sources: Iterable[Source]) -> defaultdict[str, list[Source]]:
@@ -124,117 +103,17 @@ def self_test() -> None:
     assert check(versions([("s1", "x", a), ("s2", "x", b)]), {"urn:o/1": ({"s2"}, "E0")}), "a stale allowance passed"
 
 
-LINEAGE = RELEASES / "lineage.json"
-#: Frozen versions whose stated owl:priorVersion is wrong (ERRATA.md E3, E4): version IRI ->
-#: (erratum, the predecessor to read instead, or None when the version is its module's first).
-CORRECTED_PRIORS: dict[str, tuple[str | None, str | None]] = {
-    "https://hexplain.io/ns/aspect/raster/1.1": ("E3", None),
-    "https://hexplain.io/ns/aspect/spatialref/1.1": ("E3", None),
-    "https://hexplain.io/ns/aspect/geometry/1.1": ("E3", None),
-    "https://hexplain.io/ns/aspect/bundle/1.1": ("E4", "https://hexplain.io/ns/aspect/bundle/1.0"),
-    "https://hexplain.io/ns/aspect/bundle/1.2": ("E4", "https://hexplain.io/ns/aspect/bundle/1.1"),
-    "https://hexplain.io/ns/dlv/1.1": ("E4", "https://hexplain.io/ns/dlv/1.0"),
-    "https://hexplain.io/ns/aspect/networkflow/1.1": ("E4", "https://hexplain.io/ns/aspect/networkflow/1.0"),
-    "https://hexplain.io/ns/net/1.1": ("E4", "https://hexplain.io/ns/net/1.0"),
-    "https://hexplain.io/ns/register/geometry-type/1.1": ("E4", "https://hexplain.io/ns/register/geometry-type/1.0"),
-}
-
-
-def _git(*args: str) -> bytes | None:
-    import subprocess
-
-    try:
-        return subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, check=True).stdout
-    except (OSError, subprocess.CalledProcessError):
-        return None
-
-
-def snapshot_commit(release: str) -> str | None:
-    """The commit that added the snapshot's manifest, or None without git history."""
-    out = _git("log", "--diff-filter=A", "--format=%H", "--", f"releases/{release}/manifest.json")
-    return out.decode().split()[-1] if out and out.split() else None
-
-
-def lineage() -> dict[str, Any]:
-    """Snapshots with their commits, and every module's versions in the order they were frozen."""
-    snapshots: list[dict[str, Any]] = []
-    modules: defaultdict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
-    for manifest_path in sorted(RELEASES.glob("*/manifest.json")):
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        release = manifest["releaseId"]
-        snapshots.append({"id": release, "commit": snapshot_commit(release), "archiveSha256": manifest["sha256"]})
-    for where, _, g in [*snapshot_graphs(), *working_graphs()]:
-        for ontology in g.subjects(RDF.type, OWL.Ontology):
-            version = g.value(ontology, OWL.versionIRI)
-            if not isinstance(version, URIRef):
-                continue
-            entry = modules[str(ontology)].setdefault(
-                str(version),
-                {
-                    "versionIri": str(version),
-                    "versionInfo": str(g.value(ontology, OWL.versionInfo) or ""),
-                    "statedPriorVersion": str(g.value(ontology, OWL.priorVersion) or "") or None,
-                    "snapshots": [],
-                },
-            )
-            if where != "working tree" and where not in entry["snapshots"]:
-                entry["snapshots"].append(where)
-    return {
-        "schemaVersion": 1,
-        "description": "Snapshots with the commit that added each, and every module version in the order the "
-        "snapshots froze "
-        "it; priorVersion is the stated owl:priorVersion, corrected where releases/ERRATA.md says so. Versions "
-        "with unreleased true are in the working tree only.",
-        "snapshots": snapshots,
-        "modules": _chains(modules),
-    }
-
-
-def _chains(modules: dict[str, dict[str, dict[str, Any]]]) -> dict[str, list[dict[str, Any]]]:
-    """Each module's versions in the order the snapshots froze them, with corrected prior versions."""
-    out = {}
-    for ontology, versions_ in sorted(modules.items()):
-        chain, previous = [], None
-        for version in sorted(
-            versions_.values(),
-            key=lambda v: (
-                v["snapshots"][0] if v["snapshots"] else "~",
-                [int(n) for n in v["versionIri"].rsplit("/", 1)[-1].split(".") if n.isdigit()],
-            ),
-        ):
-            erratum, corrected = CORRECTED_PRIORS.get(version["versionIri"], (None, version["statedPriorVersion"]))
-            version["priorVersion"] = corrected
-            if erratum:
-                version["erratum"] = erratum
-            version["unreleased"] = not version["snapshots"]
-            if previous and corrected != previous:
-                version["note"] = f"frozen after {previous}, but names {corrected} as its prior version"
-            chain.append(version)
-            previous = version["versionIri"]
-        out[ontology] = chain
-    return out
-
-
-def check_lineage(write: bool) -> list[str]:
-    computed = lineage()
-    expected = json.dumps(computed, indent=1, ensure_ascii=False) + "\n"
-    if write:
-        LINEAGE.write_text(expected, encoding="utf-8", newline="\n")
-    stored = json.loads(LINEAGE.read_text(encoding="utf-8")) if LINEAGE.is_file() else None
-    if stored is not None:
-        # A snapshot's commit exists only once the snapshot is committed, and a shallow clone has
-        # none: an unknown commit on either side is not staleness.
-        known = {s["id"]: s["commit"] for s in stored["snapshots"]}
-        for snapshot in computed["snapshots"]:
-            if snapshot["commit"] is None or known.get(snapshot["id"], "") is None:
-                snapshot["commit"] = known.get(snapshot["id"])
-    if stored != computed:
-        return ["releases/lineage.json is stale; run python tools/test_version_immutability.py --write"]
+def check_lineage(sources: Iterable[Source]) -> list[str]:
+    """Whether releases/lineage.json is current, and whether every module's prior versions chain."""
+    computed = lineage(sources)
+    expected = render(computed)
+    if not is_current(computed):
+        return ["releases/lineage.json is stale; run python tools/_build_lineage.py --write"]
     problems = []
     for snapshot in json.loads(expected)["snapshots"]:
         if snapshot["commit"] is None:
             continue  # no git history: the commit cannot be checked, and lineage() recorded none
-        recorded = _git("show", f"{snapshot['commit']}:releases/{snapshot['id']}/manifest.json")
+        recorded = git("show", f"{snapshot['commit']}:releases/{snapshot['id']}/manifest.json")
         if recorded is None or json.loads(recorded)["sha256"] != snapshot["archiveSha256"]:
             problems.append(f"snapshot {snapshot['id']}: commit {snapshot['commit']} does not hold its manifest")
     for chain in json.loads(expected)["modules"].values():
@@ -255,6 +134,11 @@ def check_lineage(write: bool) -> list[str]:
 
 
 def main() -> int:
+    # The old `--write` habit must not look like a pass that regenerated something.
+    assert len(sys.argv) == 1, (
+        "this gate takes no arguments and writes nothing; releases/lineage.json is written by "
+        "`python tools/_build_lineage.py --write`"
+    )
     self_test()
     if not (ROOT / ERRATA).is_file():
         print(f"FAIL: {ERRATA} is missing; it records the known violations")
@@ -264,8 +148,9 @@ def main() -> int:
     if missing:
         print(f"FAIL: {ERRATA} has no entry {missing}")
         return 1
-    by_version = versions([*snapshot_graphs(), *working_graphs()])
-    problems = check(by_version, KNOWN_VIOLATIONS) + check_lineage("--write" in sys.argv)
+    sources = [*snapshot_graphs(), *working_graphs()]
+    by_version = versions(sources)
+    problems = check(by_version, KNOWN_VIOLATIONS) + check_lineage(sources)
     if problems:
         print("FAIL:\n  " + "\n  ".join(problems))
         return 1

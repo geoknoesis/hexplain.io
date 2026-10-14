@@ -124,7 +124,6 @@ def _replay_family_contracts(path: Path, files: dict[str, str]) -> int:
 
 def main() -> int:
     current_files = {p: (ROOT / p).read_text(encoding="utf-8") for p in specgraph.ontology_paths()}
-    current = specgraph.ontologies()
     parser = argparse.ArgumentParser()
     parser.add_argument("--release", help="Replay only this existing release identifier")
     parser.add_argument(
@@ -137,12 +136,12 @@ def main() -> int:
     assert releases, "No pinned specification snapshot"
     cases = 0
     for path in releases:
-        files, family = _verify_archive(path)
+        files, _ = _verify_archive(path)
         if not args.replay_history:
             continue
         corpus = files["specification/validation/test/competency.tsv"]
-        archived_count = check_corpus(family, files, corpus)
-        assert check_corpus(current, current_files, corpus) == archived_count
+        archived_count = check_corpus(files, corpus)
+        assert check_corpus(current_files, corpus) == archived_count
         cases += archived_count
         cases += _replay_corpora(path, files)
         cases += _replay_family_contracts(path, files)

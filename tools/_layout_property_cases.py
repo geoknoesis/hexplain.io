@@ -1,7 +1,7 @@
 """Layout fixtures and the layout selector, dynamic dimension and rule property contracts.
 
-PREFIX and LAYOUT are the shared layout/compound-dataset fixture: the competency gate
-(tools/test_layout_competency.py) and the closure and integer-family libraries build on them.
+PREFIX and LAYOUT are the shared layout/compound-dataset fixture: the competency corpus
+(tools/_build_layout_competency.py) and the closure and integer-family libraries build on them.
 """
 
 from __future__ import annotations

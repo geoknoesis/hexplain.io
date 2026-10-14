@@ -147,12 +147,18 @@ Add positive and negative semantic cases, including activation, result path and 
 Regenerate changed evidence rather than weakening freshness or coverage assertions.
 
 Authored validation cases live in the `tools/_*_cases.py` libraries and share `tools/_cases.py`
-(`row()`, `Case`, `PREFIXES`). After changing them run `python tools/_build_family_contracts.py
---write` (retained snapshot; `--check` reports whether it is current, and
-`tools/test_family_contract.py` only checks) and `python tools/test_layout_competency.py
---write` where applicable, then `python tools/_constraint_coverage.py` and `python
-tools/_render_constraint_coverage.py`, because the coverage ledger hashes the snapshots and the
-procedural gates. The ledger is measured across a process pool, corpus by corpus (about eight
+(`row()`, `Case`, `PREFIXES`). A retained file generated from authored cases or from the family
+is written by a builder, never by the gate that checks it: `python tools/_build_<name>.py
+--write` regenerates it, `--check` reports whether it is current, and the gate only checks and
+takes no arguments. The builders are `_build_family_contracts` (`family-contracts.json`);
+`_build_layout_competency`, `_build_conformance_competency`, `_build_security_competency` and
+`_build_network_competency` (those `*-competency.tsv` corpora; each builder holds its cases); `_build_strict_profile` (`strict-profile-shapes.ttl`); `_build_fn_catalogue` (the
+catalogue section of `specification/fn/index.html`); and `_build_lineage`
+(`releases/lineage.json`, after a snapshot or a new version IRI). After changing cases run
+`python tools/_build_family_contracts.py --write` and the builder of each corpus that changed
+(`python tools/_build_layout_competency.py --write` for the layout fragments), then `python
+tools/_constraint_coverage.py` and `python tools/_render_constraint_coverage.py`, because the
+coverage ledger hashes the snapshots and the procedural gates. The ledger is measured across a process pool, corpus by corpus (about eight
 minutes for the 2,163 validation calls at eight workers on the recording host under the load
 stated under [Gate cost](#gate-cost), where the sequential whole-family measurement took forty);
 its content does not depend on the number of workers. The GDAL evidence gates derive their
