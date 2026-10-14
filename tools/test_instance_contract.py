@@ -13,7 +13,7 @@ CORPUS = ROOT / "specification/validation/test/competency.tsv"
 
 def main() -> int:
     files = {p: (ROOT / p).read_text(encoding="utf-8") for p in specgraph.ontology_paths()}
-    count = check_corpus(specgraph.ontologies(), files, CORPUS.read_text(encoding="utf-8"))
+    count = check_corpus(files, CORPUS.read_text(encoding="utf-8"))
     print(f"PASS: {count} cross-engine instance contracts, including selected targets and result paths")
     return 0
 

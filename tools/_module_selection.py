@@ -31,7 +31,7 @@ individuals on every call; nothing the case said could change their result.
 from __future__ import annotations
 
 import functools
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -168,13 +168,29 @@ class Index:
             files |= self.nodes.get(term, set())
         return files, terms | bound_registers
 
+    def used_by(self, *graphs: Graph) -> list[str]:
+        """The files a case involves: its terms' homes, the modules aiming shapes at it, and their imports."""
+        aimed, terms = self.aimed_at(graphs)
+        ontologies = self.homes(self.namespaces_of(terms))
+        # A bound register is named by its ontology IRI, which no namespace prefix matches.
+        ontologies |= {term for term in terms if isinstance(term, URIRef) and term in self.namespace}
+        for path in aimed:
+            ontologies |= self.declared[path]
+        selected = set(self.closed(ontologies)) | aimed
+        return [path for path in self.declared if path in selected]
+
 
 @functools.cache
 def index() -> Index:
     """The index of the family's canonical modules; each file is parsed once per process."""
+    return index_of({path: Graph().parse(ROOT / path, format="turtle") for path in canonical_paths()})
+
+
+def index_of(graphs: Mapping[str, Graph]) -> Index:
+    """An index of the given module files (path -> parsed graph), such as an archived release's."""
     built = Index()
-    for path in canonical_paths():
-        built.read(path, Graph().parse(ROOT / path, format="turtle"))
+    for path, graph in graphs.items():
+        built.read(path, graph)
     return built
 
 
@@ -202,12 +218,4 @@ def modules_for(namespaces: Iterable[str]) -> list[str]:
 
 def modules_used_by(*graphs: Graph) -> list[str]:
     """The family files a case involves: its terms' homes, the modules aiming shapes at it, and their imports."""
-    built = index()
-    aimed, terms = built.aimed_at(graphs)
-    ontologies = built.homes(built.namespaces_of(terms))
-    # A bound register is named by its ontology IRI, which no namespace prefix matches.
-    ontologies |= {term for term in terms if isinstance(term, URIRef) and term in built.namespace}
-    for path in aimed:
-        ontologies |= built.declared[path]
-    selected = set(built.closed(ontologies)) | aimed
-    return [path for path in built.declared if path in selected]
+    return index().used_by(*graphs)
