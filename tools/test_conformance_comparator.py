@@ -123,6 +123,14 @@ def graph_checks(failures: list[str]) -> None:
         "bddo:localExpression is HEL-bearing, whatever its expression literal is typed",
         failures,
     )
+    for prop in ("hexplain:parameterExpression", "hexplain:codecFromExpression"):
+        plain = graph(f'ex:s {prop} "n*2" .')
+        canonical = graph(f'ex:s {prop} "instance.n * 2"^^bddo:HelExpression .')
+        check(
+            compare.compare_graph(plain, canonical, cls="hdl-compiler") == [],
+            f"{prop} is HEL-bearing: its literal compares by expression equivalence",
+            failures,
+        )
     args = graph('ex:f bddo:hasArgument ( "n*2" "m" ) .')
     args_typed = graph(
         'ex:f bddo:hasArgument ( "instance.n * 2"^^bddo:HelExpression "instance.m"^^bddo:HelExpression ) .'

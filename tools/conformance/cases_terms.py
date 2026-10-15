@@ -335,6 +335,21 @@ pp(
     error="Validation",
 )
 
+pp(
+    "bcd-signed",
+    "Packed decimal on a signed data type is a description error",
+    "Packed decimal has no sign nibble, so a signed type has no packed-decimal reading: bddo:BcdShape refuses "
+    "bddo:bcd true on a bddo:int16, whatever the bytes.",
+    ["req-pm-errors-8"],
+    ["numeric-representation", "errors"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:a ) .
+   ex:a a bddo:Field ; bddo:dataType bddo:int16 ; bddo:bcd true .
+   """,
+    b"\x00\x45",
+    error="Description",
+)
+
 # ----------------------------------------------------------------- custom encodings
 
 pp(

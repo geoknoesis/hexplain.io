@@ -83,6 +83,8 @@ HEL_PROPERTIES = {
     URIRef(DLV + "dimensionStrideFromExpression"),
     URIRef(CORE + "condition"),
     URIRef(CORE + "valueExpression"),
+    URIRef(CORE + "parameterExpression"),
+    URIRef(CORE + "codecFromExpression"),
     URIRef(CONF + "assertion"),
 }
 HEL_EXPRESSION = URIRef(BDDO + "HelExpression")

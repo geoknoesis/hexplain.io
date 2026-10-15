@@ -1030,3 +1030,195 @@ hc(
 menc:BZip2 .
    """,
 )
+
+
+# ----------------------------------------------------------------- offset and alignment origins, float formats
+
+pair(
+    "offset-field-start",
+    "@at ... from field-start <name> measures an offset from an earlier sibling's first byte",
+    "body is 8 bytes on from the start of header, and tail len bytes on: each compiles to its offset property by the "
+    "form rule, bddo:offsetBase bddo:fieldStart and bddo:offsetBaseField naming header.",
+    OK + ["req-hdl-clauses-9", "req-hdl-form-rule-1"],
+    ["offset-field-start", "clauses", "grammar-fields"],
+    """
+     format t @namespace "{ns}"
+     struct Root {
+       header : u16
+       len : u8
+       body : u8 @at 8 from field-start header
+       tail : u8 @at len from field-start header
+     }
+     """,
+    """
+     format: t
+     namespace: "{ns}"
+     structs:
+       Root:
+         fields:
+           - { name: header, type: u16 }
+           - { name: len, type: u8 }
+           - { name: body, type: u8, at: { offset: 8, from: field-start, field: header } }
+           - { name: tail, type: u8, at: { offset: len, from: field-start, field: header } }
+     """,
+    """
+     ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.header ex:Root.len ex:Root.body ex:Root.tail ) .
+     ex:Root.header a bddo:Field ; bddo:dataType bddo:uint16 .
+     ex:Root.len a bddo:Field ; bddo:dataType bddo:uint8 .
+     ex:Root.body a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 8 ; bddo:offsetBase bddo:fieldStart ;
+         bddo:offsetBaseField ex:Root.header .
+     ex:Root.tail a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffsetFromField ex:Root.len ;
+         bddo:offsetBase bddo:fieldStart ; bddo:offsetBaseField ex:Root.header .
+     """,
+)
+
+err(
+    "offset-field-start-later-field",
+    "An offset from the start of a later field is an ERROR",
+    "b is declared after a, so its start is not known when a's offset is resolved.",
+    ["req-hdl-clauses-9"],
+    ["offset-field-start"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      a : u8 @at 2 from field-start b
+      b : u8
+    }
+    """,
+    line=3,
+)
+
+err(
+    "offset-field-start-not-a-field",
+    "An offset from the start of a name that is no field of the struct is an ERROR",
+    "missing is not declared in Root.",
+    ["req-hdl-clauses-9"],
+    ["offset-field-start"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      a : u8
+      b : u8 @at 2 from field-start missing
+    }
+    """,
+    line=4,
+)
+
+err(
+    "offset-field-start-yaml-no-field",
+    "On the YAML surface, from: field-start without a field is an ERROR",
+    "at: { offset: 2, from: field-start } names no sibling to measure from.",
+    ["req-hdl-clauses-9", "req-hdl-conformance-section-2"],
+    ["offset-field-start", "yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        fields:
+          - { name: a, type: u8 }
+          - { name: b, type: u8, at: { offset: 2, from: field-start } }
+    """,
+    yaml=True,
+)
+
+err(
+    "offset-field-yaml-other-base",
+    "On the YAML surface, a field with a base other than field-start is an ERROR",
+    "at: { offset: 2, from: stream-start, field: a }: only an offset from a field's start names a field.",
+    ["req-hdl-clauses-9", "req-hdl-conformance-section-2"],
+    ["offset-field-start", "yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        fields:
+          - { name: a, type: u8 }
+          - { name: b, type: u8, at: { offset: 2, from: stream-start, field: a } }
+    """,
+    yaml=True,
+)
+
+pair(
+    "align-origin",
+    "@align ... from struct or from stream states the alignment origin",
+    "b aligns to 4 bytes from the start of the containing struct instance, c to 8 from the start of the stream, "
+    "stated; d to 2 with no origin, which is the stream's and is not emitted.",
+    OK + ["req-hdl-clauses-10", "req-hdl-form-rule-2"],
+    ["align-origin", "clauses", "grammar-fields"],
+    """
+     format t @namespace "{ns}"
+     struct Root {
+       a : u8
+       b : u32 @align 4 from struct
+       c : u32 @align 8 from stream
+       d : u16 @align 2
+     }
+     """,
+    """
+     format: t
+     namespace: "{ns}"
+     structs:
+       Root:
+         fields:
+           - { name: a, type: u8 }
+           - { name: b, type: u32, align: { to: 4, from: struct } }
+           - { name: c, type: u32, align: { to: 8, from: stream } }
+           - { name: d, type: u16, align: 2 }
+     """,
+    """
+     ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.a ex:Root.b ex:Root.c ex:Root.d ) .
+     ex:Root.a a bddo:Field ; bddo:dataType bddo:uint8 .
+     ex:Root.b a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:alignment 4 ; bddo:alignmentOrigin bddo:structOrigin .
+     ex:Root.c a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:alignment 8 ; bddo:alignmentOrigin bddo:streamOrigin .
+     ex:Root.d a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:alignment 2 .
+     """,
+)
+
+err(
+    "align-origin-unknown",
+    "An alignment origin other than stream or struct is an ERROR",
+    "@align 4 from parent: the origins are stream and struct.",
+    ["req-hdl-clauses-10"],
+    ["align-origin", "grammar-fields"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      a : u32 @align 4 from parent
+    }
+    """,
+    line=3,
+)
+
+pair(
+    "float-format-vax",
+    "The VAX float formats are stated with @prop at the widths they exist at",
+    "vaxF on an f32, vaxD and vaxG on an f64: each @prop emits its bddo:floatFormat triple and nothing else.",
+    OK + ["req-hdl-clauses-5"],
+    ["terms-without-a-clause", "escape-hatch"],
+    """
+     format t @namespace "{ns}"
+     struct Root {
+       f : f32 @prop bddo:floatFormat bddo:vaxF
+       d : f64 @prop bddo:floatFormat bddo:vaxD
+       g : f64 @prop bddo:floatFormat bddo:vaxG
+     }
+     """,
+    """
+     format: t
+     namespace: "{ns}"
+     structs:
+       Root:
+         fields:
+           - { name: f, type: f32, prop: { "bddo:floatFormat": { curie: "bddo:vaxF" } } }
+           - { name: d, type: f64, prop: { "bddo:floatFormat": { curie: "bddo:vaxD" } } }
+           - { name: g, type: f64, prop: { "bddo:floatFormat": { curie: "bddo:vaxG" } } }
+     """,
+    """
+     ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.f ex:Root.d ex:Root.g ) .
+     ex:Root.f a bddo:Field ; bddo:dataType bddo:float32 ; bddo:floatFormat bddo:vaxF .
+     ex:Root.d a bddo:Field ; bddo:dataType bddo:float64 ; bddo:floatFormat bddo:vaxD .
+     ex:Root.g a bddo:Field ; bddo:dataType bddo:float64 ; bddo:floatFormat bddo:vaxG .
+     """,
+)

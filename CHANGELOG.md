@@ -61,6 +61,33 @@ rewritten.
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### Points the reference implementation found (2026-10-15)
+
+- **Packed decimal is unsigned only.** `bddo:BcdShape`, the `bddo:bcd` comment and the Processing
+  Model already made `bddo:bcd true` on a signed type a description error, but the Writer cases
+  `w-bcd`, `w-bcd-negative` and `w-bcd-too-many-digits` stated it on a `bddo:int16`. Their field
+  `s` is now a `bddo:uint16`; `w-bcd-negative` keeps its intent, a negative value written into an
+  unsigned packed-decimal field being a validation error. The new case `pp-bcd-signed` asserts the
+  description error.
+- **Codec HEL literals compare as HEL.** `hexplain:parameterExpression` and
+  `hexplain:codecFromExpression` have rows in HEL's name-binding table, and the conformance
+  comparator canonicalises their literals as it does every other HEL-bearing property's
+  (`hc-codec-switch-and-session` and its YAML twin).
+- **Round trips honour an allowed error.** `run_suite.py --round-trip` passes a Physical Parser
+  case whose manifest allows an error outcome (`orError`) when the writer or the parser under test
+  refuses with that category, with no symmetry to check (`pp-limit-regex-idle-iterations`,
+  `pp-limit-regex-counted-bound-above-cap`); the runner's self-test probes it.
+- **HDL clauses for two origins.** `@at <expr> from field-start <name>` compiles to
+  `bddo:offsetBase bddo:fieldStart` and `bddo:offsetBaseField` (req-hdl-clauses-9; an ERROR when
+  the name is not an earlier field of the struct), and `@align <n> from struct|stream` to
+  `bddo:alignmentOrigin` (req-hdl-clauses-10); on the YAML surface `at: { offset, from, field }`
+  and `align: { to, from }`. The list of BDDO terms without a clause names the VAX formats
+  `bddo:vaxD` and `bddo:vaxG` beside `bddo:vaxF`, and a struct's alignment origin. Cases
+  `hc-offset-field-start` (and its YAML twin), `hc-offset-field-start-later-field`,
+  `hc-offset-field-start-not-a-field`, `hc-offset-field-start-yaml-no-field`,
+  `hc-offset-field-yaml-other-base`, `hc-align-origin` (and its YAML twin),
+  `hc-align-origin-unknown` and `hc-float-format-vax` (and its YAML twin).
+
 ### Classes and terms for the bundled table, geometry and raster profiles (2026-10-14)
 
 The engine's bundled profiles had nothing to map some root structs and stored facts to. The

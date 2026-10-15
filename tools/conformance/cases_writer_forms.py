@@ -449,7 +449,7 @@ BCD_FIELDS = """
    ex:be a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:bcd true .
    ex:le a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:endianness bddo:LittleEndian ; bddo:bcd true .
    ex:one a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bcd true .
-   ex:s a bddo:Field ; bddo:dataType bddo:int16 ; bddo:bcd true .
+   ex:s a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:bcd true .
    """
 
 w(
@@ -478,7 +478,7 @@ w(
 w(
     "bcd-negative",
     "A negative number has no packed-decimal form",
-    "s is a signed type, so -5 is inside its range; packed decimal spells non-negative numbers only.",
+    "s is an unsigned packed-decimal field: packed decimal has no sign nibble, so -5 has no form in it.",
     [BCD],
     ["numeric-representation"],
     BCD_FIELDS,

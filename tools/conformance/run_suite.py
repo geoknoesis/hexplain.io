@@ -34,8 +34,9 @@ with --pp-cmd and comparing the tree with the case's expected.json; without --pp
 --round-trip runs the symmetry requirement instead of the cases (round_trip.py): every Physical Parser case that
 states a tree is written with --w-cmd ({input} is the case's expected.json) and what was written is parsed with
 --pp-cmd ({input} is the written stream); the two trees must be isomorphic, or the writer must refuse as
-specification/conformance/writer/round-trip-expectations.json states for the case. Both templates are required, and
-the claims must claim `writer`.
+specification/conformance/writer/round-trip-expectations.json states for the case. A case whose manifest allows an
+error outcome (`orError`) also passes when the writer or the parser refuses with that category. Both templates are
+required, and the claims must claim `writer`.
 
 A case applies when every optional feature and codec it requires is claimed and none it expects unclaimed is; the
 claims come
@@ -322,6 +323,11 @@ def run_case(
         return ("FAIL", "; ".join(problems)) if problems else ("PASS", "")
 
 
+def allowed_refusal(manifest: dict[str, Any], category: str | None) -> bool:
+    """Whether [category] is the error outcome the case's manifest allows in place of its tree (`orError`)."""
+    return category is not None and category == manifest.get("orError")
+
+
 def run_round_trip(
     case_dir: Path,
     writer: str,
@@ -332,7 +338,9 @@ def run_round_trip(
     observed: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
     """(status, detail) of the round trip of one Physical Parser case's tree: written with [writer], parsed back
-    with [parser], and judged against [expected], the case's entry in round-trip-expectations.json."""
+    with [parser], and judged against [expected], the case's entry in round-trip-expectations.json. A case whose
+    manifest allows an error outcome (`orError`) passes, with no symmetry to check, when the writer or the parser
+    refuses with that category: the case lets a processor refuse the tree's expressions that way."""
     manifest = json.loads((case_dir / "manifest.json").read_text(encoding="utf-8"))
     skip = skip_reason(manifest, claims, writer) or skip_reason(manifest, claims, parser)
     if skip is None and "writer" not in (claimed_features(claims) if claims is not None else ()):
@@ -350,12 +358,19 @@ def run_round_trip(
             refusal = category_of(written)
             if observed is not None:
                 observed["category"] = refusal
+            if allowed_refusal(manifest, refusal):
+                return "PASS", f"the writer refused with {refusal}, which the case allows"
             return round_trip.judge(expected, refusal or "an unnamed category", None)
         back, why = parse_back(case_dir, manifest, written, parser, tmp, timeout)
         if back is None:
             return "FAIL", "the written stream does not parse: " + why
         if back.name == compare.ERROR_FILE:
-            return "FAIL", f"the written stream does not parse: {category_of(back)}"
+            refusal = category_of(back)
+            if observed is not None:
+                observed["category"] = refusal
+            if allowed_refusal(manifest, refusal):
+                return "PASS", f"the parser refused the written stream with {refusal}, which the case allows"
+            return "FAIL", f"the written stream does not parse: {refusal}"
         tree = json.loads((case_dir / "expected.json").read_text(encoding="utf-8"))
         exempt = round_trip.recomputed_keys(case_dir / "description.ttl")
         problems = round_trip.isomorphism_problems(tree, json.loads(back.read_text(encoding="utf-8")), exempt)

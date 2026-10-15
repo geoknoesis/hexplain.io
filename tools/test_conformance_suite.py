@@ -267,6 +267,10 @@ def comparator_problems() -> list[str]:
         return [f"compare.py: {what}" for ok, what in probes if not ok]
 
 
+#: A Physical Parser case with a tree whose manifest also allows an error outcome (`orError`).
+ALLOWS_ERROR = "pp-limit-regex-idle-iterations"
+
+
 def runner_problems() -> list[str]:
     """The runner's round trips reach the verdicts the expectations call for, probed with a stand-in writer and
     parser (tools/conformance/stub_processor.py) that produce each outcome on demand."""
@@ -313,6 +317,22 @@ def runner_problems() -> list[str]:
             "ran without the writer claim",
         ),
         (trip("pp-encoding-shift-jis-decodes", "round-trip") == "SKIP", "ran an encoding the claims do not list"),
+        (
+            trip(ALLOWS_ERROR, "round-trip", parser=parse + " --refuse ResourceLimit") == "PASS",
+            "a parser refusal the case allows (orError) failed",
+        ),
+        (
+            trip(ALLOWS_ERROR, "round-trip", writer=write + " --refuse ResourceLimit") == "PASS",
+            "a writer refusal the case allows (orError) failed",
+        ),
+        (
+            trip(ALLOWS_ERROR, "round-trip", parser=parse + " --refuse Validation") == "FAIL",
+            "a parser refusal of another category than the case allows passed",
+        ),
+        (
+            trip("pp-bits-lsb-first", "round-trip", parser=parse + " --refuse ResourceLimit") == "FAIL",
+            "a ResourceLimit refusal passed where the case allows no error",
+        ),
         (verified(write, parse) == "PASS", "a Writer case verified by round trip failed"),
         (
             verified(write, parse + " --other-tree") == "FAIL",
