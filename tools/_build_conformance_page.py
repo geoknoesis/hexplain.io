@@ -220,8 +220,18 @@ def round_trip_expectations() -> dict[str, Any]:
     return {"trees": len(entries), "outcomes": dict(sorted(Counter(entries.values()).items()))}
 
 
+def current_digest() -> str:
+    """The digest of the suite on disk (tools/conformance/report.py, suite_digest)."""
+    sys.path.insert(0, str(ROOT / "tools/conformance"))
+    import report  # noqa: PLC0415 -- the conformance tooling is not a package
+
+    return report.suite_digest(SUITE)
+
+
 def published_reports() -> list[dict[str, Any]]:
-    """The implementation reports under specification/conformance/reports/, summarised for the page."""
+    """The implementation reports under specification/conformance/reports/, summarised for the page; a report whose
+    suite digest is not the suite on disk's is superseded (#superseded-reports)."""
+    current = current_digest()
     out = []
     for path in sorted((SUITE / "reports").glob("*/*.json")):
         report = json.loads(path.read_text(encoding="utf-8"))
@@ -233,6 +243,7 @@ def published_reports() -> list[dict[str, Any]]:
                 "version": impl.get("version", ""),
                 "date": report.get("run", {}).get("date", ""),
                 "digest": report.get("suite", {}).get("digest", ""),
+                "superseded": report.get("suite", {}).get("digest", "") != current,
                 **{s: counts.get(s, 0) for s in ("PASS", "FAIL", "SKIP")},
             }
         )
@@ -313,7 +324,9 @@ def render(data: dict[str, Any]) -> str:
             parts.append(
                 f'<tr><td><a href="{html.escape(r["path"])}">{html.escape(r["name"])}</a></td>'
                 f"<td>{html.escape(r['version'])}</td><td>{html.escape(r['date'])}</td><td>{r['PASS']}</td>"
-                f"<td>{r['FAIL']}</td><td>{r['SKIP']}</td><td><code>{html.escape(r['digest'][:12])}</code></td></tr>"
+                f"<td>{r['FAIL']}</td><td>{r['SKIP']}</td><td><code>{html.escape(r['digest'][:12])}</code>"
+                + (' (<a href="#superseded-reports">superseded</a>)' if r["superseded"] else " (current)")
+                + "</td></tr>"
             )
         parts.append("</tbody></table></div>")
     else:

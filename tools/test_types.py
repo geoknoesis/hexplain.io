@@ -5,7 +5,7 @@ implicit Optional), and a finding in any module fails the gate.
 
 ``Any`` is the honest type of parsed JSON and of values from untyped dependencies, so it is not
 banned; as a *return* type it is how an unannotated function used to be papered over, and the
-number of ``-> Any`` signatures is held under :data:`ANY_RETURNS`.
+number of ``-> Any`` signatures is held to at most :data:`ANY_RETURNS`, the number in use.
 
 mypy is in the hash-pinned requirements; where it is not installed the gate reports that it
 could not run (exit 77) rather than passing.
@@ -21,8 +21,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SKIP_EXIT = 77
-#: Ceiling on ``-> Any`` return annotations.
-ANY_RETURNS = 10
+#: Ceiling on ``-> Any`` return annotations: the number in use, so a new one fails the gate.
+ANY_RETURNS = 2
 FINDING = re.compile(r"^(?P<path>[^:\n]+\.py):(?P<line>\d+): error: (?P<message>.*)$", re.M)
 ANY_RETURN = re.compile(r"\)\s*->\s*Any\s*:")
 
@@ -65,7 +65,7 @@ def main() -> int:
     assert run.returncode == 0 or errors, f"mypy failed without a finding this gate can read:\n{run.stdout}"
     assert not errors, f"{len(errors)} type errors:\n  " + "\n  ".join(errors)
     returns = any_returns()
-    assert len(returns) < ANY_RETURNS, (
+    assert len(returns) <= ANY_RETURNS, (
         f"{len(returns)} `-> Any` return annotations (ceiling {ANY_RETURNS}); give the newest a real type:\n  "
         + "\n  ".join(returns)
     )

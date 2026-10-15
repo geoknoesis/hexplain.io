@@ -61,6 +61,18 @@ rewritten.
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### The reference implementation's report of the current suite (2026-10-15)
+
+The implementation report of the current suite (931 cases, digest 665b443c5f01) is published under
+`specification/conformance/reports/hexplain-tools/`, written by the engine's `conformanceReport`
+task at engine commit 1d3df9ad and published unchanged: 927 PASS, 0 FAIL, 4 SKIP (two codec-refusal
+cases for codecs it decodes, two chunk-order cases for features it does not claim), the Writer
+class 88 of 88. The engine also passes the round-trip mode (247 of 249 trees; the other two need
+the unclaimed chunk features). `writer` stays claimed, now on a report of the current suite:
+`reference-engine-claims.json` and the Processing Model's reference-implementation note say so. The
+conformance page's table of published reports marks each report of an earlier suite superseded
+(`#superseded-reports`), and `tools/test_types.py` holds `-> Any` returns to the two in use.
+
 ### Points the reference implementation found (2026-10-15)
 
 - **Packed decimal is unsigned only.** `bddo:BcdShape`, the `bddo:bcd` comment and the Processing
