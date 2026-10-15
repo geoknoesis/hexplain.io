@@ -61,6 +61,37 @@ rewritten.
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
+### Classes and terms for the bundled table, geometry and raster profiles (2026-10-14)
+
+The engine's bundled profiles had nothing to map some root structs and stored facts to. The
+modules keep their unreleased versions (tabular 1.2, geometry 1.4, raster 1.3, sampling 1.2).
+
+- **aspect/tabular.** `atab:Table` (a schema of columns and the records under it) and
+  `atab:Record` (one row), linked by `atab:hasRecord`; `atab:TableShape`, `atab:RecordShape`
+  (a record belongs to at most one table) and `atab:RecordCountShape` (no more records than
+  `atab:rowCount`). A dBASE file's root struct maps to `atab:Table`, its repeated record struct
+  to `atab:Record`.
+- **aspect/geometry.** `ageom:Geometry` (one encoded geometry, at every nesting level),
+  `ageom:GeometryRecord` (a stored geometry with its container's header, such as a GeoPackage
+  geometry blob), `ageom:hasGeometry` and `ageom:hasMember` (acyclic membership of a
+  multi-geometry or collection); `ageom:GeometryShape`, `ageom:GeometryMembershipShape`,
+  `ageom:GeometryRecordShape`. A WKB root struct maps to `ageom:Geometry`, a GeoPackage blob's
+  to `ageom:GeometryRecord`.
+- **aspect/raster.** `araster:formatNoDataValue`, the no-data value a format fixes when the file
+  stores none (DTED -32767, SRTM -32768), overridden by a stored `araster:noDataValue`; stored
+  bounds as the file states them, `araster:boundsMinX`, `araster:boundsMaxX`,
+  `araster:boundsMinY`, `araster:boundsMaxY`, with `araster:boundsRegistration`
+  (`araster:nodeRegistration` or `araster:cellRegistration`, class `araster:BoundsRegistration`),
+  distinct from the computed geotransform; a stated value range, `araster:minimumValue` and
+  `araster:maximumValue`; shapes `araster:FormatNoDataShape`, `araster:StoredBoundsShape` (a
+  minimum bound is not above its maximum) and `araster:ValueRangeShape`. `araster:sampleScale`
+  and `araster:sampleOffset` may be stated of a grid whose format has no band structure; a band's
+  own value takes precedence.
+- **aspect/sampling.** `asamp:sampleFormatName`, the sample format as a literal token
+  (`"signedInteger"`, `"unsignedInteger"`, `"float"`), because a mapping from a field or a
+  constant yields a literal and `asamp:sampleFormat` takes an IRI;
+  `asamp:SampleFormatAgreementShape` holds the two to the same format when both are stated.
+
 ### Integration of round 2: the forthcoming terms are normative (2026-10-14)
 
 The Processing Model's informative note on forthcoming terms (`#forthcoming-terms`) is gone: the

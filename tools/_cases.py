@@ -52,6 +52,7 @@ PREFIXES: dict[str, str] = {
     "security": "https://hexplain.io/ns/aspect/security#",
     "signal": "https://hexplain.io/ns/aspect/signal#",
     "spatialref": "https://hexplain.io/ns/aspect/spatialref#",
+    "tabular": "https://hexplain.io/ns/aspect/tabular#",
     "time": "https://hexplain.io/ns/aspect/time#",
 }
 

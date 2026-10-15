@@ -44,7 +44,7 @@
 <https://hexplain.io/ns/req/requirements> a owl:Ontology ;
     rdfs:seeAlso <https://hexplain.io/specification/req/requirements-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/req/requirements/1.0> ; owl:versionInfo "1.0" ;
-    dcterms:modified "2026-10-13"^^xsd:date ; dcterms:created "2026-10-12"^^xsd:date ;
+    dcterms:modified "2026-10-14"^^xsd:date ; dcterms:created "2026-10-12"^^xsd:date ;
     dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     # req supplies the requirement vocabulary; every module that publishes a node shape is
@@ -241,6 +241,33 @@ reqs:req-shape-afs-RangeDatatypeShape a owl:NamedIndividual , reqs:ShapeRequirem
     req:statement "Applies to subjects using afs:creationTime, afs:fileName, afs:fileSize, afs:isDirectory, afs:modificationTime. afs:creationTime takes an xsd:dateTime literal (rdfs:range xsd:dateTime). afs:fileName takes an xsd:string literal (rdfs:range xsd:string). afs:fileSize takes an integer within the xsd:unsignedLong value space (rdfs:range xsd:unsignedLong). afs:isDirectory takes an xsd:boolean literal (rdfs:range xsd:boolean). afs:modificationTime takes an xsd:dateTime literal (rdfs:range xsd:dateTime)."@en ;
     req:discrepancyType req:Syntactic ;
     dcterms:references afs:RangeDatatypeShape .
+reqs:req-shape-ageom-GeometryMembershipShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of ageom:GeometryMembershipShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement ageom:GeometryMembershipShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-ageom-GeometryMembershipShape" ;
+    req:fromStandard "Hexplain Aspect — Geometry (hx-geometry)" ;
+    req:statement "Applies to subjects using ageom:hasMember. Each value of ageom:hasMember is a value conforming to ageom:GeometryShape. Geometry membership (ageom:hasMember) must be acyclic."@en ;
+    req:discrepancyType req:Semantic ;
+    dcterms:references ageom:GeometryMembershipShape .
+reqs:req-shape-ageom-GeometryRecordShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of ageom:GeometryRecordShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement ageom:GeometryRecordShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-ageom-GeometryRecordShape" ;
+    req:fromStandard "Hexplain Aspect — Geometry (hx-geometry)" ;
+    req:statement "Applies to instances of ageom:GeometryRecord; subjects using ageom:hasGeometry. A geometry record is a resource (an IRI or a blank node), not a literal. Each focus node is a resource (an IRI or a blank node). A geometry record holds exactly one ageom:hasGeometry, a value conforming to ageom:GeometryShape."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references ageom:GeometryRecordShape .
+reqs:req-shape-ageom-GeometryShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of ageom:GeometryShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement ageom:GeometryShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-ageom-GeometryShape" ;
+    req:fromStandard "Hexplain Aspect — Geometry (hx-geometry)" ;
+    req:statement "Applies to instances of ageom:Geometry; objects of ageom:hasGeometry, ageom:hasMember. A geometry is a resource (an IRI or a blank node), not a literal. Each focus node is a resource (an IRI or a blank node). A geometry is a member (ageom:hasMember) of at most one collection. A geometry is held (ageom:hasGeometry) by at most one geometry record."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references ageom:GeometryShape .
 reqs:req-shape-ageom-IntegerValueShape a owl:NamedIndividual , reqs:ShapeRequirement ;
     rdfs:label "Requirement of ageom:IntegerValueShape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
@@ -403,6 +430,15 @@ reqs:req-shape-araster-ExtentShape a owl:NamedIndividual , reqs:ShapeRequirement
     req:statement "Applied through references from other shapes. An extent is a non-negative integer literal (an XSD integer-family datatype, at least 0; zero is an empty axis). A conforming value is an integer (of any XSD integer datatype) at least 0."@en ;
     req:discrepancyType req:Syntactic ;
     dcterms:references araster:ExtentShape .
+reqs:req-shape-araster-FormatNoDataShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of araster:FormatNoDataShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement araster:FormatNoDataShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-araster-FormatNoDataShape" ;
+    req:fromStandard "Hexplain Aspect — Raster (hx-raster)" ;
+    req:statement "Applies to subjects using araster:formatNoDataValue. araster:formatNoDataValue is at most one numeric literal (xsd:double/float, including NaN; xsd:decimal; or an integer-family datatype)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references araster:FormatNoDataShape .
 reqs:req-shape-araster-GroupHierarchyShape a owl:NamedIndividual , reqs:ShapeRequirement ;
     rdfs:label "Requirement of araster:GroupHierarchyShape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
@@ -466,6 +502,24 @@ reqs:req-shape-araster-SampleArrayShape a owl:NamedIndividual , reqs:ShapeRequir
     req:statement "Applies to instances of araster:SampleArray; subjects using araster:dimensions; objects of araster:coordinateArray, araster:hasArray. araster:dimensions takes exactly one value, a resource (an IRI or a blank node). Each member of the araster:dimensions list is a value conforming to araster:ArrayDimensionShape. Dimension lists must terminate in rdf:nil, contain exactly one first/rest per cell, and contain no cycles."@en ;
     req:discrepancyType req:Semantic ;
     dcterms:references araster:SampleArrayShape .
+reqs:req-shape-araster-StoredBoundsShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of araster:StoredBoundsShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement araster:StoredBoundsShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-araster-StoredBoundsShape" ;
+    req:fromStandard "Hexplain Aspect — Raster (hx-raster)" ;
+    req:statement "Applies to subjects using araster:boundsMaxX, araster:boundsMaxY, araster:boundsMinX, araster:boundsMinY, araster:boundsRegistration. araster:boundsMaxX takes at most one value; each is an xsd:double literal. araster:boundsMaxY takes at most one value; each is an xsd:double literal. araster:boundsMinX takes at most one value; each is an xsd:double literal. araster:boundsMinY takes at most one value; each is an xsd:double literal. araster:boundsRegistration takes at most one value; each is either araster:nodeRegistration or araster:cellRegistration."@en ;
+    req:discrepancyType req:Semantic ;
+    dcterms:references araster:StoredBoundsShape .
+reqs:req-shape-araster-ValueRangeShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of araster:ValueRangeShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement araster:ValueRangeShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-araster-ValueRangeShape" ;
+    req:fromStandard "Hexplain Aspect — Raster (hx-raster)" ;
+    req:statement "Applies to subjects using araster:maximumValue, araster:minimumValue. araster:maximumValue takes at most one value; each is an xsd:double literal. araster:minimumValue takes at most one value; each is an xsd:double literal."@en ;
+    req:discrepancyType req:Semantic ;
+    dcterms:references araster:ValueRangeShape .
 reqs:req-shape-asamp-IntegerValueShape a owl:NamedIndividual , reqs:ShapeRequirement ;
     rdfs:label "Requirement of asamp:IntegerValueShape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
@@ -484,6 +538,15 @@ reqs:req-shape-asamp-PositiveIntegerShape a owl:NamedIndividual , reqs:ShapeRequ
     req:statement "A positive integral quantity using an XML Schema integer-family datatype. Fractional values and numeric strings are not counts."@en ;
     req:discrepancyType req:Syntactic ;
     dcterms:references asamp:PositiveIntegerShape .
+reqs:req-shape-asamp-SampleFormatAgreementShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of asamp:SampleFormatAgreementShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement asamp:SampleFormatAgreementShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-asamp-SampleFormatAgreementShape" ;
+    req:fromStandard "Hexplain Aspect — Sampling (hx-sampling)" ;
+    req:statement "A resource that states both asamp:sampleFormat and asamp:sampleFormatName states the same format in both."@en ;
+    req:discrepancyType req:Semantic ;
+    dcterms:references asamp:SampleFormatAgreementShape .
 reqs:req-shape-asamp-SamplingShape a owl:NamedIndividual , reqs:ShapeRequirement ;
     rdfs:label "Requirement of asamp:SamplingShape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
@@ -628,6 +691,33 @@ reqs:req-shape-atab-RangeDatatypeShape a owl:NamedIndividual , reqs:ShapeRequire
     req:statement "Applies to subjects using atab:fieldDataType, atab:fieldName, atab:rowCount. atab:fieldDataType takes an xsd:string literal (rdfs:range xsd:string). atab:fieldName takes an xsd:string literal (rdfs:range xsd:string). atab:rowCount takes an integer within the xsd:unsignedLong value space (rdfs:range xsd:unsignedLong)."@en ;
     req:discrepancyType req:Syntactic ;
     dcterms:references atab:RangeDatatypeShape .
+reqs:req-shape-atab-RecordCountShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of atab:RecordCountShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement atab:RecordCountShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-atab-RecordCountShape" ;
+    req:fromStandard "Hexplain Aspect — Tabular (hx-tabular)" ;
+    req:statement "Applies to subjects using atab:hasRecord. A table describes no more records (atab:hasRecord) than its declared atab:rowCount."@en ;
+    req:discrepancyType req:Semantic ;
+    dcterms:references atab:RecordCountShape .
+reqs:req-shape-atab-RecordShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of atab:RecordShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement atab:RecordShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-atab-RecordShape" ;
+    req:fromStandard "Hexplain Aspect — Tabular (hx-tabular)" ;
+    req:statement "Applies to instances of atab:Record; objects of atab:hasRecord. A record is a resource (an IRI or a blank node), not a literal. Each focus node is a resource (an IRI or a blank node). A record belongs to at most one table (atab:hasRecord)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references atab:RecordShape .
+reqs:req-shape-atab-TableShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of atab:TableShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement atab:TableShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-atab-TableShape" ;
+    req:fromStandard "Hexplain Aspect — Tabular (hx-tabular)" ;
+    req:statement "Applies to instances of atab:Table; subjects using atab:hasField, atab:hasRecord, atab:rowCount. A table is a resource (an IRI or a blank node), not a literal. Each focus node is a resource (an IRI or a blank node). Each value of atab:hasField is a resource (an IRI or a blank node) naming a column. Each value of atab:hasRecord is a value conforming to atab:RecordShape. A table declares at most one atab:rowCount."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references atab:TableShape .
 reqs:req-shape-atime-DurationShape a owl:NamedIndividual , reqs:ShapeRequirement ;
     rdfs:label "Requirement of atime:DurationShape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;

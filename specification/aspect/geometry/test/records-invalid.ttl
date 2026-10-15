@@ -1,0 +1,25 @@
+# A record without its geometry and one with two; a geometry shared by two records and one by
+# two collections; membership that loops; a literal member.
+# expect: ex:noGeometry ageom:GeometryRecordShape sh:MinCountConstraintComponent
+# expect: ex:twoGeometries ageom:GeometryRecordShape sh:MaxCountConstraintComponent
+# expect: ex:shared ageom:GeometryShape sh:MaxCountConstraintComponent
+# expect: ex:member ageom:GeometryShape sh:MaxCountConstraintComponent
+# expect: ex:loopA ageom:GeometryMembershipShape sh:SPARQLConstraintComponent
+# expect: ex:loopB ageom:GeometryMembershipShape sh:SPARQLConstraintComponent
+# expect: ex:literalMember ageom:GeometryMembershipShape sh:NodeConstraintComponent
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix ageom: <https://hexplain.io/ns/aspect/geometry#> .
+@prefix ex:    <https://hexplain.io/test/geometry-records-invalid#> .
+
+ex:noGeometry a ageom:GeometryRecord .
+ex:twoGeometries a ageom:GeometryRecord ; ageom:hasGeometry ex:g1, ex:g2 .
+ex:shared a ageom:Geometry .
+ex:r1 ageom:hasGeometry ex:shared .
+ex:r2 ageom:hasGeometry ex:shared .
+ex:member a ageom:Geometry .
+ex:c1 ageom:hasMember ex:member .
+ex:c2 ageom:hasMember ex:member .
+ex:loopA ageom:hasMember ex:loopB .
+ex:loopB ageom:hasMember ex:loopA .
+ex:literalMember ageom:hasMember "point" .

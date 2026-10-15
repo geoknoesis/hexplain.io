@@ -40,10 +40,33 @@
 :bandCount a owl:DatatypeProperty ; rdfs:range xsd:positiveInteger ; rdfs:label "band count"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Total band count. A partial RDF projection may describe fewer bands, but never more than this count."@en .
 :bandIndex a owl:DatatypeProperty ; rdfs:range xsd:positiveInteger ; rdfs:label "band index"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "One-based band index within its owning grid."@en .
 :sampleScale a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "sample scale"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Calibration multiplier: physical = raw * sampleScale + sampleOffset. Absence means unspecified, not a stored default. Apply no-data detection to raw samples first."@en ;
-    skos:scopeNote "Use on an araster:RasterBand: the radiometric calibration multiplier applied to its raw samples. Not asref:sampleScale, the RPC normalisation scale of the sample (column) image coordinate."@en .
+    skos:scopeNote "Use on an araster:RasterBand: the radiometric calibration multiplier applied to its raw samples; or on an araster:RasterGrid whose format has no band structure, where it applies to every sample of the grid and a band's own value takes precedence. Not asref:sampleScale, the RPC normalisation scale of the sample (column) image coordinate."@en .
 :sampleOffset a owl:DatatypeProperty ; rdfs:range xsd:double ; rdfs:label "sample offset"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Calibration additive term, in the unit of the physical value. Independent of byte offsets and georeferencing origins."@en ;
-    skos:scopeNote "Use on an araster:RasterBand: the radiometric calibration offset added after scaling. Not asref:sampleOffset, the RPC normalisation offset of the sample (column) image coordinate."@en .
+    skos:scopeNote "Use on an araster:RasterBand: the radiometric calibration offset added after scaling; or on an araster:RasterGrid whose format has no band structure, where it applies to every sample of the grid and a band's own value takes precedence. Not asref:sampleOffset, the RPC normalisation offset of the sample (column) image coordinate."@en .
 :sampleUnit a owl:ObjectProperty ; rdfs:label "sample unit"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Unit IRI for calibrated sample values; profiles may reuse established unit vocabularies."@en .
+:formatNoDataValue a owl:DatatypeProperty ; rdfs:label "format no-data value"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    rdfs:comment "The no-data value the format's specification fixes, which holds for a grid or band whose file stores none: DTED's -32767, SRTM's -32768. A numeric literal of the datatypes araster:noDataValue admits. An araster:noDataValue stated of the same grid or band (read from the file) takes precedence; a band inherits its grid's value as for araster:noDataValue. No rdfs:range is asserted because the admissible datatypes are a union; araster:FormatNoDataShape enforces it."@en ;
+    skos:scopeNote "State it as a constant of the profile, on the struct mapped to an araster:RasterGrid or araster:RasterBand, when the format defines the value rather than storing it. A file that stores its own no-data value maps that field to araster:noDataValue instead."@en .
+:boundsMinX a owl:DatatypeProperty ; rdfs:label "stored bounds: minimum x"@en ; rdfs:range xsd:double ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    rdfs:comment "The least x (easting or longitude; a format's west bound) of a grid's extent as the file states it, in the units of the grid's spatial reference."@en .
+:boundsMaxX a owl:DatatypeProperty ; rdfs:label "stored bounds: maximum x"@en ; rdfs:range xsd:double ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    rdfs:comment "The greatest x (easting or longitude; a format's east bound) of a grid's extent as the file states it, in the units of the grid's spatial reference."@en .
+:boundsMinY a owl:DatatypeProperty ; rdfs:label "stored bounds: minimum y"@en ; rdfs:range xsd:double ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    rdfs:comment "The least y (northing or latitude; a format's south bound) of a grid's extent as the file states it, in the units of the grid's spatial reference."@en .
+:boundsMaxY a owl:DatatypeProperty ; rdfs:label "stored bounds: maximum y"@en ; rdfs:range xsd:double ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    rdfs:comment "The greatest y (northing or latitude; a format's north bound) of a grid's extent as the file states it, in the units of the grid's spatial reference."@en .
+:boundsRegistration a owl:ObjectProperty ; rdfs:label "bounds registration"@en ; rdfs:range :BoundsRegistration ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    rdfs:comment "What the stored bounds of a grid bound: the centres of its outermost cells (araster:nodeRegistration, as Surfer grids, GRASS ASCII grids in node mode and DEM profiles state them) or their outer edges (araster:cellRegistration). Absent, the registration is unstated."@en .
+:BoundsRegistration a owl:Class ; rdfs:label "Bounds registration"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    rdfs:comment "Whether a grid's stored bounds pass through the centres of its outermost cells or along their outer edges. Closed set: araster:nodeRegistration and araster:cellRegistration."@en .
+:nodeRegistration a owl:NamedIndividual, :BoundsRegistration ; rdfs:label "Node registration"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    rdfs:comment "The stored bounds pass through the centres of the outermost cells: the extent is half a cell wider on each side than the bounds."@en .
+:cellRegistration a owl:NamedIndividual, :BoundsRegistration ; rdfs:label "Cell registration"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    rdfs:comment "The stored bounds run along the outer edges of the outermost cells: they are the grid's extent."@en .
+:minimumValue a owl:DatatypeProperty ; rdfs:label "minimum value"@en ; rdfs:range xsd:double ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    rdfs:comment "The least sample value of a grid or band as the file states it (Surfer's zlo, a DEM's minimum elevation), in the unit of the raw samples; no-data samples excluded. A stated statistic, not one a processor computes."@en .
+:maximumValue a owl:DatatypeProperty ; rdfs:label "maximum value"@en ; rdfs:range xsd:double ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    rdfs:comment "The greatest sample value of a grid or band as the file states it (Surfer's zhi, a DEM's maximum elevation), in the unit of the raw samples; no-data samples excluded. A stated statistic, not one a processor computes."@en .
 :hasMask a owl:ObjectProperty ; rdfs:range :RasterBand ; rdfs:label "has validity mask"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Validity mask band: zero is invalid; nonzero is valid. This relation does not imply alpha/transparency semantics."@en .
 :hasOverview a owl:ObjectProperty ; rdfs:label "has overview"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "A lower-resolution representation covering the same logical domain. Does not assert a resampling algorithm or an integer reduction factor."@en .
 :dimensions a owl:ObjectProperty ; rdfs:range rdf:List ; rdfs:label "dimensions"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ; rdfs:comment "Complete ordered RDF list of ArrayDimension resources in logical indexing order. rdf:nil denotes a scalar. The list must be finite, well formed and permit repeated dimension resources at distinct positions."@en .
@@ -108,6 +131,40 @@ araster:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
       PREFIX a: <https://hexplain.io/ns/aspect/raster#>
       SELECT $this WHERE { $this a:bandCount ?n . { SELECT $this (COUNT(DISTINCT ?b) AS ?c) WHERE { $this a:hasBand ?b } GROUP BY $this } FILTER(?c > ?n) }
     """ ] .
+:FormatNoDataShape a sh:NodeShape ; rdfs:label "Format no-data shape"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    sh:targetSubjectsOf :formatNoDataValue ;
+    sh:property [ sh:path :formatNoDataValue ; sh:maxCount 1 ;
+        sh:or ( [ sh:datatype xsd:double ] [ sh:datatype xsd:float ] [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonPositiveInteger ] [ sh:datatype xsd:negativeInteger ] [ sh:datatype xsd:long ] [ sh:datatype xsd:int ] [ sh:datatype xsd:short ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:unsignedByte ] ) ;
+        sh:message "araster:formatNoDataValue is at most one numeric literal (xsd:double/float, including NaN; xsd:decimal; or an integer-family datatype)." ] .
+:StoredBoundsShape a sh:NodeShape ; rdfs:label "Stored bounds shape"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    sh:targetSubjectsOf :boundsMinX, :boundsMaxX, :boundsMinY, :boundsMaxY, :boundsRegistration ;
+    sh:property [ sh:path :boundsMinX ; sh:datatype xsd:double ; sh:maxCount 1 ;
+        sh:message "araster:boundsMinX takes at most one value; each is an xsd:double literal." ] ;
+    sh:property [ sh:path :boundsMaxX ; sh:datatype xsd:double ; sh:maxCount 1 ;
+        sh:message "araster:boundsMaxX takes at most one value; each is an xsd:double literal." ] ;
+    sh:property [ sh:path :boundsMinY ; sh:datatype xsd:double ; sh:maxCount 1 ;
+        sh:message "araster:boundsMinY takes at most one value; each is an xsd:double literal." ] ;
+    sh:property [ sh:path :boundsMaxY ; sh:datatype xsd:double ; sh:maxCount 1 ;
+        sh:message "araster:boundsMaxY takes at most one value; each is an xsd:double literal." ] ;
+    sh:property [ sh:path :boundsRegistration ; sh:in ( :nodeRegistration :cellRegistration ) ; sh:maxCount 1 ;
+        sh:message "araster:boundsRegistration takes at most one value; each is either araster:nodeRegistration or araster:cellRegistration." ] ;
+    sh:sparql [ sh:message "A stored minimum bound exceeds its maximum: {?low} is greater than {?high}." ;
+        sh:select """
+      PREFIX araster: <https://hexplain.io/ns/aspect/raster#>
+      SELECT $this ?low ?high WHERE {
+        { $this araster:boundsMinX ?low ; araster:boundsMaxX ?high } UNION { $this araster:boundsMinY ?low ; araster:boundsMaxY ?high }
+        FILTER(?low > ?high)
+      }""" ] .
+:ValueRangeShape a sh:NodeShape ; rdfs:label "Value range shape"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/raster> ;
+    sh:targetSubjectsOf :minimumValue, :maximumValue ;
+    sh:property [ sh:path :minimumValue ; sh:datatype xsd:double ; sh:maxCount 1 ;
+        sh:message "araster:minimumValue takes at most one value; each is an xsd:double literal." ] ;
+    sh:property [ sh:path :maximumValue ; sh:datatype xsd:double ; sh:maxCount 1 ;
+        sh:message "araster:maximumValue takes at most one value; each is an xsd:double literal." ] ;
+    sh:sparql [ sh:message "The stated minimum value {?low} is greater than the stated maximum {?high}." ;
+        sh:select """
+      PREFIX araster: <https://hexplain.io/ns/aspect/raster#>
+      SELECT $this ?low ?high WHERE { $this araster:minimumValue ?low ; araster:maximumValue ?high . FILTER(?low > ?high) }""" ] .
 :ArrayDimensionShape a sh:NodeShape ; sh:targetClass :ArrayDimension ;
     sh:message "An array dimension is a resource (an IRI or a blank node), not a literal." ;
     sh:nodeKind sh:BlankNodeOrIRI ;

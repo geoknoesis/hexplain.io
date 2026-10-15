@@ -13999,5 +13999,269 @@
     "path": "",
     "data": "@prefix conf:<https://hexplain.io/ns/conf#> .\n@prefix req:<https://hexplain.io/ns/req#> .\n@prefix bddo:<https://hexplain.io/ns/bddo#> .\n@prefix hexplain:<https://hexplain.io/ns/core#> .\n@prefix abnd:<https://hexplain.io/ns/aspect/bundle#> .\n@prefix sh:<http://www.w3.org/ns/shacl#> .\n@prefix owl:<http://www.w3.org/2002/07/owl#> .\n@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n@prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> .\n@prefix dcterms:<http://purl.org/dc/terms/> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\n@prefix ex:<urn:review-probe:> .\n\nbddo:string a bddo:DataType .\nex:doc a bddo:TreeDocument ; bddo:treeSyntax bddo:xml ;\n    bddo:hasNamespaceBinding [ a bddo:NamespaceBinding ; bddo:namespacePrefix \"a.b\" ; bddo:namespaceIRI \"urn:x\"^^xsd:anyURI ] ;\n    bddo:hasField ( ) .\nex:f a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath \"/a.b:item\" .\n",
     "allowWarnings": true
+  },
+  {
+    "name": "tabular table with fewer records than its count",
+    "module": "specification/aspect/tabular/tabular.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/tabular#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:t a p:Table; p:rowCount 2; p:hasRecord ex:r.",
+    "allowWarnings": true
+  },
+  {
+    "name": "tabular table with as many records as its count",
+    "module": "specification/aspect/tabular/tabular.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/tabular#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:t p:rowCount 1; p:hasRecord ex:r.",
+    "allowWarnings": true
+  },
+  {
+    "name": "tabular table with more records than its count",
+    "module": "specification/aspect/tabular/tabular.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/tabular#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:t p:rowCount 1; p:hasRecord ex:r, ex:s.",
+    "allowWarnings": true
+  },
+  {
+    "name": "tabular empty table",
+    "module": "specification/aspect/tabular/tabular.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/tabular#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:t a p:Table; p:rowCount 0.",
+    "allowWarnings": true
+  },
+  {
+    "name": "tabular table with two row counts",
+    "module": "specification/aspect/tabular/tabular.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/tabular#rowCount",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/tabular#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:t a p:Table; p:rowCount 1, 2.",
+    "allowWarnings": true
+  },
+  {
+    "name": "tabular untyped table with two row counts",
+    "module": "specification/aspect/tabular/tabular.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/tabular#rowCount",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/tabular#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:t p:hasField ex:c; p:rowCount 1, 2.",
+    "allowWarnings": true
+  },
+  {
+    "name": "tabular literal column",
+    "module": "specification/aspect/tabular/tabular.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/tabular#hasField",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/tabular#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:t p:hasField 1.",
+    "allowWarnings": true
+  },
+  {
+    "name": "tabular literal record",
+    "module": "specification/aspect/tabular/tabular.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/tabular#hasRecord",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/tabular#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:t p:hasRecord 1.",
+    "allowWarnings": true
+  },
+  {
+    "name": "tabular record of two tables",
+    "module": "specification/aspect/tabular/tabular.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/tabular#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:t p:hasRecord ex:r. ex:u p:hasRecord ex:r.",
+    "allowWarnings": true
+  },
+  {
+    "name": "geometry record with one geometry",
+    "module": "specification/aspect/geometry/geometry.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/geometry#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:r a p:GeometryRecord; p:hasGeometry ex:g.",
+    "allowWarnings": true
+  },
+  {
+    "name": "geometry record without geometry",
+    "module": "specification/aspect/geometry/geometry.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/geometry#hasGeometry",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/geometry#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:r a p:GeometryRecord.",
+    "allowWarnings": true
+  },
+  {
+    "name": "geometry record with two geometries",
+    "module": "specification/aspect/geometry/geometry.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/geometry#hasGeometry",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/geometry#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:r p:hasGeometry ex:g, ex:h.",
+    "allowWarnings": true
+  },
+  {
+    "name": "geometry literal geometry",
+    "module": "specification/aspect/geometry/geometry.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/geometry#hasGeometry",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/geometry#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:r p:hasGeometry \"POINT (1 2)\".",
+    "allowWarnings": true
+  },
+  {
+    "name": "geometry geometry of two records",
+    "module": "specification/aspect/geometry/geometry.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/geometry#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:r p:hasGeometry ex:g. ex:s p:hasGeometry ex:g.",
+    "allowWarnings": true
+  },
+  {
+    "name": "geometry collection with members",
+    "module": "specification/aspect/geometry/geometry.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/geometry#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:c a p:Geometry; p:hasMember ex:a, ex:b.",
+    "allowWarnings": true
+  },
+  {
+    "name": "geometry member of two collections",
+    "module": "specification/aspect/geometry/geometry.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/geometry#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:c p:hasMember ex:a. ex:d p:hasMember ex:a.",
+    "allowWarnings": true
+  },
+  {
+    "name": "geometry member of itself",
+    "module": "specification/aspect/geometry/geometry.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/geometry#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:c p:hasMember ex:c.",
+    "allowWarnings": true
+  },
+  {
+    "name": "geometry membership cycle",
+    "module": "specification/aspect/geometry/geometry.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/geometry#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:c p:hasMember ex:d. ex:d p:hasMember ex:c.",
+    "allowWarnings": true
+  },
+  {
+    "name": "geometry literal member",
+    "module": "specification/aspect/geometry/geometry.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/geometry#hasMember",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/geometry#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:c p:hasMember \"POINT (1 2)\".",
+    "allowWarnings": true
+  },
+  {
+    "name": "raster format no-data value",
+    "module": "specification/aspect/raster/raster.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:g a p:RasterGrid; p:formatNoDataValue \"-32767\"^^xsd:short.",
+    "allowWarnings": true
+  },
+  {
+    "name": "raster text format no-data value",
+    "module": "specification/aspect/raster/raster.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/raster#formatNoDataValue",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:g p:formatNoDataValue \"none\".",
+    "allowWarnings": true
+  },
+  {
+    "name": "raster two format no-data values",
+    "module": "specification/aspect/raster/raster.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/raster#formatNoDataValue",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:g p:formatNoDataValue -32767, -32768.",
+    "allowWarnings": true
+  },
+  {
+    "name": "raster ordered bounds",
+    "module": "specification/aspect/raster/raster.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:g p:boundsMinX \"0.0\"^^xsd:double; p:boundsMaxX \"0.0\"^^xsd:double.",
+    "allowWarnings": true
+  },
+  {
+    "name": "raster inverted bounds",
+    "module": "specification/aspect/raster/raster.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:g p:boundsMinY \"2.0\"^^xsd:double; p:boundsMaxY \"1.0\"^^xsd:double.",
+    "allowWarnings": true
+  },
+  {
+    "name": "raster node registration",
+    "module": "specification/aspect/raster/raster.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:g p:boundsRegistration p:nodeRegistration.",
+    "allowWarnings": true
+  },
+  {
+    "name": "raster unknown registration",
+    "module": "specification/aspect/raster/raster.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/raster#boundsRegistration",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:g p:boundsRegistration ex:corner.",
+    "allowWarnings": true
+  },
+  {
+    "name": "raster ordered value range",
+    "module": "specification/aspect/raster/raster.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:g p:minimumValue \"-1.0\"^^xsd:double; p:maximumValue \"9.0\"^^xsd:double.",
+    "allowWarnings": true
+  },
+  {
+    "name": "raster inverted value range",
+    "module": "specification/aspect/raster/raster.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:g p:minimumValue \"9.0\"^^xsd:double; p:maximumValue \"-1.0\"^^xsd:double.",
+    "allowWarnings": true
+  },
+  {
+    "name": "raster grid-level calibration",
+    "module": "specification/aspect/raster/raster.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/raster#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:g a p:RasterGrid; p:sampleScale \"0.5\"^^xsd:double.",
+    "allowWarnings": true
+  },
+  {
+    "name": "sampling format name",
+    "module": "specification/aspect/sampling/sampling.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/sampling#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:b p:sampleFormatName \"float\".",
+    "allowWarnings": true
+  },
+  {
+    "name": "sampling unknown format name",
+    "module": "specification/aspect/sampling/sampling.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/sampling#sampleFormatName",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/sampling#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:b p:sampleFormatName \"int16\".",
+    "allowWarnings": true
+  },
+  {
+    "name": "sampling agreeing format and name",
+    "module": "specification/aspect/sampling/sampling.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/sampling#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:b p:sampleFormatName \"signedInteger\"; p:sampleFormat p:SignedInteger.",
+    "allowWarnings": true
+  },
+  {
+    "name": "sampling contradicting format and name",
+    "module": "specification/aspect/sampling/sampling.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix p:<https://hexplain.io/ns/aspect/sampling#> . @prefix ex:<urn:record-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:b p:sampleFormatName \"float\"; p:sampleFormat p:SignedInteger.",
+    "allowWarnings": true
   }
 ]

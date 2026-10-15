@@ -320,6 +320,7 @@ def cases() -> list[dict[str, Any]]:
     from _mapping_contract_cases import cases as mappings
     from _physical_property_cases import cases as physical
     from _range_contract_cases import cases as ranges
+    from _record_contract_cases import cases as records
     from _raster_contract_cases import cases as raster
     from _remaining_contract_cases import cases as remaining
     from _requirement_contract_cases import cases as requirements
@@ -347,6 +348,7 @@ def cases() -> list[dict[str, Any]]:
         + closure()
         + ranges()
         + review()
+        + records()
     )
     # A case is about one obligation. An advisory result from some other shape -- a level with no
     # rank, say -- must not decide it, or every advisory constraint added later would silently

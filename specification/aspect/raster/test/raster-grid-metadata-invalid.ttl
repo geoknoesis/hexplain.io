@@ -1,0 +1,19 @@
+# A text no-data value, two format no-data values, inverted bounds, an unknown registration,
+# a bound that is not a double, and an inverted value range.
+# expect: ex:textNoData araster:FormatNoDataShape sh:OrConstraintComponent
+# expect: ex:twoNoData araster:FormatNoDataShape sh:MaxCountConstraintComponent
+# expect: ex:inverted araster:StoredBoundsShape sh:SPARQLConstraintComponent
+# expect: ex:registration araster:StoredBoundsShape sh:InConstraintComponent
+# expect: ex:textBound araster:StoredBoundsShape sh:DatatypeConstraintComponent
+# expect: ex:range araster:ValueRangeShape sh:SPARQLConstraintComponent
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix araster: <https://hexplain.io/ns/aspect/raster#> .
+@prefix ex:      <https://hexplain.io/test/raster-grid-metadata-invalid#> .
+
+ex:textNoData araster:formatNoDataValue "none" .
+ex:twoNoData araster:formatNoDataValue -32767, -32768 .
+ex:inverted araster:boundsMinX "10.0"^^xsd:double ; araster:boundsMaxX "0.0"^^xsd:double .
+ex:registration araster:boundsRegistration ex:cornerRegistration .
+ex:textBound araster:boundsMinY "51N" .
+ex:range araster:minimumValue "100.0"^^xsd:double ; araster:maximumValue "-1.0"^^xsd:double .

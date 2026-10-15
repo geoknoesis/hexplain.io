@@ -1,0 +1,14 @@
+# A table with a schema and records: an untyped table is checked by its properties, a partial
+# description names fewer records than its row count, and an empty table names none.
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix atab: <https://hexplain.io/ns/aspect/tabular#> .
+@prefix ex:   <https://hexplain.io/test/tabular-records-valid#> .
+
+ex:table a atab:Table ; atab:rowCount 3 ; atab:hasField ex:name ; atab:hasRecord ex:row1, ex:row2 .
+ex:name a atab:Field ; atab:fieldName "NAME" ; atab:fieldDataType "C" .
+ex:row1 a atab:Record .
+ex:row2 a atab:Record .
+ex:untyped atab:rowCount 1 ; atab:hasRecord ex:row3 .
+ex:row3 a atab:Record .
+ex:empty a atab:Table ; atab:rowCount 0 .
