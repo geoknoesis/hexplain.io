@@ -68,12 +68,12 @@ is committed together with its figures here.
 
 | | |
 |---|---|
-| Recorded (UTC) | 2026-10-13T18:50:13 |
+| Recorded (UTC) | 2026-10-15T20:12:09 |
 | Host | Windows-10-10.0.26200-SP0; 20 logical CPUs; 32428 MiB; Python 3.11.4 |
-| Host load when the run began | 30.2 % of the CPUs already busy; 1849 MiB free |
-| Gates run, at `--jobs` | 81, at 4 |
-| Wall clock | 307.4 s |
-| Sum of the gates' durations | 1205.3 s |
+| Host load when the run began | 43.0 % of the CPUs already busy; 1716 MiB free |
+| Gates run, at `--jobs` | 83, at 4 |
+| Wall clock | 423.9 s |
+| Sum of the gates' durations | 1667.9 s |
 
 The command was `python tools/run_gates.py --strict --record-costs` at the default job count.
 The reference it is compared with is the sequential strict run of 2026-09-28 on the same host:
