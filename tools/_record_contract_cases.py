@@ -63,6 +63,23 @@ def cases() -> list[dict[str, Any]]:
         ("grid-level calibration", 'ex:g a p:RasterGrid; p:sampleScale "0.5"^^xsd:double.', True, ""),
     ]:
         add("raster", RASTER, name, body, ok, path)
+    for literal in ('"1.5"^^xsd:double', '"1.5"^^xsd:float', "1.5", "-32767"):
+        add("raster", RASTER, "format no-data value " + literal, f"ex:g p:formatNoDataValue {literal}.", True)
+    for prop in ("boundsMinX", "boundsMaxX", "boundsMinY", "boundsMaxY", "minimumValue", "maximumValue"):
+        add("raster", RASTER, prop + " decimal", f"ex:g p:{prop} 1.5.", False, prop)
+        add("raster", RASTER, prop + " twice", f'ex:g p:{prop} "1.0"^^xsd:double, "2.0"^^xsd:double.', False, prop)
+    add(
+        "raster",
+        RASTER,
+        "two registrations",
+        "ex:g p:boundsRegistration p:nodeRegistration, p:cellRegistration.",
+        False,
+    )
+    for name, body, ok, path in [
+        ("format name not a string", "ex:b p:sampleFormatName 1.", False, "sampleFormatName"),
+        ("two format names", 'ex:b p:sampleFormatName "float", "signedInteger".', False, "sampleFormatName"),
+    ]:
+        add("sampling", SAMPLING, name, body, ok, path)
     for name, body, ok, path in [
         ("format name", 'ex:b p:sampleFormatName "float".', True, ""),
         ("unknown format name", 'ex:b p:sampleFormatName "int16".', False, "sampleFormatName"),
