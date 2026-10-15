@@ -173,8 +173,9 @@ catalogue section of `specification/fn/index.html`); and `_build_lineage`
 (`releases/lineage.json`, after a snapshot or a new version IRI). After changing cases run
 `python tools/_build_family_contracts.py --write` and the builder of each corpus that changed
 (`python tools/_build_layout_competency.py --write` for the layout fragments), then `python
-tools/_constraint_coverage.py` and `python tools/_render_constraint_coverage.py`, because the
-coverage ledger hashes the snapshots and the procedural gates. The ledger is measured across a process pool, corpus by corpus (about eight
+tools/_constraint_coverage.py`, `python tools/_render_constraint_coverage.py` and `python
+tools/_capabilities.py`, because the coverage ledger hashes the snapshots and the procedural
+gates, and `python tools/_competency_trace.py`, whose traceability matrix hashes the corpora. The ledger is measured across a process pool, corpus by corpus (about eight
 minutes for the 2,163 validation calls at eight workers on the recording host under the load
 stated under [Gate cost](#gate-cost), where the sequential whole-family measurement took forty);
 its content does not depend on the number of workers. The GDAL evidence gates derive their

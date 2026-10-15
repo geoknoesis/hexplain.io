@@ -13,12 +13,14 @@ one of the case's nodes is still there:
    and an implicit class target likewise. A term of the family that the case mentions (a
    register concept, a class) keeps the types the family gives it, so a shape aimed at one of
    those classes is kept too: the case may be saying something about that term. The family's only
-   custom (SPARQL) targets are the
-   register-binding shapes, which select the subjects of a property that some
-   ``hexplain:RegisterBinding`` binds; a case using a bound property therefore brings in the
-   module that binds it, the module that holds those shapes, and the home of the bound register.
+   custom (SPARQL) targets are of two kinds. The register-binding shapes select the subjects of a
+   property that some ``hexplain:RegisterBinding`` binds; a case using a bound property therefore
+   brings in the module that binds it, the module that holds those shapes, and the home of the
+   bound register. A shape in :data:`SUBJECTS_OF_TARGETS` selects a subset of the subjects of one
+   property, so it is aimed as ``sh:targetSubjectsOf`` that property would be.
    tools/test_specgraph.py fails if a custom target of another kind appears, because this step
-   would not know what it selects.
+   would not know what it selects, and checks that every branch of a listed shape's selection binds
+   ``?this`` through its property.
 3. *Imports*: everything those modules ``owl:import``, transitively; and with any vocabulary, a
    shapes-only ontology that imports it and claims no namespace of its own (conf/shapes.ttl for
    conf.ttl): those shapes are that vocabulary's.
@@ -46,6 +48,13 @@ HEXPLAIN = Namespace("https://hexplain.io/ns/core#")
 
 #: Files by the term a shape of theirs is aimed at.
 Aim = dict[Node, set[str]]
+
+#: Shapes whose SPARQL target selects only subjects of the property given (a subset of what
+#: sh:targetSubjectsOf would select): req:RequirementIdentityShape narrows the subjects of
+#: req:requirementId to those that can have a twin.
+SUBJECTS_OF_TARGETS: dict[Node, URIRef] = {
+    URIRef("https://hexplain.io/ns/req#RequirementIdentityShape"): URIRef("https://hexplain.io/ns/req#requirementId"),
+}
 
 
 def canonical_paths() -> list[str]:
@@ -94,8 +103,11 @@ class Index:
             # A node shape that is also a class is aimed at that class's instances.
             if (shape, RDF.type, RDFS.Class) in graph or (shape, RDF.type, OWL.Class) in graph:
                 self.classes.setdefault(shape, set()).add(path)
-        if (None, SH.target, None) in graph:
-            self.custom.add(path)
+        for shape in graph.subjects(SH.target, None):
+            if shape in SUBJECTS_OF_TARGETS:
+                self.subjects_of.setdefault(SUBJECTS_OF_TARGETS[shape], set()).add(path)
+            else:
+                self.custom.add(path)
         for binding, bound in graph.subject_objects(HEXPLAIN.forProperty):
             self.binders.setdefault(bound, set()).add(path)
             registers = self.registers.setdefault(bound, set())

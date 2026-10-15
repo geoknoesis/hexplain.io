@@ -153,6 +153,13 @@ def check_custom_targets() -> int:
         module = Graph().parse(specgraph.ROOT / path, format="turtle")
         for shape, target in module.subject_objects(SH.target):
             select = str(module.value(target, SH.select) or "")
+            if shape in selection.SUBJECTS_OF_TARGETS:
+                # Each UNION branch binds ?this as a subject of the listed property.
+                local = str(selection.SUBJECTS_OF_TARGETS[shape]).rsplit("#", 1)[-1]
+                branches = select.count("UNION") + 1
+                assert select.count(f"?this req:{local} ") == branches, f"{path}: {shape} selects beyond {local}"
+                count += 1
+                continue
             assert (target, RDF.type, SH.SPARQLTarget) in module and "hexplain:forProperty" in select, (
                 f"{path}: {shape} has a custom target tools/_module_selection.py does not model; "
                 "teach Index.aimed_at what it selects before relying on module selection"
@@ -260,7 +267,7 @@ def main() -> int:
     print(
         f"PASS: the family cache keeps {specgraph.CACHE_KEEP} pickles and no abandoned temporary file; "
         f"{targets} target probes each select the module that aims at them; imports and shapes-only companions "
-        f"follow; {custom} custom targets are the modelled register-binding kind; {len(sampled)} fixtures report "
+        f"follow; {custom} custom targets of a modelled kind; {len(sampled)} fixtures report "
         "identically with their selected modules and with the whole family"
     )
     return 0
