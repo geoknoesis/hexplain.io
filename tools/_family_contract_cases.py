@@ -320,8 +320,8 @@ def cases() -> list[dict[str, Any]]:
     from _mapping_contract_cases import cases as mappings
     from _physical_property_cases import cases as physical
     from _range_contract_cases import cases as ranges
-    from _record_contract_cases import cases as records
     from _raster_contract_cases import cases as raster
+    from _record_contract_cases import cases as records
     from _remaining_contract_cases import cases as remaining
     from _requirement_contract_cases import cases as requirements
     from _review_contract_cases import cases as review

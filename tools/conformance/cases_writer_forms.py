@@ -370,9 +370,10 @@ w(
 )
 
 VAX_FIELDS = """
-   ex:Root a bddo:Struct ; bddo:hasField ( ex:f ex:d ex:z ) .
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:f ex:d ex:g ex:z ) .
    ex:f a bddo:Field ; bddo:dataType bddo:float32 ; bddo:floatFormat bddo:vaxF .
-   ex:d a bddo:Field ; bddo:dataType bddo:float64 ; bddo:floatFormat bddo:vaxF .
+   ex:d a bddo:Field ; bddo:dataType bddo:float64 ; bddo:floatFormat bddo:vaxD .
+   ex:g a bddo:Field ; bddo:dataType bddo:float64 ; bddo:floatFormat bddo:vaxG .
    ex:z a bddo:Field ; bddo:dataType bddo:float32 ; bddo:floatFormat bddo:vaxF .
    """
 
@@ -381,13 +382,14 @@ w(
     "A VAX float is written in the format's own word order",
     "12.5 is 0.78125 × 2^4: exponent 128 + 4 = 132, fraction (0.78125 - 0.5) × 2^24 = 0x480000, the 32 bits "
     "42 48 00 00, stored as two 16-bit words each least significant byte first: 48 42 00 00. 1.0 as D_floating "
-    "is exponent 129 and a zero fraction, 40 80 then zeros, stored 80 40 00 00 00 00 00 00. A positive zero is "
-    "all-zero bytes. The struct's byte order is not consulted.",
+    "is exponent 129 and a zero fraction, 40 80 then zeros, stored 80 40 00 00 00 00 00 00. 128.0 as G_floating "
+    "is 0.5 × 2^8, exponent 1024 + 8 = 1032 in eleven bits and a zero fraction: the same eight bytes. A positive "
+    "zero is all-zero bytes. The struct's byte order is not consulted.",
     [VAX],
     ["numeric-representation"],
     VAX_FIELDS,
-    {"f": 12.5, "d": 1.0, "z": 0.0},
-    bytes.fromhex("48420000 8040000000000000 00000000"),
+    {"f": 12.5, "d": 1.0, "g": 128.0, "z": 0.0},
+    bytes.fromhex("48420000 8040000000000000 8040000000000000 00000000"),
 )
 
 w(
@@ -397,7 +399,7 @@ w(
     [NO_INVERSE],
     ["numeric-representation"],
     VAX_FIELDS,
-    {"f": float("inf"), "d": 1.0, "z": 0.0},
+    {"f": float("inf"), "d": 1.0, "g": 128.0, "z": 0.0},
     error="Validation",
 )
 
@@ -408,7 +410,7 @@ w(
     [NO_INVERSE],
     ["numeric-representation"],
     VAX_FIELDS,
-    {"f": 12.5, "d": 1.0, "z": -0.0},
+    {"f": 12.5, "d": 1.0, "g": 128.0, "z": -0.0},
     error="Validation",
 )
 

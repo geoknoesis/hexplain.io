@@ -226,16 +226,16 @@ pp(
 
 pp(
     "float-vax",
-    "bddo:vaxF reads VAX F_floating and D_floating in their own word order",
+    "bddo:vaxF reads VAX F_floating and bddo:vaxD D_floating, each in its own word order",
     "48 42 00 00 is the words 0x4248, 0x0000: sign 0, exponent 132, fraction 0x480000, so (0.5 + 0x480000 / 2^24) x "
     "2^4 = 12.5. The D_floating 80 40 then six zero bytes is the word 0x4080 first: exponent 129, fraction 0, so "
     "0.5 x 2 = 1.0. The struct's little-endian declaration is not consulted.",
-    FLOATS + ["req-pm-numeric-representation-4", "req-pm-numeric-representation-6"],
+    FLOATS + ["req-pm-numeric-representation-4", "req-pm-numeric-representation-10", "req-pm-numeric-representation-6"],
     ["numeric-representation"],
     """
    ex:Root a bddo:Struct ; bddo:endianness bddo:BigEndian ; bddo:hasField ( ex:f ex:d ) .
    ex:f a bddo:Field ; bddo:dataType bddo:float32 ; bddo:floatFormat bddo:vaxF .
-   ex:d a bddo:Field ; bddo:dataType bddo:float64 ; bddo:floatFormat bddo:vaxF .
+   ex:d a bddo:Field ; bddo:dataType bddo:float64 ; bddo:floatFormat bddo:vaxD .
    """,
     bytes.fromhex("484200008040000000000000"),
     {"f": 12.5, "d": 1.0},
