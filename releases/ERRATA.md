@@ -5,6 +5,11 @@ Defects found in a frozen snapshot are recorded here instead, and the gates that
 them list exactly these entries (`tools/test_version_immutability.py`). The version lineage
 that follows from the corrections is `releases/lineage.json`.
 
+A validation outcome that a later, recorded change altered is not a defect of the snapshot that
+froze the case, and is not recorded here: `releases/compatibility.json` lists each archived case
+whose outcome against the current shapes differs, under the change that caused it, and
+`python tools/test_release_contract.py --replay-history` holds the replay to that list.
+
 ## E1 bddo 1.0 has two contents
 
 `https://hexplain.io/ns/bddo/1.0` names different graphs in different snapshots. Snapshots

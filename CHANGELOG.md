@@ -120,6 +120,24 @@ requirement identifiers.
 - **Every codec contract states `hexplain:encodes`** (`#codec-contracts`), true or false.
 - **A non-positive stride** that a field or an expression supplies is a description error when
   the layout is resolved (`#data-layouts`).
+- **The history replay judges archived cases as their gates did, and records what changed.**
+  `python tools/test_release_contract.py --replay-history` failed on snapshot 2026-09-06.1. The
+  replay validated retained family contracts without `allowWarnings` and without SHACL Advanced
+  Features, so a snapshot's advisory-only cases failed against its own shapes; it now uses
+  `test_family_contract.case_failure`, and Advanced Features for the TSV corpora. Against the
+  current shapes, 113 archived cases (285 copies across the seven snapshots) have another outcome
+  because of recorded changes; `releases/compatibility.json` lists each under its change, and
+  the replay fails on a divergence it does not list or a listed one that no longer occurs. No
+  archive is rewritten. One of those changes was not in this changelog: a `bddo:Checksum` must
+  state the start and the end of its covered range (since 2026-10-12), which the retained BDDO
+  contracts sharing a range-less checksum prelude no longer meet.
+- **Suite cases.** New: `pp-align-struct-origin-padding`, `pp-align-struct-origin-field`,
+  `pp-align-derived-field`, `pp-offset-field-start`, `pp-offset-field-start-outside`,
+  `pp-offset-field-start-absent-base`, `pp-float-vax-d-g`, `pp-float-vax-f-64-deprecated`,
+  `pp-valid-despite-warning`, `pp-layout-stride-from-field-zero`, `pp-separated-abutting-regions`,
+  `w-pad-to-struct-origin`, `w-separated-region-start`. Changed: `pp-float-vax` reads its 64-bit
+  field as `bddo:vaxD`; `w-float-vax`, `w-float-vax-infinity` and `w-float-vax-negative-zero`
+  write a `bddo:vaxD` and a `bddo:vaxG` field.
 
 ### Gate tooling: second review pass (2026-10-13)
 

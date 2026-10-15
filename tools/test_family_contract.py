@@ -42,39 +42,50 @@ Task = tuple[str, list[tuple[int, Row]]]
 Failure = tuple[int, str, str, str]
 
 
+def case_failure(shapes: Graph, row: Row) -> tuple[str, str] | None:
+    """Validate one retained case against its module's ``shapes``: (reason, report) when it fails, else None.
+
+    tools/test_release_contract.py replays archived cases with this same function, so a snapshot's cases are judged
+    as the gate judged them when the snapshot was cut.
+    """
+    selected = shapes
+    if row.get("targetShape"):
+        selected = Graph() + shapes
+        selected.add((URIRef(row["targetShape"]), SH.targetNode, URIRef(row["targetNode"])))
+    # allow_warnings distinguishes advisory results from violations: pySHACL otherwise reports
+    # conforms=false for a warning-only report, which would make sh:severity unobservable and
+    # every advisory constraint indistinguishable from an error. advanced=True, as the coverage
+    # ledger measures these same cases: a shape whose focus nodes a SPARQL target selects
+    # (sh:target, SHACL Advanced Features) is otherwise never applied.
+    ok, report, detail = validate(
+        Graph().parse(data=row["data"], format="turtle"),
+        shacl_graph=selected,
+        inference="none",
+        advanced=True,
+        allow_warnings=bool(row.get("allowWarnings")),
+    )
+    if bool(ok) != row["expected"]:
+        return f"expected conforms={row['expected']}", detail
+    wanted = [
+        (SH.resultPath, row["path"], "result path"),
+        (SH.sourceShape, row.get("expectedShape"), "source shape"),
+        (SH.resultSeverity, row.get("severity"), "severity"),
+    ]
+    for predicate, value, what in wanted:
+        if value and URIRef(value) not in report.objects(None, predicate):
+            return f"missing {what} {value}", detail
+    return None
+
+
 def check(task: Task) -> list[Failure]:
     """Validate one module's chunk, returning (index, name, reason, report) for each failure."""
     module, items = task
     shapes = Graph().parse(ROOT / module)
     failures: list[Failure] = []
     for index, row in items:
-        selected = shapes
-        if row.get("targetShape"):
-            selected = Graph() + shapes
-            selected.add((URIRef(row["targetShape"]), SH.targetNode, URIRef(row["targetNode"])))
-        # allow_warnings distinguishes advisory results from violations: pySHACL otherwise reports
-        # conforms=false for a warning-only report, which would make sh:severity unobservable and
-        # every advisory constraint indistinguishable from an error. advanced=True, as the coverage
-        # ledger measures these same cases: a shape whose focus nodes a SPARQL target selects
-        # (sh:target, SHACL Advanced Features) is otherwise never applied.
-        ok, report, detail = validate(
-            Graph().parse(data=row["data"], format="turtle"),
-            shacl_graph=selected,
-            inference="none",
-            advanced=True,
-            allow_warnings=bool(row.get("allowWarnings")),
-        )
-        if bool(ok) != row["expected"]:
-            failures.append((index, row["name"], f"expected conforms={row['expected']}", detail))
-            continue
-        if row["path"] and URIRef(row["path"]) not in report.objects(None, SH.resultPath):
-            failures.append((index, row["name"], f"missing result path {row['path']}", detail))
-            continue
-        if row.get("expectedShape") and URIRef(row["expectedShape"]) not in report.objects(None, SH.sourceShape):
-            failures.append((index, row["name"], f"missing source shape {row['expectedShape']}", detail))
-            continue
-        if row.get("severity") and URIRef(row["severity"]) not in report.objects(None, SH.resultSeverity):
-            failures.append((index, row["name"], f"missing severity {row['severity']}", detail))
+        failed = case_failure(shapes, row)
+        if failed is not None:
+            failures.append((index, row["name"], *failed))
     return failures
 
 
