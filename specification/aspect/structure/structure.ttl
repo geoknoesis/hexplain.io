@@ -1,0 +1,42 @@
+# Draft reusable structured-value aspect. No application-format vocabulary.
+@prefix st: <https://hexplain.io/ns/aspect/structure#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+<https://hexplain.io/ns/aspect/structure> a owl:Ontology ;
+    rdfs:label "Hexplain structured values (draft)"@en ;
+    owl:versionInfo "0.1-draft" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    rdfs:comment "Application-independent records, named members and collection items. Values retain their RDF datatypes; nested values are resources. This aspect describes decoded values, not physical BDDO declarations."@en .
+
+st:Record a owl:Class ; rdfs:label "structured record"@en ;
+    rdfs:comment "A decoded record with individually identified members. The source profile defines each member's meaning and type."@en .
+st:Member a owl:Class ; rdfs:label "record member"@en ;
+    rdfs:comment "A decoded named member, with its optional numeric identifier and its typed value or collection items."@en .
+st:Item a owl:Class ; rdfs:label "collection item"@en ;
+    rdfs:comment "An individually addressable collection element. Its canonical Hexplain instance path records its sequence position."@en .
+st:hasMember a owl:ObjectProperty ; rdfs:range st:Member ; rdfs:label "has member"@en .
+st:hasItem a owl:ObjectProperty ; rdfs:range st:Item ; rdfs:label "has item"@en .
+st:name a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "member name"@en .
+st:identifier a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "member identifier"@en .
+st:recordType a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "declared record type"@en .
+st:dataType a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "declared value type"@en .
+st:symbol a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "enumeration symbol"@en .
+st:count a owl:DatatypeProperty ; rdfs:range xsd:nonNegativeInteger ; rdfs:label "element or byte count"@en .
+st:value a rdf:Property ; rdfs:label "decoded value"@en ;
+    rdfs:comment "A scalar RDF literal with its actual datatype, or a resource describing a nested value. Never a substitute for parsing an unknown structure."@en .
+
+st:MemberShape a sh:NodeShape ; sh:targetClass st:Member ;
+    sh:property [ sh:path st:name ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path st:identifier ; sh:maxCount 1 ; sh:node st:IntegerValueShape ] ;
+    sh:property [ sh:path st:value ; sh:maxCount 1 ] .
+st:CountShape a sh:NodeShape ; sh:targetSubjectsOf st:count ;
+    sh:property [ sh:path st:count ; sh:node st:IntegerValueShape ; sh:minInclusive 0 ; sh:maxCount 1 ] .
+
+st:IntegerValueShape a sh:NodeShape ;
+    sh:nodeKind sh:Literal ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
