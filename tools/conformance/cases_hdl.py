@@ -1644,6 +1644,22 @@ err(
 )
 
 err(
+    "repeat-previous-outside-repeat",
+    "repeat.previous outside the arguments and until condition of a repeat is an ERROR",
+    "A size expression is not an element argument of a repeat clause, so it has no previous element.",
+    ["req-hdl-expressions-8"],
+    ["repeat-index"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      n : u8
+      d : bytes[repeat.previous]
+    }
+    """,
+    line=4,
+)
+
+err(
     "pipeline-and-encoded-with",
     "@pipeline together with @encoded-with is an ERROR",
     "The two encoding forms are mutually exclusive.",

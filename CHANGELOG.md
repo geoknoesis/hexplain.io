@@ -120,6 +120,10 @@ the quantifier claim lists all 20 functions, README counts 39 module rows, CONTR
 case procedure and corrects the order of the coverage builders, and `_build_ontology_docs.py` keeps
 the print-stylesheet link on the pages it writes.
 
+### The previous element of a repetition, and concatOf
+
+`repeat.previous` gives an element argument or `until` condition the element before the one being read or written (Null for the first), so a value such as a running total is carried along a repetition without a nesting level per element. `concatOf(array, expression)` joins the arrays (or Bytes) an expression yields for each element. New requirements: `req-hel-reserved-roots-8` (scope and Null for the first element), `req-hdl-expressions-8` (a compiler accepts it exactly where it accepts `repeat.index`), `req-pm-parsefield-38` (reader), `req-pm-serialisation-40` (Writer, from the tree) and `req-hel-ext-quantifiers-24` (`concatOf`). Changed text: `req-hel-reserved-roots-6` (the root takes the keys `index` and `previous`), `req-hdl-expressions-6` (likewise). Cases: `pp-repeat-previous`, `w-repeat-previous`, `pp-concat-of`, `hc-repeat-previous-outside-repeat`.
+
 ### Outcome contracts, scoped round trips and validation evidence
 
 Required-error cases now reject successful process/artifact outcomes, even when their bodies

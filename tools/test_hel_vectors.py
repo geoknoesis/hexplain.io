@@ -55,6 +55,7 @@ QUANTIFIER_FUNCTIONS = (
     "countWhere",
     "sumOf",
     "project",
+    "concatOf",
     "repeatValue",
     "concatArrays",
     "concatBytes",

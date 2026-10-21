@@ -735,6 +735,44 @@ pp(
 )
 
 pp(
+    "repeat-previous",
+    "repeat.previous is the element before the one being read, Null for the first",
+    "Each Item receives the Total of the one before it (0 for the first), so the Totals are the running sums "
+    "1, 3, 6 of the bytes 01 02 03.",
+    ["req-pm-parsefield-38", "req-hel-reserved-roots-8"],
+    ["repeat-index", "hel/index.html#reserved-roots"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ) .
+   ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 3 ;
+       bddo:hasArgument ( "repeat.index == 0 ? 0 : repeat.previous.Total" ) .
+   ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.base ) ; bddo:hasField ( ex:Item.N ex:Item.Total ) .
+   ex:Item.base a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Item.N a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Item.Total a bddo:Field ; bddo:valueFromExpression "param.base + instance.N" .
+   """,
+    bytes([1, 2, 3]),
+    {"items": [{"N": 1, "Total": 1}, {"N": 2, "Total": 3}, {"N": 3, "Total": 6}]},
+)
+
+pp(
+    "concat-of",
+    "concatOf concatenates the arrays its expression yields, in element order",
+    "Two Parts of lengths 2 and 1 hold 0A 0B and 0C; All is their concatenation.",
+    ["req-hel-ext-quantifiers-24"],
+    ["algorithm", "hel/index.html#ext-quantifiers"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.parts ex:Root.All ) .
+   ex:Root.parts a bddo:Field ; bddo:dataType ex:Part ; bddo:repeatCount 2 .
+   ex:Root.All a bddo:Field ; bddo:valueFromExpression "concatOf(instance.parts, self.Data)" .
+   ex:Part a bddo:Struct ; bddo:hasField ( ex:Part.Len ex:Part.Data ) .
+   ex:Part.Len a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Part.Data a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCountFromField ex:Part.Len .
+   """,
+    bytes([2, 10, 11, 1, 12]),
+    {"parts": [{"Len": 2, "Data": [10, 11]}, {"Len": 1, "Data": [12]}], "All": [10, 11, 12]},
+)
+
+pp(
     "param-nested-arguments",
     "Arguments are expressions in the caller's context and pass parameters on",
     "Root passes w and w * 2 to Row; Row passes param.w + 1 to Cell, whose data is that many bytes.",
