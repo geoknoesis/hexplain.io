@@ -694,6 +694,24 @@ pp(
 )
 
 pp(
+    "repeat-index",
+    "repeat.index is the zero-based position of the element being read",
+    "Items passes repeat.index to each Item, whose v must equal it: bytes 00 01 02 satisfy the three elements, "
+    "which would fail if every element saw the same index.",
+    ["req-pm-parsefield-37", "req-hel-reserved-roots-6"],
+    ["repeat-index", "hel/index.html#reserved-roots"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ) .
+   ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 3 ; bddo:hasArgument ( "repeat.index" ) .
+   ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.i ) ; bddo:hasField ( ex:Item.v ) .
+   ex:Item.i a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Item.v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self == param.i" .
+   """,
+    bytes([0, 1, 2]),
+    {"items": [{"v": 0}, {"v": 1}, {"v": 2}]},
+)
+
+pp(
     "param-nested-arguments",
     "Arguments are expressions in the caller's context and pass parameters on",
     "Root passes w and w * 2 to Row; Row passes param.w + 1 to Cell, whose data is that many bytes.",

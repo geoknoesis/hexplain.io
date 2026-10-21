@@ -523,6 +523,24 @@ w(
 )
 
 w(
+    "repeat-index",
+    "A Writer binds repeat.index to each element's position",
+    "The tree holds three Item elements; each is written with repeat.index as its argument, so v == param.i holds "
+    "for 0, 1 and 2 and the output is 000102.",
+    ["req-pm-serialisation-39"],
+    ["repeat-index"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ) .
+   ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 3 ; bddo:hasArgument ( "repeat.index" ) .
+   ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.i ) ; bddo:hasField ( ex:Item.v ) .
+   ex:Item.i a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Item.v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self == param.i" .
+   """,
+    {"items": [{"v": 0}, {"v": 1}, {"v": 2}]},
+    bytes.fromhex("00 01 02"),
+)
+
+w(
     "pad-to-pad-byte",
     "The padding of a bddo:padTo is its declared bddo:padByte, and 00 when none is declared",
     "a is padded to 4 with its pad byte 2A: 01 2A 2A 2A. The struct Rec is padded to 4 with no pad byte declared: "

@@ -1595,6 +1595,22 @@ err(
 )
 
 err(
+    "repeat-index-outside-repeat",
+    "repeat.index outside the arguments and until condition of a repeat is an ERROR",
+    "A size expression is not an element argument of a repeat clause, so it has no element index.",
+    ["req-hdl-expressions-6"],
+    ["repeat-index"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      n : u8
+      d : bytes[repeat.index]
+    }
+    """,
+    line=4,
+)
+
+err(
     "pipeline-and-encoded-with",
     "@pipeline together with @encoded-with is an ERROR",
     "The two encoding forms are mutually exclusive.",
