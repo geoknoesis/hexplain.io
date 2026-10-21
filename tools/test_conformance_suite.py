@@ -54,6 +54,8 @@ from suite import (  # noqa: E402
 
 REQUIRED = ("id", "class", "title", "description", "requirements", "sections")
 MINIMUM_CASES = 150
+#: The values of the `dependentValues` option a Writer case may set in its `limits` member (Serialisation).
+DEPENDENT_VALUE_MODES = ("verify", "recompute")
 #: The registry class of the serialisation requirements, and the feature token a Writer case requires.
 WRITER = "writer"
 
@@ -373,12 +375,22 @@ def member_problems(cls: str, man: dict[str, Any], known: Known) -> list[str]:
     return listed_member_problems(man, known) + flag_problems(cls, man)
 
 
+def limit_problems(man: dict[str, Any]) -> list[str]:
+    """The members of a manifest's limits: a resource limit by name, or the Writer's dependentValues mode."""
+    problems = []
+    for limit, value in man.get("limits", {}).items():
+        if limit == "dependentValues":
+            if value not in DEPENDENT_VALUE_MODES:
+                problems.append(f"dependentValues is one of {DEPENDENT_VALUE_MODES}, not {value!r}")
+        elif limit not in LIMITS:
+            problems.append(f"unknown limit {limit}")
+    return problems
+
+
 def listed_member_problems(man: dict[str, Any], known: Known) -> list[str]:
     """The members that list names: limits, features, codecs and withdrawn claims."""
     problems = []
-    for limit in man.get("limits", {}):
-        if limit not in LIMITS:
-            problems.append(f"unknown limit {limit}")
+    problems += limit_problems(man)
     for kind, names in man.get("features", {}).items():
         if kind not in ("requires", "unclaimed"):
             problems.append(f"unknown features member {kind}")
@@ -555,7 +567,7 @@ def main() -> int:
             if cls == WRITER:
                 writer_cited |= set(man.get("requirements", []))
     by_mode = set(_build_conformance_page.OBSERVED_BY_ROUND_TRIP)
-    for rid in sorted(writer_requirements - writer_cited - by_mode):
+    for rid in sorted(writer_requirements - writer_cited - by_mode - set(_build_conformance_page.NOT_SUITE_TESTABLE)):
         problems.append(f"{rid}: a live serialisation requirement no Writer case cites")
     for rid in sorted(by_mode & writer_cited):
         problems.append(f"{rid}: observed by the round-trip mode, which is its citation; no single case shows it")

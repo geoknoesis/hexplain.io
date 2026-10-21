@@ -1963,6 +1963,15 @@
    "text": "A processor MUST evaluate repeat.previous in the same expressions as the element at position i − 1 of the same repetition as it was read, with its fields reached by path, and as Null while i is zero.",
    "sha256": "d0c215e81c89ea92"
   },
+  "req-pm-parsefield-39": {
+   "page": "specification/processing/index.html",
+   "section": "context",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST evaluate the bddo:definesExpression of a field once the field is bound, with the bindings of bddo:validIf, and a result that is not equal to the field’s value is a validation error, as a false bddo:validIf is (Serialisation gives the write direction).",
+   "sha256": "76af7368a4447c16"
+  },
   "req-pm-parsestruct-1": {
    "page": "specification/processing/index.html",
    "section": "parsestruct",
@@ -2353,9 +2362,12 @@
    "cls": "writer",
    "level": "MUST",
    "audience": "processor",
-   "text": "Every other bound dependent value — a length of bytes the tree itself determines, an element count, a checksum over such bytes — MUST equal its recomputation, and a Writer MUST raise a validation error when it differs, so that a tree is never silently corrected.",
-   "sha256": "90e6c66e216ba8ce",
-   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
+   "text": "In verify mode (the default: The HEL Parsing Context), every other bound dependent value — a length of bytes the tree itself determines, an element count, a checksum over such bytes — MUST equal its recomputation, and a Writer MUST raise a validation error when it differs, so that a tree is never silently corrected.",
+   "sha256": "3f275394017a1bda",
+   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:",
+   "history": [
+    "90e6c66e216ba8ce"
+   ]
   },
   "req-pm-serialisation-23": {
    "page": "specification/processing/index.html",
@@ -2388,11 +2400,12 @@
    "cls": "writer",
    "level": "MUST",
    "audience": "processor",
-   "text": "Padding, alignment and offsets. A fill byte is 0x00, with one exception: the padding of a bddo:padTo is filled with the bddo:padByte declared beside it, and with 0x00 when none is declared (The fill byte). The unused low-order bits of a partial byte the bit cursor leaves at a realignment point are 0. bddo:alignment writes fill bytes to the next multiple of the alignment, measured from the alignment origin as at parse, and bddo:padTo writes its fill from the end of the field's value, or of the struct's last member, to the next multiple of its boundary, measured from the same origin. An offset-addressed field (bddo:atOffset and its forms, with its bddo:offsetBase) is written at its target, its bddo:padTo padding after its value there, and the cursor restored afterwards as at parse: the output is addressable, the bytes between the cursor and a target not yet written are fill bytes, and a target already written with different bytes, or a target before the start of the stream, is a validation error. Offset values are taken from T (the offset field's value or the expression's result); this version does not derive offset tables.",
-   "sha256": "79ae71afceaf433a",
+   "text": "Padding, alignment and offsets. A fill byte is 0x00, with one exception: the padding of a bddo:padTo is filled with the bddo:padByte declared beside it, and with 0x00 when none is declared (The fill byte). The unused low-order bits of a partial byte the bit cursor leaves at a realignment point are 0. bddo:alignment writes fill bytes to the next multiple of the alignment, measured from the alignment origin as at parse, and bddo:padTo writes its fill from the end of the field's value, or of the struct's last member, to the next multiple of its boundary, measured from the same origin. An offset-addressed field (bddo:atOffset and its forms, with its bddo:offsetBase) is written at its target, its bddo:padTo padding after its value there, and the cursor restored afterwards as at parse: the output is addressable, the bytes between the cursor and a target not yet written are fill bytes, and a target already written with different bytes, or a target before the start of the stream, is a validation error. In verify mode, offset values are taken from T (the offset field's value or the expression's result) and this rule derives no offset table; recompute mode places a region and rebinds its offset (The HEL Parsing Context).",
+   "sha256": "49d7206fe537461a",
    "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:",
    "history": [
-    "9cb23f1ba4d1ddc4"
+    "9cb23f1ba4d1ddc4",
+    "79ae71afceaf433a"
    ]
   },
   "req-pm-serialisation-26": {
@@ -2553,6 +2566,96 @@
    "text": "A Writer MUST bind repeat.previous in the same expressions to the preceding element of the tree being written, as Null for the first, and MUST read that element as written: a field the tree binds has the tree’s value, and a derived field has the value the Writer recomputed while writing that element (the tree’s value for it, if any, is ignored, as everywhere in serialisation), so that the value a parser carried forward from the element before is the value the Writer computes from the tree.",
    "sha256": "2f069a5aaec3697a",
    "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
+  },
+  "req-pm-serialisation-41": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Writer MUST offer two modes for dependent values and MUST apply verify mode, which is rules 2 and 4 exactly as stated, unless the caller selects recompute mode.",
+   "sha256": "0773a25e4eca83fa"
+  },
+  "req-pm-serialisation-42": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "In recompute mode a Writer MUST recompute every dependent value from what it writes and MUST rebind the value of T it is computed from so that the computation holds, instead of comparing the two; the stream is then written from the rebound tree.",
+   "sha256": "bcc30e42ac266489"
+  },
+  "req-pm-serialisation-43": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Writer MUST rebind through a dependent expression only when it is in the following fragment, evaluated over T with the field being rebound (the terminal) excluded.",
+   "sha256": "55f5277f5af0bbe5"
+  },
+  "req-pm-serialisation-44": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Anything else is outside the fragment — in particular concatOf, project, sumOf and every other aggregate, a product of two fields, and a subscript by anything but a constant or repeat.index — and a Writer MUST raise a validation error naming the field when a dependent value needs an expression outside the fragment inverted, and when a rebound value is outside the range of its terminal's type.",
+   "sha256": "6c355cbd9fb0af79"
+  },
+  "req-pm-serialisation-45": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "In recompute mode a Writer MUST place a region addressed by an offset expression in the fragment at the next free position in stream order, after every region that precedes it in field order, and MUST rebind the offset's source to that position; the rule that offset values are taken from T (rule 4) applies in verify mode only.",
+   "sha256": "53aaa936b75b6d10"
+  },
+  "req-pm-serialisation-46": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A codec whose contract reports a recomputed parameter (menc:VerifyCRC32 reports expected, the CRC-32 of its input) MUST have, in recompute mode, the expression of that parameter inverted like a size, the Writer rebinding the terminal to the reported value.",
+   "sha256": "f9a95ed2361871ef"
+  },
+  "req-pm-serialisation-47": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A field with bddo:definesExpression E (HDL @defines, E in the fragment) is checked when written as E == the field's value, a mismatch being a validation error as for bddo:validIf; a Writer in recompute mode MUST instead write it by rebinding the terminal of E to the field's value.",
+   "sha256": "7b1b6a3200fcdfbe"
+  },
+  "req-pm-serialisation-48": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Writer that reuses the encoded bytes a parse captured for a field MUST do so only when the decoded bytes, the codec steps and their parameters all equal those at parse; any difference re-encodes.",
+   "sha256": "52fb9db0bdba7e73"
+  },
+  "req-pm-serialisation-49": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Rebinding happens inside the Writer's bounded layout passes (maxLayoutPasses), each pass writing the stream from the tree the previous one rebound; a Writer MUST raise a resource-limit error when rebinding has not converged within them, and MUST NOT write the last pass's stream.",
+   "sha256": "8043a37b8d1b3a97"
+  },
+  "req-pm-serialisation-50": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "The terminal MUST be a non-derived scalar field that T binds.",
+   "sha256": "6ad0785f6a139f8b"
   },
   "req-pm-size-resolution-1": {
    "page": "specification/processing/index.html",
@@ -4166,6 +4269,24 @@
    "audience": "processor",
    "text": "A compiler MUST emit bddo:alignment and, for an explicit origin, bddo:alignmentOrigin with bddo:structOrigin or bddo:streamOrigin, and MUST NOT emit bddo:alignmentOrigin for an @align without one (Processing Model, alignment and padding).",
    "sha256": "accba7dfdb06b2fe"
+  },
+  "req-hdl-clauses-11": {
+   "page": "specification/hdl/index.html",
+   "section": "clauses",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST emit @defines E as bddo:definesExpression with the canonical HEL string of E, and MUST report an ERROR for a second @defines on one field and for an E outside the invertible fragment (Processing Model) — an aggregate such as concatOf, project or sumOf, a product of two fields, or a subscript by anything but a constant or repeat.index.",
+   "sha256": "1bf795bc10bd4206"
+  },
+  "req-hdl-clauses-12": {
+   "page": "specification/hdl/index.html",
+   "section": "clauses",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "In a .hx.yaml document a compiler MUST accept the clause as the field key defines, under the same rules.",
+   "sha256": "697354ebdeb952c5"
   },
   "req-hdl-compilation-model-1": {
    "page": "specification/hdl/index.html",

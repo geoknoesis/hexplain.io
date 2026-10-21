@@ -43,8 +43,12 @@ def w(
     tree: Any,
     expected: Any = None,
     error: Any = None,
+    recompute: bool = False,
     **kw: Any,
 ) -> None:
+    manifest: dict[str, Any] = {"features": {"requires": ["writer"]}}
+    if recompute:
+        manifest["limits"] = {"dependentValues": "recompute"}
     CASES.append(
         Case(
             id=f"w-{id}",
@@ -57,7 +61,7 @@ def w(
             tree=tree,
             expected_bytes=expected,
             error=error,
-            manifest={"features": {"requires": ["writer"]}},
+            manifest=manifest,
             **kw,
         )
     )
@@ -588,6 +592,210 @@ w(
         ]
     },
     bytes.fromhex("01 aa 02 bb cc 03 dd ee ff 11"),
+)
+
+# ----------------------------------------------------------------- recompute mode (dependent values)
+
+RC = ["req-pm-serialisation-41", "req-pm-serialisation-42"]
+INV = "req-pm-serialisation-43"
+INV_TERMINAL = "req-pm-serialisation-50"
+NOT_INV = "req-pm-serialisation-44"
+RC_SECTIONS = ["write-recompute", "write-invertible"]
+
+w(
+    "recompute-size-expression",
+    "Recompute mode rebinds the field a size expression reads",
+    "data is n + 1 bytes and the tree gives n as 9 with three bytes of data: recomputing the size from the data "
+    "rebinds n to 2, and 02 AA BB CC is written. Verify mode refuses the same tree.",
+    RC + [INV, INV_TERMINAL],
+    RC_SECTIONS,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:data ) .
+   ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "instance.n + 1" .
+   """,
+    {"n": 9, "data": bytes([0xAA, 0xBB, 0xCC])},
+    bytes([2, 0xAA, 0xBB, 0xCC]),
+    recompute=True,
+)
+
+w(
+    "recompute-count-expression",
+    "Recompute mode rebinds the field a count expression reads",
+    "items repeats n - 1 times; the tree holds three items and a stale n of 0, so n is rebound to 4.",
+    RC + [INV, INV_TERMINAL],
+    RC_SECTIONS,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:items ) .
+   ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:items a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCountFromExpression "instance.n - 1" .
+   """,
+    {"n": 0, "items": [1, 2, 3]},
+    bytes([4, 1, 2, 3]),
+    recompute=True,
+)
+
+w(
+    "recompute-derive-chain",
+    "Rebinding follows a derived field whose expression is itself invertible",
+    "data is total bytes and total is derived as n + 1: three bytes of data make total 3, which rebinds n to 2 "
+    "through the derived field.",
+    RC + [INV, INV_TERMINAL],
+    RC_SECTIONS,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:total ex:data ) .
+   ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:total a bddo:Field ; bddo:valueFromExpression "instance.n + 1" .
+   ex:data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "instance.total" .
+   """,
+    {"n": 0, "total": 3, "data": bytes([0xAA, 0xBB, 0xCC])},
+    bytes([2, 0xAA, 0xBB, 0xCC]),
+    recompute=True,
+)
+
+w(
+    "recompute-mask",
+    "A mask 2^k - 1 rebinds the representative in the signed range of k bits",
+    "data is n & 15 bytes and n is a signed byte: twelve bytes of data need n & 15 = 12, whose representative in "
+    "[-8, 8) is -4, written FC.",
+    RC + [INV, INV_TERMINAL],
+    RC_SECTIONS,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:data ) .
+   ex:n a bddo:Field ; bddo:dataType bddo:int8 .
+   ex:data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "instance.n & 15" .
+   """,
+    {"n": 100, "data": bytes(range(12))},
+    bytes([0xFC]) + bytes(range(12)),
+    recompute=True,
+)
+
+w(
+    "recompute-codec-parameter",
+    "A codec's recomputed parameter rebinds the field its expression reads",
+    "The VerifyCRC32 step of data takes expected from crc; in recompute mode the CRC-32 of 123 (884863D2) is "
+    "reported by the codec and rebinds crc.",
+    RC + ["req-pm-serialisation-46"],
+    RC_SECTIONS + ["write-recompute-codec"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:crc ex:data ) .
+   ex:crc a bddo:Field ; bddo:dataType bddo:uint32 .
+   ex:data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 3 ;
+       hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:VerifyCRC32 ;
+           hexplain:codecParameter [ a hexplain:CodecParameter ; hexplain:parameterName "expected" ;
+               hexplain:parameterExpression "instance.crc" ] ] ) .
+   """,
+    {"crc": 0, "data": b"123"},
+    bytes.fromhex("884863d2") + b"123",
+    recompute=True,
+)
+
+w(
+    "recompute-offset",
+    "A region addressed by an offset expression is placed at the next free position",
+    "blob is at ptr; the tree's ptr is 99, but the regions before blob end at offset 2, so blob is placed there and "
+    "ptr rebound to 2.",
+    RC + ["req-pm-serialisation-45"],
+    RC_SECTIONS + ["write-recompute-offsets"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:hdr ex:ptr ex:blob ) .
+   ex:hdr a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:ptr a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:blob a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 2 ; bddo:atOffsetFromExpression "instance.ptr" .
+   """,
+    {"hdr": 7, "ptr": 99, "blob": bytes([0xAA, 0xBB])},
+    bytes([7, 2, 0xAA, 0xBB]),
+    recompute=True,
+)
+
+DEFINES_DESCRIPTION = """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:count ex:items ex:cnt ) .
+   ex:count a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:items a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount 2 .
+   ex:cnt a bddo:Field ; bddo:valueFromExpression "len(instance.items)" ; bddo:definesExpression "instance.count" .
+   """
+
+w(
+    "recompute-defines",
+    "A derived field with bddo:definesExpression rebinds the terminal of its expression",
+    "cnt is len(items) and defines count: the tree's count of 9 is stale, so recompute mode rebinds it to 2.",
+    RC + ["req-pm-serialisation-47"],
+    RC_SECTIONS + ["write-defines"],
+    DEFINES_DESCRIPTION,
+    {"count": 9, "items": [5, 6], "cnt": 2},
+    bytes([2, 5, 6]),
+    recompute=True,
+)
+
+w(
+    "recompute-defines-verify",
+    "In verify mode bddo:definesExpression is only a check",
+    "The same description and tree as w-recompute-defines, written in the default mode: count (9) is not "
+    "len(items) (2), a validation error.",
+    ["req-pm-serialisation-41", "req-pm-serialisation-47"],
+    ["write-recompute", "write-defines"],
+    DEFINES_DESCRIPTION,
+    {"count": 9, "items": [5, 6], "cnt": 2},
+    error="Validation",
+)
+
+w(
+    "recompute-parameter-path",
+    "Rebinding follows a struct parameter to the node its argument denotes",
+    "body receives meta as its argument m, and cnt defines param.m.Count: the tree's meta.Count is stale, so "
+    "recompute mode resolves m to meta and rebinds Count to 2, in the field written before body.",
+    RC + [INV, INV_TERMINAL, "req-pm-serialisation-47"],
+    RC_SECTIONS + ["write-defines"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:meta ex:body ) .
+   ex:meta a bddo:Field ; bddo:dataType ex:Meta .
+   ex:Meta a bddo:Struct ; bddo:hasField ( ex:Meta.Count ) .
+   ex:Meta.Count a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:body a bddo:Field ; bddo:dataType ex:Child ; bddo:hasArgument ( "instance.meta" ) .
+   ex:Child a bddo:Struct ; bddo:hasParameter ( ex:Child.m ) ; bddo:hasField ( ex:Child.items ex:Child.cnt ) .
+   ex:Child.m a bddo:Parameter ; bddo:parameterType bddo:NodeParameter .
+   ex:Child.items a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount 2 .
+   ex:Child.cnt a bddo:Field ; bddo:valueFromExpression "len(instance.items)" ;
+       bddo:definesExpression "param.m.Count" .
+   """,
+    {"meta": {"Count": 9}, "body": {"items": [5, 6], "cnt": 2}},
+    bytes([2, 5, 6]),
+    recompute=True,
+)
+
+w(
+    "recompute-not-invertible",
+    "A size expression outside the invertible fragment is a validation error",
+    "data is a * b bytes; the tree gives a = 2, b = 3 and five bytes of data. A product of two fields cannot be "
+    "inverted, so recompute mode refuses the tree as verify mode does.",
+    RC + [NOT_INV],
+    RC_SECTIONS,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:a ex:b ex:data ) .
+   ex:a a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:b a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "instance.a * instance.b" .
+   """,
+    {"a": 2, "b": 3, "data": bytes(5)},
+    error="Validation",
+    recompute=True,
+)
+
+w(
+    "recompute-unchanged",
+    "A tree that is already consistent writes the same bytes in recompute mode",
+    "n is 2 and data is three bytes, as n + 1 requires: nothing is rebound, and 02 AA BB CC is what verify mode "
+    "writes too.",
+    RC,
+    ["write-recompute"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:n ex:data ) .
+   ex:n a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "instance.n + 1" .
+   """,
+    {"n": 2, "data": bytes([0xAA, 0xBB, 0xCC])},
+    bytes([2, 0xAA, 0xBB, 0xCC]),
+    recompute=True,
 )
 
 w(
