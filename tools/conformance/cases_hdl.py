@@ -1594,6 +1594,39 @@ err(
     line=3,
 )
 
+hc(
+    "repeat-index-nested",
+    "repeat.index in a nested repetition is emitted unchanged for the innermost repeat clause",
+    "Rows passes its index to Row, which passes it on with the cell index to Cell: each hasArgument carries "
+    "repeat.index of the repeat clause on its own field, the outer index reaching Cell only through param.r.",
+    OK + ["req-hdl-expressions-7"],
+    ["repeat-index"],
+    """
+   format t @namespace "{ns}"
+   struct Root {
+     rows : Row(repeat.index) repeat 2
+   }
+   struct Row(r) {
+     cells : Cell(r, repeat.index) repeat 3
+   }
+   struct Cell(r, c) {
+     v : u8 @valid [self == r * 3 + c]
+   }
+   """,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.rows ) .
+   ex:Root.rows a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( "repeat.index" ) ; bddo:repeatCount 2 .
+   ex:Row a bddo:Struct ; bddo:hasParameter ( ex:Row.r ) ; bddo:hasField ( ex:Row.cells ) .
+   ex:Row.r a bddo:Parameter .
+   ex:Row.cells a bddo:Field ; bddo:dataType ex:Cell ; bddo:hasArgument ( "param.r" "repeat.index" ) ;
+       bddo:repeatCount 3 .
+   ex:Cell a bddo:Struct ; bddo:hasParameter ( ex:Cell.r ex:Cell.c ) ; bddo:hasField ( ex:Cell.v ) .
+   ex:Cell.r a bddo:Parameter .
+   ex:Cell.c a bddo:Parameter .
+   ex:Cell.v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self == param.r * 3 + param.c" .
+   """,
+)
+
 err(
     "repeat-index-outside-repeat",
     "repeat.index outside the arguments and until condition of a repeat is an ERROR",

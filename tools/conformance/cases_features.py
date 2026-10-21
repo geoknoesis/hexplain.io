@@ -716,7 +716,7 @@ pp(
     "repeat.index names the innermost repetition, the outer index arriving as an argument",
     "Rows passes its index r to Row, which passes r and the cell index to Cell; v must equal r * 3 + c over bytes "
     "00..05, which fails if the inner arguments saw the outer index.",
-    ["req-pm-parsefield-37", "req-hel-reserved-roots-6", "req-hel-reserved-roots-7", "req-hdl-expressions-7"],
+    ["req-pm-parsefield-37", "req-hel-reserved-roots-6", "req-hel-reserved-roots-7"],
     ["repeat-index", "hel/index.html#reserved-roots"],
     """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.rows ) .
