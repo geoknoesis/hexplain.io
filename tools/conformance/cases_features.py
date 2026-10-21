@@ -738,20 +738,27 @@ pp(
     "repeat-previous",
     "repeat.previous is the element before the one being read, Null for the first",
     "Each Item receives the Total of the one before it (0 for the first), so the Totals are the running sums "
-    "1, 3, 6 of the bytes 01 02 03.",
+    "1, 3, 6 and the Pads are 1, 2 and 4 bytes long (base + 1).",
     ["req-pm-parsefield-38", "req-hel-reserved-roots-8"],
     ["repeat-index", "hel/index.html#reserved-roots"],
     """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ) .
    ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 3 ;
        bddo:hasArgument ( "repeat.index == 0 ? 0 : repeat.previous.Total" ) .
-   ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.base ) ; bddo:hasField ( ex:Item.N ex:Item.Total ) .
+   ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.base ) ; bddo:hasField ( ex:Item.N ex:Item.Pad ex:Item.Total ) .
    ex:Item.base a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
    ex:Item.N a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Item.Pad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.base + 1" .
    ex:Item.Total a bddo:Field ; bddo:valueFromExpression "param.base + instance.N" .
    """,
-    bytes([1, 2, 3]),
-    {"items": [{"N": 1, "Total": 1}, {"N": 2, "Total": 3}, {"N": 3, "Total": 6}]},
+    bytes([1, 0xAA, 2, 0xBB, 0xCC, 3, 0xDD, 0xEE, 0xFF, 0x11]),
+    {
+        "items": [
+            {"N": 1, "Pad": "aa", "Total": 1},
+            {"N": 2, "Pad": "bbcc", "Total": 3},
+            {"N": 3, "Pad": "ddeeff11", "Total": 6},
+        ]
+    },
 )
 
 pp(
@@ -770,6 +777,42 @@ pp(
    """,
     bytes([2, 10, 11, 1, 12]),
     {"parts": [{"Len": 2, "Data": [10, 11]}, {"Len": 1, "Data": [12]}], "All": [10, 11, 12]},
+)
+
+pp(
+    "concat-of-bytes",
+    "concatOf of Bytes results is Bytes",
+    "Each Part holds Len bytes; All is the Bytes 0A 0B 0C.",
+    ["req-hel-ext-quantifiers-8"],
+    ["algorithm", "hel/index.html#ext-quantifiers"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.parts ex:Root.All ) .
+   ex:Root.parts a bddo:Field ; bddo:dataType ex:Part ; bddo:repeatCount 2 .
+   ex:Root.All a bddo:Field ; bddo:valueFromExpression "concatOf(instance.parts, self.Data)" .
+   ex:Part a bddo:Struct ; bddo:hasField ( ex:Part.Len ex:Part.Data ) .
+   ex:Part.Len a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Part.Data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromField ex:Part.Len .
+   """,
+    bytes([2, 10, 11, 1, 12]),
+    {"parts": [{"Len": 2, "Data": bytes([10, 11])}, {"Len": 1, "Data": bytes([12])}], "All": bytes([10, 11, 12])},
+)
+
+pp(
+    "concat-of-empty",
+    "concatOf over an empty collection is an empty array",
+    "No Part is read, so All is the empty array.",
+    ["req-hel-ext-quantifiers-8"],
+    ["algorithm", "hel/index.html#ext-quantifiers"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.tag ex:Root.parts ex:Root.All ) .
+   ex:Root.tag a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Root.parts a bddo:Field ; bddo:dataType ex:Part ; bddo:repeatCount 0 .
+   ex:Root.All a bddo:Field ; bddo:valueFromExpression "concatOf(instance.parts, self.Data)" .
+   ex:Part a bddo:Struct ; bddo:hasField ( ex:Part.Data ) .
+   ex:Part.Data a bddo:Field ; bddo:dataType bddo:uint8 .
+   """,
+    bytes([7]),
+    {"tag": 7, "parts": [], "All": []},
 )
 
 pp(

@@ -1627,6 +1627,34 @@ hc(
    """,
 )
 
+hc(
+    "repeat-previous-accepted",
+    "repeat.previous is accepted in an element argument and in an until condition",
+    "The same positions that accept repeat.index accept repeat.previous, and each is emitted unchanged.",
+    OK + ["req-hdl-expressions-8"],
+    ["repeat-index"],
+    """
+   format t @namespace "{ns}"
+   struct Root {
+     xs : It(repeat.index == 0 ? 0 : repeat.previous.Total) repeat until repeat.index > 0 and repeat.previous.Total > 5
+   }
+   struct It(base) {
+     n : u8
+     Total : derive base + n
+   }
+   """,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.xs ) .
+   ex:Root.xs a bddo:Field ; bddo:dataType ex:It ;
+       bddo:hasArgument ( "repeat.index == 0 ? 0 : repeat.previous.Total" ) ;
+       bddo:repeatUntil "repeat.index > 0 and repeat.previous.Total > 5" .
+   ex:It a bddo:Struct ; bddo:hasParameter ( ex:It.base ) ; bddo:hasField ( ex:It.n ex:It.Total ) .
+   ex:It.base a bddo:Parameter .
+   ex:It.n a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:It.Total a bddo:Field ; bddo:valueFromExpression "param.base + instance.n" .
+   """,
+)
+
 err(
     "repeat-index-outside-repeat",
     "repeat.index outside the arguments and until condition of a repeat is an ERROR",

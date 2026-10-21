@@ -565,21 +565,29 @@ w(
 w(
     "repeat-previous",
     "A Writer binds repeat.previous to the preceding element of the tree",
-    "Each Item is written with the Total of the element before it (0 for the first); N is written from the tree, "
-    "so the output is 01 02 03.",
+    "Each Item is written with the Total of the element before it, as written (0 for the first), and its Pad is "
+    "base + 1 bytes: 1, 2 and 4 bytes, so the output is 01 AA 02 BB CC 03 DD EE FF 11. A Writer that bound another "
+    "element, or Null, would size Pad differently and refuse the tree.",
     ["req-pm-serialisation-40", "req-hel-reserved-roots-8"],
     ["repeat-index"],
     """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ) .
    ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 3 ;
        bddo:hasArgument ( "repeat.index == 0 ? 0 : repeat.previous.Total" ) .
-   ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.base ) ; bddo:hasField ( ex:Item.N ex:Item.Total ) .
+   ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.base ) ; bddo:hasField ( ex:Item.N ex:Item.Pad ex:Item.Total ) .
    ex:Item.base a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
    ex:Item.N a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Item.Pad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.base + 1" .
    ex:Item.Total a bddo:Field ; bddo:valueFromExpression "param.base + instance.N" .
    """,
-    {"items": [{"N": 1, "Total": 1}, {"N": 2, "Total": 3}, {"N": 3, "Total": 6}]},
-    bytes.fromhex("01 02 03"),
+    {
+        "items": [
+            {"N": 1, "Pad": "aa", "Total": 1},
+            {"N": 2, "Pad": "bbcc", "Total": 3},
+            {"N": 3, "Pad": "ddeeff11", "Total": 6},
+        ]
+    },
+    bytes.fromhex("01 aa 02 bb cc 03 dd ee ff 11"),
 )
 
 w(

@@ -15,7 +15,8 @@
 ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ) .
 ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 3 ;
     bddo:hasArgument ( "repeat.index == 0 ? 0 : repeat.previous.Total" ) .
-ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.base ) ; bddo:hasField ( ex:Item.N ex:Item.Total ) .
+ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.base ) ; bddo:hasField ( ex:Item.N ex:Item.Pad ex:Item.Total ) .
 ex:Item.base a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
 ex:Item.N a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:Item.Pad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.base + 1" .
 ex:Item.Total a bddo:Field ; bddo:valueFromExpression "param.base + instance.N" .
