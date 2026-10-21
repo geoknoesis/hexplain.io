@@ -712,6 +712,29 @@ pp(
 )
 
 pp(
+    "repeat-index-nested",
+    "repeat.index names the innermost repetition, the outer index arriving as an argument",
+    "Rows passes its index r to Row, which passes r and the cell index to Cell; v must equal r * 3 + c over bytes "
+    "00..05, which fails if the inner arguments saw the outer index.",
+    ["req-pm-parsefield-37", "req-hel-reserved-roots-6", "req-hel-reserved-roots-7", "req-hdl-expressions-7"],
+    ["repeat-index", "hel/index.html#reserved-roots"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.rows ) .
+   ex:Root.rows a bddo:Field ; bddo:dataType ex:Row ; bddo:repeatCount 2 ; bddo:hasArgument ( "repeat.index" ) .
+   ex:Row a bddo:Struct ; bddo:hasParameter ( ex:Row.r ) ; bddo:hasField ( ex:Row.cells ) .
+   ex:Row.r a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Row.cells a bddo:Field ; bddo:dataType ex:Cell ; bddo:repeatCount 3 ;
+       bddo:hasArgument ( "param.r" "repeat.index" ) .
+   ex:Cell a bddo:Struct ; bddo:hasParameter ( ex:Cell.r ex:Cell.c ) ; bddo:hasField ( ex:Cell.v ) .
+   ex:Cell.r a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Cell.c a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Cell.v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self == param.r * 3 + param.c" .
+   """,
+    bytes([0, 1, 2, 3, 4, 5]),
+    {"rows": [{"cells": [{"v": 0}, {"v": 1}, {"v": 2}]}, {"cells": [{"v": 3}, {"v": 4}, {"v": 5}]}]},
+)
+
+pp(
     "param-nested-arguments",
     "Arguments are expressions in the caller's context and pass parameters on",
     "Root passes w and w * 2 to Row; Row passes param.w + 1 to Cell, whose data is that many bytes.",

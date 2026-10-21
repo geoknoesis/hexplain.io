@@ -541,6 +541,28 @@ w(
 )
 
 w(
+    "repeat-index-nested",
+    "A Writer binds repeat.index to the innermost repetition",
+    "Six cells in two rows are written with r the row index and c the cell index, so the output is 00 01 02 03 04 05.",
+    ["req-pm-serialisation-39", "req-hel-reserved-roots-7"],
+    ["repeat-index"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.rows ) .
+   ex:Root.rows a bddo:Field ; bddo:dataType ex:Row ; bddo:repeatCount 2 ; bddo:hasArgument ( "repeat.index" ) .
+   ex:Row a bddo:Struct ; bddo:hasParameter ( ex:Row.r ) ; bddo:hasField ( ex:Row.cells ) .
+   ex:Row.r a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Row.cells a bddo:Field ; bddo:dataType ex:Cell ; bddo:repeatCount 3 ;
+       bddo:hasArgument ( "param.r" "repeat.index" ) .
+   ex:Cell a bddo:Struct ; bddo:hasParameter ( ex:Cell.r ex:Cell.c ) ; bddo:hasField ( ex:Cell.v ) .
+   ex:Cell.r a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Cell.c a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Cell.v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self == param.r * 3 + param.c" .
+   """,
+    {"rows": [{"cells": [{"v": 0}, {"v": 1}, {"v": 2}]}, {"cells": [{"v": 3}, {"v": 4}, {"v": 5}]}]},
+    bytes.fromhex("00 01 02 03 04 05"),
+)
+
+w(
     "pad-to-pad-byte",
     "The padding of a bddo:padTo is its declared bddo:padByte, and 00 when none is declared",
     "a is padded to 4 with its pad byte 2A: 01 2A 2A 2A. The struct Rec is padded to 4 with no pad byte declared: "
