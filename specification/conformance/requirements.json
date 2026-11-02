@@ -3118,7 +3118,7 @@
    "audience": "processor",
    "text": "The first argument MUST be an array node.",
    "sha256": "c9a653f8d49309d3",
-   "context": "Boolean: true when predicate holds for at least one element; false for an empty array."
+   "context": "Inputs are unchanged."
   },
   "req-hel-ext-quantifiers-2": {
    "page": "specification/hel/index.html",
@@ -3147,6 +3147,33 @@
    "audience": "processor",
    "text": "An evaluator MUST bound the total number of predicate evaluations during one evaluation of an expression, nested quantifiers included, by its configured quantifier limit (the Processing Model’s quantifier evaluations, at least 1,000,000 by default), and MUST report exceeding it as a ResourceLimit error.",
    "sha256": "0b5aa85e6a49fd7d"
+  },
+  "req-hel-ext-quantifiers-5": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Collection construction, traversal, byte conversion and exact decimal formatting MUST share the quantifier element budget: each processed input or output element is charged before the corresponding allocation or conversion.",
+   "sha256": "4020dd92e5180942"
+  },
+  "req-hel-ext-quantifiers-6": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An excessive count, slice, scale or conversion MUST fail with ResourceLimit before allocating its expanded output.",
+   "sha256": "26c727f8dcb52696"
+  },
+  "req-hel-ext-quantifiers-7": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Implementations that cannot execute a function MUST report Unsupported rather than substitute a value.",
+   "sha256": "ecb45b4dabf34609"
   },
   "req-hel-ext-temporal-1": {
    "page": "specification/hel/index.html",
@@ -4230,11 +4257,12 @@
    "cls": "hdl-compiler",
    "level": "MUST",
    "audience": "processor",
-   "text": "A compiler MUST report an ERROR for: a type position that supplies a number of arguments other than its struct's number of parameters (including arguments for a struct without parameters, and none for one with parameters); a parameterised struct in a position that cannot state arguments — a dispatch default, a layout cell type, a described-by part struct, and the root struct (@root, or the first struct) — since none of them has a caller that could supply them; two parameters, two bindings, or a parameter, binding and field of one struct, that share a name; a parameter type other than the five words above; param used as a name, and param.x in a struct with no parameter x; a forward or self reference in an argument, which is evaluated at the position of the field that passes it, or in a let expression, which is evaluated at the binding's position; a clause on a let (it has a name and an expression, nothing else); a let binding named where a field is required — a layout extent or stride, a checksum range bound, @root-key, @lang-from — since it has neither bytes nor a place in the tree; a let in a header, table or document, whose members have no evaluation order; and parameters on a header, table or document (in YAML, params beside a kind other than struct), which has no scope to bind them in.",
-   "sha256": "ed34b0d59e5bdfa8",
+   "text": "A compiler MUST report an ERROR for: a type position that supplies a number of arguments other than its struct's number of parameters (including arguments for a struct without parameters, and none for one with parameters); a parameterised struct in a position that cannot state arguments — a dispatch default, a layout cell type, a described-by part struct, and the root struct (@root, or the first struct) — since none of them has a caller that could supply them; two parameters, two bindings, or a parameter, binding and field of one struct, that share a name; a parameter type other than the seven words above; param used as a name, and param.x in a struct with no parameter x; a forward or self reference in an argument, which is evaluated at the position of the field that passes it, or in a let expression, which is evaluated at the binding's position; a clause on a let (it has a name and an expression, nothing else); a let binding named where a field is required — a layout extent or stride, a checksum range bound, @root-key, @lang-from — since it has neither bytes nor a place in the tree; a let in a header, table or document, whose members have no evaluation order; and parameters on a header, table or document (in YAML, params beside a kind other than struct), which has no scope to bind them in.",
+   "sha256": "39fabcf67ab8ee14",
    "history": [
     "8df4d62c14048686",
-    "9ce7b1c5cdb5b371"
+    "9ce7b1c5cdb5b371",
+    "ed34b0d59e5bdfa8"
    ]
   },
   "req-hdl-parameters-2": {

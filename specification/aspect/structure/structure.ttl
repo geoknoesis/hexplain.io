@@ -1,42 +1,78 @@
-# Draft reusable structured-value aspect. No application-format vocabulary.
-@prefix st: <https://hexplain.io/ns/aspect/structure#> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix sh: <http://www.w3.org/ns/shacl#> .
+# Hexplain Aspect — Structure (hx-structure) 0.1
+# Content aspect: application-independent decoded records, named members and collection items.
+# Imports no other aspect. Physical layout stays in BDDO; format profiles supply member meanings.
+@prefix :       <https://hexplain.io/ns/aspect/structure#> .
+@prefix st:     <https://hexplain.io/ns/aspect/structure#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
 
 <https://hexplain.io/ns/aspect/structure> a owl:Ontology ;
-    rdfs:label "Hexplain structured values (draft)"@en ;
-    owl:versionInfo "0.1-draft" ;
+    rdfs:seeAlso <https://hexplain.io/specification/aspect/structure/structure-doc.ttl> ;
+    owl:versionIRI <https://hexplain.io/ns/aspect/structure/0.1> ; owl:versionInfo "0.1" ;
+    <http://schema.org/creativeWorkStatus> "working draft" ;
+    dcterms:modified "2026-11-01"^^xsd:date ;
+    rdfs:label "Hexplain Aspect — Structure (hx-structure)"@en ;
+    rdfs:comment "Application-independent records, named members and collection items. Values retain their RDF datatypes; nested values are resources. This aspect describes decoded values, not physical BDDO declarations."@en ;
+    dcterms:created "2026-10-20"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
-    rdfs:comment "Application-independent records, named members and collection items. Values retain their RDF datatypes; nested values are resources. This aspect describes decoded values, not physical BDDO declarations."@en .
+    vann:preferredNamespacePrefix "st" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/structure#" .
 
-st:Record a owl:Class ; rdfs:label "structured record"@en ;
+:Record a owl:Class ; rdfs:label "structured record"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
     rdfs:comment "A decoded record with individually identified members. The source profile defines each member's meaning and type."@en .
-st:Member a owl:Class ; rdfs:label "record member"@en ;
+:Member a owl:Class ; rdfs:label "record member"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
     rdfs:comment "A decoded named member, with its optional numeric identifier and its typed value or collection items."@en .
-st:Item a owl:Class ; rdfs:label "collection item"@en ;
+:Item a owl:Class ; rdfs:label "collection item"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
     rdfs:comment "An individually addressable collection element. Its canonical Hexplain instance path records its sequence position."@en .
-st:hasMember a owl:ObjectProperty ; rdfs:range st:Member ; rdfs:label "has member"@en .
-st:hasItem a owl:ObjectProperty ; rdfs:range st:Item ; rdfs:label "has item"@en .
-st:name a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "member name"@en .
-st:identifier a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "member identifier"@en .
-st:recordType a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "declared record type"@en .
-st:dataType a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "declared value type"@en .
-st:symbol a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "enumeration symbol"@en .
-st:count a owl:DatatypeProperty ; rdfs:range xsd:nonNegativeInteger ; rdfs:label "element or byte count"@en .
-st:value a rdf:Property ; rdfs:label "decoded value"@en ;
+
+:hasMember a owl:ObjectProperty ; rdfs:label "has member"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range :Member .
+:hasItem a owl:ObjectProperty ; rdfs:label "has item"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range :Item .
+:name a owl:DatatypeProperty ; rdfs:label "member name"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:string .
+:identifier a owl:DatatypeProperty ; rdfs:label "member identifier"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:integer .
+:recordType a owl:DatatypeProperty ; rdfs:label "declared record type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:string .
+:dataType a owl:DatatypeProperty ; rdfs:label "declared value type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:string .
+:symbol a owl:DatatypeProperty ; rdfs:label "enumeration symbol"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:string .
+:count a owl:DatatypeProperty ; rdfs:label "element or byte count"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:nonNegativeInteger .
+:value a rdf:Property ; rdfs:label "decoded value"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
     rdfs:comment "A scalar RDF literal with its actual datatype, or a resource describing a nested value. Never a substitute for parsing an unknown structure."@en .
 
-st:MemberShape a sh:NodeShape ; sh:targetClass st:Member ;
-    sh:property [ sh:path st:name ; sh:datatype xsd:string ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path st:identifier ; sh:maxCount 1 ; sh:node st:IntegerValueShape ] ;
-    sh:property [ sh:path st:value ; sh:maxCount 1 ] .
-st:CountShape a sh:NodeShape ; sh:targetSubjectsOf st:count ;
-    sh:property [ sh:path st:count ; sh:node st:IntegerValueShape ; sh:minInclusive 0 ; sh:maxCount 1 ] .
+st:MemberShape a sh:NodeShape ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
+    sh:targetClass st:Member ; sh:targetSubjectsOf st:name ;
+    sh:property [ sh:path st:name ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "A record member has exactly one st:name." ] .
+st:SingleValueShape a sh:NodeShape ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
+    sh:targetSubjectsOf st:identifier, st:value ;
+    sh:property [ sh:path st:identifier ; sh:maxCount 1 ;
+        sh:message "A member, item or record has at most one st:identifier." ] ;
+    sh:property [ sh:path st:value ; sh:maxCount 1 ;
+        sh:message "A member, item or record has at most one st:value." ] .
+st:CountShape a sh:NodeShape ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
+    sh:targetSubjectsOf st:count ;
+    sh:property [ sh:path st:count ; sh:node st:IntegerValueShape ; sh:minInclusive 0 ; sh:maxCount 1 ;
+        sh:message "A described value has at most one st:count, a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] .
 
-st:IntegerValueShape a sh:NodeShape ;
-    sh:nodeKind sh:Literal ;
+st:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
+st:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
+    sh:targetSubjectsOf st:dataType ,
+        st:identifier ,
+        st:name ,
+        st:recordType ,
+        st:symbol ;
+    sh:property [ sh:path st:dataType ; sh:datatype xsd:string ;
+        sh:message "st:dataType takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path st:identifier ; sh:node st:IntegerValueShape ;
+        sh:message "st:identifier takes an integer (rdfs:range xsd:integer)." ] ;
+    sh:property [ sh:path st:name ; sh:datatype xsd:string ;
+        sh:message "st:name takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path st:recordType ; sh:datatype xsd:string ;
+        sh:message "st:recordType takes an xsd:string literal (rdfs:range xsd:string)." ] ;
+    sh:property [ sh:path st:symbol ; sh:datatype xsd:string ;
+        sh:message "st:symbol takes an xsd:string literal (rdfs:range xsd:string)." ] .

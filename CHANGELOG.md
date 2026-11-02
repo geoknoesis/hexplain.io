@@ -6,11 +6,135 @@ snapshots are recorded under `releases/`.
 
 ## Unreleased (changes since snapshot 2026-09-24.2)
 
+### Outcome contracts, scoped round trips and validation evidence
+
+Required-error cases now reject successful process/artifact outcomes, even when their bodies
+look like errors. Evaluator alternatives must likewise use a nonzero exit and the error artifact.
+Round-trip exemptions now use field paths and dependency analysis for encoded lengths,
+checksums and derived expressions; unrelated names, constants and decoded-stream metadata
+remain compared, and exemptions preserve node kinds, binding and shape. Unproved dynamic
+relationships remain strict rather than receiving a blanket exemption. Windows gate cleanup
+falls back to killing the gate when taskkill returns failure as well as when it raises.
+Validation evidence now hashes configuration, workflows, publication files, binary fixtures,
+release archives and root inputs, excluding runtime caches and explicit output records.
+Regression controls cover the reported false passes, scoped repeated fields, bounded regions,
+configuration changes during a run and custom result-file destinations.
+
+### Comparator artifact boundaries
+
+Malformed evaluator error artifacts no longer pass success cases by matching an absent or
+null `orError`. An alternative error requires an explicit registered category and a matching
+reported category. A Physical Parser error artifact cannot pass as a successful parsed tree
+merely because their JSON contents match. Category mapping is applied consistently to JSON
+and RDF evaluator alternatives. Regression controls reject malformed errors against every
+success expectation and preserve the suite's expected-artifact controls.
+
+### Validated report writes and run provenance
+
+The conformance runner checks report metadata before launching processors and validates the
+complete result before publication. New reports and completed reports share an atomic writer:
+validation, serialization or replacement failures leave the existing file unchanged. The
+completion command accepts `--suite` for validation against the matching suite. Report
+validation now requires a nonempty runner identity and a valid ISO 8601 UTC timestamp,
+including for retained historical reports. Regression tests cover invalid revisions, missing
+or malformed provenance, unchanged files after rejected completion, and interrupted writes.
+
+### Follow-up conformance and review-package corrections
+
+Windows processor invocations now enter a Job Object before launching the implementation;
+closing the job also terminates descendants whose parent has exited. Partial runs cannot
+write implementation reports. Shared applicability rules prevent absent commands from
+silently skipping claimed cases and reject applicable SKIPs in current-suite reports.
+Report validation checks SHA-256 syntax, totals and duplicate identifiers for all suites;
+coverage of a different suite is explicitly unverified unless that suite is supplied.
+Historical publication retention checks structure without certifying coverage. The review
+archive now contains the conformance tooling and data, preserves exact case bytes, and is
+tested by executing its conformance and report gates from an isolated extraction.
+
+### Conformance runner and CI
+
+The conformance runner now enforces process exit status against success/error artifacts,
+rejects conflicting artifacts, bounds combined stdout/stderr capture, and terminates timed-out
+or flooding process trees. Compiler diagnostics remain separate from stdout. Malformed
+processor output and launch failures become per-case failures without dropping subsequent
+results or the implementation report. Regression probes exercise these failure paths and
+round-trip output parsing. The offline CI matrix now covers both supported Python versions,
+3.11 and 3.12, on Windows and Linux. Independent semantic acceptance remains pending; the
+review candidate is regenerated against the corrected tooling without assigning a reviewer
+or recording an acceptance decision.
+
+### Contract, coverage and review-package follow-ups
+
+- Hardened JSON report comparison with exact scalar types and order-independent one-to-one
+  finding matching, including overlapping partial expectations.
+- Bounded processor artifact reads to 16 MiB per artifact and isolated parsing/comparison
+  under a subprocess deadline, with failure-local diagnostics and regression probes.
+
+- Added 56 authored protection, acquisition and temporal contracts, including missing,
+  duplicate, wrong-class and numeric boundary counterexamples. Every documented module
+  publishing shapes now has positive and negative authored contracts.
+- Capability schema 2 reports authored contracts separately from competency TSV references;
+  traceability includes both corpora without equating term mentions with semantic acceptance.
+- Corrected all 38 module rows and resource counts in the independent-review instructions;
+  package checks prevent drift and include capability evidence. Independent sign-off remains pending.
+
+- Validate acceptance dates, decision consistency and explicit module decisions; reject
+  malformed records without implying reviewer authentication.
+- Resolve repeated-record round-trip dependencies per array element, preserving strict
+  comparison for unaffected first records and bounded regions.
+- Require diagnostic path, source shape and severity on the same validation result.
+- Correct round-trip documentation and inventory every registered normative clause,
+  measured SHACL obligation and vocabulary declaration, keeping review-only gaps explicit.
+
+- Added four ordered-layout processor cases (both orders of overlapping cell-type and
+  dimension-order rules), bringing the processor corpus to 935 cases. Cell-observation cases
+  provide their raw logical tree separately for Writer symmetry checks.
+- Execute all six published pure SPARQL bodies with 55 success, boundary and unbound-result
+  probes, including registration invariance and negative floors. RDFLib's mixed numeric
+  promotion limitation is explicitly scoped in the calibration datatype assertion.
+- Explicitly map 27 description/advisory clauses to measured property contracts and three
+  affine clauses to executable function bodies; retain inspection-only and external-runtime
+  requirements as exceptions, never as completed behavioral tests.
+
+### Codecs for columnar stores, typed parameters and HEL collection functions
+
+The media-encoding register gains 11 concepts with codec contracts and vector suites: the raw
+compression streams `menc:SnappyRaw`, `menc:LzoRaw` (with a required `decodedSize`),
+`menc:Brotli` and `menc:HadoopLz4`; the reversible `menc:ByteTranspose` (`elementSize`); the
+virtual inputs `menc:ByteSource` and `menc:ByteResource`, which return previously bound bytes
+or an operation-scoped resource from an empty physical input; the scoped-key ciphers
+`menc:AESGCM`, `menc:AESCTR` and `menc:AESGCMSignature`, whose shared `menc:Cipher.*`
+parameters name keys by reference and never embed key material; and `menc:VerifyCRC32`. The
+vector manifest schema adds `inputs`, operation-scoped external bytes (cipher keys,
+additional-data prefixes, resources) that are neither codec parameters nor format fields.
+`bddo:parameterType` accepts `bddo:ArrayParameter` and `bddo:NodeParameter`, an existing HEL
+array or struct node passed by identity, and HDL spells them `array` and `node`. HEL's
+quantifier extension adds collection, byte and integer-text functions (`countWhere`, `sumOf`,
+`project`, `repeatValue`, `concatArrays`, `concatBytes`, `slice`, `integralScan`, `modularAdd`,
+`integerBytes`, `integerText`, `unicodeText`, `join`, `integerPrecision`) under three new
+requirements: one shared element budget, ResourceLimit before an oversized output is allocated,
+and Unsupported rather than a substituted value. The Processing Model's `maxQuantifierEvaluations`
+now names that shared budget, and three ResourceLimit cases (`pp-limit-collection-output`,
+`pp-limit-collection-traversal`, `pp-limit-text-conversion`) bring the processor corpus to 938
+cases; reporting Unsupported is a non-black-box disposition. The prose term check reads a dotted local name
+(`menc:Cipher.keyRef`) as one term.
+
+### Structure aspect (working draft 0.1)
+
+`https://hexplain.io/ns/aspect/structure` (prefix `st`) joins the family: application-independent
+decoded records (`st:Record`), named members (`st:Member`, `st:name`, `st:identifier`) and
+collection items (`st:Item`), with `st:value` keeping each literal's datatype. Its shapes require
+one name per member, at most one identifier and value per member, item or record, and integer
+and string datatypes for the declared ranges; 20 authored contracts witness them. Physical layout
+stays in BDDO, and format profiles supply member meanings. The `spatialref` page builder now
+carries the requirement wording settled on 2026-10-15, so regenerating the page no longer reverts it.
+
 ### Module versions
 
 Every module whose canonical Turtle differs from snapshot 2026-09-24.2 has a new version IRI
 naming the version that snapshot froze as `owl:priorVersion`, and a `dcterms:modified` of the day
-its canonical Turtle last changed (2026-10-13 for every module). Most changed only in their generated
+its canonical Turtle last changed (2026-10-13, or 2026-11-01 for bddo and
+media-encoding). Most changed only in their generated
 documentation (below); `owl:versionInfo` is now the bare version number everywhere, and the three
 working drafts say so with `schema:creativeWorkStatus "working draft"`. aspect/color,
 aspect/encoding, aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security and

@@ -420,6 +420,25 @@ group(
 )
 
 group(
+    "st",
+    "\n"
+    "Record|A structured decoded value whose member identities and value interpretations are specified by a "
+    "format description.\n"
+    "Member|One identified component of a record, related to its name, optional numeric identifier and decoded value.\n"
+    "Item|One occurrence in an ordered collection; its instance path identifies its sequence position.\n"
+    "hasMember|Relates a record to one component whose name or identifier distinguishes its role.\n"
+    "hasItem|Relates a collection-bearing value to an individually described element occurrence.\n"
+    "name|The decoded textual name identifying a record component in its containing record.\n"
+    "identifier|The integer code identifying a component or occurrence in the representation described by its "
+    "profile.\n"
+    "recordType|The declared record-kind name supplied by the describing schema or interface definition.\n"
+    "dataType|The textual type or interpretation label assigned to a decoded value.\n"
+    "symbol|The symbolic name associated with a declared enumeration code.\n"
+    "count|The non-negative cardinality or byte extent associated with a described value.\n"
+    "value|The interpreted scalar literal or structured resource carried by a member, item or record.\n",
+)
+
+group(
     "atime",
     "\n"
     "duration|The elapsed playing time of content expressed in seconds. It is a temporal extent, distinct from a "

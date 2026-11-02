@@ -313,6 +313,7 @@ def authored_cases() -> list[dict[str, Any]]:
 
 def cases() -> list[dict[str, Any]]:
     """Every authored family contract, from this module and every sibling case library."""
+    from _acceptance_contract_cases import cases as acceptance
     from _closure_contract_cases import cases as closure
     from _core_contract_cases import cases as core
     from _integer_family_cases import cases as integers
@@ -328,6 +329,7 @@ def cases() -> list[dict[str, Any]]:
     from _semantic_boundary_cases import cases as semantic
     from _spatial_contract_cases import cases as spatial
     from _structural_contract_cases import cases as structural
+    from _structure_contract_cases import cases as structure
     from _tree_contract_cases import cases as tree
 
     everything = (
@@ -349,6 +351,8 @@ def cases() -> list[dict[str, Any]]:
         + ranges()
         + review()
         + records()
+        + acceptance()
+        + structure()
     )
     # A case is about one obligation. An advisory result from some other shape -- a level with no
     # rank, say -- must not decide it, or every advisory constraint added later would silently

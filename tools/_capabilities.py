@@ -24,8 +24,9 @@ TARGET = ROOT / "specification/capabilities.json"
 # Evidence artifacts, each produced by a gate in this repository.
 REFERENCE = ROOT / "specification/reference/manifest.json"
 COVERAGE = ROOT / "specification/validation/constraint-coverage.json"
+CONTRACTS = ROOT / "specification/validation/test/family-contracts.json"
 COMPETENCY = ROOT / "specification/validation/competency-trace.json"
-EVIDENCE = (REFERENCE, COVERAGE, COMPETENCY)
+EVIDENCE = (REFERENCE, COVERAGE, COMPETENCY, CONTRACTS)
 
 
 def digest(path: Path) -> str:
@@ -58,6 +59,14 @@ def build() -> str:
         exercised[module] += bool(resource["positive"] or resource["negative"])
         with_result_path[module] += bool(resource["result_path"])
 
+    contracts = json.loads(CONTRACTS.read_text(encoding="utf-8"))
+    positive: defaultdict[str, int] = defaultdict(int)
+    negative: defaultdict[str, int] = defaultdict(int)
+    referenced: defaultdict[str, int] = defaultdict(int)
+    for contract in contracts:
+        (positive if contract["expected"] else negative)[module_of(contract["module"])] += 1
+    for resource in competency["resources"]:
+        referenced[resource["module"]] += bool(resource["contract_positive"] or resource["contract_negative"])
     modules = []
     for entry in sorted(reference, key=lambda e: e["module"]):
         module = entry["module"]
@@ -69,6 +78,9 @@ def build() -> str:
                 constraint_obligations=obligations.get(module, 0),
                 two_sided_obligations=two_sided.get(module, 0),
                 traced_resources=described.get(module, 0),
+                authored_positive_cases=positive[module],
+                authored_negative_cases=negative[module],
+                contract_referenced_resources=referenced[module],
                 exercised_resources=exercised.get(module, 0),
                 resources_asserting_result_path=with_result_path.get(module, 0),
             )
@@ -81,18 +93,26 @@ def build() -> str:
     unattributed = {module: count for module, count in sorted(obligations.items()) if module not in documented}
 
     matrix = dict(
-        schema_version=1,
+        schema_version=2,
         scope=(
             "Per-module capability derived from retained evidence. Obligations are SHACL "
             "constraint components measured with two-sided witnesses; exercise counts "
             "resources referenced by a competency case. Counts describe the declared "
-            "corpora only and are not proof of complete semantic coverage."
+            "corpora only and are not proof of complete semantic coverage. Authored contract cases "
+            "and their syntactic resource references are reported separately from competency TSVs."
         ),
         validator=coverage["validator"],
         evidence={path.relative_to(ROOT).as_posix(): digest(path) for path in EVIDENCE},
         unattributed_obligations=unattributed,
+        unattributed_contract_cases={
+            module: positive[module] + negative[module]
+            for module in sorted(set(positive) | set(negative))
+            if module not in documented
+        },
         totals=dict(
             modules=len(modules),
+            authored_contract_cases=len(contracts),
+            contract_referenced_resources=sum(m["contract_referenced_resources"] for m in modules),
             measured_obligations=len(coverage["constraints"]),
             terms=sum(m["terms"] for m in modules),
             constraint_obligations=sum(m["constraint_obligations"] for m in modules),

@@ -22,6 +22,7 @@ from typing import Any
 from _build_family_contracts import RETAINED
 from _family_contract_cases import cases
 from _gate_runner import gate_workers
+from _validation_result import matching_result
 from pyshacl import validate
 from rdflib import Graph, Namespace, URIRef
 from rdflib.compare import isomorphic
@@ -66,14 +67,8 @@ def case_failure(shapes: Graph, row: Row) -> tuple[str, str] | None:
     )
     if bool(ok) != row["expected"]:
         return f"expected conforms={row['expected']}", detail
-    wanted = [
-        (SH.resultPath, row["path"], "result path"),
-        (SH.sourceShape, row.get("expectedShape"), "source shape"),
-        (SH.resultSeverity, row.get("severity"), "severity"),
-    ]
-    for predicate, value, what in wanted:
-        if value and URIRef(value) not in report.objects(None, predicate):
-            return f"missing {what} {value}", detail
+    if not matching_result(report, row["path"], row.get("expectedShape", ""), row.get("severity", "")):
+        return "no single validation result matches the expected path, source shape and severity", detail
     return None
 
 
@@ -115,13 +110,49 @@ def compare_retained(rows: list[Row]) -> None:
         ), stale
 
 
+def acceptance_mutations(rows: list[Row]) -> None:
+    """New counterexamples must detect independently removed constraints."""
+    probes = [
+        ("acceptance EncryptedRegion cipher missing", SH.minCount),
+        ("acceptance EncryptedRegion cipher duplicate", SH.maxCount),
+        ("acceptance acquisition hasPlatform untyped", SH["class"]),
+        ("acceptance signal zero", SH.minExclusive),
+        ("acceptance time negative", SH.minInclusive),
+    ]
+    by_name = {row["name"]: row for row in rows}
+    for name, predicate in probes:
+        row = by_name[name]
+        shapes = Graph().parse(ROOT / row["module"])
+        assert case_failure(shapes, row) is None, name
+        properties = list(shapes.subjects(SH.path, URIRef(row["path"])))
+        assert any((prop, predicate, None) in shapes for prop in properties), name
+        for prop in properties:
+            shapes.remove((prop, predicate, None))
+        assert case_failure(shapes, row) is not None, f"Counterexample missed removed constraint: {name}"
+
+
+def diagnostic_regressions() -> None:
+    report = Graph().parse(
+        data="""@prefix sh:<http://www.w3.org/ns/shacl#>.
+    <urn:a> sh:resultPath <urn:wanted>; sh:sourceShape <urn:other>; sh:resultSeverity sh:Warning.
+    <urn:b> sh:resultPath <urn:other>; sh:sourceShape <urn:wanted>; sh:resultSeverity sh:Violation.
+    """,
+        format="turtle",
+    )
+    assert not matching_result(report, "urn:wanted", "urn:wanted")
+    assert not matching_result(report, "urn:wanted", severity=str(SH.Violation))
+    assert matching_result(report, "urn:wanted", "urn:other", str(SH.Warning))
+
+
 def main() -> int:
     # The old `--write` habit must not look like a pass that regenerated something.
     assert len(sys.argv) == 1, (
         "this gate takes no arguments and writes nothing; the retained file is written by "
         "`python tools/_build_family_contracts.py --write`"
     )
+    diagnostic_regressions()
     rows = cases()
+    acceptance_mutations(rows)
     assert len({row["name"] for row in rows}) == len(rows), "Case names must be unique evidence identifiers"
 
     queue = list(tasks(rows))

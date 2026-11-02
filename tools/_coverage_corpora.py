@@ -29,6 +29,7 @@ from typing import Any
 
 import pyshacl
 import specgraph
+from _validation_result import matching_result
 from pyshacl.constraints import ALL_CONSTRAINT_COMPONENTS
 from rdflib import Graph, Namespace, URIRef
 
@@ -201,12 +202,7 @@ class Corpora:
             data, shacl_graph=shapes, inference="none", advanced=True, allow_warnings=allow_warnings
         )
         assert bool(ok) == expected, (name, detail)
-        if path:
-            assert URIRef(path) in report.objects(None, SH.resultPath), (name, detail)
-        if expected_shape:
-            assert URIRef(expected_shape) in report.objects(None, SH.sourceShape), (name, detail)
-        if severity:
-            assert URIRef(severity) in report.objects(None, SH.resultSeverity), (name, detail)
+        assert matching_result(report, path, expected_shape, severity), (name, detail)
         tracer.cases += 1
 
     def family_contracts(self, tracer: Tracer, task: Task) -> None:

@@ -113,6 +113,10 @@ def check_workflows(manifest: dict[str, Gate]) -> None:
     within = sum(entry["timeout"] for entry in manifest.values() if entry["class"] in classes)
     limit = job_limit_seconds(SITE_WORKFLOW, "publication")
     assert limit > within, f"site.yml allows the job {limit} s but its gates may take {within} s"
+    validate = VALIDATE_WORKFLOW.read_text(encoding="utf-8")
+    assert "python: ['3.11', '3.12']" in validate
+    assert "python-version: ${{ matrix.python }}" in validate
+    assert "specification-gates-${{ matrix.os }}-py${{ matrix.python }}" in validate
     longest = max(entry["timeout"] for entry in manifest.values() if entry["class"] == "offline")
     limit = job_limit_seconds(VALIDATE_WORKFLOW, "validate")
     assert limit > longest, f"validate.yml allows the job {limit} s but one gate may take {longest} s"

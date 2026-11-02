@@ -92,6 +92,7 @@ def check_timeout_rule() -> None:
         (360.0, 3600),
         (361.0, 3600),
         (5000.0, 3600),
+        (1e308, 3600),  # Finite input must be capped before the multiplication can overflow.
     ]:
         assert derive_timeout(seconds) == expected, (seconds, derive_timeout(seconds), expected)
     for invalid in (-1.0, float("nan"), float("inf")):
@@ -162,7 +163,10 @@ def check_record(root: Path) -> None:
     assert sorted(first["gates"]) == ["test_one", "test_two"], first["gates"]
     assert set(first["gates"]["test_one"]) == {"duration_s", "peak_rss_mb", "procs"}, first["gates"]["test_one"]
     run = first["runs"]["offline"]
-    assert run["gates"] == 2 and run["jobs"] >= 1 and run["wall_clock_s"] > 0 and run["sequential_sum_s"] > 0, run
+    # Recorded tenths of a second may legitimately be zero on a fast host.
+    assert run["gates"] == 2 and run["jobs"] >= 1 and run["wall_clock_s"] >= 0 and run["sequential_sum_s"] >= 0, run
+    measured = json.loads((root / ".gate-results/summary.json").read_text())
+    assert run["sequential_sum_s"] == round(sum(row["duration_seconds"] for row in measured["gates"]), 1), run
     described = {"recorded_utc", "platform", "python", "cpu_count", "memory_mb"}
     assert described | {"available_mb_at_start", "cpu_busy_percent_at_start"} <= set(run), run
     # Recording another class merges: the offline entries and the offline run header stay.
@@ -174,15 +178,15 @@ def check_record(root: Path) -> None:
     # A plain run -- filtered or not -- never touches the tracked record.
     before = record.read_bytes()
     assert run_gates(root, set(), ["--strict", "test_one"]) == 0
+    assert record.read_bytes() == before, "a filtered run without --record-costs changed the tracked record"
     assert run_gates(root, set(), ["--strict"]) == 0
+    assert record.read_bytes() == before, "a run without --record-costs changed the tracked record"
     # ... and runs under the declared timeouts, as does a recording of gates already recorded.
     assert timeouts_of(root) == {"test_one": 900.0, "test_two": 300.0}, timeouts_of(root)
     assert run_gates(root, set(), ["--strict", "--record-costs"]) == 0
     assert timeouts_of(root) == {"test_one": 900.0, "test_two": 300.0}, timeouts_of(root)
     merged["gates"].update({name: read_record(root)["gates"][name] for name in ("test_one", "test_two")})
     merged["runs"]["offline"] = read_record(root)["runs"]["offline"]
-    before = record.read_bytes()
-    assert record.read_bytes() == before, "a run without --record-costs changed the tracked record"
     assert record.read_text(encoding="utf-8") == json.dumps(merged, indent=2) + "\n", "record is not canonical JSON"
     # A gate removed from the manifest leaves the record with the next recording.
     manifest = root / "tools/gates.json"
@@ -221,11 +225,49 @@ def check_derived_timeouts(root: Path) -> None:
         assert "test_one" in str(error), error
 
 
+def check_invalid_costs(root: Path) -> None:
+    """Reject unusable measurements before they reach timeout derivation or scheduling."""
+    (root / "tools").mkdir(parents=True)
+    path = root / COSTS
+    valid = dict(duration_s=0.0, peak_rss_mb=None, procs=0)
+    invalid_entries: list[dict[str, Any]] = [
+        {**valid, "duration_s": value} for value in (float("nan"), float("inf"), -1, True, "soon", 10**400)
+    ]
+    invalid_entries += [
+        {**valid, "peak_rss_mb": value} for value in (float("nan"), float("inf"), -1, True, 1e308, 10**400)
+    ]
+    invalid_process_counts: tuple[object, ...] = (-1, True, 1.5, "2", [])
+    invalid_entries += [{**valid, "procs": value} for value in invalid_process_counts]
+    for entry in invalid_entries:
+        write_report(path, schema_version=1, gates={"test_bad": entry}, runs={})
+        try:
+            load_costs(root)
+            raise AssertionError(f"accepted malformed cost {entry}")
+        except ValueError as error:
+            assert "test_bad" in str(error), error
+    invalid_containers: tuple[object, ...] = (None, [], "bad")
+    for key in ("gates", "runs"):
+        for value in invalid_containers:
+            document: dict[str, Any] = dict(schema_version=1, gates={}, runs={})
+            document[key] = value
+            write_report(path, **document)
+            try:
+                load_costs(root)
+                raise AssertionError(f"accepted malformed {key}")
+            except ValueError as error:
+                assert str(path) in str(error), error
+    write_report(path, schema_version=1, gates={"test_zero": valid}, runs={})
+    assert load_costs(root)["test_zero"].duration_s == 0.0
+    write_report(path, schema_version=1, gates={"test_normal": dict(duration_s=1.5, peak_rss_mb=0.5, procs=2)}, runs={})
+    assert load_costs(root)["test_normal"].peak_rss_bytes == MIB // 2
+
+
 def main() -> int:
     quiet = io.StringIO()
     with contextlib.redirect_stdout(quiet), contextlib.redirect_stderr(quiet), tempfile.TemporaryDirectory() as temp:
         check_summary(Path(temp))
         check_timeout_rule()
+        check_invalid_costs(Path(temp) / "invalid-costs")
         root = Path(temp) / "tree"
         check_record(root)
         check_derived_timeouts(root)

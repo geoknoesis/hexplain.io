@@ -101,11 +101,15 @@ then zero (north-up); a skew that is present MUST be finite. The normalized affi
 geotransform is: column/row coordinates refer to cell corners, (0, 0) is the outer corner of the first cell and the \
 center of the first cell is (0.5, 0.5). <span class="req" \
 id="req-spatialref-document-2"></span>asref:pixelRegistration states where a cell's value is located within the cell \
-(PixelCenter: a point sample at the center; PixelCorner: a value for the cell's area); it MUST NOT shift the affine, \
-and the column and row of a world point are the floors of its inverse-affine grid coordinates whatever the \
-registration. A source whose native transform is center-based is shifted by half a cell once, when it is normalized. \
+(PixelCenter: a point sample at the center; PixelCorner: a value for the cell's area); a description MUST NOT use it \
+to shift the affine, whose coefficients are corner-based under both registrations. <span class="req" \
+id="req-spatialref-document-12"></span>No conformance class of the Processing Model evaluates the transform; a \
+consumer that does, as the <a href="../../fn/index.html#column">hxf function library</a> does, SHOULD take the column \
+and row of a world point as the floors of its inverse-affine grid coordinates whatever the registration. A source \
+whose native transform is center-based is shifted by half a cell once, when it is normalized. \
 Negative scaleY is valid. <span class="req" id="req-spatialref-document-3"></span>A singular transform MAY be \
-represented, but inverse evaluation MUST fail when the determinant is zero. <span class="req" \
+represented; a consumer that evaluates the inverse SHOULD fail when the determinant is zero, as \
+<code>hxf:column</code> and <code>hxf:row</code> do, rather than return a cell. <span class="req" \
 id="req-spatialref-document-4"></span>Floating implementations MUST document conditioning and tolerance policies; \
 exact nonzero determinants alone do not establish numerical stability.</p>
 <h2>CRS and control points</h2><p>CRS WKT is not WKT geometry; no equivalence with GeoSPARQL geometry serialization \
@@ -119,11 +123,14 @@ class="req" id="req-spatialref-document-7"></span>A polynomialBasis IRI MUST ide
 all 20 ordered monomials, normalization, input CRS/units and pixel convention. <span class="req" \
 id="req-spatialref-document-8"></span>Different coefficient orders MUST NOT be interchanged. <span class="req" \
 id="req-spatialref-document-9"></span>A profile MUST identify the complete contract, not merely label a model “RPC”. \
-<span class="req" id="req-spatialref-document-10"></span>A processor MUST report an unsupported basis; this working \
-draft does not mandate a new RPC execution engine.</p><p>For a known basis, normalize each input <code>q = \
+<span class="req" id="req-spatialref-document-10"></span>A consumer that evaluates rational polynomial transforms \
+SHOULD report a basis it does not support, and SHOULD NOT evaluate it under another basis; this working draft \
+mandates no RPC execution engine, and no conformance class of the Processing Model evaluates one.</p><p>For a \
+known basis, normalize each input <code>q = \
 (coordinate − offset) / scale</code>, evaluate each numerator and denominator in the declared monomial order, then \
 recover each output as <code>output = offset + scale × numerator / denominator</code>. <span class="req" \
-id="req-spatialref-document-11"></span>Zero denominators MUST yield an explicit evaluation error. Structural SHACL \
+id="req-spatialref-document-11"></span>Such a consumer SHOULD raise an explicit evaluation error for a zero \
+denominator. Structural SHACL \
 validation does not prove that a denominator is nonzero everywhere or that an inverse is unique. Inversion \
 tolerances, height assumptions and convergence failures belong to the processor contract.</p>
 <p class="note">Compatibility: the shape rejects a GeoTransform without its origin and scale coefficients; preserve \

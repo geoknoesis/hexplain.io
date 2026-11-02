@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 import rdflib
+from pyshacl import validate
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -28,8 +29,11 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE / "conformance"))
 
 import _build_conformance_page  # noqa: E402
+import _processor_contract_cases  # noqa: E402
+import _round_trip_contract_cases  # noqa: E402
 import generate_inputs  # noqa: E402
 import round_trip  # noqa: E402
+import specgraph  # noqa: E402
 from suite import (  # noqa: E402
     BASE_ENCODINGS,
     BLANKET,
@@ -190,8 +194,8 @@ def round_trip_problems() -> list[str]:
     probes = (
         (iso(tree, json.loads(json.dumps(tree))) == [], "a tree is not isomorphic to itself"),
         (iso(tree, dict(tree, n=4)) != [], "a changed value went unnoticed"),
-        (iso(tree, dict(tree, n=4), {"n"}) == [], "a recomputed derived value was compared"),
-        (iso(tree, dict(tree, n=None), {"n"}) != [], "a recomputed value unbound in one tree went unnoticed"),
+        (iso(tree, dict(tree, n=4), {("n",)}) == [], "a recomputed derived value was compared"),
+        (iso(tree, dict(tree, n=None), {("n",)}) != [], "a recomputed value unbound in one tree went unnoticed"),
         (iso(tree, dict(tree, items=[1.0])) != [], "a shorter array went unnoticed"),
         (iso(tree, dict(tree, items=[1, {"x": None}])) != [], "an Integer for a Float went unnoticed"),
         (iso({"f": 0.0}, {"f": -0.0}) != [], "-0.0 was taken for 0.0"),
@@ -284,9 +288,9 @@ def runner_problems() -> list[str]:
     def trip(case: str, expected: str, writer: str = write, parser: str = parse, stated: Any = claims) -> str:
         return run_suite.run_round_trip(parsers / case, writer, parser, stated, expected, 60)[0]
 
-    def verified(writer: str, parser: str | None) -> str:
+    def verified(writer: str, parser: str | None, stated: dict | None = claims) -> str:
         case = SUITE / WRITER / "w-codec-compressor-round-trip"
-        return run_suite.run_case(case, writer, claims, 60, parser=parser)[0]
+        return run_suite.run_case(case, writer, stated, 60, parser=parser)[0]
 
     probes = (
         (trip("pp-bits-lsb-first", "round-trip") == "PASS", "a stream that parses back to the tree failed"),
@@ -338,7 +342,8 @@ def runner_problems() -> list[str]:
             verified(write, parse + " --other-tree") == "FAIL",
             "a Writer case whose stream parses to another tree passed",
         ),
-        (verified(write, None) == "SKIP", "a Writer case verified by round trip ran without a parser"),
+        (verified(write, None) == "FAIL", "an applicable Writer case verified by round trip passed without a parser"),
+        (verified(write, None, None) == "SKIP", "a Writer case verified by round trip ran without a parser or claims"),
     )
     return [f"run_suite.py: {what}" for ok, what in probes if not ok]
 
@@ -495,6 +500,30 @@ def parse_problems(where: str, cls: str, case_dir: Path, man: dict[str, Any]) ->
     return problems
 
 
+def layout_description_problems() -> list[str]:
+    """Expected output comparison must not hide structurally invalid positive fixtures."""
+    files = ("specification/bddo/bddo.ttl", "specification/dlv/dlv.ttl", "specification/hexplain/core.ttl")
+    context, shapes = specgraph.context_and_shapes(files)
+    problems = []
+    checked = 0
+    for prefix in ("pp-layout-cell-type-first-", "pp-layout-dimension-order-first-"):
+        for case in sorted((SUITE / "physical-parser").glob(prefix + "*")):
+            checked += 1
+            data = rdflib.Graph().parse(case / "description.ttl")
+            ok, _, detail = validate(
+                context + data,
+                shacl_graph=rdflib.Graph() + shapes,
+                inference="none",
+                advanced=True,
+                allow_warnings=True,
+            )
+            if not ok:
+                problems.append(f"{case.name}: invalid positive description: {detail}")
+    if checked != 4:
+        problems.append(f"Expected four positive conditional-layout descriptions, checked {checked}")
+    return problems
+
+
 def main() -> int:
     problems = []
     wanted = generate_inputs.expected_tree()
@@ -530,10 +559,13 @@ def main() -> int:
         problems.append(f"{rid}: a live serialisation requirement no Writer case cites")
     for rid in sorted(by_mode & writer_cited):
         problems.append(f"{rid}: observed by the round-trip mode, which is its citation; no single case shows it")
+    problems += layout_description_problems()
     problems += round_trip_problems()
     problems += reference_encoding_problems()
     problems += comparator_problems()
     problems += runner_problems()
+    problems += _processor_contract_cases.check()
+    problems += _round_trip_contract_cases.check()
     for cls, n in counts.items():
         if not n:
             problems.append(f"no {cls} cases")

@@ -37,6 +37,7 @@
 @prefix req: <https://hexplain.io/ns/req#> .
 @prefix reqs: <https://hexplain.io/ns/req/requirements#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix st: <https://hexplain.io/ns/aspect/structure#> .
 @prefix vann: <http://purl.org/vocab/vann/> .
 @prefix vdv: <https://hexplain.io/ns/video#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -44,7 +45,7 @@
 <https://hexplain.io/ns/req/requirements> a owl:Ontology ;
     rdfs:seeAlso <https://hexplain.io/specification/req/requirements-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/req/requirements/1.0> ; owl:versionInfo "1.0" ;
-    dcterms:modified "2026-10-14"^^xsd:date ; dcterms:created "2026-10-12"^^xsd:date ;
+    dcterms:modified "2026-11-01"^^xsd:date ; dcterms:created "2026-10-12"^^xsd:date ;
     dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     # req supplies the requirement vocabulary; every module that publishes a node shape is
@@ -66,6 +67,7 @@
         <https://hexplain.io/ns/aspect/security> ,
         <https://hexplain.io/ns/aspect/signal> ,
         <https://hexplain.io/ns/aspect/spatialref> ,
+        <https://hexplain.io/ns/aspect/structure> ,
         <https://hexplain.io/ns/aspect/tabular> ,
         <https://hexplain.io/ns/aspect/time> ,
         <https://hexplain.io/ns/audio> ,
@@ -1183,7 +1185,7 @@ reqs:req-shape-bddo-ParameterShape a owl:NamedIndividual , reqs:ShapeRequirement
     rdfs:comment "The requirement bddo:ParameterShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
     req:requirementId "req-shape-bddo-ParameterShape" ;
     req:fromStandard "Binary Data Description Ontology (BDDO)" ;
-    req:statement "Applies to instances of bddo:Parameter; subjects using bddo:parameterType. A bddo:Parameter is not a bddo:Field: it consumes no bytes and is not a member of the parsed tree. Each focus node is not an instance of bddo:Field. bddo:parameterType is one of bddo:IntegerParameter, bddo:FloatParameter, bddo:StringParameter, bddo:BytesParameter and bddo:BooleanParameter."@en ;
+    req:statement "Applies to instances of bddo:Parameter; subjects using bddo:parameterType. A bddo:Parameter is not a bddo:Field: it consumes no bytes and is not a member of the parsed tree. Each focus node is not an instance of bddo:Field. bddo:parameterType is one of bddo:IntegerParameter, bddo:FloatParameter, bddo:StringParameter, bddo:BytesParameter, bddo:BooleanParameter, bddo:ArrayParameter and bddo:NodeParameter."@en ;
     req:discrepancyType req:Syntactic ;
     dcterms:references bddo:ParameterShape .
 reqs:req-shape-bddo-ParameterisedStructShape a owl:NamedIndividual , reqs:ShapeRequirement ;
@@ -1978,6 +1980,51 @@ reqs:req-shape-req-RequirementShape a owl:NamedIndividual , reqs:ShapeRequiremen
     req:statement "Applies to instances of req:Requirement; subjects using req:appliesToVersion, req:discrepancyType, req:fromStandard, req:requirementId, req:statement. req:appliesToVersion values are non-empty strings; omit the property to mean every version. A Requirement needs exactly one req:discrepancyType from the controlled set. A Requirement needs exactly one non-blank req:fromStandard. White space, no-break and zero-width spaces alone are blank. A Requirement needs exactly one non-blank req:requirementId. White space, no-break and zero-width spaces alone are blank. A Requirement needs exactly one non-blank req:statement quoting the source text: a plain or language-tagged string."@en ;
     req:discrepancyType req:Syntactic ;
     dcterms:references req:RequirementShape .
+reqs:req-shape-st-CountShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of st:CountShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement st:CountShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-st-CountShape" ;
+    req:fromStandard "Hexplain Aspect — Structure (hx-structure)" ;
+    req:statement "Applies to subjects using st:count. A described value has at most one st:count, a non-negative integer (rdfs:range xsd:nonNegativeInteger)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references st:CountShape .
+reqs:req-shape-st-IntegerValueShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of st:IntegerValueShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement st:IntegerValueShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-st-IntegerValueShape" ;
+    req:fromStandard "Hexplain Aspect — Structure (hx-structure)" ;
+    req:statement "Applied through references from other shapes. An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte). A conforming value is an integer (of any XSD integer datatype)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references st:IntegerValueShape .
+reqs:req-shape-st-MemberShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of st:MemberShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement st:MemberShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-st-MemberShape" ;
+    req:fromStandard "Hexplain Aspect — Structure (hx-structure)" ;
+    req:statement "Applies to instances of st:Member; subjects using st:name. A record member has exactly one st:name."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references st:MemberShape .
+reqs:req-shape-st-RangeDatatypeShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of st:RangeDatatypeShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement st:RangeDatatypeShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-st-RangeDatatypeShape" ;
+    req:fromStandard "Hexplain Aspect — Structure (hx-structure)" ;
+    req:statement "Applies to subjects using st:dataType, st:identifier, st:name, st:recordType, st:symbol. st:dataType takes an xsd:string literal (rdfs:range xsd:string). st:identifier takes an integer (rdfs:range xsd:integer). st:name takes an xsd:string literal (rdfs:range xsd:string). st:recordType takes an xsd:string literal (rdfs:range xsd:string). st:symbol takes an xsd:string literal (rdfs:range xsd:string)."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references st:RangeDatatypeShape .
+reqs:req-shape-st-SingleValueShape a owl:NamedIndividual , reqs:ShapeRequirement ;
+    rdfs:label "Requirement of st:SingleValueShape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;
+    rdfs:comment "The requirement st:SingleValueShape enforces on a description; a description that this shape reports does not satisfy it."@en ;
+    req:requirementId "req-shape-st-SingleValueShape" ;
+    req:fromStandard "Hexplain Aspect — Structure (hx-structure)" ;
+    req:statement "Applies to subjects using st:identifier, st:value. A member, item or record has at most one st:identifier. A member, item or record has at most one st:value."@en ;
+    req:discrepancyType req:Syntactic ;
+    dcterms:references st:SingleValueShape .
 reqs:req-shape-vdv-IntegerValueShape a owl:NamedIndividual , reqs:ShapeRequirement ;
     rdfs:label "Requirement of vdv:IntegerValueShape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/req/requirements> ;

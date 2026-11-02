@@ -1,0 +1,196 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#AESCTR",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "nist",
+      "url": "https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/block-ciphers",
+      "description": "Public all-zero AES key/IV known-answer cases, explicit envelope construction, malformed inputs and scoped fake-key bindings. Round trips do not prescribe compressor or cipher implementation details.",
+      "licence": "CC0-1.0 test data"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "known-decode",
+      "source": "nist",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        },
+        "aadPrefix": {
+          "empty-prefix": {
+            "hex": ""
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "00000000000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            }
+          },
+          "input": {
+            "hex": "00000000000000000000000000000000"
+          },
+          "expect": {
+            "hex": "66e94bd4ef8a2c3b884cfa59ca342b2e"
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-trip",
+      "source": "nist",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        },
+        "aadPrefix": {
+          "empty-prefix": {
+            "hex": ""
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "00000000000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            }
+          },
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "00000000000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            }
+          },
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "missing-key",
+      "source": "nist",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "00000000000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            }
+          },
+          "input": {
+            "hex": "00000000000000000000000000000000"
+          },
+          "expect": {
+            "error": "Unsupported"
+          }
+        }
+      ]
+    },
+    {
+      "id": "output-limit",
+      "source": "nist",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        },
+        "aadPrefix": {
+          "empty-prefix": {
+            "hex": ""
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "00000000000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            }
+          },
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 0
+        }
+      ]
+    },
+    {
+      "id": "invalid-external-key",
+      "source": "nist",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00"
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "00000000000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            }
+          },
+          "input": {
+            "hex": "00000000000000000000000000000000"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    }
+  ]
+}

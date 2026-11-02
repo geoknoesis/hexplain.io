@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from _capabilities import COVERAGE, EVIDENCE, ROOT, TARGET, build
+from _specification_coverage import check as check_constructs
 
 
 def digest(path: Path) -> str:
@@ -16,11 +17,12 @@ def digest(path: Path) -> str:
 
 
 def main() -> int:
+    check_constructs()
     published = TARGET.read_text(encoding="utf-8")
     assert published == build(), "Regenerate specification/capabilities.json from current evidence"
 
     matrix = json.loads(published)
-    assert matrix["schema_version"] == 1
+    assert matrix["schema_version"] == 2
 
     # The matrix must describe exactly the modules the reference manifest documents.
     reference = json.loads((ROOT / "specification/reference/manifest.json").read_text(encoding="utf-8"))
@@ -42,7 +44,10 @@ def main() -> int:
         )
         assert row["exercised_resources"] <= row["traced_resources"], module
         assert row["resources_asserting_result_path"] <= row["traced_resources"], module
+        assert row["contract_referenced_resources"] <= row["traced_resources"], module
         if row["shapes"]:
+            assert row["authored_positive_cases"] > 0, f"{module}: no positive authored contract"
+            assert row["authored_negative_cases"] > 0, f"{module}: no negative authored contract"
             assert row["constraint_obligations"] > 0, f"{module}: publishes shapes but has no measured obligation"
 
     # Every measured obligation is attributed, either to a documented module or to a named
@@ -65,9 +70,13 @@ def main() -> int:
         "two_sided_obligations",
         "traced_resources",
         "exercised_resources",
+        "contract_referenced_resources",
     ):
         assert totals[field] == sum(row[field] for row in matrix["modules"]), field
 
+    assert totals["authored_contract_cases"] == sum(matrix["unattributed_contract_cases"].values()) + sum(
+        r["authored_positive_cases"] + r["authored_negative_cases"] for r in matrix["modules"]
+    )
     print(
         f"PASS: {totals['modules']} modules; {totals['measured_obligations']} measured obligations all two-sided "
         f"({unattributed} outside documented modules); {totals['exercised_resources']} of {totals['traced_resources']} "

@@ -16,6 +16,7 @@ inferred from a gate's stdout.
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import hashlib
 import json
 import math
@@ -80,37 +81,48 @@ def gate_workers(default_cap: int = WORKER_CAP) -> int:
     return max(1, min(count, default_cap))
 
 
-def source_manifest(root: Path) -> dict[str, str]:
+# Editor, coverage and staged-write droppings change under a run without being validation inputs.
+TRANSIENT = (".coverage", ".coverage.*", "*.swp", "*.swo", "*~", ".#*", ".report-*.tmp", ".DS_Store")
+
+
+def transient(name: str) -> bool:
+    return any(fnmatch.fnmatchcase(name, pattern) for pattern in TRANSIENT)
+
+
+def source_manifest(root: Path, excluded: set[Path] | None = None) -> dict[str, str]:
     """Byte hashes for declared local validation inputs; no external-file traversal."""
     # Published documents are validation inputs too: link, governance and page-equality
     # gates read them, so a document changed during a run must invalidate acceptance the
     # same way a changed shape or script does.
-    suffixes = {".py", ".ttl", ".json", ".tsv", ".in", ".txt", ".html", ".css", ".md"}
+    # Scan source directories in full: binary vectors and archives are validation inputs too.
+    # Local caches/results and the rebuilt candidate ZIP are outputs, not source inputs.
     paths: list[Path] = []
-    for directory in ("tools", "specification", "authoring"):
+    ignored = {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+    for directory in ("tools", "specification", "authoring", "deployment", ".github", "assets", "releases"):
         base = root / directory
         if base.exists():
             paths.extend(
-                p for p in base.rglob("*") if p.is_file() and p.suffix in suffixes and "__pycache__" not in p.parts
+                p
+                for p in base.rglob("*")
+                if p.is_file()
+                and not ignored.intersection(p.relative_to(root).parts)
+                and not transient(p.name)
+                and p.relative_to(root).as_posix() != "specification/ontology-review/ontology-review-candidate.zip"
             )
-    # Published root artifacts that gates read but no scanned directory contains.
-    paths.extend(
-        p
-        for p in (
-            root / "requirements.txt",
-            root / "pyproject.toml",
-            root / "index.html",
-            root / "robots.txt",
-            root / "sitemap.xml",
-        )
-        if p.exists()
-    )
+    paths.extend(p for p in root.iterdir() if p.is_file() and not transient(p.name))
     result = {}
+    excluded_paths = {p.resolve() for p in excluded or set()}
     for path in sorted(set(paths)):
+        if path.resolve() in excluded_paths:
+            continue
         if not path.resolve().is_relative_to(root.resolve()):
             raise ValueError(f"Validation input escapes repository: {path}")
-        with path.open("rb") as stream:
-            result[path.relative_to(root).as_posix()] = hashlib.file_digest(stream, "sha256").hexdigest()
+        try:
+            with path.open("rb") as stream:
+                digest = hashlib.file_digest(stream, "sha256").hexdigest()
+        except FileNotFoundError:
+            continue  # Removed after the scan listed it; the comparison records it as changed.
+        result[path.relative_to(root).as_posix()] = digest
     return result
 
 
@@ -129,18 +141,28 @@ def load_gate_manifest(root: Path) -> dict[str, Gate] | None:
     if not path.is_file():
         return None
     document = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(document, dict):
+        raise ValueError(f"{path}: gate manifest must be an object")
     if document.get("schema_version") != 1:
         raise ValueError(f"{path}: unsupported gate manifest schema {document.get('schema_version')!r}")
+    entries = document.get("gates")
+    if not isinstance(entries, list):
+        raise ValueError(f"{path}: gates must be an array of objects")
     gates: dict[str, Gate] = {}
-    for entry in document["gates"]:
-        name = entry["name"]
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise ValueError(f"{path}: each gate must be an object")
+        name = entry.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError(f"{path}: each gate needs a nonempty string name")
         if name in gates:
             raise ValueError(f"{path}: gate {name} is declared twice")
         if entry.get("class", "offline") not in GATE_CLASSES:
             raise ValueError(f"{path}: gate {name} has unknown class {entry.get('class')!r}")
-        if not isinstance(entry.get("timeout"), int | float) or entry["timeout"] <= 0:
-            raise ValueError(f"{path}: gate {name} needs a positive timeout")
-        if not isinstance(entry.get("procs", 1), int) or entry.get("procs", 1) < 1:
+        timeout = entry.get("timeout")
+        if isinstance(timeout, bool) or not isinstance(timeout, int | float) or not 0 < timeout <= sys.float_info.max:
+            raise ValueError(f"{path}: gate {name} needs a positive finite timeout representable as a float")
+        if type(entry.get("procs", 1)) is not int or entry.get("procs", 1) < 1:
             raise ValueError(f"{path}: gate {name} needs a positive procs count")
         gates[name] = dict(entry)
     return gates
@@ -262,7 +284,8 @@ class _Run:
         self.root = root
         self.destination = destination
         self.strict: bool = args.strict
-        self.sources = source_manifest(root)
+        self.outputs = {destination, destination.with_suffix(destination.suffix + ".tmp")}
+        self.sources = source_manifest(root, self.outputs)
         self.records: dict[str, dict[str, Any]] = {}
         self.lock = threading.Lock()
         self.started = time.monotonic()
@@ -325,17 +348,38 @@ class _Run:
         """Run every pending gate, printing each one's buffered output as it finishes."""
         stream = jobs == 1
         heartbeat_at = time.monotonic() + 15
+        launched_at: dict[str, float] = {}
         with ThreadPoolExecutor(max_workers=jobs) as pool:
             while scheduler.pending or scheduler.running:
                 while (gate := scheduler.next_ready()) is not None:
                     print(f"RUN {gate['name']}", flush=True)
+                    launched_at[gate["name"]] = time.monotonic()
                     scheduler.started(pool.submit(self.launch, gate, stream, scheduler), gate)
                 done, _ = wait(list(scheduler.running), timeout=1, return_when=FIRST_COMPLETED)
                 for future in sorted(done, key=lambda f: scheduler.running[f]["name"]):
-                    scheduler.finished(future)
-                    row = future.result()
+                    gate = scheduler.finished(future)
+                    started = launched_at.pop(gate["name"])
+                    try:
+                        row = future.result()
+                    except Exception as error:  # noqa: BLE001 -- one worker failure must not discard the run
+                        row = dict(
+                            gate=gate["name"],
+                            procs=gate["effective_procs"],
+                            timeout_seconds=float(gate["timeout"]),
+                            status="FAIL",
+                            exit_code=None,
+                            timed_out=False,
+                            output_limit_exceeded=False,
+                            duration_seconds=round(time.monotonic() - started, 3),
+                            peak_rss_bytes=None,
+                            peak_processes=None,
+                            rss_samples=0,
+                            memory_note="worker failed; memory measurements unavailable",
+                            worker_error=type(error).__name__,
+                            output=f"Gate worker failed ({type(error).__name__}): {str(error)[:2000]}\n",
+                        )
                     self.records[row["gate"]] = row
-                    if not stream and row["output"]:
+                    if row["output"] and (not stream or row.get("worker_error")):
                         print(row["output"], end="" if row["output"].endswith("\n") else "\n", flush=True)
                     print(f"{row['status']} {row['gate']} ({row['duration_seconds']:.1f}s)", flush=True)
                     self.save()
@@ -349,7 +393,7 @@ class _Run:
         rows = [self.records[name] for name in sorted(self.records)]
         counts = {s: sum(r["status"] == s for r in rows) for s in ("PASS", "SKIP", "FAIL")}
         print(f"{counts['PASS']} passed, {counts['SKIP']} skipped, {counts['FAIL']} failed", flush=True)
-        final_sources = source_manifest(self.root)
+        final_sources = source_manifest(self.root, self.outputs)
         changed = sorted(
             path
             for path in self.sources.keys() | final_sources.keys()

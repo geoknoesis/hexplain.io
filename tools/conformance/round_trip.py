@@ -36,6 +36,8 @@ from typing import Any
 
 import rdflib
 from rdflib import RDF, Literal, URIRef
+from round_trip_dependencies import FieldPath
+from round_trip_dependencies import recomputed_paths as recomputed_paths
 from suite import ROOT, SUITE, dump
 
 EXPECTATIONS = "writer/round-trip-expectations.json"
@@ -146,25 +148,6 @@ def load_expectations(suite: Path = SUITE) -> dict[str, str]:
     return json.loads((Path(suite) / EXPECTATIONS).read_text(encoding="utf-8"))
 
 
-def recomputed_keys(description: Path) -> set[str]:
-    """The local names of the fields whose value isomorphism exempts: the length field of an encoded field, and,
-    in a description with an encoded field, every checksum field and every derived field (a checksum whose covered
-    range includes encoded bytes is recomputed, and a derived value may rest on either). Field keys are local names,
-    so the exemption is by name."""
-    graph = rdflib.Graph().parse(description, format="turtle")
-    encoded = set()
-    for local in ("isEncodedWith", "hasEncodingStep", "codecFromExpression"):
-        encoded |= set(graph.subjects(URIRef(CORE + local), None))
-    if not encoded:
-        return set()
-    exempt = set()
-    for field in encoded:
-        exempt |= set(graph.objects(field, URIRef(BDDO + "sizeFromField")))
-    exempt |= set(graph.subjects(URIRef(BDDO + "checksum"), None))
-    exempt |= set(graph.subjects(URIRef(BDDO + "valueFromExpression"), None))
-    return {str(term).rpartition("#")[2].rpartition("/")[2] for term in exempt}
-
-
 def same_value(expected: Any, actual: Any) -> bool:
     """Equal values of the same type: a NaN equals a NaN, and -0.0 is not 0.0."""
     if type(expected) is not type(actual):
@@ -176,22 +159,36 @@ def same_value(expected: Any, actual: Any) -> bool:
     return expected == actual
 
 
-def isomorphism_problems(expected: Any, actual: Any, exempt: Set[str] = frozenset(), path: str = "$") -> list[str]:
-    """Why two canonical trees are not isomorphic (processing/index.html#tree-isomorphism); [] when they are.
-    A member whose key is in [exempt] is a recomputed derived value: bound in one tree it is bound in the other,
-    and its value is not compared."""
+def isomorphism_problems(
+    expected: Any,
+    actual: Any,
+    exempt: Set[FieldPath] = frozenset(),
+    path: str = "$",
+    _location: FieldPath = (),
+    _ignore_values: bool = False,
+) -> list[str]:
+    """Compare trees, relaxing scalar values only at proved, scoped recomputation paths.
+
+    Exemptions preserve binding, node kind, member keys and array lengths. They never match
+    an unrelated field merely because it has the same local name.
+    """
+    ignore = (
+        _ignore_values
+        or _location in exempt
+        or any(
+            len(candidate) == len(_location)
+            and all(a == b or (a == "*" and isinstance(b, int)) for a, b in zip(candidate, _location, strict=True))
+            for candidate in exempt
+        )
+    )
     if isinstance(expected, dict):
         if not isinstance(actual, dict):
             return [f"{path}: a struct node became {actual!r}"]
-        if set(expected) != set(actual):
+        if expected.keys() != actual.keys():
             return [f"{path}: members {sorted(expected)} became {sorted(actual)}"]
         out = []
         for key, value in expected.items():
-            if key in exempt:
-                if (value is None) != (actual[key] is None):
-                    out.append(f"{path}.{key}: a recomputed value is bound in one tree and not in the other")
-            else:
-                out += isomorphism_problems(value, actual[key], exempt, f"{path}.{key}")
+            out += isomorphism_problems(value, actual[key], exempt, f"{path}.{key}", _location + (key,), ignore)
         return out
     if isinstance(expected, list):
         if not isinstance(actual, list):
@@ -199,9 +196,13 @@ def isomorphism_problems(expected: Any, actual: Any, exempt: Set[str] = frozense
         if len(expected) != len(actual):
             return [f"{path}: {len(expected)} elements became {len(actual)}"]
         out = []
-        for index, (e, a) in enumerate(zip(expected, actual, strict=True)):
-            out += isomorphism_problems(e, a, exempt, f"{path}[{index}]")
+        for index, (expected_item, actual_item) in enumerate(zip(expected, actual, strict=True)):
+            out += isomorphism_problems(
+                expected_item, actual_item, exempt, f"{path}[{index}]", _location + (index,), ignore
+            )
         return out
+    if ignore:
+        return [] if type(expected) is type(actual) else [f"{path}: a recomputed value changed type or binding"]
     return [] if same_value(expected, actual) else [f"{path}: {expected!r} became {actual!r}"]
 
 

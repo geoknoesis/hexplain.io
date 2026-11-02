@@ -12,6 +12,7 @@ from __future__ import annotations
 import sys
 
 from _build_fn_catalogue import expected_page
+from _pure_function_contracts import check as check_pure_functions
 
 
 def main() -> int:
@@ -27,7 +28,8 @@ def main() -> int:
             "run python tools/_build_fn_catalogue.py --write"
         )
         return 1
-    print("PASS: the function catalogue is generated from fn.ttl and current")
+    calls = check_pure_functions()
+    print(f"PASS: current function catalogue; {calls} actual SPARQL function-body probes cover all six pure functions")
     return 0
 
 

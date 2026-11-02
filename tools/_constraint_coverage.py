@@ -43,6 +43,7 @@ from _coverage_corpora import (
     trace,
 )
 from _gate_runner import gate_workers
+from _validation_result import matching_result
 from pyshacl import validate
 from pyshacl.constraints import ALL_CONSTRAINT_COMPONENTS
 from rdflib import RDF, BNode, Graph, URIRef
@@ -273,10 +274,10 @@ def extend_family() -> dict[str, Any]:
                 Graph().parse(data=row["data"], format="turtle"), shacl_graph=selected, inference="none", advanced=True
             )
             assert bool(ok) == row["expected"], (row["name"], detail)
-            if row["path"]:
-                assert URIRef(row["path"]) in report.objects(None, SH.resultPath), (row["name"], detail)
-            if row.get("expectedShape"):
-                assert URIRef(row["expectedShape"]) in report.objects(None, SH.sourceShape), (row["name"], detail)
+            assert matching_result(report, row["path"], row.get("expectedShape", ""), row.get("severity", "")), (
+                row["name"],
+                detail,
+            )
     evidence["constraints"] = _close(inventory_rows)
     evidence["summary"] = _summary(evidence["constraints"], evidence["summary"]["cases"] + len(additions))
     evidence["complete"] = all(r["two_sided_evaluation"] for r in evidence["constraints"])

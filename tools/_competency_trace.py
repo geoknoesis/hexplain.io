@@ -19,7 +19,16 @@ OUT = ROOT / "specification/validation"
 def build() -> tuple[str, str]:
     modules = json.loads((ROOT / "specification/reference/manifest.json").read_text(encoding="utf-8"))
     terms = {
-        iri: dict(iri=iri, module=m["module"], positive=[], negative=[], result_path=[])
+        iri: dict(
+            iri=iri,
+            module=m["module"],
+            positive=[],
+            negative=[],
+            result_path=[],
+            contract_positive=[],
+            contract_negative=[],
+            contract_result_path=[],
+        )
         for m in modules
         for iri in m["iris"]
     }
@@ -46,10 +55,28 @@ def build() -> tuple[str, str]:
                 terms[iri]["positive" if expected == "true" else "negative"].append(key)
             if path in terms:
                 terms[path]["result_path"].append(key)
+    contract_file = OUT / "test/family-contracts.json"
+    sources[contract_file.relative_to(ROOT).as_posix()] = hashlib.sha256(
+        contract_file.read_text(encoding="utf-8").encode("utf-8")
+    ).hexdigest()
+    contracts = json.loads(contract_file.read_text(encoding="utf-8"))
+    for contract in contracts:
+        graph = Graph().parse(data=contract["data"], format="turtle")
+        mentioned = {str(term) for triple in graph for term in triple if isinstance(term, URIRef)}
+        key = "family-contracts:" + contract["name"]
+        for iri in mentioned.intersection(terms):
+            terms[iri]["contract_positive" if contract["expected"] else "contract_negative"].append(key)
+        if contract["path"] in terms:
+            terms[contract["path"]]["contract_result_path"].append(key)
     rows = sorted(terms.values(), key=lambda r: r["iri"])
     summary = dict(
         resources=len(rows),
         cases=count,
+        authored_contract_cases=len(contracts),
+        contract_referenced=sum(bool(r["contract_positive"] or r["contract_negative"]) for r in rows),
+        evidence_referenced=sum(
+            bool(r["positive"] or r["negative"] or r["contract_positive"] or r["contract_negative"]) for r in rows
+        ),
         mentioned=sum(bool(r["positive"] or r["negative"]) for r in rows),
         with_asserted_result_path=sum(bool(r["result_path"]) for r in rows),
     )
@@ -57,7 +84,8 @@ def build() -> tuple[str, str]:
         hash_policy="SHA-256 of UTF-8 corpus text with universal-newline normalization to LF; immutable archives "
         "retain "
         "their original byte hashes.",
-        scope="Syntactic references and expected result paths in retained shared corpora. Mentions do not prove shape "
+        scope="Syntactic references and expected result paths in retained competency TSVs and authored family "
+        "contracts, recorded separately. Mentions do not prove shape "
         "activation, assertion independence, complete constraints or semantic correctness. Unmentioned terms may "
         "have evidence in other suites.",
         summary=summary,
@@ -80,7 +108,7 @@ def build() -> tuple[str, str]:
         "result-path assertions</th></tr></thead><tbody>"
     )
     for r in rows:
-        refs = r["positive"] + r["negative"]
+        refs = r["positive"] + r["negative"] + r["contract_positive"] + r["contract_negative"]
         page += (
             "<tr><td>"
             + escape(r["iri"])
@@ -93,8 +121,12 @@ def build() -> tuple[str, str]:
                 if refs
                 else ""
             )
+            + "<br>Authored contracts: "
+            + str(len(r["contract_positive"]))
+            + " / "
+            + str(len(r["contract_negative"]))
             + "</td><td>"
-            + str(len(r["result_path"]))
+            + str(len(r["result_path"]) + len(r["contract_result_path"]))
             + "</td></tr>"
         )
     page = with_print_link(OUT / "competency-trace.html", page + "</tbody></table></html>")

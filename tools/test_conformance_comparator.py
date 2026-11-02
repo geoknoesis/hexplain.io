@@ -9,7 +9,9 @@ self-check: every expected artifact of the suite, offered as the actual output, 
 
 from __future__ import annotations
 
+import itertools
 import json
+import random
 import sys
 import tempfile
 from pathlib import Path
@@ -246,6 +248,31 @@ def other_checks(failures: list[str]) -> None:
     diags = {"diagnostics": [{"severity": "WARNING", "line": 2}, {"severity": "ERROR", "line": 3}], "output": False}
     check(compare.compare_hdl_error({"severity": "ERROR", "line": 3}, diags) == [], "an ERROR at the line", failures)
     check(compare.compare_hdl_error({"severity": "ERROR", "line": 2}, diags) != [], "a WARNING is no ERROR", failures)
+    for line in (True, 1.0, "1", None):
+        check(
+            compare.compare_hdl_error({"line": 1}, {"diagnostics": [{"severity": "ERROR", "line": line}]}) != [],
+            f"a non-integer diagnostic line {line!r} cannot match line 1",
+            failures,
+        )
+    check(
+        compare.compare_hdl_error({"line": 1}, {"diagnostics": [{"severity": "error", "line": 1}]}) == [],
+        "an integer diagnostic line still matches with case-insensitive severity",
+        failures,
+    )
+    malformed_diagnostics: tuple[object, ...] = (
+        None,
+        [],
+        "ERROR",
+        {"diagnostics": None},
+        {"diagnostics": {}},
+        {"diagnostics": [1]},
+    )
+    for malformed in malformed_diagnostics:
+        check(
+            bool(compare.compare_hdl_error({"severity": "ERROR"}, malformed)),
+            f"malformed diagnostics {malformed!r} return a comparison failure",
+            failures,
+        )
     check(
         compare.compare_hdl_error({"severity": "ERROR"}, dict(diags, output=True)) != [],
         "an ERROR with output",
@@ -335,6 +362,50 @@ def other_checks(failures: list[str]) -> None:
     )
 
 
+def artifact_checks(failures: list[str]) -> None:
+    """Errors cannot masquerade as reports or successful trees, including a tree with a category field."""
+    values: tuple[dict[str, Any], ...] = ({}, {"category": None}, {"category": []}, {"category": "Invalid"})
+    with tempfile.TemporaryDirectory() as scratch:
+        root = Path(scratch)
+        for expected in ("expected-report.json", "expected-report.ttl"):
+            for allowed in (False, True):
+                cases = [
+                    p.parent
+                    for p in (SUITE / "conformance-evaluator").glob("*/" + expected)
+                    if bool(json.loads((p.parent / "manifest.json").read_text(encoding="utf-8")).get("orError"))
+                    == allowed
+                ]
+                case = sorted(cases)[0]
+                for filename in (compare.ERROR_FILE, "actual.json"):
+                    actual = root / filename
+                    for value in values:
+                        actual.write_text(json.dumps(value), encoding="utf-8", newline="\n")
+                        check(bool(compare.compare_case(case, actual)), f"{case.name} accepted {value!r}", failures)
+                    actual.write_text('{"category":"ResourceLimit"}', encoding="utf-8", newline="\n")
+                    check(
+                        (compare.compare_case(case, actual) == []) == allowed,
+                        f"{case.name}: explicit alternative error was not respected",
+                        failures,
+                    )
+                    actual.write_text('{"category":"limited"}', encoding="utf-8", newline="\n")
+                    check(
+                        (compare.compare_case(case, actual, category_map={"limited": "ResourceLimit"}) == [])
+                        == allowed,
+                        f"{case.name}: mapped alternative error was not respected",
+                        failures,
+                    )
+        case = root / "tree"
+        case.mkdir()
+        (case / "manifest.json").write_text('{"class":"physical-parser"}', encoding="utf-8", newline="\n")
+        (case / "expected.json").write_text('{"category":"Bounds"}', encoding="utf-8", newline="\n")
+        error = root / compare.ERROR_FILE
+        error.write_text('{"category":"Bounds"}', encoding="utf-8", newline="\n")
+        check(bool(compare.compare_case(case, error)), "an error passed as a matching tree", failures)
+        success = root / "actual.json"
+        success.write_bytes(error.read_bytes())
+        check(compare.compare_case(case, success) == [], "a legitimate category field was rejected", failures)
+
+
 def self_check(failures: list[str]) -> int:
     """Every expected artifact, offered as the output, passes its own case."""
     n = 0
@@ -369,17 +440,67 @@ def self_check(failures: list[str]) -> int:
                 problems = compare.compare_case(case, actual, reported_base=compare.REPORTED_BASE)
             if problems:
                 failures.append(f"{case.name}: its own expected artifact does not pass: {problems[:2]}")
+            if name != "expected-error.json":
+                error = Path(tmp) / compare.ERROR_FILE
+                for value in ({}, {"category": None}):
+                    error.write_text(json.dumps(value), encoding="utf-8", newline="\n")
+                    if not compare.compare_case(case, error):
+                        failures.append(f"{case.name}: malformed error artifact passed: {value!r}")
             n += 1
     return n
 
 
+def report_regressions(failures: list[str]) -> None:
+    for key in ("truncated", "versionScopingApplied"):
+        for value in (False, True):
+            check(
+                bool(compare.compare_report_json({key: value}, {key: int(value)})),
+                f"{key} rejects numeric booleans",
+                failures,
+            )
+    wants = {"findings": [{"severity": "ERROR"}, {"severity": "ERROR", "message": "specific"}]}
+    have = [{"severity": "ERROR", "message": "specific"}, {"severity": "ERROR", "message": "other"}]
+    for findings in (have, list(reversed(have))):
+        check(not compare.compare_report_json(wants, {"findings": findings}), "overlapping finding matching", failures)
+    check(
+        bool(compare.compare_report_json(wants, {"findings": [have[1], have[1]]})),
+        "matching cannot reuse a finding",
+        failures,
+    )
+    malformed_values: tuple[Any, ...] = (None, {}, 0, "invalid")
+    for malformed in malformed_values:
+        check(
+            bool(compare.compare_report_json({"findings": []}, {"findings": malformed})),
+            "malformed findings rejected",
+            failures,
+        )
+
+
+def matching_oracle(failures: list[str]) -> None:
+    """Compare the polynomial matcher to exhaustive assignments on small overlapping patterns."""
+    rng = random.Random(5301)
+    for _ in range(200):
+        n = rng.randrange(1, 6)
+        have = [{"severity": rng.choice(["ERROR", "WARNING"]), "message": rng.choice(["a", "b"])} for _ in range(n)]
+        wants = [{k: v for k, v in rng.choice(have).items() if rng.choice([False, True])} for _ in range(n)]
+        possible = any(
+            all(all(h.get(k) == v for k, v in w.items()) for w, h in zip(wants, order, strict=True))
+            for order in itertools.permutations(have)
+        )
+        matched = not compare.compare_report_json({"findings": wants}, {"findings": have})
+        check(matched == possible, "finding matcher agrees with exhaustive assignment", failures)
+
+
 def main() -> int:
     failures: list[str] = []
+    matching_oracle(failures)
+    report_regressions(failures)
     hel_checks(failures)
     tree_checks(failures)
     graph_checks(failures)
     other_checks(failures)
     writer_checks(failures)
+    artifact_checks(failures)
     n = self_check(failures)
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures[:40]))

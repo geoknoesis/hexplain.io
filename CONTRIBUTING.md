@@ -68,14 +68,17 @@ is committed together with its figures here.
 
 | | |
 |---|---|
-| Recorded (UTC) | 2026-10-15T20:12:09 |
+| Recorded (UTC) | 2026-10-16T16:25:12 |
 | Host | Windows-10-10.0.26200-SP0; 20 logical CPUs; 32428 MiB; Python 3.11.4 |
-| Host load when the run began | 43.0 % of the CPUs already busy; 1716 MiB free |
+| Host load when the run began | 93.7 % of the CPUs already busy; 1179 MiB free |
 | Gates run, at `--jobs` | 83, at 4 |
-| Wall clock | 423.9 s |
-| Sum of the gates' durations | 1667.9 s |
+| Wall clock | 548.4 s |
+| Sum of the gates' durations | 1783.7 s |
 
-The command was `python tools/run_gates.py --strict --record-costs` at the default job count.
+The measurement command was `python tools/run_gates.py --strict --jobs 4 --json
+.gate-results/reverification-final-offline.json`. Its retained complete, unfiltered record
+was imported through `_gate_cost.record_costs` when refreshing the timeout baseline; its
+original measurement date and host metadata above are preserved.
 The reference it is compared with is the sequential strict run of 2026-09-28 on the same host:
 724 s for the 75 gates of that day, one after another. Two rows of the table qualify the
 comparison. The host was not idle -- the load row says how busy it already was when the run

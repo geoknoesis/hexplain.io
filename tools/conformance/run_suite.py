@@ -53,13 +53,19 @@ Every case that does not apply is reported as SKIP with its reason. The exit sta
 from __future__ import annotations
 
 import argparse
+import atexit
+import contextlib
 import fnmatch
 import json
+import math
+import platform
+import queue
 import re
 import shlex
 import subprocess
 import sys
 import tempfile
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -69,7 +75,10 @@ sys.path.insert(0, str(HERE))
 import compare  # noqa: E402
 import report  # noqa: E402
 import round_trip  # noqa: E402
-from suite import BASE_ENCODINGS, CLASSES, ENCODING_NAMESPACE, ROUND_TRIP, SUITE  # noqa: E402
+from applicability import claimed_features, skip_reason  # noqa: E402
+from comparison_worker import artifact_problem  # noqa: E402
+from processor_process import execute  # noqa: E402
+from suite import CLASSES, ROUND_TRIP, SUITE  # noqa: E402
 
 FLAGS = {
     "physical-parser": "pp",
@@ -87,27 +96,6 @@ Claims = dict[str, Any]
 Result = dict[str, Any]
 
 
-def claimed_features(claims: Claims) -> set[str]:
-    value = claims.get("optionalFeatures", {})
-    if isinstance(value, dict):
-        return {k for k, v in value.items() if (v.get("claimed") if isinstance(v, dict) else v)}
-    return set(value)
-
-
-def claimed_codecs(claims: Claims) -> set[str]:
-    """The codec IRIs a claims statement lists: its "codecs" member is an array of IRIs."""
-    value = claims.get("codecs", [])
-    return set(value) if isinstance(value, list) else set()
-
-
-def claimed_encodings(claims: Claims) -> set[str]:
-    """The text encodings a claims statement states: the five every Physical Parser decodes, and the further ones
-    its "encodings" member lists, an array of bddo:Encoding IRIs. A statement without the member lists none."""
-    value = claims.get("encodings", [])
-    listed = set(value) if isinstance(value, list) else set()
-    return listed | {ENCODING_NAMESPACE + name for name in BASE_ENCODINGS}
-
-
 def fill(template: str, values: dict[str, Any]) -> list[str]:
     """The command as an argument list: the template is split like a POSIX shell line first, then each placeholder is
     replaced inside its argument, so a path with a space stays one argument and nothing is interpreted by a shell."""
@@ -116,79 +104,6 @@ def fill(template: str, values: dict[str, Any]) -> list[str]:
         return re.sub(r"\{(\w+)\}", lambda m: str(values[m.group(1)]) if m.group(1) in values else m.group(0), arg)
 
     return [one(arg) for arg in shlex.split(template)]
-
-
-def skip_reason(manifest: Manifest, claims: Claims | None, template: str) -> str | None:
-    """Why a case does not apply to the implementation the claims describe, or None when it does."""
-    return (
-        _feature_skip(manifest, claims)
-        or _codec_skip(manifest, claims)
-        or _encoding_skip(manifest, claims)
-        or _template_skip(manifest, template)
-    )
-
-
-def _feature_skip(manifest: Manifest, claims: Claims | None) -> str | None:
-    """Why the optional features the case requires or checks the refusal of rule it out, or None."""
-    features = claimed_features(claims) if claims is not None else None
-    wanted = manifest.get("features", {})
-    if wanted.get("requires"):
-        if features is None:
-            return f"requires {wanted['requires']}, and no --claims statement says which features are claimed"
-        missing = [f for f in wanted["requires"] if f not in features]
-        if missing:
-            return f"requires unclaimed feature(s) {missing}"
-    if wanted.get("unclaimed"):
-        if features is None:
-            return "checks the refusal of an unclaimed feature, and no --claims statement is given"
-        present = [f for f in wanted["unclaimed"] if f in features]
-        if present:
-            return f"checks the refusal of {present}, which the implementation claims"
-    return None
-
-
-def _codec_skip(manifest: Manifest, claims: Claims | None) -> str | None:
-    """Why the codecs the case requires or checks the refusal of rule it out, or None."""
-    codecs = manifest.get("codecs", {})
-    if not codecs:
-        return None
-    if claims is None:
-        return "names codecs, and no --claims statement says which codecs are claimed"
-    listed = claimed_codecs(claims)
-    missing = [c for c in codecs.get("requires", []) if c not in listed]
-    if missing:
-        return f"requires codec(s) {missing} the implementation does not list"
-    present = [c for c in codecs.get("unclaimed", []) if c in listed]
-    if present:
-        return f"checks the refusal of codec(s) {present}, which the implementation lists"
-    return None
-
-
-def _encoding_skip(manifest: Manifest, claims: Claims | None) -> str | None:
-    """Why the text encodings the case requires or checks the refusal of rule it out, or None."""
-    encodings = manifest.get("encodings", {})
-    if not encodings:
-        return None
-    if claims is None:
-        return "names text encodings, and no --claims statement says which encodings are supported"
-    listed = claimed_encodings(claims)
-    missing = [e for e in encodings.get("requires", []) if e not in listed]
-    if missing:
-        return f"requires text encoding(s) {missing} the implementation does not list"
-    present = [e for e in encodings.get("unclaimed", []) if e in listed]
-    if present:
-        return f"checks the refusal of text encoding(s) {present}, which the implementation lists"
-    return None
-
-
-def _template_skip(manifest: Manifest, template: str) -> str | None:
-    """Why the command template lacks a placeholder the case needs, or None."""
-    withdraw = manifest.get("claims", {}).get("withdraw", [])
-    if withdraw and "{withdraw}" not in template:
-        return f"runs without {withdraw}; the command template has no {{withdraw}} placeholder"
-    if manifest.get("cells") and "{cells}" not in template:
-        return f"asks for the cells of {manifest['cells']}; the command template has no {{cells}} placeholder"
-    return None
 
 
 def placeholders(case_dir: Path, manifest: Manifest, tmp: Path, ext: str) -> dict[str, Any]:
@@ -219,18 +134,29 @@ def invoke(template: str, values: dict[str, Any], tmp: Path, timeout: float) -> 
     out, err = values["out"], values["err"]
     for stale in (out, err):
         stale.unlink(missing_ok=True)
+    values.pop("stderr", None)
     try:
-        proc = subprocess.run(fill(template, values), cwd=tmp, capture_output=True, text=True, timeout=timeout)
-    except subprocess.TimeoutExpired:
-        return None, f"timed out after {timeout}s"
-    values["stderr"] = proc.stderr
+        code, stderr, failure = execute(fill(template, values), tmp, timeout)
+    except (OSError, ValueError) as exc:
+        return None, f"could not run the command: {exc}"
+    if failure:
+        return None, failure
+    for artifact in (out, err, values["reported"]):
+        problem = artifact_problem(artifact)
+        if problem:
+            return None, problem
+    values["stderr"] = stderr
+    values["exit_code"] = code
+    if err.is_file() and out.is_file():
+        return None, "the command wrote both output and error artifacts"
     if err.is_file():
-        return err, ""
+        return (err, "") if code != 0 else (None, "the command reported an error but exited zero")
+    # An HDL compiler may report its error solely through stderr diagnostics, leaving {out} absent or empty.
+    if code != 0 and DIAGNOSTIC.search(stderr) and (not out.is_file() or out.stat().st_size == 0):
+        return None, "diagnostics only"
     if out.is_file():
-        return out, ""
-    return None, f"the command wrote neither {out.name} nor {err.name} (exit {proc.returncode}): " + (
-        proc.stderr.strip()[:300]
-    )
+        return (out, "") if code == 0 else (None, f"the command wrote output but exited {code}")
+    return None, f"the command wrote neither {out.name} nor {err.name} (exit {code}): " + stderr.strip()[:300]
 
 
 def category_of(path: Path) -> str | None:
@@ -269,7 +195,20 @@ def hdl_diagnostics(values: dict[str, Any], tmp: Path) -> Path:
     return actual
 
 
-def run_case(
+def invalid_success(name: str, actual: Path | None, values: dict[str, Any]) -> str | None:
+    """An error-shaped body cannot change a successful process/artifact into an error outcome."""
+    if actual is None or actual != values["out"]:
+        return None
+    if name == "expected-error.json":
+        return "the case requires an error, but the processor reported successful output"
+    if name == "expected-report.json":
+        payload = json.loads(actual.read_text(encoding="utf-8"))
+        if isinstance(payload, dict) and "category" in payload:
+            return "an evaluator error must use the error artifact and a nonzero exit"
+    return None
+
+
+def _run_case(
     case_dir: Path,
     template: str,
     claims: Claims | None,
@@ -289,19 +228,32 @@ def run_case(
             json.loads((case_dir / "expected-claims.json").read_text(encoding="utf-8")), claims
         )
         return ("FAIL", "; ".join(problems)) if problems else ("PASS", "")
-    skip = skip_reason(manifest, claims, template)
+    applicability = skip_reason(manifest, claims, "{withdraw} {cells}")
+    if applicability is not None:
+        return "SKIP", applicability
+    # The run, not the claims, rules these out: an applicable case then fails, as one with no command does.
+    limitation = skip_reason(manifest, claims, template)
     verified = manifest.get("verify") == ROUND_TRIP
-    if skip is None and verified and parser is None:
-        skip = "is verified by parsing the written stream back, and no --pp-cmd is given"
-    if skip is not None:
-        return "SKIP", skip
+    if limitation is None and verified and parser is None:
+        limitation = "is verified by parsing the written stream back, and no --pp-cmd is given"
+    if limitation is not None:
+        return ("SKIP", limitation) if claims is None else ("FAIL", "applicable case " + limitation)
     with tempfile.TemporaryDirectory(dir=keep) as scratch:
         tmp = Path(scratch)
         name = compare.expected_artifact(case_dir)
         ext = ".bin" if manifest["class"] == "writer" else ".ttl" if name.endswith(".ttl") else ".json"
         values = placeholders(case_dir, manifest, tmp, ext)
         actual, why = invoke(template, values, tmp, timeout)
-        if manifest["class"] == "hdl-compiler" and name == "expected-error.json" and "stderr" in values:
+        failure = invalid_success(name, actual, values)
+        if failure:
+            return "FAIL", failure
+        if (
+            manifest["class"] == "hdl-compiler"
+            and name == "expected-error.json"
+            and (actual is not None or why == "diagnostics only")
+        ):
+            if values["exit_code"] == 0:
+                return "FAIL", "the compiler error case exited zero"
             actual = hdl_diagnostics(values, tmp)
         if actual is None:
             return "FAIL", why
@@ -316,11 +268,125 @@ def run_case(
         base = reported.read_text(encoding="utf-8").strip() if reported.is_file() else None
         if "base" in manifest and manifest["base"] is None and not base and actual == values["out"]:
             return "FAIL", "the case gives no base and the processor reported none"
-        try:
-            problems = compare.compare_case(case_dir, actual, reported_base=base)
-        except Exception as exc:  # noqa: BLE001 -- an unreadable output is a failure of the case, not of the runner
-            problems = [f"the output could not be compared: {exc}"]
+        problems = bounded_comparison("case", case_dir, actual, timeout, base)
         return ("FAIL", "; ".join(problems)) if problems else ("PASS", "")
+
+
+class ComparisonWorker:
+    """One long-lived comparison process: rdflib and the comparator load once, not once per case. A request that
+    overruns its deadline, a reply beyond its bound or a dead worker discards the process; the next request starts
+    a fresh one. The worker is recycled after RECYCLE requests so no comparison inherits unbounded state."""
+
+    RECYCLE = 500
+    MAX_REPLY_CHARS = 64_000  # The worker returns at most 20 problems of 2000 characters.
+
+    def __init__(self) -> None:
+        self.lock = threading.Lock()
+        self.proc: subprocess.Popen[str] | None = None
+        self.script: Path | None = None
+        self.replies: queue.Queue[str | None] = queue.Queue()
+        self.served = 0
+
+    def _start(self, script: Path) -> subprocess.Popen[str]:
+        self.replies = queue.Queue()
+        proc = subprocess.Popen(
+            [sys.executable, str(script), "--serve"],
+            cwd=script.parent,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        replies, stream = self.replies, proc.stdout
+        assert stream is not None
+
+        def read() -> None:
+            try:
+                for line in iter(lambda: stream.readline(self.MAX_REPLY_CHARS + 1), ""):
+                    replies.put(line)
+            except (OSError, ValueError):
+                pass
+            finally:
+                replies.put(None)
+
+        threading.Thread(target=read, daemon=True).start()
+        self.proc, self.script, self.served = proc, script, 0
+        return proc
+
+    def stop(self) -> None:
+        proc, self.proc = self.proc, None
+        if proc is None:
+            return
+        with contextlib.suppress(OSError):
+            proc.kill()
+        with contextlib.suppress(subprocess.TimeoutExpired):
+            proc.wait(timeout=10)
+        for pipe in (proc.stdin, proc.stdout):
+            with contextlib.suppress(OSError):
+                if pipe is not None:
+                    pipe.close()
+
+    def request(self, script: Path, payload: dict[str, str], timeout: float) -> tuple[list[str] | None, str]:
+        """(the problems, "") or (None, why the comparison failed)."""
+        with self.lock:
+            if self.proc is not None and (
+                self.script != script or self.served >= self.RECYCLE or self.proc.poll() is not None
+            ):
+                self.stop()
+            try:
+                proc = self.proc or self._start(script)
+                assert proc.stdin is not None
+                proc.stdin.write(json.dumps(payload) + "\n")
+                proc.stdin.flush()
+            except OSError as exc:
+                self.stop()
+                return None, f"could not reach the comparison worker: {exc}"
+            self.served += 1
+            try:
+                line = self.replies.get(timeout=timeout)
+            except queue.Empty:
+                self.stop()
+                return None, f"timed out after {timeout}s"
+            if line is None or not line.endswith("\n"):
+                self.stop()
+                return None, "the comparison worker exited" if line is None else "the reply exceeded its bound"
+            try:
+                problems = json.loads(line)
+            except ValueError:
+                problems = None
+            if not isinstance(problems, list) or not all(isinstance(p, str) for p in problems):
+                self.stop()
+                return None, "the comparison worker sent a malformed reply"
+            return problems, ""
+
+
+COMPARISONS = ComparisonWorker()
+atexit.register(COMPARISONS.stop)
+
+
+def bounded_comparison(mode: str, case: Path, actual: Path, timeout: float, base: str | None = None) -> list[str]:
+    """Compare in a separate, deadline-bound process so parsing and matching cannot stall the suite."""
+    payload = {"mode": mode, "case": str(case.resolve()), "actual": str(actual.resolve()), "base": base or ""}
+    problems, why = COMPARISONS.request(HERE / "comparison_worker.py", payload, timeout)
+    return ["comparison failed: " + why] if problems is None else problems
+
+
+def run_case(
+    case_dir: Path,
+    template: str,
+    claims: Claims | None,
+    timeout: float,
+    keep: str | None = None,
+    observed: dict[str, Any] | None = None,
+    parser: str | None = None,
+) -> tuple[str, str]:
+    """Keep unreadable processor artifacts local to this case, so the run still produces a report."""
+    try:
+        return _run_case(case_dir, template, claims, timeout, keep, observed, parser)
+    except Exception as exc:  # noqa: BLE001 -- a broken case must not discard the rest of the report
+        return "FAIL", f"the case could not be evaluated: {exc}"
 
 
 def allowed_refusal(manifest: dict[str, Any], category: str | None) -> bool:
@@ -328,7 +394,7 @@ def allowed_refusal(manifest: dict[str, Any], category: str | None) -> bool:
     return category is not None and category == manifest.get("orError")
 
 
-def run_round_trip(
+def _run_round_trip(
     case_dir: Path,
     writer: str,
     parser: str,
@@ -342,7 +408,8 @@ def run_round_trip(
     manifest allows an error outcome (`orError`) passes, with no symmetry to check, when the writer or the parser
     refuses with that category: the case lets a processor refuse the tree's expressions that way."""
     manifest = json.loads((case_dir / "manifest.json").read_text(encoding="utf-8"))
-    skip = skip_reason(manifest, claims, writer) or skip_reason(manifest, claims, parser)
+    writer_manifest = {k: v for k, v in manifest.items() if k != "cells"}
+    skip = skip_reason(writer_manifest, claims, writer) or skip_reason(manifest, claims, parser)
     if skip is None and "writer" not in (claimed_features(claims) if claims is not None else ()):
         skip = "the claims statement does not claim the feature 'writer'"
     if skip is not None:
@@ -350,7 +417,10 @@ def run_round_trip(
     with tempfile.TemporaryDirectory() as scratch:
         tmp = Path(scratch)
         values = placeholders(case_dir, manifest, tmp, ".bin")
-        values["input"] = case_dir / "expected.json"
+        logical_tree = case_dir / "round-trip-tree.json"
+        values["input"] = (
+            logical_tree if manifest.get("cells") and logical_tree.is_file() else case_dir / "expected.json"
+        )
         written, why = invoke(writer, values, tmp, timeout)
         if written is None:
             return "FAIL", "writing the tree: " + why
@@ -371,10 +441,24 @@ def run_round_trip(
             if allowed_refusal(manifest, refusal):
                 return "PASS", f"the parser refused the written stream with {refusal}, which the case allows"
             return "FAIL", f"the written stream does not parse: {refusal}"
-        tree = json.loads((case_dir / "expected.json").read_text(encoding="utf-8"))
-        exempt = round_trip.recomputed_keys(case_dir / "description.ttl")
-        problems = round_trip.isomorphism_problems(tree, json.loads(back.read_text(encoding="utf-8")), exempt)
+        problems = bounded_comparison("round-trip", case_dir, back, timeout)
         return round_trip.judge(expected, None, problems)
+
+
+def run_round_trip(
+    case_dir: Path,
+    writer: str,
+    parser: str,
+    claims: Claims | None,
+    expected: str,
+    timeout: float,
+    observed: dict[str, Any] | None = None,
+) -> tuple[str, str]:
+    """Keep malformed round-trip artifacts from aborting subsequent cases."""
+    try:
+        return _run_round_trip(case_dir, writer, parser, claims, expected, timeout, observed)
+    except Exception as exc:  # noqa: BLE001 -- a broken case must not discard the rest of the report
+        return "FAIL", f"the round trip could not be evaluated: {exc}"
 
 
 def round_trip_results(args: argparse.Namespace, claims: Claims | None) -> list[Result]:
@@ -415,7 +499,14 @@ def case_results(args: argparse.Namespace, claims: Claims | None) -> list[Result
                 continue
             observed: dict[str, Any] = {}
             if template is None:
-                status, detail = "SKIP", f"no --{FLAGS[cls]}-cmd"
+                manifest = json.loads((case_dir / "manifest.json").read_text(encoding="utf-8"))
+                reason = skip_reason(manifest, claims, "{withdraw} {cells}")
+                if reason:
+                    status, detail = "SKIP", reason
+                elif claims is None:
+                    status, detail = "SKIP", f"no --{FLAGS[cls]}-cmd and no claims statement"
+                else:
+                    status, detail = "FAIL", f"applicable case has no --{FLAGS[cls]}-cmd"
             else:
                 status, detail = run_case(
                     case_dir, template, claims, args.timeout, observed=observed, parser=args.pp_cmd
@@ -431,6 +522,40 @@ def case_results(args: argparse.Namespace, claims: Claims | None) -> list[Result
             )
             print(f"{status} {case_dir.name}" + (f"  {detail}" if detail and status != "PASS" else ""))
     return results
+
+
+def report_metadata(args: argparse.Namespace) -> tuple[dict[str, str], dict[str, str]]:
+    implementation = {
+        "name": args.implementation,
+        "version": args.implementation_version,
+        "revision": args.implementation_revision,
+    }
+    environment = {"os": args.os or platform.platform(), "jvm": args.jvm, "toolchain": args.toolchain}
+    return implementation, environment
+
+
+def check_report_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    if not args.json:
+        return
+    if args.case:
+        parser.error("--json requires the whole suite; --case produces a partial run, not an implementation report")
+    if not (args.implementation_revision and args.toolchain):
+        parser.error("--json needs --implementation-revision and --toolchain: a report names the build it ran")
+    implementation, environment = report_metadata(args)
+    problems = report.metadata_problems(implementation, environment)
+    if problems:
+        parser.error("; ".join(problems))
+
+
+def write_report(args: argparse.Namespace, results: list[Result], claims: Claims | None) -> bool:
+    implementation, environment = report_metadata(args)
+    built = report.build(results, implementation, claims or {}, Path(args.suite), environment=environment)
+    problems = report.write_validated(Path(args.json), built, Path(args.suite))
+    if problems:
+        print("report not written: " + "; ".join(problems))
+        return False
+    print(f"report written to {args.json}; publish it as {report.report_path(built)}")
+    return True
 
 
 def main(argv: list[str]) -> int:
@@ -464,14 +589,15 @@ def main(argv: list[str]) -> int:
         help="run the symmetry requirement over the Physical Parser cases' trees (needs --w-cmd and --pp-cmd)",
     )
     args = ap.parse_args(argv)
+    if not math.isfinite(args.timeout) or args.timeout <= 0:
+        ap.error("--timeout must be positive and finite")
     if args.check_report:
         problems = report.check(
             json.loads(Path(args.check_report).read_text(encoding="utf-8")), Path(args.suite), path=args.check_report
         )
         print("\n".join(problems) if problems else "the report follows the format and covers the suite")
         return 1 if problems else 0
-    if args.json and not (args.implementation_revision and args.toolchain):
-        ap.error("--json needs --implementation-revision and --toolchain: a report names the build it ran")
+    check_report_args(args, ap)
     claims = json.loads(Path(args.claims).read_text(encoding="utf-8")) if args.claims else None
     if args.round_trip:
         if not (args.w_cmd and args.pp_cmd):
@@ -481,22 +607,10 @@ def main(argv: list[str]) -> int:
         results = round_trip_results(args, claims)
     else:
         results = case_results(args, claims)
-    counts = {status: sum(1 for r in results if r["status"] == status) for status in ("PASS", "FAIL", "SKIP")}
+    counts = report.result_counts(results)
     print(f"{counts['PASS']} passed, {counts['FAIL']} failed, {counts['SKIP']} skipped")
-    if args.json:
-        import platform
-
-        implementation = {
-            "name": args.implementation,
-            "version": args.implementation_version,
-            "revision": args.implementation_revision,
-        }
-        environment = {"os": args.os or platform.platform(), "jvm": args.jvm, "toolchain": args.toolchain}
-        built = report.build(results, implementation, claims or {}, Path(args.suite), environment=environment)
-        Path(args.json).write_text(
-            json.dumps(built, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n"
-        )
-        print(f"report written to {args.json}; publish it as {report.report_path(built)}")
+    if args.json and not write_report(args, results, claims):
+        return 1
     return 1 if counts["FAIL"] else 0
 
 

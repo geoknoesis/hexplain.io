@@ -142,7 +142,7 @@ def compare_tree(expected: Any, actual: Any, path: str = "$") -> list[str]:
     if isinstance(expected, dict):
         if not isinstance(actual, dict):
             return [f"{path}: expected a struct, got {actual!r}"]
-        if set(expected) != set(actual):
+        if expected.keys() != actual.keys():
             return [f"{path}: expected members {sorted(expected)}, got {sorted(actual)}"]
         out: list[str] = []
         for k in expected:
@@ -193,7 +193,7 @@ def _argument_cells(g: rdflib.Graph) -> set[Node]:
         if cell in cells or cell == RDF.nil:
             continue
         cells.add(cell)
-        pending += list(g.objects(cell, RDF.rest))
+        pending.extend(g.objects(cell, RDF.rest))
     return cells
 
 
@@ -228,16 +228,15 @@ def normalise_graph(
     HEL literals canonical."""
     manifest = manifest or {}
     drop: set[Triple] = set()
+    closure: set[Node] = set()
     if cls == "bundle-processor" and manifest.get("bundleProfile"):
         pending: list[Node] = [URIRef(manifest["bundleProfile"])]
-        closure: set[Node] = set()
         while pending:
             node = pending.pop()
             if node in closure:
                 continue
             closure.add(node)
-            pending += [o for o in g.objects(node, None) if isinstance(o, BNode)]
-        drop |= {t for t in g if t[0] in closure}
+            pending.extend(o for o in g.objects(node, None) if isinstance(o, BNode))
     compare_header = manifest.get("compareOntologyHeader", False) if header is None else header
     if cls == "hdl-compiler" and not compare_header:
         for s in set(g.subjects(RDF.type, URIRef(OWL + "Ontology"))):
@@ -245,14 +244,15 @@ def normalise_graph(
                 if p in HEADER_PREDICATES or str(p).startswith(HEADER_NAMESPACES):
                     drop.add((s, p, o))
     arguments = _argument_cells(g)
+    by_value = cls in BY_VALUE
     out = rdflib.Graph()
     for s, p, o in g:
-        if p in EXTENTS or (s, p, o) in drop:
+        if p in EXTENTS or s in closure or (s, p, o) in drop:
             continue
         argument = p == RDF.first and s in arguments
         if reported_base:
             s, o = (_rebase(t, reported_base) for t in (s, o))
-        out.add((s, p, _canonical_literal(p, o, argument, by_value=cls in BY_VALUE)))
+        out.add((s, p, _canonical_literal(p, o, argument, by_value=by_value)))
     return out
 
 
@@ -289,11 +289,23 @@ def _nt(g: rdflib.Graph) -> list[str]:
 
 def compare_error(expected: dict[str, Any], actual: Any, category_map: dict[str, str] | None = None) -> list[str]:
     names: dict[Any, str] = category_map or {}
-    got = (actual or {}).get("category")
+    if not isinstance(actual, dict) or not isinstance(actual.get("category"), str):
+        return [f"expected a {expected['category']} error, got {actual!r}"]
+    got = actual["category"]
     got = names.get(got, got)
     if got not in CATEGORIES:
         return [f"expected a {expected['category']} error, got {actual!r}"]
     return [] if got == expected["category"] else [f"expected a {expected['category']} error, got {got}"]
+
+
+def compare_alternative_error(
+    manifest: dict[str, Any], actual: Any, category_map: dict[str, str] | None = None
+) -> list[str]:
+    """An alternative must explicitly name a valid category; absent and null are never error outcomes."""
+    allowed = manifest.get("orError")
+    if allowed not in CATEGORIES:
+        return [f"the case requires successful output, got an error artifact: {actual!r}"]
+    return compare_error({"category": allowed}, actual, category_map)
 
 
 def compare_bytes(expected: bytes, actual: bytes) -> list[str]:
@@ -312,13 +324,18 @@ def compare_bytes(expected: bytes, actual: bytes) -> list[str]:
 def compare_hdl_error(expected: dict[str, Any], actual: Any) -> list[str]:
     """An HDL Compiler error case: at least one ERROR diagnostic (at the stated line, when the case states one) and no
     compiled output."""
-    diags = [d for d in (actual or {}).get("diagnostics", []) if str(d.get("severity", "")).upper() == "ERROR"]
+    if not isinstance(actual, dict):
+        return ["compiler diagnostics must be an object"]
+    diagnostics = actual.get("diagnostics", [])
+    if not isinstance(diagnostics, list) or any(not isinstance(d, dict) for d in diagnostics):
+        return ["diagnostics must be an array of objects"]
+    diags = [d for d in diagnostics if str(d.get("severity", "")).upper() == "ERROR"]
     out = []
     if not diags:
         out.append(f"expected an ERROR diagnostic, got {actual!r}")
-    elif "line" in expected and not any(d.get("line") == expected["line"] for d in diags):
+    elif "line" in expected and not any(type(d.get("line")) is int and d["line"] == expected["line"] for d in diags):
         out.append(f"expected an ERROR at line {expected['line']}, got lines {[d.get('line') for d in diags]}")
-    if (actual or {}).get("output"):
+    if actual.get("output"):
         out.append("the compiler produced output for input it reported an ERROR for")
     return out
 
@@ -329,31 +346,66 @@ def compare_hdl_error(expected: dict[str, Any], actual: Any) -> list[str]:
 def compare_report_json(expected: dict[str, Any], actual: dict[str, Any]) -> list[str]:
     """The summary comparison: verdict, truncation, scoping and every listed outcome equal; findings one for one, each
     on the members the expected finding states."""
+    if not isinstance(actual, dict):
+        return ["the report must be an object"]
     out = []
     for key in ("verdict", "truncated", "versionScopingApplied"):
-        if key in expected and expected[key] != actual.get(key):
+        if key in expected and not _finding_member(key, expected[key], actual.get(key)):
             out.append(f"{key}: expected {expected[key]!r}, got {actual.get(key)!r}")
+    outcomes = actual.get("outcomes", {})
+    if not isinstance(outcomes, dict):
+        return out + ["outcomes must be an object"]
     for req, value in expected.get("outcomes", {}).items():
-        got = actual.get("outcomes", {}).get(req)
-        if got != value:
+        got = outcomes.get(req)
+        if not _finding_member(req, value, got):
             out.append(f"outcome of {req}: expected {value}, got {got}")
     if "findings" in expected:
-        have = list(actual.get("findings", []))
-        if len(expected["findings"]) != len(have):
-            out.append(f"expected {len(expected['findings'])} finding(s), got {len(have)}")
-        for want in expected["findings"]:
-            match = next((h for h in have if all(_finding_member(k, v, h.get(k)) for k, v in want.items())), None)
-            if match is None:
-                out.append(f"no finding matches {want}")
-            else:
-                have.remove(match)
+        have = actual.get("findings", [])
+        if not isinstance(have, list) or any(not isinstance(h, dict) for h in have):
+            return out + ["findings must be an array of objects"]
+        out.extend(_match_findings(expected["findings"], have))
+    return out
+
+
+def _match_findings(wants: list[dict[str, Any]], have: list[dict[str, Any]]) -> list[str]:
+    """Match partial finding patterns without depending on report ordering."""
+    out: list[str] = []
+    if len(wants) != len(have):
+        out.append(f"expected {len(wants)} finding(s), got {len(have)}")
+    # Augmenting paths find a complete bipartite matching even when patterns overlap.
+    edges = [
+        [i for i, h in enumerate(have) if all(_finding_member(k, v, h.get(k)) for k, v in w.items())] for w in wants
+    ]
+    owners: dict[int, int] = {}
+    for start in range(len(wants)):
+        pending = [start]
+        previous: dict[int, tuple[int, int] | None] = {start: None}
+        end: tuple[int, int] | None = None
+        for want in pending:
+            for candidate in edges[want]:
+                if candidate not in owners:
+                    end = (want, candidate)
+                    break
+                owner = owners[candidate]
+                if owner not in previous:
+                    previous[owner] = (want, candidate)
+                    pending.append(owner)
+            if end is not None:
+                break
+        if end is None:
+            out.append(f"no distinct finding matches {wants[start]}")
+            continue
+        while end is not None:
+            want, candidate = end
+            owners[candidate] = want
+            end = previous[want]
     return out
 
 
 def _finding_member(key: str, want: Any, got: Any) -> bool:
     if key == "requirements":
-        return sorted(want) == sorted(got or [])
-    return want == got
+        return isinstance(got, list) and all(isinstance(v, str) for v in got) and sorted(want) == sorted(got)
+    return type(want) is type(got) and want == got
 
 
 def _report_graph(g: rdflib.Graph) -> rdflib.Graph:
@@ -526,14 +578,19 @@ def compare_case(
     case_dir, actual_path = Path(case_dir), Path(actual_path)
     manifest = json.loads((case_dir / "manifest.json").read_text(encoding="utf-8"))
     name = expected_artifact(case_dir)
+    if actual_path.name == ERROR_FILE and name != "expected-error.json":
+        actual = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.is_file() else None
+        return compare_alternative_error(manifest, actual, category_map)
     if manifest["class"] == "writer":
-        return _compare_writer(case_dir, name, actual_path, category_map)
+        return _compare_writer(case_dir, name, actual_path, category_map, manifest)
     if name.endswith(".json"):
         return _compare_json(case_dir, name, manifest, actual_path, category_map)
-    return _compare_graphs(case_dir, name, manifest, actual_path, reported_base)
+    return _compare_graphs(case_dir, name, manifest, actual_path, reported_base, category_map)
 
 
-def _compare_writer(case_dir: Path, name: str, actual_path: Path, category_map: dict[str, str] | None) -> list[str]:
+def _compare_writer(
+    case_dir: Path, name: str, actual_path: Path, category_map: dict[str, str] | None, manifest: dict[str, Any]
+) -> list[str]:
     """A Writer case: the bytes written, the tree they parse back to, or the error raised."""
     # A writer's output is bytes or an error: the file is read as JSON only when it is named as one (error.json).
     if not actual_path.is_file():
@@ -552,7 +609,9 @@ def _compare_writer(case_dir: Path, name: str, actual_path: Path, category_map: 
         # error the writer or the parser raised.
         if error is not None or actual_path.suffix != ".json":
             return [f"expected a stream that parses back to the tree, got {error or 'unparsed bytes'!r}"]
-        return round_trip.isomorphism_problems(expected, read, round_trip.recomputed_keys(case_dir / DESCRIPTION))
+        return round_trip.isomorphism_problems(
+            expected, read, round_trip.recomputed_paths(case_dir / DESCRIPTION, manifest.get("root"), expected)
+        )
     if error is None:
         return [f"expected a {expected['category']} error, got {actual_path.stat().st_size} bytes"]
     return compare_error(expected, error, category_map)
@@ -566,9 +625,6 @@ def _compare_json(
     expected = json.loads((case_dir / name).read_text(encoding="utf-8"))
     actual = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.is_file() else None
     if name == "expected.json":
-        if actual_path.name == ERROR_FILE and manifest.get("orError"):
-            # An error category that is an equally conforming outcome (a limit a processor may apply).
-            return compare_error({"category": manifest["orError"]}, actual, category_map)
         return compare_tree(expected, actual)
     if name == "expected-error.json":
         if cls == "hdl-compiler":
@@ -583,13 +639,18 @@ def _compare_json(
         return compare_error(expected, actual, category_map)
     if name == "expected-report.json":
         if isinstance(actual, dict) and "category" in actual:
-            return [] if actual["category"] == manifest.get("orError") else [f"expected a report, got {actual}"]
+            return compare_alternative_error(manifest, actual, category_map)
         return compare_report_json(expected, actual or {})
     return compare_claims(expected, actual or {})
 
 
 def _compare_graphs(
-    case_dir: Path, name: str, manifest: dict[str, Any], actual_path: Path, reported_base: str | None
+    case_dir: Path,
+    name: str,
+    manifest: dict[str, Any],
+    actual_path: Path,
+    reported_base: str | None,
+    category_map: dict[str, str] | None = None,
 ) -> list[str]:
     """A case whose expected artifact is a graph: an emitted or compiled graph, or a run report as RDF."""
     expected_graph = load_graph(case_dir / name)
@@ -597,8 +658,8 @@ def _compare_graphs(
         return [f"no output at {actual_path}"]
     if actual_path.suffix == ".json":
         actual = json.loads(actual_path.read_text(encoding="utf-8"))
-        if name == "expected-report.ttl" and actual.get("category") == manifest.get("orError"):
-            return []
+        if name == "expected-report.ttl":
+            return compare_alternative_error(manifest, actual, category_map)
         return [f"expected a graph, got {actual!r}"]
     actual_graph = load_graph(actual_path)
     if name == "expected-report.ttl":

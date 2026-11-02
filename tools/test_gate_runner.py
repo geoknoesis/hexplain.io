@@ -10,11 +10,15 @@ import os
 import subprocess
 import sys
 import tempfile
+import threading
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
+from unittest.mock import patch
 
+import _gate_process
 from _gate_process import SKIP_EXIT, kill_tree_windows, run_gate
-from _gate_runner import WORKER_CAP, gate_workers, load_gate_manifest
+from _gate_runner import WORKER_CAP, gate_workers, load_gate_manifest, source_manifest
 from _gate_runner import main as run_gates
 from _gate_schedule import MEMORY_ENV
 
@@ -64,6 +68,25 @@ def check_outcomes(root: Path) -> None:
     with contextlib.redirect_stdout(quiet):
         buffered = run_gate([sys.executable, "-c", "print('held back')"], root, 10, stream=False)
     assert buffered["output"].strip() == "held back" and quiet.getvalue() == "", (buffered, quiet.getvalue())
+    overrides = {"PYTHONUTF8": "0", "PYTHONUNBUFFERED": "0", "PYTHONOPTIMIZE": "2"}
+    original = overrides.copy()
+    with environment(HEXPLAIN_ENV_PROBE="inherited"):
+        overridden = run_gate(
+            [
+                sys.executable,
+                "-c",
+                "import json, os, sys; print(json.dumps([os.environ.get('PYTHONUTF8'), "
+                "os.environ.get('PYTHONUNBUFFERED'), os.environ.get('HEXPLAIN_ENV_PROBE'), "
+                "sys.flags.optimize]))",
+            ],
+            root,
+            10,
+            stream=False,
+            env=overrides,
+        )
+    assert overridden["status"] == "PASS", overridden
+    assert json.loads(overridden["output"]) == ["0", "0", "inherited", 0], overridden
+    assert overrides == original, "launching a gate must not mutate its caller's environment mapping"
 
 
 def check_runner(root: Path) -> None:
@@ -112,6 +135,39 @@ def check_runner(root: Path) -> None:
         newline="\n",
     )
     assert run_gates(root, set(), ["--strict"]) == 0
+
+
+def check_source_inputs(root: Path) -> None:
+    """Configuration and binary fixtures affect the run identity; custom output records do not."""
+    names = (
+        "ruff.toml",
+        "CHANGELOG.md",
+        "CONTRIBUTING.md",
+        ".github/workflows/validate.yml",
+        "deployment/publication.conf",
+        "specification/input.bin",
+        "releases/snapshot.zip",
+    )
+    for name in names:
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"original")
+        before = source_manifest(root)
+        path.write_bytes(b"changed")
+        after = source_manifest(root)
+        assert before[name] != after[name], name
+        path.unlink()
+    gate = root / "tools/test_optional.py"
+    gate.write_text(
+        "from pathlib import Path\nPath('ruff.toml').write_text('changed')\n", encoding="utf-8", newline="\n"
+    )
+    (root / "ruff.toml").write_text("original", encoding="utf-8", newline="\n")
+    assert run_gates(root, set(), ["--strict"]) == 1
+    record = json.loads((root / ".gate-results/summary.json").read_text())
+    assert record["changed_sources"] == ["ruff.toml"]
+    gate.write_text("print('PASS')\n", encoding="utf-8", newline="\n")
+    assert run_gates(root, set(), ["--strict", "--json", "custom-results.json"]) == 0
+    assert "custom-results.json" not in json.loads((root / "custom-results.json").read_text())["source_sha256"]
 
 
 def check_concurrency(root: Path) -> None:
@@ -242,6 +298,14 @@ def check_kill_fallback() -> None:
 
         kill_tree_windows(proc, run=unavailable)
         assert proc.wait(timeout=30) != 0, "the gate survived a failed tree kill"
+    proc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"], text=True)
+    try:
+        kill_tree_windows(proc, run=lambda *_args, **_kwargs: subprocess.CompletedProcess([], 1))
+        assert proc.wait(timeout=10) != 0, "the gate survived a nonzero taskkill result"
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait(timeout=10)
 
 
 def check_manifest(root: Path) -> None:
@@ -286,6 +350,126 @@ def check_manifest(root: Path) -> None:
         raise AssertionError("accepted a non-positive timeout")
     except ValueError:
         pass
+
+
+def check_manifest_boundaries(root: Path) -> None:
+    """Malformed manifests fail at loading, before any gate can be launched."""
+    manifest = root / "tools/gates.json"
+    valid = dict(name="test_listed", timeout=30, procs=1)
+    invalid: list[object] = [None, [], {"schema_version": 1}, {"schema_version": 1, "gates": {}}]
+    invalid_entries: list[object] = [None, [], "test_listed"]
+    invalid_entries += [dict(valid, timeout=value) for value in (True, float("nan"), float("inf"), 10**400, "30")]
+    invalid_entries += [dict(valid, procs=value) for value in (True, 0, -1, 1.5, "2")]
+    invalid_names: tuple[object, ...] = (None, [], {}, True, "", "  ")
+    invalid_entries += [dict(valid, name=value) for value in invalid_names]
+    invalid += [{"schema_version": 1, "gates": [entry]} for entry in invalid_entries]
+    for document in invalid:
+        manifest.write_text(json.dumps(document), encoding="utf-8", newline="\n")
+        try:
+            load_gate_manifest(root)
+            raise AssertionError(f"accepted malformed manifest {document!r}")
+        except ValueError as error:
+            assert str(manifest) in str(error), error
+    for timeout in (0.5, 30, 1e308):
+        manifest.write_text(
+            json.dumps({"schema_version": 1, "gates": [dict(valid, timeout=timeout)]}),
+            encoding="utf-8",
+            newline="\n",
+        )
+        loaded = load_gate_manifest(root)
+        assert loaded is not None and loaded["test_listed"]["timeout"] == timeout
+
+
+def check_launch_failures(root: Path) -> None:
+    """A worker exception is a recorded FAIL; other gates still run and the report closes."""
+    (root / "tools").mkdir(parents=True)
+    for name in ("test_broken", "test_healthy"):
+        (root / "tools" / f"{name}.py").write_text("print('PASS')\n", encoding="utf-8", newline="\n")
+    for jobs in (1, 2):
+        for failure in (OSError("process creation failed"), RuntimeError("worker failed")):
+
+            def launch(command: list[str], cwd: Path, timeout: float, **kwargs: Any) -> dict[str, Any]:
+                if Path(command[-1]).stem == "test_broken":
+                    raise failure
+                return run_gate(command, cwd, timeout, **kwargs)
+
+            with patch("_gate_runner.run_gate", side_effect=launch):
+                assert run_gates(root, set(), ["--strict", "--jobs", str(jobs)]) == 1
+            saved = json.loads((root / ".gate-results/summary.json").read_text())
+            assert saved["status"] == "failed" and saved["counts"] == {"PASS": 1, "SKIP": 0, "FAIL": 1}, saved
+            rows = {row["gate"]: row for row in saved["gates"]}
+            assert rows["test_healthy"]["status"] == "PASS", rows
+            broken = rows["test_broken"]
+            assert broken["status"] == "FAIL" and broken["exit_code"] is None, broken
+            assert broken["worker_error"] == type(failure).__name__ and str(failure) in broken["output"], broken
+            assert broken["duration_seconds"] >= 0 and broken["peak_rss_bytes"] is None, broken
+            assert saved["changed_sources"] == [], saved
+
+
+def cleanup_interrupted_probe(captured: dict[str, Any]) -> None:
+    """Keep a failing regression from leaving its probe process or reader behind."""
+    if "sampling_stopped" in captured:
+        captured["sampling_stopped"].set()
+    if "process" in captured:
+        proc = captured["process"]
+        if proc.poll() is None:
+            _gate_process.terminate(proc)
+        proc.wait(timeout=10)
+    if "reader" in captured:
+        captured["reader"].close()
+
+
+def check_interrupted_cleanup(root: Path) -> None:
+    """Real children and background readers are cleaned up when setup or collection fails."""
+    create_process = subprocess.Popen
+    sample_memory = _gate_process.sample_memory
+    start_thread = threading.Thread.start
+    for stage in ("collector", "reader", "sampler"):
+        captured: dict[str, Any] = {}
+
+        def create(*args: Any, **kwargs: Any) -> subprocess.Popen[str]:
+            proc = create_process(*args, **kwargs)
+            if args[0][0] == sys.executable:
+                captured["process"] = proc
+            return proc
+
+        def sample(*args: Any, **kwargs: Any) -> dict[str, Any]:
+            captured["sampling_stopped"] = args[1]
+            return sample_memory(*args, **kwargs)
+
+        def interrupted(*args: Any) -> None:
+            captured["reader"] = args[1]
+            raise RuntimeError("collector interrupted")
+
+        def fail_sampler_once(thread: threading.Thread) -> None:
+            if not captured.get("sampler_failed"):
+                captured["sampler_failed"] = True
+                raise RuntimeError("sampler failed")
+            start_thread(thread)
+
+        try:
+            with contextlib.ExitStack() as stack:
+                stack.enter_context(patch("_gate_process.subprocess.Popen", side_effect=create))
+                stack.enter_context(patch("_gate_process.sample_memory", side_effect=sample))
+                if stage == "collector":
+                    stack.enter_context(patch("_gate_process._collect", side_effect=interrupted))
+                elif stage == "reader":
+                    stack.enter_context(patch("_gate_process._Reader", side_effect=RuntimeError("reader failed")))
+                else:
+                    stack.enter_context(patch("threading.Thread.start", new=fail_sampler_once))
+                try:
+                    run_gate([sys.executable, "-c", "import time; time.sleep(60)"], root, 10, stream=False)
+                    raise AssertionError(f"{stage} failure was swallowed")
+                except RuntimeError:
+                    pass
+            proc = captured["process"]
+            assert proc.poll() is not None and proc.stdout.closed, (stage, proc.pid)
+            if stage != "sampler":
+                assert captured["sampling_stopped"].is_set(), stage
+            if stage == "collector":
+                assert not captured["reader"].thread.is_alive(), stage
+        finally:
+            cleanup_interrupted_probe(captured)
 
 
 def check_workers() -> None:
@@ -373,9 +557,13 @@ def run_checks(root: Path) -> None:
     """Every check, in the order they build on the shared tree."""
     check_outcomes(root)
     check_runner(root)
+    check_source_inputs(root)
     check_concurrency(root)
     check_tight_budget_serialises(root)
     check_manifest(root)
+    check_manifest_boundaries(root)
+    check_launch_failures(root / "launch-failures")
+    check_interrupted_cleanup(root)
     check_effective_procs(root)
     check_workers()
     check_kill_fallback()

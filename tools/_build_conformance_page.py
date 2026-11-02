@@ -99,6 +99,8 @@ PROCESSOR_CLASSES = (
 #: evidence named, or checked only by inspection. The build fails when an entry is withdrawn, is not a processor MUST,
 #: or is cited by a case (then it is testable after all, and the entry is stale).
 NOT_SUITE_TESTABLE = {
+    "req-hel-ext-quantifiers-7": "A black-box suite cannot make an implementation lack a function; inspect how a "
+    "processor without one reports Unsupported rather than a substituted value.",
     "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's "
     "shape gates (test_shapes, test_vocab_shapes) apply it.",
     "req-core-punning-1": "Whether a processor relies on a DL entailment is not observable from its output: a case "

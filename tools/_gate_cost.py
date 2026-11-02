@@ -71,6 +71,8 @@ def derive_timeout(duration_s: float | None) -> int:
         return TIMEOUT_STEP
     if not math.isfinite(duration_s) or duration_s < 0:
         raise ValueError(f"recorded duration must be a finite, non-negative number, not {duration_s!r}")
+    if duration_s >= TIMEOUT_CAP / TIMEOUT_FACTOR:
+        return TIMEOUT_CAP  # Cap before multiplying, which can overflow even a finite input.
     stepped = math.ceil(duration_s * TIMEOUT_FACTOR / TIMEOUT_STEP) * TIMEOUT_STEP
     return int(min(TIMEOUT_CAP, max(TIMEOUT_STEP, stepped)))
 
@@ -83,6 +85,8 @@ def read_record(root: Path) -> dict[str, Any]:
     document = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(document, dict) or document.get("schema_version") != 1:
         raise ValueError(f"{path}: unsupported gate cost record")
+    if any(not isinstance(document.get(key, {}), dict) for key in ("gates", "runs")):
+        raise ValueError(f"{path}: gates and runs must be objects")
     return document
 
 
@@ -92,11 +96,19 @@ def load_costs(root: Path) -> dict[str, GateCost]:
     for name, entry in read_record(root).get("gates", {}).items():
         try:
             rss, procs = entry.get("peak_rss_mb"), entry.get("procs")
+            if isinstance(entry["duration_s"], bool) or isinstance(rss, bool):
+                raise ValueError("a Boolean is not a measured cost")
+            if procs is not None and (type(procs) is not int or procs < 0):
+                raise ValueError("procs must be a nonnegative integer or null")
             cost = GateCost(float(entry["duration_s"]), None if rss is None else float(rss), procs)
-        except (AttributeError, KeyError, TypeError, ValueError) as error:
+        except (AttributeError, KeyError, OverflowError, TypeError, ValueError) as error:
             raise ValueError(f"{root / COSTS}: gate {name} has a malformed cost entry: {error!r}") from error
         if cost.duration_s < 0 or (cost.peak_rss_mb is not None and cost.peak_rss_mb < 0):
             raise ValueError(f"{root / COSTS}: gate {name} records a negative cost")
+        if not math.isfinite(cost.duration_s) or (
+            cost.peak_rss_mb is not None and not math.isfinite(cost.peak_rss_mb * MIB)
+        ):
+            raise ValueError(f"{root / COSTS}: gate {name} records a non-finite cost in seconds or bytes")
         costs[name] = cost
     return costs
 

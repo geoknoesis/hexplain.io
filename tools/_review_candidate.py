@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 import specgraph
+from _build_conformance_page import CASE_CLASSES
 from rdflib import Graph, Namespace, URIRef
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -62,7 +63,10 @@ def _shape_inventory(modules: list[dict[str, Any]], trace: dict[str, Any]) -> di
                         {
                             c
                             for p in paths
-                            for c in refs.get(p, {}).get("positive", []) + refs.get(p, {}).get("negative", [])
+                            for c in refs.get(p, {}).get("positive", [])
+                            + refs.get(p, {}).get("negative", [])
+                            + refs.get(p, {}).get("contract_positive", [])
+                            + refs.get(p, {}).get("contract_negative", [])
                         }
                     ),
                     review_status="needs constraint-level review",
@@ -83,7 +87,8 @@ def _payload_paths(modules: list[dict[str, Any]]) -> set[str]:
     paths.update(
         p.relative_to(ROOT).as_posix() for p in (ROOT / "specification/validation/test").glob("*") if p.is_file()
     )
-    paths.update(p.relative_to(ROOT).as_posix() for p in (ROOT / "tools").glob("*.py"))
+    paths.update(p.relative_to(ROOT).as_posix() for p in (ROOT / "tools").rglob("*.py"))
+    paths.update(p.relative_to(ROOT).as_posix() for p in (ROOT / "specification/conformance").rglob("*") if p.is_file())
     paths.update(m["page"] for m in modules)
     paths.update(p.relative_to(ROOT).as_posix() for p in (ROOT / "authoring/specification").rglob("*") if p.is_file())
     paths.update(
@@ -101,6 +106,8 @@ def _payload_paths(modules: list[dict[str, Any]]) -> set[str]:
             "specification/family.json",
             "specification/coverage/profile-catalog.json",
             "specification/reference/manifest.json",
+            "specification/capabilities.json",
+            "specification/validation/construct-coverage.json",
             "specification/validation/competency-trace.json",
             "specification/validation/constraint-coverage.json",
             "specification/ontology-review/review-instructions.md",
@@ -108,6 +115,14 @@ def _payload_paths(modules: list[dict[str, Any]]) -> set[str]:
             "specification/ontology-review/candidate-migration.md",
             "specification/coverage/gdal-tests/vector-semantic-candidate.json",
             "tools/gates.json",
+            "specification/hdl/index.html",
+            "specification/reference-engine-claims.json",
+            "pyproject.toml",
+            "ruff.toml",
+            "LICENSE",
+            "LICENSING.md",
+            "requirements.in",
+            "requirements-browser.in",
         ]
     )
     return paths
@@ -120,7 +135,12 @@ def build() -> tuple[dict[str, Any], dict[str, Any], bytes]:
     audit = _shape_inventory(modules, trace)
     payload = {}
     for path in sorted(_payload_paths(modules)):
-        payload[path] = (ROOT / path).read_bytes() if path.endswith(".zip") else text_bytes(path)
+        payload[path] = (
+            (ROOT / path).read_bytes()
+            if path.endswith(".zip")
+            or any(path.startswith(f"specification/conformance/{cls}/") for cls in CASE_CLASSES)
+            else text_bytes(path)
+        )
     payload["specification/ontology-review/constraint-inventory.json"] = (json.dumps(audit, indent=2) + "\n").encode()
     content = io.BytesIO()
     with zipfile.ZipFile(content, "w", compression=zipfile.ZIP_STORED) as archive:
@@ -139,7 +159,7 @@ def build() -> tuple[dict[str, Any], dict[str, Any], bytes]:
         modules=len(modules),
         hash_policy=(
             "SHA-256 of exact archive entry bytes; source UTF-8 text normalized to LF before packaging. "
-            "Historical release archives are unchanged."
+            "Conformance case bytes and historical release archives are unchanged."
         ),
         archive=ARCHIVE,
         archive_sha256=hashlib.sha256(binary).hexdigest(),

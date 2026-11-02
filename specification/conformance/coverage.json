@@ -1,6 +1,6 @@
 {
  "cases": {
-  "physical-parser": 518,
+  "physical-parser": 525,
   "semantic-emitter": 49,
   "bundle-processor": 13,
   "hdl-compiler": 222,
@@ -19,11 +19,12 @@
  },
  "processorMust": {
   "Physical Parser": {
-   "total": 284,
-   "covered": 280,
+   "total": 287,
+   "covered": 282,
    "notSuiteTestable": {
     "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's shape gates (test_shapes, test_vocab_shapes) apply it.",
     "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the condition is asserted by the HEL vectors (validation/test/hel-vectors.tsv, req-hel-conformance-9).",
+    "req-hel-ext-quantifiers-7": "A black-box suite cannot make an implementation lack a function; inspect how a processor without one reports Unsupported rather than a substituted value.",
     "req-hel-ext-text-7": "A statement in the processor's claims or report environment, not a result of a parse; it is checked by reading the published report.",
     "req-pm-alignment-padding-3": "Verifying a fill byte is optional (a processor MAY compare the padding with bddo:padByte), so a case cannot tell a processor that does not verify from one that verified and agreed; the rule binds only what a verifying processor reports."
    },
@@ -82,8 +83,8 @@
   },
   "hel": {
    "MUST": {
-    "total": 75,
-    "covered": 73
+    "total": 78,
+    "covered": 75
    },
    "SHOULD": {
     "total": 1,
@@ -143,11 +144,11 @@
  },
  "writer": {
   "roundTrip": {
-   "trees": 249,
+   "trees": 253,
    "outcomes": {
     "Unsupported": 17,
     "Validation": 7,
-    "round-trip": 225
+    "round-trip": 229
    }
   },
   "cases": [
@@ -1293,7 +1294,11 @@
    "pp-param-type-mismatch-evaluated"
   ],
   "req-pm-data-layouts-1": [
+   "pp-layout-cell-type-first-forward",
+   "pp-layout-cell-type-first-reverse",
    "pp-layout-conditional-cell-no-arm",
+   "pp-layout-dimension-order-first-forward",
+   "pp-layout-dimension-order-first-reverse",
    "pp-layout-packed-float-from-field",
    "pp-layout-read-as-bytes",
    "pp-layout-size-expression-not-integer",
@@ -1688,6 +1693,8 @@
    "pp-codec-lz4-block-declared-size-over-limit",
    "pp-codec-lz4-frame-declared-size-over-limit",
    "pp-codec-zstd-declared-size-over-limit",
+   "pp-limit-collection-output",
+   "pp-limit-collection-traversal",
    "pp-limit-depth-exceeded",
    "pp-limit-hel-depth",
    "pp-limit-hel-length",
@@ -1696,6 +1703,7 @@
    "pp-limit-no-cheaper-interpretation",
    "pp-limit-quantifier-evaluations",
    "pp-limit-regex-steps",
+   "pp-limit-text-conversion",
    "pp-limit-tree-depth",
    "pp-limit-visited-nodes",
    "pp-param-recursion-depth-limit",
@@ -2362,6 +2370,8 @@
   ],
   "req-pm-resource-limits-1": [
    "pp-codec-decoded-byte-limit",
+   "pp-limit-collection-output",
+   "pp-limit-collection-traversal",
    "pp-limit-depth-at-limit",
    "pp-limit-depth-exceeded",
    "pp-limit-hel-depth",
@@ -2371,6 +2381,7 @@
    "pp-limit-no-cheaper-interpretation",
    "pp-limit-quantifier-evaluations",
    "pp-limit-regex-steps",
+   "pp-limit-text-conversion",
    "pp-limit-tree-depth",
    "pp-limit-visited-nodes",
    "pp-param-recursion-depth-limit",
@@ -2383,6 +2394,8 @@
   "req-pm-resource-limits-3": [
    "ce-lenient-parse-resource-limit",
    "pp-codec-decoded-byte-limit",
+   "pp-limit-collection-output",
+   "pp-limit-collection-traversal",
    "pp-limit-depth-exceeded",
    "pp-limit-hel-depth",
    "pp-limit-hel-length",
@@ -2390,6 +2403,7 @@
    "pp-limit-materialized-bytes",
    "pp-limit-quantifier-evaluations",
    "pp-limit-regex-steps",
+   "pp-limit-text-conversion",
    "pp-limit-tree-depth",
    "pp-limit-visited-nodes",
    "se-triple-limit"
@@ -2911,11 +2925,14 @@
   "req-hel-conformance-8": [
    "pp-hel-flat-chain-depth",
    "pp-hel-flat-conjunction-depth",
+   "pp-limit-collection-output",
+   "pp-limit-collection-traversal",
    "pp-limit-hel-default-depth",
    "pp-limit-hel-depth",
    "pp-limit-hel-length",
    "pp-limit-quantifier-evaluations",
-   "pp-limit-regex-steps"
+   "pp-limit-regex-steps",
+   "pp-limit-text-conversion"
   ],
   "req-hel-conformance-9": [
    "pp-hel-vector-rows"
@@ -2963,6 +2980,16 @@
   "req-hel-ext-quantifiers-4": [
    "pp-limit-quantifier-evaluations"
   ],
+  "req-hel-ext-quantifiers-5": [
+   "pp-limit-collection-output",
+   "pp-limit-collection-traversal",
+   "pp-limit-text-conversion"
+  ],
+  "req-hel-ext-quantifiers-6": [
+   "pp-limit-collection-output",
+   "pp-limit-text-conversion"
+  ],
+  "req-hel-ext-quantifiers-7": [],
   "req-hel-ext-temporal-1": [
    "pp-hel-temporal-date-only"
   ],
@@ -4581,7 +4608,12 @@
   "req-bddo-structural-properties-6": [
    "pp-struct-size-literal"
   ],
-  "req-dlv-conditional-1": [],
+  "req-dlv-conditional-1": [
+   "pp-layout-cell-type-first-forward",
+   "pp-layout-cell-type-first-reverse",
+   "pp-layout-dimension-order-first-forward",
+   "pp-layout-dimension-order-first-reverse"
+  ],
   "req-dlv-properties-1": [],
   "req-dlv-properties-2": [],
   "req-core-punning-1": [],
@@ -4653,7 +4685,7 @@
    "version": "0.1.0-SNAPSHOT",
    "date": "2026-10-15T21:56:45Z",
    "digest": "665b443c5f019d43086b748ff36e624caac326fb46fb99838e3ed6fb002b9499",
-   "superseded": false,
+   "superseded": true,
    "PASS": 927,
    "FAIL": 0,
    "SKIP": 4
@@ -4664,6 +4696,7 @@
   "bddo/index.html#odd-widths": 7,
   "bddo/index.html#parameterised-structs": 9,
   "conf/index.html#conformance": 1,
+  "dlv#conditional": 4,
   "hdl/index.html#align-origin": 3,
   "hdl/index.html#asset": 2,
   "hdl/index.html#bundle-profile": 5,
@@ -4711,7 +4744,7 @@
   "hel/index.html#expression-depth": 2,
   "hel/index.html#expression-literals": 1,
   "hel/index.html#ext-geometry": 3,
-  "hel/index.html#ext-quantifiers": 5,
+  "hel/index.html#ext-quantifiers": 8,
   "hel/index.html#ext-register": 1,
   "hel/index.html#ext-temporal": 3,
   "hel/index.html#ext-text": 19,
@@ -4745,7 +4778,7 @@
   "processing#conformance-classes": 6,
   "processing#conformance-evaluation": 41,
   "processing#context": 6,
-  "processing#data-layouts": 12,
+  "processing#data-layouts": 16,
   "processing#delimited-records": 8,
   "processing#delimited-tables": 8,
   "processing#delta-parameters": 11,
@@ -4771,7 +4804,7 @@
   "processing#recovery": 8,
   "processing#refusal": 2,
   "processing#repeat-until-bindings": 5,
-  "processing#resource-limits": 20,
+  "processing#resource-limits": 23,
   "processing#round-trip": 2,
   "processing#security-decompression": 4,
   "processing#security-resources": 1,

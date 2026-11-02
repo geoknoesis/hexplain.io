@@ -390,6 +390,9 @@ SCOPE = {
     "file timestamps "
     "and reference-frame epochs.",
     "signal": "Use for sampled signals; state channel organization and units separately from sample rate.",
+    "structure": "Use for decoded records, member roles and ordered occurrences when a more specific domain aspect "
+    "does not supply those meanings. Physical byte layout remains in BDDO; format profiles supply "
+    "application-specific member semantics.",
     "tabular": "Use for tabular records and typed column declarations. Source datatype names require "
     "interpretation by the "
     "relevant format/profile.",

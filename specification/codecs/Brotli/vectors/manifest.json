@@ -1,0 +1,89 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#Brotli",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "contract",
+      "url": "https://hexplain.io/ns/register/media-encoding#Brotli",
+      "description": "Literal contract vectors; scoped resource success cases additionally exercised by ByteResourceCodecTest. Compression literals follow their published raw wire grammars.",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "brotli-1",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0b028068656c6c6f03"
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "brotli-2",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0b028068656c6c6f03"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 4
+        }
+      ]
+    },
+    {
+      "id": "brotli-3",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0b0280"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-trip",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {},
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    }
+  ]
+}

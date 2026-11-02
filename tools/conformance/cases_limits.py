@@ -179,6 +179,47 @@ pp(
     manifest={"limits": {"maxQuantifierEvaluations": 5}, "features": {"requires": ["hel-ext-quantifier"]}},
 )
 
+# The quantifier group's collection, byte and text functions charge every input or output element
+# against the same budget, before the allocation or conversion it pays for.
+for _case, _title, _detail, _expression, _requirements in [
+    (
+        "limit-collection-output",
+        "A collection whose expanded output exceeds maxQuantifierEvaluations is a ResourceLimit error",
+        "repeatValue(1, 10) expands to ten elements before sumOf reads one; the limit is 5.",
+        "sumOf(repeatValue(1, 10), self)",
+        ["req-hel-ext-quantifiers-5", "req-hel-ext-quantifiers-6"],
+    ),
+    (
+        "limit-collection-traversal",
+        "A traversal beyond maxQuantifierEvaluations is a ResourceLimit error",
+        "sumOf over ten elements processes ten inputs; the limit is 5.",
+        "sumOf(items, self)",
+        ["req-hel-ext-quantifiers-5"],
+    ),
+    (
+        "limit-text-conversion",
+        "A text conversion beyond maxQuantifierEvaluations is a ResourceLimit error",
+        "unicodeText over ten scalar codes charges ten inputs and ten outputs; the limit is 5.",
+        "unicodeText(items)",
+        ["req-hel-ext-quantifiers-5", "req-hel-ext-quantifiers-6"],
+    ),
+]:
+    pp(
+        _case,
+        _title,
+        _detail,
+        LIMITS + _requirements + ["req-hel-conformance-8"],
+        ["resource-limits", "hel/index.html#ext-quantifiers"],
+        f"""
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:items ex:d ) .
+   ex:items a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount 10 .
+   ex:d a bddo:Field ; bddo:valueFromExpression "{_expression}" .
+   """,
+        b"A" * 10,
+        error="ResourceLimit",
+        manifest={"limits": {"maxQuantifierEvaluations": 5}, "features": {"requires": ["hel-ext-quantifier"]}},
+    )
+
 pp(
     "limit-regex-steps",
     "A regular-expression match beyond maxRegexSteps is a ResourceLimit error, not false",

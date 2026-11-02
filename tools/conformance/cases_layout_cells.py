@@ -17,6 +17,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from cases_physical import pp
+from suite import canonical_json
 
 ROWS, COLUMNS, CHUNK_COLUMNS = 3, 6, 2
 CHUNKS_Y, CHUNKS_X = ROWS, COLUMNS // CHUNK_COLUMNS
@@ -128,3 +129,62 @@ pp(
     {"offsets": HILBERT, "pixels": list(PIXELS)},
     manifest=FEATURES,
 )
+
+
+# Overlapping rules make first-match semantics observable, including reversed list order.
+for reverse in (False, True):
+    suffix = "reverse" if reverse else "forward"
+    types = ["uint16", "int16"]
+    if reverse:
+        types.reverse()
+    rules = " ".join(
+        f'[ a dlv:CellDataTypeRule; bddo:condition "true"; dlv:ruleCellDataType bddo:{kind} ]' for kind in types
+    )
+    source = (
+        """
+    ex:Root a bddo:Struct; bddo:hasField (ex:pixels).
+    ex:pixels a bddo:Field; bddo:dataType bddo:bytes; bddo:size 2; hexplain:hasDataLayout ex:Layout.
+    ex:Dim a dlv:Dimension; dlv:hasAxis dlv:axisX; dlv:dimensionSize 1.
+    """
+        + f"ex:Layout a dlv:DataLayout; dlv:hasConditionalCellDataType ({rules}); dlv:hasDimension (ex:Dim)."
+    )
+    pp(
+        "layout-cell-type-first-" + suffix,
+        "Overlapping cell-type rules select the first arm",
+        "Both predicates hold. Reversing the rules changes 0xfffe from unsigned 65534 to signed -2.",
+        ["req-dlv-conditional-1", "req-pm-data-layouts-1"],
+        ["dlv#conditional", "data-layouts"],
+        source,
+        bytes.fromhex("fffe"),
+        {"pixels": [-2 if reverse else 65534]},
+        manifest={"cells": ["pixels"]},
+        files={"round-trip-tree.json": canonical_json({"pixels": bytes.fromhex("fffe")})},
+    )
+    orders = ["ex:Y ex:X", "ex:X ex:Y"]
+    if reverse:
+        orders.reverse()
+    rules = " ".join(
+        f'[ a dlv:DimensionOrderRule; bddo:condition "true"; dlv:ruleDimensionOrder ({order}) ]' for order in orders
+    )
+    source = (
+        """
+    ex:Root a bddo:Struct; bddo:hasField (ex:pixels).
+    ex:pixels a bddo:Field; bddo:dataType bddo:bytes; bddo:size 6; hexplain:hasDataLayout ex:Layout.
+    ex:Y a dlv:Dimension; dlv:hasAxis dlv:axisY; dlv:dimensionSize 2; dlv:dimensionStride 3.
+    ex:X a dlv:Dimension; dlv:hasAxis dlv:axisX; dlv:dimensionSize 3; dlv:dimensionStride 1.
+    """
+        + f"ex:Layout a dlv:DataLayout; dlv:cellDataType bddo:uint8; dlv:hasConditionalDimensionOrder ({rules})."
+    )
+    values = [0, 3, 1, 4, 2, 5] if reverse else list(range(6))
+    pp(
+        "layout-dimension-order-first-" + suffix,
+        "Overlapping dimension-order rules select the first arm",
+        "Fixed Y/X strides isolate selection order: X-major traversal reads 0,3,1,4,2,5; Y-major reads 0..5.",
+        ["req-dlv-conditional-1", "req-pm-data-layouts-1"],
+        ["dlv#conditional", "data-layouts"],
+        source,
+        bytes(range(6)),
+        {"pixels": values},
+        manifest={"cells": ["pixels"]},
+        files={"round-trip-tree.json": canonical_json({"pixels": bytes(range(6))})},
+    )

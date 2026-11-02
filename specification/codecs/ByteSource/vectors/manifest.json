@@ -1,0 +1,129 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#ByteSource",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "contract",
+      "url": "https://hexplain.io/ns/register/media-encoding#ByteSource",
+      "description": "Literal contract vectors; scoped resource success cases additionally exercised by ByteResourceCodecTest. Compression literals follow their published raw wire grammars.",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "bytesource-1",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "data": {
+              "hex": "010203"
+            }
+          },
+          "input": {
+            "hex": ""
+          },
+          "expect": {
+            "hex": "010203"
+          }
+        }
+      ]
+    },
+    {
+      "id": "bytesource-2",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "data": {
+              "hex": "010203"
+            }
+          },
+          "input": {
+            "hex": "010203"
+          },
+          "expect": {
+            "hex": ""
+          }
+        }
+      ]
+    },
+    {
+      "id": "bytesource-3",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "data": {
+              "hex": "010203"
+            }
+          },
+          "input": {
+            "hex": "01"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "bytesource-4",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "data": {
+              "hex": "010203"
+            }
+          },
+          "input": {
+            "hex": ""
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 2
+        }
+      ]
+    },
+    {
+      "id": "round-trip",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "data": {
+              "hex": "68656c6c6f"
+            }
+          },
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "data": {
+              "hex": "68656c6c6f"
+            }
+          },
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    }
+  ]
+}

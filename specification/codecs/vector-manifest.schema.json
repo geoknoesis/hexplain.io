@@ -56,6 +56,41 @@
         "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$", "description": "Unique within the suite." },
         "source": { "type": "string", "description": "The id of one of the suite's sources." },
         "session": { "type": "boolean", "default": false, "description": "When true the steps share one codec session (a codec whose contract keeps a session); otherwise every step starts afresh." },
+        "inputs": {
+          "type": "object",
+          "description": "Operation-scoped external byte inputs, grouped by kind then reference. They are not codec parameters or format fields. cipherKey, aadPrefix and resource are standard binding kinds. Public test keys only.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "hex"
+                  ],
+                  "properties": {
+                    "hex": {
+                      "$ref": "#/$defs/hex"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "base64"
+                  ],
+                  "properties": {
+                    "base64": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
         "steps": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/step" } },
         "expectAll": { "$ref": "#/$defs/expectAll" }
       }

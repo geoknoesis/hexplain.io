@@ -51,6 +51,7 @@ PREFIXES = {
     "apc": "https://hexplain.io/ns/aspect/pointcloud#",
     "atab": "https://hexplain.io/ns/aspect/tabular#",
     "asig": "https://hexplain.io/ns/aspect/signal#",
+    "st": "https://hexplain.io/ns/aspect/structure#",
     "aint": "https://hexplain.io/ns/aspect/integrity#",
     "rpr": "https://hexplain.io/ns/register/part-role#",
     "menc": "https://hexplain.io/ns/register/media-encoding#",
@@ -98,12 +99,15 @@ def defined_terms() -> set[str]:
 def main() -> int:
     # A CURIE inside a longer absolute IRI is not a prose vocabulary reference.
     # In particular, urn:hexplain:security-example:Marked is not hexplain:security.
+    # A dotted local name (menc:Cipher.keyRef, a parameter shared by several contracts) is one term;
+    # a sentence-ending full stop is not part of the name.
     def names(text: str, prefix: str) -> set[str]:
-        return set(re.findall(rf"(?<![\w:/#.-]){prefix}:([A-Za-z][A-Za-z0-9_]*)", text))
+        return set(re.findall(rf"(?<![\w:/#.-]){prefix}:([A-Za-z][A-Za-z0-9_]*(?:[.][A-Za-z][A-Za-z0-9_]*)*)", text))
 
     assert names("urn:hexplain:security-example:Marked", "hexplain") == set()
     assert names("https://example.org/dlv:Unrelated", "dlv") == set()
     assert names("<code>dlv:MissingTerm</code> (dlv:Dimension)", "dlv") == {"MissingTerm", "Dimension"}
+    assert names("menc:Cipher.keyRef and dlv:Dimension. Next", "menc") == {"Cipher.keyRef"}
     defined = defined_terms()
     if len(defined) < 300:
         print(f"FAIL: only {len(defined)} terms collected from specification/")

@@ -17,7 +17,7 @@ import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import IO, Any
 
 try:
     import psutil
@@ -99,7 +99,10 @@ def kill_tree_windows(proc: subprocess.Popen[str], run: Callable[..., Any] = sub
     wait reports whatever survives.
     """
     try:
-        run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True, timeout=KILL_TIMEOUT)
+        result = run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True, timeout=KILL_TIMEOUT)
+        if result.returncode != 0:
+            with contextlib.suppress(OSError):
+                proc.kill()
     except (subprocess.TimeoutExpired, OSError):
         with contextlib.suppress(OSError):
             proc.kill()
@@ -117,9 +120,10 @@ def terminate(proc: subprocess.Popen[str]) -> None:
 class _Reader:
     """Reads a gate's output on a thread into a bounded queue, so a timeout can interrupt the wait."""
 
-    def __init__(self, proc: subprocess.Popen[str]) -> None:
-        assert proc.stdout is not None
-        self.stream = proc.stdout
+    def __init__(self, proc: subprocess.Popen[str], stream: IO[str] | None = None) -> None:
+        selected = stream if stream is not None else proc.stdout
+        assert selected is not None
+        self.stream = selected
         self.chunks: queue.Queue[str | None] = queue.Queue(maxsize=16)
         self.stopped = threading.Event()
         self.thread = threading.Thread(target=self._read, daemon=True)
@@ -228,7 +232,8 @@ def run_gate(
     if max_output_chars < 1:
         raise ValueError("output limit must be positive")
     started = time.monotonic()
-    environment = dict(os.environ, PYTHONUNBUFFERED="1", PYTHONUTF8="1", **(env or {}))
+    # Explicit overrides win over runner defaults without duplicate keyword errors.
+    environment = {**os.environ, "PYTHONUNBUFFERED": "1", "PYTHONUTF8": "1", **(env or {})}
     environment.pop("PYTHONOPTIMIZE", None)
     proc = subprocess.Popen(
         command,
@@ -246,15 +251,31 @@ def run_gate(
     sampler = threading.Thread(
         target=lambda: sampled.update(sample_memory(proc.pid, sampling_stopped, publish=publish)), daemon=True
     )
-    sampler.start()
-    reader = _Reader(proc)
-    label = Path(command[-1]).name
-    text, expired, flooded = _collect(proc, reader, label, started, timeout, heartbeat, max_output_chars, stream)
-    reader.stopped.set()
-    _reap(proc)
-    sampling_stopped.set()
-    sampler.join(timeout=5)
-    reader.close()
+    sampler_started = False
+    reader: _Reader | None = None
+    collected = False
+    try:
+        sampler.start()
+        sampler_started = True
+        reader = _Reader(proc)
+        label = Path(command[-1]).name
+        text, expired, flooded = _collect(proc, reader, label, started, timeout, heartbeat, max_output_chars, stream)
+        collected = True
+    finally:
+        if reader is not None:
+            reader.stopped.set()
+        try:
+            if not collected:
+                terminate(proc)  # An interrupted collector must not leave its process tree alive.
+            _reap(proc)
+        finally:
+            sampling_stopped.set()
+            if sampler_started:
+                sampler.join(timeout=5)
+            if reader is not None:
+                reader.close()
+            elif proc.stdout is not None:
+                proc.stdout.close()
     return dict(
         status=_status(proc.returncode, expired, flooded),
         exit_code=proc.returncode,

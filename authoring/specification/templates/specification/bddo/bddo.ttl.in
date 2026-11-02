@@ -18,7 +18,7 @@
     owl:versionIRI <https://hexplain.io/ns/bddo/1.3> ;
     owl:versionInfo "1.3" ;
     owl:priorVersion <https://hexplain.io/ns/bddo/1.2> ;
-    dcterms:modified "2026-10-13"^^xsd:date ;
+    dcterms:modified "2026-11-01"^^xsd:date ;
     rdfs:label "Binary Data Description Ontology (BDDO)"@en ;
     rdfs:comment "Vocabulary for declaratively describing the physical structure of binary data."@en ;
     dcterms:created "2025-08-16"^^xsd:date ;
@@ -56,7 +56,7 @@
 # of hasField (so its position, and therefore what it may read and what may read it, is the
 # list order) but not a field: it consumes no bytes and is neither in the parsed tree nor lifted.
 :ParameterType a owl:Class ; rdfs:label "Parameter Type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The kind of HEL value a Parameter accepts: one of the five individuals below, one per HEL scalar value type."@en .
+    rdfs:comment "The kind of HEL value a Parameter accepts: one of the scalar value types, an array node or a struct node."@en .
 :IntegerParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Integer parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "The parameter accepts a HEL Integer."@en .
 :FloatParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Float parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
@@ -67,6 +67,10 @@
     rdfs:comment "The parameter accepts a HEL Bytes value."@en .
 :BooleanParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Boolean parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "The parameter accepts a HEL Boolean."@en .
+:ArrayParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Array parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The parameter accepts a HEL array node. The existing node is referenced without copying, mutation, byte consumption or semantic lifting through the parameter."@en .
+:NodeParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Struct-node parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The parameter accepts a HEL struct node. It preserves the referenced node's identity and fields; it does not reparent that node or introduce another physical occurrence."@en .
 # Where a session-keeping codec's state lives (hexplain:codecSessionScope).
 :SessionScope a owl:Class ; rdfs:label "Session Scope"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "Where a field's session-keeping codecs keep their state across decodes: one of the two individuals below. The individuals are closed by hexplain:CodecSessionScopeShape."@en .
@@ -166,7 +170,7 @@
 :hasParameter a owl:ObjectProperty ; rdfs:label "has parameter"@en ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "Ordered rdf:List of the bddo:Parameter resources of a parameterised Struct. Every place that names the struct as a type supplies exactly one argument per parameter, positionally, with bddo:hasArgument."@en .
 :parameterType a owl:ObjectProperty ; rdfs:label "parameter type"@en ; rdfs:range :ParameterType ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "Restricts the kind of value a Parameter accepts to one HEL value type: bddo:IntegerParameter, bddo:FloatParameter (an Integer argument is converted to Float), bddo:StringParameter, bddo:BytesParameter or bddo:BooleanParameter. Absent, the parameter accepts any scalar value, Null included."@en ;
+    rdfs:comment "Restricts the kind of value a Parameter accepts to one HEL value type: bddo:IntegerParameter, bddo:FloatParameter (an Integer argument is converted to Float), bddo:StringParameter, bddo:BytesParameter, bddo:BooleanParameter, bddo:ArrayParameter or bddo:NodeParameter. Absent, the parameter accepts any scalar value, Null included."@en ;
     skos:scopeNote "Use on a bddo:Parameter of a parameterised Struct. Not hexplain:parameterType, which types a codec contract's parameter (a hexplain:CodecParameterSpec) with a hexplain:CodecParameterType."@en .
 :hasArgument a owl:ObjectProperty ; rdfs:label "has argument"@en ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "Ordered rdf:List of HEL expression strings, the positional arguments for the parameterised Struct this resource names as a type: on a Field, for its bddo:dataType; on a DataTypeRule, for its bddo:ruleDataType; on a DispatchArm, for its bddo:armDataType. A bddo:dispatchDefault has nowhere to state arguments, so it never names a parameterised struct. Each is evaluated in the CALLER's context -- the struct containing the field -- at the point the field is read."@en .
@@ -1236,8 +1240,8 @@ bddo:ParameterShape a sh:NodeShape ;
     sh:targetClass bddo:Parameter ;
     sh:targetSubjectsOf bddo:parameterType ;
     sh:property [ sh:path bddo:parameterType ; sh:maxCount 1 ;
-        sh:in ( bddo:IntegerParameter bddo:FloatParameter bddo:StringParameter bddo:BytesParameter bddo:BooleanParameter ) ;
-        sh:message "bddo:parameterType is one of bddo:IntegerParameter, bddo:FloatParameter, bddo:StringParameter, bddo:BytesParameter and bddo:BooleanParameter." ] ;
+        sh:in ( bddo:IntegerParameter bddo:FloatParameter bddo:StringParameter bddo:BytesParameter bddo:BooleanParameter bddo:ArrayParameter bddo:NodeParameter ) ;
+        sh:message "bddo:parameterType is one of bddo:IntegerParameter, bddo:FloatParameter, bddo:StringParameter, bddo:BytesParameter, bddo:BooleanParameter, bddo:ArrayParameter and bddo:NodeParameter." ] ;
     sh:message "A bddo:Parameter is not a bddo:Field: it consumes no bytes and is not a member of the parsed tree." ;
     sh:not [ sh:class bddo:Field ] .
 
