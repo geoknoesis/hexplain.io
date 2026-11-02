@@ -12,7 +12,13 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from _build_conformance_page import BLANKET, NOT_SUITE_TESTABLE, OBSERVED_BY_ROUND_TRIP
+from _build_conformance_page import (
+    BLANKET,
+    HEL_VECTOR_EVIDENCE,
+    HEL_VECTORS,
+    NOT_SUITE_TESTABLE,
+    OBSERVED_BY_ROUND_TRIP,
+)
 from _cases import term
 from rdflib import RDF, Graph, Namespace
 
@@ -104,7 +110,21 @@ REVIEW_REQUIRED = {
         "Zero-denominator behavior belongs to an optional RPC consumer; this repository "
         "supplies no RPC execution engine."
     ),
+    "req-dlv-conditional-1": (
+        "Author ordering rule: whether one arm's condition is more specific than another's is a judgement over "
+        "HEL conditions that no shape can decide; inspect the description."
+    ),
 }
+
+
+def hel_vector_rows() -> dict[str, str]:
+    """Expression -> row name of every row of the HEL vector set."""
+    rows = {}
+    for line in HEL_VECTORS.read_text(encoding="utf-8").splitlines():
+        columns = line.split("\t")
+        if line.strip() and not line.startswith("#") and len(columns) > 2:
+            rows[columns[1]] = columns[0]
+    return rows
 
 
 def build() -> dict[str, Any]:
@@ -112,6 +132,7 @@ def build() -> dict[str, Any]:
     registry, coverage, ledger, trace, reference = (inputs[name] for name in INPUTS)
     function_requirements = {"req-spatialref-document-2", "req-spatialref-document-3", "req-spatialref-document-12"}
     requirements = []
+    vector_rows = hel_vector_rows()
     for identifier, row in sorted(registry["requirements"].items()):
         if row.get("withdrawn"):
             continue
@@ -130,6 +151,11 @@ def build() -> dict[str, Any]:
             status = "case-cited"
         elif identifier in BLANKET:
             status = "cross-cutting-suite-contract"
+        elif identifier in HEL_VECTOR_EVIDENCE:
+            missing = [e for e in HEL_VECTOR_EVIDENCE[identifier] if e not in vector_rows]
+            assert not missing, (identifier, missing, "No HEL vector row for the explicit mapping")
+            status = "hel-vector-cited"
+            reason = "HEL vectors: " + "; ".join(vector_rows[e] for e in HEL_VECTOR_EVIDENCE[identifier])
         elif identifier in NOT_SUITE_TESTABLE:
             status, reason = "non-black-box", NOT_SUITE_TESTABLE[identifier]
         elif identifier in function_requirements:

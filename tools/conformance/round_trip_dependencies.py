@@ -308,16 +308,28 @@ class Dependencies:
         self, field: Field, node: hel.Node, exempt: set[FieldPath], context: Context | None = None
     ) -> bool:
         context = context or self.context(field)
-        if node[0] == "acc":
-            root, steps = node[1], node[2]
-            if root == "stream":
-                return len(steps) == 1 and steps[0][0] == "key" and self.stream_changes(field, steps[0][1])
-            if root == "param":
-                return self.parameter_changes(steps, exempt, context)
-            return self.access_path(field, root, steps, context) in exempt
-        if node[0] == "call" and node[1] in ("all", "any") and len(node[2]) == 2:
-            return self.quantifier_changes(field, node, exempt, context)
-        return any(self.expression_changes(field, child, exempt, context) for child in self.children(node))
+        # An explicit stack, not recursion: an expression as deep as HEL's default depth limit (512) must not exhaust
+        # the interpreter stack. The answer is a pure "any", so the visiting order does not matter.
+        pending = [node]
+        while pending:
+            current = pending.pop()
+            if current[0] == "acc":
+                if self.access_changes(field, current, exempt, context):
+                    return True
+            elif current[0] == "call" and current[1] in ("all", "any") and len(current[2]) == 2:
+                if self.quantifier_changes(field, current, exempt, context):
+                    return True
+            else:
+                pending.extend(self.children(current))
+        return False
+
+    def access_changes(self, field: Field, node: hel.Node, exempt: set[FieldPath], context: Context) -> bool:
+        root, steps = node[1], node[2]
+        if root == "stream":
+            return len(steps) == 1 and steps[0][0] == "key" and self.stream_changes(field, steps[0][1])
+        if root == "param":
+            return self.parameter_changes(steps, exempt, context)
+        return self.access_path(field, root, steps, context) in exempt
 
     @staticmethod
     def children(node: hel.Node) -> Iterator[hel.Node]:

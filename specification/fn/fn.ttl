@@ -90,7 +90,7 @@
     :signature "bytes(node: IRI) -> xsd:hexBinary | bytes(node: IRI, offset: integer, length: integer) -> xsd:hexBinary" ;
     :reads hexplain:byteOffset, hexplain:byteLength ;
     rdfs:comment "The node's bytes as they sit in the file, whole or a slice relative to the node. Unbound when the slice leaves the node or exceeds hxf:maxBytesPerCall."@en ;
-    :unboundWhen "The node has no recorded byte range, or the requested window lies outside the asset."@en .
+    :unboundWhen "The node has no recorded byte range; the requested slice [offset, offset + length) does not lie within the node's own bytes; or its length exceeds hxf:maxBytesPerCall."@en .
 :decodedBytes a owl:NamedIndividual , :Function ; :kind :Native ; :layer 0 ; rdfs:label "decoded bytes"@en ;
     :signature "decodedBytes(node: IRI) -> xsd:hexBinary" ;
     :reads hexplain:isEncodedWith, hexplain:hasEncodingStep ;
@@ -166,7 +166,7 @@
 :isNoData a owl:NamedIndividual , :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "is no-data"@en ;
     :signature "isNoData(band: IRI, value: number) -> xsd:boolean" ;
     :reads araster:noDataValue, araster:hasBand, asamp:sampleFormat, asamp:bitDepth ;
-    rdfs:comment "True when value equals the no-data value in effect: the band's own araster:noDataValue, else that of the grid that has the band (araster:hasBand). The two are compared in the band's declared numeric type, stated by asamp:sampleFormat and asamp:bitDepth on the band or, failing that, on the grids that have it (which must then agree): for asamp:Float with bitDepth 32 both are first rounded to the nearest binary32 value, so a float32 no-data value written in decimal (for example -3.4028234663852886e38) matches the stored float32 sample; for an integer format both must be the same integer; with no declared type they are compared as xsd:double. A NaN no-data value matches a NaN value, although NaN never equals itself numerically. False when no no-data value is in effect. Deterministic: exactly one answer or none. The SPARQL body relies on xsd:float casts rounding to binary32, as Apache Jena's do; a SPARQL processor that holds xsd:float in binary64 compares such values as doubles."@en ;
+    rdfs:comment "True when value equals the no-data value in effect: the band's own araster:noDataValue, else that of the grid that has the band (araster:hasBand). The two are compared in the band's declared numeric type, stated by asamp:sampleFormat and asamp:bitDepth on the band or, failing that, on the grids that have it (which must then agree): for asamp:Float with bitDepth 32 both are first rounded to the nearest binary32 value, so a float32 no-data value written in decimal (for example -3.4028234663852886e38) matches the stored float32 sample; for asamp:SignedInteger or asamp:UnsignedInteger both must be the same integer, compared exactly (as xsd:decimal, never through xsd:double, so two 64-bit values that round to one double stay distinct, and a value with a fractional part matches no integer no-data value); with no declared type, or another format, they are compared as xsd:double. A NaN no-data value matches a NaN value, although NaN never equals itself numerically. False when no no-data value is in effect. Deterministic: exactly one answer or none. The SPARQL body relies on xsd:float casts rounding to binary32, as Apache Jena's do; a SPARQL processor that holds xsd:float in binary64 compares such values as doubles."@en ;
     :unboundWhen "The band carries more than one distinct araster:noDataValue, or it has none and the grids having it carry more than one distinct one between them; or the sample format or bit depth in effect is ambiguous (several of the band's own, or none of its own and the grids having it disagree): which applies is undefined, so no value is returned rather than an arbitrary one."@en ;
     sh:parameter [ sh:path :arg1 ; sh:order 0 ; sh:description "band" ] , [ sh:path :arg2 ; sh:order 1 ; sh:description "value" ] ;
     sh:returnType xsd:boolean ;
@@ -194,12 +194,13 @@
   OPTIONAL { ?gb <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/sampling#bitDepth> ?bitsGrid }
   BIND ( COALESCE(?fmtOwn, ?fmtGrid) AS ?fmt ) BIND ( COALESCE(?bitsOwn, ?bitsGrid) AS ?bits )
   BIND ( BOUND(?fmt) && ?fmt = <https://hexplain.io/ns/aspect/sampling#Float> && BOUND(?bits) && xsd:integer(?bits) = 32 AS ?f32 )
+  BIND ( BOUND(?fmt) && ?fmt IN (<https://hexplain.io/ns/aspect/sampling#SignedInteger>, <https://hexplain.io/ns/aspect/sampling#UnsignedInteger>) AS ?int )
   BIND ( IF(?hasOwn,
     EXISTS { $arg1 <https://hexplain.io/ns/aspect/raster#noDataValue> ?nd .
-             FILTER ( IF(?f32, xsd:float(?nd) = xsd:float($arg2), xsd:double(?nd) = xsd:double($arg2))
+             FILTER ( IF(?f32, xsd:float(?nd) = xsd:float($arg2), IF(?int, xsd:decimal(?nd) = xsd:decimal($arg2), xsd:double(?nd) = xsd:double($arg2)))
                       || ( xsd:double(?nd) != xsd:double(?nd) && xsd:double($arg2) != xsd:double($arg2) ) ) },
     EXISTS { ?grid <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/raster#noDataValue> ?nd .
-             FILTER ( IF(?f32, xsd:float(?nd) = xsd:float($arg2), xsd:double(?nd) = xsd:double($arg2))
+             FILTER ( IF(?f32, xsd:float(?nd) = xsd:float($arg2), IF(?int, xsd:decimal(?nd) = xsd:decimal($arg2), xsd:double(?nd) = xsd:double($arg2)))
                       || ( xsd:double(?nd) != xsd:double(?nd) && xsd:double($arg2) != xsd:double($arg2) ) ) } )
     AS ?result )
 }""" .

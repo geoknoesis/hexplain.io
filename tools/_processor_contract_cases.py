@@ -90,7 +90,13 @@ def containment_problems(root: Path) -> None:
         encoding="utf-8",
         newline="\n",
     )
-    assert "timed out" in (execute([sys.executable, str(script)], root, 2)[2] or "")
+    # A loaded host may not start the implementation and its child within a short deadline, so the deadline grows
+    # until the child has been started (child.pid written) before the timeout fires.
+    for deadline in (2.0, 5.0, 15.0):
+        (root / "child.pid").unlink(missing_ok=True)
+        assert "timed out" in (execute([sys.executable, str(script)], root, deadline)[2] or "")
+        if (root / "child.pid").is_file():
+            break
     child = int((root / "child.pid").read_text())
     assert not psutil.pid_exists(child) or psutil.Process(child).status() == psutil.STATUS_ZOMBIE
     # The implementation exits first, leaving a child holding inherited pipes open.
@@ -102,7 +108,17 @@ def containment_problems(root: Path) -> None:
         newline="\n",
     )
     try:
-        assert "timed out" in (execute([sys.executable, str(script)], root, 2)[2] or "")
+        # It finished within its time: past the deadline only the exit grace bounds the drain, so this is no
+        # timeout -- but the orphan holding the pipes is still ended. The short deadline keeps the drain past it;
+        # a loaded host that cannot even start the implementation in time gets a longer one.
+        for deadline in (0.5, 1.5, 5.0):
+            (root / "orphan.pid").unlink(missing_ok=True)
+            code, _, failure = execute([sys.executable, str(script)], root, deadline)
+            if failure is None or deadline == 5.0:
+                break
+            with contextlib.suppress(psutil.Error, ValueError, OSError):
+                psutil.Process(int((root / "orphan.pid").read_text())).kill()
+        assert failure is None and code == 0, (code, failure)
         orphan = psutil.Process(int((root / "orphan.pid").read_text()))
         assert not orphan.is_running() or orphan.status() == psutil.STATUS_ZOMBIE
     except psutil.NoSuchProcess:
@@ -134,12 +150,26 @@ def report_problems(root: Path) -> None:
         newline="\n",
     )
     output = root / "report.json"
+    claims_file = root / "claims.json"
+    claims_file.write_text('{"classes":["Physical Parser"]}', encoding="utf-8", newline="\n")
+    with contextlib.redirect_stderr(io.StringIO()):
+        try:
+            run_suite.main(
+                ["--suite", str(suite), "--json", str(output), "--implementation-revision", "abcdef0"]
+                + ["--toolchain", "regression probe"]
+            )
+        except SystemExit as exc:
+            assert exc.code == 2
+        else:
+            raise AssertionError("a report without a claims statement was permitted")
     with contextlib.redirect_stdout(io.StringIO()):
         assert (
             run_suite.main(
                 [
                     "--suite",
                     str(suite),
+                    "--claims",
+                    str(claims_file),
                     "--pp-cmd",
                     command(script),
                     "--json",
@@ -163,8 +193,6 @@ def report_problems(root: Path) -> None:
         else:
             raise AssertionError("a partial implementation report was permitted")
     assert not (root / "partial.json").exists()
-    claims_file = root / "claims.json"
-    claims_file.write_text('{"classes":["Physical Parser"]}', encoding="utf-8", newline="\n")
     with contextlib.redirect_stdout(io.StringIO()):
         assert run_suite.main(["--suite", str(suite), "--claims", str(claims_file)]) == 1
 
@@ -242,7 +270,9 @@ def preflight_problems(root: Path) -> None:
     output = root / "preflight.json"
     output.write_bytes(b"retain the original bytes\r\n")
     original = output.read_bytes()
-    base = ["--json", str(output), "--implementation-revision", "abcdef0", "--toolchain", "probe"]
+    claims = root / "preflight-claims.json"
+    claims.write_text('{"classes":["Physical Parser"]}', encoding="utf-8", newline="\n")
+    base = ["--json", str(output), "--claims", str(claims), "--implementation-revision", "abcdef0", "--toolchain", "x"]
     for flags in (
         ["--implementation-revision", "main"],
         ["--implementation-revision", "abcdef0\n"],
@@ -354,9 +384,91 @@ def reader_setup_problems(root: Path) -> None:
                     pipe.close()
 
 
+def group_cleanup_problems(root: Path) -> None:
+    """On POSIX the process group is killed in cleanup even when the command exited and closed both pipes: a
+    daemonised descendant holds neither, and would otherwise outlive the case."""
+    import processor_process
+
+    proc = subprocess.Popen(
+        [sys.executable, "-c", "pass"], cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    with (
+        patch.object(processor_process.sys, "platform", "linux"),
+        patch.object(processor_process, "terminate") as terminate,
+    ):
+        assert processor_process.collect(proc, 10)[1] is None
+    terminate.assert_called_with(proc)
+
+
+def runner_input_problems(root: Path) -> None:
+    """The runner's base, category and template handling, and strict reading of what a processor writes."""
+    import run_suite
+    from suite import SUITE
+
+    # A Windows path keeps its backslashes, and quotes group an argument.
+    assert run_suite.split_template(r'"C:\Program Files\p.exe" C:\tools\x {out}', posix=False) == [
+        r"C:\Program Files\p.exe",
+        r"C:\tools\x",
+        "{out}",
+    ]
+    assert run_suite.split_template("'/opt/my p' a\\ b", posix=True) == ["/opt/my p", "a b"]
+    # The base a processor reports is ignored where the manifest gives one.
+    case = next(
+        p.parent
+        for p in sorted((SUITE / "semantic-emitter").glob("*/manifest.json"))
+        if json.loads(p.read_text(encoding="utf-8")).get("base") and (p.parent / "expected.ttl").is_file()
+    )
+    manifest = json.loads((case / "manifest.json").read_text(encoding="utf-8"))
+    script = root / "emitter.py"
+    script.write_text(
+        "import pathlib,shutil,sys\n"
+        "shutil.copy(pathlib.Path(sys.argv[1])/'expected.ttl', sys.argv[2])\n"
+        f"pathlib.Path(sys.argv[3]).write_text({manifest['base']!r})\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    template = f'"{Path(sys.executable).as_posix()}" "{script.as_posix()}" {{case}} {{out}} {{reported}}'
+    assert run_suite.run_case(case, template, None, 30) == ("PASS", ""), run_suite.run_case(case, template, None, 30)
+    reported = root / "reported.txt"
+    reported.write_text("urn:uuid:chosen\n", encoding="utf-8", newline="\n")
+    assert run_suite.reported_base({"base": "urn:example:input"}, reported) is None
+    assert run_suite.reported_base({"base": None}, reported) == "urn:uuid:chosen"
+    assert run_suite.reported_base({}, reported) == "urn:uuid:chosen"
+    # An implementation's own error names map to the categories; an unmapped one is recorded as no category.
+    case = SUITE / "physical-parser/pp-align-derived-field"
+    expected = json.loads((case / "expected-error.json").read_text(encoding="utf-8"))["category"]
+    script = root / "named-error.py"
+    script.write_text(
+        'import pathlib,sys\npathlib.Path(sys.argv[1]).write_text(\'{"category":"E_IMPL"}\')\nsys.exit(1)\n',
+        encoding="utf-8",
+        newline="\n",
+    )
+    template = f'"{Path(sys.executable).as_posix()}" "{script.as_posix()}" {{err}}'
+    observed: dict[str, Any] = {}
+    status = run_suite.run_case(case, template, None, 30, observed=observed, category_map={"E_IMPL": expected})
+    assert status == ("PASS", "") and observed == {"category": expected}, (status, observed)
+    observed = {}
+    status = run_suite.run_case(case, template, None, 30, observed=observed)
+    assert status[0] == "FAIL" and observed == {"category": None, "unmapped": "E_IMPL"}, (status, observed)
+    assert "E_IMPL" in run_suite.result_detail(status[1], observed)
+    # A repeated member is not read as either of its values.
+    script.write_text(
+        "import pathlib,sys\n"
+        f'pathlib.Path(sys.argv[1]).write_text(\'{{"category":"Unsupported","category":"{expected}"}}\')\n'
+        "sys.exit(1)\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    observed = {}
+    assert run_suite.run_case(case, template, None, 30, observed=observed)[0] == "FAIL"
+    assert observed.get("category") is None, observed
+
+
 def check() -> list[str]:
     with tempfile.TemporaryDirectory() as scratch:
         root = Path(scratch)
+        group_cleanup_problems(root)
+        runner_input_problems(root)
         comparison_limits(root)
         required_error_problems(root)
         artifact_boundary_problems(root)

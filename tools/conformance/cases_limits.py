@@ -19,7 +19,7 @@ def nested(depth: int) -> dict[str, object]:
     return node
 
 
-LIMITS = ["req-pm-resource-limits-1", "req-pm-resource-limits-3", "req-pm-errors-12"]
+LIMITS = ["req-pm-resource-limits-1", "req-pm-errors-12"]
 
 pp(
     "limit-depth-exceeded",
@@ -151,7 +151,7 @@ pp(
 pp(
     "limit-tree-depth",
     "A tree document nested beyond maxTreeDepth is a ResourceLimit error",
-    "JSON nested five deep under maxTreeDepth 3.",
+    "JSON objects nested four deep (the top-level object at depth 1) under maxTreeDepth 3.",
     LIMITS,
     ["resource-limits", "tree-documents"],
     """

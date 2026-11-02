@@ -544,7 +544,7 @@ pp(
     "codec-decoded-byte-limit",
     "Decoded output counts toward the decoded-byte limit",
     "Inflating to 17 bytes under a 10-byte maxDecodedBytes is a ResourceLimit error.",
-    ["req-pm-resource-limits-1", "req-pm-resource-limits-3", "req-pm-errors-12"],
+    ["req-pm-resource-limits-1", "req-pm-errors-12"],
     ["resource-limits", "minimum-codecs"],
     codec_field("hexplain:isEncodedWith menc:Zlib", 16),
     bytes.fromhex("78dacb48cdc9c957c84090003a2e067d"),

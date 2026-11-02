@@ -11,11 +11,13 @@ validate workflow produces the downloadable artifact a reviewer receives.
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import hashlib
 import io
 import json
+import subprocess
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 import specgraph
@@ -82,15 +84,30 @@ def _shape_inventory(modules: list[dict[str, Any]], trace: dict[str, Any]) -> di
     )
 
 
+def tracked_files(directory: str, pattern: str = "*", recursive: bool = True) -> set[str]:
+    """The files git tracks under [directory] (repository-relative POSIX paths) whose names match [pattern], and that
+    are present in the tree. Untracked files -- a scratch report, an editor backup, another tool's output left in
+    the working tree -- are never packaged, so the candidate is the same for every checkout of one commit."""
+    listed = subprocess.run(
+        ["git", "-C", str(ROOT), "ls-files", "-z", "--", directory], capture_output=True, check=True
+    ).stdout.decode("utf-8")
+    out = set()
+    for name in filter(None, listed.split("\x00")):
+        relative = PurePosixPath(name).relative_to(directory)
+        if not recursive and len(relative.parts) > 1:
+            continue
+        if fnmatch.fnmatchcase(relative.name, pattern) and (ROOT / name).is_file():
+            out.add(name)
+    return out
+
+
 def _payload_paths(modules: list[dict[str, Any]]) -> set[str]:
     paths = set(specgraph.family_file_paths())
-    paths.update(
-        p.relative_to(ROOT).as_posix() for p in (ROOT / "specification/validation/test").glob("*") if p.is_file()
-    )
-    paths.update(p.relative_to(ROOT).as_posix() for p in (ROOT / "tools").rglob("*.py"))
-    paths.update(p.relative_to(ROOT).as_posix() for p in (ROOT / "specification/conformance").rglob("*") if p.is_file())
+    paths.update(tracked_files("specification/validation/test", recursive=False))
+    paths.update(tracked_files("tools", "*.py"))
+    paths.update(tracked_files("specification/conformance"))
     paths.update(m["page"] for m in modules)
-    paths.update(p.relative_to(ROOT).as_posix() for p in (ROOT / "authoring/specification").rglob("*") if p.is_file())
+    paths.update(tracked_files("authoring/specification"))
     paths.update(
         [
             "specification/print.css",

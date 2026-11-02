@@ -1,0 +1,17 @@
+# The deprecated pre-release terms are still read with their original meaning: a data type with
+# the base type bddo:integer or bddo:float, and a field stating bddo:hasEndianness (once, beside
+# an agreeing bddo:endianness). Each is valid and reported at sh:Warning so descriptions migrate.
+# expect: ex:oldInteger bddo:DeprecatedBaseTypeShape sh:SPARQLConstraintComponent sh:Warning
+# expect: ex:oldFloat bddo:DeprecatedBaseTypeShape sh:SPARQLConstraintComponent sh:Warning
+# expect: ex:Header.magic bddo:DeprecatedEndiannessUseShape sh:SPARQLConstraintComponent sh:Warning
+# expect: ex:Header.size bddo:DeprecatedEndiannessUseShape sh:SPARQLConstraintComponent sh:Warning
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <https://hexplain.io/test/deprecated-terms-valid#> .
+
+ex:oldInteger a bddo:DataType ; bddo:baseType bddo:integer ; bddo:bitWidth 16 ; bddo:isSigned false ; bddo:xsdType xsd:unsignedShort .
+ex:oldFloat a bddo:DataType ; bddo:baseType bddo:float ; bddo:bitWidth 32 ; bddo:xsdType xsd:float ; bddo:floatFormat bddo:ieee754 .
+ex:Header a bddo:Struct ; bddo:hasField ( ex:Header.magic ex:Header.size ) .
+ex:Header.magic a bddo:Field ; bddo:dataType ex:oldInteger ; bddo:hasEndianness bddo:BigEndian .
+ex:Header.size a bddo:Field ; bddo:dataType ex:oldFloat ; bddo:hasEndianness bddo:LittleEndian ; bddo:endianness bddo:LittleEndian .

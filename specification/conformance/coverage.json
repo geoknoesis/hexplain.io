@@ -1,6 +1,6 @@
 {
  "cases": {
-  "physical-parser": 525,
+  "physical-parser": 526,
   "semantic-emitter": 49,
   "bundle-processor": 13,
   "hdl-compiler": 222,
@@ -19,14 +19,33 @@
  },
  "processorMust": {
   "Physical Parser": {
-   "total": 287,
+   "total": 306,
    "covered": 282,
    "notSuiteTestable": {
     "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's shape gates (test_shapes, test_vocab_shapes) apply it.",
+    "req-hel-array-values-1": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: len(project(rows, v)); all(project(rows, repeatValue(v, 2)), self[0] == self[1])",
+    "req-hel-array-values-2": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: project(rows, v) == xs",
+    "req-hel-array-values-3": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: sizeof(project(rows, v))",
     "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the condition is asserted by the HEL vectors (validation/test/hel-vectors.tsv, req-hel-conformance-9).",
-    "req-hel-ext-quantifiers-7": "A black-box suite cannot make an implementation lack a function; inspect how a processor without one reports Unsupported rather than a substituted value.",
+    "req-hel-ext-quantifiers-10": "HEL is free of side effects, so evaluating an argument once before the call is observable only through element-budget charges; inspect the evaluator.",
+    "req-hel-ext-quantifiers-11": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: all(xs, 10 / (3 - self) > 5); countWhere(xs, 10 / (3 - self) > 5)",
+    "req-hel-ext-quantifiers-12": "Needs a parsed unsigned 64-bit value above 2^63-1 passed to floatCast and the integer functions; inspect the evaluator.",
+    "req-hel-ext-quantifiers-13": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: repeatValue(7, -1)",
+    "req-hel-ext-quantifiers-14": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: slice(xs, 2, 2); slice('abc', 0, 1)",
+    "req-hel-ext-quantifiers-15": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: integralScan(xs, 0, 65, 0); integralScan(xs, 128, 8, 0)",
+    "req-hel-ext-quantifiers-16": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: modularAdd(1, 1, 0)",
+    "req-hel-ext-quantifiers-17": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: integerBytes(256, 1, false); integerBytes(-129, 1, true)",
+    "req-hel-ext-quantifiers-18": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: integerText(concatBytes(), true, true); integerText('ab', true, true)",
+    "req-hel-ext-quantifiers-19": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: unicodeText(repeatValue(55296, 1)); unicodeText(repeatValue('a', 1))",
+    "req-hel-ext-quantifiers-20": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: join(xs, ',')",
+    "req-hel-ext-quantifiers-21": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: integerPrecision(0, true)",
+    "req-hel-ext-quantifiers-22": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: decimalText('012', 1); decimalText('-0', 1)",
+    "req-hel-ext-quantifiers-23": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: patchValues(xs, repeatValue(3, 1), repeatValue(9, 1)); patchValues(xs, repeatValue(0, 2), repeatValue(9, 2))",
+    "req-hel-ext-quantifiers-8": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: sumOf(rows, 'a'); sumOf(rows, 9223372036854775807)",
+    "req-hel-ext-quantifiers-9": "HEL has no Null literal, so neither a vector nor a case can make project's element expression yield Null on demand; inspect the evaluator.",
     "req-hel-ext-text-7": "A statement in the processor's claims or report environment, not a result of a parse; it is checked by reading the published report.",
-    "req-pm-alignment-padding-3": "Verifying a fill byte is optional (a processor MAY compare the padding with bddo:padByte), so a case cannot tell a processor that does not verify from one that verified and agreed; the rule binds only what a verifying processor reports."
+    "req-pm-alignment-padding-3": "Verifying a fill byte is optional (a processor MAY compare the padding with bddo:padByte), so a case cannot tell a processor that does not verify from one that verified and agreed; the rule binds only what a verifying processor reports.",
+    "req-pm-resource-limits-3": "A wall-clock limit and cancellation by the caller are implementation safeguards with no normative values: a case cannot make one fire on demand. The configured limits' ResourceLimit outcome is req-pm-resource-limits-1's, which the pp-limit-* cases exercise."
    },
    "uncovered": []
   },
@@ -74,7 +93,7 @@
   "physical-parser": {
    "MUST": {
     "total": 209,
-    "covered": 207
+    "covered": 206
    },
    "SHOULD": {
     "total": 5,
@@ -83,8 +102,8 @@
   },
   "hel": {
    "MUST": {
-    "total": 78,
-    "covered": 75
+    "total": 97,
+    "covered": 76
    },
    "SHOULD": {
     "total": 1,
@@ -1534,6 +1553,7 @@
    "pp-hel-bytes-malformed-argument",
    "pp-hel-bytes-ordering",
    "pp-hel-comparison-chain",
+   "pp-hel-computed-array-result",
    "pp-hel-concat-number",
    "pp-hel-division-by-zero",
    "pp-hel-float-division-by-zero",
@@ -2391,23 +2411,7 @@
    "pp-limit-depth-default",
    "pp-limit-hel-default-depth"
   ],
-  "req-pm-resource-limits-3": [
-   "ce-lenient-parse-resource-limit",
-   "pp-codec-decoded-byte-limit",
-   "pp-limit-collection-output",
-   "pp-limit-collection-traversal",
-   "pp-limit-depth-exceeded",
-   "pp-limit-hel-depth",
-   "pp-limit-hel-length",
-   "pp-limit-input-bytes",
-   "pp-limit-materialized-bytes",
-   "pp-limit-quantifier-evaluations",
-   "pp-limit-regex-steps",
-   "pp-limit-text-conversion",
-   "pp-limit-tree-depth",
-   "pp-limit-visited-nodes",
-   "se-triple-limit"
-  ],
+  "req-pm-resource-limits-3": [],
   "req-pm-resource-limits-4": [
    "pp-limit-no-cheaper-interpretation"
   ],
@@ -2852,6 +2856,12 @@
    "se-fixed-point-scale-range"
   ],
   "req-pm-value-mapping-3": [],
+  "req-hel-array-values-1": [],
+  "req-hel-array-values-2": [],
+  "req-hel-array-values-3": [],
+  "req-hel-array-values-4": [
+   "pp-hel-computed-array-result"
+  ],
   "req-hel-coercion-1": [
    "pp-hel-null-arithmetic",
    "pp-valid-if-evaluation-failure"
@@ -2989,7 +2999,22 @@
    "pp-limit-collection-output",
    "pp-limit-text-conversion"
   ],
-  "req-hel-ext-quantifiers-7": [],
+  "req-hel-ext-quantifiers-8": [],
+  "req-hel-ext-quantifiers-9": [],
+  "req-hel-ext-quantifiers-10": [],
+  "req-hel-ext-quantifiers-11": [],
+  "req-hel-ext-quantifiers-12": [],
+  "req-hel-ext-quantifiers-13": [],
+  "req-hel-ext-quantifiers-14": [],
+  "req-hel-ext-quantifiers-15": [],
+  "req-hel-ext-quantifiers-16": [],
+  "req-hel-ext-quantifiers-17": [],
+  "req-hel-ext-quantifiers-18": [],
+  "req-hel-ext-quantifiers-19": [],
+  "req-hel-ext-quantifiers-20": [],
+  "req-hel-ext-quantifiers-21": [],
+  "req-hel-ext-quantifiers-22": [],
+  "req-hel-ext-quantifiers-23": [],
   "req-hel-ext-temporal-1": [
    "pp-hel-temporal-date-only"
   ],
@@ -4531,17 +4556,6 @@
    "pp-bits-realign-before-byte-field"
   ],
   "req-bddo-checksum-algorithms-1": [
-   "hc-checksum-named-crcs",
-   "pp-crc-crc16arc",
-   "pp-crc-crc16modbus",
-   "pp-crc-crc16x25",
-   "pp-crc-crc16xmodem",
-   "pp-crc-crc32bzip2",
-   "pp-crc-crc32c",
-   "pp-crc-crc32mpeg2",
-   "pp-crc-crc64ecma",
-   "pp-crc-crc64xz",
-   "pp-crc-crc8",
    "pp-crc-custom",
    "pp-crc-custom-24-bit",
    "pp-crc-custom-invalid-width"
@@ -4608,12 +4622,7 @@
   "req-bddo-structural-properties-6": [
    "pp-struct-size-literal"
   ],
-  "req-dlv-conditional-1": [
-   "pp-layout-cell-type-first-forward",
-   "pp-layout-cell-type-first-reverse",
-   "pp-layout-dimension-order-first-forward",
-   "pp-layout-dimension-order-first-reverse"
-  ],
+  "req-dlv-conditional-1": [],
   "req-dlv-properties-1": [],
   "req-dlv-properties-2": [],
   "req-core-punning-1": [],
@@ -4648,6 +4657,7 @@
   "req-ce-conf-conformance-11",
   "req-ce-conf-conformance-12",
   "req-hdl-clauses-4",
+  "req-hel-ext-quantifiers-7",
   "req-hel-ext-text-2",
   "req-pm-conformance-classes-9",
   "req-pm-errors-15",
@@ -4737,6 +4747,7 @@
   "hdl/index.html#types": 11,
   "hdl/index.html#versioning": 3,
   "hdl/index.html#yaml": 67,
+  "hel/index.html#array-values": 1,
   "hel/index.html#coercion": 9,
   "hel/index.html#conformance": 11,
   "hel/index.html#core-functions": 11,

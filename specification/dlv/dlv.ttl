@@ -92,7 +92,7 @@
 :morton a owl:NamedIndividual, :ChunkOrder ; rdfs:label "Morton (Z-order) chunk order"@en ;
     rdfs:comment "Chunks appear in the offset table in ascending Morton (Z-order) key. The key interleaves the bits of the chunk indices, taking the dimensions in declared order, least significant bit first, the first dimension contributing the lowest bit of each group: with d dimensions and chunk indices c0 .. c(d-1), bit j of dimension i is bit j*d + i of the key. Each dimension's chunk count is padded to the next power of two (a count that is already a power of two is unchanged), so every dimension contributes the same number of bits; the key of a cell outside a dimension's real chunk count is skipped and takes no table entry."@en .
 :hilbert a owl:NamedIndividual, :ChunkOrder ; rdfs:label "Hilbert curve chunk order"@en ;
-    rdfs:comment "Chunks appear in the offset table in ascending Hilbert-curve key. The key is the Hilbert index computed by Skilling's algorithm (J. Skilling, Programming the Hilbert curve, AIP Conference Proceedings 707, 2004) from the chunk indices, taken in the same dimension order as dlv:morton takes them, the first declared dimension being the algorithm's first axis, with n bits per dimension. Each dimension's chunk count is padded to the next power of two and n is the bit width of the largest padded count, the same for every dimension; the key of a cell outside a dimension's real chunk count is skipped and takes no table entry."@en .
+    rdfs:comment "Chunks appear in the offset table in ascending Hilbert-curve key. The key is the Hilbert index computed by Skilling's algorithm (J. Skilling, Programming the Hilbert curve, AIP Conference Proceedings 707, 2004) from the chunk indices, taken in the same dimension order as dlv:morton takes them, the first declared dimension being the algorithm's first axis, with n bits per dimension. Each dimension's chunk count is padded to the next power of two, and n is the base-2 logarithm of the largest padded count (the bit width of the largest chunk index), the same for every dimension; the key of a cell outside a dimension's real chunk count is skipped and takes no table entry."@en .
 
 :axisX a owl:NamedIndividual , :Axis ; rdfs:label "X Axis (Width)"@en .
 :axisY a owl:NamedIndividual , :Axis ; rdfs:label "Y Axis (Height)"@en .
@@ -116,7 +116,7 @@
     rdfs:comment "Ordered rdf:List of CellDataTypeRule. The first rule whose condition holds gives the layout's cell type. If no rule's condition holds, the cell type is undetermined and the layout cannot be read; a condition that cannot be evaluated is not a false condition, so it does not pass the choice to a later rule. Mutually exclusive with dlv:cellDataType."@en .
 :ruleCellDataType a owl:ObjectProperty ; rdfs:label "rule cell data type"@en ; rdfs:range bddo:DataType ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
 :hasConditionalDimensionOrder a owl:ObjectProperty ; rdfs:label "has conditional dimension order"@en ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    rdfs:comment "Ordered rdf:List of DimensionOrderRule. The first rule whose condition holds gives the layout's dimension order. If no rule's condition holds, the dimension order is undetermined and the layout cannot be read; a condition that cannot be evaluated is not a false condition, so it does not pass the choice to a later rule. Each rule names the SAME Dimension nodes in a different sequence -- band interleaving is a permutation of axes, not a different set of them. Mutually exclusive with dlv:hasDimension."@en .
+    rdfs:comment "Ordered rdf:List of DimensionOrderRule. The first rule whose condition holds gives the layout's dimension order. If no rule's condition holds, the dimension order is undetermined and the layout cannot be read; a condition that cannot be evaluated is not a false condition, so it does not pass the choice to a later rule. Each rule names the SAME Dimension nodes, each exactly once, in a different sequence -- band interleaving is a permutation of axes, not a different set of them (dlv:DataLayoutShape). Mutually exclusive with dlv:hasDimension."@en .
 :ruleDimensionOrder a owl:ObjectProperty ; rdfs:label "rule dimension order"@en ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
     rdfs:comment "The ordered rdf:List of dlv:Dimension selected by a DimensionOrderRule, slowest- to fastest-varying."@en .
 
@@ -158,6 +158,31 @@ dlv:DataLayoutShape a sh:NodeShape ;
         sh:message "dlv:hasConditionalCellDataType takes at most one value; each is a resource (an IRI or a blank node)." ] ;
     sh:property [ sh:path dlv:hasConditionalDimensionOrder ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
         sh:message "dlv:hasConditionalDimensionOrder takes at most one value; each is a resource (an IRI or a blank node)." ] ;
+    # Every rule of a conditional dimension order is a permutation of the same axes: it names each
+    # Dimension once, and every rule names the Dimension nodes the list's first rule names (two
+    # rules that differ from each other cannot both agree with the first).
+    sh:sparql [ sh:message "Rule {?rule} of dlv:hasConditionalDimensionOrder names Dimension {?d} more than once in its dlv:ruleDimensionOrder: every rule names each of the layout's Dimension nodes exactly once." ;
+        sh:prefixes dlv:_prefixes ;
+        sh:select """SELECT DISTINCT $this ?rule ?d WHERE {
+            $this dlv:hasConditionalDimensionOrder/rdf:rest*/rdf:first ?rule .
+            ?rule dlv:ruleDimensionOrder/rdf:rest* ?n1 , ?n2 .
+            ?n1 rdf:first ?d . ?n2 rdf:first ?d .
+            FILTER(!sameTerm(?n1, ?n2))
+        }""" ] ;
+    sh:sparql [ sh:message "Rule {?rule} of dlv:hasConditionalDimensionOrder does not name the same Dimension nodes as the first rule ({?d} is named by one and not the other): each rule is a permutation of the same dimensions, never a different set of them." ;
+        sh:prefixes dlv:_prefixes ;
+        sh:select """SELECT DISTINCT $this ?rule ?d WHERE {
+            $this dlv:hasConditionalDimensionOrder ?list .
+            ?list rdf:first ?first .
+            ?list rdf:rest+/rdf:first ?rule .
+            {
+                ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d .
+                FILTER NOT EXISTS { ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
+            } UNION {
+                ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d .
+                FILTER NOT EXISTS { ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
+            }
+        }""" ] ;
     # The two choices a layout makes (cell type, dimension order) are dlv:CellTypeChoiceShape
     # and dlv:DimensionOrderChoiceShape.
     sh:property [ sh:path ( dlv:hasConditionalCellDataType [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
@@ -277,7 +302,8 @@ dlv:_prefixes sh:declare
     [ sh:prefix "dlv" ; sh:namespace "https://hexplain.io/ns/dlv#"^^xsd:anyURI ] ,
     [ sh:prefix "rdf" ; sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ] .
 
-# A chunked layout must say where its chunks are.
+# A chunked layout must say where its chunks are, whichever way it orders its dimensions: fixed
+# (dlv:hasDimension) or chosen (the dimensions of its dlv:hasConditionalDimensionOrder rules).
 dlv:ChunkedLayoutShape a sh:NodeShape ;
     sh:targetClass dlv:DataLayout ;
     sh:property [ sh:path dlv:chunkOffsetsFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
@@ -292,7 +318,8 @@ dlv:ChunkedLayoutShape a sh:NodeShape ;
     sh:sparql [ sh:message "A chunked dlv:DataLayout (any Dimension declaring dlv:chunkSize, dlv:chunkSizeFromField or dlv:chunkSizeFromExpression) must declare dlv:chunkOffsetsFromField." ;
         sh:prefixes dlv:_prefixes ;
         sh:select """SELECT $this WHERE {
-            $this dlv:hasDimension/rdf:rest*/rdf:first ?d .
+            { $this dlv:hasDimension/rdf:rest*/rdf:first ?d }
+            UNION { $this dlv:hasConditionalDimensionOrder/rdf:rest*/rdf:first/dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
             { ?d dlv:chunkSize ?c } UNION { ?d dlv:chunkSizeFromField ?c } UNION { ?d dlv:chunkSizeFromExpression ?c }
             FILTER NOT EXISTS { $this dlv:chunkOffsetsFromField ?o }
         }""" ] .

@@ -31,6 +31,18 @@ def cases() -> list[dict[str, Any]]:
         ("duplicate", "1, 2", False),
     ]:
         add("count " + label, "ex:v st:count " + value + ".", ok, "" if ok else "count")
+    # The unit-specific counts, ranged xsd:unsignedLong like atab:rowCount and apc:pointCount.
+    for prop in ["elementCount", "byteCount"]:
+        for label, value, ok in [
+            ("zero", "0", True),
+            ("largest", '"18446744073709551615"^^xsd:unsignedLong', True),
+            ("negative", "-1", False),
+            ("beyond unsignedLong", "18446744073709551616", False),
+            ("decimal", "1.5", False),
+            ("duplicate", "1, 2", False),
+        ]:
+            add(prop + " " + label, "ex:v st:" + prop + " " + value + ".", ok, "" if ok else prop)
+    add("member with element and byte counts", 'ex:m st:name "data"; st:elementCount 4; st:byteCount 16.', True)
     add("typed member without a name", "ex:m a st:Member; st:value 1.", False, "name")
     add("member with two names", 'ex:m st:name "a", "b".', False, "name")
     add("name not a string", "ex:m st:name 1.", False, "name")

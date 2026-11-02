@@ -79,7 +79,7 @@ def self_test() -> int:
     legacy["implementation"].pop("revision")
     legacy["suite"]["digest"] = "0" * 64
     assert report.check(legacy), "unknown historical coverage was accepted"
-    assert report.check(legacy, allow_historical=True) == []
+    assert report.check(legacy, allow_historical=True), "a fabricated historical digest was accepted"
     malformed = copy.deepcopy(legacy)
     malformed["suite"]["digest"] = "not-a-sha256"
     assert report.check(malformed, allow_historical=True)
@@ -90,17 +90,101 @@ def self_test() -> int:
     skipped["claims"]["classes"] = ["Physical Parser"]
     skipped["claimsDigest"] = report.claims_digest(skipped["claims"])
     assert any("applicable case" in problem for problem in report.check(skipped))
+    history_problems(good, legacy)
+    claim_problems(good)
 
-    completed = report.complete(copy.deepcopy(legacy), "0123abcd", ENVIRONMENT)
-    assert completed["formatVersion"] == 2 and report.check(completed, allow_historical=True) == [], (
-        "complete() left the report unchecked"
-    )
+    with tempfile.TemporaryDirectory() as scratch:
+        register = Path(scratch) / "suite-digests.json"
+        report.record_suite(register, digest=legacy["suite"]["digest"], commit="0123abcd")
+        completed = report.complete(copy.deepcopy(legacy), "0123abcd", ENVIRONMENT)
+        assert completed["formatVersion"] == 2
+        assert report.check(completed, allow_historical=True, history=register) == [], (
+            "complete() left the report unchecked"
+        )
     for date in ("2026-01-01T00:00:00+00:00", "2026-01-01T00:00:00.123Z"):
         valid = copy.deepcopy(good)
         valid["run"]["date"] = date
         assert report.check(valid) == []
     file_problems(good)
     return len(cases)
+
+
+def history_problems(good: report.Report, legacy: report.Report) -> None:
+    """A historical report is accepted only for a suite the register records, and is checked against its case ids."""
+    with tempfile.TemporaryDirectory() as scratch:
+        register = Path(scratch) / "suite-digests.json"
+        fabricated = legacy["suite"]["digest"]
+        assert report.check(legacy, allow_historical=True, history=register), "an unrecorded digest was accepted"
+        report.record_suite(register, digest=fabricated, commit="0123abcd", note="probe")
+        assert report.historical_suites(register)[fabricated] == report.suite_cases()
+        assert report.check(legacy, allow_historical=True, history=register) == []
+        assert report.check(legacy, history=register), "a historical report passed the check of a new report"
+        invented = copy.deepcopy(legacy)
+        invented["results"][0]["case"] = "pp-invented-case"
+        problems = report.check(invented, allow_historical=True, history=register)
+        assert any("pp-invented-case" in p for p in problems), problems
+        missing = copy.deepcopy(legacy)
+        missing["results"].pop()
+        missing["suite"]["cases"] -= 1
+        missing["counts"]["SKIP"] -= 1
+        assert report.check(missing, allow_historical=True, history=register), "a case missing from it passed"
+        reclassed = copy.deepcopy(legacy)
+        reclassed["results"][0]["class"] = next(c for c in report.CLASSES if c != reclassed["results"][0]["class"])
+        assert report.check(reclassed, allow_historical=True, history=register), "a case of another class passed"
+    # Every published report names the current suite or a recorded one (main() checks each against it).
+    recorded = report.historical_suites()
+    for path, data in report.published():
+        digest = data["suite"]["digest"]
+        assert digest == good["suite"]["digest"] or digest in recorded, f"{path.name}: suite {digest[:12]} unrecorded"
+
+
+def claim_problems(good: report.Report) -> None:
+    """Results agree with the applicability rules for the claims, the claims with the closed lists, and the run
+    with the clock."""
+    cases = report.suite_cases()
+    claims = {"classes": ["Physical Parser"], "optionalFeatures": [], "codecs": []}
+    results = []
+    for case, cls in cases.items():
+        manifest = json.loads((report.SUITE / cls / case / "manifest.json").read_text(encoding="utf-8"))
+        reason = report.skip_reason(manifest, claims, "{withdraw} {cells}")
+        results.append(
+            {"case": case, "class": cls, "status": "SKIP" if reason else "PASS", "category": None, "detail": reason}
+        )
+    consistent = report.build(
+        results, good["implementation"], claims, date="2026-01-01T00:00:00Z", environment=ENVIRONMENT
+    )
+    assert report.check(consistent) == [], report.check(consistent)
+    inapplicable = copy.deepcopy(consistent)
+    hdl = next(r for r in inapplicable["results"] if r["class"] == "hdl-compiler")
+    hdl.update(status="PASS", detail="")
+    inapplicable["counts"] = report.result_counts(inapplicable["results"])
+    problems = report.check(inapplicable)
+    assert any(hdl["case"] in p and "inapplicable" in p for p in problems), "a PASS on an unclaimed class passed"
+    dict_form = copy.deepcopy(consistent)
+    dict_form["claims"]["classes"] = {"Physical Parser": {"claimed": True}, "HDL Compiler": {"claimed": False}}
+    dict_form["claimsDigest"] = report.claims_digest(dict_form["claims"])
+    assert report.check(dict_form) == [], "a class claimed false in the object form counted as claimed"
+    for key, value in (
+        ("classes", ["Physical Parser", "Hexplain Accelerator"]),
+        ("optionalFeatures", ["time-travel"]),
+        ("codecs", ["zstd"]),
+        ("codecs", {"https://hexplain.io/ns/register/media-encoding#Zstd": True}),
+        ("encodings", ["https://hexplain.io/ns/bddo#klingon"]),
+    ):
+        bad = copy.deepcopy(consistent)
+        bad["claims"][key] = value
+        bad["claimsDigest"] = report.claims_digest(bad["claims"])
+        assert any(p.startswith("claims:") for p in report.check(bad)), f"claims {key}={value!r} passed"
+    future = copy.deepcopy(good)
+    future["run"]["date"] = "2999-01-01T00:00:00Z"
+    assert any("future" in p for p in report.check(future)), "a run dated in the future passed"
+    # Implementation reports are read as strict JSON: a repeated member is not silently one of its values.
+    for text in ('{"format": 1, "format": 2}', '{"counts": NaN}'):
+        try:
+            report.strict_json(text)
+            raise AssertionError(f"non-RFC 8259 JSON was read: {text}")
+        except ValueError:
+            pass
 
 
 def file_problems(good: report.Report) -> None:
@@ -160,7 +244,8 @@ def main() -> int:
         return 1
     print(
         f"PASS: the report check holds on a {n}-case suite; {len(published)} published report(s) follow the format "
-        "(historical coverage is unverified without its suite)"
+        f"and cover the suite they name (the current one, or one of the {len(report.historical_suites())} past "
+        f"suites recorded in {report.HISTORY.name})"
     )
     return 0
 

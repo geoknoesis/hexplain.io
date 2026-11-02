@@ -1,6 +1,7 @@
 # A chunked layout with no chunk offset table — the chunks cannot be located.
 # Expected to trip dlv:ChunkedLayoutShape.
 # expect: ex:Layout dlv:ChunkedLayoutShape sh:SPARQLConstraintComponent
+# expect: ex:ChosenOrder dlv:ChunkedLayoutShape sh:SPARQLConstraintComponent
 @prefix bddo: <https://hexplain.io/ns/bddo#> .
 @prefix dlv:  <https://hexplain.io/ns/dlv#> .
 @prefix ex:   <https://hexplain.io/test/chunk-invalid#> .
@@ -13,3 +14,11 @@ ex:Layout a dlv:DataLayout ;
 
 ex:DimY a dlv:Dimension ; dlv:hasAxis dlv:axisY ; dlv:dimensionSize 1024 ; dlv:chunkSize 256 .
 ex:DimX a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSize 1024 ; dlv:chunkSize 256 .
+
+# The same chunked dimensions reached through a conditional dimension order: still no offsets.
+ex:ChosenOrder a dlv:DataLayout ;
+    dlv:cellDataType bddo:uint8 ;
+    dlv:hasConditionalDimensionOrder (
+        [ a dlv:DimensionOrderRule ; bddo:condition "instance.n == 1" ; dlv:ruleDimensionOrder ( ex:DimY ex:DimX ) ]
+        [ a dlv:DimensionOrderRule ; bddo:condition "instance.n == 2" ; dlv:ruleDimensionOrder ( ex:DimX ex:DimY ) ]
+    ) .

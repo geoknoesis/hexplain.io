@@ -26,7 +26,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
+from decimal import Decimal
 from math import copysign
 from pathlib import Path
 from typing import Any
@@ -49,7 +51,7 @@ sys.path.insert(0, str(HERE))
 
 import hel  # noqa: E402
 import round_trip  # noqa: E402
-from suite import CATEGORIES, REPORTED_BASE, parse_hex  # noqa: E402
+from suite import CATEGORIES, REPORTED_BASE, parse_hex, strict_json  # noqa: E402
 
 #: The file a runner writes an error category to, and a case's description.
 ERROR_FILE, DESCRIPTION = "error.json", "description.ttl"
@@ -125,6 +127,19 @@ class Mismatch(Exception):
     pass
 
 
+class UnreadableOutput(ValueError):
+    """An implementation's output that is not the JSON it must be: a case failure, not a comparator failure."""
+
+
+def read_actual_json(path: Path) -> Any:
+    """The JSON an implementation wrote at [path], read strictly (suite.strict_json): a repeated member or a
+    NaN/Infinity token makes the output unreadable rather than silently picking one of its values."""
+    try:
+        return strict_json(path.read_text(encoding="utf-8"))
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise UnreadableOutput(f"{path.name} is not valid JSON: {exc}") from exc
+
+
 #: A triple of an rdflib graph.
 Triple = tuple[Node, Node, Node]
 #: A blank node of an expected run report bound to a node of the actual report.
@@ -197,6 +212,15 @@ def _argument_cells(g: rdflib.Graph) -> set[Node]:
     return cells
 
 
+def _decimal_lexical(value: Decimal) -> str:
+    """The canonical xsd:decimal lexical form of [value]: no redundant zeros, at least one fraction digit, and no
+    negative zero, so "1.0", "1.00" and "01.0" are one value."""
+    text = format(value.normalize(), "f")
+    if "." not in text:
+        text += ".0"
+    return "0.0" if text in ("-0.0", "0.0") else text
+
+
 def _canonical_literal(p: Node, o: Node, hel_bearing: bool = False, by_value: bool = False) -> Node:
     if not isinstance(o, Literal):
         return o
@@ -205,13 +229,57 @@ def _canonical_literal(p: Node, o: Node, hel_bearing: bool = False, by_value: bo
     if (hel_bearing or p in HEL_PROPERTIES) and (o.datatype in (None, XSD.string, HEL_EXPRESSION)) and not o.language:
         c = hel.canonical(str(o))
         return Literal(c if c is not None else str(o))
+    if o.datatype == XSD.string and not o.language:
+        # RDF 1.1: a simple literal IS an xsd:string literal ("x" and "x"^^xsd:string are one term).
+        return Literal(str(o))
     if o.datatype is None or o.language or not by_value:
         # An emitted literal compares as written: the Processing Model fixes its canonical lexical form.
         return o
     try:
-        return Literal(str(o), datatype=o.datatype, normalize=True) if o.ill_typed is False else o
+        if o.ill_typed is not False:
+            return o  # An ill-formed literal keeps its lexical form.
+        value = o.toPython()
+        if isinstance(value, Decimal) and value.is_finite():
+            # rdflib keeps a decimal's trailing zeros ("1.00" stays "1.00"); by value they do not matter.
+            return Literal(_decimal_lexical(value), datatype=o.datatype)
+        return Literal(str(o), datatype=o.datatype, normalize=True)
     except Exception:  # noqa: BLE001 -- an ill-formed literal keeps its lexical form
         return o
+
+
+#: The lexical space of xsd:nonNegativeInteger (an optional sign, digits; a minus sign only before zero).
+NON_NEGATIVE_INTEGER = re.compile(r"\+?[0-9]+|-0+")
+
+
+def _valid_extent(o: Node) -> bool:
+    """Whether [o] is an extent value the Processing Model allows: a literal typed xsd:nonNegativeInteger whose
+    lexical form is in that datatype's lexical space (Semantic Triple Emission)."""
+    return (
+        isinstance(o, Literal)
+        and o.datatype == XSD.nonNegativeInteger
+        and NON_NEGATIVE_INTEGER.fullmatch(str(o)) is not None
+    )
+
+
+def _extent_bearers(g: rdflib.Graph) -> set[Node]:
+    """The resources of [g] described by more than their extents: the minted resources an extent may annotate."""
+    return {s for s, p, _ in g if p not in EXTENTS}
+
+
+def _ignorable_extent(s: Node, o: Node, minted: set[Node], bases: tuple[str, ...], described: set[Node]) -> bool:
+    """Whether an extent triple on [s] (after rebasing) is the optional annotation the Processing Model allows, and so
+    is removed: a valid xsd:nonNegativeInteger on a resource the expected graph has ([minted]), on an IRI minted
+    under the case's base ([bases]), or on a blank node the graph otherwise describes ([described]). Any other
+    extent stays in the graph, where it is reported as an unexpected triple: the instance graph "holds nothing else"
+    (processing/index.html#emission)."""
+    if not _valid_extent(o):
+        return False
+    if s in minted:
+        return True
+    if isinstance(s, BNode):
+        return s in described
+    text = str(s)
+    return any(text == base or text.startswith(base + "#") or text.startswith(base + "/") for base in bases)
 
 
 def normalise_graph(
@@ -221,12 +289,21 @@ def normalise_graph(
     manifest: dict[str, Any] | None = None,
     reported_base: str | None = None,
     header: bool | None = None,
+    minted: set[Node] | None = None,
 ) -> rdflib.Graph:
-    """The graph a case compares: extents removed, the bundle profile's closure removed (Bundle Processor), the
-    ontology header removed (HDL Compiler, unless the case compares it), the reported base rewritten to the
-    placeholder, typed literals as written (by value for an HDL Compiler graph, whose datatypes alone are fixed),
-    HEL literals canonical."""
+    """The graph a case compares: the allowed extents removed, the bundle profile's closure removed (Bundle
+    Processor), the ontology header removed (HDL Compiler, unless the case compares it), the reported base rewritten
+    to the placeholder, xsd:string literals as simple literals, typed literals as written (by value for an HDL
+    Compiler graph, whose datatypes alone are fixed), HEL literals canonical.
+
+    [minted] is the subjects of the normalised expected graph, when [g] is an implementation's output: an extent is
+    removed only from one of them, from an IRI under the case's base, or from a blank node the output otherwise
+    describes, and only when it is a valid xsd:nonNegativeInteger (_ignorable_extent). Without [minted] (the
+    expected graph itself) the graph's own described resources are the minted ones."""
     manifest = manifest or {}
+    described = _extent_bearers(g)
+    owners = described if minted is None else minted
+    bases = tuple(b.split("#")[0] for b in (REPORTED_BASE, manifest.get("base")) if isinstance(b, str) and b)
     drop: set[Triple] = set()
     closure: set[Node] = set()
     if cls == "bundle-processor" and manifest.get("bundleProfile"):
@@ -247,11 +324,13 @@ def normalise_graph(
     by_value = cls in BY_VALUE
     out = rdflib.Graph()
     for s, p, o in g:
-        if p in EXTENTS or s in closure or (s, p, o) in drop:
+        if s in closure or (s, p, o) in drop:
             continue
         argument = p == RDF.first and s in arguments
         if reported_base:
             s, o = (_rebase(t, reported_base) for t in (s, o))
+        if p in EXTENTS and _ignorable_extent(s, o, owners, bases, described):
+            continue
         out.add((s, p, _canonical_literal(p, o, argument, by_value=by_value)))
     return out
 
@@ -269,7 +348,7 @@ def compare_graph(expected: rdflib.Graph, actual: rdflib.Graph, **kw: Any) -> li
     """Differences between two graphs (rdflib Graphs) after normalise_graph; [] when isomorphic."""
     base = kw.pop("reported_base", None)
     e = normalise_graph(expected, **kw)
-    a = normalise_graph(actual, reported_base=base, **kw)
+    a = normalise_graph(actual, reported_base=base, minted=set(e.subjects()), **kw)
     ie, ia = to_isomorphic(e), to_isomorphic(a)
     if ie == ia:
         return []
@@ -578,8 +657,26 @@ def compare_case(
     case_dir, actual_path = Path(case_dir), Path(actual_path)
     manifest = json.loads((case_dir / "manifest.json").read_text(encoding="utf-8"))
     name = expected_artifact(case_dir)
+    try:
+        return _compare_case(case_dir, actual_path, manifest, name, reported_base, category_map)
+    except UnreadableOutput as exc:
+        return [str(exc)]
+
+
+def _compare_case(
+    case_dir: Path,
+    actual_path: Path,
+    manifest: dict[str, Any],
+    name: str,
+    reported_base: str | None,
+    category_map: dict[str, str] | None,
+) -> list[str]:
+    # An error outcome is the error artifact (error.json, written with a nonzero exit), never a successful output
+    # whose body happens to hold a "category" member. An HDL Compiler reports its error as diagnostics instead.
+    if name == "expected-error.json" and manifest["class"] != "hdl-compiler" and actual_path.name != ERROR_FILE:
+        return [f"the case requires an error, reported as {ERROR_FILE}; got the output {actual_path.name}"]
     if actual_path.name == ERROR_FILE and name != "expected-error.json":
-        actual = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.is_file() else None
+        actual = read_actual_json(actual_path) if actual_path.is_file() else None
         return compare_alternative_error(manifest, actual, category_map)
     if manifest["class"] == "writer":
         return _compare_writer(case_dir, name, actual_path, category_map, manifest)
@@ -595,7 +692,7 @@ def _compare_writer(
     # A writer's output is bytes or an error: the file is read as JSON only when it is named as one (error.json).
     if not actual_path.is_file():
         return [f"no output at {actual_path}"]
-    read = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.suffix == ".json" else None
+    read = read_actual_json(actual_path) if actual_path.suffix == ".json" else None
     # A JSON output is an error, except for a case verified by round trip, whose JSON output is the re-parsed
     # tree unless it is the runner's error file.
     error = read if name != "expected.json" or actual_path.name == ERROR_FILE else None
@@ -623,7 +720,7 @@ def _compare_json(
     """A case whose expected artifact is JSON: a tree, an error, a run summary or a claims statement."""
     cls = manifest["class"]
     expected = json.loads((case_dir / name).read_text(encoding="utf-8"))
-    actual = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.is_file() else None
+    actual = read_actual_json(actual_path) if actual_path.is_file() else None
     if name == "expected.json":
         return compare_tree(expected, actual)
     if name == "expected-error.json":
@@ -657,7 +754,7 @@ def _compare_graphs(
     if not actual_path.is_file():
         return [f"no output at {actual_path}"]
     if actual_path.suffix == ".json":
-        actual = json.loads(actual_path.read_text(encoding="utf-8"))
+        actual = read_actual_json(actual_path)
         if name == "expected-report.ttl":
             return compare_alternative_error(manifest, actual, category_map)
         return [f"expected a graph, got {actual!r}"]

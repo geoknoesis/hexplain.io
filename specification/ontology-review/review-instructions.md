@@ -40,11 +40,11 @@ Acceptance requires completed module coverage, dispositions for all findings, re
 | specification/aspect/security | 16 | Unreviewed |
 | specification/aspect/signal | 3 | Unreviewed |
 | specification/aspect/spatialref | 56 | Unreviewed |
-| specification/aspect/structure | 18 | Unreviewed |
+| specification/aspect/structure | 20 | Unreviewed |
 | specification/aspect/tabular | 14 | Unreviewed |
 | specification/aspect/time | 3 | Unreviewed |
 | specification/axv | 10 | Unreviewed |
-| specification/bddo | 312 | Unreviewed |
+| specification/bddo | 316 | Unreviewed |
 | specification/conf | 66 | Unreviewed |
 | specification/dfv | 28 | Unreviewed |
 | specification/dlv | 52 | Unreviewed |
@@ -60,7 +60,7 @@ Acceptance requires completed module coverage, dispositions for all findings, re
 | specification/register/part-role | 14 | Unreviewed |
 | specification/register/protection | 16 | Unreviewed |
 | specification/register/us-nato-security | 90 | Unreviewed |
-| specification/req | 236 | Unreviewed |
+| specification/req | 240 | Unreviewed |
 | specification/vdv | 18 | Unreviewed |
 
 ## Evidence boundaries

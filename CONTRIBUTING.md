@@ -148,7 +148,8 @@ register is the exception to generated definitions: each `skos:Concept` states i
 `skos:definition`, and each codec parameter spec an `rdfs:comment` saying what it means, in the
 register file (`tools/test_documentation_annotations.py`).
 
-The builders, in the order a change to a shape needs them (each has a check mode a gate runs):
+The builders, in the order a change to a shape needs them (each but the last has a check mode a
+gate runs):
 
 | Builder | Writes | Check |
 |---|---|---|
@@ -158,6 +159,7 @@ The builders, in the order a change to a shape needs them (each has a check mode
 | `tools/_build_shape_requirements.py --write` | `specification/req/requirements.ttl`, one `reqs:ShapeRequirement` per node shape | `--check` (default), `test_shape_requirements.py` |
 | `tools/_build_term_reference.py --enrich` (again) | `requirements-doc.ttl` and the req page | `--check` |
 | `tools/_build_architecture_catalogue.py` | the aspect catalogue cells of the architecture page | `--check` |
+| `tools/_build_ontology_docs.py` | the ontology-design page (its namespace table is `family.json`'s), the raster, spatial-reference and geometry pages, the GDAL coverage page, and then the term reference again | no check mode; `test_namespace_prefixes.py` checks the namespace table |
 
 A fixture under `specification/**/test/` is valid when validation reports no `sh:Violation`;
 `# expect:` lines name each result it must produce, with `sh:Warning` or `sh:Info` as a last
@@ -173,16 +175,42 @@ takes no arguments. The builders are `_build_family_contracts` (`family-contract
 `_build_layout_competency`, `_build_conformance_competency`, `_build_security_competency` and
 `_build_network_competency` (those `*-competency.tsv` corpora; each builder holds its cases); `_build_strict_profile` (`strict-profile-shapes.ttl`); `_build_fn_catalogue` (the
 catalogue section of `specification/fn/index.html`); and `_build_lineage`
-(`releases/lineage.json`, after a snapshot or a new version IRI). After changing cases run
+(`releases/lineage.json`, after a snapshot or a new version IRI). The conformance suite's
+builder, `_build_conformance_page`, is described under [Conformance cases](#conformance-cases).
+After changing cases run
 `python tools/_build_family_contracts.py --write` and the builder of each corpus that changed
 (`python tools/_build_layout_competency.py --write` for the layout fragments), then `python
-tools/_constraint_coverage.py`, `python tools/_render_constraint_coverage.py` and `python
-tools/_capabilities.py`, because the coverage ledger hashes the snapshots and the procedural
-gates, and `python tools/_competency_trace.py`, whose traceability matrix hashes the corpora. The ledger is measured across a process pool, corpus by corpus (about eight
+tools/_constraint_coverage.py` and `python tools/_render_constraint_coverage.py`, because the
+coverage ledger hashes the snapshots and the procedural gates; `python
+tools/_competency_trace.py`, whose traceability matrix hashes the corpora; `python
+tools/_capabilities.py`, which reads the ledger and that matrix; and last `python
+tools/_specification_coverage.py`, whose construct inventory
+(`specification/validation/construct-coverage.json`) reads the ledger, the matrix, the
+conformance coverage and the requirement registry. The ledger is measured across a process pool, corpus by corpus (about eight
 minutes for the 2,163 validation calls at eight workers on the recording host under the load
 stated under [Gate cost](#gate-cost), where the sequential whole-family measurement took forty);
 its content does not depend on the number of workers. The GDAL evidence gates derive their
 expected totals from the evidence's own counts blocks; do not retype totals.
+
+### Conformance cases
+
+The processor conformance suite is authored in the case modules of `tools/conformance/` and
+written to `specification/conformance/<class>/` by a builder. After adding or changing a case,
+run in order: `python tools/conformance/generate_inputs.py` (the suite on disk; `--check`
+reports drift); `python tools/_build_conformance_page.py` (the coverage section of
+`specification/conformance/index.html` and `specification/conformance/coverage.json`; it writes
+by default, and `--check`, which `test_conformance_suite.py` runs, reports a stale section);
+`python tools/_specification_coverage.py` (the construct inventory, which reads that coverage);
+and then the coverage and capability chain above when its gates report it stale. A changed
+suite has a new digest: the published implementation reports of the old one become superseded
+and are kept as they are.
+
+A new or changed normative sentence (an RFC 2119 keyword) on the Processing Model, HEL, HDL,
+conf or req pages needs its requirement anchor: `python tools/_requirement_ids.py` anchors new
+sentences and refreshes `specification/conformance/requirements.json` (`--check` reports what it
+would change). An ID whose sentence disappears or changes must be named in the Unreleased
+section of `CHANGELOG.md` (`test_requirement_ids.py`). Then run `_build_conformance_page.py`
+and `_specification_coverage.py` as above, since both read the registry.
 
 Public documentation links are checked by `test_site_links.py`. Run `python
 tools/_site_inventory.py` after adding pages; it also links the shared print stylesheet.

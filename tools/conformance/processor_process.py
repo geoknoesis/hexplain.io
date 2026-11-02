@@ -27,8 +27,11 @@ def cleanup(
             close_job()
     finally:
         try:
-            if len(closed) < 2 or proc.poll() is None:
-                terminate(proc)  # Descendants may still hold a reader's pipe open.
+            # On POSIX the command leads its own process group: a descendant can outlive it with both pipes closed
+            # (redirected or daemonised), so the group is always killed. On Windows the job object, closed above,
+            # ends the tree; the process itself is ended only while it still runs or holds a pipe.
+            if sys.platform != "win32" or len(closed) < 2 or proc.poll() is None:
+                terminate(proc)
         finally:
             for reader in readers:
                 reader.stopped.set()
@@ -62,7 +65,9 @@ def collect(
                 exited = now
             if exited is not None and now - exited >= EXIT_GRACE:
                 break  # Cleanup terminates the descendants still holding a pipe.
-            if now >= deadline:
+            if exited is None and now >= deadline:
+                # Once the process has exited, only the exit grace bounds the drain: a process that finished in
+                # time is not a timeout because a descendant held its pipe past the deadline.
                 return "", f"timed out after {timeout}s"
             for index, reader in enumerate(readers):
                 if index in closed:

@@ -15,7 +15,7 @@ import json
 import textwrap
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 
 ROOT = Path(__file__).resolve().parents[2]
 SUITE = ROOT / "specification/conformance"
@@ -74,6 +74,26 @@ BLANKET = (
 #: The placeholder base of a case whose manifest gives no base (Processing Model, IRI minting): the
 #: processor chooses and reports its own base, and the comparator reads that base as this IRI.
 REPORTED_BASE = "urn:hexplain:suite:reported-base"
+
+
+def _unique_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in out:
+            raise ValueError(f"the JSON object repeats the member {key!r}")
+        out[key] = value
+    return out
+
+
+def _no_constant(name: str) -> NoReturn:
+    raise ValueError(f"{name} is not JSON (RFC 8259 has no NaN or Infinity)")
+
+
+def strict_json(text: str) -> Any:
+    """[text] parsed as RFC 8259 JSON, refusing what Python's json module tolerates: an object that repeats a member
+    (json.loads keeps the last, so a processor could state two values and be read as either) and the NaN, Infinity
+    and -Infinity tokens. Every processor output and implementation report is read this way. Raises ValueError."""
+    return json.loads(text, object_pairs_hook=_unique_members, parse_constant=_no_constant)
 
 
 def feature_tokens() -> tuple[str, ...]:

@@ -82,7 +82,14 @@ def label(g: Graph, term: Node | None) -> str:
     if not labels and (term, RDF.type, HX.CodecContract) in g:
         return label(g, g.value(None, HX.codecContract, term)) + " codec contract"
     if not labels and (term, RDF.type, HX.CodecParameterSpec) in g:
-        return label(g, g.value(None, HX.declaresParameter, term)) + " parameter " + str(g.value(term, HX.parameterKey))
+        key = str(g.value(term, HX.parameterKey))
+        # A spec several contracts declare (the AES ciphers share menc:Cipher.*) is labelled by all of
+        # them: naming whichever contract g.value happened to return called AES-CTR's iv an AES-GCM one.
+        contracts = sorted(set(g.subjects(HX.declaresParameter, term)), key=str)
+        if len(contracts) > 1:
+            concepts = sorted({label(g, g.value(None, HX.codecContract, c)) for c in contracts})
+            return f"codec contract parameter {key} shared by {_listed(concepts)}"
+        return label(g, g.value(None, HX.declaresParameter, term)) + " parameter " + key
     return (
         str(sorted(labels, key=lambda x: (getattr(x, "language", None) != "en", str(x)))[0])
         if labels

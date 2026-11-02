@@ -326,7 +326,7 @@ se(
     "triple-limit",
     "More triples than the emitted-triples limit is a ResourceLimit error",
     "Five triples under maxTriples 3; no partial graph is returned.",
-    ["req-pm-resource-limits-1", "req-pm-resource-limits-3", "req-pm-errors-12"],
+    ["req-pm-resource-limits-1", "req-pm-errors-12"],
     ["resource-limits"],
     """
    ex:Root a bddo:Struct ; hexplain:mapsToClass ex:Rec ; bddo:hasField ( ex:a ex:b ex:c ex:d ) .

@@ -19,23 +19,26 @@ def artifact_problem(path: Path) -> str | None:
     return None
 
 
-def comparison(mode: str, case: Path, actual: Path, base: str) -> list[str]:
-    """The bounded problems of one comparison; malformed artifacts are case failures, not worker failures."""
+def comparison(mode: str, case: Path, actual: Path, base: str, category_map: dict[str, str] | None = None) -> list[str]:
+    """The bounded problems of one comparison; malformed artifacts are case failures, not worker failures.
+    [category_map] maps the implementation's error names to the Processing Model's categories (--category-map)."""
     try:
         problem = artifact_problem(actual)
         if problem:
             problems = [problem]
         elif mode == "case":
-            problems = compare.compare_case(case, actual, reported_base=base or None)
+            problems = compare.compare_case(case, actual, reported_base=base or None, category_map=category_map)
         else:
             manifest = json.loads((case / "manifest.json").read_text(encoding="utf-8"))
             tree = json.loads((case / "expected.json").read_text(encoding="utf-8"))
             exempt = round_trip.recomputed_paths(case / "description.ttl", manifest.get("root"), tree)
             problems = round_trip.isomorphism_problems(
                 tree,
-                json.loads(actual.read_text(encoding="utf-8")),
+                compare.read_actual_json(actual),
                 exempt,
             )
+    except RecursionError:
+        problems = ["the output could not be compared: it is nested more deeply than the comparator can follow"]
     except Exception as exc:  # noqa: BLE001 -- malformed artifacts are case failures
         problems = [f"the output could not be compared: {exc}"]
     # Never return an unbounded diagnostic to the parent.
@@ -51,7 +54,13 @@ def serve() -> int:
     sys.stdout = sys.stderr  # Stray prints from a comparison must not corrupt the reply stream.
     for line in sys.stdin:
         request = json.loads(line)
-        problems = comparison(request["mode"], Path(request["case"]), Path(request["actual"]), request["base"])
+        problems = comparison(
+            request["mode"],
+            Path(request["case"]),
+            Path(request["actual"]),
+            request["base"],
+            request.get("categories") or None,
+        )
         replies.write(json.dumps(problems) + "\n")
         replies.flush()
     return 0

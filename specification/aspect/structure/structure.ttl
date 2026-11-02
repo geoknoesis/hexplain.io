@@ -8,6 +8,7 @@
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
 @prefix sh:     <http://www.w3.org/ns/shacl#> .
 
@@ -23,20 +24,35 @@
     vann:preferredNamespacePrefix "st" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/structure#" .
 
 :Record a owl:Class ; rdfs:label "structured record"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
-    rdfs:comment "A decoded record with individually identified members. The source profile defines each member's meaning and type."@en .
+    rdfs:comment "A decoded record with individually identified members. The source profile defines each member's meaning and type."@en ;
+    rdfs:seeAlso <https://hexplain.io/ns/aspect/tabular#Record> ;
+    skos:scopeNote "Use for a decoded record whose members are named or numbered individually (st:hasMember), such as a Thrift or Avro struct. Not atab:Record, which is one row of an atab:Table laid out under the table's column schema; a description of tabular data uses the tabular aspect."@en .
 :Member a owl:Class ; rdfs:label "record member"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
     rdfs:comment "A decoded named member, with its optional numeric identifier and its typed value or collection items."@en .
 :Item a owl:Class ; rdfs:label "collection item"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
     rdfs:comment "An individually addressable collection element. Its canonical Hexplain instance path records its sequence position."@en .
 
-:hasMember a owl:ObjectProperty ; rdfs:label "has member"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range :Member .
-:hasItem a owl:ObjectProperty ; rdfs:label "has item"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range :Item .
-:name a owl:DatatypeProperty ; rdfs:label "member name"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:string .
+:hasMember a owl:ObjectProperty ; rdfs:label "has member"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range :Member ;
+    rdfs:comment "Relates a decoded record (or any value with named components) to one of its members. Members are unordered: each is identified by its st:name and optional st:identifier, never by its position."@en .
+:hasItem a owl:ObjectProperty ; rdfs:label "has item"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range :Item ;
+    rdfs:comment "Relates a collection-valued value (a list, set or map of a decoded record) to one of its elements. An item's sequence position is recorded by its canonical Hexplain instance path, not by this property."@en .
+:name a owl:DatatypeProperty ; rdfs:label "member name"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:string ;
+    rdfs:seeAlso <https://hexplain.io/ns/aspect/tabular#fieldName> ;
+    skos:scopeNote "Use on an st:Member for the name its schema or interface definition gives it. Not atab:fieldName, the name of a column of a tabular schema."@en .
 :identifier a owl:DatatypeProperty ; rdfs:label "member identifier"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:integer .
 :recordType a owl:DatatypeProperty ; rdfs:label "declared record type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:string .
-:dataType a owl:DatatypeProperty ; rdfs:label "declared value type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:string .
+:dataType a owl:DatatypeProperty ; rdfs:label "declared value type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:string ;
+    rdfs:seeAlso <https://hexplain.io/ns/aspect/tabular#fieldDataType> ;
+    skos:scopeNote "Use on an st:Member, st:Item or st:Record for the type name its schema declares for the decoded value. Not atab:fieldDataType, the declared type of a column of a tabular schema, and not bddo:dataType, the physical type of a field's bytes."@en .
 :symbol a owl:DatatypeProperty ; rdfs:label "enumeration symbol"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:string .
-:count a owl:DatatypeProperty ; rdfs:label "element or byte count"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:nonNegativeInteger .
+:count a owl:DatatypeProperty ; rdfs:label "element or byte count"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "A count associated with a described value, in a unit the source profile fixes: a number of elements or a number of bytes. A description that knows the unit states st:elementCount or st:byteCount instead, each of which is a st:count."@en .
+:elementCount a owl:DatatypeProperty ; rdfs:label "element count"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:unsignedLong ;
+    rdfs:subPropertyOf :count ;
+    rdfs:comment "The number of elements (items, members or values) a described collection or value holds, including zero for an empty one."@en .
+:byteCount a owl:DatatypeProperty ; rdfs:label "byte count"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ; rdfs:range xsd:unsignedLong ;
+    rdfs:subPropertyOf :count ;
+    rdfs:comment "The length in bytes of a described value's encoded form, as its source representation states it."@en .
 :value a rdf:Property ; rdfs:label "decoded value"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
     rdfs:comment "A scalar RDF literal with its actual datatype, or a resource describing a nested value. Never a substitute for parsing an unknown structure."@en .
 
@@ -51,9 +67,13 @@ st:SingleValueShape a sh:NodeShape ; rdfs:isDefinedBy <https://hexplain.io/ns/as
     sh:property [ sh:path st:value ; sh:maxCount 1 ;
         sh:message "A member, item or record has at most one st:value." ] .
 st:CountShape a sh:NodeShape ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;
-    sh:targetSubjectsOf st:count ;
+    sh:targetSubjectsOf st:count , st:elementCount , st:byteCount ;
     sh:property [ sh:path st:count ; sh:node st:IntegerValueShape ; sh:minInclusive 0 ; sh:maxCount 1 ;
-        sh:message "A described value has at most one st:count, a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] .
+        sh:message "A described value has at most one st:count, a non-negative integer (rdfs:range xsd:nonNegativeInteger)." ] ;
+    sh:property [ sh:path st:elementCount ; sh:node st:IntegerValueShape ; sh:minInclusive 0 ; sh:maxInclusive 18446744073709551615 ; sh:maxCount 1 ;
+        sh:message "A described value has at most one st:elementCount, an integer within the xsd:unsignedLong value space (rdfs:range xsd:unsignedLong)." ] ;
+    sh:property [ sh:path st:byteCount ; sh:node st:IntegerValueShape ; sh:minInclusive 0 ; sh:maxInclusive 18446744073709551615 ; sh:maxCount 1 ;
+        sh:message "A described value has at most one st:byteCount, an integer within the xsd:unsignedLong value space (rdfs:range xsd:unsignedLong)." ] .
 
 st:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/structure> ;

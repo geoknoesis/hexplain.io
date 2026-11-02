@@ -1,0 +1,15 @@
+# The deprecated bddo:hasEndianness is constrained as bddo:endianness is: two values, a value
+# that is not a byte order, a value contradicting bddo:endianness, and a value beside
+# bddo:hasConditionalEndianness.
+# expect: ex:Two bddo:DeprecatedEndiannessShape sh:MaxCountConstraintComponent
+# expect: ex:Middle bddo:DeprecatedEndiannessShape sh:InConstraintComponent
+# expect: ex:Contradicting bddo:DeprecatedEndiannessShape sh:SPARQLConstraintComponent
+# expect: ex:Conditional bddo:ConditionalEndiannessShape sh:MaxCountConstraintComponent
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://hexplain.io/test/deprecated-terms-invalid#> .
+
+ex:Two a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:hasEndianness bddo:BigEndian , bddo:LittleEndian .
+ex:Middle a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:hasEndianness ex:middleEndian .
+ex:Contradicting a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:hasEndianness bddo:BigEndian ; bddo:endianness bddo:LittleEndian .
+ex:Conditional a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:hasEndianness bddo:BigEndian ;
+    bddo:hasConditionalEndianness ( [ a bddo:EndiannessRule ; bddo:condition "true" ; bddo:ruleEndianness bddo:BigEndian ] ) .

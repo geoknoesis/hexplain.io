@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from _build_term_reference import build as build_term_references
+from _site_inventory import with_print_link
 from rdflib import OWL, RDF, RDFS, Graph, URIRef
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -43,6 +44,11 @@ def page(title: str, body: str, rootlink: str, status: str) -> str:
         f'Hexplain</title><style>{STYLE}</style></head><body><header><a href="{rootlink}">Hexplain '
         f"specification</a><h1>{title}</h1><p>{esc(status)}</p></header><main>{body}</main></body></html>"
     )
+
+
+def write_page(path: Path, html: str) -> None:
+    """Write a generated page carrying the site's print stylesheet link, as tools/_site_inventory.py expects."""
+    path.write_text(with_print_link(path, html), encoding="utf-8", newline="\n")
 
 
 DCT_MODIFIED = URIRef("http://purl.org/dc/terms/modified")
@@ -190,9 +196,7 @@ for module in prose:
     status = ("Working draft" if "working draft" in info else "Version " + version) + (
         " · modified " + modified if modified else ""
     )
-    (directory / "index.html").write_text(
-        page(module.title() + " aspect " + version, body, "../../index.html", status), encoding="utf-8", newline="\n"
-    )
+    write_page(directory / "index.html", page(module.title() + " aspect " + version, body, "../../index.html", status))
 
 policy = """<p>Hexplain separates physical byte description (BDDO), array addressing (DLV), semantic lifting (Core), \
 reusable aspects, controlled concept registers and format profiles. This separation is a compatibility boundary.</p>
@@ -213,7 +217,7 @@ reusable.</b> Core and aspects do not name individual binary formats. Open conce
 format-specific choices. Reuse units and CRS identifiers rather than inventing a parallel authority \
 registry.</li><li><b>Version validation changes.</b> Every changed module declares a new owl:versionIRI and \
 owl:versionInfo, an owl:priorVersion naming a version that a pinned snapshot has frozen, and dcterms:modified; the \
-raster, spatial-reference and geometry aspects are working drafts (VERSIONS). Stable namespace IRIs remain \
+raster, spatial-reference, geometry and structure aspects are working drafts (VERSIONS). Stable namespace IRIs remain \
 unchanged. A stricter shape is a validation compatibility change and must be described in migration notes. No claim \
 is made that draft version IRIs are already deployed.</li><li><b>Require evidence.</b> Every capability claim \
 identifies its level: vocabulary expression, RDF validation, compilation, binary parsing, payload decoding, semantic \
@@ -296,8 +300,9 @@ datatype <code>bddo:uint16le</code>, a character encoding <code>bddo:utf8</code>
 do not always match: <code>adv</code> names the audio namespace, the image vocabulary sits in directory \
 <code>idv</code> but declares <code>img</code>, <code>gv</code> is the geo namespace, <code>hexplain</code> the core \
 and <code>hxf</code> the function library, <code>axv</code> the archive, <code>dfv</code> the document and font and \
-<code>npv</code> the network vocabulary, and <code>menc</code> and <code>usnato</code> are register prefixes beside \
-the <code>r…</code> ones. None of them is renamed; a published prefix and namespace IRI are part of every \
+<code>npv</code> the network vocabulary, <code>menc</code> and <code>usnato</code> are register prefixes beside \
+the <code>r…</code> ones, and <code>st</code> is the structure aspect's prefix, without the leading <code>a</code> \
+the other aspect prefixes carry. None of them is renamed; a published prefix and namespace IRI are part of every \
 description that uses them. This table is the authority, kept as the <code>namespaces</code> list of <a \
 href="../family.json"><code>specification/family.json</code></a>; <code>tools/test_namespace_prefixes.py</code> \
 checks that every module declares exactly its row (<code>vann:preferredNamespacePrefix</code>, \
@@ -337,7 +342,8 @@ vocabulary</a></li><li><a href="https://www.w3.org/TR/shacl/">W3C SHACL validati
 href="https://www.w3.org/TR/owl2-primer/">W3C OWL 2 semantics</a></li><li><a href="https://www.w3.org/TR/ld-bp/">W3C \
 linked-data publication practices</a></li></ul><p><a href="../coverage/index.html">Inspect the GDAL evidence \
 inventory</a></p>"""
-versions = ", ".join(f"{m} {status_of(m)[0]}" for m in ["raster", "spatialref", "geometry"])
+DRAFT_ASPECTS = ["raster", "spatialref", "geometry", "structure"]
+versions = ", ".join(f"{m} {status_of(m)[0]}" for m in DRAFT_ASPECTS)
 policy = policy.replace("VERSIONS", esc(versions))
 _family = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))
 policy = policy.replace(
@@ -346,16 +352,15 @@ policy = policy.replace(
         f"<tr><td><code>{esc(r['prefix'])}</code></td><td><code>{esc(r['namespace'])}</code></td>"
         f"<td><code>{esc(r['ontology'])}</code></td><td><a "
         f'href="../{esc(r["file"])}">{esc(r["file"])}</a></td></tr>'
-        for r in _family["namespaces"]
+        for r in sorted(_family["namespaces"], key=lambda r: r["prefix"])
     ),
 )
-latest = max(status_of(m)[1] for m in ["raster", "spatialref", "geometry"])
+latest = max(status_of(m)[1] for m in DRAFT_ASPECTS)
 directory = ROOT / "specification/ontology-design"
 directory.mkdir(exist_ok=True)
-(directory / "index.html").write_text(
+write_page(
+    directory / "index.html",
     page("Ontology modeling policy", policy, "../index.html", "Modeling policy · aspects last modified " + latest),
-    encoding="utf-8",
-    newline="\n",
 )
 
 inventory = json.loads((ROOT / "specification/coverage/gdal-drivers.json").read_text(encoding="utf-8"))
@@ -489,16 +494,18 @@ evidence, so the evidence column is unchanged.</p>
 <script>document.getElementById('filter').addEventListener('input',e=>{{let n=0;document.querySelectorAll('#drivers \
 tr').forEach(r=>{{r.hidden=!r.dataset.search.includes(e.target.value.toLowerCase());if(!r.hidden)n++}});\
 document.getElementById('count').textContent=n+' entries';}});</script>"""
-(ROOT / "specification/coverage/index.html").write_text(
+write_page(
+    ROOT / "specification/coverage/index.html",
     page(
         "GDAL coverage & evidence",
         body,
         "../index.html",
         "Evidence inventory · GDAL " + str(inventory.get("gdal_release", "")),
     ),
-    encoding="utf-8",
-    newline="\n",
 )
 print("Built three aspect references, ontology policy and GDAL inventory page")
 
 build_term_references()
+# The term-reference build rewrites the catalogue page without the print stylesheet link; restore it.
+_catalogue = ROOT / "specification/reference/index.html"
+write_page(_catalogue, _catalogue.read_text(encoding="utf-8"))

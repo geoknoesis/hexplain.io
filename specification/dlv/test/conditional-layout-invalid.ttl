@@ -3,6 +3,7 @@
 # Expected to trip both choice shapes, each with its own message.
 # expect: ex:Both dlv:CellTypeChoiceShape sh:XoneConstraintComponent
 # expect: ex:Both dlv:DimensionOrderChoiceShape sh:XoneConstraintComponent
+# expect: ex:Mismatched dlv:DataLayoutShape sh:SPARQLConstraintComponent
 @prefix bddo: <https://hexplain.io/ns/bddo#> .
 @prefix dlv:  <https://hexplain.io/ns/dlv#> .
 @prefix ex:   <https://hexplain.io/test/condlayout-invalid#> .
@@ -21,3 +22,13 @@ ex:Both a dlv:DataLayout ;
     ) .
 
 ex:DimX a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSize 16 .
+
+# Two order rules over different dimension sets, the second naming one dimension twice: a
+# conditional order permutes one set of dimensions.
+ex:Mismatched a dlv:DataLayout ; dlv:cellDataType bddo:uint8 ;
+    dlv:hasConditionalDimensionOrder (
+        [ a dlv:DimensionOrderRule ; bddo:condition "instance.n == 1" ; dlv:ruleDimensionOrder ( ex:DimY ex:DimX ) ]
+        [ a dlv:DimensionOrderRule ; bddo:condition "instance.n == 2" ; dlv:ruleDimensionOrder ( ex:DimX ex:DimX ex:DimB ) ]
+    ) .
+ex:DimY a dlv:Dimension ; dlv:hasAxis dlv:axisY ; dlv:dimensionSize 8 .
+ex:DimB a dlv:Dimension ; dlv:hasAxis dlv:axisBand ; dlv:dimensionSize 3 .

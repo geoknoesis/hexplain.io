@@ -128,15 +128,15 @@
         </ul>
 
         <h3>Aspect Layer</h3>
-        <p>Cross-cutting concerns that belong to <em>no single domain</em> are defined once as orthogonal <b>aspect</b> ontologies and imported by the domains that exhibit them, so each term (a codec, a colour space, a duration) has exactly one IRI everywhere. A format is then a composition — it imports the aspects it has and adds only its genuinely-unique terms. See the <a href="architecture/index.html"><b>Aspect-Oriented Architecture</b></a> for the full catalogue, decision rule, and refactoring roadmap. Established so far:</p>
+        <p>Cross-cutting concerns that belong to <em>no single domain</em> are defined once as orthogonal <b>aspect</b> ontologies and imported by the domains that exhibit them, so each term (a codec, a colour space, a duration) has exactly one IRI everywhere. A format is then a composition — it imports the aspects it has and adds only its genuinely-unique terms. See the <a href="architecture/index.html"><b>Aspect-Oriented Architecture</b></a> for the full catalogue, decision rule, and refactoring roadmap.</p>
         <p>The established aspects (see the <a href="architecture/index.html">architecture document</a> for the full catalogue, tiers, and rationale):</p>
         <ul>
             <li><b>Base:</b> <a href="aspect/sampling/sampling.ttl">hx-sampling</a> (<code>asamp</code>), <a href="aspect/color/color.ttl">hx-color</a> (<code>acolor</code>).</li>
-            <li><b>Content representation:</b> <a href="aspect/raster/raster.ttl">hx-raster</a> (<code>araster</code>), <a href="aspect/geometry/geometry.ttl">hx-geometry</a> (<code>ageom</code>), <a href="aspect/pointcloud/pointcloud.ttl">hx-pointcloud</a> (<code>apc</code>), <a href="aspect/tabular/tabular.ttl">hx-tabular</a> (<code>atab</code>), <a href="aspect/signal/signal.ttl">hx-signal</a> (<code>asig</code>).</li>
+            <li><b>Content representation:</b> <a href="aspect/raster/raster.ttl">hx-raster</a> (<code>araster</code>), <a href="aspect/geometry/geometry.ttl">hx-geometry</a> (<code>ageom</code>), <a href="aspect/pointcloud/pointcloud.ttl">hx-pointcloud</a> (<code>apc</code>), <a href="aspect/tabular/tabular.ttl">hx-tabular</a> (<code>atab</code>), <a href="aspect/signal/signal.ttl">hx-signal</a> (<code>asig</code>), and, as a working draft (0.1), <a href="aspect/structure/structure.ttl">hx-structure</a> (<code>st</code>; decoded records, named members and collection items).</li>
             <li><b>Signal &amp; encoding:</b> <a href="aspect/encoding/encoding.ttl">hx-encoding</a> (<code>aenc</code>; codec + compression registers), <a href="aspect/integrity/integrity.ttl">hx-integrity</a> (<code>aintg</code>), <a href="aspect/protection/protection.ttl">hx-protection</a> (<code>aprot</code>; encryption, signatures and error-correcting codes, described and not processed).</li>
             <li><b>Reference frames:</b> <a href="aspect/time/time.ttl">hx-time</a> (<code>atime</code>), <a href="aspect/spatialref/spatialref.ttl">hx-spatialref</a> (<code>asref</code>).</li>
             <li><b>Governance:</b> <a href="aspect/provenance/provenance.ttl">hx-provenance</a> (<code>aprov</code>), <a href="aspect/security/security.ttl">hx-security</a> (<code>asec</code>); descriptive metadata reuses Dublin Core directly.</li>
-            <li><b>Container &amp; system:</b> <a href="aspect/packaging/packaging.ttl">hx-packaging</a> (<code>apkg</code>), <a href="aspect/fsmeta/fsmeta.ttl">hx-fsmeta</a> (<code>afs</code>), <a href="aspect/networkflow/networkflow.ttl">hx-networkflow</a> (<code>anet</code>).</li>
+            <li><b>Container &amp; system:</b> <a href="aspect/bundle/bundle.ttl">hx-bundle</a> (<code>abnd</code>; multi-part assets), <a href="aspect/packaging/packaging.ttl">hx-packaging</a> (<code>apkg</code>), <a href="aspect/fsmeta/fsmeta.ttl">hx-fsmeta</a> (<code>afs</code>), <a href="aspect/networkflow/networkflow.ttl">hx-networkflow</a> (<code>anet</code>).</li>
         </ul>
     </section>
 
@@ -194,7 +194,7 @@
     <section id="benefits">
         <h2>Benefits of the Hexplain Approach</h2>
         <ul>
-            <li><b>Interoperability:</b> By mapping format-specific fields to a common semantic vocabulary, Hexplain allows querying and analysis across different file formats, creating a unified view of the data. Domain vocabularies additionally align (via <code>skos:closeMatch</code>/<code>owl:equivalentProperty</code>) to established standards such as Dublin Core, the W3C Ontology for Media Resources, SOSA/SSN, and GeoSPARQL.</li>
+            <li><b>Interoperability:</b> By mapping format-specific fields to a common semantic vocabulary, Hexplain allows querying and analysis across different file formats, creating a unified view of the data. Domain vocabularies additionally relate their terms to established standards such as Dublin Core, the W3C Ontology for Media Resources, SOSA/SSN, and GeoSPARQL: by reusing the external term directly, by <code>rdfs:subPropertyOf</code> or <code>rdfs:subClassOf</code> where every use entails it, and otherwise by <code>rdfs:seeAlso</code>. SKOS mapping properties relate register concepts only (<a href="ontology-design/index.html#alignments">modeling policy</a>).</li>
             <li><b>Formal Validation:</b> Hexplain descriptions can be validated using SHACL, ensuring the descriptions themselves are correct. Rules and constraints within a description (fixed values, checksums) can further validate the integrity of the binary data itself.</li>
             <li><b>Semantic Querying:</b> Once parsed, the data becomes part of a knowledge graph, enabling powerful SPARQL queries such as "all images with a width greater than 4000 pixels" without knowing the location or data type of the width field in a PNG versus a JPEG.</li>
             <li><b>Long-Term Preservation:</b> A formal Hexplain description is enduring, machine-readable documentation — a self-contained digital artifact that guarantees data can be understood long after its authoring software is obsolete.</li>
@@ -217,7 +217,7 @@
         <p>The formal, machine-readable nature of Hexplain descriptions — made executable by the <a href="processing/index.html">Processing Model</a> — enables a powerful tool ecosystem.</p>
         <dl>
             <dt><b>Parser &amp; Codec Generators</b></dt>
-            <dd>Generate parser and writer source code directly from a Hexplain description, eliminating manual, error-prone implementation. The reference toolchain currently ships a Kotlin generator only; generators for other languages are possible from the same descriptions but none is provided.</dd>
+            <dd>Generate parser and writer source code directly from a Hexplain description, eliminating manual, error-prone implementation. The reference toolchain ships a Kotlin generator (a Rust reader backend is in development); generators for other languages are possible from the same descriptions but none is provided.</dd>
             <dt><b>Conformance Test Suites</b></dt>
             <dd>Use a description as "ground truth" to validate a corpus of binary files for structural integrity, correct values, and adherence to conditional logic.</dd>
             <dt><b>Semantic Query Engines</b></dt>
@@ -263,8 +263,9 @@
             including labels, definitions, usage scope, declared ranges, relationships, and the activation and constraints of validation shapes.</p>
         <h2>Ontology quality and GDAL coverage</h2>
         <p>The working drafts of the <a href="aspect/raster/index.html">raster and multidimensional array model</a>,
-            <a href="aspect/spatialref/index.html">georeferencing model</a> and
-            <a href="aspect/geometry/index.html">geometry ordinate semantics</a> carry their versions in their Turtle and pages.
+            <a href="aspect/spatialref/index.html">georeferencing model</a>,
+            <a href="aspect/geometry/index.html">geometry ordinate semantics</a> and
+            <a href="aspect/structure/index.html">structured records</a> carry their versions in their Turtle and pages.
             Read the <a href="ontology-design/index.html">ontology modeling policy</a> and the
             <a href="coverage/index.html">versioned GDAL coverage inventory</a> for precise capability and evidence boundaries.</p>
     </section>

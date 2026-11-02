@@ -124,7 +124,7 @@ hc(
     "crc8, crc16arc, crc16xmodem, crc16modbus, crc16x25, crc32c, crc32bzip2, crc32mpeg2, crc64ecma and "
     "crc64xz, each over the "
     "same range and stored in a field of its own width.",
-    OK + ["req-hdl-grammar-1", "req-bddo-checksum-algorithms-1"],
+    OK + ["req-hdl-grammar-1"],
     ["checksums", "grammar-fields"],
     'format t @namespace "{ns}"\nstruct Root {\n  text : ascii[9]\n'
     + "".join(f"  {f} : {t} @checksum {h}(text .. text)\n" for f, t, h, _ in NAMED)

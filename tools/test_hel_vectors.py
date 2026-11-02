@@ -9,7 +9,8 @@ typed number (int:3, float:2 -- the form that can say a result is the Float 2.0,
 JSON, every context is base64 JSON whose tree form uses only the members the file defines, every error names a
 condition the HEL page defines, and every condition the page defines is exercised by at least one row. The functions
 that read the run -- evaluationInstant() and partExtension() -- and the result types of abs, min and max over mixed
-Integer and Float arguments each have rows, so the gaps the file once declared stay closed.
+Integer and Float arguments each have rows, so the gaps the file once declared stay closed. Every function of
+the quantifiers group has at least one value row and one error row.
 """
 
 from __future__ import annotations
@@ -35,7 +36,7 @@ TREE_MEMBERS = frozenset(
 TYPED = re.compile(r"^(int|float):(.+)$")
 #: What the file must exercise: (what a row's expression contains, the expectation kind, what its expected column
 #: starts with).
-REQUIRED_ROWS = (
+REQUIRED_ROWS: tuple[tuple[str, str, str], ...] = (
     ("evaluationInstant(", "value", "int:"),
     ("evaluationInstant(", "error", '"argument"'),
     ("partExtension(", "value", '"'),
@@ -47,6 +48,30 @@ REQUIRED_ROWS = (
     ("min(", "value", "float:"),
     ("min(", "value", "int:"),
 )
+#: Every function of the quantifiers group has at least one value row and one error row of its own.
+QUANTIFIER_FUNCTIONS = (
+    "all",
+    "any",
+    "countWhere",
+    "sumOf",
+    "project",
+    "repeatValue",
+    "concatArrays",
+    "concatBytes",
+    "slice",
+    "integralScan",
+    "modularAdd",
+    "integerBytes",
+    "integerText",
+    "unicodeText",
+    "join",
+    "integerPrecision",
+    "decimalText",
+    "floatCast",
+    "fromIEEE",
+    "patchValues",
+)
+REQUIRED_ROWS += tuple((f"{name}(", kind, "") for name in QUANTIFIER_FUNCTIONS for kind in ("value", "error"))
 
 
 def expected_value(text: str) -> object:

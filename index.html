@@ -503,9 +503,9 @@
         <line class="g-edge" x1="220" y1="110" x2="80" y2="180" stroke="#34d399" stroke-width="1.4"/>
         <line class="g-edge" x1="220" y1="110" x2="366" y2="176" stroke="#fbbf24" stroke-width="1.4"/>
         <!-- edge labels -->
-        <text x="140" y="66"  fill="#67e8f9" font-family="ui-monospace,monospace" font-size="9">img:width</text>
-        <text x="270" y="70"  fill="#c4b5fd" font-family="ui-monospace,monospace" font-size="9">img:height</text>
-        <text x="118" y="152" fill="#34d399" font-family="ui-monospace,monospace" font-size="9">img:colorSpace</text>
+        <text x="140" y="66"  fill="#67e8f9" font-family="ui-monospace,monospace" font-size="9">araster:width</text>
+        <text x="270" y="70"  fill="#c4b5fd" font-family="ui-monospace,monospace" font-size="9">araster:height</text>
+        <text x="118" y="152" fill="#34d399" font-family="ui-monospace,monospace" font-size="9">acolor:colorSpace</text>
         <text x="248" y="150" fill="#fbbf24" font-family="ui-monospace,monospace" font-size="9">dcterms:format</text>
         <!-- center node -->
         <g><rect x="168" y="94" width="104" height="32" rx="8" fill="#0a0d13" stroke="url(#ng)" stroke-width="1.6"/>
@@ -627,22 +627,23 @@
         <div class="code-head"><span class="d" style="width:9px;height:9px;border-radius:3px;background:var(--violet)"></span><span class="fn">png-profile.ttl</span><span class="tag ttl">description</span></div>
 <pre><span class="c"># The PNG IHDR width field, mapped to a shared concept</span>
 <span class="p">:IHDR_Width</span> <span class="k">a</span> <span class="p">bddo:Field</span> ;
-    <span class="p">bddo:hasDataType</span> <span class="p">bddo:uint32</span> ;
-    <span class="p">bddo:byteOrder</span>  <span class="p">bddo:BigEndian</span> ;
+    <span class="p">bddo:dataType</span>   <span class="p">bddo:uint32</span> ;
+    <span class="p">bddo:endianness</span> <span class="p">bddo:BigEndian</span> ;
     <span class="p">bddo:atOffset</span>   <span class="n">16</span> ;
-    <span class="p">hexplain:mapsToProperty</span> <span class="p">img:width</span> .
+    <span class="p">hexplain:mapsToProperty</span> <span class="p">araster:width</span> .
 
 <span class="c"># A JPEG description maps its SOF0 width</span>
-<span class="c"># to the very same img:width property.</span></pre>
+<span class="c"># to the very same araster:width property.</span></pre>
       </div>
       <div class="code-card reveal d1">
         <div class="code-head"><span class="d" style="width:9px;height:9px;border-radius:3px;background:var(--cyan)"></span><span class="fn">query.rq</span><span class="tag sparql">SPARQL</span></div>
 <pre><span class="c"># Every large image — regardless of file format</span>
-<span class="k">PREFIX</span> <span class="p">img:</span> <span class="s">&lt;https://hexplain.io/ns/image#&gt;</span>
+<span class="k">PREFIX</span> <span class="p">img:</span>     <span class="s">&lt;https://hexplain.io/ns/image#&gt;</span>
+<span class="k">PREFIX</span> <span class="p">araster:</span> <span class="s">&lt;https://hexplain.io/ns/aspect/raster#&gt;</span>
 
 <span class="k">SELECT</span> ?file ?w <span class="k">WHERE</span> {
   ?file <span class="k">a</span> <span class="p">img:Image</span> ;
-        <span class="p">img:width</span> ?w .
+        <span class="p">araster:width</span> ?w .
   <span class="k">FILTER</span>(?w &gt; <span class="n">4000</span>)
 }
 <span class="k">ORDER BY</span> <span class="k">DESC</span>(?w)</pre>
@@ -850,7 +851,7 @@
       <div class="uc reveal">
         <span class="k">Geointelligence</span>
         <h3>One query across every imagery format</h3>
-        <p>Describe GeoTIFF, NITF, and HDF5 against the Geospatial Vocabulary, then run a single query: <em>"all WorldView-3 datasets collected after Jan 2024 that contain a Lidar point cloud"</em> — via <code>gv:platformName</code> and <code>gv:PointCloud</code>.</p>
+        <p>Describe GeoTIFF, NITF, and HDF5 against the Geospatial Vocabulary, then run a single query: <em>"all WorldView-3 datasets collected after Jan 2024 that contain a Lidar point cloud"</em> — via <code>aprov:platformName</code> and <code>gv:PointCloud</code>.</p>
       </div>
       <div class="uc reveal d1">
         <span class="k">Digital forensics</span>

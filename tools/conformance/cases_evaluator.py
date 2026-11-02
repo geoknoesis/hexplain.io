@@ -454,7 +454,7 @@ ce(
     "The input exceeds a 4-byte maxInputBytes: the run fails with a ResourceLimit error, or returns a report "
     "marked truncated; "
     "it never records the limit as a finding and carries on.",
-    CE + ["req-pm-recovery-5", "req-pm-errors-14", "req-pm-conformance-evaluation-6", "req-pm-resource-limits-3"],
+    CE + ["req-pm-recovery-5", "req-pm-errors-14", "req-pm-conformance-evaluation-6"],
     [EVAL, "errors", "resource-limits"],
     REQS
     + """

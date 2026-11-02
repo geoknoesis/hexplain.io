@@ -13393,6 +13393,14 @@
     "allowWarnings": true
   },
   {
+    "name": "review conf report: not applicable with version scoping unstated",
+    "module": "specification/conf/shapes.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix conf:<https://hexplain.io/ns/conf#> .\n@prefix req:<https://hexplain.io/ns/req#> .\n@prefix bddo:<https://hexplain.io/ns/bddo#> .\n@prefix hexplain:<https://hexplain.io/ns/core#> .\n@prefix abnd:<https://hexplain.io/ns/aspect/bundle#> .\n@prefix sh:<http://www.w3.org/ns/shacl#> .\n@prefix owl:<http://www.w3.org/2002/07/owl#> .\n@prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n@prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> .\n@prefix skos:<http://www.w3.org/2004/02/skos/core#> .\n@prefix dcterms:<http://purl.org/dc/terms/> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\n@prefix ex:<urn:review-probe:> .\n\nex:req1 a req:Requirement ; req:requirementId \"R1\" ; req:fromStandard \"Example 1.0\" ; req:statement \"One.\" ; req:appliesToVersion \"2.0\" ; req:discrepancyType req:Syntactic .\nex:req2 a req:Requirement ; req:requirementId \"R2\" ; req:fromStandard \"Example 1.0\" ; req:statement \"Two.\" ; req:discrepancyType req:Semantic .\nex:field a bddo:Field .\nex:con a conf:Constraint ; conf:scope ex:field ; conf:assertion \"self > 0\" ; conf:satisfies ex:req1 ; conf:message \"m\" ; conf:severity sh:Warning .\nex:pa a conf:ParseAttribution ; conf:errorCategory conf:BoundsError ; conf:satisfies ex:req2 .\nex:run a conf:Run ; conf:verdict conf:NonConformant ; conf:truncated false ; \n    conf:profile ex:profile ; conf:ruleSet ex:rules ; conf:input \"input.bin\" ; conf:failOn sh:Violation ;\n    conf:outcome [ conf:outcomeRequirement ex:req1 ; conf:outcomeValue conf:NotApplicable ] ,\n                 [ conf:outcomeRequirement ex:req2 ; conf:outcomeValue conf:Evaluated ] ;\n    conf:finding ex:f1 , ex:f2 .\nex:f1 a conf:Finding ; conf:findingKind conf:Violation ; conf:findingConstraint ex:con ; conf:findingRequirement ex:req1 ;\n    conf:severity sh:Warning ; conf:findingMessage \"m\" .\nex:f2 a conf:Finding ; conf:findingKind conf:Parse ; conf:errorCategory conf:BoundsError ; conf:findingRequirement ex:req2 ;\n    conf:severity sh:Violation ; conf:findingMessage \"p\" .\n",
+    "allowWarnings": true
+  },
+  {
     "name": "review conf report: not applicable although the version matches",
     "module": "specification/conf/shapes.ttl",
     "expected": false,
@@ -15129,6 +15137,110 @@
     "allowWarnings": true
   },
   {
+    "name": "structure elementCount zero",
+    "module": "specification/aspect/structure/structure.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:v st:elementCount 0.",
+    "allowWarnings": true
+  },
+  {
+    "name": "structure elementCount largest",
+    "module": "specification/aspect/structure/structure.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:v st:elementCount \"18446744073709551615\"^^xsd:unsignedLong.",
+    "allowWarnings": true
+  },
+  {
+    "name": "structure elementCount negative",
+    "module": "specification/aspect/structure/structure.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/structure#elementCount",
+    "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:v st:elementCount -1.",
+    "allowWarnings": true
+  },
+  {
+    "name": "structure elementCount beyond unsignedLong",
+    "module": "specification/aspect/structure/structure.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/structure#elementCount",
+    "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:v st:elementCount 18446744073709551616.",
+    "allowWarnings": true
+  },
+  {
+    "name": "structure elementCount decimal",
+    "module": "specification/aspect/structure/structure.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/structure#elementCount",
+    "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:v st:elementCount 1.5.",
+    "allowWarnings": true
+  },
+  {
+    "name": "structure elementCount duplicate",
+    "module": "specification/aspect/structure/structure.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/structure#elementCount",
+    "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:v st:elementCount 1, 2.",
+    "allowWarnings": true
+  },
+  {
+    "name": "structure byteCount zero",
+    "module": "specification/aspect/structure/structure.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:v st:byteCount 0.",
+    "allowWarnings": true
+  },
+  {
+    "name": "structure byteCount largest",
+    "module": "specification/aspect/structure/structure.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:v st:byteCount \"18446744073709551615\"^^xsd:unsignedLong.",
+    "allowWarnings": true
+  },
+  {
+    "name": "structure byteCount negative",
+    "module": "specification/aspect/structure/structure.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/structure#byteCount",
+    "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:v st:byteCount -1.",
+    "allowWarnings": true
+  },
+  {
+    "name": "structure byteCount beyond unsignedLong",
+    "module": "specification/aspect/structure/structure.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/structure#byteCount",
+    "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:v st:byteCount 18446744073709551616.",
+    "allowWarnings": true
+  },
+  {
+    "name": "structure byteCount decimal",
+    "module": "specification/aspect/structure/structure.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/structure#byteCount",
+    "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:v st:byteCount 1.5.",
+    "allowWarnings": true
+  },
+  {
+    "name": "structure byteCount duplicate",
+    "module": "specification/aspect/structure/structure.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/aspect/structure#byteCount",
+    "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:v st:byteCount 1, 2.",
+    "allowWarnings": true
+  },
+  {
+    "name": "structure member with element and byte counts",
+    "module": "specification/aspect/structure/structure.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:m st:name \"data\"; st:elementCount 4; st:byteCount 16.",
+    "allowWarnings": true
+  },
+  {
     "name": "structure typed member without a name",
     "module": "specification/aspect/structure/structure.ttl",
     "expected": false,
@@ -15198,6 +15310,312 @@
     "expected": false,
     "path": "https://hexplain.io/ns/aspect/structure#symbol",
     "data": "@prefix st:<https://hexplain.io/ns/aspect/structure#> . @prefix ex:<urn:structure-contract:> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . ex:v st:symbol 1.",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 arity of a parameterised delimited table",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. b:DelimitedRecords rdfs:subClassOf b:Struct. b:DelimitedTable rdfs:subClassOf b:DelimitedRecords. b:TreeDocument rdfs:subClassOf b:Struct. ex:T a b:DelimitedTable; b:fieldDelimiter \"2c\"^^xsd:hexBinary; b:hasField (ex:T.c); b:hasParameter (ex:T.n). ex:T.c a b:Field; b:dataType b:asciiInteger. ex:T.n a b:Parameter. ex:f a b:Field; b:dataType ex:T; b:hasArgument (\"1\").",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 arity of a delimited table named without arguments",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:T a b:DelimitedTable; b:fieldDelimiter \"2c\"^^xsd:hexBinary; b:hasField (ex:T.c); b:hasParameter (ex:T.n). ex:T.c a b:Field; b:dataType b:asciiInteger. ex:T.n a b:Parameter. ex:f a b:Field; b:dataType ex:T.",
+    "expectedShape": "https://hexplain.io/ns/bddo#ArgumentArityShape",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 arity of a tree document given two arguments for one parameter",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. b:DelimitedRecords rdfs:subClassOf b:Struct. b:DelimitedTable rdfs:subClassOf b:DelimitedRecords. b:TreeDocument rdfs:subClassOf b:Struct. ex:D a b:TreeDocument; b:treeSyntax b:json; b:hasField (ex:D.a); b:hasParameter (ex:D.n). ex:D.a a b:Field; b:dataType b:asciiInteger; b:nodePath \"/a\". ex:D.n a b:Parameter. ex:f a b:Field; b:dataType ex:D; b:hasArgument (\"1\" \"2\").",
+    "expectedShape": "https://hexplain.io/ns/bddo#ArgumentArityShape",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 bcd false on a float field",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:float32; b:bcd false.",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 bcd true on a float field",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:float32; b:bcd true.",
+    "expectedShape": "https://hexplain.io/ns/bddo#NumericRepresentationShape",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 bcd true on an unsigned integer field",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:uint16; b:bcd true.",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 bcd true beside a fixed-point scale",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:uint16; b:bcd true; b:fixedPointScale -2.",
+    "expectedShape": "https://hexplain.io/ns/bddo#NumericRepresentationShape",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 bcd false beside a fixed-point scale",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:uint16; b:bcd false; b:fixedPointScale -2.",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 bcd true beside a bit length",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:uint16; b:bcd true; b:bitLength 12.",
+    "expectedShape": "https://hexplain.io/ns/bddo#BcdShape",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 arguments for a parameterised struct",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:Row a b:Struct; b:hasParameter (ex:Row.n); b:hasField (ex:Row.v). ex:Row.n a b:Parameter. ex:Row.v a b:Field; b:dataType b:uint8. ex:f a b:Field; b:dataType ex:Row; b:hasArgument (\"1\").",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 arguments for a primitive type",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:uint8; b:hasArgument (\"1\" \"2\").",
+    "expectedShape": "https://hexplain.io/ns/bddo#ArgumentListShape",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 arguments on a field typed only by its rules",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:Row a b:Struct; b:hasParameter (ex:Row.n); b:hasField (ex:Row.v). ex:Row.n a b:Parameter. ex:Row.v a b:Field; b:dataType b:uint8. ex:f a b:Field; b:hasConditionalDataType (ex:r); b:hasArgument (\"1\"). ex:r a b:DataTypeRule; b:condition \"true\"; b:ruleDataType ex:Row; b:hasArgument (\"1\").",
+    "expectedShape": "https://hexplain.io/ns/bddo#ArgumentListShape",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 arguments on the rule that names the parameterised struct",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:Row a b:Struct; b:hasParameter (ex:Row.n); b:hasField (ex:Row.v). ex:Row.n a b:Parameter. ex:Row.v a b:Field; b:dataType b:uint8. ex:f a b:Field; b:hasConditionalDataType (ex:r). ex:r a b:DataTypeRule; b:condition \"true\"; b:ruleDataType ex:Row; b:hasArgument (\"1\").",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 dispatch default without parameters",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:t a b:DispatchTable; b:dispatchOnExpression \"1\"; b:dispatchDefault b:uint8.",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 dispatch default naming a parameterised struct",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:Row a b:Struct; b:hasParameter (ex:Row.n); b:hasField (ex:Row.v). ex:Row.n a b:Parameter. ex:Row.v a b:Field; b:dataType b:uint8. ex:t a b:DispatchTable; b:dispatchOnExpression \"1\"; b:dispatchDefault ex:Row.",
+    "expectedShape": "https://hexplain.io/ns/bddo#DispatchDefaultShape",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 derived field",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:valueFromExpression \"1\".",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 derived field with a dispatch table",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:valueFromExpression \"1\"; b:hasDispatchTable ex:t. ex:t a b:DispatchTable; b:dispatchOnExpression \"1\"; b:dispatchDefault b:uint8.",
+    "expectedShape": "https://hexplain.io/ns/bddo#DerivedFieldShape",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 derived field with arguments",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:Row a b:Struct; b:hasParameter (ex:Row.n); b:hasField (ex:Row.v). ex:Row.n a b:Parameter. ex:Row.v a b:Field; b:dataType b:uint8. ex:f a b:Field; b:valueFromExpression \"1\"; b:hasArgument (\"1\").",
+    "expectedShape": "https://hexplain.io/ns/bddo#DerivedFieldShape",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 deprecated base type is advisory only",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . ex:d a b:DataType; b:baseType b:integer; b:bitWidth 8.",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 deprecated base type is reported",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . ex:d a b:DataType; b:baseType b:integer; b:bitWidth 8.",
+    "expectedShape": "https://hexplain.io/ns/bddo#DeprecatedBaseTypeShape",
+    "severity": "http://www.w3.org/ns/shacl#Warning",
+    "allowWarnings": false
+  },
+  {
+    "name": "review 2026-11 current base type is not reported",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . ex:d a b:DataType; b:baseType b:baseInteger; b:bitWidth 8.",
+    "allowWarnings": false
+  },
+  {
+    "name": "review 2026-11 unknown base type",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/bddo#baseType",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:d a b:DataType; b:baseType ex:integer; b:bitWidth 8.",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 deprecated endianness alone",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:uint16; b:hasEndianness b:BigEndian.",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 two deprecated endiannesses",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/bddo#hasEndianness",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:uint16; b:hasEndianness b:BigEndian, b:LittleEndian.",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 deprecated endianness not a byte order",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/bddo#hasEndianness",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:uint16; b:hasEndianness ex:middle.",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 deprecated endianness contradicting endianness",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:uint16; b:hasEndianness b:BigEndian; b:endianness b:LittleEndian.",
+    "expectedShape": "https://hexplain.io/ns/bddo#DeprecatedEndiannessShape",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 deprecated endianness beside conditional endianness",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/bddo#hasEndianness",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:uint16; b:hasEndianness b:BigEndian; b:hasConditionalEndianness (ex:r). ex:r a b:EndiannessRule; b:condition \"true\"; b:ruleEndianness b:BigEndian.",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 deprecated endianness is reported",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:f a b:Field; b:dataType b:uint16; b:hasEndianness b:BigEndian.",
+    "expectedShape": "https://hexplain.io/ns/bddo#DeprecatedEndiannessUseShape",
+    "severity": "http://www.w3.org/ns/shacl#Warning",
+    "allowWarnings": false
+  },
+  {
+    "name": "review 2026-11 tree document field located by its path",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. b:DelimitedRecords rdfs:subClassOf b:Struct. b:DelimitedTable rdfs:subClassOf b:DelimitedRecords. b:TreeDocument rdfs:subClassOf b:Struct. ex:D a b:TreeDocument; b:treeSyntax b:json; b:hasField (ex:D.a); b:hasParameter (ex:D.n). ex:D.a a b:Field; b:dataType b:asciiInteger; b:nodePath \"/a\". ex:D.n a b:Parameter. ex:f a b:Field; b:dataType ex:D; b:hasArgument (\"1\").",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 tree document field located by atOffsetFromField",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. b:DelimitedRecords rdfs:subClassOf b:Struct. b:DelimitedTable rdfs:subClassOf b:DelimitedRecords. b:TreeDocument rdfs:subClassOf b:Struct. ex:D a b:TreeDocument; b:treeSyntax b:json; b:hasField (ex:D.a); b:hasParameter (ex:D.n). ex:D.a a b:Field; b:dataType b:asciiInteger; b:nodePath \"/a\"; b:atOffsetFromField ex:D.a. ex:D.n a b:Parameter. ",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 tree document field located by atOffsetFromExpression",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. b:DelimitedRecords rdfs:subClassOf b:Struct. b:DelimitedTable rdfs:subClassOf b:DelimitedRecords. b:TreeDocument rdfs:subClassOf b:Struct. ex:D a b:TreeDocument; b:treeSyntax b:json; b:hasField (ex:D.a); b:hasParameter (ex:D.n). ex:D.a a b:Field; b:dataType b:asciiInteger; b:nodePath \"/a\"; b:atOffsetFromExpression \"4\". ex:D.n a b:Parameter. ",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 dimension orders that permute one set",
+    "module": "specification/dlv/dlv.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:l a dlv:DataLayout; dlv:cellDataType b:uint8; dlv:hasConditionalDimensionOrder (ex:r1 ex:r2). ex:r1 a dlv:DimensionOrderRule; b:condition \"true\"; dlv:ruleDimensionOrder (ex:b ex:y ex:x) . ex:r2 a dlv:DimensionOrderRule; b:condition \"false\"; dlv:ruleDimensionOrder (ex:y ex:x ex:b). ex:y a dlv:Dimension; dlv:hasAxis dlv:axisY; dlv:dimensionSize 4. ex:x a dlv:Dimension; dlv:hasAxis dlv:axisX; dlv:dimensionSize 4. ex:b a dlv:Dimension; dlv:hasAxis dlv:axisBand; dlv:dimensionSize 3. dlv:axisX a dlv:Axis. dlv:axisY a dlv:Axis. dlv:axisBand a dlv:Axis. ",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 dimension orders naming different sets",
+    "module": "specification/dlv/dlv.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:l a dlv:DataLayout; dlv:cellDataType b:uint8; dlv:hasConditionalDimensionOrder (ex:r1 ex:r2). ex:r1 a dlv:DimensionOrderRule; b:condition \"true\"; dlv:ruleDimensionOrder (ex:y ex:x) . ex:r2 a dlv:DimensionOrderRule; b:condition \"false\"; dlv:ruleDimensionOrder (ex:y ex:x ex:b). ex:y a dlv:Dimension; dlv:hasAxis dlv:axisY; dlv:dimensionSize 4. ex:x a dlv:Dimension; dlv:hasAxis dlv:axisX; dlv:dimensionSize 4. ex:b a dlv:Dimension; dlv:hasAxis dlv:axisBand; dlv:dimensionSize 3. dlv:axisX a dlv:Axis. dlv:axisY a dlv:Axis. dlv:axisBand a dlv:Axis. ",
+    "expectedShape": "https://hexplain.io/ns/dlv#DataLayoutShape",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 dimension order naming a dimension twice",
+    "module": "specification/dlv/dlv.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:l a dlv:DataLayout; dlv:cellDataType b:uint8; dlv:hasConditionalDimensionOrder (ex:r1 ex:r2). ex:r1 a dlv:DimensionOrderRule; b:condition \"true\"; dlv:ruleDimensionOrder (ex:y ex:x) . ex:r2 a dlv:DimensionOrderRule; b:condition \"false\"; dlv:ruleDimensionOrder (ex:x ex:x ex:y). ex:y a dlv:Dimension; dlv:hasAxis dlv:axisY; dlv:dimensionSize 4. ex:x a dlv:Dimension; dlv:hasAxis dlv:axisX; dlv:dimensionSize 4. ex:b a dlv:Dimension; dlv:hasAxis dlv:axisBand; dlv:dimensionSize 3. dlv:axisX a dlv:Axis. dlv:axisY a dlv:Axis. dlv:axisBand a dlv:Axis. ",
+    "expectedShape": "https://hexplain.io/ns/dlv#DataLayoutShape",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 chunked conditional order with chunk offsets",
+    "module": "specification/dlv/dlv.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:l a dlv:DataLayout; dlv:cellDataType b:uint8; dlv:hasConditionalDimensionOrder (ex:r1 ex:r2); dlv:chunkOffsetsFromField ex:offsets. ex:r1 a dlv:DimensionOrderRule; b:condition \"true\"; dlv:ruleDimensionOrder (ex:y ex:x) . ex:r2 a dlv:DimensionOrderRule; b:condition \"false\"; dlv:ruleDimensionOrder (ex:x ex:y).  ex:x a dlv:Dimension; dlv:hasAxis dlv:axisX; dlv:dimensionSize 4. ex:b a dlv:Dimension; dlv:hasAxis dlv:axisBand; dlv:dimensionSize 3. dlv:axisX a dlv:Axis. dlv:axisY a dlv:Axis. dlv:axisBand a dlv:Axis. ex:y a dlv:Dimension; dlv:hasAxis dlv:axisY; dlv:dimensionSize 4; dlv:chunkSize 2. ex:offsets a b:Field.",
+    "allowWarnings": true
+  },
+  {
+    "name": "review 2026-11 chunked conditional order without chunk offsets",
+    "module": "specification/dlv/dlv.ttl",
+    "expected": false,
+    "path": "",
+    "data": "@prefix ex:<urn:review-2026-11:> . @prefix b:<https://hexplain.io/ns/bddo#> . @prefix dlv:<https://hexplain.io/ns/dlv#> . @prefix xsd:<http://www.w3.org/2001/XMLSchema#> . @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#> . b:uint8 a b:DataType; b:baseType b:baseInteger; b:bitWidth 8; b:isSigned false. b:uint16 a b:DataType; b:baseType b:baseInteger; b:bitWidth 16; b:isSigned false. b:float32 a b:DataType; b:baseType b:baseFloat; b:bitWidth 32. b:asciiInteger a b:DataType. ex:l a dlv:DataLayout; dlv:cellDataType b:uint8; dlv:hasConditionalDimensionOrder (ex:r1 ex:r2). ex:r1 a dlv:DimensionOrderRule; b:condition \"true\"; dlv:ruleDimensionOrder (ex:y ex:x) . ex:r2 a dlv:DimensionOrderRule; b:condition \"false\"; dlv:ruleDimensionOrder (ex:x ex:y).  ex:x a dlv:Dimension; dlv:hasAxis dlv:axisX; dlv:dimensionSize 4. ex:b a dlv:Dimension; dlv:hasAxis dlv:axisBand; dlv:dimensionSize 3. dlv:axisX a dlv:Axis. dlv:axisY a dlv:Axis. dlv:axisBand a dlv:Axis. ex:y a dlv:Dimension; dlv:hasAxis dlv:axisY; dlv:dimensionSize 4; dlv:chunkSize 2. ",
+    "expectedShape": "https://hexplain.io/ns/dlv#ChunkedLayoutShape",
     "allowWarnings": true
   }
 ]

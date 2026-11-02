@@ -13,6 +13,7 @@ FN = Namespace("https://hexplain.io/ns/fn#")
 SH = Namespace("http://www.w3.org/ns/shacl#")
 SR = Namespace("https://hexplain.io/ns/aspect/spatialref#")
 RASTER = Namespace("https://hexplain.io/ns/aspect/raster#")
+SAMPLING = Namespace("https://hexplain.io/ns/aspect/sampling#")
 NODE = URIRef("urn:function-contract:node")
 
 
@@ -109,6 +110,16 @@ def check() -> int:
     assert evaluate("isNoData", data, NODE, 9) == [False]
     data.set((NODE, RASTER.noDataValue, Literal(float("nan"))))
     assert evaluate("isNoData", data, NODE, float("nan")) == [True]
+    # An integer format compares exactly: 2^63 - 1 and 2^63 - 2 are one double but two integers.
+    data = Graph()
+    data.add((NODE, SAMPLING.sampleFormat, SAMPLING.SignedInteger))
+    data.add((NODE, SAMPLING.bitDepth, Literal(64)))
+    data.add((NODE, RASTER.noDataValue, Literal("9223372036854775807", datatype=XSD.long)))
+    assert evaluate("isNoData", data, NODE, Literal("9223372036854775807", datatype=XSD.long)) == [True]
+    assert evaluate("isNoData", data, NODE, Literal("9223372036854775806", datatype=XSD.long)) == [False]
+    data.set((NODE, RASTER.noDataValue, Literal(-9999.0)))
+    assert evaluate("isNoData", data, NODE, -9999) == [True]
+    assert evaluate("isNoData", data, NODE, -9998.5) == [False]
     pure = {str(function).removeprefix(str(FN)) for function in functions.subjects(RDF.type, SH.SPARQLFunction)}
     assert checked == pure, ("A pure specification function has no executable contract", pure - checked)
     return calls

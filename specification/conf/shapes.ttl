@@ -260,13 +260,13 @@ conf:_prefixes sh:declare
         }""" ;
     ] ;
     sh:sparql [
-        sh:message "Requirement {?r} is reported conf:NotApplicable, but version scoping cannot have excluded it: it states no req:appliesToVersion, the run did not apply version scoping, or one of its versions equals the run's conf:fileVersion." ;
+        sh:message "Requirement {?r} is reported conf:NotApplicable, but version scoping cannot have excluded it: it states no req:appliesToVersion, the run does not state that it applied version scoping (conf:versionScopingApplied true), or one of its versions equals the run's conf:fileVersion." ;
         sh:prefixes conf:_prefixes ;
         sh:select """SELECT $this ?r WHERE {
             $this conf:outcome ?o .
             ?o conf:outcomeValue conf:NotApplicable ; conf:outcomeRequirement ?r .
             FILTER(NOT EXISTS { ?r req:appliesToVersion ?any }
-                || EXISTS { $this conf:versionScopingApplied false }
+                || NOT EXISTS { $this conf:versionScopingApplied true }
                 || EXISTS { $this conf:fileVersion ?fv . ?r req:appliesToVersion ?rv . FILTER(STR(?fv) = STR(?rv)) })
         }""" ;
     ] .

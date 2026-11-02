@@ -495,6 +495,18 @@ hel(
 )
 
 hel(
+    "computed-array-result",
+    "A computed array is not a field's value",
+    "repeatValue(1, 2) is a computed array, which a bddo:valueFromExpression may not yield.",
+    ["req-hel-array-values-4", TYPE_ERROR],
+    ["array-values"],
+    one("repeatValue(1, 2)"),
+    b"",
+    error="Expression",
+    manifest={"features": {"requires": ["hel-ext-quantifier"]}},
+)
+
+hel(
     "quantifier-non-boolean",
     "A quantifier predicate must yield a Boolean",
     "all(items, v) yields Integers.",

@@ -185,10 +185,16 @@ class _Parser:
         return self._chain(self.not_expr, ("and",), word=True)
 
     def not_expr(self) -> Node:
-        if self.at("ident", "not"):
+        # Prefix operators are folded in a loop: an expression 512 levels deep (the default HEL depth limit) must
+        # not cost 512 interpreter frames.
+        count = 0
+        while self.at("ident", "not"):
             self.next()
-            return ("un", "not", self.not_expr())
-        return self.comparison()
+            count += 1
+        node = self.comparison()
+        for _ in range(count):
+            node = ("un", "not", node)
+        return node
 
     def comparison(self) -> Node:
         left = self.bit_or()
@@ -218,10 +224,13 @@ class _Parser:
         return self._chain(self.unary, ("*", "/", "%"))
 
     def unary(self) -> Node:
-        if self.at("op", "-") or self.at("op", "~"):
-            op = self.next()[1]
-            return ("un", op, self.unary())
-        return self.primary()
+        ops: list[TokenValue] = []
+        while self.at("op", "-") or self.at("op", "~"):
+            ops.append(self.next()[1])
+        node = self.primary()
+        for op in reversed(ops):
+            node = ("un", op, node)
+        return node
 
     def primary(self) -> Node:
         kind, value = self.peek()
@@ -275,8 +284,13 @@ class _Parser:
 
 
 def parse(text: str) -> Node:
-    """The expression tree of a HEL string; raises HelSyntaxError when the grammar does not generate it."""
-    return _Parser(text).parse()
+    """The expression tree of a HEL string; raises HelSyntaxError when the grammar does not generate it, or when
+    its parenthesised nesting is beyond what this recursive-descent parser can follow (it is then compared as
+    written)."""
+    try:
+        return _Parser(text).parse()
+    except RecursionError as exc:
+        raise HelSyntaxError("the expression is nested too deeply for the comparator's parser") from exc
 
 
 def _float(v: float) -> str:
@@ -328,13 +342,30 @@ def _quote(value: str) -> str:
     return "".join(out)
 
 
-def _grouped(node: Node) -> str:
-    text = serialize(node)
+def _grouped(node: Node, text: str) -> str:
     return f"({text})" if node[0] in ("bin", "cond") else text
 
 
-def serialize(node: Node) -> str:
-    """The canonical form of an expression tree (specification/hel/index.html#canonical-form)."""
+def _subtrees(node: Node) -> tuple[Node, ...]:
+    """The subexpressions of a node, in the order its canonical form writes them."""
+    kind = node[0]
+    if kind == "lit":
+        return ()
+    if kind == "acc":
+        return tuple(step[1] for step in node[2] if step[0] != "key")
+    if kind == "un":
+        return (node[2],)
+    if kind == "bin":
+        return (node[2], node[3])
+    if kind == "call":
+        return tuple(node[2])
+    if kind == "cond":
+        return (node[1], node[2], node[3])
+    raise ValueError(f"unknown node {node!r}")
+
+
+def _written(node: Node, parts: list[str]) -> str:
+    """The canonical form of [node], given the canonical forms of its _subtrees, in order."""
     kind = node[0]
     if kind == "lit":
         _, t, v = node
@@ -348,23 +379,39 @@ def serialize(node: Node) -> str:
     if kind == "acc":
         _, root, steps = node
         out = [root]
+        indices = iter(parts)
         for step in steps:
-            out.append("." + step[1] if step[0] == "key" else "[" + serialize(step[1]) + "]")
+            out.append("." + step[1] if step[0] == "key" else "[" + next(indices) + "]")
         return "".join(out)
     if kind == "un":
         _, op, operand = node
-        return ("not " if op == "not" else op) + _grouped(operand)
+        return ("not " if op == "not" else op) + _grouped(operand, parts[0])
     if kind == "bin":
         _, op, left, right = node
-        return f"{_grouped(left)} {op} {_grouped(right)}"
+        return f"{_grouped(left, parts[0])} {op} {_grouped(right, parts[1])}"
     if kind == "call":
-        _, name, args = node
-        return name + "(" + ", ".join(serialize(a) for a in args) + ")"
-    if kind == "cond":
-        _, c, t, e = node
-        cond = f"({serialize(c)})" if c[0] == "cond" else serialize(c)
-        return f"{cond} ? {serialize(t)} : {serialize(e)}"
-    raise ValueError(f"unknown node {node!r}")
+        return node[1] + "(" + ", ".join(parts) + ")"
+    c = node[1]
+    cond = f"({parts[0]})" if c[0] == "cond" else parts[0]
+    return f"{cond} ? {parts[1]} : {parts[2]}"
+
+
+def serialize(node: Node) -> str:
+    """The canonical form of an expression tree (specification/hel/index.html#canonical-form). Iterative, so an
+    expression as deep as HEL's default depth limit (512) is written without exhausting the interpreter stack."""
+    results: list[str] = []
+    tasks: list[tuple[bool, Node]] = [(False, node)]
+    while tasks:
+        ready, current = tasks.pop()
+        subtrees = _subtrees(current)
+        if not ready:
+            tasks.append((True, current))
+            tasks.extend((False, child) for child in reversed(subtrees))
+            continue
+        parts = results[len(results) - len(subtrees) :]
+        del results[len(results) - len(subtrees) :]
+        results.append(_written(current, parts))
+    return results[0]
 
 
 def canonical(text: str) -> str | None:

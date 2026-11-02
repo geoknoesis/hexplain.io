@@ -261,6 +261,16 @@ def _outcome_cases() -> list[dict[str, Any]]:
         _sub(na, ('req:statement "One."', 'req:statement "One." ; req:appliesToVersion "2.0"')),
         False,
     )
+    # conf:versionScopingApplied is optional; a run that omits it did not apply version scoping.
+    add(
+        "not applicable with version scoping unstated",
+        _sub(
+            na,
+            ("conf:versionScopingApplied false ;", ""),
+            ('req:statement "One."', 'req:statement "One." ; req:appliesToVersion "2.0"'),
+        ),
+        False,
+    )
     add(
         "not applicable although the version matches",
         _sub(scoped, ('req:appliesToVersion "2.0"', 'req:appliesToVersion "2.0" , "1.0"')),

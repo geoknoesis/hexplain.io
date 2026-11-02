@@ -44,7 +44,11 @@ from --claims (a JSON claims statement: {"classes": [...], "optionalFeatures": [
 "codecs": [codec IRIs] and "encodings": [IRIs of the further bddo:Encoding individuals it decodes]). A case that
 names text encodings ("encodings": {"requires": [...]}) applies when the statement lists each; the five encodings
 every Physical Parser decodes are claimed by every statement.
-The template is split into arguments as a POSIX shell would split it, and run without a shell. A case that withdraws
+The template is split into arguments as a POSIX shell would split it (on Windows: on unquoted white space, a
+backslash being a path separator and the quotes around an argument removed), and run without a shell. An
+implementation whose error names are not the Processing Model's categories gives --category-map, a JSON file mapping
+its names to them; a name that maps to no category is recorded as no category, with the name in the result's detail.
+An implementation report (--json) needs --claims: its results are checked against them. A case that withdraws
 features ("claims": {"withdraw": [...]}) runs only when the template has a {withdraw} placeholder, and a case that
 asks for a layout's cells ("cells": [...]) only when it has a {cells} placeholder.
 Every case that does not apply is reported as SKIP with its reason. The exit status is 1 when any case fails.
@@ -58,6 +62,7 @@ import contextlib
 import fnmatch
 import json
 import math
+import os
 import platform
 import queue
 import re
@@ -78,7 +83,7 @@ import round_trip  # noqa: E402
 from applicability import claimed_features, skip_reason  # noqa: E402
 from comparison_worker import artifact_problem  # noqa: E402
 from processor_process import execute  # noqa: E402
-from suite import CLASSES, ROUND_TRIP, SUITE  # noqa: E402
+from suite import CATEGORIES, CLASSES, ROUND_TRIP, SUITE, strict_json  # noqa: E402
 
 FLAGS = {
     "physical-parser": "pp",
@@ -96,14 +101,31 @@ Claims = dict[str, Any]
 Result = dict[str, Any]
 
 
-def fill(template: str, values: dict[str, Any]) -> list[str]:
-    """The command as an argument list: the template is split like a POSIX shell line first, then each placeholder is
-    replaced inside its argument, so a path with a space stays one argument and nothing is interpreted by a shell."""
+def split_template(template: str, posix: bool | None = None) -> list[str]:
+    """A command template's arguments. On POSIX the template is split as a POSIX shell would split it. On Windows
+    (posix False) a backslash is a path separator, not an escape -- POSIX splitting would turn C:\\tools\\p.exe into
+    C:toolsp.exe -- so the template is split on unquoted white space and the quotes around an argument removed."""
+    if posix is None:
+        posix = os.name != "nt"
+    if posix:
+        return shlex.split(template)
+    out = []
+    for arg in shlex.split(template, posix=False):
+        if len(arg) >= 2 and arg[0] == arg[-1] and arg[0] in "\"'":
+            arg = arg[1:-1]
+        out.append(arg)
+    return out
+
+
+def fill(template: str, values: dict[str, Any], posix: bool | None = None) -> list[str]:
+    """The command as an argument list: the template is split into arguments first (split_template), then each
+    placeholder is replaced inside its argument, so a path with a space stays one argument and nothing is
+    interpreted by a shell."""
 
     def one(arg: str) -> str:
         return re.sub(r"\{(\w+)\}", lambda m: str(values[m.group(1)]) if m.group(1) in values else m.group(0), arg)
 
-    return [one(arg) for arg in shlex.split(template)]
+    return [one(arg) for arg in split_template(template, posix)]
 
 
 def placeholders(case_dir: Path, manifest: Manifest, tmp: Path, ext: str) -> dict[str, Any]:
@@ -159,11 +181,47 @@ def invoke(template: str, values: dict[str, Any], tmp: Path, timeout: float) -> 
     return None, f"the command wrote neither {out.name} nor {err.name} (exit {code}): " + stderr.strip()[:300]
 
 
-def category_of(path: Path) -> str | None:
+#: An implementation's error names mapped to the Processing Model's categories (--category-map).
+CategoryMap = dict[str, str]
+
+
+def raw_category(path: Path) -> object:
+    """The "category" member of the error artifact at [path], as written; None when it is unreadable."""
     try:
-        return json.loads(path.read_text(encoding="utf-8")).get("category")
-    except (ValueError, AttributeError):
+        payload = strict_json(path.read_text(encoding="utf-8"))
+    except (ValueError, UnicodeDecodeError):
         return None
+    return payload.get("category") if isinstance(payload, dict) else None
+
+
+def category_of(path: Path, category_map: CategoryMap | None = None) -> str | None:
+    """The Processing Model category the error artifact at [path] names, through [category_map]; None when it names
+    none (the report records only a category of the Processing Model)."""
+    raw = raw_category(path)
+    if not isinstance(raw, str):
+        return None
+    mapped = (category_map or {}).get(raw, raw)
+    return mapped if mapped in CATEGORIES else None
+
+
+def observe_category(path: Path, observed: dict[str, Any] | None, category_map: CategoryMap | None) -> str | None:
+    """Record the category of the error artifact at [path] in [observed]: the Processing Model category it maps to,
+    or None, with the name the processor used kept as `unmapped` for the result's detail."""
+    category = category_of(path, category_map)
+    if observed is not None:
+        observed["category"] = category
+        raw = raw_category(path)
+        if category is None and raw is not None:
+            observed["unmapped"] = raw
+    return category
+
+
+def result_detail(detail: str, observed: dict[str, Any]) -> str:
+    """[detail], noting an error name that maps to no Processing Model category."""
+    if "unmapped" not in observed:
+        return detail
+    note = f"the processor's error category {observed['unmapped']!r:.200} is not a Processing Model category"
+    return f"{detail}; {note}" if detail else note
 
 
 def parse_back(
@@ -185,7 +243,12 @@ def hdl_diagnostics(values: dict[str, Any], tmp: Path) -> Path:
         {"severity": m.group(3).upper(), "line": int(m.group(1))} for m in DIAGNOSTIC.finditer(values.get("stderr", ""))
     ]
     if err.is_file():
-        diags += json.loads(err.read_text(encoding="utf-8")).get("diagnostics", [])
+        try:
+            reported = strict_json(err.read_text(encoding="utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            reported = {}  # An unreadable error artifact contributes no diagnostics.
+        listed = reported.get("diagnostics", []) if isinstance(reported, dict) else []
+        diags += listed if isinstance(listed, list) else []
     actual = tmp / "diagnostics.json"
     actual.write_text(
         json.dumps({"diagnostics": diags, "output": out.is_file() and out.stat().st_size > 0}),
@@ -202,7 +265,10 @@ def invalid_success(name: str, actual: Path | None, values: dict[str, Any]) -> s
     if name == "expected-error.json":
         return "the case requires an error, but the processor reported successful output"
     if name == "expected-report.json":
-        payload = json.loads(actual.read_text(encoding="utf-8"))
+        try:
+            payload = strict_json(actual.read_text(encoding="utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            return None  # The comparison reports an unreadable report.
         if isinstance(payload, dict) and "category" in payload:
             return "an evaluator error must use the error artifact and a nonzero exit"
     return None
@@ -216,10 +282,12 @@ def _run_case(
     keep: str | None = None,
     observed: dict[str, Any] | None = None,
     parser: str | None = None,
+    category_map: CategoryMap | None = None,
 ) -> tuple[str, str]:
     """(status, detail) for one case: PASS, FAIL or SKIP. When the implementation reports an error, its category is
-    stored in `observed["category"]` for the implementation report. [parser] is the Physical Parser template, which a
-    Writer case verified by round trip parses the written stream with."""
+    stored in `observed["category"]` for the implementation report (through [category_map], which maps the
+    implementation's error names to the Processing Model's categories). [parser] is the Physical Parser template,
+    which a Writer case verified by round trip parses the written stream with."""
     manifest = json.loads((case_dir / "manifest.json").read_text(encoding="utf-8"))
     if manifest.get("check") == "claims":
         if claims is None:
@@ -262,14 +330,23 @@ def _run_case(
             actual, why = parse_back(case_dir, manifest, actual, parser, tmp, timeout)
             if actual is None:
                 return "FAIL", "parsing the written stream back: " + why
-        if actual.name == compare.ERROR_FILE and observed is not None:
-            observed["category"] = category_of(actual)
-        reported = values["reported"]
-        base = reported.read_text(encoding="utf-8").strip() if reported.is_file() else None
+        if actual.name == compare.ERROR_FILE:
+            observe_category(actual, observed, category_map)
+        base = reported_base(manifest, values["reported"])
         if "base" in manifest and manifest["base"] is None and not base and actual == values["out"]:
             return "FAIL", "the case gives no base and the processor reported none"
-        problems = bounded_comparison("case", case_dir, actual, timeout, base)
+        problems = bounded_comparison("case", case_dir, actual, timeout, base, category_map)
         return ("FAIL", "; ".join(problems)) if problems else ("PASS", "")
+
+
+def reported_base(manifest: Manifest, reported: Path) -> str | None:
+    """The base the comparator reads as the placeholder: the one the processor reported, only for a case whose
+    manifest leaves the base to the processor (null or absent). Where the manifest gives the base, the expected
+    graph is minted under it and a reported base is ignored: rewriting that base to the placeholder would fail a
+    correct graph."""
+    if manifest.get("base") or not reported.is_file():
+        return None
+    return reported.read_text(encoding="utf-8").strip() or None
 
 
 class ComparisonWorker:
@@ -328,7 +405,7 @@ class ComparisonWorker:
                 if pipe is not None:
                     pipe.close()
 
-    def request(self, script: Path, payload: dict[str, str], timeout: float) -> tuple[list[str] | None, str]:
+    def request(self, script: Path, payload: dict[str, Any], timeout: float) -> tuple[list[str] | None, str]:
         """(the problems, "") or (None, why the comparison failed)."""
         with self.lock:
             if self.proc is not None and (
@@ -353,7 +430,7 @@ class ComparisonWorker:
                 self.stop()
                 return None, "the comparison worker exited" if line is None else "the reply exceeded its bound"
             try:
-                problems = json.loads(line)
+                problems = strict_json(line)
             except ValueError:
                 problems = None
             if not isinstance(problems, list) or not all(isinstance(p, str) for p in problems):
@@ -366,9 +443,22 @@ COMPARISONS = ComparisonWorker()
 atexit.register(COMPARISONS.stop)
 
 
-def bounded_comparison(mode: str, case: Path, actual: Path, timeout: float, base: str | None = None) -> list[str]:
+def bounded_comparison(
+    mode: str,
+    case: Path,
+    actual: Path,
+    timeout: float,
+    base: str | None = None,
+    category_map: CategoryMap | None = None,
+) -> list[str]:
     """Compare in a separate, deadline-bound process so parsing and matching cannot stall the suite."""
-    payload = {"mode": mode, "case": str(case.resolve()), "actual": str(actual.resolve()), "base": base or ""}
+    payload: dict[str, Any] = {
+        "mode": mode,
+        "case": str(case.resolve()),
+        "actual": str(actual.resolve()),
+        "base": base or "",
+        "categories": category_map or {},
+    }
     problems, why = COMPARISONS.request(HERE / "comparison_worker.py", payload, timeout)
     return ["comparison failed: " + why] if problems is None else problems
 
@@ -381,10 +471,11 @@ def run_case(
     keep: str | None = None,
     observed: dict[str, Any] | None = None,
     parser: str | None = None,
+    category_map: CategoryMap | None = None,
 ) -> tuple[str, str]:
     """Keep unreadable processor artifacts local to this case, so the run still produces a report."""
     try:
-        return _run_case(case_dir, template, claims, timeout, keep, observed, parser)
+        return _run_case(case_dir, template, claims, timeout, keep, observed, parser, category_map)
     except Exception as exc:  # noqa: BLE001 -- a broken case must not discard the rest of the report
         return "FAIL", f"the case could not be evaluated: {exc}"
 
@@ -402,6 +493,7 @@ def _run_round_trip(
     expected: str,
     timeout: float,
     observed: dict[str, Any] | None = None,
+    category_map: CategoryMap | None = None,
 ) -> tuple[str, str]:
     """(status, detail) of the round trip of one Physical Parser case's tree: written with [writer], parsed back
     with [parser], and judged against [expected], the case's entry in round-trip-expectations.json. A case whose
@@ -425,9 +517,7 @@ def _run_round_trip(
         if written is None:
             return "FAIL", "writing the tree: " + why
         if written.name == compare.ERROR_FILE:
-            refusal = category_of(written)
-            if observed is not None:
-                observed["category"] = refusal
+            refusal = observe_category(written, observed, category_map)
             if allowed_refusal(manifest, refusal):
                 return "PASS", f"the writer refused with {refusal}, which the case allows"
             return round_trip.judge(expected, refusal or "an unnamed category", None)
@@ -435,9 +525,7 @@ def _run_round_trip(
         if back is None:
             return "FAIL", "the written stream does not parse: " + why
         if back.name == compare.ERROR_FILE:
-            refusal = category_of(back)
-            if observed is not None:
-                observed["category"] = refusal
+            refusal = observe_category(back, observed, category_map)
             if allowed_refusal(manifest, refusal):
                 return "PASS", f"the parser refused the written stream with {refusal}, which the case allows"
             return "FAIL", f"the written stream does not parse: {refusal}"
@@ -453,10 +541,11 @@ def run_round_trip(
     expected: str,
     timeout: float,
     observed: dict[str, Any] | None = None,
+    category_map: CategoryMap | None = None,
 ) -> tuple[str, str]:
     """Keep malformed round-trip artifacts from aborting subsequent cases."""
     try:
-        return _run_round_trip(case_dir, writer, parser, claims, expected, timeout, observed)
+        return _run_round_trip(case_dir, writer, parser, claims, expected, timeout, observed, category_map)
     except Exception as exc:  # noqa: BLE001 -- a broken case must not discard the rest of the report
         return "FAIL", f"the round trip could not be evaluated: {exc}"
 
@@ -474,8 +563,16 @@ def round_trip_results(args: argparse.Namespace, claims: Claims | None) -> list[
             status, detail = "FAIL", f"{round_trip.EXPECTATIONS} has no entry for the case"
         else:
             status, detail = run_round_trip(
-                case_dir, args.w_cmd, args.pp_cmd, claims, expected, args.timeout, observed=observed
+                case_dir,
+                args.w_cmd,
+                args.pp_cmd,
+                claims,
+                expected,
+                args.timeout,
+                observed=observed,
+                category_map=category_map(args),
             )
+        detail = result_detail(detail, observed)
         results.append(
             {
                 "case": case_dir.name,
@@ -509,8 +606,15 @@ def case_results(args: argparse.Namespace, claims: Claims | None) -> list[Result
                     status, detail = "FAIL", f"applicable case has no --{FLAGS[cls]}-cmd"
             else:
                 status, detail = run_case(
-                    case_dir, template, claims, args.timeout, observed=observed, parser=args.pp_cmd
+                    case_dir,
+                    template,
+                    claims,
+                    args.timeout,
+                    observed=observed,
+                    parser=args.pp_cmd,
+                    category_map=category_map(args),
                 )
+            detail = result_detail(detail, observed)
             results.append(
                 {
                     "case": case_dir.name,
@@ -522,6 +626,19 @@ def case_results(args: argparse.Namespace, claims: Claims | None) -> list[Result
             )
             print(f"{status} {case_dir.name}" + (f"  {detail}" if detail and status != "PASS" else ""))
     return results
+
+
+def category_map(args: argparse.Namespace) -> CategoryMap | None:
+    """The --category-map file, read once: {the implementation's error name: Processing Model category}."""
+    if not getattr(args, "category_map", None):
+        return None
+    if not hasattr(args, "category_map_value"):
+        value = strict_json(Path(args.category_map).read_text(encoding="utf-8"))
+        if not isinstance(value, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in value.items()):
+            raise ValueError("--category-map must be a JSON object mapping error names to category names")
+        args.category_map_value = value
+    mapping: CategoryMap = args.category_map_value
+    return mapping
 
 
 def report_metadata(args: argparse.Namespace) -> tuple[dict[str, str], dict[str, str]]:
@@ -541,6 +658,10 @@ def check_report_args(args: argparse.Namespace, parser: argparse.ArgumentParser)
         parser.error("--json requires the whole suite; --case produces a partial run, not an implementation report")
     if not (args.implementation_revision and args.toolchain):
         parser.error("--json needs --implementation-revision and --toolchain: a report names the build it ran")
+    if not args.claims:
+        # The report is checked against the claims it ran with: without a statement no case's applicability, and
+        # so no result, can be verified.
+        parser.error("--json needs --claims: a report states the claims statement its results are checked against")
     implementation, environment = report_metadata(args)
     problems = report.metadata_problems(implementation, environment)
     if problems:
@@ -582,6 +703,11 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--os", help="the operating system of the run (default: as the platform reports it)")
     ap.add_argument("--jvm", default="none", help="the Java runtime of a JVM implementation, else none")
     ap.add_argument("--toolchain", help="the build tool and compiler that produced the build, required for the report")
+    ap.add_argument(
+        "--category-map",
+        metavar="FILE",
+        help="JSON file mapping the implementation's error names to the Processing Model's categories",
+    )
     ap.add_argument("--check-report", metavar="FILE", help="check an implementation report against the suite and exit")
     ap.add_argument(
         "--round-trip",
@@ -591,9 +717,13 @@ def main(argv: list[str]) -> int:
     args = ap.parse_args(argv)
     if not math.isfinite(args.timeout) or args.timeout <= 0:
         ap.error("--timeout must be positive and finite")
+    try:
+        category_map(args)
+    except (OSError, ValueError) as exc:
+        ap.error(f"--category-map: {exc}")
     if args.check_report:
         problems = report.check(
-            json.loads(Path(args.check_report).read_text(encoding="utf-8")), Path(args.suite), path=args.check_report
+            strict_json(Path(args.check_report).read_text(encoding="utf-8")), Path(args.suite), path=args.check_report
         )
         print("\n".join(problems) if problems else "the report follows the format and covers the suite")
         return 1 if problems else 0

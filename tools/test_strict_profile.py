@@ -52,6 +52,17 @@ def _tracked(root: Path) -> list[Path]:
         return sorted(root.rglob("*.ttl"))
 
 
+def skipped(path: Path, root: Path) -> bool:
+    """Whether [path] lies in a build or tool directory OF THE CHECKOUT. Only the parts below [root] count: a
+    checkout that itself lives under a directory named build or out (/home/ci/build/hexplain-tools) is not skipped
+    whole."""
+    try:
+        parts = path.relative_to(root).parts
+    except ValueError:
+        return True  # Not under the checkout: not one of its files.
+    return bool(set(parts[:-1]) & SKIPPED_DIRS)
+
+
 def engine_profiles(root: Path, family_ontologies: set[Node]) -> Iterator[tuple[Path, Graph | Exception]]:
     """Every tracked Turtle file of the engine checkout that describes a format, parsed.
 
@@ -61,7 +72,7 @@ def engine_profiles(root: Path, family_ontologies: set[Node]) -> Iterator[tuple[
     vocabulary, not a description of a format, and is left to the family's own gates.
     """
     for path in _tracked(root):
-        if set(path.parts) & SKIPPED_DIRS or not path.is_file():
+        if skipped(path, root) or not path.is_file():
             continue
         try:
             text = path.read_text(encoding="utf-8")
@@ -107,6 +118,9 @@ def main() -> None:
         "the strict profile must reject an aspect property on a Field and a Field property on a Struct, and "
         f"accept the rest: {focus}"
     )
+    checkout = Path("/ci/build/hexplain-tools")
+    assert not skipped(checkout / "core/src/main/resources/x.ttl", checkout), "an enclosing build directory skipped all"
+    assert skipped(checkout / "core/build/resources/x.ttl", checkout), "a build directory of the checkout was linted"
     failures = []
     engine = os.environ.get("HEXPLAIN_TOOLS")
     checked = 0
@@ -127,6 +141,9 @@ def main() -> None:
             conforms, _, detail = validate(g, shacl_graph=strict, inference="none")
             if not conforms:
                 failures.append(f"{path}: does not conform to the strict profile:\n{detail[:1500]}")
+        if checked == 0:
+            # A lint that found nothing to lint is not a pass: the checkout is wrong, or every file was skipped.
+            failures.append(f"HEXPLAIN_TOOLS={engine} holds no tracked format description to lint")
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures))
         sys.exit(1)

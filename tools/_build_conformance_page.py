@@ -99,8 +99,9 @@ PROCESSOR_CLASSES = (
 #: evidence named, or checked only by inspection. The build fails when an entry is withdrawn, is not a processor MUST,
 #: or is cited by a case (then it is testable after all, and the entry is stale).
 NOT_SUITE_TESTABLE = {
-    "req-hel-ext-quantifiers-7": "A black-box suite cannot make an implementation lack a function; inspect how a "
-    "processor without one reports Unsupported rather than a substituted value.",
+    "req-pm-resource-limits-3": "A wall-clock limit and cancellation by the caller are implementation safeguards "
+    "with no normative values: a case cannot make one fire on demand. The configured limits' ResourceLimit outcome "
+    "is req-pm-resource-limits-1's, which the pp-limit-* cases exercise.",
     "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's "
     "shape gates (test_shapes, test_vocab_shapes) apply it.",
     "req-core-punning-1": "Whether a processor relies on a DL entailment is not observable from its output: a case "
@@ -127,6 +128,48 @@ NOT_SUITE_TESTABLE = {
     "than every "
     "conforming compiler's bound, and no size is.",
 }
+
+#: Requirements stated by HEL's vector set, the executable statement of HEL (hel/index.html): each names
+#: the expressions of hel-vectors.tsv rows that exercise it, and build() fails if a row is missing.
+HEL_VECTORS = Path(__file__).resolve().parents[1] / "specification/validation/test/hel-vectors.tsv"
+HEL_VECTOR_EVIDENCE: dict[str, tuple[str, ...]] = {
+    "req-hel-array-values-1": ("len(project(rows, v))", "all(project(rows, repeatValue(v, 2)), self[0] == self[1])"),
+    "req-hel-array-values-2": ("project(rows, v) == xs",),
+    "req-hel-array-values-3": ("sizeof(project(rows, v))",),
+    "req-hel-ext-quantifiers-8": ("sumOf(rows, 'a')", "sumOf(rows, 9223372036854775807)"),
+    "req-hel-ext-quantifiers-11": ("all(xs, 10 / (3 - self) > 5)", "countWhere(xs, 10 / (3 - self) > 5)"),
+    "req-hel-ext-quantifiers-13": ("repeatValue(7, -1)",),
+    "req-hel-ext-quantifiers-14": ("slice(xs, 2, 2)", "slice('abc', 0, 1)"),
+    "req-hel-ext-quantifiers-15": ("integralScan(xs, 0, 65, 0)", "integralScan(xs, 128, 8, 0)"),
+    "req-hel-ext-quantifiers-16": ("modularAdd(1, 1, 0)",),
+    "req-hel-ext-quantifiers-17": ("integerBytes(256, 1, false)", "integerBytes(-129, 1, true)"),
+    "req-hel-ext-quantifiers-18": ("integerText(concatBytes(), true, true)", "integerText('ab', true, true)"),
+    "req-hel-ext-quantifiers-19": ("unicodeText(repeatValue(55296, 1))", "unicodeText(repeatValue('a', 1))"),
+    "req-hel-ext-quantifiers-20": ("join(xs, ',')",),
+    "req-hel-ext-quantifiers-21": ("integerPrecision(0, true)",),
+    "req-hel-ext-quantifiers-22": ("decimalText('012', 1)", "decimalText('-0', 1)"),
+    "req-hel-ext-quantifiers-23": (
+        "patchValues(xs, repeatValue(3, 1), repeatValue(9, 1))",
+        "patchValues(xs, repeatValue(0, 2), repeatValue(9, 2))",
+    ),
+}
+
+# A processor case observes only the Expression category of these HEL requirements; the HEL vectors assert them.
+for _rid, _rows in HEL_VECTOR_EVIDENCE.items():
+    NOT_SUITE_TESTABLE[_rid] = (
+        "A processor case observes only the Processing Model category (Expression); the HEL vectors "
+        "(validation/test/hel-vectors.tsv) assert it: " + "; ".join(_rows)
+    )
+NOT_SUITE_TESTABLE.update(
+    {
+        "req-hel-ext-quantifiers-9": "HEL has no Null literal, so neither a vector nor a case can make project's "
+        "element expression yield Null on demand; inspect the evaluator.",
+        "req-hel-ext-quantifiers-10": "HEL is free of side effects, so evaluating an argument once before the "
+        "call is observable only through element-budget charges; inspect the evaluator.",
+        "req-hel-ext-quantifiers-12": "Needs a parsed unsigned 64-bit value above 2^63-1 passed to floatCast and "
+        "the integer functions; inspect the evaluator.",
+    }
+)
 
 
 def counted(entry: dict[str, Any], rid: str) -> bool:

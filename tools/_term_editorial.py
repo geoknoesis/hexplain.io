@@ -434,7 +434,10 @@ group(
     "recordType|The declared record-kind name supplied by the describing schema or interface definition.\n"
     "dataType|The textual type or interpretation label assigned to a decoded value.\n"
     "symbol|The symbolic name associated with a declared enumeration code.\n"
-    "count|The non-negative cardinality or byte extent associated with a described value.\n"
+    "count|A non-negative count associated with a described value, in a unit (elements or bytes) its source "
+    "profile fixes; the general form of st:elementCount and st:byteCount.\n"
+    "elementCount|The number of elements a described collection or value holds, including zero for an empty one.\n"
+    "byteCount|The length in bytes of a described value's encoded form, as its source representation states it.\n"
     "value|The interpreted scalar literal or structured resource carried by a member, item or record.\n",
 )
 

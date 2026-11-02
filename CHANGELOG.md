@@ -6,6 +6,94 @@ snapshots are recorded under `releases/`.
 
 ## Unreleased (changes since snapshot 2026-09-24.2)
 
+### Review fixes (2026-11-01)
+
+A six-area review of the specification found 77 problems; this section records their fixes.
+
+**HEL arrays, element-scoped arguments and parameters.** HEL now defines **array values**: an array
+node, or an array a `quantifiers` function computes (`project`, `repeatValue`, `concatArrays`,
+`slice`, `integralScan`, `patchValues`), with subscript, `len`, no comparison, no byte extent or
+holder, and never the result of a value expression (req-hel-array-values-1 to -4). The second
+argument of `all`, `any`, `countWhere`, `sumOf` and `project` is an **element-scoped argument**;
+every other argument is evaluated once, before the call (req-hel-ext-quantifiers-1, -2, -8 to
+-11). Each function of the group states its argument types, ranges and errors, and an exact charge
+against the element budget, made after argument checks and before allocation
+(req-hel-ext-quantifiers-4 to -6, -12); the error table and 84 new vectors cover them, and
+`tools/test_hel_vectors.py` requires a value and an error row per function. Specification coverage
+credits a requirement to named HEL vector rows (status `hel-vector-cited`, checked to exist), and
+`pp-hel-computed-array-result` (939 processor cases) shows a computed array is no field value;
+req-hel-ext-quantifiers-9, -10 and -12 are recorded as not observable by a black-box case. The group was extended
+before the HEL 1.0 snapshot, and the feature token `hel-ext-quantifier` names the whole group.
+req-hel-ext-quantifiers-7 is withdrawn: an evaluator without the group rejects it at load time
+(req-hel-extension-groups-1). Node and array parameters now work in HEL `param` paths, in
+ParseField (req-pm-parsefield-11, req-pm-context-4), in HDL's `ParamType` grammar (`array`, `node`)
+and in BDDO. The limits table names `maxHelDepth`, `maxHelLength`, `maxTriples` and `maxFindings`,
+and req-pm-resource-limits-4 covers every limit. Also changed: req-hel-reserved-roots-3,
+req-hel-key-resolution-2, req-hel-name-binding-1, req-hel-conformance-8,
+req-pm-computed-values-9, req-hdl-parameters-2, req-hdl-expressions-1. The Processing Model's
+cryptography non-goal now excepts the scoped-key ciphers and `menc:VerifyCRC32`, which run only
+when a description names them.
+Requirements of the quantifiers group changed: req-hel-ext-quantifiers-1, req-hel-ext-quantifiers-2,
+req-hel-ext-quantifiers-4, req-hel-ext-quantifiers-5, req-hel-ext-quantifiers-6; added:
+req-hel-ext-quantifiers-8 to req-hel-ext-quantifiers-12; withdrawn: req-hel-ext-quantifiers-7.
+
+**Shapes.** Arity is checked for every kind of struct, delimited tables and tree documents
+included. `bddo:hasArgument` is rejected unless the type it accompanies is a struct that declares
+parameters, and `bddo:dispatchDefault` may not name a parameterised struct
+(`bddo:DispatchDefaultShape`). A derived field may not also state `bddo:hasDispatchTable` or
+`bddo:hasArgument`. `bddo:bcd false`, the default, no longer counts as an integer-only
+representation, and every BCD and numeric-representation rule reports its own message. The
+deprecated `bddo:integer`, `bddo:float` and `bddo:hasEndianness` are accepted and reported at
+`sh:Warning`; `bddo:hasEndianness` is constrained like `bddo:endianness`. Tree-document fields
+reject every byte-offset form. In DLV, a layout chunked through `dlv:hasConditionalDimensionOrder`
+must declare its chunk offsets, each order rule must name the same dimensions exactly once, and the
+Hilbert key width is log2 of the largest padded count. A run that omits
+`conf:versionScopingApplied` may not report `conf:NotApplicable` for a version-scoped requirement.
+`hxf:isNoData` compares integer formats exactly, and `hxf:bytes` is unbound when the slice leaves
+the node. The structure aspect adds `st:elementCount` and `st:byteCount` beside `st:count`,
+documents `st:hasMember` and `st:hasItem`, links its terms to their tabular counterparts with
+`rdfs:seeAlso`, and gains test fixtures. 49 authored contracts witness these fixes.
+
+**Codecs.** The LZ4 suite's overlapping-match frame broke the block format's end-of-block rules
+and liblz4 rejected it; a conforming frame verified with liblz4 1.9.4 replaces it, and the LZ4
+vector suite moves to version 2. The eleven new codecs are valid top concepts of their schemes.
+Their definitions state the AES-GCM tag position and AAD order (prefix, then `aad`), the AES-CTR
+counter (the whole 128-bit block incremented big-endian, as SP 800-38A specifies), nonce
+uniqueness, the error each failure raises (a wrong-length iv is a Description error, a tag
+mismatch Checksum), trailing data and length mismatches for the raw compressors, Hadoop LZ4's
+zero-sized blocks and ByteResource's check order. New known-answer vectors pin encoder output,
+including NIST GCM Test Case 4 and SP 800-38A F.5.1. ByteTranspose is related to Shuffle,
+Snappy to SnappyRaw and LZ4Block to HadoopLz4; the codec page lists all 45 suites and documents
+the manifest's `inputs`; each suite's sources say how its vectors were verified; shared parameter
+specs are labelled by every contract that uses them; every current security marking is a top
+concept of its scheme. The Checksum row of the error table names AEAD tag mismatches.
+
+**Conformance tooling.** The comparator reads processor JSON strictly (repeated members and
+NaN/Infinity are rejected), an error case requires the error artifact, simple literals equal their
+`xsd:string` form and HDL Compiler decimals compare by value. Physical-extent annotations are
+ignored only when they are valid `xsd:nonNegativeInteger` values on resources the expected graph
+or the case's base mints. HEL canonicalisation and round-trip dependency analysis are iterative, so
+512-deep expressions compare. `run_suite.py` ignores a reported base when the manifest gives one,
+accepts `--category-map`, keeps Windows backslashes in command templates and requires `--claims`
+for an implementation report. Report validation checks historical reports against a new register of
+past suites (`reports/suite-digests.json`) and rejects results that contradict applicability,
+claims outside the closed lists and future run dates. `test_doc_terms` derives its prefix table
+from the family and now checks every Hexplain prefix; `test_strict_profile` fails when it lints
+nothing; the review package holds only tracked files; `tools/test_types.py` allows the four JSON
+readers' `-> Any` returns. Suite citations are corrected: req-pm-resource-limits-3 is not
+suite-testable, and the conditional-layout and custom-CRC citations are narrowed.
+
+**Documents and claims.** The homepage example uses real terms (`bddo:dataType`,
+`bddo:endianness`, `araster:width`, `acolor:colorSpace`, `aprov:platformName`). The landing and
+architecture pages describe alignment as the design rules do (`rdfs:seeAlso`, SKOS for concepts
+only) and list the structure and bundle aspects; the architecture page gains an hx-structure row,
+hx-protection in its import diagram and `st` as the one prefix exception, also documented on the
+ontology-design page. The Writer claim now cites the report of suite 665b443c5f01 as superseded,
+the quantifier claim lists all 20 functions, README counts 39 module rows, CONTRIBUTING documents
+`_build_ontology_docs.py`, `_build_conformance_page.py`, `_requirement_ids.py` and the conformance
+case procedure and corrects the order of the coverage builders, and `_build_ontology_docs.py` keeps
+the print-stylesheet link on the pages it writes.
+
 ### Outcome contracts, scoped round trips and validation evidence
 
 Required-error cases now reject successful process/artifact outcomes, even when their bodies
@@ -111,12 +199,12 @@ additional-data prefixes, resources) that are neither codec parameters nor forma
 array or struct node passed by identity, and HDL spells them `array` and `node`. HEL's
 quantifier extension adds collection, byte and integer-text functions (`countWhere`, `sumOf`,
 `project`, `repeatValue`, `concatArrays`, `concatBytes`, `slice`, `integralScan`, `modularAdd`,
-`integerBytes`, `integerText`, `unicodeText`, `join`, `integerPrecision`) under three new
-requirements: one shared element budget, ResourceLimit before an oversized output is allocated,
-and Unsupported rather than a substituted value. The Processing Model's `maxQuantifierEvaluations`
+`integerBytes`, `integerText`, `unicodeText`, `join`, `integerPrecision`, `decimalText`, `floatCast`,
+`fromIEEE`, `patchValues`) under requirements for one shared element budget and for ResourceLimit
+before an oversized output is allocated (completed by the review fixes above). The Processing Model's `maxQuantifierEvaluations`
 now names that shared budget, and three ResourceLimit cases (`pp-limit-collection-output`,
 `pp-limit-collection-traversal`, `pp-limit-text-conversion`) bring the processor corpus to 938
-cases; reporting Unsupported is a non-black-box disposition. The prose term check reads a dotted local name
+cases. The prose term check reads a dotted local name
 (`menc:Cipher.keyRef`) as one term.
 
 ### Structure aspect (working draft 0.1)
@@ -133,9 +221,9 @@ carries the requirement wording settled on 2026-10-15, so regenerating the page 
 
 Every module whose canonical Turtle differs from snapshot 2026-09-24.2 has a new version IRI
 naming the version that snapshot froze as `owl:priorVersion`, and a `dcterms:modified` of the day
-its canonical Turtle last changed (2026-10-13, or 2026-11-01 for bddo and
-media-encoding). Most changed only in their generated
-documentation (below); `owl:versionInfo` is now the bare version number everywhere, and the three
+its canonical Turtle last changed (2026-10-13; 2026-10-14 for aspect/geometry, aspect/tabular, aspect/raster and
+aspect/sampling; 2026-11-01 for bddo, register/media-encoding, aspect/structure and req/requirements). Most changed only in their generated
+documentation (below); `owl:versionInfo` is now the bare version number everywhere, and the four
 working drafts say so with `schema:creativeWorkStatus "working draft"`. aspect/color,
 aspect/encoding, aspect/fsmeta, aspect/networkflow, aspect/pointcloud, aspect/security and
 aspect/time, unchanged until then, took a new version when their generated documentation was
@@ -160,6 +248,7 @@ rewritten.
 | aspect/security | 2.1 | 2.2 |
 | aspect/signal | 1.1 | 1.2 |
 | aspect/spatialref | 1.3 working draft | 1.4 (working draft) |
+| aspect/structure | (new) | 0.1 (working draft) |
 | aspect/tabular | 1.1 | 1.2 |
 | aspect/time | 1.0 | 1.1 |
 | audio (adv) | 1.1 | 1.2 |
@@ -185,14 +274,14 @@ rewritten.
 | req/shapes | 1.2 | 1.3 |
 | video (vdv) | 1.1 | 1.2 |
 
-### The reference implementation's report of the current suite (2026-10-15)
+### The reference implementation's report of the then-current suite (2026-10-15)
 
-The implementation report of the current suite (931 cases, digest 665b443c5f01) is published under
+The implementation report of the then-current suite (931 cases, digest 665b443c5f01, since superseded) is published under
 `specification/conformance/reports/hexplain-tools/`, written by the engine's `conformanceReport`
 task at engine commit 1d3df9ad and published unchanged: 927 PASS, 0 FAIL, 4 SKIP (two codec-refusal
 cases for codecs it decodes, two chunk-order cases for features it does not claim), the Writer
 class 88 of 88. The engine also passes the round-trip mode (247 of 249 trees; the other two need
-the unclaimed chunk features). `writer` stays claimed, now on a report of the current suite:
+the unclaimed chunk features). `writer` stayed claimed, then on a report of the current suite:
 `reference-engine-claims.json` and the Processing Model's reference-implementation note say so. The
 conformance page's table of published reports marks each report of an earlier suite superseded
 (`#superseded-reports`), and `tools/test_types.py` holds `-> Any` returns to the two in use.

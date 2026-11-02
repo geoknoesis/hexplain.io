@@ -343,3 +343,89 @@ matches a nested counted group	matches(s, '(a{2}){2}')	value	true	eyJzIjogImFhYW
 matches counts every repetition	matches(s, '(a{2}){3}')	value	false	eyJzIjogImFhYWEifQ==
 matches an empty group repeated	matches('', '((){100}){100}')	value	true	eyJzIjogImFhYWEifQ==
 matches an optional group repeated over nothing	matches('', '(a?)*')	value	true	eyJzIjogImFhYWEifQ==
+# quantifiers group: element-scoped arguments, array values, and the collection, byte and text functions.
+# Bytes results are observed through len(), integerText() and Bytes equality, since Bytes have no JSON spelling.
+countWhere counts the elements a predicate holds for	countWhere(rows, v > 1)	value	int:2	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+countWhere over an empty array is zero	countWhere(empty, v > 1)	value	int:0	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+all stops at the first element that decides it	all(xs, 10 / (3 - self) > 5)	value	false	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+countWhere evaluates the predicate for every element	countWhere(xs, 10 / (3 - self) > 5)	error	"division-by-zero"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"zero"
+a computed array has no byte extent	sizeof(project(rows, v))	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"computed"
+countWhere predicate must be boolean	countWhere(rows, v)	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"boolean"
+sumOf sums the element expression	sumOf(rows, v * 2)	value	int:12	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+sumOf over an empty array is the Integer zero	sumOf(empty, v)	value	int:0	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+sumOf promotes to Float at a Float element	sumOf(rows, v * 0.5)	value	float:3	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+sumOf element expression must be numeric	sumOf(rows, 'a')	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"number"
+sumOf is checked arithmetic	sumOf(rows, 9223372036854775807)	error	"overflow"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"overflow"
+project maps each element in order	project(rows, v * 2)	value	[2, 4, 6]	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+project over an empty array is empty	len(project(empty, v))	value	int:0	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+project elements may be arrays, read through self	all(project(rows, repeatValue(v, 2)), self[0] == self[1])	value	true	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+project requires an array	project(n, 1)	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"array"
+len of a computed array	len(project(rows, v))	value	int:3	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+arrays do not compare	project(rows, v) == xs	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"compare"
+a computed array is not subscripted after a call	project(rows, v)[0]	error	"syntax"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	""
+repeatValue repeats a value	repeatValue(7, 3)	value	[7, 7, 7]	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+repeatValue count must be non-negative	repeatValue(7, -1)	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"count"
+concatArrays joins arrays of either kind	concatArrays(xs, project(rows, v * 10))	value	[1, 2, 3, 10, 20, 30]	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+concatArrays of nothing is empty	len(concatArrays())	value	int:0	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+concatArrays requires arrays	concatArrays(xs, 1)	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"array"
+concatBytes joins Bytes	len(concatBytes(integerBytes(1, 2, false), integerBytes(2, 1, false)))	value	int:3	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+concatBytes of nothing is empty	len(concatBytes())	value	int:0	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+concatBytes does not convert a String	concatBytes('a')	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"bytes"
+slice of an array	slice(xs, 1, 2)	value	[2, 3]	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+slice of Bytes is Bytes	integerText(slice(integerBytes(258, 2, false), 1, 1), false, false)	value	"2"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+slice never clamps	slice(xs, 2, 2)	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"slice"
+slice does not take a String	slice('abc', 0, 1)	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"slice"
+integralScan forms prefix sums	integralScan(xs, 0, 8, 0)	value	[1, 3, 6]	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+integralScan wraps to signed bits	integralScan(repeatValue(100, 2), 0, 8, 0)	value	[100, -56]	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+integralScan adds the offset each step	integralScan(xs, 0, 16, 1)	value	[2, 5, 9]	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+integralScan bits are 1 through 64	integralScan(xs, 0, 65, 0)	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"width"
+integralScan seed must fit its bits	integralScan(xs, 128, 8, 0)	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"seed"
+integralScan elements must be Integers	integralScan(project(rows, 'a'), 0, 8, 0)	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"integer"
+modularAdd wraps to signed bits	modularAdd(127, 1, 8)	value	int:-128	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+modularAdd bits are 1 through 64	modularAdd(1, 1, 0)	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"width"
+modularAdd takes Integers	modularAdd(1, 1.0, 8)	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"integer"
+integerBytes honours byte order	integerBytes(1, 2, false) == integerBytes(256, 2, true)	value	true	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+integerBytes writes the full unsigned width	integerText(integerBytes(255, 1, true), false, true)	value	"255"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+integerBytes writes a 64-bit pattern from a negative Integer	integerText(integerBytes(-1, 8, true), false, true)	value	"18446744073709551615"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+integerBytes value must fit its width	integerBytes(256, 1, false)	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"width"
+integerBytes signed value must fit its width	integerBytes(-129, 1, true)	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"width"
+integerBytes width is 1 through 8	integerBytes(1, 9, true)	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"width"
+integerText reads signed two's complement	integerText(integerBytes(-2, 2, true), true, true)	value	"-2"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+integerText reads unsigned	integerText(integerBytes(-2, 2, true), false, true)	value	"65534"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+integerText requires at least one byte	integerText(concatBytes(), true, true)	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"byte"
+integerText requires Bytes	integerText('ab', true, true)	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"bytes"
+unicodeText builds text from scalar values	unicodeText(project(rows, v + 64))	value	"ABC"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+unicodeText rejects a surrogate	unicodeText(repeatValue(55296, 1))	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"scalar"
+unicodeText requires Integers	unicodeText(repeatValue('a', 1))	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"integer"
+join puts the separator between elements	join(repeatValue('ab', 3), '-')	value	"ab-ab-ab"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+join of an empty array is empty	join(empty, '-')	value	""	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+join requires String elements	join(xs, ',')	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"string"
+integerPrecision of an unsigned byte	integerPrecision(1, false)	value	int:2	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+integerPrecision of a signed 32-bit integer	integerPrecision(4, true)	value	int:9	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+integerPrecision of a signed 128-bit integer	integerPrecision(16, true)	value	int:38	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+integerPrecision width is 1 through 32	integerPrecision(0, true)	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"width"
+integerPrecision signed must be Boolean	integerPrecision(4, 1)	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"boolean"
+decimalText inserts the point	decimalText('12345', 2)	value	"123.45"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+decimalText pads with leading zeros	decimalText('5', 3)	value	"0.005"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+decimalText keeps the sign below one	decimalText('-5', 1)	value	"-0.5"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+decimalText keeps trailing zeros	decimalText('100', 2)	value	"1.00"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+decimalText of scale zero is the coefficient	decimalText('123', 0)	value	"123"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+decimalText of a negative scale appends zeros	decimalText('12', -2)	value	"1200"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+decimalText rejects a leading zero	decimalText('012', 1)	error	"argument"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"canonical"
+decimalText rejects negative zero	decimalText('-0', 1)	error	"argument"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"canonical"
+decimalText coefficient is text	decimalText(12, 1)	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"string"
+floatCast rounds to binary32	floatCast(0.1, 32)	value	float:0.10000000149011612	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+floatCast rounds an Integer once, ties to even	floatCast(16777217, 32)	value	float:16777216	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+floatCast overflows binary32 to Infinity	floatCast(1e39, 32) > 1e308	value	true	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+floatCast bits are 32 or 64	floatCast(1.0, 16)	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"width"
+floatCast requires a number	floatCast('1', 32)	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"number"
+fromIEEE reads a binary32 pattern	fromIEEE(1065353216, 32)	value	float:1	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+fromIEEE reads a negative Integer as its pattern	fromIEEE(-1082130432, 32)	value	float:-1	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+fromIEEE reads a binary64 pattern	fromIEEE(4611686018427387904, 64)	value	float:2	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+fromIEEE pattern must fit its bits	fromIEEE(4294967296, 32)	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"width"
+fromIEEE bits are 32 or 64	fromIEEE(1, 16)	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"width"
+patchValues replaces the indexed elements	patchValues(xs, slice(xs, 0, 1), repeatValue(9, 1))	value	[1, 9, 3]	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+patchValues position must be inside the array	patchValues(xs, repeatValue(3, 1), repeatValue(9, 1))	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"position"
+patchValues positions must be distinct	patchValues(xs, repeatValue(0, 2), repeatValue(9, 2))	error	"range"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"repeated"
+patchValues needs one replacement per position	patchValues(xs, repeatValue(0, 1), repeatValue(9, 2))	error	"argument"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"length"
+any predicate must be boolean	any(rows, v)	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"boolean"

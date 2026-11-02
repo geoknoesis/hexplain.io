@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import logging
 import random
 import sys
 import tempfile
@@ -63,6 +64,22 @@ def hel_checks(failures: list[str]) -> None:
     check(hel.canonical("5e-324") == "4.9E-324", "one digit that round-trips is written as the nearest two", failures)
     check(hel.canonical("1e23") == "1.0E23" and hel.canonical("0.5") == "0.5", "shortest digits elsewhere", failures)
     check(hel.canonical("'\\q'") is None, "an unknown escape is a syntax error", failures)
+    deep = hel.canonical("- " * 511 + "1")
+    check(
+        deep == "-" * 511 + "1", "an expression 512 deep (HEL's default depth limit) has its canonical form", failures
+    )
+    check(
+        hel.canonical("not " * 600 + "a") == "not " * 600 + "instance.a", "a long chain of not is canonical", failures
+    )
+    check(hel.canonical("(" * 5000 + "1" + ")" * 5000) is None, "nesting beyond the parser is no crash", failures)
+    from comparison_worker import comparison
+
+    depth = SUITE / "physical-parser/pp-limit-hel-default-depth"
+    check(
+        comparison("round-trip", depth, depth / "expected.json", "") == [],
+        "the round-trip comparison of a 512-deep expression's case does not overflow the stack",
+        failures,
+    )
     check(
         hel.canonical("'a\x01b'") == "'a\\x01b'", "a control character is written \\xHH in the canonical form", failures
     )
@@ -172,10 +189,80 @@ def graph_checks(failures: list[str]) -> None:
         "compareOntologyHeader compares the header",
         failures,
     )
-    extent = graph("ex:r a ex:C ; hexplain:byteOffset 0 ; hexplain:byteLength 4 .")
+    extent = graph(
+        'ex:r a ex:C ; hexplain:byteOffset "0"^^xsd:nonNegativeInteger ; '
+        'hexplain:byteLength "4"^^xsd:nonNegativeInteger .'
+    )
     check(
         compare.compare_graph(graph("ex:r a ex:C ."), extent, cls="semantic-emitter") == [],
         "the optional extent annotations are removed",
+        failures,
+    )
+    for body, what in (
+        ('ex:r a ex:C . ex:other hexplain:byteOffset "0"^^xsd:nonNegativeInteger .', "on a resource never minted"),
+        ("ex:r a ex:C ; hexplain:byteOffset 0 .", "typed xsd:integer, not xsd:nonNegativeInteger"),
+        ('ex:r a ex:C ; hexplain:byteLength "-4"^^xsd:nonNegativeInteger .', "negative"),
+        ('ex:r a ex:C ; hexplain:byteLength "four"^^xsd:nonNegativeInteger .', "not a number"),
+        ('ex:r a ex:C . ex:C hexplain:byteLength "4"^^xsd:nonNegativeInteger .', "on an object that is no subject"),
+    ):
+        logging.disable(logging.WARNING)  # rdflib logs the ill-typed literal these probes parse on purpose.
+        try:
+            actual_graph = graph(body)
+        finally:
+            logging.disable(logging.NOTSET)
+        check(
+            compare.compare_graph(graph("ex:r a ex:C ."), actual_graph, cls="semantic-emitter") != [],
+            f"an extent {what} is reported, not removed: the instance graph holds nothing else",
+            failures,
+        )
+    minted = compare.load_graph(
+        f"<urn:uuid:1#root> a <urn:ex#C> . <urn:uuid:1#root/a> <{compare.CORE}byteOffset> "
+        '"3"^^<http://www.w3.org/2001/XMLSchema#nonNegativeInteger> .'
+    )
+    check(
+        compare.compare_graph(
+            compare.load_graph(f"<{compare.REPORTED_BASE}#root> a <urn:ex#C> ."),
+            minted,
+            cls="semantic-emitter",
+            reported_base="urn:uuid:1",
+        )
+        == [],
+        "an extent on a resource minted under the reported base is removed",
+        failures,
+    )
+    blank = graph('ex:r ex:p [ a ex:C ; hexplain:byteOffset "1"^^xsd:nonNegativeInteger ] .')
+    check(
+        compare.compare_graph(graph("ex:r ex:p [ a ex:C ] ."), blank, cls="semantic-emitter") == [],
+        "an extent on a blank node the graph describes is removed",
+        failures,
+    )
+    simple, typed_string = graph('ex:r ex:p "x" .'), graph('ex:r ex:p "x"^^xsd:string .')
+    for cls in ("semantic-emitter", "hdl-compiler"):
+        check(
+            compare.compare_graph(simple, typed_string, cls=cls) == []
+            and compare.compare_graph(typed_string, simple, cls=cls) == [],
+            f"{cls}: a simple literal and its xsd:string twin are one RDF 1.1 term",
+            failures,
+        )
+    check(
+        compare.compare_graph(simple, graph('ex:r ex:p "x"@en .'), cls="semantic-emitter") != [],
+        "a language-tagged string is not a simple literal",
+        failures,
+    )
+    decimal, padded = graph('ex:r ex:p "1.0"^^xsd:decimal .'), graph('ex:r ex:p "01.00"^^xsd:decimal .')
+    check(
+        compare.compare_graph(decimal, padded, cls="hdl-compiler") == [],
+        "an HDL Compiler decimal compares by value: 1.0 is 01.00",
+        failures,
+    )
+    check(
+        compare.compare_graph(decimal, graph('ex:r ex:p "1.5"^^xsd:decimal .'), cls="hdl-compiler") != [],
+        "another decimal value fails",
+        failures,
+    )
+    check(
+        compare.compare_graph(decimal, padded, cls="semantic-emitter") != [],
+        "an emitted decimal still compares as written (its lexical form is fixed)",
         failures,
     )
     reported = compare.load_graph("<urn:uuid:1234#root> a <urn:ex#C> .")
@@ -404,6 +491,28 @@ def artifact_checks(failures: list[str]) -> None:
         success = root / "actual.json"
         success.write_bytes(error.read_bytes())
         check(compare.compare_case(case, success) == [], "a legitimate category field was rejected", failures)
+        # An error case requires the error artifact: a successful output that holds a category is not an error.
+        for cls, error_case in (
+            ("physical-parser", SUITE / "physical-parser/pp-align-derived-field"),
+            ("writer", SUITE / "writer/w-tree-undeclared-key"),
+        ):
+            wanted = (error_case / "expected-error.json").read_text(encoding="utf-8")
+            success.write_text(wanted, encoding="utf-8", newline="\n")
+            error.write_text(wanted, encoding="utf-8", newline="\n")
+            check(bool(compare.compare_case(error_case, success)), f"{cls}: actual.json passed as an error", failures)
+            check(compare.compare_case(error_case, error) == [], f"{cls}: the error artifact failed", failures)
+        # Processor JSON is read strictly: a repeated member or a NaN is not JSON a comparison can trust.
+        category = json.loads(wanted)["category"]
+        for text in (
+            f'{{"category":"Validation","category":"{category}"}}',
+            f'{{"category":"{category}","n":NaN}}',
+            f'{{"category":"{category}","n":-Infinity}}',
+        ):
+            error.write_text(text, encoding="utf-8", newline="\n")
+            check(bool(compare.compare_case(error_case, error)), f"non-RFC 8259 JSON was accepted: {text}", failures)
+        success.write_text('{"a":1,"a":2}', encoding="utf-8", newline="\n")
+        (case / "expected.json").write_text('{"a":2}', encoding="utf-8", newline="\n")
+        check(bool(compare.compare_case(case, success)), "a tree with a repeated member passed", failures)
 
 
 def self_check(failures: list[str]) -> int:
@@ -418,6 +527,8 @@ def self_check(failures: list[str]) -> int:
             if name == "expected-error.json" and json.loads(content).get("severity"):
                 expected = json.loads(content)
                 content = json.dumps({"diagnostics": [expected], "output": False}).encode()
+            elif name == "expected-error.json":
+                actual = Path(tmp) / compare.ERROR_FILE  # An error is reported as the error artifact.
             if name == "expected-claims.json":
                 expected = json.loads(content)
                 content = json.dumps(

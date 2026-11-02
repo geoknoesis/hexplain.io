@@ -4,8 +4,8 @@
   "sources": [
     {
       "id": "contract",
-      "url": "https://hexplain.io/ns/register/media-encoding#SnappyRaw",
-      "description": "Literal contract vectors; scoped resource success cases additionally exercised by ByteResourceCodecTest. Compression literals follow their published raw wire grammars.",
+      "url": "https://github.com/google/snappy/blob/main/format_description.txt",
+      "description": "Authored byte by byte from the definition and the Snappy format description; every input checked with aircompressor 2.0.3's SnappyDecompressor, which yields the expected output or rejects what an error vector expects to fail.",
       "licence": "CC0-1.0"
     }
   ],
@@ -81,6 +81,54 @@
           },
           "expect": {
             "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "length-short",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "061068656c6c6f"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "length-long",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "041068656c6c6f"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "element-after-length",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "051068656c6c6f0061"
+          },
+          "expect": {
+            "error": "Validation"
           }
         }
       ]

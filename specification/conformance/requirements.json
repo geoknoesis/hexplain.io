@@ -326,7 +326,7 @@
    "audience": "processor",
    "text": "When neither the rule nor the field gives a hexplain:valueDatatype, a Semantic Emitter MUST emit the result in its natural datatype, by this table:",
    "sha256": "86193a976a4b42c4",
-   "context": "Introduces: Integer | An xsd:long literal, the datatype whose value space is HEL’s signed 64-bit Integer, whatever the value’s magnitude. An unsigned value above 2^63−1, which only… | Float | An xsd:double literal; NaN and the infinities are written NaN, INF and -INF, the XSD lexical forms. | String | An xsd:string literal. | Boolean | An xsd:boolean literal, true or false. | Bytes | An xsd:hexBinary literal. | Null | Nothing, exactly as for an unbound field. | A struct node or an array node | A Type / HEL error: a computed value is one literal, and a node has no literal form. (A struct is emitted through hexplain:mapsToObjectProperty, and a repeated…"
+   "context": "Introduces: Integer | An xsd:long literal, the datatype whose value space is HEL’s signed 64-bit Integer, whatever the value’s magnitude. An unsigned value above 2^63−1, which only… | Float | An xsd:double literal; NaN and the infinities are written NaN, INF and -INF, the XSD lexical forms. | String | An xsd:string literal. | Boolean | An xsd:boolean literal, true or false. | Bytes | An xsd:hexBinary literal. | Null | Nothing, exactly as for an unbound field. | A struct node or an array value (an array node, or an array a function computed: HEL, array values) | A Type / HEL error: a computed value is one literal, and neither a node nor an array has a literal form. (A struct is emitted through hexplain:mapsToObjectProp…"
   },
   "req-pm-computed-values-2": {
    "page": "specification/processing/index.html",
@@ -406,9 +406,12 @@
    "cls": "semantic-emitter",
    "level": "MUST",
    "audience": "processor",
-   "text": "A struct node or an array node | A Type / HEL error: a computed value is one literal, and a node has no literal form. (A struct is emitted through hexplain:mapsToObjectProperty, and a repeated field one triple per element.)",
-   "sha256": "606426ca6a127022",
-   "context": "When neither the rule nor the field gives a hexplain:valueDatatype, a Semantic Emitter MUST emit the result in its natural datatype, by this table:"
+   "text": "A struct node or an array value (an array node, or an array a function computed: HEL, array values) | A Type / HEL error: a computed value is one literal, and neither a node nor an array has a literal form. (A struct is emitted through hexplain:mapsToObjectProperty, and a repeated field one triple per element.)",
+   "sha256": "b84588cc8b543949",
+   "context": "When neither the rule nor the field gives a hexplain:valueDatatype, a Semantic Emitter MUST emit the result in its natural datatype, by this table:",
+   "history": [
+    "606426ca6a127022"
+   ]
   },
   "req-pm-conformance-1": {
    "page": "specification/processing/index.html",
@@ -625,8 +628,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Any other argument is known only once it is evaluated: a processor MUST raise a value of the wrong type, a struct or an array as a Type / HEL error when the argument is evaluated (ParseField, Value), not as a description error.",
-   "sha256": "91dd207630a0a59d"
+   "text": "Any other argument is known only once it is evaluated: a processor MUST raise a value of the wrong type — Null for a bddo:NodeParameter or bddo:ArrayParameter, and a struct node or an array value for a parameter that is untyped or typed with a scalar type, included — as a Type / HEL error when the argument is evaluated (ParseField, Value), not as a description error.",
+   "sha256": "32ad7ca361a904a0",
+   "history": [
+    "91dd207630a0a59d"
+   ]
   },
   "req-pm-data-layouts-1": {
    "page": "specification/processing/index.html",
@@ -969,11 +975,12 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Checksum error | bddo:Checksum mismatch; an integrity-check mismatch inside a codec (zlib Adler-32, gzip CRC-32, length or header CRC, an LZ4 header, block or content checksum, a Zstandard content checksum, or an LZ4 or Zstandard declared content size).",
-   "sha256": "e655cd8a8b265a05",
+   "text": "Checksum error | bddo:Checksum mismatch; an integrity-check mismatch inside a codec (zlib Adler-32, gzip CRC-32, length or header CRC, an LZ4 header, block or content checksum, a Zstandard content checksum, an LZ4 or Zstandard declared content size, the expected value of a menc:VerifyCRC32 step, or an AEAD authentication tag mismatch of menc:AESGCM or menc:AESGCMSignature).",
+   "sha256": "3da69e874d9da7d3",
    "context": "Processors MUST distinguish and report the following conditions rather than emit a silently-wrong graph:",
    "history": [
-    "0be475d71ec283ae"
+    "0be475d71ec283ae",
+    "e655cd8a8b265a05"
    ]
   },
   "req-pm-errors-6": {
@@ -1009,8 +1016,8 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Description error | The description itself is inconsistent: two dispatch arms with one key, both dispatch mechanisms on one field, an empty terminator, a variable-length field with no extent, an unbound namespace prefix, cyclic cross-part references, two part specs described by structs sharing a local name, a malformed fixed value, a CRC, digest or Adler-32 whose checksum field is not of the algorithm's kind and width, a float format on a width it is not defined for, bddo:bcd on a field that is not a whole-byte fixed-width integer, a bddo:padByte without a bddo:padTo, a bddo:CustomEncoding without its one bddo:ianaCharset, a packed width on a non-integer cell type, a bddo:repeatUntil on a text container, a codec parameter that is unknown, missing or a literal out of range, or that carries both or neither of a literal and an expression, a parameter expression for a parameter the contract does not declare, a codec step that its contract otherwise refuses, a pipeline whose kinds do not connect or whose first decoded step reads samples (Codec contracts, Parameter expressions), a selection whose candidates repeat a codec or include one whose kind does not connect at the step's position, a selecting step that carries a hexplain:codecParameter, a step with both hexplain:codec and hexplain:codecFromExpression, a selecting step without hexplain:codecCandidates or with an empty candidate list (Run-time codec selection), a pair of conflicting forms (a repeat count with a repeat-until condition, two count or offset forms, a dispatch table with conditional type rules, two values of a functional property), two fields of one struct sharing a local name; a parameterised struct named with a number of arguments other than its number of parameters, arguments for a struct without parameters or for a data type, a literal argument that is not of its parameter's type (an evaluated one is a Type / HEL error: ParseField, Value), a parameter or local binding sharing its name with a field, parameter or binding of its struct, param.x in an expression whose instance struct has no parameter x (inside a quantifier over struct elements, the element’s struct: Stream metadata and eof()), a root or bundle-part struct with parameters, a parameterised struct named by a bddo:dispatchDefault (which cannot state arguments), a parameter or a local binding declared by a text container (a delimited table or record sequence, a key/value header or a tree document); a CRC whose checksum field is not an integer exactly as wide as the CRC, or a digest whose checksum field is not a bddo:bytes field of literal size exactly the digest's length; an menc:LZ4Block step without a decodedSize, or with an invalid literal one. An invalid profile or rule set is a Description error when it is loaded: a description, conformance profile or rule set that the family’s shapes reject, including a requirement identity stated twice (by IRI, or by a blank-node pair with one req:requirementId and req:fromStandard), a requirement without a statement, and a parse attribution naming ResourceLimit. A Description error SHOULD be raised when the description is loaded.",
-   "sha256": "cd705eff541560bd",
+   "text": "Description error | The description itself is inconsistent: two dispatch arms with one key, both dispatch mechanisms on one field, an empty terminator, a variable-length field with no extent, an unbound namespace prefix, cyclic cross-part references, two part specs described by structs sharing a local name, a malformed fixed value, a CRC, digest or Adler-32 whose checksum field is not of the algorithm's kind and width, a float format on a width it is not defined for, bddo:bcd on a field that is not a whole-byte fixed-width integer, a bddo:padByte without a bddo:padTo, a bddo:CustomEncoding without its one bddo:ianaCharset, a packed width on a non-integer cell type, a bddo:repeatUntil on a text container, a codec parameter that is unknown, missing or a literal out of range, or that carries both or neither of a literal and an expression, a parameter expression for a parameter the contract does not declare, a codec step that its contract otherwise refuses, a pipeline whose kinds do not connect or whose first decoded step reads samples (Codec contracts, Parameter expressions), a selection whose candidates repeat a codec or include one whose kind does not connect at the step's position, a selecting step that carries a hexplain:codecParameter, a step with both hexplain:codec and hexplain:codecFromExpression, a selecting step without hexplain:codecCandidates or with an empty candidate list (Run-time codec selection), a pair of conflicting forms (a repeat count with a repeat-until condition, two count or offset forms, a dispatch table with conditional type rules, two values of a functional property), two fields of one struct sharing a local name; a parameterised struct named with a number of arguments other than its number of parameters, arguments for a struct without parameters or for a data type, a literal argument that is not of its parameter's type (an evaluated one is a Type / HEL error: ParseField, Value), a parameter or local binding sharing its name with a field, parameter or binding of its struct, param.x in an expression whose instance struct has no parameter x (inside an element-scoped argument over struct elements, the element’s struct: Stream metadata and eof()), a root or bundle-part struct with parameters, a parameterised struct named by a bddo:dispatchDefault (which cannot state arguments), a parameter or a local binding declared by a text container (a delimited table or record sequence, a key/value header or a tree document); a CRC whose checksum field is not an integer exactly as wide as the CRC, or a digest whose checksum field is not a bddo:bytes field of literal size exactly the digest's length; an menc:LZ4Block step without a decodedSize, or with an invalid literal one. An invalid profile or rule set is a Description error when it is loaded: a description, conformance profile or rule set that the family’s shapes reject, including a requirement identity stated twice (by IRI, or by a blank-node pair with one req:requirementId and req:fromStandard), a requirement without a statement, and a parse attribution naming ResourceLimit. A Description error SHOULD be raised when the description is loaded.",
+   "sha256": "1c91259e72e01a61",
    "context": "Processors MUST distinguish and report the following conditions rather than emit a silently-wrong graph:",
    "history": [
     "0cb63e59ec525203",
@@ -1021,7 +1028,8 @@
     "346d0c03b0091053",
     "5726121f91229d13",
     "4996455a75da033c",
-    "d3e4d0786e013473"
+    "d3e4d0786e013473",
+    "cd705eff541560bd"
    ]
   },
   "req-pm-errors-9": {
@@ -1685,13 +1693,14 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "Value. If the effective type is a bddo:Struct, recurse via ParseStruct. When that struct declares parameters, the arguments are evaluated first — the bddo:hasArgument list of what named the struct: the bddo:DataTypeRule or bddo:DispatchArm that selected it, or the field when it is the field's bddo:dataType — in list order, each with the containing struct as instance exactly as a bddo:sizeFromExpression of the field is evaluated, and passed to ParseStruct; for a repeated field they are evaluated anew before each element. An argument whose value is not of its parameter's bddo:parameterType (an Integer is accepted for bddo:FloatParameter and converted to Float), or that is a struct or array node, is an error: a description error when it is a literal, known when the description is loaded, and otherwise a Type / HEL error raised when the argument is evaluated (Stream metadata and eof()). If the effective type is a bddo:DataType:",
-   "sha256": "dfbd7f5dbfdd2f68",
+   "text": "Value. If the effective type is a bddo:Struct, recurse via ParseStruct. When that struct declares parameters, the arguments are evaluated first — the bddo:hasArgument list of what named the struct: the bddo:DataTypeRule or bddo:DispatchArm that selected it, or the field when it is the field's bddo:dataType — in list order, each with the containing struct as instance exactly as a bddo:sizeFromExpression of the field is evaluated, and passed to ParseStruct; for a repeated field they are evaluated anew before each element. An argument whose value is not of its parameter's bddo:parameterType (an Integer is accepted for bddo:FloatParameter and converted to Float), or that is a struct node or an array value for a parameter without a bddo:parameterType or with a scalar one, is an error; a bddo:NodeParameter accepts exactly a struct node and a bddo:ArrayParameter exactly an array value (an array node or a computed array), each passed by identity — nothing is copied, no byte is read, and the node keeps its place in the tree — and neither accepts Null. A wrong argument is a description error when it is a literal, known when the description is loaded, and otherwise a Type / HEL error raised when the argument is evaluated (Stream metadata and eof()). If the effective type is a bddo:DataType:",
+   "sha256": "cefedda88e217911",
    "context": "A Physical Parser MUST parse a field by these steps, in this order; a step whose property the field does not declare does nothing:",
    "history": [
     "e4d21caff3c52a61",
     "3300fc4b796a1b90",
-    "f8ffe558bc642800"
+    "f8ffe558bc642800",
+    "dfbd7f5dbfdd2f68"
    ]
   },
   "req-pm-parsefield-12": {
@@ -2158,8 +2167,11 @@
    "cls": "physical-parser",
    "level": "MUST",
    "audience": "processor",
-   "text": "A processor MUST NOT fall back to a cheaper interpretation of the description to finish in time.",
-   "sha256": "42f010972929548d"
+   "text": "A processor MUST NOT fall back to a cheaper interpretation of the description, nor skip, approximate or reorder work the description requires, to stay within any limit, configured or wall-clock: a limit decides only whether the processing finishes, never what it produces.",
+   "sha256": "f22331d0865aa3e0",
+   "history": [
+    "42f010972929548d"
+   ]
   },
   "req-pm-security-decompression-1": {
    "page": "specification/processing/index.html",
@@ -2918,6 +2930,42 @@
    "text": "A processor MUST raise a description error for a bddo:fixedPointScale outside the range it supports, when the description is loaded or, at the latest, when the field is emitted; it MUST NOT emit an approximation of the scaled value or the integer unscaled.",
    "sha256": "8ae53c75d2045e29"
   },
+  "req-hel-array-values-1": {
+   "page": "specification/hel/index.html",
+   "section": "array-values",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An evaluator MUST support exactly these operations on an array value of either kind: a subscript a[i], under the index rule of key resolution (a non-negative Integer below the length, a range error otherwise); len(a) and count(a), its number of elements; use as the array argument of a function of the quantifiers group; use as an element of a computed array; and use as the argument of a parameter typed bddo:ArrayParameter, which then denotes the same array value, nothing copied (Processing Model, argument types).",
+   "sha256": "782ef9ea684fc920"
+  },
+  "req-hel-array-values-2": {
+   "page": "specification/hel/index.html",
+   "section": "array-values",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Array values do not compare: an evaluator MUST raise a type error for ==, != or an ordering with an array value as an operand, of either kind, and for an array value as an operand of an arithmetic, bitwise or logical operator or as a ternary condition; two arrays are compared element by element through the functions (countWhere, all) instead.",
+   "sha256": "f22c43d079da09b1"
+  },
+  "req-hel-array-values-3": {
+   "page": "specification/hel/index.html",
+   "section": "array-values",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A computed array is not a node of the parsed tree: it has no byte extent and no holder, so an evaluator MUST raise a type error for sizeof of a computed array, and MUST read a .parent step taken on it, or on a subscript of it, as Null, as it reads every .parent after a local binding, self or param (Reserved Roots), never as the struct of some array node the computed array was made from.",
+   "sha256": "22ef43c199322a84"
+  },
+  "req-hel-array-values-4": {
+   "page": "specification/hel/index.html",
+   "section": "array-values",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An array value, a computed array included, MUST NOT be the result of a bddo:valueFromExpression or of a hexplain:valueExpression: an evaluator MUST raise a type error for one, as for a struct node (Name Binding).",
+   "sha256": "37fb43e54cbc5625"
+  },
   "req-hel-coercion-1": {
    "page": "specification/hel/index.html",
    "section": "coercion",
@@ -3016,11 +3064,12 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "Accept, by default, expressions whose expression tree is at least 512 levels deep and at least 64 KiB long, when they are parsed and when they are evaluated, and quantifier and match-cost budgets of at least the Processing Model’s minimums; let the user configure all four limits; and report an expression beyond its configured nesting or length limit, a quantifier that exceeds its evaluation budget, a regular-expression match that exceeds its cost limit, and a deadline or cancellation as the Processing Model's ResourceLimit error, not as a syntax or runtime error: it is fatal in every mode, including a lenient one that records other errors and continues (Security and Privacy Considerations).",
-   "sha256": "95744b9fb501f2f3",
+   "text": "Accept, by default, expressions whose expression tree is at least 512 levels deep and at least 64 KiB long, when they are parsed and when they are evaluated, and element (quantifier) and match-cost budgets of at least the Processing Model’s minimums; let the user configure all four limits; and report an expression beyond its configured nesting or length limit, a charge beyond its element budget, a regular-expression match that exceeds its cost limit, and a deadline or cancellation as the Processing Model's ResourceLimit error, not as a syntax or runtime error: it is fatal in every mode, including a lenient one that records other errors and continues (Security and Privacy Considerations).",
+   "sha256": "065f3b4817f7ca4d",
    "context": "A conforming HEL 1.0 evaluator MUST:",
    "history": [
-    "52daa8c31a06fbe6"
+    "52daa8c31a06fbe6",
+    "95744b9fb501f2f3"
    ]
   },
   "req-hel-conformance-9": {
@@ -3116,9 +3165,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "The first argument MUST be an array node.",
-   "sha256": "c9a653f8d49309d3",
-   "context": "Inputs are unchanged."
+   "text": "The first argument of a function that takes an element-scoped argument MUST be an array value (an array node or a computed array), else it is a type error; the element-scoped argument is evaluated once per element, in order, with self bound to the element and, when the element is a struct node, instance bound to it (so bare names read the element's fields) and parent bound to the enclosing instance; when the element is not a struct node, instance remains the enclosing instance and parent also names that enclosing instance.",
+   "sha256": "0b30e9c1a5b30845",
+   "history": [
+    "c9a653f8d49309d3"
+   ]
   },
   "req-hel-ext-quantifiers-2": {
    "page": "specification/hel/index.html",
@@ -3126,9 +3177,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "Each evaluation MUST yield a Boolean, else it is an error.",
-   "sha256": "91ef726bcb30e3d0",
-   "context": "When the element is a struct node, param.n and a name that reaches a local binding MUST resolve against the element’s struct: param.n is the argument the element was parsed with, a bare name or instance.name may name a local binding of the element’s struct, and the parameters and bindings of the struct holding the expression are not reachable in the predicate."
+   "text": "In all, any and countWhere each evaluation of the predicate MUST yield a Boolean, else it is a type error.",
+   "sha256": "5585f98af6846b58",
+   "history": [
+    "91ef726bcb30e3d0"
+   ]
   },
   "req-hel-ext-quantifiers-3": {
    "page": "specification/hel/index.html",
@@ -3136,8 +3189,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "When the element is a struct node, param.n and a name that reaches a local binding MUST resolve against the element’s struct: param.n is the argument the element was parsed with, a bare name or instance.name may name a local binding of the element’s struct, and the parameters and bindings of the struct holding the expression are not reachable in the predicate.",
-   "sha256": "029360d627ecf81c"
+   "text": "When the element is a struct node, param.n and a name that reaches a local binding MUST resolve against the element’s struct: param.n is the argument the element was parsed with, a bare name or instance.name may name a local binding of the element’s struct, and the parameters and bindings of the struct holding the expression are not reachable in the element-scoped argument.",
+   "sha256": "a6ddb558f8d2c2e2",
+   "history": [
+    "029360d627ecf81c"
+   ]
   },
   "req-hel-ext-quantifiers-4": {
    "page": "specification/hel/index.html",
@@ -3145,8 +3201,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "An evaluator MUST bound the total number of predicate evaluations during one evaluation of an expression, nested quantifiers included, by its configured quantifier limit (the Processing Model’s quantifier evaluations, at least 1,000,000 by default), and MUST report exceeding it as a ResourceLimit error.",
-   "sha256": "0b5aa85e6a49fd7d"
+   "text": "An evaluator MUST charge the work of this group's functions, as the table below states, against one element budget for each evaluation of an expression, element-scoped arguments nested in element-scoped arguments included, bounded by its configured quantifier limit (the Processing Model’s maxQuantifierEvaluations, at least 1,000,000 by default), and MUST report a charge that would take the total beyond that limit as a ResourceLimit error.",
+   "sha256": "d4f583cb78f05323",
+   "history": [
+    "0b5aa85e6a49fd7d"
+   ]
   },
   "req-hel-ext-quantifiers-5": {
    "page": "specification/hel/index.html",
@@ -3154,8 +3213,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "Collection construction, traversal, byte conversion and exact decimal formatting MUST share the quantifier element budget: each processed input or output element is charged before the corresponding allocation or conversion.",
-   "sha256": "4020dd92e5180942"
+   "text": "A function MUST make each charge before the evaluation, allocation or conversion it pays for: the charge for a predicate or element expression before that evaluation, and the whole charge of any other function before it allocates or converts any part of its result.",
+   "sha256": "de56483cfafdc3e1",
+   "history": [
+    "4020dd92e5180942"
+   ]
   },
   "req-hel-ext-quantifiers-6": {
    "page": "specification/hel/index.html",
@@ -3163,8 +3225,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "An excessive count, slice, scale or conversion MUST fail with ResourceLimit before allocating its expanded output.",
-   "sha256": "26c727f8dcb52696"
+   "text": "A function other than one with an element-scoped argument MUST check its arguments, the elements it reads included, before it makes its charge, so that an argument error is reported as the type, range or argument error it is whatever the budget, and an excessive count, slice, scale or conversion then fails with ResourceLimit before any of its expanded output is allocated.",
+   "sha256": "37aed782aaead7c5",
+   "history": [
+    "26c727f8dcb52696"
+   ]
   },
   "req-hel-ext-quantifiers-7": {
    "page": "specification/hel/index.html",
@@ -3173,7 +3238,152 @@
    "level": "MUST",
    "audience": "processor",
    "text": "Implementations that cannot execute a function MUST report Unsupported rather than substitute a value.",
-   "sha256": "ecb45b4dabf34609"
+   "sha256": "ecb45b4dabf34609",
+   "withdrawn": true
+  },
+  "req-hel-ext-quantifiers-8": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "In sumOf each evaluation of the element expression MUST yield an Integer or a Float, else it is a type error, and the sum MUST be formed left to right with HEL's +, starting from the Integer 0: an Integer sum outside the signed 64-bit range is an overflow error, and a Float element makes the running sum a Float from that element on.",
+   "sha256": "07880a3b0ee1e368"
+  },
+  "req-hel-ext-quantifiers-9": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "In project each evaluation of the element expression yields the element at the same position of the result, and MUST NOT yield Null, which is a type error (an element is never Null).",
+   "sha256": "8667d80b9b2fd8c2"
+  },
+  "req-hel-ext-quantifiers-10": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Every other argument, of every HEL function, MUST be evaluated exactly once, before the call, in the scope of the expression that contains the call.",
+   "sha256": "11d41bcdb4a27ceb"
+  },
+  "req-hel-ext-quantifiers-11": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "all and any MUST stop at the first element that decides the result (a false for all, a true for any) and MUST NOT evaluate the predicate for a later element; countWhere, sumOf and project MUST evaluate their element-scoped argument for every element.",
+   "sha256": "84b6818ac75f35bf"
+  },
+  "req-hel-ext-quantifiers-12": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An unsigned 64-bit value above 2^63−1 (Unsigned 64-bit values) MUST be accepted by floatCast, which, like the math group, reads a number's value, and MUST be raised as a range error where any other function of this group requires an Integer.",
+   "sha256": "acc846005824b63c"
+  },
+  "req-hel-ext-quantifiers-13": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "count MUST be an Integer (type error otherwise) and non-negative (range error otherwise).",
+   "sha256": "f50b5ddae6a8686e"
+  },
+  "req-hel-ext-quantifiers-14": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "source MUST be an array value or Bytes (a String is a type error; substring slices text); start and count MUST be non-negative Integers and start + count MUST NOT exceed the source's length, each a range error otherwise (slice never clamps).",
+   "sha256": "6d3baf5df679dd91"
+  },
+  "req-hel-ext-quantifiers-15": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "bits MUST be an Integer from 1 through 64; seed MUST be an Integer in [−2^bits−1, 2^bits−1−1], each a range error otherwise; offset may be any Integer; every element MUST be an Integer, else it is a type error.",
+   "sha256": "52d9d8074d5b4d9f"
+  },
+  "req-hel-ext-quantifiers-16": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "a and b are any Integers; bits MUST be an Integer from 1 through 64 (range error otherwise).",
+   "sha256": "d683f825e67c28ca"
+  },
+  "req-hel-ext-quantifiers-17": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "width MUST be an Integer from 1 through 8; value MUST lie in [−2^8×width−1, 2^8×width−1], so a non-negative value may use the full unsigned width; each is a range error otherwise.",
+   "sha256": "3c1c078b240ad59e"
+  },
+  "req-hel-ext-quantifiers-18": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "bytes MUST be Bytes (a String is a type error) of length 1 through 32 (range error otherwise), so 128- and 256-bit decimal coefficients can be rendered.",
+   "sha256": "cef3d2417094d92d"
+  },
+  "req-hel-ext-quantifiers-19": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Every element MUST be an Integer (type error otherwise) that is a Unicode scalar value, in [0, 0x10FFFF] and outside the surrogates 0xD800–0xDFFF (range error otherwise).",
+   "sha256": "ed9468e87f111998"
+  },
+  "req-hel-ext-quantifiers-20": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "Every element and the separator MUST be Strings, a Bytes value being accepted and decoded as the core argument rules state; any other value is a type error.",
+   "sha256": "351731c95204c015"
+  },
+  "req-hel-ext-quantifiers-21": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "width MUST be an Integer from 1 through 32 (range error otherwise).",
+   "sha256": "a3d9014cf1b2a292"
+  },
+  "req-hel-ext-quantifiers-22": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "coefficient MUST be a String that matches -?(0|[1-9][0-9]*) exactly and is not -0 (an argument error otherwise: no +, no leading zeros, no whitespace); scale MUST be an Integer whose magnitude is at most 2^31−1 (range error otherwise).",
+   "sha256": "f66acd53614d1a59"
+  },
+  "req-hel-ext-quantifiers-23": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "All three MUST be array values (type error otherwise); every position MUST be an Integer (type error otherwise), non-negative, below the length of array and distinct from the others (range error otherwise); positions and replacements MUST have the same length (argument error otherwise).",
+   "sha256": "476deb5e755004cf"
   },
   "req-hel-ext-temporal-1": {
    "page": "specification/hel/index.html",
@@ -3616,8 +3826,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "Inside the predicate of all/any over struct elements instance is the element, so a processor MUST make that check against the element’s struct, not the struct holding the expression, wherever the description determines the element’s struct (the collection is a path of fields whose declared types are structs, none chosen at parse time); where it does not, a param.n the element’s struct lacks is an undefined name when it is evaluated.",
-   "sha256": "b02626e351a9181d"
+   "text": "Inside an element-scoped argument whose elements are struct nodes instance is the element, so a processor MUST make that check against the element’s struct, not the struct holding the expression, wherever the description determines the element’s struct (the collection is a path of fields whose declared types are structs, none chosen at parse time); where it does not, a param.n the element’s struct lacks is an undefined name when it is evaluated.",
+   "sha256": "1cc6553c4b00be82",
+   "history": [
+    "b02626e351a9181d"
+   ]
   },
   "req-hel-reserved-roots-4": {
    "page": "specification/hel/index.html",
@@ -3992,8 +4205,11 @@
    "cls": "hdl-compiler",
    "level": "MUST",
    "audience": "processor",
-   "text": "A conforming compiler MUST validate every synthesized expression against the HEL grammar and MUST report an ERROR diagnostic, at compile time, for: a bare identifier that does not resolve to a declared field; a forward reference, including a field's reference to itself outside @valid; self outside repeat until, @valid and a quantifier predicate; a stream.",
-   "sha256": "77289d455fcff381"
+   "text": "A conforming compiler MUST validate every synthesized expression against the HEL grammar and MUST report an ERROR diagnostic, at compile time, for: a bare identifier that does not resolve to a declared field; a forward reference, including a field's reference to itself outside @valid; self outside repeat until, @valid and an element-scoped argument; a stream.",
+   "sha256": "23f7036d04571b33",
+   "history": [
+    "77289d455fcff381"
+   ]
   },
   "req-hdl-expressions-2": {
    "page": "specification/hdl/index.html",
@@ -4271,8 +4487,11 @@
    "cls": "hdl-compiler",
    "level": "MUST",
    "audience": "processor",
-   "text": "Where instance is an element — the condition of a repeat until over struct elements, and the predicate of all/any over them — a compiler MUST resolve a bare name against the element struct’s parameters and let bindings (param.name, instance.name) and check param.x against the element struct’s parameters, not those of the struct holding the field, and MUST report an ERROR for a name that is only a parameter of the holding struct, which param never reaches there; the holding struct passes such a value to the element struct as an argument instead.",
-   "sha256": "61084c3a46696c2c"
+   "text": "Where instance is an element — the condition of a repeat until over struct elements, and an element-scoped argument (the predicate of all, any or countWhere, the element expression of sumOf or project) over them — a compiler MUST resolve a bare name against the element struct’s parameters and let bindings (param.name, instance.name) and check param.x against the element struct’s parameters, not those of the struct holding the field, and MUST report an ERROR for a name that is only a parameter of the holding struct, which param never reaches there; the holding struct passes such a value to the element struct as an argument instead.",
+   "sha256": "468d0db5754f4e82",
+   "history": [
+    "61084c3a46696c2c"
+   ]
   },
   "req-hdl-prefixes-1": {
    "page": "specification/hdl/index.html",

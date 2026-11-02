@@ -45,8 +45,6 @@ OPEN_CLASSES = {
     ),
 }
 LEGACY = {
-    HX + "bddo#integer": "bddo:BaseType values predate the policy; the base-type shape checks by class",
-    HX + "bddo#float": "bddo:BaseType values predate the policy; the base-type shape checks by class",
     HX + "dlv#rowMajor": "dlv:ChunkOrder values predate the policy; the Processing Model closes the set",
     HX + "dlv#columnMajor": "dlv:ChunkOrder values predate the policy; the Processing Model closes the set",
     HX + "dlv#morton": "dlv:ChunkOrder values predate the policy; the Processing Model closes the set",

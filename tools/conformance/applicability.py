@@ -16,18 +16,30 @@ def class_skip(manifest: Manifest, claims: Claims | None) -> str | None:
         return None
     cls = manifest["class"]
     name = " ".join(word.upper() if word == "hdl" else word.title() for word in cls.split("-"))
+    classes = claimed_classes(claims)
     if cls == "writer":
-        if "Physical Parser" in claims.get("classes", []) and "writer" in claimed_features(claims):
+        if "Physical Parser" in classes and "writer" in claimed_features(claims):
             return None
         return "the claims statement does not claim the Physical Parser writer feature"
-    return None if name in claims.get("classes", []) else f"the claims statement does not claim {name}"
+    return None if name in classes else f"the claims statement does not claim {name}"
+
+
+def _claimed(value: Any) -> set[str]:
+    """The names a claims member states as claimed: an array of names, or an object whose entries are claimed when
+    their value is true or {"claimed": true} -- the reading compare.compare_claims gives the same member."""
+    if isinstance(value, dict):
+        return {k for k, v in value.items() if (v.get("claimed") if isinstance(v, dict) else v)}
+    return set(value) if isinstance(value, list) else set()
+
+
+def claimed_classes(claims: Claims) -> set[str]:
+    """The conformance classes a claims statement claims. In the object form, a class listed as
+    {"claimed": false} is not claimed."""
+    return _claimed(claims.get("classes", []))
 
 
 def claimed_features(claims: Claims) -> set[str]:
-    value = claims.get("optionalFeatures", {})
-    if isinstance(value, dict):
-        return {k for k, v in value.items() if (v.get("claimed") if isinstance(v, dict) else v)}
-    return set(value)
+    return _claimed(claims.get("optionalFeatures", {}))
 
 
 def claimed_codecs(claims: Claims) -> set[str]:

@@ -4,8 +4,8 @@
   "sources": [
     {
       "id": "contract",
-      "url": "https://hexplain.io/ns/register/media-encoding#LzoRaw",
-      "description": "Literal contract vectors; scoped resource success cases additionally exercised by ByteResourceCodecTest. Compression literals follow their published raw wire grammars.",
+      "url": "https://www.oberhumer.com/opensource/lzo/",
+      "description": "Authored byte by byte from the definition and the LZO1X instruction grammar (a literal run, then the end-of-stream instruction 11 00 00); every input checked with aircompressor 2.0.3's LzoDecompressor, which yields the expected output or rejects what an error vector expects to fail.",
       "licence": "CC0-1.0"
     }
   ],
@@ -91,6 +91,42 @@
           },
           "expect": {
             "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "trailing-after-end",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "decodedSize": 5
+          },
+          "input": {
+            "hex": "1668656c6c6f11000000"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "length-mismatch",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "decodedSize": 6
+          },
+          "input": {
+            "hex": "1668656c6c6f110000"
+          },
+          "expect": {
+            "error": "Validation"
           }
         }
       ]

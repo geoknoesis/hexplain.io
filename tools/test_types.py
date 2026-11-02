@@ -21,8 +21,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SKIP_EXIT = 77
-#: Ceiling on ``-> Any`` return annotations: the number in use, so a new one fails the gate.
-ANY_RETURNS = 2
+#: Ceiling on ``-> Any`` return annotations: the number in use, so a new one fails the gate. All four are JSON
+#: readers (two corpus loaders, suite.strict_json and compare.read_actual_json) whose result is parsed JSON.
+ANY_RETURNS = 4
 FINDING = re.compile(r"^(?P<path>[^:\n]+\.py):(?P<line>\d+): error: (?P<message>.*)$", re.M)
 ANY_RETURN = re.compile(r"\)\s*->\s*Any\s*:")
 

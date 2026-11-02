@@ -1,6 +1,6 @@
 {
   "codec": "https://hexplain.io/ns/register/media-encoding#LZ4",
-  "suiteVersion": 1,
+  "suiteVersion": 2,
   "sources": [
     {
       "id": "reference-libraries",
@@ -11,7 +11,7 @@
     {
       "id": "hand-built",
       "url": "https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md",
-      "description": "Frames built byte by byte here from the LZ4 Frame Format Description 1.6.4 and RFC 8878 (Zstandard).",
+      "description": "Frames built byte by byte here from the LZ4 Frame Format Description 1.6.4 and RFC 8878 (Zstandard). Their blocks keep the LZ4 block format's end-of-block rules (the last five bytes are literals, and the last match starts at least twelve bytes before the end of the block); the overlapping-match frame (suite version 2) was checked with liblz4 1.9.4 through python-lz4, as a frame and as a bare block.",
       "licence": "CC0-1.0"
     },
     {
@@ -293,10 +293,10 @@
           "direction": "decode",
           "params": {},
           "input": {
-            "hex": "04224d186040820600000010610100106200000000"
+            "hex": "04224d186040820b000000246162020050636465666700000000"
           },
           "expect": {
-            "hex": "616161616162"
+            "hex": "616261626162616261626364656667"
           }
         }
       ]

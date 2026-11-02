@@ -9,6 +9,10 @@ earlier suites are kept beside the current one.
     python tools/conformance/report.py --complete report.json --revision <commit> --os "..." --jvm "..." --toolchain
 "..."
     python tools/conformance/report.py --path report.json        # the path the report is published at
+    python tools/conformance/report.py --record-suite <commit>   # record the current suite before it changes
+
+A report of an earlier suite stays published and is checked against that suite's entry in
+specification/conformance/reports/suite-digests.json (its case ids by class), never on its structure alone.
 """
 
 from __future__ import annotations
@@ -28,17 +32,71 @@ from pathlib import Path
 from typing import Any
 
 from applicability import skip_reason
-from suite import CATEGORIES, CLASSES, SUITE
+from suite import CATEGORIES, CLASSES, SUITE, strict_json
 
 FORMAT = "https://hexplain.io/specification/conformance/#implementation-reports"
 FORMAT_VERSION = 2
 STATUSES = ("PASS", "FAIL", "SKIP")
 REPORTS = SUITE / "reports"
+#: The register of past suites (record_suite): a historical report is checked against its suite's entry.
+HISTORY = REPORTS / "suite-digests.json"
+#: How far a run's date may lie ahead of the checking clock (clock skew between machines), in seconds.
+CLOCK_SKEW = 300
 #: A Git commit hash, or <system>:<identifier> for another version-control system.
 REVISION = re.compile(r"^(?:[0-9a-fA-F]{7,40}|[a-z][a-z0-9+.-]*:[^\s]+)$")
 ENVIRONMENT = ("os", "jvm", "toolchain")
 #: An implementation report, as parsed JSON.
 Report = dict[str, Any]
+
+
+def historical_suites(register: Path | str = HISTORY) -> dict[str, dict[str, str]]:
+    """{suite digest: {case id: class}} of every past suite the register records (reports/suite-digests.json). A
+    report of a suite that is no longer current is checked against its entry; a digest the register does not hold
+    is no suite this repository ever had."""
+    path = Path(register)
+    if not path.is_file():
+        return {}
+    data = strict_json(path.read_text(encoding="utf-8"))
+    return {
+        digest: {case: cls for cls, ids in entry["cases"].items() for case in ids}
+        for digest, entry in data.get("suites", {}).items()
+    }
+
+
+def record_suite(
+    register: Path | str = HISTORY,
+    suite: Path | str = SUITE,
+    commit: str | None = None,
+    digest: str | None = None,
+    note: str | None = None,
+) -> str:
+    """Record the suite at [suite] in the register: its digest (or [digest], for a suite whose files are not the ones
+    at [commit] -- [note] then says why) and its case ids by class, and the [commit] its files are read from. Run it
+    (report.py --record-suite) for the suite a published report names before a change to the suite makes that report
+    historical. Returns the digest recorded."""
+    path = Path(register)
+    data = strict_json(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    data.setdefault(
+        "note",
+        "The suites earlier implementation reports ran: digest -> the commit whose case files it was computed over "
+        "and its case ids by class. Written by tools/conformance/report.py --record-suite; report.check verifies a "
+        "historical report's coverage against its entry.",
+    )
+    by_class: dict[str, list[str]] = {}
+    for case, cls in suite_cases(suite).items():
+        by_class.setdefault(cls, []).append(case)
+    reproduced = digest is None
+    digest = digest or suite_digest(suite)
+    entry: dict[str, Any] = {"commit": commit, "reproduced": reproduced}
+    if note:
+        entry["note"] = note
+    entry["cases"] = {cls: sorted(ids) for cls, ids in sorted(by_class.items())}
+    suites: dict[str, dict[str, Any]] = data.setdefault("suites", {})
+    suites[digest] = entry
+    order = sorted(suites, key=lambda d: (str(suites[d].get("commit")), d))
+    data["suites"] = {d: suites[d] for d in order}
+    path.write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    return digest
 
 
 def suite_cases(suite: Path | str = SUITE) -> dict[str, str]:
@@ -168,9 +226,12 @@ def _run_problems(report: Report) -> list[str]:
             r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|\+00:00)", date
         ):
             raise ValueError("not an ISO 8601 UTC timestamp")
-        datetime.fromisoformat(date)
+        instant = datetime.fromisoformat(date.replace("Z", "+00:00"))
     except ValueError:
         problems.append("run.date must be a valid ISO 8601 UTC timestamp")
+    else:
+        if (instant - datetime.now(UTC)).total_seconds() > CLOCK_SKEW:
+            problems.append(f"run.date {date} is in the future: a report records a run that happened")
     return problems
 
 
@@ -227,8 +288,10 @@ def _structure_problems(report: Report) -> list[str]:
 
 
 def _skip_problems(result: dict[str, Any], claims: dict[str, Any], suite: Path | str) -> list[str]:
-    """A current-suite SKIP needs an applicability reason, not merely an absent command."""
-    if result.get("status") != "SKIP" or result.get("class") not in CLASSES:
+    """A current-suite result agrees with the applicability rules for the report's claims: a SKIP needs an
+    applicability reason, not merely an absent command, and a case the claims make inapplicable was not run, so it
+    cannot PASS or FAIL."""
+    if result.get("status") not in STATUSES or result.get("class") not in CLASSES:
         return []
     manifest = Path(suite) / result["class"] / result["case"] / "manifest.json"
     if not manifest.is_file():
@@ -238,18 +301,49 @@ def _skip_problems(result: dict[str, Any], claims: dict[str, Any], suite: Path |
         reason = skip_reason(json.loads(manifest.read_text(encoding="utf-8")), claims, "{withdraw} {cells}")
     except (TypeError, ValueError, AttributeError) as exc:
         return [f"{result['case']}: invalid applicability claims: {exc}"]
-    return [] if reason else [f"{result['case']}: an applicable case must PASS or FAIL, not SKIP"]
+    if result["status"] == "SKIP":
+        return [] if reason else [f"{result['case']}: an applicable case must PASS or FAIL, not SKIP"]
+    if reason:
+        return [f"{result['case']}: {result['status']} on a case the claims make inapplicable (it {reason})"]
+    return []
+
+
+def claims_problems(claims: object, suite: Path | str = SUITE) -> list[str]:
+    """The claims statement a report ran with, against the closed lists the suite's claims case states (its
+    expected-claims.json): every class, feature, codec and encoding claimed is one the Processing Model defines.
+    The case's own minimum (mustInclude, required) binds a processor running that case, not every report."""
+    if not isinstance(claims, dict):
+        return ["claims must be the implementation's claims statement"]
+    lists = sorted(Path(suite).glob("*/*/expected-claims.json"))
+    if not lists:
+        return []
+    import compare  # imported here: the comparator loads rdflib, which only this check needs
+
+    closed = strict_json(lists[0].read_text(encoding="utf-8"))
+    closed = {k: v for k, v in closed.items() if k not in ("mustInclude", "required")}
+    try:
+        return [f"claims: {p}" for p in compare.compare_claims(closed, claims)]
+    except (TypeError, AttributeError) as exc:
+        return [f"claims: the claims statement is malformed: {exc}"]
 
 
 def check(
-    report: Report, suite: Path | str = SUITE, path: Path | str | None = None, *, allow_historical: bool = False
+    report: Report,
+    suite: Path | str = SUITE,
+    path: Path | str | None = None,
+    *,
+    allow_historical: bool = False,
+    history: Path | str | None = None,
 ) -> list[str]:
     """The problems of a report, [] when it follows the format and covers the suite it names.
 
     [path], when given, is where the report is published (any path ending in reports/<implementation>/<file>.json):
     its file name must be the one the report's names and suite digest require.
-    Historical coverage requires supplying that suite. allow_historical=True checks only the
-    structure of superseded reports for archive retention; it does not verify their coverage.
+    allow_historical=True also accepts a report of an earlier suite, but only of one the register of past suites
+    records ([history], reports/suite-digests.json): its coverage and classes are checked against that suite's case
+    ids. A digest that is neither the supplied suite's nor a recorded one is never accepted. The applicability of
+    each result and the claims statement's closed lists are checked against the supplied suite only, the one whose
+    manifests are on disk.
     """
     problems = _structure_problems(report)
     if problems:
@@ -264,15 +358,14 @@ def check(
         problems.append("implementation must name the implementation and its version")
     if not isinstance(report.get("claims"), dict):
         problems.append("claims must be the implementation's claims statement")
-    current = report.get("suite", {}).get("digest") == suite_digest(suite)
+    current = report["suite"]["digest"] == suite_digest(suite)
     problems += _version_problems(report, historical=not current)
-    cases = suite_cases(suite)
-    if not current and not allow_historical:
-        problems.append("suite digest differs from the supplied suite; historical coverage is unverified")
-    if current:
+    cases, named = _named_suite(report, suite, current, allow_historical, history)
+    problems += named
+    if cases is not None:
         problems += _coverage_problems(report, cases)
     for r in report.get("results", []):
-        problems += _result_problems(r, cases if current else None)
+        problems += _result_problems(r, cases)
         if current:
             problems += _skip_problems(r, report["claims"], suite)
     counts = report.get("counts", {})
@@ -286,6 +379,25 @@ def check(
         if not got.endswith(want):
             problems.append(f"published at {Path(path).name}, but the report's names and suite digest require {want}")
     return problems
+
+
+def _named_suite(
+    report: Report, suite: Path | str, current: bool, allow_historical: bool, history: Path | str | None
+) -> tuple[dict[str, str] | None, list[str]]:
+    """({case id: class} of the suite the report names, or None when it cannot be known; the problems found): the
+    supplied suite, whose claims lists the report's claims are checked against too, or a recorded past suite."""
+    if current:
+        return suite_cases(suite), claims_problems(report["claims"], suite)
+    if not allow_historical:
+        return None, ["suite digest differs from the supplied suite; a new report is of the current suite"]
+    digest = report["suite"]["digest"]
+    cases = historical_suites(HISTORY if history is None else history).get(digest)
+    if cases is None:
+        return None, [
+            f"suite digest {digest[:12]} is neither the supplied suite's nor a past suite's recorded in "
+            f"{HISTORY.name}; the report's coverage cannot be verified"
+        ]
+    return cases, []
 
 
 def _coverage_problems(report: Report, cases: dict[str, str]) -> list[str]:
@@ -353,7 +465,7 @@ def write_validated(path: Path, report: Report, suite: Path | str = SUITE) -> li
 def complete_file(path: Path, revision: str, environment: dict[str, str], suite: Path | str) -> int:
     """Stage metadata in memory and preserve the original bytes unless the complete report validates."""
     try:
-        candidate = json.loads(path.read_text(encoding="utf-8"))
+        candidate = strict_json(path.read_text(encoding="utf-8"))
         complete(candidate, revision, environment)
         problems = write_validated(path, candidate, suite)
     except (OSError, ValueError, TypeError, AttributeError) as exc:
@@ -364,7 +476,7 @@ def complete_file(path: Path, revision: str, environment: dict[str, str], suite:
 
 def published() -> list[tuple[Path, Report]]:
     """Every published report, as (path, report)."""
-    return [(p, json.loads(p.read_text(encoding="utf-8"))) for p in sorted(REPORTS.glob("*/*.json"))]
+    return [(p, strict_json(p.read_text(encoding="utf-8"))) for p in sorted(REPORTS.glob("*/*.json"))]
 
 
 def main(argv: list[str]) -> int:
@@ -376,9 +488,18 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--os")
     ap.add_argument("--jvm", default="none")
     ap.add_argument("--toolchain")
+    ap.add_argument(
+        "--record-suite",
+        metavar="COMMIT",
+        help="record the suite at --suite (checked out at COMMIT) in reports/suite-digests.json, so the reports of it "
+        "stay verifiable once the suite changes",
+    )
     args = ap.parse_args(argv)
+    if args.record_suite:
+        print(f"recorded suite {record_suite(HISTORY, Path(args.suite), args.record_suite)[:12]} in {HISTORY.name}")
+        return 0
     if args.path:
-        print(report_path(json.loads(Path(args.path).read_text(encoding="utf-8"))))
+        print(report_path(strict_json(Path(args.path).read_text(encoding="utf-8"))))
         return 0
     if not args.complete:
         ap.error("--complete FILE or --path FILE")

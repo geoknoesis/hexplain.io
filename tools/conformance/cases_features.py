@@ -227,7 +227,7 @@ for name, (hdl, label, width, *_rest, check) in crc.NAMED.items():
         f"bddo:{name} is {label}",
         f"The checksum of the ASCII bytes '123456789' is the catalogue check value {check:#x}, stored big-endian in a "
         f"{width}-bit field.",
-        [CHECK, "req-bddo-checksum-algorithms-1"],
+        [CHECK],
         ["algorithm", "bddo/index.html#checksum-algorithms"],
         f"""
        ex:Root a bddo:Struct ; bddo:hasField ( ex:text ex:sum ) .

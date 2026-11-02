@@ -123,7 +123,27 @@ def finding_regressions() -> None:
         assert finding_problems(bad, True), bad
 
 
+def tracked_regressions() -> None:
+    """Only files git tracks are packaged: an untracked file left in a packaged directory changes nothing."""
+    from unittest.mock import patch
+
+    import _review_candidate
+
+    with tempfile.TemporaryDirectory() as scratch:
+        root = Path(scratch)
+        (root / "tools/sub").mkdir(parents=True)
+        for name in ("tools/kept.py", "tools/sub/nested.py", "tools/notes.txt", "tools/stray.py"):
+            (root / name).write_text("x\n", encoding="utf-8", newline="\n")
+        subprocess.run(["git", "init", "-q", str(root)], check=True)
+        add = ["git", "-C", str(root), "add", "tools/kept.py", "tools/sub/nested.py", "tools/notes.txt"]
+        subprocess.run(add, check=True)
+        with patch.object(_review_candidate, "ROOT", root):
+            assert _review_candidate.tracked_files("tools", "*.py") == {"tools/kept.py", "tools/sub/nested.py"}
+            assert _review_candidate.tracked_files("tools", recursive=False) == {"tools/kept.py", "tools/notes.txt"}
+
+
 def main() -> int:
+    tracked_regressions()
     gates = json.loads((Path(__file__).parent / "gates.json").read_text(encoding="utf-8"))["gates"]
     budget = next(gate["timeout"] for gate in gates if gate["name"] == "test_review_candidate")
     deadline = time.monotonic() + budget

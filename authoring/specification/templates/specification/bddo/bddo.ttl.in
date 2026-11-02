@@ -52,9 +52,6 @@
 # fields (by the simple key of their IRI) and read in HEL through the root `param`.
 :Parameter a owl:Class ; rdfs:label "Parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "One formal parameter of a parameterised Struct, a member of its bddo:hasParameter list. Its name is the simple key of its IRI (the local name after the last '.'), as for a Field; HEL reads the value the caller supplied as param.<name>. A parameter consumes no bytes, is not a field of the parsed tree and is never lifted."@en .
-# A named intermediate value, computed once where it stands in the member list. It is a member
-# of hasField (so its position, and therefore what it may read and what may read it, is the
-# list order) but not a field: it consumes no bytes and is neither in the parsed tree nor lifted.
 :ParameterType a owl:Class ; rdfs:label "Parameter Type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "The kind of HEL value a Parameter accepts: one of the scalar value types, an array node or a struct node."@en .
 :IntegerParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Integer parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
@@ -68,7 +65,7 @@
 :BooleanParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Boolean parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "The parameter accepts a HEL Boolean."@en .
 :ArrayParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Array parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
-    rdfs:comment "The parameter accepts a HEL array node. The existing node is referenced without copying, mutation, byte consumption or semantic lifting through the parameter."@en .
+    rdfs:comment "The parameter accepts a HEL array value: an array node or a computed array. The existing value is referenced without copying, mutation, byte consumption or semantic lifting through the parameter."@en .
 :NodeParameter a owl:NamedIndividual, :ParameterType ; rdfs:label "Struct-node parameter"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "The parameter accepts a HEL struct node. It preserves the referenced node's identity and fields; it does not reparent that node or introduce another physical occurrence."@en .
 # Where a session-keeping codec's state lives (hexplain:codecSessionScope).
@@ -78,6 +75,9 @@
     rdfs:comment "One session per encoding step, shared by every decode of the field within one instance of the struct that declares it (the strips of one TIFF image); the next instance starts a new one."@en .
 :PerLayout a owl:NamedIndividual, :SessionScope ; rdfs:label "per layout"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "One session per encoding step for the field across the whole parse, shared by every instance of its struct and, for a field laid out as a data layout, by all of the layout's chunks."@en .
+# A named intermediate value, computed once where it stands in the member list. It is a member
+# of hasField (so its position, and therefore what it may read and what may read it, is the
+# list order) but not a field: it consumes no bytes and is neither in the parsed tree nor lifted.
 :LocalBinding a owl:Class ; rdfs:label "Local Binding"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "A named HEL value local to one Struct instance: a member of the struct's bddo:hasField list whose bddo:localExpression is evaluated when its position in the list is reached, in the struct's context. Later members, and the struct's own size, count, offset and presence expressions evaluated after it, read it by bare name or instance.<name>. It consumes no bytes, is not part of the parsed tree and is never lifted. Its name is the simple key of its IRI, as for a Field."@en .
 # A struct, a field and a data type are different kinds of thing: a field's value may be typed
@@ -429,7 +429,7 @@
 :hasEndianness a owl:ObjectProperty ; rdfs:label "has endianness (deprecated)"@en ; rdfs:range :Endianness ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     owl:deprecated true ; dcterms:isReplacedBy :endianness ;
-    rdfs:comment "Deprecated pre-release spelling of bddo:endianness, with the same meaning. A processor reading a description that states both uses bddo:endianness."@en .
+    rdfs:comment "Deprecated pre-release spelling of bddo:endianness, with the same meaning and the same constraints (bddo:DeprecatedEndiannessShape): at most one value, never beside bddo:hasConditionalEndianness, and, where both are stated, equal to bddo:endianness, which is what a processor reads. Its use is reported at sh:Warning."@en .
 :usesStruct a owl:ObjectProperty ; rdfs:label "uses struct (deprecated)"@en ; rdfs:range :Struct ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     owl:deprecated true ;
@@ -438,11 +438,11 @@
 :integer a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Integer (deprecated)"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     owl:deprecated true ; dcterms:isReplacedBy :baseInteger ;
-    rdfs:comment "Deprecated pre-release name of bddo:baseInteger, with the same meaning."@en .
+    rdfs:comment "Deprecated pre-release name of bddo:baseInteger, with the same meaning. Still accepted as a bddo:baseType, and reported at sh:Warning (bddo:DeprecatedBaseTypeShape)."@en .
 :float a owl:NamedIndividual, :BaseType ; rdfs:label "Base type Float (deprecated)"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     owl:deprecated true ; dcterms:isReplacedBy :baseFloat ;
-    rdfs:comment "Deprecated pre-release name of bddo:baseFloat, with the same meaning."@en .
+    rdfs:comment "Deprecated pre-release name of bddo:baseFloat, with the same meaning. Still accepted as a bddo:baseType, and reported at sh:Warning (bddo:DeprecatedBaseTypeShape)."@en .
 
 # ---------- Enumerated individuals (typed with their controlled-vocabulary class) ----------
 :BigEndian a owl:NamedIndividual, :Endianness ; rdfs:label "Big Endian"@en .
@@ -890,16 +890,17 @@ bddo:AlignmentOriginShape a sh:NodeShape ; rdfs:label "Alignment origin shape"@e
         sh:message "bddo:alignmentOrigin takes at most one value; each is either bddo:streamOrigin or bddo:structOrigin." ] .
 
 # A derived (zero-byte) field computes its value from an expression and MUST NOT
-# also consume bytes via a data type, sizing, offset, bit-length or enumeration, nor move the
+# also consume bytes via a data type (fixed, conditional, dispatched or instantiated with
+# arguments), sizing, offset, bit-length or enumeration, nor move the
 # cursor with an alignment or a padding: it has no start to align and no end to pad.
 bddo:DerivedFieldShape a sh:NodeShape ;
     sh:targetClass bddo:Field ;
-    sh:sparql [ sh:message "A bddo:valueFromExpression (derived) field must not also declare a byte-consuming or byte-positioning mechanism (dataType, hasConditionalDataType, size*, terminator, bitLength, atOffset*, enumeration, alignment or padTo): it occupies no bytes to type, size, place, align or pad." ;
+    sh:sparql [ sh:message "A bddo:valueFromExpression (derived) field must not also declare a byte-consuming or byte-positioning mechanism (dataType, hasConditionalDataType, hasDispatchTable, hasArgument, size*, terminator, bitLength, atOffset*, enumeration, alignment or padTo): it occupies no bytes to type, size, place, align or pad." ;
         sh:prefixes bddo:_prefixes ;
         sh:select """SELECT $this WHERE {
             $this bddo:valueFromExpression ?e .
             $this ?p ?v .
-            FILTER(?p IN (bddo:dataType, bddo:hasConditionalDataType, bddo:size,
+            FILTER(?p IN (bddo:dataType, bddo:hasConditionalDataType, bddo:hasDispatchTable, bddo:hasArgument, bddo:size,
                           bddo:sizeFromField, bddo:sizeFromExpression, bddo:sizeToEndOfStream,
                           bddo:terminator, bddo:bitLength, bddo:atOffset, bddo:atOffsetFromField,
                           bddo:atOffsetFromExpression, bddo:enumeration, bddo:alignment, bddo:padTo))
@@ -907,9 +908,11 @@ bddo:DerivedFieldShape a sh:NodeShape ;
 
 bddo:DataTypeShape a sh:NodeShape ;
     sh:targetClass bddo:DataType ;
+    # The deprecated pre-release names bddo:integer and bddo:float are still read, and reported at
+    # sh:Warning by bddo:DeprecatedBaseTypeShape.
     sh:property [ sh:path bddo:baseType ; sh:maxCount 1 ;
-        sh:in ( bddo:baseInteger bddo:baseFloat bddo:baseString bddo:baseBytes ) ;
-        sh:message "bddo:baseType takes at most one value; each is one of bddo:baseInteger, bddo:baseFloat, bddo:baseString or bddo:baseBytes." ] ;
+        sh:in ( bddo:baseInteger bddo:baseFloat bddo:baseString bddo:baseBytes bddo:integer bddo:float ) ;
+        sh:message "bddo:baseType takes at most one value; each is one of bddo:baseInteger, bddo:baseFloat, bddo:baseString or bddo:baseBytes (or the deprecated bddo:integer or bddo:float)." ] ;
     sh:property [ sh:path bddo:bitWidth ; sh:minExclusive 0 ; sh:maxCount 1 ;
         sh:message "bddo:bitWidth takes at most one value; each is a number greater than 0." ] ;
     sh:property [ sh:path bddo:isSigned ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
@@ -931,23 +934,28 @@ bddo:DataTypeShape a sh:NodeShape ;
 bddo:NumericRepresentationShape a sh:NodeShape ;
     rdfs:comment "bddo:floatFormat applies to a floating-point Field or DataType (bddo:baseType bddo:baseFloat); bddo:fixedPointScale and bddo:bcd apply to an integer one (bddo:baseType bddo:baseInteger). Also, a BCD field is not scaled: bddo:bcd true and bddo:fixedPointScale are mutually exclusive, because the digits spell a decimal number, not a binary one."@en ;
     sh:targetSubjectsOf bddo:floatFormat , bddo:fixedPointScale , bddo:bcd ;
-    sh:message "bddo:bcd true and bddo:fixedPointScale are mutually exclusive: BCD digits spell a decimal number, which no binary scale applies to." ;
-    sh:not [ sh:and ( [ sh:property [ sh:path bddo:bcd ; sh:hasValue true ] ]
-                      [ sh:property [ sh:path bddo:fixedPointScale ; sh:minCount 1 ] ] ) ] ;
+    # Each rule is its own SPARQL constraint with its own message, so a result never carries the
+    # message of a different rule of the same shape.
+    sh:sparql [ sh:message "bddo:bcd true and bddo:fixedPointScale are mutually exclusive: BCD digits spell a decimal number, which no binary scale applies to." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:bcd true ; bddo:fixedPointScale ?scale .
+        }""" ] ;
     sh:sparql [ sh:message "bddo:floatFormat applies to a floating-point Field or DataType; {?base} is not bddo:baseFloat." ;
         sh:prefixes bddo:_prefixes ;
         sh:select """SELECT $this ?base WHERE {
             $this bddo:floatFormat ?f .
             { $this bddo:dataType/bddo:baseType ?base } UNION { $this bddo:baseType ?base }
-            FILTER(?base != bddo:baseFloat)
+            FILTER(?base NOT IN (bddo:baseFloat, bddo:float))
         }""" ] ;
+    # bddo:bcd false is the default and states nothing, so only bddo:bcd true needs an integer.
     sh:sparql [ sh:message "{?p} applies to an integer Field or DataType; {?base} is not bddo:baseInteger." ;
         sh:prefixes bddo:_prefixes ;
         sh:select """SELECT $this ?p ?base WHERE {
-            $this ?p ?v .
-            FILTER(?p IN (bddo:fixedPointScale, bddo:bcd))
+            { $this bddo:fixedPointScale ?v . BIND(bddo:fixedPointScale AS ?p) }
+            UNION { $this bddo:bcd true . BIND(bddo:bcd AS ?p) }
             { $this bddo:dataType/bddo:baseType ?base } UNION { $this bddo:baseType ?base }
-            FILTER(?base != bddo:baseInteger)
+            FILTER(?base NOT IN (bddo:baseInteger, bddo:integer))
         }""" ] .
 
 # A float format is a layout of a particular number of bits. Checked where the width is known
@@ -981,15 +989,53 @@ bddo:DeprecatedVaxFWidthShape a sh:NodeShape ; rdfs:label "Deprecated VAX F widt
             FILTER(?width = 64)
         }""" ] .
 
+# The deprecated pre-release terms keep their meaning and are reported, so that descriptions migrate.
+bddo:DeprecatedBaseTypeShape a sh:NodeShape ; rdfs:label "Deprecated base type shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Advisory (sh:Warning): bddo:integer and bddo:float are the deprecated pre-release names of bddo:baseInteger and bddo:baseFloat. They are read with the same meaning and do not make the description invalid."@en ;
+    sh:targetSubjectsOf bddo:baseType ;
+    sh:severity sh:Warning ;
+    sh:sparql [ sh:message "{?base} is a deprecated base type name: it is read as {?replacement}; name {?replacement} instead." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this ?base ?replacement WHERE {
+            $this bddo:baseType ?base .
+            FILTER(?base IN (bddo:integer, bddo:float))
+            BIND(IF(?base = bddo:integer, bddo:baseInteger, bddo:baseFloat) AS ?replacement)
+        }""" ] .
+
+bddo:DeprecatedEndiannessShape a sh:NodeShape ; rdfs:label "Deprecated endianness shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "bddo:hasEndianness, the deprecated pre-release spelling of bddo:endianness, is constrained as bddo:endianness is: at most one value, bddo:BigEndian or bddo:LittleEndian, never beside a different bddo:endianness (a processor would read bddo:endianness and silently drop it), and never beside bddo:hasConditionalEndianness (bddo:ConditionalEndiannessShape). Its use is reported at sh:Warning by bddo:DeprecatedEndiannessUseShape."@en ;
+    sh:targetSubjectsOf bddo:hasEndianness ;
+    sh:property [ sh:path bddo:hasEndianness ; sh:maxCount 1 ; sh:in ( bddo:BigEndian bddo:LittleEndian ) ;
+        sh:message "bddo:hasEndianness (deprecated; use bddo:endianness) takes at most one value; each is either bddo:BigEndian or bddo:LittleEndian." ] ;
+    sh:sparql [ sh:message "bddo:hasEndianness {?old} contradicts bddo:endianness {?new}: a processor reads bddo:endianness and ignores the deprecated spelling." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this ?old ?new WHERE {
+            $this bddo:hasEndianness ?old ; bddo:endianness ?new .
+            FILTER(!sameTerm(?old, ?new))
+        }""" ] .
+
+bddo:DeprecatedEndiannessUseShape a sh:NodeShape ; rdfs:label "Deprecated endianness use shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "Advisory (sh:Warning): bddo:hasEndianness is the deprecated pre-release spelling of bddo:endianness. It is read with the same meaning and does not make the description invalid."@en ;
+    sh:targetSubjectsOf bddo:hasEndianness, bddo:endianness ;
+    sh:severity sh:Warning ;
+    sh:sparql [ sh:message "bddo:hasEndianness is deprecated: it is read as bddo:endianness; name bddo:endianness instead." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE { $this bddo:hasEndianness ?e . }""" ] .
+
 # BCD is two decimal digits in each whole byte of an unsigned binary integer; nothing else has
 # bytes to read that way. The flag false is the default and constrains nothing.
 bddo:BcdShape a sh:NodeShape ; rdfs:label "BCD shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
     rdfs:comment "bddo:bcd true is stated on an unsigned fixed-width binary integer Field or DataType: not beside bddo:bitLength, not on a variable-length integer or a number written as text, and not on a signed type."@en ;
     sh:targetSubjectsOf bddo:bcd ;
-    sh:message "bddo:bcd true is not combined with bddo:bitLength: BCD packs two decimal digits into each whole byte." ;
-    sh:not [ sh:and ( [ sh:property [ sh:path bddo:bcd ; sh:hasValue true ] ]
-                      [ sh:property [ sh:path bddo:bitLength ; sh:minCount 1 ] ] ) ] ;
+    sh:sparql [ sh:message "bddo:bcd true is not combined with bddo:bitLength: BCD packs two decimal digits into each whole byte." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:bcd true ; bddo:bitLength ?bits .
+        }""" ] ;
     sh:sparql [ sh:message "bddo:bcd true does not apply to {?type}: a variable-length integer or a number written as text is not a sequence of BCD bytes." ;
         sh:prefixes bddo:_prefixes ;
         sh:select """SELECT $this ?type WHERE {
@@ -1251,19 +1297,48 @@ bddo:ArgumentListShape a sh:NodeShape ;
         sh:message "bddo:hasArgument must point to a single rdf:List." ] ;
     sh:property [ sh:path ( bddo:hasArgument [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
         sh:node bddo:HelExpressionValueShape ;
-        sh:message "Every member of a hasArgument list is a HEL expression, an xsd:string or bddo:HelExpression literal." ] .
+        sh:message "Every member of a hasArgument list is a HEL expression, an xsd:string or bddo:HelExpression literal." ] ;
+    # Arguments instantiate the parameterised struct the same node names as its type. A node that
+    # names no such struct -- a primitive type, a struct without parameters, or no type of its own,
+    # as a field typed only by its hasConditionalDataType rules -- has nothing to pass them to.
+    sh:sparql [ sh:message "bddo:hasArgument is stated, but the type this node names (by bddo:dataType, bddo:ruleDataType or bddo:armDataType) is not a struct that declares parameters: arguments are supplied only where a parameterised bddo:Struct is named." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this bddo:hasArgument ?args .
+            FILTER NOT EXISTS {
+                $this ?tp ?s .
+                FILTER(?tp IN (bddo:dataType, bddo:ruleDataType, bddo:armDataType))
+                ?s bddo:hasParameter/rdf:rest*/rdf:first ?p .
+            }
+        }""" ] .
+
+# A dispatch default is named without arguments, so it cannot instantiate a parameterised struct.
+bddo:DispatchDefaultShape a sh:NodeShape ; rdfs:label "Dispatch default shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/bddo> ;
+    rdfs:comment "The bddo:dispatchDefault of a DispatchTable never names a struct that declares parameters: a default has nowhere to state bddo:hasArgument, so such a struct could not be instantiated. A parameterised struct is selected by a DispatchArm, whose bddo:hasArgument supplies the arguments."@en ;
+    sh:targetSubjectsOf bddo:dispatchDefault ;
+    sh:sparql [ sh:message "bddo:dispatchDefault names {?s}, a struct that declares parameters; a default has nowhere to state bddo:hasArgument, so name it from a bddo:DispatchArm with arguments instead." ;
+        sh:prefixes bddo:_prefixes ;
+        sh:select """SELECT $this ?s WHERE {
+            $this bddo:dispatchDefault ?s .
+            ?s bddo:hasParameter/rdf:rest*/rdf:first ?p .
+        }""" ] .
 
 # Arity: every place that names a struct as a type supplies one argument per parameter. List
-# NODES are counted, not members, so two equal argument strings still count twice.
+# NODES are counted, not members, so two equal argument strings still count twice. Any kind of
+# struct is checked: the container subclasses by name, since a data graph need not carry their
+# rdfs:subClassOf axioms, and any other subclass of bddo:Struct by its axioms.
 bddo:ArgumentArityShape a sh:NodeShape ;
-    rdfs:comment "Wherever a bddo:Struct that declares parameters is named as a type (by bddo:dataType, bddo:ruleDataType or bddo:armDataType), the naming node supplies exactly one bddo:hasArgument list member per parameter. List nodes are counted, so two equal argument strings count twice."@en ;
+    rdfs:comment "Wherever a bddo:Struct (or a struct of any of its subclasses) that declares parameters is named as a type (by bddo:dataType, bddo:ruleDataType or bddo:armDataType), the naming node supplies exactly one bddo:hasArgument list member per parameter. List nodes are counted, so two equal argument strings count twice."@en ;
     sh:targetSubjectsOf bddo:dataType , bddo:ruleDataType , bddo:armDataType ;
     sh:sparql [ sh:message "{?s} declares {?np} parameter(s), but {?na} argument(s) are supplied for it." ;
         sh:prefixes bddo:_prefixes ;
         sh:select """SELECT $this ?s (COUNT(DISTINCT ?pn) AS ?np) (COUNT(DISTINCT ?an) AS ?na) WHERE {
             $this ?tp ?s .
             FILTER(?tp IN (bddo:dataType, bddo:ruleDataType, bddo:armDataType))
-            ?s a bddo:Struct .
+            ?s a ?kind .
+            FILTER(?kind IN (bddo:Struct, bddo:DelimitedRecords, bddo:KeyValueHeader, bddo:DelimitedTable,
+                             bddo:TreeDocument) || EXISTS { ?kind rdfs:subClassOf+ bddo:Struct })
             OPTIONAL { ?s bddo:hasParameter/rdf:rest* ?pn . FILTER(?pn != rdf:nil) }
             OPTIONAL { $this bddo:hasArgument/rdf:rest* ?an . FILTER(?an != rdf:nil) }
         } GROUP BY $this ?s HAVING (COUNT(DISTINCT ?pn) != COUNT(DISTINCT ?an))""" ] .
@@ -1345,6 +1420,8 @@ bddo:ConditionalEndiannessShape a sh:NodeShape ;
         sh:message "bddo:hasConditionalEndianness must point to a single rdf:List." ] ;
     sh:property [ sh:path bddo:endianness ; sh:maxCount 0 ;
         sh:message "bddo:endianness and bddo:hasConditionalEndianness are mutually exclusive." ] ;
+    sh:property [ sh:path bddo:hasEndianness ; sh:maxCount 0 ;
+        sh:message "bddo:hasEndianness (the deprecated spelling of bddo:endianness) and bddo:hasConditionalEndianness are mutually exclusive." ] ;
     sh:property [ sh:path ( bddo:hasConditionalEndianness [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
         sh:class bddo:EndiannessRule ;
         sh:message "Every member of a hasConditionalEndianness list must be a bddo:EndiannessRule." ] .
@@ -1414,6 +1491,8 @@ bddo:TreeDocumentShape a sh:NodeShape ;
             sh:property {{constraint:pattern_141}} ;
             sh:property {{constraint:pattern_144}} ;
             sh:property [ sh:path bddo:atOffset ; sh:maxCount 0 ] ;
+            sh:property [ sh:path bddo:atOffsetFromField ; sh:maxCount 0 ] ;
+            sh:property [ sh:path bddo:atOffsetFromExpression ; sh:maxCount 0 ] ;
             sh:message "Every field of a bddo:TreeDocument is located by exactly one bddo:nodePath, and not by a key, a key path or a byte offset." ] ;
         sh:message "Every field of a bddo:TreeDocument is located by exactly one bddo:nodePath, and not by a key, a key path or a byte offset." ] ;
     # Namespaces bind prefixes in XPath. JSON Pointer has no prefixes to bind, so a binding on a
