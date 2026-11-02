@@ -1,0 +1,469 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#CCITTModifiedHuffman",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "gdal-3.13.3",
+      "url": "https://github.com/OSGeo/gdal/tree/v3.13.3",
+      "description": "Pixels decoded by GDAL 3.13.3 (container ghcr.io/osgeo/gdal@sha256:2dd0f81ef927ff4c3d4dbe4f73c029dc86d4073974c0564f8e196f6e1412e2e0) from GDAL autotest files at commit c8b4c45fca87d3e6fbf80e7a7898b8a661ad0edc and from synthetic files written by hexplain-tools tests/gdal/codec_vectors.py; imported by tools/codecs/_import_gdal_vectors.py from core/src/test/resources/gdal-codec-vectors.tsv, gdal-codec-refusals.tsv and gdal-color-*.tsv.",
+      "licence": "GDAL autotest data: MIT/X (GDAL LICENSE.TXT and per-file notices); synthetic files CC0-1.0"
+    },
+    {
+      "id": "reference-engine",
+      "url": "https://github.com/geoknoesis/hexplain-tools",
+      "description": "Inputs derived here (tools/codecs/_complete_vectors.py) from this suite's own vectors: truncations, single-byte corruptions, lowered output limits and parameter settings; the category or output of each was confirmed with hexplain-tools 97c952f24508 (hexplain-codec vector) before it was recorded, since no independent implementation of this codec was at hand.",
+      "licence": "inputs as the vectors they derive from; expectations CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "ccitt-rle-tif",
+      "session": true,
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 16,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "35c803cc1fdd407f7a803503c1f0bf6180cc343a1d0e9d0e87ed0f9480ef887874fc2787438368fd13b9e3c5209e1a1d0e8763a1e7ca40a7043c3a1d0f43806d350d03e3a1d3a743a743b1c34b00473a10f8f8e43a29205851bc3e3ee870d70fc43e3a1f743a743e58d3b4e874fc0a3e50d00f30"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 16,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "abd8e03503c1f0d00f30199980119900d00f3007a50009ad803503c1f057ac8027ac00d00f3031920002d540d00f303503c1f0"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 5,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "1bd480d00f3013c28014c140d00f30"
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ],
+      "expectAll": {
+        "sha256": "b4ef51e9f6df7d1a9cac97af515d17313d3423b879c9d383c958f21b0f1cb356",
+        "unpack": {
+          "bitsPerSample": 1,
+          "width": 83
+        }
+      },
+      "source": "gdal-3.13.3"
+    },
+    {
+      "id": "ccitt-rle-wide-tif",
+      "session": true,
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 2600,
+            "rows": 9,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "35c078480f301f01f1607c07c5403501f0d3c0bc07c4c0cc327510edd00f1900ec8578fba7c7301d5903ccff487c7578ead00f25809e1a1d3e3ae5180f2580"
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ],
+      "expectAll": {
+        "sha256": "72b16c741e7f7c93af979a6be792b2606fe017a210354c011f01c3cb08cb3e7f",
+        "unpack": {
+          "bitsPerSample": 1,
+          "width": 2600
+        }
+      },
+      "source": "gdal-3.13.3"
+    },
+    {
+      "id": "ccitt-rle-corrupt1-tif",
+      "session": true,
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 16,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "35c803cc1fdd407f7a803503c1f0bf6180cc343a1d0e9d0e87ed0f9480ef887874fc2787438368fd13b9e3c5209e1a1d0e8763a1e7ca40a7043c3a1d0f43806d350d03e3a1d3a743a743b1c34b00473a10f8f8e43a29205851bc3e3ee870d70fc43e3a1f743a743e58d3b4e874fc0a3e50d00f30"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 16,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "abd8e03503c1f0d00f30199980119900d00f3007a50009ad703503c1f057ac8027ac00d00f3031920002d540d00f303503c1f0"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 5,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "1bd480d00f3013c28014c120d00f30"
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ],
+      "expectAll": {
+        "sha256": "b4ef51e9f6df7d1a9cac97af515d17313d3423b879c9d383c958f21b0f1cb356",
+        "unpack": {
+          "bitsPerSample": 1,
+          "width": 83
+        }
+      },
+      "source": "gdal-3.13.3"
+    },
+    {
+      "id": "ccitt-rle-corrupt2-tif",
+      "session": true,
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 16,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "35c803cc1fdd407f7a803503c1f0bf6180cc343a1d0e9d0e87ed0f9480ef887874fc2787438368fd13b9e3c5209e1a1d0e8763a1e7ca40a7043c3a1d0f43806d350d03e3a1d3a743a743b1c34b00473a10f8f8e43a29205851bc3e3ee870d70fc43e3a1f743a743e58d3b4e874fc0a3e50d00f30"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 16,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "abd8e03503c1f0d00f30199980119900d00f3007a50009ad803503c1f057ac8027cd00d00f3031920002d540d00f303503c1f0"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 5,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "1bc180d00f3036c28014c140d00f30"
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ],
+      "expectAll": {
+        "sha256": "5e37e690363efc473be17e9163369972cf558be831e0a388c7cd3efd5e2901f2",
+        "unpack": {
+          "bitsPerSample": 1,
+          "width": 83
+        }
+      },
+      "source": "gdal-3.13.3"
+    },
+    {
+      "id": "ccitt-rle-corrupt3-tif",
+      "session": true,
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 16,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "35c803cc1fdd407f7a803503c1f0bf6180cc343a1d0e9d0e87ed0f9480ef887874fc2787438368fd13b9e3c5209e1a1d0e8763a1e7ca40a7043c3a1d0f43806d350d03e3a1d3a743a743b1c34b00473a10f8f8e43a29255851bc453ee870d70fc43e3a1f743a743e58d3b4e874fc0a3e49d00f30"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 16,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "abd8e03503c1f0d00f30199980119900d00f3007a50009ad803503c1f057ac8027ac00d00f3031920002d540d00f303503c1f0"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 5,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "1bd480d00f3013c28014c140d00f61"
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ],
+      "expectAll": {
+        "sha256": "d806560c452e304d2bcebaf3455bb1c7e9797afa1f5f1c9d5fee8b506dea1d02",
+        "unpack": {
+          "bitsPerSample": 1,
+          "width": 83
+        }
+      },
+      "source": "gdal-3.13.3"
+    },
+    {
+      "id": "ccitt-rle-wide-corrupt0-tif",
+      "session": true,
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 2600,
+            "rows": 9,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "35c078480f301f01f1607c07c540a601f0d3c0bc07c4c0cc327510edd00f1900ec8578fba7c7301d5903ccff487c7578ead00f25809e1a1d3e3ae5180f2580"
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ],
+      "expectAll": {
+        "sha256": "3714c34b0e2eaead9fb16cc4b9eed9c9174a74b4ee84b5b767a9ced96be55b62",
+        "unpack": {
+          "bitsPerSample": 1,
+          "width": 2600
+        }
+      },
+      "source": "gdal-3.13.3"
+    },
+    {
+      "id": "ccitt-rle-wide-corrupt1-tif",
+      "session": true,
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 2600,
+            "rows": 9,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "35c078480f301f01f1607c07c540a001f0d3c0bc07c4c0cc327510edd00f8500ec8578fba7c7301d5903ccff487c7578ead00f25809e1a1d3e3ae5180f2580"
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ],
+      "expectAll": {
+        "sha256": "0f89ecd61fb7100cc2de193e0bde9fed2f323617f5780531a40ab52055ebf0bc",
+        "unpack": {
+          "bitsPerSample": 1,
+          "width": 2600
+        }
+      },
+      "source": "gdal-3.13.3"
+    },
+    {
+      "id": "ccitt-rle-wide-corrupt2-tif",
+      "session": true,
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 2600,
+            "rows": 9,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "35c078480f301f01f1607c07c5403501f0d3c0bc07c4c0cc327510edd00f1900ec8578fba7c7301d5803ccff487c757869d00f25809e1a1d3e3ae58e0f2580"
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ],
+      "expectAll": {
+        "sha256": "1015de98f989b79945a4093c1708e4701f3c332150d57464eb69e25202e3045e",
+        "unpack": {
+          "bitsPerSample": 1,
+          "width": 2600
+        }
+      },
+      "source": "gdal-3.13.3"
+    },
+    {
+      "id": "ccitt-rle-corrupt0-tif-refused",
+      "session": true,
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 16,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "35c803cc1fdd407f7a803503c1f0bf6180cc343a1d0e9d0e87ed0f9480ef887874fc2787438368fd13b9e3c5209e1a1d0e8763a1e7ca40a7043c3a1d0f43806d350d03e3a1d3a743a743b1c34b00473a10f8f8e43a29205851bc3e3ee870d70fc43e3a1f743a743e58d3b4e874fc0a3e50d00f30"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 16,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "abd8e03503c1f0d00f30199980119900d00f3007a50009ad803503c1f057ac8027ac00d00f3031920002d540d00f303503c1f0"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 5,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "1bd480d0dc3013c28014c140d00f30"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "gdal-3.13.3"
+    },
+    {
+      "id": "ccitt-rle-wide-corrupt3-tif-refused",
+      "session": true,
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 2600,
+            "rows": 9,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "input": {
+            "hex": "35c078480f301f01f1607c84c5403501f0d3c0bc07c4c0cc327510edd00f1900ec8578fba7c7301d59a0ccff487c757880d00f25809e1a1d3e3ae5180f2525"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "gdal-3.13.3"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "columns": 83,
+            "rows": 16,
+            "fillOrder": 1,
+            "rowAlignment": 8
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "input": {
+            "hex": "35c803cc1fdd407f7a803503c1f0bf6180cc343a1d0e9d0e87ed0f9480ef887874fc2787438368fd13b9e3c5209e1a1d0e8763a1e7ca40a7043c3a1d0f43806d350d03e3a1d3a743a743b1c34b00473a10f8f8e43a29205851bc3e3ee870d70fc43e3a1f743a743e58d3b4e874fc0a3e50d00f30"
+          },
+          "maxOutputBytes": 0
+        }
+      ],
+      "source": "reference-engine",
+      "session": true
+    }
+  ]
+}

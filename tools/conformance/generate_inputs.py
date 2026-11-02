@@ -6,7 +6,11 @@
 Every case -- its description, its input bytes and its expected output -- is authored in the
 cases_*.py modules beside this file, so a binary input is reviewable as the Python that builds it
 and reproducible byte for byte. The class directories are generated: edit the modules, not them.
+writer/round-trip-expectations.json is generated with them, from round_trip.py.
 """
+
+from __future__ import annotations
+
 import shutil
 import sys
 from pathlib import Path
@@ -14,16 +18,37 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from suite import CLASSES, PREFIX, SUITE  # noqa: E402
+from suite import CLASSES, PREFIX, SUITE, Case  # noqa: E402
 
 #: Case modules. The physical-parser modules after cases_physical add to its CASES list.
-MODULES = ("cases_physical", "cases_integers", "cases_regions", "cases_selection", "cases_integrity",
-           "cases_text", "cases_limits", "cases_hel", "cases_rules", "cases_semantic", "cases_bundle", "cases_hdl",
-           "cases_evaluator", "cases_features", "cases_features_hdl")
+MODULES = (
+    "cases_physical",
+    "cases_integers",
+    "cases_regions",
+    "cases_selection",
+    "cases_integrity",
+    "cases_text",
+    "cases_encodings",
+    "cases_layout_cells",
+    "cases_origins",
+    "cases_limits",
+    "cases_hel",
+    "cases_rules",
+    "cases_semantic",
+    "cases_bundle",
+    "cases_hdl",
+    "cases_evaluator",
+    "cases_features",
+    "cases_features_hdl",
+    "cases_hdl_names",
+    "cases_terms",
+    "cases_writer",
+    "cases_writer_forms",
+)
 
 
-def all_cases():
-    lists = []
+def all_cases() -> list[Case]:
+    lists: list[list[Case]] = []
     for module in [__import__(name) for name in MODULES]:
         own = getattr(module, "CASES", None)
         if own is not None and not any(own is seen for seen in lists):
@@ -41,16 +66,22 @@ def all_cases():
     return cases
 
 
-def expected_tree():
-    """{relative path: bytes} of every generated file."""
+def expected_tree() -> dict[str, bytes]:
+    """{relative path: bytes} of every generated file: the cases, and the round-trip expectations of the Physical
+    Parser cases that state a tree (round_trip.py)."""
+    import round_trip
+
     out = {}
-    for case in all_cases():
+    cases = all_cases()
+    for case in cases:
         for name, content in case.artifacts().items():
             out[f"{case.cls}/{case.id}/{name}"] = content
+    parsers = {case.id: case for case in cases if case.cls == "physical-parser" and case.description is not None}
+    out[round_trip.EXPECTATIONS] = round_trip.expectations_file(parsers)
     return out
 
 
-def on_disk():
+def on_disk() -> dict[str, bytes]:
     out = {}
     for cls in CLASSES:
         base = SUITE / cls
@@ -61,14 +92,16 @@ def on_disk():
     return out
 
 
-def main(argv):
+def main(argv: list[str]) -> int:
     wanted = expected_tree()
     if "--check" in argv:
         present = on_disk()
         stale = sorted(p for p in wanted.keys() | present.keys() if wanted.get(p) != present.get(p))
         if stale:
-            print(f"FAIL: {len(stale)} suite file(s) differ from the case modules; run "
-                  "python tools/conformance/generate_inputs.py\n  " + "\n  ".join(stale[:20]))
+            print(
+                f"FAIL: {len(stale)} suite file(s) differ from the case modules; run "
+                "python tools/conformance/generate_inputs.py\n  " + "\n  ".join(stale[:20])
+            )
             return 1
         print(f"PASS: {len(wanted)} suite files match the case modules")
         return 0

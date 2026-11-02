@@ -1,0 +1,21 @@
+# expect: ex:dup req:RequirementIdentityShape sh:SPARQLConstraintComponent
+# expect: ex:blank req:RequirementShape sh:MinCountConstraintComponent
+@prefix req:     <https://hexplain.io/ns/req#> .
+@prefix reqs:    <https://hexplain.io/ns/req/requirements#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix ex:      <https://hexplain.io/test/shape-requirements-invalid#> .
+
+# A second requirement with the identifier and standard of a published shape requirement: the
+# (standard, identifier) pair names at most one requirement in a graph.
+ex:dup a req:Requirement ;
+    req:requirementId "req-shape-bddo-ChecksumShape" ;
+    req:fromStandard "Binary Data Description Ontology (BDDO)" ;
+    req:statement "Duplicate."@en ;
+    req:discrepancyType req:Syntactic .
+# A requirement without a statement.
+ex:blank a req:Requirement ;
+    req:requirementId "req-shape-Nothing" ;
+    req:fromStandard "Example profile 1.0" ;
+    req:discrepancyType req:Syntactic .

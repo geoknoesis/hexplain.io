@@ -1,0 +1,135 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#LzoRaw",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "contract",
+      "url": "https://www.oberhumer.com/opensource/lzo/",
+      "description": "Authored byte by byte from the definition and the LZO1X instruction grammar (a literal run, then the end-of-stream instruction 11 00 00); every input checked with aircompressor 2.0.3's LzoDecompressor, which yields the expected output or rejects what an error vector expects to fail.",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "lzoraw-1",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "decodedSize": 5
+          },
+          "input": {
+            "hex": "1668656c6c6f110000"
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lzoraw-2",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "decodedSize": 5
+          },
+          "input": {
+            "hex": "1668656c6c6f110000"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 4
+        }
+      ]
+    },
+    {
+      "id": "lzoraw-3",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "decodedSize": 5
+          },
+          "input": {
+            "hex": ""
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-trip",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "decodedSize": 5
+          },
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "decodedSize": 5
+          },
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "trailing-after-end",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "decodedSize": 5
+          },
+          "input": {
+            "hex": "1668656c6c6f11000000"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "length-mismatch",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "decodedSize": 6
+          },
+          "input": {
+            "hex": "1668656c6c6f110000"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    }
+  ]
+}

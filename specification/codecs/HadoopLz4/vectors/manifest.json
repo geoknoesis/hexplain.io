@@ -1,0 +1,169 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#HadoopLz4",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "contract",
+      "url": "https://github.com/apache/hadoop/blob/trunk/hadoop-common-project/hadoop-common/src/main/java/org/apache/hadoop/io/compress/BlockDecompressorStream.java",
+      "description": "Authored byte by byte from the definition: Hadoop block and chunk sizes built here around raw LZ4 blocks, each chunk checked with liblz4 1.9.4 through python-lz4 (lz4.block.decompress).",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "hadooplz4-1",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "00000005000000065068656c6c6f"
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "hadooplz4-2",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0000000a000000065068656c6c6f0000000650776f726c64"
+          },
+          "expect": {
+            "hex": "68656c6c6f776f726c64"
+          }
+        }
+      ]
+    },
+    {
+      "id": "hadooplz4-3",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "00000005000000065068656c6c6f"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 4
+        }
+      ]
+    },
+    {
+      "id": "hadooplz4-4",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "00000005000000065068"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-trip",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {},
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "empty-block-then-data",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0000000000000005000000065068656c6c6f"
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "chunk-overruns-block",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "00000004000000065068656c6c6f"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "partial-block-header",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "00000005000000065068656c6c6f0000"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "zero-chunk-size",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0000000500000000"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -20,6 +20,9 @@ The gate checks every individual of a Hexplain class outside the registers (idio
 that every skos:Concept lives in a register (idiom C). Values that predate the policy and do not
 fit are listed in LEGACY with the reason they are kept; the list may shrink but must not grow.
 """
+
+from __future__ import annotations
+
 import json
 import sys
 from pathlib import Path
@@ -36,10 +39,12 @@ OPEN_CLASSES = {
     HX + "bddo#DataType": "profiles declare their own primitive data types (nitf:BCSA, ...)",
     HX + "dlv#Axis": "domain vocabularies add axes (audio#axisSample, geo#axisLatitude, ...)",
     HX + "fn#Function": "the function catalogue grows by addition; each function is its own resource",
+    HX + "req/requirements#ShapeRequirement": (
+        "one requirement per node shape of the family (req/requirements.ttl); each is its own resource, "
+        "added as shapes are"
+    ),
 }
 LEGACY = {
-    HX + "bddo#integer": "bddo:BaseType values predate the policy; the base-type shape checks by class",
-    HX + "bddo#float": "bddo:BaseType values predate the policy; the base-type shape checks by class",
     HX + "dlv#rowMajor": "dlv:ChunkOrder values predate the policy; the Processing Model closes the set",
     HX + "dlv#columnMajor": "dlv:ChunkOrder values predate the policy; the Processing Model closes the set",
     HX + "dlv#morton": "dlv:ChunkOrder values predate the policy; the Processing Model closes the set",
@@ -49,10 +54,11 @@ LEGACY = {
 }
 
 
-def main():
+def main() -> None:
     files = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))["files"]
-    graphs = {f: Graph().parse(data=(ROOT / "specification" / f).read_text(encoding="utf-8"), format="turtle")
-              for f in files}
+    graphs = {
+        f: Graph().parse(data=(ROOT / "specification" / f).read_text(encoding="utf-8"), format="turtle") for f in files
+    }
     whole = Graph()
     for g in graphs.values():
         whole += g
@@ -77,18 +83,22 @@ def main():
             if str(s) in LEGACY:
                 seen_legacy.add(str(s))
                 continue
-            failures.append(f"{f}: {s} is an individual of {cls} but is neither listed in an sh:in "
-                            f"(idiom A) nor of a class in OPEN_CLASSES (idiom B)")
+            failures.append(
+                f"{f}: {s} is an individual of {cls} but is neither listed in an sh:in "
+                f"(idiom A) nor of a class in OPEN_CLASSES (idiom B)"
+            )
     for stale in sorted(set(LEGACY) - seen_legacy):
         failures.append(f"LEGACY lists {stale}, which now follows an idiom or no longer exists (remove it)")
-    for cls in sorted(OPEN_CLASSES):
-        if URIRef(cls) not in classes:
-            failures.append(f"OPEN_CLASSES lists {cls}, which is not a Hexplain class")
+    for open_class in sorted(OPEN_CLASSES):
+        if URIRef(open_class) not in classes:
+            failures.append(f"OPEN_CLASSES lists {open_class}, which is not a Hexplain class")
     if failures:
         print("FAIL:\n  " + "\n  ".join(failures))
         sys.exit(1)
-    print(f"PASS: {counted} vocabulary individuals follow idiom A or B ({len(LEGACY)} legacy exceptions); "
-          f"every skos:Concept is in a register")
+    print(
+        f"PASS: {counted} vocabulary individuals follow idiom A or B ({len(LEGACY)} legacy exceptions); "
+        f"every skos:Concept is in a register"
+    )
 
 
 if __name__ == "__main__":

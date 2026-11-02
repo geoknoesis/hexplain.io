@@ -1,0 +1,22 @@
+# expect: ex:WideBrain bddo:FloatFormatWidthShape sh:SPARQLConstraintComponent
+# expect: ex:HalfIbm bddo:FloatFormatWidthShape sh:SPARQLConstraintComponent
+# expect: ex:HalfVax bddo:FloatFormatWidthShape sh:SPARQLConstraintComponent
+# expect: ex:SingleVaxD bddo:FloatFormatWidthShape sh:SPARQLConstraintComponent
+# expect: ex:SingleVaxG bddo:FloatFormatWidthShape sh:SPARQLConstraintComponent
+# expect: ex:brain32 bddo:FloatFormatWidthShape sh:SPARQLConstraintComponent
+# expect: ex:ibm16 bddo:FloatFormatWidthShape sh:SPARQLConstraintComponent
+# A float format is a layout of a particular number of bits; at any other width there is nothing
+# to read. On a field the width is its data type's, on a profile's datatype its own.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/fmt#> .
+
+ex:WideBrain a bddo:Field ; bddo:dataType bddo:float32 ; bddo:floatFormat bddo:bfloat16 .
+ex:HalfIbm a bddo:Field ; bddo:dataType bddo:float16le ; bddo:floatFormat bddo:ibmHexadecimal .
+ex:HalfVax a bddo:Field ; bddo:dataType bddo:float16le ; bddo:floatFormat bddo:vaxF .
+ex:SingleVaxD a bddo:Field ; bddo:dataType bddo:float32le ; bddo:floatFormat bddo:vaxD .
+ex:SingleVaxG a bddo:Field ; bddo:dataType bddo:float32le ; bddo:floatFormat bddo:vaxG .
+ex:brain32 a bddo:DataType ; bddo:baseType bddo:baseFloat ; bddo:bitWidth 32 ; bddo:floatFormat bddo:bfloat16 .
+ex:ibm16 a bddo:DataType ; bddo:baseType bddo:baseFloat ; bddo:bitWidth 16 ; bddo:floatFormat bddo:ibmHexadecimal .

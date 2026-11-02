@@ -1,0 +1,40 @@
+# expect: ex:Block.noBase bddo:OffsetBaseFieldShape sh:SPARQLConstraintComponent
+# expect: ex:Block.stray bddo:OffsetBaseFieldShape sh:SPARQLConstraintComponent
+# expect: ex:Block.orphan bddo:OffsetBaseFieldShape sh:SPARQLConstraintComponent
+# expect: ex:Block.forward bddo:OffsetBaseFieldShape sh:SPARQLConstraintComponent
+# expect: ex:Block.foreign bddo:OffsetBaseFieldShape sh:SPARQLConstraintComponent
+# expect: ex:Block.self bddo:OffsetBaseFieldShape sh:SPARQLConstraintComponent
+# expect: ex:Block.two bddo:FieldShape sh:MaxCountConstraintComponent
+# expect: ex:Block.notField bddo:FieldShape sh:ClassConstraintComponent
+# expect: ex:Block.unknownBase bddo:FieldShape sh:InConstraintComponent
+# A sibling-relative offset names its sibling, only a sibling-relative offset does, and the
+# sibling is an earlier member of the same struct: a later member, the field itself or a member
+# of another struct has no start that is known when the offset is resolved.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/sibling#> .
+
+ex:Block a bddo:Struct ; bddo:hasField ( ex:Block.header ex:Block.noBase ex:Block.stray ex:Block.forward
+    ex:Block.foreign ex:Block.self ex:Block.two ex:Block.notField ex:Block.unknownBase ex:Block.late ) .
+ex:Other a bddo:Struct ; bddo:hasField ( ex:Other.header ) .
+ex:Other.header a bddo:Field ; bddo:dataType bddo:uint32le .
+ex:Block.header a bddo:Field ; bddo:dataType bddo:uint32le .
+ex:Block.late a bddo:Field ; bddo:dataType bddo:uint32le .
+ex:Block.noBase a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 4 ; bddo:offsetBase bddo:fieldStart .
+ex:Block.stray a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 4 ; bddo:offsetBase bddo:parentStart ;
+    bddo:offsetBaseField ex:Block.header .
+# A base field and no base at all: the default base is not bddo:fieldStart.
+ex:Block.orphan a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 4 ; bddo:offsetBaseField ex:Block.header .
+ex:Block.forward a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 4 ; bddo:offsetBase bddo:fieldStart ;
+    bddo:offsetBaseField ex:Block.late .
+ex:Block.foreign a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 4 ; bddo:offsetBase bddo:fieldStart ;
+    bddo:offsetBaseField ex:Other.header .
+ex:Block.self a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 4 ; bddo:offsetBase bddo:fieldStart ;
+    bddo:offsetBaseField ex:Block.self .
+ex:Block.two a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 4 ; bddo:offsetBase bddo:fieldStart ;
+    bddo:offsetBaseField ex:Block.header , ex:Block.noBase .
+ex:Block.notField a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 4 ; bddo:offsetBase bddo:fieldStart ;
+    bddo:offsetBaseField ex:Block .
+ex:Block.unknownBase a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 4 ; bddo:offsetBase bddo:structOrigin .

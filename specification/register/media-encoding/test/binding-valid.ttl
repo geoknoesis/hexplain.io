@@ -1,0 +1,21 @@
+# The two schemes of this register bound to the two encoding-aspect properties they serve, plus
+# a physical description naming a contracted codec in a pipeline step.
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix aenc: <https://hexplain.io/ns/aspect/encoding#> .
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix ex:   <https://example.org/media#> .
+
+ex:profile hexplain:usesRegister
+    [ a hexplain:RegisterBinding ; hexplain:forProperty aenc:codec ; hexplain:register menc:CodecScheme ] ,
+    [ a hexplain:RegisterBinding ; hexplain:forProperty aenc:compression ; hexplain:register menc:CompressionScheme ] ,
+    [ a hexplain:RegisterBinding ; hexplain:forProperty hexplain:codec ; hexplain:register menc:CompressionScheme ] .
+ex:stream aenc:codec menc:H264 ; aenc:bitrate 4000000 .
+ex:tile aenc:compression menc:Deflate .
+ex:Block a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+    hexplain:hasEncodingStep ( [ a hexplain:EncodingStep ; hexplain:codec menc:Zlib ] ) .

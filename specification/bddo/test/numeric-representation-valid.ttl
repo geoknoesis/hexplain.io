@@ -1,0 +1,33 @@
+# A float format on floating-point fields and datatypes, a fixed-point scale and a BCD flag on
+# integer ones.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/num#> .
+
+ex:IbmReal a bddo:Field ; bddo:dataType bddo:float32be ; bddo:floatFormat bddo:ibmHexadecimal .
+ex:IbmDouble a bddo:Field ; bddo:dataType bddo:float64be ; bddo:floatFormat bddo:ibmHexadecimal .
+# Each VAX format at the width it exists at: F_floating is 32 bits, D_floating and G_floating 64.
+ex:VaxReal a bddo:Field ; bddo:dataType bddo:float32le ; bddo:floatFormat bddo:vaxF .
+ex:VaxDouble a bddo:Field ; bddo:dataType bddo:float64le ; bddo:floatFormat bddo:vaxD .
+ex:VaxGrand a bddo:Field ; bddo:dataType bddo:float64le ; bddo:floatFormat bddo:vaxG .
+ex:Tensor a bddo:Field ; bddo:dataType bddo:float16le ; bddo:floatFormat bddo:bfloat16 .
+ex:Plain a bddo:Field ; bddo:dataType bddo:float32 ; bddo:floatFormat bddo:ieee754 .
+ex:Q16 a bddo:Field ; bddo:dataType bddo:int32le ; bddo:fixedPointScale -16 .
+ex:Scaled a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:fixedPointScale 2 .
+ex:Decimal a bddo:Field ; bddo:dataType bddo:uint32be ; bddo:bcd true .
+ex:NotDecimal a bddo:Field ; bddo:dataType bddo:uint32be ; bddo:bcd false .
+# bddo:bcd false is the default and constrains nothing: a signed type, a bit field, a varint.
+ex:SignedPlain a bddo:Field ; bddo:dataType bddo:int32 ; bddo:bcd false .
+ex:NibblePlain a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 4 ; bddo:bcd false .
+ex:VarPlain a bddo:Field ; bddo:dataType bddo:varuint ; bddo:bcd false .
+# The portable scale range is inclusive at both ends.
+ex:LargestScale a bddo:Field ; bddo:dataType bddo:int32 ; bddo:fixedPointScale 4096 .
+ex:SmallestScale a bddo:Field ; bddo:dataType bddo:int32 ; bddo:fixedPointScale -4096 .
+
+# A profile's own datatypes fix the representation for every field that uses them.
+ex:ibmFloat32 a bddo:DataType ; bddo:baseType bddo:baseFloat ; bddo:bitWidth 32 ; bddo:endianness bddo:BigEndian ; bddo:xsdType xsd:float ; bddo:floatFormat bddo:ibmHexadecimal .
+ex:bcd8 a bddo:DataType ; bddo:baseType bddo:baseInteger ; bddo:bitWidth 64 ; bddo:isSigned false ; bddo:xsdType xsd:unsignedLong ; bddo:bcd true .
+ex:q8 a bddo:DataType ; bddo:baseType bddo:baseInteger ; bddo:bitWidth 16 ; bddo:isSigned true ; bddo:xsdType xsd:short ; bddo:fixedPointScale -8 .
+ex:Temperature a bddo:Field ; bddo:dataType ex:ibmFloat32 .

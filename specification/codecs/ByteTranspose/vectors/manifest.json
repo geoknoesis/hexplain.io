@@ -1,0 +1,117 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#ByteTranspose",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "contract",
+      "url": "https://hexplain.io/ns/register/media-encoding#ByteTranspose",
+      "description": "Authored from the definition, the transposition worked by hand; no external implementation is involved.",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "bytetranspose-1",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 2
+          },
+          "input": {
+            "hex": "01030204"
+          },
+          "expect": {
+            "hex": "01020304"
+          }
+        }
+      ]
+    },
+    {
+      "id": "bytetranspose-2",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "elementSize": 2
+          },
+          "input": {
+            "hex": "01020304"
+          },
+          "expect": {
+            "hex": "01030204"
+          }
+        }
+      ]
+    },
+    {
+      "id": "bytetranspose-3",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 2
+          },
+          "input": {
+            "hex": "010203"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "bytetranspose-4",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 2
+          },
+          "input": {
+            "hex": "01030204"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 3
+        }
+      ]
+    },
+    {
+      "id": "round-trip",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "elementSize": 1
+          },
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "elementSize": 1
+          },
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    }
+  ]
+}

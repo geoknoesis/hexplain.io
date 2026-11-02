@@ -1,0 +1,18 @@
+# expect: ex:payload hexplain:RegisterBindingShape sh:SPARQLConstraintComponent
+# expect: ex:Retired hexplain:RegisterLifecycleShape sh:OrConstraintComponent
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix rck:   <https://hexplain.io/ns/register/checksum#> .
+@prefix menc:  <https://hexplain.io/ns/register/media-encoding#> .
+@prefix aintg: <https://hexplain.io/ns/aspect/integrity#> .
+@prefix ex:    <https://example.org/checksum#> .
+
+ex:profile hexplain:usesRegister [ a hexplain:RegisterBinding ; hexplain:forProperty aintg:checksumAlgorithm ; hexplain:register rck:ChecksumAlgorithmScheme ] .
+# A compression codec is not a checksum algorithm: the value is in no register bound to the property.
+ex:payload aintg:checksumAlgorithm menc:Deflate .
+# A sibling register retiring an entry without the lifecycle record (status and note).
+ex:Retired a skos:Concept ; skos:inScheme rck:ChecksumAlgorithmScheme ; skos:prefLabel "Retired algorithm"@en ; owl:deprecated true .

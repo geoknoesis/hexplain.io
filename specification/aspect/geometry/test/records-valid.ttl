@@ -1,0 +1,16 @@
+# A geometry record holding one collection geometry whose members are geometries; an untyped
+# geometry is checked through the edge that reaches it.
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix ageom: <https://hexplain.io/ns/aspect/geometry#> .
+@prefix ex:    <https://hexplain.io/test/geometry-records-valid#> .
+
+ex:MultiPoint a skos:Concept .
+ex:Point a skos:Concept .
+ex:record a ageom:GeometryRecord ; ageom:hasGeometry ex:multi .
+ex:multi a ageom:Geometry ; ageom:geometryType ex:MultiPoint ; ageom:dimensionality 3 ;
+    ageom:hasZ true ; ageom:hasM false ; ageom:hasMember ex:p1, ex:p2 .
+ex:p1 a ageom:Geometry ; ageom:geometryType ex:Point ; ageom:dimensionality 3 .
+ex:p2 ageom:geometryType ex:Point .
+ex:bare a ageom:Geometry .

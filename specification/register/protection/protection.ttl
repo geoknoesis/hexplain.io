@@ -1,0 +1,79 @@
+# Hexplain Register — Protection Algorithms 1.0
+# Controlled values for the hx-protection aspect: common ciphers, signature and message
+# authentication algorithms, and error-correcting code families, as their specifications name
+# them. A register rather than part of the aspect, so that a profile or another body can publish
+# a sibling register (national ciphers, a format's own codes) without forking the aspect or
+# minting into a namespace it does not own.
+# Codes are NOT here: a raw wire code belongs to the format that encodes it, and is carried
+# by that profile's HDL enum. Parameters a concept leaves open (key length, curve, hash, code
+# length) are the profile's to state.
+# Every concept states its own skos:definition: a register is read on its own.
+@prefix rprot: <https://hexplain.io/ns/register/protection#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix vann:   <http://purl.org/vocab/vann/> .
+
+<https://hexplain.io/ns/register/protection> a owl:Ontology ;
+    owl:versionIRI <https://hexplain.io/ns/register/protection/1.0> ; owl:versionInfo "1.0" ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
+    rdfs:seeAlso <https://hexplain.io/specification/register/protection/protection-doc.ttl> ;
+    rdfs:label "Hexplain Register — Protection Algorithms"@en ;
+    dcterms:created "2026-10-13"^^xsd:date ;
+    dcterms:creator <https://geoknoesis.com> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    vann:preferredNamespacePrefix "rprot" ;
+    vann:preferredNamespaceUri "https://hexplain.io/ns/register/protection#" .
+
+# ---------- Cipher Register (SKOS) ----------
+rprot:CipherScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "Cipher Register"@en ;
+    skos:definition "The controlled concept scheme of ciphers, each with its mode of operation, that aprot:cipher names. A concept identifies the algorithm and mode; the key length is the profile's to state."@en .
+rprot:AESCBC a skos:Concept ; skos:inScheme rprot:CipherScheme ; skos:topConceptOf rprot:CipherScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "AES-CBC"@en ;
+    skos:definition "The Advanced Encryption Standard (FIPS 197) in cipher block chaining mode (NIST SP 800-38A), with a 128-bit initialisation vector. Unauthenticated; the padding scheme is the profile's to state."@en .
+rprot:AESCTR a skos:Concept ; skos:inScheme rprot:CipherScheme ; skos:topConceptOf rprot:CipherScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "AES-CTR"@en ;
+    skos:definition "The Advanced Encryption Standard (FIPS 197) in counter mode (NIST SP 800-38A): a stream cipher whose keystream is the encryption of successive 128-bit counter blocks. Unauthenticated. The initial counter block, and how a format builds it from a nonce and a counter, is the profile's to state; each following block is the previous one plus one, the whole block read as a big-endian unsigned integer modulo 2^128 (SP 800-38A's standard incrementing function over all 128 bits), as the codec menc:AESCTR defines, unless the profile states another incrementing function."@en .
+rprot:AESGCM a skos:Concept ; skos:inScheme rprot:CipherScheme ; skos:topConceptOf rprot:CipherScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "AES-GCM"@en ;
+    skos:definition "The Advanced Encryption Standard (FIPS 197) in Galois/Counter Mode (NIST SP 800-38D): authenticated encryption with associated data, producing a ciphertext and an authentication tag from a key, a nonce and optional additional authenticated data."@en .
+rprot:ChaCha20Poly1305 a skos:Concept ; skos:inScheme rprot:CipherScheme ; skos:topConceptOf rprot:CipherScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "ChaCha20-Poly1305"@en ;
+    skos:definition "The ChaCha20 stream cipher combined with the Poly1305 authenticator as the AEAD construction of RFC 8439: a 256-bit key, a 96-bit nonce, optional additional authenticated data and a 128-bit tag."@en .
+
+# ---------- Signature and Message Authentication Register (SKOS) ----------
+rprot:SignatureAlgorithmScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "Signature and Message Authentication Algorithm Register"@en ;
+    skos:definition "The controlled concept scheme of digital signature and message authentication algorithms that aprot:signatureAlgorithm names. A concept identifies the scheme; the hash function, curve or key size it leaves open is the profile's to state."@en .
+rprot:RSAPKCS1v15 a skos:Concept ; skos:inScheme rprot:SignatureAlgorithmScheme ; skos:topConceptOf rprot:SignatureAlgorithmScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "RSA PKCS #1 v1.5 signature"@en ; skos:altLabel "RSASSA-PKCS1-v1_5"@en ;
+    skos:definition "The RSA signature scheme with appendix RSASSA-PKCS1-v1_5 of PKCS #1 (RFC 8017): a deterministic padding of the message digest, signed with the RSA private key. The hash function is the profile's to state."@en .
+rprot:RSAPSS a skos:Concept ; skos:inScheme rprot:SignatureAlgorithmScheme ; skos:topConceptOf rprot:SignatureAlgorithmScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "RSA-PSS"@en ; skos:altLabel "RSASSA-PSS"@en ;
+    skos:definition "The RSA probabilistic signature scheme RSASSA-PSS of PKCS #1 (RFC 8017). The hash function, mask generation function and salt length are the profile's to state."@en .
+rprot:ECDSA a skos:Concept ; skos:inScheme rprot:SignatureAlgorithmScheme ; skos:topConceptOf rprot:SignatureAlgorithmScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "ECDSA"@en ;
+    skos:definition "The Elliptic Curve Digital Signature Algorithm (FIPS 186, ANSI X9.62). The curve, the hash function and the encoding of the signature pair (r, s) are the profile's to state."@en .
+rprot:Ed25519 a skos:Concept ; skos:inScheme rprot:SignatureAlgorithmScheme ; skos:topConceptOf rprot:SignatureAlgorithmScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "Ed25519"@en ;
+    skos:definition "The Edwards-curve Digital Signature Algorithm over Curve25519 with SHA-512 (RFC 8032, pure Ed25519): a 32-byte public key and a 64-byte signature."@en .
+rprot:HMACSHA256 a skos:Concept ; skos:inScheme rprot:SignatureAlgorithmScheme ; skos:topConceptOf rprot:SignatureAlgorithmScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "HMAC-SHA-256"@en ;
+    skos:definition "The keyed-hash message authentication code HMAC (RFC 2104, FIPS 198-1) over SHA-256: a symmetric authentication tag of up to 32 bytes, not a digital signature. Whether the stored tag is truncated is the profile's to state."@en .
+
+# ---------- Error-Correcting Code Register (SKOS) ----------
+rprot:ErrorCorrectingCodeScheme a skos:ConceptScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "Error-Correcting Code Register"@en ;
+    skos:definition "The controlled concept scheme of error-correcting code families that aprot:errorCorrectingCode names. A concept identifies the family; block length, message length, symbol size and generator polynomial are the profile's to state."@en .
+rprot:ReedSolomon a skos:Concept ; skos:inScheme rprot:ErrorCorrectingCodeScheme ; skos:topConceptOf rprot:ErrorCorrectingCodeScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "Reed–Solomon"@en ; skos:altLabel "Reed-Solomon"@en ;
+    skos:definition "The Reed–Solomon family of non-binary cyclic block codes over a finite field: n symbols carry k data symbols and correct up to (n − k) / 2 symbol errors. The field, the code length and the generator polynomial are the profile's to state."@en .
+rprot:BCH a skos:Concept ; skos:inScheme rprot:ErrorCorrectingCodeScheme ; skos:topConceptOf rprot:ErrorCorrectingCodeScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "BCH"@en ; skos:altLabel "Bose–Chaudhuri–Hocquenghem"@en ;
+    skos:definition "The Bose–Chaudhuri–Hocquenghem family of cyclic block codes, here the binary codes: a code of length n with designed distance d corrects up to (d − 1) / 2 bit errors. The length and the generator polynomial are the profile's to state."@en .
+rprot:Hamming a skos:Concept ; skos:inScheme rprot:ErrorCorrectingCodeScheme ; skos:topConceptOf rprot:ErrorCorrectingCodeScheme ; rdfs:isDefinedBy <https://hexplain.io/ns/register/protection> ;
+    skos:prefLabel "Hamming"@en ;
+    skos:definition "The Hamming family of binary linear block codes of minimum distance 3, which correct one bit error per block (and, extended by an overall parity bit, also detect two). The block length is the profile's to state."@en .

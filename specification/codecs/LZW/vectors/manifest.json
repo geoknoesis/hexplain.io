@@ -1,0 +1,147 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#LZW",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "tiff-6.0",
+      "url": "https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf",
+      "description": "Worked examples of TIFF Revision 6.0 (Adobe, 1992): PackBits (section 9) and LZW (section 13), encoded as bytes by tools/codecs/_generate_tiff_vectors.py.",
+      "licence": "CC0-1.0 (the byte strings)"
+    },
+    {
+      "id": "round-trip",
+      "url": "https://hexplain.io/specification/processing/#round-trip",
+      "description": "Round trips worked by hand from the codec's definition (a transform) or fed through the previous step's output (a compressor, whose encoded bytes are the implementation's own: the encode step expects success only, and the decode step reads its output back to the input).",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "tiff6-example",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "variant": "tiff"
+          },
+          "input": {
+            "hex": "8001e0408044080c068080"
+          },
+          "expect": {
+            "hex": "070707080807070606"
+          }
+        }
+      ],
+      "source": "tiff-6.0"
+    },
+    {
+      "id": "default-variant",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "8001e0408044080c068080"
+          },
+          "expect": {
+            "hex": "070707080807070606"
+          }
+        }
+      ],
+      "source": "tiff-6.0"
+    },
+    {
+      "id": "truncated",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "8001e0408044080c0680"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "tiff-6.0"
+    },
+    {
+      "id": "no-clear-code",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "03c040"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "tiff-6.0"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "8001e0408044080c068080"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 4
+        }
+      ],
+      "source": "tiff-6.0"
+    },
+    {
+      "id": "unknown-variant",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "variant": "gif"
+          },
+          "input": {
+            "hex": "8001e0408044080c068080"
+          },
+          "expect": {
+            "error": "Description"
+          }
+        }
+      ],
+      "source": "tiff-6.0"
+    },
+    {
+      "id": "round-trip",
+      "source": "round-trip",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {},
+          "input": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220"
+          }
+        }
+      ]
+    }
+  ]
+}

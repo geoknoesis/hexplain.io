@@ -1,0 +1,23 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/pp-hel-regex-xsd-constructs#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:digits ex:consonant ex:vowel ex:category ex:dollar ex:branch ex:counted ex:over ) .
+ex:digits a bddo:Field ; bddo:valueFromExpression "matches('123', '\\\\d+')" .
+ex:consonant a bddo:Field ; bddo:valueFromExpression "matches('c', '[a-z-[aeiou]]')" .
+ex:vowel a bddo:Field ; bddo:valueFromExpression "matches('e', '[a-z-[aeiou]]')" .
+ex:category a bddo:Field ; bddo:valueFromExpression "matches('A1', '\\\\p{Lu}\\\\d')" .
+ex:dollar a bddo:Field ; bddo:valueFromExpression "matches('a$', 'a[$]')" .
+ex:branch a bddo:Field ; bddo:valueFromExpression "matches('z', '[a-c][0-9]+|z')" .
+ex:counted a bddo:Field ; bddo:valueFromExpression "matches('aaa', 'a{2,3}')" .
+ex:over a bddo:Field ; bddo:valueFromExpression "matches('aaaa', 'a{2,3}')" .

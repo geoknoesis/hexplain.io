@@ -4,16 +4,22 @@ types, named and custom CRCs, parameterised structs and local bindings.
 The expected Turtle is the mapping the HDL page states (Types, Checksums, Parameters and local
 bindings); literals are compared by value, so the integers below may be written in any form.
 """
+
+from __future__ import annotations
+
 from cases_hdl import OK, err, hc, pair
 
 HDL_PARAMS = ["req-hdl-parameters-1"]
 
 # ----------------------------------------------------------------- types
 
-pair("types-24-bit-and-half", "u24, i24 and f16 name the 24-bit and half-float BDDO types",
-     "Each HDL type name, suffixed or not, is the BDDO data type of the same width, signedness and byte order.",
-     OK + ["req-hdl-grammar-1"], ["types", "grammar-fields"],
-     """
+pair(
+    "types-24-bit-and-half",
+    "u24, i24 and f16 name the 24-bit and half-float BDDO types",
+    "Each HDL type name, suffixed or not, is the BDDO data type of the same width, signedness and byte order.",
+    OK + ["req-hdl-grammar-1"],
+    ["types", "grammar-fields"],
+    """
      format t @namespace "{ns}"
      struct Root {
        a : u24
@@ -27,7 +33,7 @@ pair("types-24-bit-and-half", "u24, i24 and f16 name the 24-bit and half-float B
        i : f16be
      }
      """,
-     """
+    """
      format: t
      namespace: "{ns}"
      structs:
@@ -43,8 +49,9 @@ pair("types-24-bit-and-half", "u24, i24 and f16 name the 24-bit and half-float B
            - { name: h, type: f16le }
            - { name: i, type: f16be }
      """,
-     """
-     ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.a ex:Root.b ex:Root.c ex:Root.d ex:Root.e ex:Root.f ex:Root.g ex:Root.h ex:Root.i ) .
+    """
+     ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.a ex:Root.b ex:Root.c ex:Root.d ex:Root.e ex:Root.f ex:Root.g \
+ex:Root.h ex:Root.i ) .
      ex:Root.a a bddo:Field ; bddo:dataType bddo:uint24 .
      ex:Root.b a bddo:Field ; bddo:dataType bddo:uint24le .
      ex:Root.c a bddo:Field ; bddo:dataType bddo:uint24be .
@@ -54,13 +61,18 @@ pair("types-24-bit-and-half", "u24, i24 and f16 name the 24-bit and half-float B
      ex:Root.g a bddo:Field ; bddo:dataType bddo:float16 .
      ex:Root.h a bddo:Field ; bddo:dataType bddo:float16le .
      ex:Root.i a bddo:Field ; bddo:dataType bddo:float16be .
-     """)
+     """,
+)
 
-hc("fixed-24-bit-and-half", "@fixed on 24-bit and half-float fields",
-   "A hex @fixed on a u24 is three bytes of xsd:hexBinary; an integer @fixed takes the field's XSD type, xsd:int on an i24 "
-   "and xsd:float on an f16.",
-   OK + ["req-hdl-clauses-1"], ["clauses", "literal-values"],
-   """
+hc(
+    "fixed-24-bit-and-half",
+    "@fixed on 24-bit and half-float fields",
+    "A hex @fixed on a u24 is three bytes of xsd:hexBinary; an integer @fixed takes the field's XSD type, "
+    "xsd:int on an i24 "
+    "and xsd:float on an f16.",
+    OK + ["req-hdl-clauses-1"],
+    ["clauses", "literal-values"],
+    """
    format t @namespace "{ns}"
    struct Root {
      magic : u24 @fixed 0x010203
@@ -68,42 +80,63 @@ hc("fixed-24-bit-and-half", "@fixed on 24-bit and half-float fields",
      one : f16 @fixed 1
    }
    """,
-   """
+    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.magic ex:Root.code ex:Root.one ) .
    ex:Root.magic a bddo:Field ; bddo:dataType bddo:uint24 ; bddo:hasFixedValue "010203"^^xsd:hexBinary .
    ex:Root.code a bddo:Field ; bddo:dataType bddo:int24 ; bddo:hasFixedValue "-2"^^xsd:int .
    ex:Root.one a bddo:Field ; bddo:dataType bddo:float16 ; bddo:hasFixedValue "1"^^xsd:float .
-   """)
+   """,
+)
 
-err("bracket-size-after-u24", "A bracket size after u24 is an ERROR",
+err(
+    "bracket-size-after-u24",
+    "A bracket size after u24 is an ERROR",
     "u24 is a fixed-width numeric type, so u24[4] could only mislead.",
-    ["req-hdl-types-1"], ["types"],
+    ["req-hdl-types-1"],
+    ["types"],
     """
     format t @namespace "{ns}"
     struct Root {
       a : u24[4]
     }
-    """, line=3)
+    """,
+    line=3,
+)
 
 # ----------------------------------------------------------------- checksums
 
-NAMED = [("c8", "u8", "crc8", "crc8Smbus"), ("c16a", "u16", "crc16arc", "crc16Arc"),
-         ("c16x", "u16", "crc16xmodem", "crc16Xmodem"), ("c16m", "u16", "crc16modbus", "crc16Modbus"),
-         ("c16s", "u16", "crc16x25", "crc16X25"), ("c32c", "u32", "crc32c", "crc32c"),
-         ("c32b", "u32", "crc32bzip2", "crc32Bzip2"), ("c32m", "u32", "crc32mpeg2", "crc32Mpeg2"),
-         ("c64e", "u64", "crc64ecma", "crc64Ecma182"), ("c64x", "u64", "crc64xz", "crc64Xz")]
+NAMED = [
+    ("c8", "u8", "crc8", "crc8Smbus"),
+    ("c16a", "u16", "crc16arc", "crc16Arc"),
+    ("c16x", "u16", "crc16xmodem", "crc16Xmodem"),
+    ("c16m", "u16", "crc16modbus", "crc16Modbus"),
+    ("c16s", "u16", "crc16x25", "crc16X25"),
+    ("c32c", "u32", "crc32c", "crc32c"),
+    ("c32b", "u32", "crc32bzip2", "crc32Bzip2"),
+    ("c32m", "u32", "crc32mpeg2", "crc32Mpeg2"),
+    ("c64e", "u64", "crc64ecma", "crc64Ecma182"),
+    ("c64x", "u64", "crc64xz", "crc64Xz"),
+]
 BDDO_TYPE = {"u8": "uint8", "u16": "uint16", "u32": "uint32", "u64": "uint64"}
-hc("checksum-named-crcs", "Every named CRC compiles to its BDDO individual",
-   "crc8, crc16arc, crc16xmodem, crc16modbus, crc16x25, crc32c, crc32bzip2, crc32mpeg2, crc64ecma and crc64xz, each over the "
-   "same range and stored in a field of its own width.",
-   OK + ["req-hdl-grammar-1", "req-bddo-checksum-algorithms-1"], ["checksums", "grammar-fields"],
-   'format t @namespace "{ns}"\nstruct Root {\n  text : ascii[9]\n'
-   + "".join(f"  {f} : {t} @checksum {h}(text .. text)\n" for f, t, h, _ in NAMED) + "}\n",
-   "ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.text " + " ".join(f"ex:Root.{f}" for f, *_ in NAMED) + " ) .\n"
-   "ex:Root.text a bddo:Field ; bddo:dataType bddo:string ; bddo:size 9 ; bddo:encoding bddo:ascii .\n"
-   + "".join(f"ex:Root.{f} a bddo:Field ; bddo:dataType bddo:{BDDO_TYPE[t]} ; bddo:checksum [ a bddo:Checksum ; "
-             f"bddo:checksumAlgorithm bddo:{b} ; bddo:coversFromField ex:Root.text ; bddo:coversToField ex:Root.text ] .\n"
-             for f, t, _h, b in NAMED))
+hc(
+    "checksum-named-crcs",
+    "Every named CRC compiles to its BDDO individual",
+    "crc8, crc16arc, crc16xmodem, crc16modbus, crc16x25, crc32c, crc32bzip2, crc32mpeg2, crc64ecma and "
+    "crc64xz, each over the "
+    "same range and stored in a field of its own width.",
+    OK + ["req-hdl-grammar-1"],
+    ["checksums", "grammar-fields"],
+    'format t @namespace "{ns}"\nstruct Root {\n  text : ascii[9]\n'
+    + "".join(f"  {f} : {t} @checksum {h}(text .. text)\n" for f, t, h, _ in NAMED)
+    + "}\n",
+    "ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.text " + " ".join(f"ex:Root.{f}" for f, *_ in NAMED) + " ) .\n"
+    "ex:Root.text a bddo:Field ; bddo:dataType bddo:string ; bddo:size 9 ; bddo:encoding bddo:ascii .\n"
+    + "".join(
+        f"ex:Root.{f} a bddo:Field ; bddo:dataType bddo:{BDDO_TYPE[t]} ; bddo:checksum [ a bddo:Checksum ; "
+        f"bddo:checksumAlgorithm bddo:{b} ; bddo:coversFromField ex:Root.text ; bddo:coversToField ex:Root.text ] .\n"
+        for f, t, _h, b in NAMED
+    ),
+)
 
 CUSTOM_TTL = """
    ex:Frame a bddo:Struct ; bddo:hasField ( ex:Frame.header ex:Frame.payload ex:Frame.crc ) .
@@ -114,19 +147,24 @@ CUSTOM_TTL = """
            bddo:checksumAlgorithm [ a bddo:CustomCrc ; bddo:crcWidth 16 ; bddo:crcPolynomial 32773 ; bddo:crcInit 0 ;
                bddo:crcReflectIn true ; bddo:crcReflectOut true ; bddo:crcXorOut 0 ] ] .
 """
-pair("checksum-custom-crc", "crc(...) compiles to an inline bddo:CustomCrc",
-     "The six parameters in any order, a key joined to its colon (width:) or apart (refin :); a HEX value is the integer "
-     "its digits spell (0x8005 is 32773).",
-     OK + ["req-hdl-checksums-1"], ["checksums", "grammar-fields"],
-     """
+pair(
+    "checksum-custom-crc",
+    "crc(...) compiles to an inline bddo:CustomCrc",
+    "The six parameters in any order, a key joined to its colon (width:) or apart (refin :); a HEX value is "
+    "the integer "
+    "its digits spell (0x8005 is 32773).",
+    OK + ["req-hdl-checksums-1"],
+    ["checksums", "grammar-fields"],
+    """
      format t @namespace "{ns}"
      struct Frame {
        header : bytes[4]
        payload : bytes[8]
-       crc : u16le @checksum crc(poly: 0x8005, width: 16, init: 0x0000, refin : true, refout: true, xorout: 0)(header .. payload)
+       crc : u16le @checksum crc(poly: 0x8005, width: 16, init: 0x0000, refin : true, refout: true, xorout: \
+0)(header .. payload)
      }
      """,
-     """
+    """
      format: t
      namespace: "{ns}"
      structs:
@@ -136,21 +174,27 @@ pair("checksum-custom-crc", "crc(...) compiles to an inline bddo:CustomCrc",
            - { name: payload, type: bytes, size: 8 }
            - name: crc
              type: u16le
-             checksum: { crc: { width: 16, poly: 0x8005, init: 0, refin: true, refout: true, xorout: 0 }, from: header, to: payload }
+             checksum: { crc: { width: 16, poly: 0x8005, init: 0, refin: true, refout: true, xorout: 0 }, from: \
+header, to: payload }
      """,
-     CUSTOM_TTL)
+    CUSTOM_TTL,
+)
 
-hc("checksum-custom-crc-64-bit", "A 64-bit custom CRC takes register values up to 2^64 - 1",
-   "0xFFFFFFFFFFFFFFFF is below 2^64, so it is a valid init and final XOR for width 64, emitted as an xsd:integer.",
-   OK + ["req-hdl-checksums-1"], ["checksums"],
-   """
+hc(
+    "checksum-custom-crc-64-bit",
+    "A 64-bit custom CRC takes register values up to 2^64 - 1",
+    "0xFFFFFFFFFFFFFFFF is below 2^64, so it is a valid init and final XOR for width 64, emitted as an xsd:integer.",
+    OK + ["req-hdl-checksums-1"],
+    ["checksums"],
+    """
    format t @namespace "{ns}"
    struct Root {
      data : bytes[4]
-     sum : u64 @checksum crc(width: 64, poly: 0x42F0E1EBA9EA3693, init: 0xFFFFFFFFFFFFFFFF, refin: true, refout: true, xorout: 0xFFFFFFFFFFFFFFFF)(data .. data)
+     sum : u64 @checksum crc(width: 64, poly: 0x42F0E1EBA9EA3693, init: 0xFFFFFFFFFFFFFFFF, refin: true, refout: \
+true, xorout: 0xFFFFFFFFFFFFFFFF)(data .. data)
    }
    """,
-   """
+    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.data ex:Root.sum ) .
    ex:Root.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 .
    ex:Root.sum a bddo:Field ; bddo:dataType bddo:uint64 ;
@@ -158,58 +202,90 @@ hc("checksum-custom-crc-64-bit", "A 64-bit custom CRC takes register values up t
            bddo:checksumAlgorithm [ a bddo:CustomCrc ; bddo:crcWidth 64 ; bddo:crcPolynomial 4823603603198064275 ;
                bddo:crcInit 18446744073709551615 ; bddo:crcReflectIn true ; bddo:crcReflectOut true ;
                bddo:crcXorOut 18446744073709551615 ] ] .
-   """)
+   """,
+)
 
 CRC_ERRS = ["req-hdl-checksums-1"]
-err("checksum-custom-crc-missing-parameter", "A custom CRC without one of its six parameters is an ERROR",
-    "xorout is missing.", CRC_ERRS, ["checksums"],
+err(
+    "checksum-custom-crc-missing-parameter",
+    "A custom CRC without one of its six parameters is an ERROR",
+    "xorout is missing.",
+    CRC_ERRS,
+    ["checksums"],
     """
     format t @namespace "{ns}"
     struct Root {
       data : bytes[4]
       sum : u16 @checksum crc(width: 16, poly: 0x8005, init: 0, refin: true, refout: true)(data .. data)
     }
-    """, line=4)
+    """,
+    line=4,
+)
 
-err("checksum-custom-crc-repeated-parameter", "A custom CRC parameter stated twice is an ERROR",
-    "init appears twice.", CRC_ERRS, ["checksums"],
+err(
+    "checksum-custom-crc-repeated-parameter",
+    "A custom CRC parameter stated twice is an ERROR",
+    "init appears twice.",
+    CRC_ERRS,
+    ["checksums"],
     """
     format t @namespace "{ns}"
     struct Root {
       data : bytes[4]
-      sum : u16 @checksum crc(width: 16, poly: 0x8005, init: 0, init: 1, refin: true, refout: true, xorout: 0)(data .. data)
+      sum : u16 @checksum crc(width: 16, poly: 0x8005, init: 0, init: 1, refin: true, refout: true, xorout: 0)(data \
+.. data)
     }
-    """, line=4)
+    """,
+    line=4,
+)
 
-err("checksum-custom-crc-value-too-wide", "A custom CRC register value that does not fit the width is an ERROR",
-    "0x18005 is CRC-16/ARC's polynomial with its top term, which a 16-bit register cannot hold.", CRC_ERRS, ["checksums"],
+err(
+    "checksum-custom-crc-value-too-wide",
+    "A custom CRC register value that does not fit the width is an ERROR",
+    "0x18005 is CRC-16/ARC's polynomial with its top term, which a 16-bit register cannot hold.",
+    CRC_ERRS,
+    ["checksums"],
     """
     format t @namespace "{ns}"
     struct Root {
       data : bytes[4]
       sum : u16 @checksum crc(width: 16, poly: 0x18005, init: 0, refin: true, refout: true, xorout: 0)(data .. data)
     }
-    """, line=4)
+    """,
+    line=4,
+)
 
-err("checksum-custom-crc-width-out-of-range", "A custom CRC width outside 8..64 is an ERROR",
-    "width 65.", CRC_ERRS, ["checksums"],
+err(
+    "checksum-custom-crc-width-out-of-range",
+    "A custom CRC width outside 8..64 is an ERROR",
+    "width 65.",
+    CRC_ERRS,
+    ["checksums"],
     """
     format t @namespace "{ns}"
     struct Root {
       data : bytes[4]
       sum : u64 @checksum crc(width: 65, poly: 3, init: 0, refin: false, refout: false, xorout: 0)(data .. data)
     }
-    """, line=4)
+    """,
+    line=4,
+)
 
-err("checksum-crc-field-width", "A CRC whose width differs from its field's is an ERROR",
-    "crc32c is 32 bits wide and the field is a u16.", ["req-hdl-checksums-2"], ["checksums"],
+err(
+    "checksum-crc-field-width",
+    "A CRC whose width differs from its field's is an ERROR",
+    "crc32c is 32 bits wide and the field is a u16.",
+    ["req-hdl-checksums-2"],
+    ["checksums"],
     """
     format t @namespace "{ns}"
     struct Root {
       data : bytes[4]
       sum : u16 @checksum crc32c(data .. data)
     }
-    """, line=4)
+    """,
+    line=4,
+)
 
 # ----------------------------------------------------------------- parameterised structs
 
@@ -224,11 +300,15 @@ PARAM_TTL = """
    ex:Row.cells a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.w" ;
        bddo:repeatCountFromExpression "param.n" .
 """
-pair("param-struct", "A parameterised struct and the arguments that instantiate it",
-     "struct Row(n: int, w) mints two bddo:Parameters; Row(count, width) passes the caller's fields as HEL strings; inside "
-     "Row, the bare names n and w compile to param.n and param.w and take the expression form.",
-     OK + HDL_PARAMS + ["req-hdl-grammar-1", "req-hdl-form-rule-1"], ["parameters", "grammar-structs", "form-rule"],
-     """
+pair(
+    "param-struct",
+    "A parameterised struct and the arguments that instantiate it",
+    "struct Row(n: int, w) mints two bddo:Parameters; Row(count, width) passes the caller's fields as HEL "
+    "strings; inside "
+    "Row, the bare names n and w compile to param.n and param.w and take the expression form.",
+    OK + HDL_PARAMS + ["req-hdl-grammar-1", "req-hdl-form-rule-1"],
+    ["parameters", "grammar-structs", "form-rule"],
+    """
      format t @namespace "{ns}"
      struct Table {
        count : u8
@@ -239,7 +319,7 @@ pair("param-struct", "A parameterised struct and the arguments that instantiate 
        cells : bytes[w] repeat n
      }
      """,
-     """
+    """
      format: t
      namespace: "{ns}"
      structs:
@@ -253,12 +333,17 @@ pair("param-struct", "A parameterised struct and the arguments that instantiate 
          fields:
            - { name: cells, type: bytes, size: w, repeat: { count: n } }
      """,
-     PARAM_TTL)
+    PARAM_TTL,
+)
 
-hc("param-nested-arguments", "Arguments are resolved in the caller's struct and pass parameters on",
-   "Row passes param.w + 1 to Cell; the literal argument 4 is the HEL string \"4\"; hdr.count reaches into a sibling struct.",
-   OK + HDL_PARAMS, ["parameters", "expressions"],
-   """
+hc(
+    "param-nested-arguments",
+    "Arguments are resolved in the caller's struct and pass parameters on",
+    'Row passes param.w + 1 to Cell; the literal argument 4 is the HEL string "4"; hdr.count reaches into a '
+    "sibling struct.",
+    OK + HDL_PARAMS,
+    ["parameters", "expressions"],
+    """
    format t @namespace "{ns}"
    struct Root {
      hdr : Header
@@ -273,7 +358,7 @@ hc("param-nested-arguments", "Arguments are resolved in the caller's struct and 
      data : bytes[size]
    }
    """,
-   """
+    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.hdr ex:Root.a ex:Root.b ) .
    ex:Root.hdr a bddo:Field ; bddo:dataType ex:Header .
    ex:Root.a a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( "instance.hdr.count" ) .
@@ -286,12 +371,16 @@ hc("param-nested-arguments", "Arguments are resolved in the caller's struct and 
    ex:Cell a bddo:Struct ; bddo:hasParameter ( ex:Cell.size ) ; bddo:hasField ( ex:Cell.data ) .
    ex:Cell.size a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
    ex:Cell.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.size" .
-   """)
+   """,
+)
 
-pair("param-switch-arms", "switch arms name parameterised structs with arguments of their own",
-     "Each arm's DataTypeRule carries its own bddo:hasArgument.",
-     OK + HDL_PARAMS + ["req-hdl-conformance-section-5"], ["parameters", "clauses"],
-     """
+pair(
+    "param-switch-arms",
+    "switch arms name parameterised structs with arguments of their own",
+    "Each arm's DataTypeRule carries its own bddo:hasArgument.",
+    OK + HDL_PARAMS + ["req-hdl-conformance-section-5"],
+    ["parameters", "clauses"],
+    """
      format t @namespace "{ns}"
      struct Root {
        kind : u8
@@ -304,7 +393,7 @@ pair("param-switch-arms", "switch arms name parameterised structs with arguments
        data : bytes[size]
      }
      """,
-     """
+    """
      format: t
      namespace: "{ns}"
      structs:
@@ -319,21 +408,27 @@ pair("param-switch-arms", "switch arms name parameterised structs with arguments
          fields:
            - { name: data, type: bytes, size: size }
      """,
-     """
+    """
      ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.kind ex:Root.body ) .
      ex:Root.kind a bddo:Field ; bddo:dataType bddo:uint8 .
      ex:Root.body a bddo:Field ; bddo:hasConditionalDataType (
-         [ a bddo:DataTypeRule ; bddo:condition "instance.kind == 1" ; bddo:ruleDataType ex:Blob ; bddo:hasArgument ( "2" ) ]
-         [ a bddo:DataTypeRule ; bddo:condition "instance.kind == 2" ; bddo:ruleDataType ex:Blob ; bddo:hasArgument ( "4" ) ] ) .
+         [ a bddo:DataTypeRule ; bddo:condition "instance.kind == 1" ; bddo:ruleDataType ex:Blob ; bddo:hasArgument \
+( "2" ) ]
+         [ a bddo:DataTypeRule ; bddo:condition "instance.kind == 2" ; bddo:ruleDataType ex:Blob ; bddo:hasArgument \
+( "4" ) ] ) .
      ex:Blob a bddo:Struct ; bddo:hasParameter ( ex:Blob.size ) ; bddo:hasField ( ex:Blob.data ) .
      ex:Blob.size a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
      ex:Blob.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.size" .
-     """)
+     """,
+)
 
-hc("param-recursion", "A struct may pass arguments to itself",
-   "Node(depth - 1) inside Node; the presence guard reads the parameter too.",
-   OK + HDL_PARAMS, ["parameters"],
-   """
+hc(
+    "param-recursion",
+    "A struct may pass arguments to itself",
+    "Node(depth - 1) inside Node; the presence guard reads the parameter too.",
+    OK + HDL_PARAMS,
+    ["parameters"],
+    """
    format t @namespace "{ns}"
    struct Root {
      levels : u8
@@ -344,7 +439,7 @@ hc("param-recursion", "A struct may pass arguments to itself",
      child : Node(depth - 1) if depth > 1
    }
    """,
-   """
+    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.levels ex:Root.tree ) .
    ex:Root.levels a bddo:Field ; bddo:dataType bddo:uint8 .
    ex:Root.tree a bddo:Field ; bddo:dataType ex:Node ; bddo:hasArgument ( "instance.levels" ) .
@@ -353,40 +448,63 @@ hc("param-recursion", "A struct may pass arguments to itself",
    ex:Node.v a bddo:Field ; bddo:dataType bddo:uint8 .
    ex:Node.child a bddo:Field ; bddo:dataType ex:Node ; bddo:hasArgument ( "param.depth - 1" ) ;
        bddo:isPresentIf "param.depth > 1" .
-   """)
+   """,
+)
 
-err("param-arity-mismatch", "Too few arguments for a parameterised struct is an ERROR",
-    "Row declares two parameters and the field passes one.", HDL_PARAMS, ["parameters"],
+err(
+    "param-arity-mismatch",
+    "Too few arguments for a parameterised struct is an ERROR",
+    "Row declares two parameters and the field passes one.",
+    HDL_PARAMS,
+    ["parameters"],
     """
     format t @namespace "{ns}"
     struct Root {
       r : Row(1)
     }
     struct Row(n, w) { cells : bytes[w] repeat n }
-    """, line=3)
+    """,
+    line=3,
+)
 
-err("param-missing-arguments", "A parameterised struct named without arguments is an ERROR",
-    "Row declares two parameters and the field names it bare.", HDL_PARAMS, ["parameters"],
+err(
+    "param-missing-arguments",
+    "A parameterised struct named without arguments is an ERROR",
+    "Row declares two parameters and the field names it bare.",
+    HDL_PARAMS,
+    ["parameters"],
     """
     format t @namespace "{ns}"
     struct Root {
       r : Row
     }
     struct Row(n, w) { cells : bytes[w] repeat n }
-    """, line=3)
+    """,
+    line=3,
+)
 
-err("param-arguments-for-plain-struct", "Arguments for a struct without parameters are an ERROR",
-    "Plain declares no parameter.", HDL_PARAMS, ["parameters"],
+err(
+    "param-arguments-for-plain-struct",
+    "Arguments for a struct without parameters are an ERROR",
+    "Plain declares no parameter.",
+    HDL_PARAMS,
+    ["parameters"],
     """
     format t @namespace "{ns}"
     struct Root {
       p : Plain(1)
     }
     struct Plain { v : u8 }
-    """, line=3)
+    """,
+    line=3,
+)
 
-err("param-field-clash", "A parameter and a field of one struct sharing a name is an ERROR",
-    "Row's parameter n and its field n.", HDL_PARAMS, ["parameters"],
+err(
+    "param-field-clash",
+    "A parameter and a field of one struct sharing a name is an ERROR",
+    "Row's parameter n and its field n.",
+    HDL_PARAMS,
+    ["parameters"],
     """
     format t @namespace "{ns}"
     struct Root {
@@ -395,28 +513,45 @@ err("param-field-clash", "A parameter and a field of one struct sharing a name i
     struct Row(n) {
       n : u8
     }
-    """)
+    """,
+)
 
-err("param-reserved-name", "A field named param is an ERROR",
-    "param is a reserved HEL root.", ["req-hdl-lexical-1", "req-hdl-grammar-keywords-1"], ["lexical", "grammar-keywords"],
+err(
+    "param-reserved-name",
+    "A field named param is an ERROR",
+    "param is a reserved HEL root.",
+    ["req-hdl-lexical-1", "req-hdl-grammar-keywords-1"],
+    ["lexical", "grammar-keywords"],
     """
     format t @namespace "{ns}"
     struct Root {
       param : u8
     }
-    """, line=3)
+    """,
+    line=3,
+)
 
-err("param-root-struct", "A root struct with parameters is an ERROR",
-    "The first struct is the root, and nothing can pass it an argument.", HDL_PARAMS, ["parameters"],
+err(
+    "param-root-struct",
+    "A root struct with parameters is an ERROR",
+    "The first struct is the root, and nothing can pass it an argument.",
+    HDL_PARAMS,
+    ["parameters"],
     """
     format t @namespace "{ns}"
     struct Root(n) {
       v : u8
     }
-    """, line=2)
+    """,
+    line=2,
+)
 
-err("param-dispatch-default", "A parameterised struct as a dispatch default is an ERROR",
-    "A dispatch default cannot state arguments.", HDL_PARAMS, ["parameters"],
+err(
+    "param-dispatch-default",
+    "A parameterised struct as a dispatch default is an ERROR",
+    "A dispatch default cannot state arguments.",
+    HDL_PARAMS,
+    ["parameters"],
     """
     format t @namespace "{ns}"
     struct Root {
@@ -425,30 +560,48 @@ err("param-dispatch-default", "A parameterised struct as a dispatch default is a
     }
     struct Blob(size) { data : bytes[size] }
     struct Plain { v : u8 }
-    """, line=4)
+    """,
+    line=4,
+)
 
-err("param-unknown-type", "A parameter type other than int, float, string, bytes or bool is an ERROR",
-    "integer is not one of the five words.", HDL_PARAMS, ["parameters", "grammar-structs"],
+err(
+    "param-unknown-type",
+    "A parameter type other than int, float, string, bytes or bool is an ERROR",
+    "integer is not one of the five words.",
+    HDL_PARAMS,
+    ["parameters", "grammar-structs"],
     """
     format t @namespace "{ns}"
     struct Root {
       r : Row(1)
     }
     struct Row(n: integer) { cells : bytes[n] }
-    """, line=5)
+    """,
+    line=5,
+)
 
-err("param-literal-type-mismatch", "A literal argument of the wrong kind for a typed parameter is an ERROR",
-    "Row's n is an int and the argument is a string.", HDL_PARAMS, ["parameters"],
+err(
+    "param-literal-type-mismatch",
+    "A literal argument of the wrong kind for a typed parameter is an ERROR",
+    "Row's n is an int and the argument is a string.",
+    HDL_PARAMS,
+    ["parameters"],
     """
     format t @namespace "{ns}"
     struct Root {
       r : Row("a")
     }
     struct Row(n: int) { cells : bytes[n] }
-    """, line=3)
+    """,
+    line=3,
+)
 
-err("param-argument-forward-reference", "An argument naming a later field is a forward reference and an ERROR",
-    "n is declared after the field that passes it.", HDL_PARAMS + ["req-hdl-expressions-1"], ["parameters", "forward-references"],
+err(
+    "param-argument-forward-reference",
+    "An argument naming a later field is a forward reference and an ERROR",
+    "n is declared after the field that passes it.",
+    HDL_PARAMS + ["req-hdl-expressions-1"],
+    ["parameters", "forward-references"],
     """
     format t @namespace "{ns}"
     struct Root {
@@ -456,24 +609,35 @@ err("param-argument-forward-reference", "An argument naming a later field is a f
       n : u8
     }
     struct Row(w) { cells : bytes[w] }
-    """, line=3)
+    """,
+    line=3,
+)
 
-err("param-undeclared", "param.x in a struct with no parameter x is an ERROR",
-    "Row declares w, not x.", HDL_PARAMS, ["parameters"],
+err(
+    "param-undeclared",
+    "param.x in a struct with no parameter x is an ERROR",
+    "Row declares w, not x.",
+    HDL_PARAMS,
+    ["parameters"],
     """
     format t @namespace "{ns}"
     struct Root {
       r : Row(1)
     }
     struct Row(w) { cells : bytes[`param.x`] }
-    """, line=5)
+    """,
+    line=5,
+)
 
 HDL_ELEMENT = ["req-hdl-parameters-2"]
-hc("param-element-scope", "Over struct elements, bare names and param are the element's",
-   "In a repeat until and a quantifier predicate over E elements, stop and small are E's parameter and binding: "
-   "param.stop and instance.small. The argument lim is resolved in R, the caller.",
-   OK + HDL_ELEMENT + HDL_PARAMS, ["parameters"],
-   """
+hc(
+    "param-element-scope",
+    "Over struct elements, bare names and param are the element's",
+    "In a repeat until and a quantifier predicate over E elements, stop and small are E's parameter and binding: "
+    "param.stop and instance.small. The argument lim is resolved in R, the caller.",
+    OK + HDL_ELEMENT + HDL_PARAMS,
+    ["parameters"],
+    """
    format t @namespace "{ns}"
    struct Root {
      r : R(3)
@@ -487,7 +651,7 @@ hc("param-element-scope", "Over struct elements, bare names and param are the el
      let small = v < stop
    }
    """,
-   """
+    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.r ) .
    ex:Root.r a bddo:Field ; bddo:dataType ex:R ; bddo:hasArgument ( "3" ) .
    ex:R a bddo:Struct ; bddo:hasParameter ( ex:R.lim ) ; bddo:hasField ( ex:R.es ex:R.ok ) .
@@ -499,10 +663,15 @@ hc("param-element-scope", "Over struct elements, bare names and param are the el
    ex:E.stop a bddo:Parameter .
    ex:E.v a bddo:Field ; bddo:dataType bddo:uint8 .
    ex:E.small a bddo:LocalBinding ; bddo:localExpression "instance.v < param.stop" .
-   """)
+   """,
+)
 
-err("param-holding-struct-in-element-scope", "A parameter of the holding struct, read where an element is instance, is an ERROR",
-    "Inside the predicate over E elements, param is E's, and E declares no lim.", HDL_ELEMENT, ["parameters"],
+err(
+    "param-holding-struct-in-element-scope",
+    "A parameter of the holding struct, read where an element is instance, is an ERROR",
+    "Inside the predicate over E elements, param is E's, and E declares no lim.",
+    HDL_ELEMENT,
+    ["parameters"],
     """
     format t @namespace "{ns}"
     struct Root {
@@ -513,10 +682,15 @@ err("param-holding-struct-in-element-scope", "A parameter of the holding struct,
       ok : derive all(es, v < lim)
     }
     struct E { v : u8 }
-    """, line=7)
+    """,
+    line=7,
+)
 
-err("param-on-header", "Parameters on a header are an ERROR",
-    "A header locates its members by key, so it has no scope to bind arguments in.", HDL_PARAMS + ["req-hdl-conformance-section-2"],
+err(
+    "param-on-header",
+    "Parameters on a header are an ERROR",
+    "A header locates its members by key, so it has no scope to bind arguments in.",
+    HDL_PARAMS + ["req-hdl-conformance-section-2"],
     ["parameters", "yaml"],
     """
     format: t
@@ -531,7 +705,9 @@ err("param-on-header", "Parameters on a header are an ERROR",
         params: [ n ]
         fields:
           - { name: samples, type: anum }
-    """, yaml=True)
+    """,
+    yaml=True,
+)
 
 # ----------------------------------------------------------------- local bindings
 
@@ -542,11 +718,14 @@ LET_TTL = """
    ex:Image.area a bddo:LocalBinding ; bddo:localExpression "instance.width * instance.height" .
    ex:Image.pixels a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "instance.area" .
 """
-pair("let-binding", "let compiles to a bddo:LocalBinding in the member list",
-     "The binding stands between the fields in bddo:hasField; a reference to it takes the expression form, never "
-     "sizeFromField, because a binding is not a field.",
-     OK + HDL_PARAMS + ["req-hdl-form-rule-1", "req-hdl-grammar-1"], ["parameters", "form-rule", "grammar-structs"],
-     """
+pair(
+    "let-binding",
+    "let compiles to a bddo:LocalBinding in the member list",
+    "The binding stands between the fields in bddo:hasField; a reference to it takes the expression form, never "
+    "sizeFromField, because a binding is not a field.",
+    OK + HDL_PARAMS + ["req-hdl-form-rule-1", "req-hdl-grammar-1"],
+    ["parameters", "form-rule", "grammar-structs"],
+    """
      format t @namespace "{ns}"
      struct Image {
        width : u16
@@ -555,7 +734,7 @@ pair("let-binding", "let compiles to a bddo:LocalBinding in the member list",
        pixels : bytes[area]
      }
      """,
-     """
+    """
      format: t
      namespace: "{ns}"
      structs:
@@ -566,12 +745,16 @@ pair("let-binding", "let compiles to a bddo:LocalBinding in the member list",
            - { let: area, value: "width * height" }
            - { name: pixels, type: bytes, size: area }
      """,
-     LET_TTL)
+    LET_TTL,
+)
 
-hc("let-reads-parameter", "A let binding may read a parameter, and let ends an unbracketed expression",
-   "total = n * 2 reads the parameter n as param.n; the next let starts a new member.",
-   OK + HDL_PARAMS, ["parameters", "grammar-keywords"],
-   """
+hc(
+    "let-reads-parameter",
+    "A let binding may read a parameter, and let ends an unbracketed expression",
+    "total = n * 2 reads the parameter n as param.n; the next let starts a new member.",
+    OK + HDL_PARAMS,
+    ["parameters", "grammar-keywords"],
+    """
    format t @namespace "{ns}"
    struct Root {
      r : Row(3)
@@ -583,19 +766,25 @@ hc("let-reads-parameter", "A let binding may read a parameter, and let ends an u
      tail : bytes[half]
    }
    """,
-   """
+    """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.r ) .
    ex:Root.r a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( "3" ) .
-   ex:Row a bddo:Struct ; bddo:hasParameter ( ex:Row.n ) ; bddo:hasField ( ex:Row.total ex:Row.half ex:Row.data ex:Row.tail ) .
+   ex:Row a bddo:Struct ; bddo:hasParameter ( ex:Row.n ) ; bddo:hasField ( ex:Row.total ex:Row.half ex:Row.data \
+ex:Row.tail ) .
    ex:Row.n a bddo:Parameter .
    ex:Row.total a bddo:LocalBinding ; bddo:localExpression "param.n * 2" .
    ex:Row.half a bddo:LocalBinding ; bddo:localExpression "instance.total / 2" .
    ex:Row.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "instance.total" .
    ex:Row.tail a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "instance.half" .
-   """)
+   """,
+)
 
-err("let-forward-reference", "Reading a let binding before its position is an ERROR",
-    "pixels reads area, which is bound after it.", HDL_PARAMS + ["req-hdl-expressions-1"], ["parameters", "forward-references"],
+err(
+    "let-forward-reference",
+    "Reading a let binding before its position is an ERROR",
+    "pixels reads area, which is bound after it.",
+    HDL_PARAMS + ["req-hdl-expressions-1"],
+    ["parameters", "forward-references"],
     """
     format t @namespace "{ns}"
     struct Image {
@@ -603,30 +792,48 @@ err("let-forward-reference", "Reading a let binding before its position is an ER
       pixels : bytes[area]
       let area = width * 2
     }
-    """, line=4)
+    """,
+    line=4,
+)
 
-err("let-name-clash", "A let binding sharing a field's name is an ERROR",
-    "width is both a field and a binding.", HDL_PARAMS, ["parameters"],
+err(
+    "let-name-clash",
+    "A let binding sharing a field's name is an ERROR",
+    "width is both a field and a binding.",
+    HDL_PARAMS,
+    ["parameters"],
     """
     format t @namespace "{ns}"
     struct Image {
       width : u16
       let width = 2
     }
-    """, line=4)
+    """,
+    line=4,
+)
 
-err("let-in-header", "A let binding in a header is an ERROR",
-    "A key/value header has no member order to evaluate a binding at.", HDL_PARAMS, ["parameters", "delimited"],
+err(
+    "let-in-header",
+    "A let binding in a header is an ERROR",
+    "A key/value header has no member order to evaluate a binding at.",
+    HDL_PARAMS,
+    ["parameters", "delimited"],
     """
     format t @namespace "{ns}"
     header Hdr @record-separator 0x0A @separator 0x3D {
       samples : anum
       let twice = samples * 2
     }
-    """, line=4)
+    """,
+    line=4,
+)
 
-err("let-where-field-required", "A let binding named where a field is required is an ERROR",
-    "A checksum range names fields, and a binding has no bytes.", HDL_PARAMS, ["parameters", "checksums"],
+err(
+    "let-where-field-required",
+    "A let binding named where a field is required is an ERROR",
+    "A checksum range names fields, and a binding has no bytes.",
+    HDL_PARAMS,
+    ["parameters", "checksums"],
     """
     format t @namespace "{ns}"
     struct Root {
@@ -634,4 +841,384 @@ err("let-where-field-required", "A let binding named where a field is required i
       let start = 0
       sum : u32 @checksum crc32(start .. data)
     }
-    """, line=5)
+    """,
+    line=5,
+)
+
+# ----------------------------------------------------------------- field-level bit order
+
+hc(
+    "bit-order-field",
+    "A field-level @bit-order compiles to bddo:bitOrder on the field, the struct's on the struct",
+    "Root declares msb and its field a lsb: the struct gets bddo:MSBFirst and a its own bddo:LSBFirst, which the "
+    "Processing Model reads first; b carries no order of its own.",
+    OK + ["req-hdl-clauses-6"],
+    ["clauses", "field-bit-order", "types"],
+    """
+   format t @namespace "{ns}"
+   struct Root @bit-order msb {
+     a : bits[3] @bit-order lsb
+     b : bits[5]
+   }
+   """,
+    """
+   ex:Root a bddo:Struct ; bddo:bitOrder bddo:MSBFirst ; bddo:hasField ( ex:Root.a ex:Root.b ) .
+   ex:Root.a a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 3 ; bddo:bitOrder bddo:LSBFirst .
+   ex:Root.b a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 5 .
+   """,
+)
+
+
+# ----------------------------------------------------------------- dispatch arm IRIs, YAML byte strings
+
+pair(
+    "dispatch-arm-iris",
+    "The arms of a keyed dispatch are IRIs minted from the table and the key",
+    "T's arms are <base>T.arm.ftyp.str and <base>T.arm.7.str for the string keys ftyp and 7, every string key "
+    "carrying the suffix .str, and <base>T.arm.7 for the integer key 7, which never does; none is a blank node, "
+    "and the lone sibling in on is bddo:dispatchOnField.",
+    OK + ["req-hdl-modules-4"],
+    ["modules", "iri-minting"],
+    """
+     format t @namespace "{ns}"
+     struct Root {
+       kind : ascii[4]
+       body : bytes[..] dispatch T on kind default Blob { "ftyp" => A  7 => B  "7" => A }
+     }
+     struct A { a : u8 }
+     struct B { b : u8 }
+     struct Blob { raw : bytes[..] }
+     """,
+    """
+     format: t
+     namespace: "{ns}"
+     structs:
+       Root:
+         fields:
+           - { name: kind, type: ascii, size: 4 }
+           - name: body
+             type: bytes
+             size: ".."
+             dispatch: { name: T, on: kind, default: Blob, cases: { ftyp: A, 7: B, "7": A } }
+       A:
+         fields:
+           - { name: a, type: u8 }
+       B:
+         fields:
+           - { name: b, type: u8 }
+       Blob:
+         fields:
+           - { name: raw, type: bytes, size: ".." }
+     """,
+    """
+     ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.kind ex:Root.body ) .
+     ex:Root.kind a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:ascii ; bddo:size 4 .
+     ex:Root.body a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ; bddo:hasDispatchTable ex:T .
+     ex:T a bddo:DispatchTable ; bddo:dispatchOnField ex:Root.kind ; bddo:dispatchDefault ex:Blob .
+     ex:T.arm.ftyp.str a bddo:DispatchArm ; bddo:armTable ex:T ; bddo:armKey "ftyp" ; bddo:armDataType ex:A .
+     ex:T.arm.7 a bddo:DispatchArm ; bddo:armTable ex:T ; bddo:armKey 7 ; bddo:armDataType ex:B .
+     ex:T.arm.7.str a bddo:DispatchArm ; bddo:armTable ex:T ; bddo:armKey "7" ; bddo:armDataType ex:A .
+     ex:A a bddo:Struct ; bddo:hasField ( ex:A.a ) .
+     ex:A.a a bddo:Field ; bddo:dataType bddo:uint8 .
+     ex:B a bddo:Struct ; bddo:hasField ( ex:B.b ) .
+     ex:B.b a bddo:Field ; bddo:dataType bddo:uint8 .
+     ex:Blob a bddo:Struct ; bddo:hasField ( ex:Blob.raw ) .
+     ex:Blob.raw a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true .
+     """,
+)
+
+YAML_HEX = ["req-hdl-yaml-3"]
+
+hc(
+    "yaml-hex-mapping",
+    'The YAML mapping { hex: "0x..." } is a hex byte string',
+    'fixed: { hex: "0x89504E47" } and terminator: { hex: "0x00" } are the byte strings the unquoted scalars spell.',
+    OK + YAML_HEX + ["req-hdl-conformance-section-2"],
+    ["yaml", "clauses"],
+    """
+   format: t
+   namespace: "{ns}"
+   structs:
+     Root:
+       fields:
+         - { name: magic, type: bytes, size: 4, fixed: { hex: "0x89504E47" } }
+         - { name: name, type: ascii, terminator: { hex: "0x00" } }
+   """,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.magic ex:Root.name ) .
+   ex:Root.magic a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 4 ; bddo:hasFixedValue "89504E47"^^xsd:hexBinary .
+   ex:Root.name a bddo:Field ; bddo:dataType bddo:string ; bddo:encoding bddo:ascii ; bddo:terminator \
+"00"^^xsd:hexBinary .
+   """,
+    yaml=True,
+)
+
+err(
+    "yaml-quoted-hex-terminator",
+    'A quoted "0x..." YAML scalar as terminator: is an ERROR',
+    "terminator: takes bytes; the quoted scalar is a string, so it is refused rather than read as the bytes it spells.",
+    ["req-hdl-yaml-5"],
+    ["yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        fields:
+          - { name: name, type: ascii, terminator: "0x00" }
+    """,
+    yaml=True,
+)
+
+err(
+    "yaml-quoted-hex-sync",
+    'A quoted "0x..." YAML scalar as sync: is an ERROR',
+    "sync: takes bytes; the quoted scalar is a string, so it is refused rather than read as the bytes it spells.",
+    ["req-hdl-yaml-5"],
+    ["yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        sync: "0x47"
+        fields:
+          - { name: a, type: u8 }
+    """,
+    yaml=True,
+)
+
+err(
+    "yaml-quoted-hex-separator",
+    'A quoted "0x..." YAML scalar as a container delimiter is an ERROR',
+    'separator: "0x3D" would be the four characters 0x3D, not the byte 3D; a delimiter that begins 0x is refused.',
+    ["req-hdl-yaml-5"],
+    ["yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      H:
+        kind: header
+        record-separator: 0x0A
+        separator: "0x3D"
+        fields:
+          - { key: "bands", type: anum }
+    """,
+    yaml=True,
+)
+
+
+hc(
+    "encoded-with-catalogue-codec",
+    "A catalogue-only codec compiles: a warning at most, never an ERROR",
+    "menc:BZip2 is in the register with no contract, so no processor decodes it; the description still records the "
+    "encoding, and the compiler emits it. The register prefix is bound with use, as every register prefix must "
+    "be, so the only diagnostic the source can draw is the WARNING.",
+    OK + ["req-hdl-semantic-1", "req-pm-codec-contracts-5"],
+    ["semantic", "processing#codec-status"],
+    """
+   format t @namespace "{ns}"
+   use menc: <https://hexplain.io/ns/register/media-encoding#>
+   struct Root {
+     data : bytes[..] @encoded-with menc:BZip2
+   }
+   """,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.data ) .
+   ex:Root.data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ; hexplain:isEncodedWith \
+menc:BZip2 .
+   """,
+)
+
+
+# ----------------------------------------------------------------- offset and alignment origins, float formats
+
+pair(
+    "offset-field-start",
+    "@at ... from field-start <name> measures an offset from an earlier sibling's first byte",
+    "body is 8 bytes on from the start of header, and tail len bytes on: each compiles to its offset property by the "
+    "form rule, bddo:offsetBase bddo:fieldStart and bddo:offsetBaseField naming header.",
+    OK + ["req-hdl-clauses-9", "req-hdl-form-rule-1"],
+    ["offset-field-start", "clauses", "grammar-fields"],
+    """
+     format t @namespace "{ns}"
+     struct Root {
+       header : u16
+       len : u8
+       body : u8 @at 8 from field-start header
+       tail : u8 @at len from field-start header
+     }
+     """,
+    """
+     format: t
+     namespace: "{ns}"
+     structs:
+       Root:
+         fields:
+           - { name: header, type: u16 }
+           - { name: len, type: u8 }
+           - { name: body, type: u8, at: { offset: 8, from: field-start, field: header } }
+           - { name: tail, type: u8, at: { offset: len, from: field-start, field: header } }
+     """,
+    """
+     ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.header ex:Root.len ex:Root.body ex:Root.tail ) .
+     ex:Root.header a bddo:Field ; bddo:dataType bddo:uint16 .
+     ex:Root.len a bddo:Field ; bddo:dataType bddo:uint8 .
+     ex:Root.body a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffset 8 ; bddo:offsetBase bddo:fieldStart ;
+         bddo:offsetBaseField ex:Root.header .
+     ex:Root.tail a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:atOffsetFromField ex:Root.len ;
+         bddo:offsetBase bddo:fieldStart ; bddo:offsetBaseField ex:Root.header .
+     """,
+)
+
+err(
+    "offset-field-start-later-field",
+    "An offset from the start of a later field is an ERROR",
+    "b is declared after a, so its start is not known when a's offset is resolved.",
+    ["req-hdl-clauses-9"],
+    ["offset-field-start"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      a : u8 @at 2 from field-start b
+      b : u8
+    }
+    """,
+    line=3,
+)
+
+err(
+    "offset-field-start-not-a-field",
+    "An offset from the start of a name that is no field of the struct is an ERROR",
+    "missing is not declared in Root.",
+    ["req-hdl-clauses-9"],
+    ["offset-field-start"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      a : u8
+      b : u8 @at 2 from field-start missing
+    }
+    """,
+    line=4,
+)
+
+err(
+    "offset-field-start-yaml-no-field",
+    "On the YAML surface, from: field-start without a field is an ERROR",
+    "at: { offset: 2, from: field-start } names no sibling to measure from.",
+    ["req-hdl-clauses-9", "req-hdl-conformance-section-2"],
+    ["offset-field-start", "yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        fields:
+          - { name: a, type: u8 }
+          - { name: b, type: u8, at: { offset: 2, from: field-start } }
+    """,
+    yaml=True,
+)
+
+err(
+    "offset-field-yaml-other-base",
+    "On the YAML surface, a field with a base other than field-start is an ERROR",
+    "at: { offset: 2, from: stream-start, field: a }: only an offset from a field's start names a field.",
+    ["req-hdl-clauses-9", "req-hdl-conformance-section-2"],
+    ["offset-field-start", "yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        fields:
+          - { name: a, type: u8 }
+          - { name: b, type: u8, at: { offset: 2, from: stream-start, field: a } }
+    """,
+    yaml=True,
+)
+
+pair(
+    "align-origin",
+    "@align ... from struct or from stream states the alignment origin",
+    "b aligns to 4 bytes from the start of the containing struct instance, c to 8 from the start of the stream, "
+    "stated; d to 2 with no origin, which is the stream's and is not emitted.",
+    OK + ["req-hdl-clauses-10", "req-hdl-form-rule-2"],
+    ["align-origin", "clauses", "grammar-fields"],
+    """
+     format t @namespace "{ns}"
+     struct Root {
+       a : u8
+       b : u32 @align 4 from struct
+       c : u32 @align 8 from stream
+       d : u16 @align 2
+     }
+     """,
+    """
+     format: t
+     namespace: "{ns}"
+     structs:
+       Root:
+         fields:
+           - { name: a, type: u8 }
+           - { name: b, type: u32, align: { to: 4, from: struct } }
+           - { name: c, type: u32, align: { to: 8, from: stream } }
+           - { name: d, type: u16, align: 2 }
+     """,
+    """
+     ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.a ex:Root.b ex:Root.c ex:Root.d ) .
+     ex:Root.a a bddo:Field ; bddo:dataType bddo:uint8 .
+     ex:Root.b a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:alignment 4 ; bddo:alignmentOrigin bddo:structOrigin .
+     ex:Root.c a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:alignment 8 ; bddo:alignmentOrigin bddo:streamOrigin .
+     ex:Root.d a bddo:Field ; bddo:dataType bddo:uint16 ; bddo:alignment 2 .
+     """,
+)
+
+err(
+    "align-origin-unknown",
+    "An alignment origin other than stream or struct is an ERROR",
+    "@align 4 from parent: the origins are stream and struct.",
+    ["req-hdl-clauses-10"],
+    ["align-origin", "grammar-fields"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      a : u32 @align 4 from parent
+    }
+    """,
+    line=3,
+)
+
+pair(
+    "float-format-vax",
+    "The VAX float formats are stated with @prop at the widths they exist at",
+    "vaxF on an f32, vaxD and vaxG on an f64: each @prop emits its bddo:floatFormat triple and nothing else.",
+    OK + ["req-hdl-clauses-5"],
+    ["terms-without-a-clause", "escape-hatch"],
+    """
+     format t @namespace "{ns}"
+     struct Root {
+       f : f32 @prop bddo:floatFormat bddo:vaxF
+       d : f64 @prop bddo:floatFormat bddo:vaxD
+       g : f64 @prop bddo:floatFormat bddo:vaxG
+     }
+     """,
+    """
+     format: t
+     namespace: "{ns}"
+     structs:
+       Root:
+         fields:
+           - { name: f, type: f32, prop: { "bddo:floatFormat": { curie: "bddo:vaxF" } } }
+           - { name: d, type: f64, prop: { "bddo:floatFormat": { curie: "bddo:vaxD" } } }
+           - { name: g, type: f64, prop: { "bddo:floatFormat": { curie: "bddo:vaxG" } } }
+     """,
+    """
+     ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.f ex:Root.d ex:Root.g ) .
+     ex:Root.f a bddo:Field ; bddo:dataType bddo:float32 ; bddo:floatFormat bddo:vaxF .
+     ex:Root.d a bddo:Field ; bddo:dataType bddo:float64 ; bddo:floatFormat bddo:vaxD .
+     ex:Root.g a bddo:Field ; bddo:dataType bddo:float64 ; bddo:floatFormat bddo:vaxG .
+     """,
+)

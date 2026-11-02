@@ -1,0 +1,16 @@
+# Boundaries counted from the containing struct rather than from the stream: the members of a
+# record that is itself embedded at an arbitrary stream offset.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/origin#> .
+
+ex:Note a bddo:Struct ; bddo:padTo 4 ; bddo:alignmentOrigin bddo:structOrigin ;
+    bddo:hasField ( ex:Note.nameSize ex:Note.name ex:Note.desc ) .
+ex:Note.nameSize a bddo:Field ; bddo:dataType bddo:uint32le .
+ex:Note.name a bddo:Field ; bddo:dataType bddo:string ; bddo:sizeFromField ex:Note.nameSize ;
+    bddo:padTo 4 ; bddo:alignmentOrigin bddo:structOrigin .
+ex:Note.desc a bddo:Field ; bddo:dataType bddo:uint32le ; bddo:alignment 4 ; bddo:alignmentOrigin bddo:structOrigin .
+# The default, stated: boundaries counted from the start of the current stream.
+ex:Sector a bddo:Field ; bddo:dataType bddo:uint32le ; bddo:alignment 512 ; bddo:alignmentOrigin bddo:streamOrigin .

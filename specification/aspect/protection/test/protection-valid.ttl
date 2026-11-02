@@ -1,0 +1,43 @@
+# A packet whose body is encrypted with an authenticated cipher, covered by a Reed-Solomon
+# block and signed. The declarations describe the protection; nothing here is decrypted, verified
+# or corrected by a processor.
+@prefix aprot: <https://hexplain.io/ns/aspect/protection#> .
+@prefix rprot: <https://hexplain.io/ns/register/protection#> .
+@prefix bddo:  <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix ex:    <https://example.org/protection#> .
+
+ex:Packet a bddo:Struct ; bddo:hasField ( ex:Packet.keyId ex:Packet.nonce ex:Packet.header ex:Packet.body
+    ex:Packet.parity ex:Packet.signer ex:Packet.signature ) .
+ex:Packet.keyId a bddo:Field ; bddo:dataType bddo:uint32be .
+ex:Packet.nonce a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 12 .
+ex:Packet.header a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 16 .
+ex:Packet.body a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 223 .
+ex:Packet.parity a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 32 .
+ex:Packet.signer a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 8 .
+ex:Packet.signature a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 64 .
+
+ex:Encrypted a aprot:EncryptedRegion ; aprot:region ex:Packet.body ; aprot:cipher rprot:AESGCM ;
+    aprot:keyIdentifierField ex:Packet.keyId ; aprot:nonceField ex:Packet.nonce ;
+    aprot:additionalAuthenticatedData ex:HeaderRange .
+ex:HeaderRange a aprot:ByteRange ; aprot:fromField ex:Packet.header ; aprot:toField ex:Packet.header .
+
+# A whole struct may be the encrypted region, and the optional fields may all be absent.
+ex:Sealed a bddo:Struct ; bddo:hasField ( ex:Sealed.blob ) .
+ex:Sealed.blob a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 32 .
+ex:SealedRegion a aprot:EncryptedRegion ; aprot:region ex:Sealed ; aprot:cipher rprot:ChaCha20Poly1305 .
+
+ex:Signed a aprot:Signature ; aprot:signatureAlgorithm rprot:Ed25519 ; aprot:signatureValueField ex:Packet.signature ;
+    aprot:covers ex:SignedRange ; aprot:signerIdentifierField ex:Packet.signer .
+ex:SignedRange a aprot:ByteRange ; aprot:fromField ex:Packet.keyId ; aprot:toField ex:Packet.signer .
+ex:Tagged a aprot:Signature ; aprot:signatureAlgorithm rprot:HMACSHA256 ; aprot:signatureValueField ex:Packet.signature ;
+    aprot:covers ex:SignedRange .
+
+ex:Coded a aprot:ErrorCorrection ; aprot:errorCorrectingCode rprot:ReedSolomon ;
+    aprot:dataRange ex:DataRange ; aprot:parityRange ex:ParityRange .
+ex:DataRange a aprot:ByteRange ; aprot:fromField ex:Packet.body ; aprot:toField ex:Packet.body .
+ex:ParityRange a aprot:ByteRange ; aprot:fromField ex:Packet.parity ; aprot:toField ex:Packet.parity .

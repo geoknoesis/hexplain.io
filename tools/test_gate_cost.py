@@ -1,55 +1,282 @@
-"""The cost of a gate run is evidence too; an unreadable or incomplete record is not a pass."""
+"""The cost of a gate run is evidence too: its summary, the tracked record and the timeouts derived from it."""
+
+from __future__ import annotations
+
 import contextlib
 import io
 import json
 import tempfile
 from pathlib import Path
+from typing import Any
 
-from _gate_cost import summarise, render
+from _gate_cost import COSTS, derive_timeout, derive_timeouts, load_costs, read_record, render, summarise
+from _gate_runner import main as run_gates
 
-with tempfile.TemporaryDirectory() as temp:
-    report = Path(temp) / 'summary.json'
+MIB = 1024 * 1024
 
-    report.write_text(json.dumps(dict(status='complete', counts=dict(PASS=2, SKIP=0, FAIL=0), gates=[
-        dict(gate='test_slow', status='PASS', duration_seconds=120.0,
-             peak_rss_bytes=900 * 1024 * 1024, peak_processes=9, rss_samples=2400),
-        dict(gate='test_fast', status='PASS', duration_seconds=1.5,
-             peak_rss_bytes=30 * 1024 * 1024, peak_processes=1, rss_samples=30),
-    ])), encoding='utf-8')
+
+def gate_row(name: str, seconds: float, rss_mib: int | None, processes: int | None) -> dict[str, Any]:
+    return dict(
+        gate=name,
+        status="PASS",
+        duration_seconds=seconds,
+        peak_rss_bytes=None if rss_mib is None else rss_mib * MIB,
+        peak_processes=processes,
+        rss_samples=0 if rss_mib is None else 30,
+    )
+
+
+def write_report(path: Path, **record: Any) -> None:
+    path.write_text(json.dumps(record), encoding="utf-8", newline="\n")
+
+
+def check_summary(temp: Path) -> None:
+    """Wall clock and the sum of durations are separate figures; an unfinished run is not summarised."""
+    report = temp / "summary.json"
+    write_report(
+        report,
+        status="complete",
+        jobs=4,
+        wall_clock_seconds=125.0,
+        counts=dict(PASS=2, SKIP=0, FAIL=0),
+        gates=[gate_row("test_slow", 120.0, 900, 9), gate_row("test_fast", 61.5, 30, 1)],
+    )
     summary = summarise(report)
-    assert summary['total_seconds'] == 121.5, summary
-    assert summary['peak_rss_bytes'] == 900 * 1024 * 1024, summary
-    assert summary['peak_processes'] == 9, summary
+    # Two gates of 120 s and 61.5 s that ran side by side: 181.5 s of work in 125 s of wall clock.
+    assert summary["gate_seconds_sum"] == 181.5, summary
+    assert summary["wall_clock_seconds"] == 125.0, summary
+    assert summary["peak_rss_bytes"] == 900 * MIB, summary
+    assert summary["peak_processes"] == 9, summary
     # Ordered by cost, so the gate worth attention is the first line and not the twentieth.
-    assert [row['gate'] for row in summary['by_duration']] == ['test_slow', 'test_fast'], summary
-    assert [row['gate'] for row in summary['by_memory']] == ['test_slow', 'test_fast'], summary
+    assert [row["gate"] for row in summary["by_duration"]] == ["test_slow", "test_fast"], summary
+    assert [row["gate"] for row in summary["by_memory"]] == ["test_slow", "test_fast"], summary
     text = render(summary)
-    assert 'test_slow' in text and '900' in text.replace(',', ''), text
+    assert "test_slow" in text and "900" in text.replace(",", ""), text
+    assert "wall clock 125.0s at --jobs 4" in text and "sum of gate durations 181.5s" in text, text
 
-    # A run where nothing sampled memory must say so rather than report a peak of zero.
-    report.write_text(json.dumps(dict(status='complete', counts=dict(PASS=1, SKIP=0, FAIL=0), gates=[
-        dict(gate='test_fast', status='PASS', duration_seconds=1.0,
-             peak_rss_bytes=None, peak_processes=None, rss_samples=0),
-    ])), encoding='utf-8')
+    # A record written before the wall clock was kept says so rather than passing the sum off as it.
+    write_report(
+        report, status="complete", counts=dict(PASS=1, SKIP=0, FAIL=0), gates=[gate_row("test_fast", 1.0, None, None)]
+    )
     summary = summarise(report)
-    assert summary['peak_rss_bytes'] is None, summary
-    assert 'not sampled' in render(summary), render(summary)
+    assert summary["wall_clock_seconds"] is None and "wall clock not recorded" in render(summary), render(summary)
+    # A run where nothing sampled memory must say so rather than report a peak of zero.
+    assert summary["peak_rss_bytes"] is None, summary
+    assert "not sampled" in render(summary), render(summary)
 
     # An incomplete run is not summarised as though it finished.
-    report.write_text(json.dumps(dict(status='running', gates=[])), encoding='utf-8',newline='\n')
+    write_report(report, status="running", gates=[])
     try:
         summarise(report)
-        raise AssertionError('summarised an unfinished run')
+        raise AssertionError("summarised an unfinished run")
     except SystemExit as failure:
-        assert 'running' in str(failure), failure
-
-    missing = Path(temp) / 'absent.json'
+        assert "running" in str(failure), failure
     try:
-        summarise(missing)
-        raise AssertionError('summarised a missing report')
+        summarise(temp / "absent.json")
+        raise AssertionError("summarised a missing report")
     except SystemExit:
         pass
 
-with contextlib.redirect_stdout(io.StringIO()):
-    pass
-print('PASS: gate cost summary reports duration, sampled memory, process count and refuses partial runs')
+
+def check_timeout_rule() -> None:
+    """Ten times the recorded duration, rounded up to five minutes, from five minutes to an hour."""
+    for seconds, expected in [
+        (None, 300),
+        (0.0, 300),
+        (1.2, 300),
+        (30.0, 300),
+        (30.1, 600),
+        (60.0, 600),
+        (85.0, 900),
+        (330.0, 3300),
+        (360.0, 3600),
+        (361.0, 3600),
+        (5000.0, 3600),
+        (1e308, 3600),  # Finite input must be capped before the multiplication can overflow.
+    ]:
+        assert derive_timeout(seconds) == expected, (seconds, derive_timeout(seconds), expected)
+    for invalid in (-1.0, float("nan"), float("inf")):
+        try:
+            derive_timeout(invalid)
+            raise AssertionError(f"derived a timeout from {invalid}")
+        except ValueError:
+            pass
+
+
+def gate_tree(root: Path) -> None:
+    """A tree with a manifest: two offline gates and one docker gate."""
+    tools = root / "tools"
+    tools.mkdir(parents=True)
+    for name in ("test_one", "test_two", "_check_docker"):
+        (tools / f"{name}.py").write_text("print('PASS')\n", encoding="utf-8", newline="\n")
+    (tools / "gates.json").write_text(
+        json.dumps(
+            dict(
+                schema_version=1,
+                gates=[
+                    dict(name="test_one", **{"class": "offline"}, timeout=900),
+                    dict(name="test_two", **{"class": "offline"}, timeout=300),
+                    dict(name="_check_docker", **{"class": "docker"}, timeout=300),
+                ],
+            ),
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+def timeouts_of(root: Path) -> dict[str, float]:
+    """The timeout each gate of the last run was held to, from its run record."""
+    saved = json.loads((root / ".gate-results/summary.json").read_text(encoding="utf-8"))
+    return {row["gate"]: row["timeout_seconds"] for row in saved["gates"]}
+
+
+def refused(root: Path, argv: list[str]) -> bool:
+    try:
+        run_gates(root, set(), argv)
+    except SystemExit as error:
+        return error.code == 2
+    return False
+
+
+def check_record(root: Path) -> None:
+    """The tracked record is written by a complete unfiltered run, merged by gate, and never by a partial one."""
+    gate_tree(root)
+    record = root / COSTS
+    assert load_costs(root) == {}, "a tree without a record has no costs"
+    # A filtered run, or one with a clamped timeout, is refused before any gate starts.
+    assert refused(root, ["--record-costs", "test_one"]), "a filtered run was allowed to record costs"
+    assert refused(root, ["--record-costs", "--timeout", "5"]), "a clamped run was allowed to record costs"
+    assert not record.exists()
+    # A failed run leaves the record alone.
+    (root / "tools/test_two.py").write_text("raise SystemExit(1)\n", encoding="utf-8", newline="\n")
+    assert run_gates(root, set(), ["--strict", "--record-costs"]) == 1
+    assert not record.exists(), "a failed run was recorded"
+    (root / "tools/test_two.py").write_text("print('PASS')\n", encoding="utf-8", newline="\n")
+    assert run_gates(root, set(), ["--strict", "--record-costs"]) == 0
+    # While its cost is recorded for the first time a gate runs under the cap, not under whatever
+    # the manifest says for a gate nobody has measured: otherwise a slow gate could never be recorded.
+    assert timeouts_of(root) == {"test_one": 3600.0, "test_two": 3600.0}, timeouts_of(root)
+    first = read_record(root)
+    assert sorted(first["gates"]) == ["test_one", "test_two"], first["gates"]
+    assert set(first["gates"]["test_one"]) == {"duration_s", "peak_rss_mb", "procs"}, first["gates"]["test_one"]
+    run = first["runs"]["offline"]
+    # Recorded tenths of a second may legitimately be zero on a fast host.
+    assert run["gates"] == 2 and run["jobs"] >= 1 and run["wall_clock_s"] >= 0 and run["sequential_sum_s"] >= 0, run
+    measured = json.loads((root / ".gate-results/summary.json").read_text())
+    assert run["sequential_sum_s"] == round(sum(row["duration_seconds"] for row in measured["gates"]), 1), run
+    described = {"recorded_utc", "platform", "python", "cpu_count", "memory_mb"}
+    assert described | {"available_mb_at_start", "cpu_busy_percent_at_start"} <= set(run), run
+    # Recording another class merges: the offline entries and the offline run header stay.
+    assert run_gates(root, set(), ["--strict", "--class", "docker", "--record-costs"]) == 0
+    merged = read_record(root)
+    assert sorted(merged["gates"]) == ["_check_docker", "test_one", "test_two"], merged["gates"]
+    assert merged["gates"]["test_one"] == first["gates"]["test_one"], "recording docker rewrote an offline entry"
+    assert sorted(merged["runs"]) == ["docker", "offline"] and merged["runs"]["offline"] == run, merged["runs"]
+    # A plain run -- filtered or not -- never touches the tracked record.
+    before = record.read_bytes()
+    assert run_gates(root, set(), ["--strict", "test_one"]) == 0
+    assert record.read_bytes() == before, "a filtered run without --record-costs changed the tracked record"
+    assert run_gates(root, set(), ["--strict"]) == 0
+    assert record.read_bytes() == before, "a run without --record-costs changed the tracked record"
+    # ... and runs under the declared timeouts, as does a recording of gates already recorded.
+    assert timeouts_of(root) == {"test_one": 900.0, "test_two": 300.0}, timeouts_of(root)
+    assert run_gates(root, set(), ["--strict", "--record-costs"]) == 0
+    assert timeouts_of(root) == {"test_one": 900.0, "test_two": 300.0}, timeouts_of(root)
+    merged["gates"].update({name: read_record(root)["gates"][name] for name in ("test_one", "test_two")})
+    merged["runs"]["offline"] = read_record(root)["runs"]["offline"]
+    assert record.read_text(encoding="utf-8") == json.dumps(merged, indent=2) + "\n", "record is not canonical JSON"
+    # A gate removed from the manifest leaves the record with the next recording.
+    manifest = root / "tools/gates.json"
+    document = json.loads(manifest.read_text(encoding="utf-8"))
+    document["gates"] = [g for g in document["gates"] if g["name"] != "test_two"]
+    manifest.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8", newline="\n")
+    (root / "tools/test_two.py").unlink()
+    assert run_gates(root, set(), ["--strict", "--record-costs"]) == 0
+    assert sorted(read_record(root)["gates"]) == ["_check_docker", "test_one"]
+
+
+def check_derived_timeouts(root: Path) -> None:
+    """--derive-timeouts rewrites the manifest from the record and runs nothing."""
+    manifest = root / "tools/gates.json"
+    document = read_record(root)
+    document["gates"]["test_one"]["duration_s"] = 45.0
+    (root / COSTS).write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8", newline="\n")
+    assert derive_timeouts(root) == ["test_one"], "expected exactly the gate whose recorded duration moved"
+    timeouts = {g["name"]: g["timeout"] for g in json.loads(manifest.read_text(encoding="utf-8"))["gates"]}
+    assert timeouts == {"test_one": 600, "_check_docker": 300}, timeouts
+    assert derive_timeouts(root) == [], "a second derivation changed something"
+    document["gates"]["test_one"]["duration_s"] = 1.0
+    (root / COSTS).write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8", newline="\n")
+    (root / ".gate-results/summary.json").unlink()
+    assert run_gates(root, set(), ["--derive-timeouts"]) == 0
+    assert not (root / ".gate-results/summary.json").exists(), "--derive-timeouts ran the gates"
+    timeouts = {g["name"]: g["timeout"] for g in json.loads(manifest.read_text(encoding="utf-8"))["gates"]}
+    assert timeouts == {"test_one": 300, "_check_docker": 300}, timeouts
+    # A malformed entry is an error, not a default.
+    document["gates"]["test_one"] = dict(duration_s="soon")
+    (root / COSTS).write_text(json.dumps(document), encoding="utf-8", newline="\n")
+    try:
+        load_costs(root)
+        raise AssertionError("accepted a malformed cost entry")
+    except ValueError as error:
+        assert "test_one" in str(error), error
+
+
+def check_invalid_costs(root: Path) -> None:
+    """Reject unusable measurements before they reach timeout derivation or scheduling."""
+    (root / "tools").mkdir(parents=True)
+    path = root / COSTS
+    valid = dict(duration_s=0.0, peak_rss_mb=None, procs=0)
+    invalid_entries: list[dict[str, Any]] = [
+        {**valid, "duration_s": value} for value in (float("nan"), float("inf"), -1, True, "soon", 10**400)
+    ]
+    invalid_entries += [
+        {**valid, "peak_rss_mb": value} for value in (float("nan"), float("inf"), -1, True, 1e308, 10**400)
+    ]
+    invalid_process_counts: tuple[object, ...] = (-1, True, 1.5, "2", [])
+    invalid_entries += [{**valid, "procs": value} for value in invalid_process_counts]
+    for entry in invalid_entries:
+        write_report(path, schema_version=1, gates={"test_bad": entry}, runs={})
+        try:
+            load_costs(root)
+            raise AssertionError(f"accepted malformed cost {entry}")
+        except ValueError as error:
+            assert "test_bad" in str(error), error
+    invalid_containers: tuple[object, ...] = (None, [], "bad")
+    for key in ("gates", "runs"):
+        for value in invalid_containers:
+            document: dict[str, Any] = dict(schema_version=1, gates={}, runs={})
+            document[key] = value
+            write_report(path, **document)
+            try:
+                load_costs(root)
+                raise AssertionError(f"accepted malformed {key}")
+            except ValueError as error:
+                assert str(path) in str(error), error
+    write_report(path, schema_version=1, gates={"test_zero": valid}, runs={})
+    assert load_costs(root)["test_zero"].duration_s == 0.0
+    write_report(path, schema_version=1, gates={"test_normal": dict(duration_s=1.5, peak_rss_mb=0.5, procs=2)}, runs={})
+    assert load_costs(root)["test_normal"].peak_rss_bytes == MIB // 2
+
+
+def main() -> int:
+    quiet = io.StringIO()
+    with contextlib.redirect_stdout(quiet), contextlib.redirect_stderr(quiet), tempfile.TemporaryDirectory() as temp:
+        check_summary(Path(temp))
+        check_timeout_rule()
+        check_invalid_costs(Path(temp) / "invalid-costs")
+        root = Path(temp) / "tree"
+        check_record(root)
+        check_derived_timeouts(root)
+    print(
+        "PASS: gate cost summary separates wall clock from the duration sum and refuses partial runs; the tracked "
+        "record merges by gate and only from a complete unfiltered run; timeouts follow the 10x rule"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

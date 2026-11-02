@@ -1,0 +1,22 @@
+# expect: ex:report hexplain:RegisterDeprecatedValueShape sh:SPARQLConstraintComponent sh:Warning
+# expect: ex:brief hexplain:RegisterBindingShape sh:SPARQLConstraintComponent
+# expect: ex:Interim hexplain:RegisterLifecycleShape sh:OrConstraintComponent
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix usnato: <https://hexplain.io/ns/register/us-nato-security#> .
+@prefix asec:   <https://hexplain.io/ns/aspect/security#> .
+@prefix ex:     <https://example.org/marking#> .
+
+ex:profile hexplain:usesRegister
+    [ a hexplain:RegisterBinding ; hexplain:forProperty asec:sensitivityLevel ; hexplain:register usnato:ClassificationLevelScheme ] .
+# usnato:Restricted was superseded by usnato:NatoRestricted: still in the scheme, so the binding
+# accepts it, but its use is reported as a warning naming the successor.
+ex:report asec:markingSystem "US" ; asec:sensitivityLevel usnato:Restricted ; asec:sensitivityLevelText "RESTRICTED" .
+# A NATO level under a binding to the US scheme alone.
+ex:brief asec:markingSystem "US" ; asec:sensitivityLevel usnato:NatoSecret ; asec:sensitivityLevelText "NATO SECRET" .
+# A retired entry of this register that states no status and no note.
+ex:Interim a skos:Concept ; skos:inScheme usnato:MarkingScheme ; skos:prefLabel "Interim"@en ; owl:deprecated true .

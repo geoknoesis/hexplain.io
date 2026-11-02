@@ -8,44 +8,136 @@ disk is exactly what the modules generate.
 
 The expected outputs are derived from the specification, never recorded from an implementation.
 """
+
+from __future__ import annotations
+
 import json
 import textwrap
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, NoReturn
 
 ROOT = Path(__file__).resolve().parents[2]
 SUITE = ROOT / "specification/conformance"
 
-CLASSES = ("physical-parser", "semantic-emitter", "bundle-processor", "hdl-compiler", "conformance-evaluator")
-PREFIX = {"physical-parser": "pp", "semantic-emitter": "se", "bundle-processor": "bp",
-          "hdl-compiler": "hc", "conformance-evaluator": "ce"}
+#: The case classes: the five conformance classes of the Processing Model, then `writer`, the cases of the optional
+#: feature of that name (a Physical Parser that claims it is the Writer conformance target).
+CLASSES = ("physical-parser", "semantic-emitter", "bundle-processor", "hdl-compiler", "conformance-evaluator", "writer")
+PREFIX = {
+    "physical-parser": "pp",
+    "semantic-emitter": "se",
+    "bundle-processor": "bp",
+    "hdl-compiler": "hc",
+    "conformance-evaluator": "ce",
+    "writer": "w",
+}
 #: The Processing Model's error categories, as a case names them (conf:errorCategory spelling,
 #: with Dispatch kept apart from Description as the Processing Model's error table does).
-CATEGORIES = ("Sync", "Bounds", "Validation", "Checksum", "Expression", "Dispatch", "Description",
-              "Unsupported", "ResourceLimit")
+CATEGORIES = (
+    "Sync",
+    "Bounds",
+    "Validation",
+    "Checksum",
+    "Expression",
+    "Dispatch",
+    "Description",
+    "Unsupported",
+    "ResourceLimit",
+)
 #: Artifacts of which a case has exactly one.
-EXPECTED = ("expected.json", "expected.ttl", "expected-error.json", "expected-report.json", "expected-report.ttl",
-            "expected-claims.json")
+EXPECTED = (
+    "expected.json",
+    "expected.ttl",
+    "expected-error.json",
+    "expected-report.json",
+    "expected-report.ttl",
+    "expected-claims.json",
+    "expected.hex",
+)
+#: The logical tree a Writer case gives the writer under test, in the canonical JSON form of a parsed tree.
+TREE = "tree.json"
+#: The manifest value of a Writer case whose stream is checked by parsing it back (its bytes are an encoder's own).
+ROUND_TRIP = "round-trip"
+#: The error categories a Writer case may expect (Processing Model, Serialisation, Refusals).
+WRITER_CATEGORIES = ("Validation", "Unsupported", "Description", "ResourceLimit")
 #: The error categories a conformance run's Parse finding names (a ResourceLimit is never a finding).
 FINDING_CATEGORIES = tuple(c for c in CATEGORIES if c != "ResourceLimit")
 #: The requirement identifiers every case of a class may cite without saying anything specific: a case
 #: cites at least one identifier outside this set.
-BLANKET = ("req-pm-conformance-1", "req-pm-introduction-1", "req-hdl-conformance-section-1", "req-hel-conformance-1",
-           "req-ce-conf-conformance-1")
+BLANKET = (
+    "req-pm-conformance-1",
+    "req-pm-introduction-1",
+    "req-hdl-conformance-section-1",
+    "req-hel-conformance-1",
+    "req-ce-conf-conformance-1",
+)
 #: The placeholder base of a case whose manifest gives no base (Processing Model, IRI minting): the
 #: processor chooses and reports its own base, and the comparator reads that base as this IRI.
 REPORTED_BASE = "urn:hexplain:suite:reported-base"
 
 
-def feature_tokens():
+def _unique_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in out:
+            raise ValueError(f"the JSON object repeats the member {key!r}")
+        out[key] = value
+    return out
+
+
+def _no_constant(name: str) -> NoReturn:
+    raise ValueError(f"{name} is not JSON (RFC 8259 has no NaN or Infinity)")
+
+
+def strict_json(text: str) -> Any:
+    """[text] parsed as RFC 8259 JSON, refusing what Python's json module tolerates: an object that repeats a member
+    (json.loads keeps the last, so a processor could state two values and be read as either) and the NaN, Infinity
+    and -Infinity tokens. Every processor output and implementation report is read this way. Raises ValueError."""
+    return json.loads(text, object_pairs_hook=_unique_members, parse_constant=_no_constant)
+
+
+def feature_tokens() -> tuple[str, ...]:
     """The optional-feature tokens of the Processing Model's closed list (processing/index.html)."""
     import re
+
     page = (ROOT / "specification/processing/index.html").read_text(encoding="utf-8")
     return tuple(re.findall(r'<li data-feature="([^"]+)">', page))
+
+
 #: Limits a manifest may lower (Processing Model, Resource Limits), plus the evaluator's findings cap.
-LIMITS = ("maxInputBytes", "maxDepth", "maxTreeDepth", "maxVisitedNodes", "maxMaterializedBytes",
-          "maxDecodedBytes", "maxHelDepth", "maxHelLength", "maxQuantifierEvaluations", "maxRegexSteps", "maxTriples",
-          "maxFindings")
+LIMITS = (
+    "maxInputBytes",
+    "maxDepth",
+    "maxTreeDepth",
+    "maxVisitedNodes",
+    "maxMaterializedBytes",
+    "maxDecodedBytes",
+    "maxHelDepth",
+    "maxHelLength",
+    "maxQuantifierEvaluations",
+    "maxRegexSteps",
+    "maxTriples",
+    "maxFindings",
+)
+
+#: The registered text encodings (bddo:Encoding individuals), by local name: the five every Physical Parser
+#: decodes, then the twelve further encodings a processor claims in its claims statement's `encodings` member, by IRI.
+ENCODING_NAMESPACE = "https://hexplain.io/ns/bddo#"
+BASE_ENCODINGS = ("utf8", "ascii", "latin1", "utf16le", "utf16be")
+FURTHER_ENCODINGS = (
+    "utf32le",
+    "utf32be",
+    "ucs2le",
+    "ucs2be",
+    "windows1252",
+    "iso8859_2",
+    "iso8859_5",
+    "iso8859_7",
+    "iso8859_9",
+    "iso8859_15",
+    "ebcdic037",
+    "shiftJis",
+)
 
 PREFIXES = """@prefix bddo: <https://hexplain.io/ns/bddo#> .
 @prefix hexplain: <https://hexplain.io/ns/core#> .
@@ -64,11 +156,11 @@ PREFIXES = """@prefix bddo: <https://hexplain.io/ns/bddo#> .
 BASE = "urn:example:input"
 
 
-def namespace(case_id):
+def namespace(case_id: str) -> str:
     return f"https://example.org/{case_id}#"
 
 
-def turtle(case_id, body):
+def turtle(case_id: str, body: str) -> str:
     """A case's Turtle: the shared prefixes, `ex:` bound to the case's own namespace, then `body`."""
     return PREFIXES + f"@prefix ex: <{namespace(case_id)}> .\n\n" + dedent(body)
 
@@ -79,34 +171,34 @@ class Case:
     cls: str
     title: str
     intent: str
-    requirements: list
-    sections: list
-    description: str = None          # Turtle body (physical, semantic, bundle, evaluator)
-    input: bytes = None              # the input stream
-    expected: object = None          # the parsed tree (physical-parser) as Python values
-    expected_ttl: str = None         # Turtle body of the expected graph
-    error: str = None                # expected Processing Model category
-    root: str = "Root"               # local name of the root struct
-    manifest: dict = field(default_factory=dict)   # further manifest members
-    files: dict = field(default_factory=dict)      # further files: name -> bytes or str
-    report: dict = None              # conformance-evaluator expected report summary
-    hdl: str = None                  # hdl-compiler source
-    hdl_error: dict = None           # hdl-compiler expected diagnostic
-    report_ttl: str = None           # conformance-evaluator expected run report, as Turtle (conf: run terms)
-    claims: dict = None              # expected-claims.json: what a processor's claims statement must satisfy
+    requirements: list[str]
+    sections: list[str]
+    description: str | None = None  # Turtle body (physical, semantic, bundle, evaluator)
+    input: bytes | None = None  # the input stream
+    expected: object = None  # the parsed tree (physical-parser) as Python values
+    expected_ttl: str | None = None  # Turtle body of the expected graph
+    error: str | None = None  # expected Processing Model category
+    root: str | None = "Root"  # local name of the root struct
+    manifest: dict[str, Any] = field(default_factory=dict)  # further manifest members
+    files: dict[str, bytes | str] = field(default_factory=dict)  # further files: name -> bytes or str
+    report: dict[str, Any] | None = None  # conformance-evaluator expected report summary
+    hdl: str | None = None  # hdl-compiler source
+    hdl_error: dict[str, Any] | None = None  # hdl-compiler expected diagnostic
+    report_ttl: str | None = None  # conformance-evaluator expected run report, as Turtle (conf: run terms)
+    claims: dict[str, Any] | None = None  # expected-claims.json: what a processor's claims statement must satisfy
+    tree: object = None  # writer: the logical tree to serialise, as Python values (tree.json)
+    expected_bytes: bytes | None = None  # writer: the exact bytes the specification requires (expected.hex)
+    reparsed: object = None  # writer: the tree the written stream must parse to ("verify": "round-trip")
 
-    def artifacts(self):
+    def artifacts(self) -> dict[str, bytes]:
         """{file name: bytes} of the case directory."""
-        out = {}
-        man = {"id": self.id, "class": self.cls, "title": self.title, "description": self.intent,
-               "requirements": list(self.requirements), "sections": list(self.sections)}
-        if self.cls != "hdl-compiler":
-            man["root"] = namespace(self.id) + self.root if self.root else None
-            if man["root"] is None:
-                del man["root"]
+        out: dict[str, bytes] = {}
+        man = self._manifest_head()
         if self.input is not None:
             man["input"] = "input.bin"
             out["input.bin"] = bytes(self.input)
+        if self.cls == "writer":
+            self._writer_artifacts(man, out)
         man.update(self.manifest)
         if self.description is not None:
             out["description.ttl"] = turtle(self.id, self.description).encode("utf-8")
@@ -114,8 +206,44 @@ class Case:
             out["input.hx"] = dedent(self.hdl).encode("utf-8")
         for name, content in self.files.items():
             out[name] = content if isinstance(content, bytes) else content.encode("utf-8")
-        if self.expected is not None or (self.cls == "physical-parser" and self.error is None and self.expected_ttl is None
-                                         and self.claims is None):
+        self._expected_artifacts(out)
+        out["manifest.json"] = dump(man)
+        return out
+
+    def _manifest_head(self) -> dict[str, Any]:
+        """The manifest members every case states, in their order: identity, citations and root."""
+        man: dict[str, Any] = {
+            "id": self.id,
+            "class": self.cls,
+            "title": self.title,
+            "description": self.intent,
+            "requirements": list(self.requirements),
+            "sections": list(self.sections),
+        }
+        if self.cls != "hdl-compiler" and self.root:
+            man["root"] = namespace(self.id) + self.root
+        return man
+
+    def _writer_artifacts(self, man: dict[str, Any], out: dict[str, bytes]) -> None:
+        """A Writer case's tree and its one expectation: the bytes, an error category or the re-parsed tree."""
+        stated = [v for v in (self.expected_bytes, self.error, self.reparsed) if v is not None]
+        if len(stated) != 1:
+            raise ValueError(f"{self.id}: a writer case states the bytes, an error category or the re-parsed tree")
+        if self.error is not None and self.error not in WRITER_CATEGORIES:
+            raise ValueError(f"{self.id}: {self.error} is not a category a Writer raises")
+        man["input"] = TREE
+        out[TREE] = canonical_json(self.tree)
+        if self.expected_bytes is not None:
+            out["expected.hex"] = hex_lines(self.expected_bytes)
+        if self.reparsed is not None:
+            man["verify"] = ROUND_TRIP
+            out["expected.json"] = canonical_json(self.reparsed)
+
+    def _expected_artifacts(self, out: dict[str, bytes]) -> None:
+        """The expected artifacts of the classes other than the Writer's bytes."""
+        if self.expected is not None or (
+            self.cls == "physical-parser" and self.error is None and self.expected_ttl is None and self.claims is None
+        ):
             out["expected.json"] = canonical_json(self.expected)
         if self.expected_ttl is not None:
             out["expected.ttl"] = turtle(self.id, self.expected_ttl).encode("utf-8")
@@ -131,26 +259,39 @@ class Case:
             out["expected-report.ttl"] = turtle(self.id, self.report_ttl).encode("utf-8")
         if self.claims is not None:
             out["expected-claims.json"] = dump(self.claims)
-        out["manifest.json"] = dump(man)
-        return out
 
 
-def dedent(text):
+def dedent(text: str) -> str:
     return textwrap.dedent(text).strip("\n") + "\n"
 
 
-def dump(value):
+def dump(value: object) -> bytes:
     return (json.dumps(value, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
 
 
-def canonical(value):
+def hex_lines(data: bytes) -> bytes:
+    """expected.hex: the bytes as lower-case hexadecimal digits, sixteen bytes to a line, one space between bytes."""
+    data = bytes(data)
+    rows = [data[i : i + 16].hex(" ") for i in range(0, len(data), 16)]
+    return ("\n".join(rows) + "\n").encode("ascii")
+
+
+def parse_hex(text: str) -> bytes:
+    """The bytes of an expected.hex: lower-case hexadecimal digits, two to a byte, white space ignored."""
+    digits = "".join(text.split())
+    if len(digits) % 2 or any(c not in "0123456789abcdef" for c in digits):
+        raise ValueError("expected.hex holds lower-case hexadecimal digits, two to a byte, and white space")
+    return bytes.fromhex(digits)
+
+
+def canonical(value: object) -> object:
     """The canonical JSON form of a parsed value (see specification/conformance/index.html)."""
     if value is None or isinstance(value, (bool, str)):
         return value
     if isinstance(value, (bytes, bytearray)):
         return bytes(value).hex()
     if isinstance(value, int):
-        return value if -(2 ** 53) <= value <= 2 ** 53 else str(value)
+        return value if -(2**53) <= value <= 2**53 else str(value)
     if isinstance(value, float):
         if value != value:
             return "NaN"
@@ -164,5 +305,5 @@ def canonical(value):
     raise TypeError(f"no canonical form for {type(value).__name__}")
 
 
-def canonical_json(value):
+def canonical_json(value: object) -> bytes:
     return dump(canonical(value))

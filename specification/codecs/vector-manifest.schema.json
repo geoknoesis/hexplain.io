@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hexplain.io/specification/codecs/vector-manifest.schema.json",
+  "title": "Hexplain codec vector suite manifest",
+  "description": "One normative vector suite of a media-encoding register concept that carries a hexplain:codecContract: specification/codecs/<LocalName>/vectors/manifest.json. The prose contract is specification/codecs/index.html; tools/codecs/vectors.py is the reference loader and comparator.",
+  "type": "object",
+  "required": ["codec", "suiteVersion", "sources", "vectors"],
+  "additionalProperties": false,
+  "properties": {
+    "codec": {
+      "type": "string",
+      "format": "iri",
+      "pattern": "^https://hexplain\\.io/ns/register/media-encoding#[A-Za-z0-9]+$",
+      "description": "The IRI of the register concept whose contract this suite is the executable statement of."
+    },
+    "suiteVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Equals the contract's hexplain:vectorSuiteVersion; a change to any vector's expectation raises both."
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/source" },
+      "description": "Where the inputs and expected outputs come from, each with its licence; every vector names one."
+    },
+    "vectors": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/vector" }
+    },
+    "unreached": {
+      "type": "object",
+      "propertyNames": { "enum": ["Validation", "Checksum", "Unsupported", "ResourceLimit"] },
+      "additionalProperties": { "type": "string", "minLength": 1 },
+      "description": "A category the contract declares that no input of any known implementation raises, with the reason: a defect of the contract, reported by tools/test_codec_vector_completeness.py until the register withdraws the category."
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": ["id", "description", "licence"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1, "description": "Provenance: the library, tool or document that produced the inputs and expectations, with its version, and how any corruption was made." },
+        "licence": { "type": "string", "minLength": 1 },
+        "url": { "type": "string" }
+      }
+    },
+    "vector": {
+      "type": "object",
+      "required": ["id", "source", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$", "description": "Unique within the suite." },
+        "source": { "type": "string", "description": "The id of one of the suite's sources." },
+        "session": { "type": "boolean", "default": false, "description": "When true the steps share one codec session (a codec whose contract keeps a session); otherwise every step starts afresh." },
+        "inputs": {
+          "type": "object",
+          "description": "Operation-scoped external byte inputs, grouped by kind then reference. They are not codec parameters or format fields. cipherKey, aadPrefix and resource are standard binding kinds. Public test keys only.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "hex"
+                  ],
+                  "properties": {
+                    "hex": {
+                      "$ref": "#/$defs/hex"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "base64"
+                  ],
+                  "properties": {
+                    "base64": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "steps": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/step" } },
+        "expectAll": { "$ref": "#/$defs/expectAll" }
+      }
+    },
+    "step": {
+      "type": "object",
+      "required": ["direction", "input", "expect"],
+      "additionalProperties": false,
+      "properties": {
+        "direction": { "enum": ["decode", "encode", "describe"] },
+        "params": {
+          "type": "object",
+          "default": {},
+          "description": "The step's codec parameters by contract key: integers and floats as JSON numbers, booleans, strings, bytes as {\"hex\": ..} or {\"base64\": ..}, IRIs as {\"iri\": ..}, and a list-valued parameter as a JSON array of those. They obey the contract unless the step expects a Description error.",
+          "additionalProperties": { "$ref": "#/$defs/paramValue" }
+        },
+        "input": { "$ref": "#/$defs/input" },
+        "maxOutputBytes": { "type": "integer", "minimum": 0, "default": 67108864, "description": "The decoded-byte limit the step runs under." },
+        "expect": { "$ref": "#/$defs/expect" }
+      }
+    },
+    "paramValue": {
+      "anyOf": [
+        { "type": "integer" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "string" },
+        { "type": "object", "required": ["hex"], "properties": { "hex": { "$ref": "#/$defs/hex" } }, "additionalProperties": false },
+        { "type": "object", "required": ["base64"], "properties": { "base64": { "type": "string" } }, "additionalProperties": false },
+        { "type": "object", "required": ["iri"], "properties": { "iri": { "type": "string" } }, "additionalProperties": false },
+        { "type": "array", "items": { "$ref": "#/$defs/paramValue" } }
+      ]
+    },
+    "hex": { "type": "string", "pattern": "^([0-9a-fA-F]{2})*$" },
+    "input": {
+      "oneOf": [
+        { "type": "object", "required": ["hex"], "properties": { "hex": { "$ref": "#/$defs/hex" } }, "additionalProperties": false },
+        { "type": "object", "required": ["base64"], "properties": { "base64": { "type": "string" } }, "additionalProperties": false },
+        { "type": "object", "required": ["file"], "properties": { "file": { "type": "string", "pattern": "^[^/\\\\]+$", "description": "A file beside the manifest holding the input bytes." } }, "additionalProperties": false },
+        { "type": "object", "required": ["samples"], "properties": { "samples": { "$ref": "#/$defs/samplesInput" } }, "additionalProperties": false },
+        { "type": "object", "required": ["previous"], "properties": { "previous": { "const": true } }, "additionalProperties": false, "description": "The output of the step before this one, which must have succeeded: how a round trip through a compressor, whose encoded bytes are the implementation's own, feeds its decode step." }
+      ]
+    },
+    "samplesInput": {
+      "type": "object",
+      "required": ["width", "height", "bands", "sampleType"],
+      "additionalProperties": false,
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "bands": { "type": "integer", "minimum": 1 },
+        "sampleType": { "$ref": "#/$defs/sampleType" },
+        "hex": { "$ref": "#/$defs/hex" },
+        "base64": { "type": "string" }
+      },
+      "description": "Sample data (little-endian, pixel-interleaved) with its geometry, for a SamplesToSamples codec's input."
+    },
+    "sampleType": { "enum": ["uint8", "int8", "uint16", "int16", "uint32", "int32", "float32", "float64"] },
+    "expect": {
+      "oneOf": [
+        { "type": "object", "required": ["hex"], "properties": { "hex": { "$ref": "#/$defs/hex" }, "validitySha256": { "$ref": "#/$defs/sha256" } }, "additionalProperties": false },
+        { "type": "object", "required": ["base64"], "properties": { "base64": { "type": "string" }, "validitySha256": { "$ref": "#/$defs/sha256" } }, "additionalProperties": false },
+        { "type": "object", "required": ["sha256"], "properties": { "sha256": { "$ref": "#/$defs/sha256" }, "size": { "type": "integer", "minimum": 0 }, "validitySha256": { "$ref": "#/$defs/sha256" } }, "additionalProperties": false },
+        { "type": "object", "required": ["ok"], "properties": { "ok": { "const": true }, "validitySha256": { "$ref": "#/$defs/sha256" } }, "additionalProperties": false, "description": "The step succeeds; its output is checked only through the vector's expectAll." },
+        { "type": "object", "required": ["samples"], "properties": { "samples": { "$ref": "#/$defs/samplesExpect" }, "validitySha256": { "$ref": "#/$defs/sha256" } }, "additionalProperties": false },
+        { "type": "object", "required": ["error"], "properties": { "error": { "$ref": "#/$defs/category" } }, "additionalProperties": false }
+      ]
+    },
+    "samplesExpect": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "bands": { "type": "integer", "minimum": 1 },
+        "sampleType": { "$ref": "#/$defs/sampleType" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "order": { "enum": ["pixel", "band"], "default": "pixel", "description": "Whether sha256 covers the samples pixel-interleaved (as the implementation lays them out) or rewritten band-sequentially." }
+      }
+    },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "category": {
+      "enum": ["Validation", "Checksum", "Unsupported", "ResourceLimit", "Description"],
+      "description": "The error category the step raises, in conformance-suite notation. The first four are the categories a contract declares with hexplain:raisesCategory; Description is the category of a step whose parameters the contract rejects (an undeclared name, a missing required parameter, a literal of the wrong type or outside the declared values) and is raised by every codec, so a contract need not declare it."
+    },
+    "expectAll": {
+      "type": "object",
+      "required": ["sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size": { "type": "integer", "minimum": 0 },
+        "unpack": {
+          "type": "object", "required": ["bitsPerSample", "width"], "additionalProperties": false,
+          "properties": { "bitsPerSample": { "type": "integer", "minimum": 1, "maximum": 8 }, "width": { "type": "integer", "minimum": 1 } },
+          "description": "Before hashing, each row of width samples of bitsPerSample bits (most significant bit first, rows padded to a byte) is widened to one byte per sample."
+        },
+        "deinterleave": {
+          "type": "object", "required": ["bands", "sampleBytes"], "additionalProperties": false,
+          "properties": { "bands": { "type": "integer", "minimum": 1 }, "sampleBytes": { "type": "integer", "minimum": 1 } },
+          "description": "Before hashing, pixel-interleaved samples of bands bands of sampleBytes bytes each are rewritten band-sequentially."
+        }
+      },
+      "description": "A digest over the concatenation of every step's output, after unpack and deinterleave, for a vector whose steps are the strips or tiles of one image."
+    }
+  }
+}

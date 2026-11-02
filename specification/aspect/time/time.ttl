@@ -15,9 +15,10 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/aspect/time> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/aspect/time/time-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/aspect/time/1.1> ; owl:versionInfo "1.1" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/time/1.0> ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Time (hx-time)"@en ;
     rdfs:comment "Orthogonal aspect for the temporal extent and structure of data (duration, and — as the aspect grows — timebase, frame count, timecode). Imported by any domain whose data has a timeline."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
@@ -38,14 +39,7 @@
     sh:property [ sh:path :duration ; sh:or ( [ sh:datatype xsd:decimal ] [ sh:datatype xsd:integer ] ) ; sh:minInclusive 0 ; sh:maxCount 1 ;
         sh:message "atime:duration takes at most one value; each is an xsd:decimal or xsd:integer literal at least 0." ] .
 
-# BEGIN GENERATED TERM DOCUMENTATION
-# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-@prefix atime: <https://hexplain.io/ns/aspect/time#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-
-<https://hexplain.io/ns/aspect/time> skos:scopeNote "Use for temporal metadata of content. Numeric durations and frame/sample counts are not interchangeable without a timing model."@en .
-atime:DurationShape rdfs:label "Duration Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/time> ;
-    skos:definition "Applies to subjects using atime:duration. atime:duration takes at most one value; each is an xsd:decimal or xsd:integer literal at least 0."@en .
-atime:duration skos:definition "The elapsed playing time of content expressed in seconds. It is a temporal extent, distinct from a timestamp or a count of frames or samples."@en .
+# ---------- Term ownership ----------
+# rdfs:isDefinedBy for the terms whose declaration above does not state it. A new term states
+# its own; tools/test_term_reference.py requires it of every term this file defines.
+:DurationShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/time> .

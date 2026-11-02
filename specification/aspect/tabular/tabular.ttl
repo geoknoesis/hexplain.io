@@ -7,31 +7,74 @@
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
 @prefix dcterms:<http://purl.org/dc/terms/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix vann:   <http://purl.org/vocab/vann/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 
 <https://hexplain.io/ns/aspect/tabular> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/aspect/tabular/tabular-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/aspect/tabular/1.2> ; owl:versionInfo "1.2" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/tabular/1.1> ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-14"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Tabular (hx-tabular)"@en ;
     rdfs:comment "Aspect for tabular records: rows of typed columns (field schema). Shared by vector attribute tables, DBF, and CSV-like data."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "atab" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/tabular#" .
 
-:Field a owl:Class ; rdfs:label "Field"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:comment "A typed column in a tabular schema."@en .
+:Table a owl:Class ; rdfs:label "Table"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ;
+    rdfs:comment "A tabular resource: a schema of typed columns (atab:hasField) and the records laid out under it (atab:hasRecord), with an optional declared record count (atab:rowCount)."@en ;
+    rdfs:seeAlso <http://www.w3.org/ns/csvw#Table> ;
+    skos:scopeNote "Map the struct that holds a table's header and records, typically a table file's root struct. A table may be described partially: it may name fewer records than its atab:rowCount, never more. Not bddo:DelimitedTable, which is the physical layout of delimited rows, not the table they encode."@en .
+:Record a owl:Class ; rdfs:label "Record"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ;
+    rdfs:comment "One row of a table: a value for each of the table's columns, held by exactly one atab:Table."@en ;
+    rdfs:seeAlso <http://www.w3.org/ns/csvw#Row> ;
+    skos:scopeNote "Map the struct a table repeats once per row. A record that the format marks as deleted is still a record of its table; the mark is the format's own field. Not bddo:DelimitedRecords, the physical framing of delimited records."@en .
+:hasRecord a owl:ObjectProperty ; rdfs:label "has record"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:range :Record ;
+    rdfs:comment "Links a table to one of its records, a part that belongs to that table alone. Record order is not conveyed by this property."@en ;
+    skos:scopeNote "Use on an atab:Table, once per described record; a record has at most one table. The number of described records never exceeds the table's atab:rowCount."@en .
+:Field a owl:Class ; rdfs:label "Field"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:comment "A typed column in a tabular schema."@en ;
+    skos:scopeNote "A column of a tabular schema, described after parsing. Not bddo:Field, the physical run of bytes a Struct locates; the bddo:Field carrying a column's bytes names the column through its semantic mapping."@en .
 :rowCount a owl:DatatypeProperty ; rdfs:label "row count"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:range xsd:unsignedLong .
-:hasField a owl:ObjectProperty ; rdfs:label "has field"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:range :Field .
+:hasField a owl:ObjectProperty ; rdfs:label "has field"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:range :Field ;
+    skos:scopeNote "Use on a tabular resource, once per column, naming an atab:Field. Not bddo:hasField, whose single value is the ordered rdf:List of a Struct's physical members."@en .
 :fieldName a owl:DatatypeProperty ; rdfs:label "field name"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:range xsd:string .
 :fieldDataType a owl:DatatypeProperty ; rdfs:label "field data type"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ; rdfs:range xsd:string .
+
+# ---------- Tables and records ----------
+# No rdfs:domain (scoped SHACL instead): a shape is activated by the class and by the properties
+# that only a table or a record carries, so an untyped table is checked too.
+atab:TableShape a sh:NodeShape ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ;
+    sh:targetClass atab:Table ; sh:targetSubjectsOf atab:hasRecord, atab:hasField, atab:rowCount ;
+    sh:property [ sh:path atab:rowCount ; sh:maxCount 1 ;
+        sh:message "A table declares at most one atab:rowCount." ] ;
+    sh:property [ sh:path atab:hasField ; sh:nodeKind sh:BlankNodeOrIRI ;
+        sh:message "Each value of atab:hasField is a resource (an IRI or a blank node) naming a column." ] ;
+    sh:property [ sh:path atab:hasRecord ; sh:node atab:RecordShape ;
+        sh:message "Each value of atab:hasRecord is a value conforming to atab:RecordShape." ] .
+atab:RecordShape a sh:NodeShape ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ;
+    sh:targetClass atab:Record ; sh:targetObjectsOf atab:hasRecord ;
+    sh:message "A record is a resource (an IRI or a blank node), not a literal." ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:property [ sh:path [ sh:inversePath atab:hasRecord ] ; sh:maxCount 1 ;
+        sh:message "A record belongs to at most one table (atab:hasRecord)." ] .
+atab:RecordCountShape a sh:NodeShape ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ;
+    sh:targetSubjectsOf atab:hasRecord ;
+    sh:sparql [ sh:message "A table describes no more records (atab:hasRecord) than its declared atab:rowCount." ; sh:select """
+      PREFIX atab: <https://hexplain.io/ns/aspect/tabular#>
+      SELECT $this WHERE { $this atab:rowCount ?n . { SELECT $this (COUNT(DISTINCT ?r) AS ?c) WHERE { $this atab:hasRecord ?r } GROUP BY $this } FILTER(?c > ?n) }
+    """ ] .
 
 # ---------- Range datatype shapes ----------
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
+# One copy per module, byte-identical to bddo:IntegerValueShape (the master; template in
+# specification/shared-patterns/integer-value-shape.ttl.template): shapes are validated module by
+# module, and a sh:node into another module's graph is silently satisfied when that module is not loaded.
 atab:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ;
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
 atab:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/tabular> ;
@@ -44,16 +87,3 @@ atab:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
         sh:message "atab:fieldName takes an xsd:string literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path atab:rowCount ; sh:node atab:IntegerValueShape ; sh:minInclusive 0 ; sh:maxInclusive 18446744073709551615 ;
         sh:message "atab:rowCount takes an integer within the xsd:unsignedLong value space (rdfs:range xsd:unsignedLong)." ] .
-
-# BEGIN GENERATED TERM DOCUMENTATION
-# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-@prefix atab: <https://hexplain.io/ns/aspect/tabular#> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-
-<https://hexplain.io/ns/aspect/tabular> skos:scopeNote "Use for tabular records and typed column declarations. Source datatype names require interpretation by the relevant format/profile."@en .
-atab:IntegerValueShape skos:definition "Applied through references from other shapes. A conforming value is an integer (of any XSD integer datatype)."@en .
-atab:RangeDatatypeShape skos:definition "Applies to subjects using atab:fieldDataType, atab:fieldName, atab:rowCount. atab:fieldDataType takes an xsd:string literal (rdfs:range xsd:string). atab:fieldName takes an xsd:string literal (rdfs:range xsd:string). atab:rowCount takes an integer within the xsd:unsignedLong value space (rdfs:range xsd:unsignedLong)."@en .
-atab:fieldDataType skos:definition "The source's textual datatype designation for a column; a format profile defines how this name is interpreted."@en .
-atab:fieldName skos:definition "The source-level name identifying a column within its table schema."@en .
-atab:hasField skos:definition "A typed column declaration belonging to the table's schema."@en .
-atab:rowCount skos:definition "The declared number of records in a tabular resource, including zero for an empty table."@en .

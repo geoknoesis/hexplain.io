@@ -1,0 +1,17 @@
+# A decoded record with named and numbered members, a nested record value, a collection of items
+# with an element count, a member whose byte count is known, and a count of unstated unit.
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix st:   <https://hexplain.io/ns/aspect/structure#> .
+@prefix ex:   <https://hexplain.io/test/structure-records-valid#> .
+
+ex:record a st:Record ; st:recordType "FileMetaData" ; st:hasMember ex:version , ex:schema , ex:blob , ex:inner .
+ex:version a st:Member ; st:name "version" ; st:identifier 1 ; st:dataType "i32" ; st:value 2 .
+ex:schema a st:Member ; st:name "schema" ; st:identifier 2 ; st:dataType "list<SchemaElement>" ;
+    st:elementCount "2"^^xsd:unsignedLong ; st:hasItem ex:item0 , ex:item1 .
+ex:item0 a st:Item ; st:value "root" .
+ex:item1 a st:Item ; st:value "id" .
+ex:blob a st:Member ; st:name "key_metadata" ; st:dataType "binary" ; st:byteCount 16 ; st:count 16 .
+ex:inner a st:Member ; st:name "encoding" ; st:symbol "PLAIN" ; st:value ex:nested .
+ex:nested a st:Record ; st:hasMember ex:empty .
+ex:empty st:name "values" ; st:elementCount 0 .

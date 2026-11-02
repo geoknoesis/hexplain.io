@@ -1,95 +1,511 @@
 """Render working-draft aspect references and the evidence-based GDAL coverage page."""
-from pathlib import Path
-from html import escape as esc
-from collections import Counter
+
+from __future__ import annotations
+
 import json
-from rdflib import Graph,RDF,RDFS,OWL,URIRef
+from collections import Counter
+from html import escape as esc
+from pathlib import Path
+from typing import Any
 
-ROOT=Path(__file__).resolve().parent.parent
-STYLE='''*{box-sizing:border-box}body{margin:0;color:#17333d;background:#f2f6f4;font:16px/1.7 system-ui,Segoe UI,sans-serif}header{background:#12343e;color:white;padding:50px max(24px,calc((100vw - 1080px)/2))}h1{font-size:clamp(32px,5vw,54px);line-height:1.12;letter-spacing:-1px}h2{line-height:1.3;margin-top:38px}main{max-width:1128px;margin:auto;padding:24px 24px 70px}a{color:#007267;text-underline-offset:3px}header a{color:#b2eee0}p{max-width:1000px}.panel{background:white;border:1px solid #d2dfd9;border-radius:10px;padding:22px;margin:20px 0}.note{border-left:5px solid #ba7139;padding:20px;background:#fff2df}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{border-bottom:1px solid #ccdcd5;padding:12px;text-align:left;vertical-align:top}th{background:#e5efeb}pre{white-space:pre;overflow:auto;padding:20px;background:#e6eeed;font:13px/1.65 Consolas,monospace}code{font:14px Consolas,monospace}dt{font-weight:750;margin-top:22px;scroll-margin-top:20px}dd{margin-left:0;color:#45606a}.muted{color:#4d6872;font-size:14px}.scroll{overflow:auto}input{font:inherit;padding:10px;border:1px solid #56776f;border-radius:5px;width:min(100%,650px)}:focus-visible{outline:3px solid #008877;outline-offset:3px}li{margin:8px 0}nav{display:flex;gap:20px;flex-wrap:wrap}@media(max-width:700px){.grid{grid-template-columns:1fr}}@media print{body{background:white;font-size:11px}header{background:white;color:#17333d;padding:15px}header a{color:inherit}main{padding:0}.controls{display:none}h1{font-size:30px}.panel{break-inside:avoid}}'''
-def page(title,body,rootlink,status):
- return f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(title)} · Hexplain</title><style>{STYLE}</style></head><body><header><a href="{rootlink}">Hexplain specification</a><h1>{title}</h1><p>{esc(status)}</p></header><main>{body}</main></body></html>'
+from _build_term_reference import build as build_term_references
+from _site_inventory import with_print_link
+from rdflib import OWL, RDF, RDFS, Graph, URIRef
 
-DCT_MODIFIED=URIRef('http://purl.org/dc/terms/modified')
-def status_of(module):
- """Version and modification date of an aspect, read from its canonical Turtle."""
- g=Graph().parse(data=(ROOT/'specification/aspect'/module/(module+'.ttl')).read_text(encoding='utf-8'),format='turtle')
- ont=URIRef(f'https://hexplain.io/ns/aspect/{module}')
- # owl:versionInfo is the bare version number; a working draft says so with its own annotation.
- draft=str(g.value(ont,URIRef('http://schema.org/creativeWorkStatus')) or '')
- return str(g.value(ont,OWL.versionInfo) or '')+(' '+draft if draft else ''),str(g.value(ont,DCT_MODIFIED) or '')
+ROOT = Path(__file__).resolve().parent.parent
+STYLE = (
+    """*{box-sizing:border-box}body{margin:0;color:#17333d;background:#f2f6f4;font:16px/1.7 system-ui,Segoe """
+    """UI,sans-serif}header{background:#12343e;color:white;padding:50px max(24px,calc((100vw - """
+    """1080px)/2))}h1{font-size:clamp(32px,5vw,54px);line-height:1.12;letter-spacing:-1px}"""
+    """h2{line-height:1.3;margin-top:38px}main{max-width:1128px;margin:auto;padding:24px """
+    """24px 70px}a{color:#007267;text-underline-offset:3px}header """
+    """a{color:#b2eee0}p{max-width:1000px}.panel{background:white;border:1px solid """
+    """#d2dfd9;border-radius:10px;padding:22px;margin:20px 0}.note{border-left:5px solid """
+    """#ba7139;padding:20px;background:#fff2df}.grid{display:grid;grid-template-columns:1fr """
+    """1fr;gap:20px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{border-bottom:1px solid """
+    """#ccdcd5;padding:12px;text-align:left;vertical-align:top}th{background:#e5efeb}"""
+    """pre{white-space:pre;overflow:auto;padding:20px;background:#e6eeed;font:13px/1.65 """
+    """Consolas,monospace}code{font:14px """
+    """Consolas,monospace}dt{font-weight:750;margin-top:22px;scroll-margin-top:20px}"""
+    """dd{margin-left:0;color:#45606a}.muted{color:#4d6872;font-size:14px}.scroll{overflow:auto}"""
+    """input{font:inherit;padding:10px;border:1px """
+    """solid #56776f;border-radius:5px;width:min(100%,650px)}:focus-visible{outline:3px solid """
+    """#008877;outline-offset:3px}li{margin:8px """
+    """0}nav{display:flex;gap:20px;flex-wrap:wrap}@media(max-width:700px){.grid{grid-template-columns:1fr}}@media """
+    """print{body{background:white;font-size:11px}header{background:white;color:#17333d;padding:15px}header """
+    """a{color:inherit}main{padding:0}.controls{display:none}h1{font-size:30px}.panel{break-inside:avoid}}"""
+)
 
-prose={
-'raster':'''<p>The logical model now covers multiband grids and arrays of arbitrary rank. It complements BDDO byte structures and DLV storage layouts. These resources describe samples after parsing; adding a semantic term does not add a decoder.</p>
-<h2>Normative modeling contract</h2><ul><li>A RasterGrid describes a two-dimensional sample grid. Bands MAY carry separate calibration, units, no-data and validity masks. Band indexes are one-based and unique within a grid. <span class="req" id="req-raster-document-1"></span>Described bands MUST NOT exceed a declared band count; omission of some bands is allowed in a partial RDF projection.</li><li><span class="req" id="req-raster-document-2"></span>SampleArray dimensions MUST be a complete, finite ordered RDF list. An empty list represents a scalar. ArrayDimension permits a zero current extent, including an empty extensible axis. A dimension resource MAY be shared between arrays and repeated within one array, as in a covariance matrix; its index is not a global property.</li><li><span class="req" id="req-raster-document-3"></span>Logical array order MUST NOT be treated as a byte-stride or chunk-order declaration. Physical layout belongs to DLV. Scalar or empty semantic arrays do not imply that every processor supports zero-byte physical layouts.</li><li>Calibration is <code>physical = raw × sampleScale + sampleOffset</code>. No-data detection precedes calibration. Missing scale or offset is unspecified; an importer MAY materialize documented source defaults. <span class="req" id="req-raster-document-4"></span>Calibration values MUST be finite; NaN MAY be a no-data sentinel and requires NaN-aware detection.</li><li>A validity mask has zero for invalid and nonzero for valid. Alpha/transparency is a separate interpretation. Overviews cover the same domain at lower resolution; no resampling algorithm or fixed integer reduction is implied.</li><li>Dimension kinds are open concept schemes bound by profiles. <span class="req" id="req-raster-document-5"></span>Temporal, vertical, spectral, ensemble and other scientific axes MUST NOT be forced into fixed X/Y/Z categories.</li></ul>
-<p class="note">Compatibility: existing width/height predicates remain. Their shapes now reject negative, zero, fractional or multiple values. New array and band types are additive; complete dimension lists are required only when the array model is used.</p>
-<p>The design is informed by GDAL’s <a href="https://gdal.org/en/stable/user/raster_data_model.html">raster model</a> and <a href="https://gdal.org/en/stable/user/multidim_raster_data_model.html">multidimensional model</a>. Repeated axes follow the <a href="https://docs.unidata.ucar.edu/nug/2.0-draft/netcdf_objects.html">netCDF dimension model</a>. These are conceptual correspondences, not OWL equivalence assertions.</p>''',
-'spatialref':'''<p>Coordinate reference systems, affine transforms, control-point sets and rational-polynomial models are distinct resources. The same vocabulary serves raster and vector data without assuming geographic coordinates or one authority’s identifier scheme.</p>
+
+def page(title: str, body: str, rootlink: str, status: str) -> str:
+    return (
+        f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" '
+        f'content="width=device-width,initial-scale=1"><title>{esc(title)} · '
+        f'Hexplain</title><style>{STYLE}</style></head><body><header><a href="{rootlink}">Hexplain '
+        f"specification</a><h1>{title}</h1><p>{esc(status)}</p></header><main>{body}</main></body></html>"
+    )
+
+
+def write_page(path: Path, html: str) -> None:
+    """Write a generated page carrying the site's print stylesheet link, as tools/_site_inventory.py expects."""
+    path.write_text(with_print_link(path, html), encoding="utf-8", newline="\n")
+
+
+DCT_MODIFIED = URIRef("http://purl.org/dc/terms/modified")
+
+
+def status_of(module: str) -> tuple[str, str]:
+    """Version and modification date of an aspect, read from its canonical Turtle."""
+    g = Graph().parse(
+        data=(ROOT / "specification/aspect" / module / (module + ".ttl")).read_text(encoding="utf-8"), format="turtle"
+    )
+    ont = URIRef(f"https://hexplain.io/ns/aspect/{module}")
+    # owl:versionInfo is the bare version number; a working draft says so with its own annotation.
+    draft = str(g.value(ont, URIRef("http://schema.org/creativeWorkStatus")) or "")
+    return str(g.value(ont, OWL.versionInfo) or "") + (" " + draft if draft else ""), str(
+        g.value(ont, DCT_MODIFIED) or ""
+    )
+
+
+prose = {
+    "raster": """<p>The logical model now covers multiband grids and arrays of arbitrary rank. It complements BDDO \
+byte structures and DLV storage layouts. These resources describe samples after parsing; adding a semantic term does \
+not add a decoder.</p>
+<h2>Normative modeling contract</h2><ul><li>A RasterGrid describes a two-dimensional sample grid. Bands MAY carry \
+separate calibration, units, no-data and validity masks. Band indexes are one-based and unique within a grid. <span \
+class="req" id="req-raster-document-1"></span>Described bands MUST NOT exceed a declared band count; omission of \
+some bands is allowed in a partial RDF projection.</li><li><span class="req" \
+id="req-raster-document-2"></span>SampleArray dimensions MUST be a complete, finite ordered RDF list. An empty list \
+represents a scalar. ArrayDimension permits a zero current extent, including an empty extensible axis. A dimension \
+resource MAY be shared between arrays and repeated within one array, as in a covariance matrix; its index is not a \
+global property.</li><li><span class="req" id="req-raster-document-3"></span>Logical array order MUST NOT be treated \
+as a byte-stride or chunk-order declaration. Physical layout belongs to DLV. Scalar or empty semantic arrays do not \
+imply that every processor supports zero-byte physical layouts.</li><li>Calibration is <code>physical = raw × \
+sampleScale + sampleOffset</code>. No-data detection precedes calibration. Missing scale or offset is unspecified; \
+an importer MAY materialize documented source defaults. <span class="req" \
+id="req-raster-document-4"></span>Calibration values MUST be finite; NaN MAY be a no-data sentinel and requires \
+NaN-aware detection.</li><li>A validity mask has zero for invalid and nonzero for valid. Alpha/transparency is a \
+separate interpretation. Overviews cover the same domain at lower resolution; no resampling algorithm or fixed \
+integer reduction is implied.</li><li>Dimension kinds are open concept schemes bound by profiles. <span class="req" \
+id="req-raster-document-5"></span>Temporal, vertical, spectral, ensemble and other scientific axes MUST NOT be \
+forced into fixed X/Y/Z categories.</li></ul>
+<p class="note">Compatibility: existing width/height predicates remain. Their shapes now reject negative, zero, \
+fractional or multiple values. New array and band types are additive; complete dimension lists are required only \
+when the array model is used.</p>
+<p>The design is informed by GDAL’s <a href="https://gdal.org/en/stable/user/raster_data_model.html">raster \
+model</a> and <a href="https://gdal.org/en/stable/user/multidim_raster_data_model.html">multidimensional model</a>. \
+Repeated axes follow the <a href="https://docs.unidata.ucar.edu/nug/2.0-draft/netcdf_objects.html">netCDF dimension \
+model</a>. These are conceptual correspondences, not OWL equivalence assertions.</p>""",
+    "spatialref": """<p>Coordinate reference systems, affine transforms, control-point sets and rational-polynomial \
+models are distinct resources. The same vocabulary serves raster and vector data without assuming geographic \
+coordinates or one authority’s identifier scheme.</p>
 <h2>Normative affine contract</h2><pre>X = originX + column × scaleX + row × skewX
 Y = originY + column × skewY  + row × scaleY
-determinant = scaleX × scaleY − skewX × skewY</pre><p><span class="req" id="req-spatialref-document-1"></span>A GeoTransform MUST carry four finite coefficients (originX, originY, scaleX, scaleY) and MAY omit a skew, which is then zero (north-up); a skew that is present MUST be finite. The normalized affine is always corner-based, as GDAL's geotransform is: column/row coordinates refer to cell corners, (0, 0) is the outer corner of the first cell and the center of the first cell is (0.5, 0.5). <span class="req" id="req-spatialref-document-2"></span>asref:pixelRegistration states where a cell's value is located within the cell (PixelCenter: a point sample at the center; PixelCorner: a value for the cell's area); it MUST NOT shift the affine, and the column and row of a world point are the floors of its inverse-affine grid coordinates whatever the registration. A source whose native transform is center-based is shifted by half a cell once, when it is normalized. Negative scaleY is valid. <span class="req" id="req-spatialref-document-3"></span>A singular transform MAY be represented, but inverse evaluation MUST fail when the determinant is zero. <span class="req" id="req-spatialref-document-4"></span>Floating implementations MUST document conditioning and tolerance policies; exact nonzero determinants alone do not establish numerical stability.</p>
-<h2>CRS and control points</h2><p>CRS WKT is not WKT geometry; no equivalence with GeoSPARQL geometry serialization is asserted. Ground-control-point coordinates MAY use a different CRS from an affine transform. <span class="req" id="req-spatialref-document-5"></span>Each GCP MUST include both image and ground coordinate pairs; elevation is optional. Neither GCP interpolation nor precedence among competing geolocation models is inferred. Coordinate epoch describes coordinates in a dynamic frame and is distinct from acquisition time and a datum’s reference epoch.</p>
-<h2>Rational-polynomial contract</h2><p>A CubicRationalTransform holds four finite 20-coefficient vectors and five offset/scale pairs. <span class="req" id="req-spatialref-document-6"></span>Each scale MUST be positive. <span class="req" id="req-spatialref-document-7"></span>A polynomialBasis IRI MUST identify a published contract defining all 20 ordered monomials, normalization, input CRS/units and pixel convention. <span class="req" id="req-spatialref-document-8"></span>Different coefficient orders MUST NOT be interchanged. <span class="req" id="req-spatialref-document-9"></span>A profile MUST identify the complete contract, not merely label a model “RPC”. <span class="req" id="req-spatialref-document-10"></span>A processor MUST report an unsupported basis; this working draft does not mandate a new RPC execution engine.</p><p>For a known basis, normalize each input <code>q = (coordinate − offset) / scale</code>, evaluate each numerator and denominator in the declared monomial order, then recover each output as <code>output = offset + scale × numerator / denominator</code>. <span class="req" id="req-spatialref-document-11"></span>Zero denominators MUST yield an explicit evaluation error. Structural SHACL validation does not prove that a denominator is nonzero everywhere or that an inverse is unique. Inversion tolerances, height assumptions and convergence failures belong to the processor contract.</p>
-<p class="note">Compatibility: the shape rejects a GeoTransform without its origin and scale coefficients; preserve partial source metadata without asserting a GeoTransform. Skews may be omitted and are then zero (earlier drafts required both); a present skew must be finite. RPC00A/RPC00B conversion and transformation execution remain processor/profile responsibilities.</p>
-<p>References: <a href="https://gdal.org/en/stable/tutorials/geotransforms_tut.html">GDAL affine conventions</a> and <a href="https://gdal.org/en/stable/development/rfc/rfc22_rpc.html">GDAL RPC metadata contract</a>.</p>''',
-'geometry':'''<p>Geometry properties are independent of container layout and CRS. Profiles bind geometry-type concepts, allowing curves, surfaces, collections and format extensions without adding format-specific terms to this aspect.</p><h2>Ordinate semantics</h2><p>The independent hasZ and hasM flags distinguish XY, XYZ, XYM and XYZM. Missing flags mean unknown, not false. <span class="req" id="req-geometry-document-1"></span>A measure ordinate MUST NOT be treated as elevation or time without an explicit semantic mapping. <span class="req" id="req-geometry-document-2"></span>Legacy dimensionality values alone cannot distinguish XYZ from XYM; importers SHOULD emit both flags when the source carries them.</p><p>Reference: <a href="https://gdal.org/en/stable/development/rfc/rfc61_support_for_measured_geometries.html">GDAL measured geometry model</a>. No geometry parser or topology engine is introduced by these properties.</p>'''
+determinant = scaleX × scaleY − skewX × skewY</pre><p><span class="req" id="req-spatialref-document-1"></span>A \
+GeoTransform MUST carry four finite coefficients (originX, originY, scaleX, scaleY) and MAY omit a skew, which is \
+then zero (north-up); a skew that is present MUST be finite. The normalized affine is always corner-based, as GDAL's \
+geotransform is: column/row coordinates refer to cell corners, (0, 0) is the outer corner of the first cell and the \
+center of the first cell is (0.5, 0.5). <span class="req" \
+id="req-spatialref-document-2"></span>asref:pixelRegistration states where a cell's value is located within the cell \
+(PixelCenter: a point sample at the center; PixelCorner: a value for the cell's area); a description MUST NOT use it \
+to shift the affine, whose coefficients are corner-based under both registrations. <span class="req" \
+id="req-spatialref-document-12"></span>No conformance class of the Processing Model evaluates the transform; a \
+consumer that does, as the <a href="../../fn/index.html#column">hxf function library</a> does, SHOULD take the column \
+and row of a world point as the floors of its inverse-affine grid coordinates whatever the registration. A source \
+whose native transform is center-based is shifted by half a cell once, when it is normalized. \
+Negative scaleY is valid. <span class="req" id="req-spatialref-document-3"></span>A singular transform MAY be \
+represented; a consumer that evaluates the inverse SHOULD fail when the determinant is zero, as \
+<code>hxf:column</code> and <code>hxf:row</code> do, rather than return a cell. <span class="req" \
+id="req-spatialref-document-4"></span>Floating implementations MUST document conditioning and tolerance policies; \
+exact nonzero determinants alone do not establish numerical stability.</p>
+<h2>CRS and control points</h2><p>CRS WKT is not WKT geometry; no equivalence with GeoSPARQL geometry serialization \
+is asserted. Ground-control-point coordinates MAY use a different CRS from an affine transform. <span class="req" \
+id="req-spatialref-document-5"></span>Each GCP MUST include both image and ground coordinate pairs; elevation is \
+optional. Neither GCP interpolation nor precedence among competing geolocation models is inferred. Coordinate epoch \
+describes coordinates in a dynamic frame and is distinct from acquisition time and a datum’s reference epoch.</p>
+<h2>Rational-polynomial contract</h2><p>A CubicRationalTransform holds four finite 20-coefficient vectors and five \
+offset/scale pairs. <span class="req" id="req-spatialref-document-6"></span>Each scale MUST be positive. <span \
+class="req" id="req-spatialref-document-7"></span>A polynomialBasis IRI MUST identify a published contract defining \
+all 20 ordered monomials, normalization, input CRS/units and pixel convention. <span class="req" \
+id="req-spatialref-document-8"></span>Different coefficient orders MUST NOT be interchanged. <span class="req" \
+id="req-spatialref-document-9"></span>A profile MUST identify the complete contract, not merely label a model “RPC”. \
+<span class="req" id="req-spatialref-document-10"></span>A consumer that evaluates rational polynomial transforms \
+SHOULD report a basis it does not support, and SHOULD NOT evaluate it under another basis; this working draft \
+mandates no RPC execution engine, and no conformance class of the Processing Model evaluates one.</p><p>For a \
+known basis, normalize each input <code>q = \
+(coordinate − offset) / scale</code>, evaluate each numerator and denominator in the declared monomial order, then \
+recover each output as <code>output = offset + scale × numerator / denominator</code>. <span class="req" \
+id="req-spatialref-document-11"></span>Such a consumer SHOULD raise an explicit evaluation error for a zero \
+denominator. Structural SHACL \
+validation does not prove that a denominator is nonzero everywhere or that an inverse is unique. Inversion \
+tolerances, height assumptions and convergence failures belong to the processor contract.</p>
+<p class="note">Compatibility: the shape rejects a GeoTransform without its origin and scale coefficients; preserve \
+partial source metadata without asserting a GeoTransform. Skews may be omitted and are then zero (earlier drafts \
+required both); a present skew must be finite. RPC00A/RPC00B conversion and transformation execution remain \
+processor/profile responsibilities.</p>
+<p>References: <a href="https://gdal.org/en/stable/tutorials/geotransforms_tut.html">GDAL affine conventions</a> and \
+<a href="https://gdal.org/en/stable/development/rfc/rfc22_rpc.html">GDAL RPC metadata contract</a>.</p>""",
+    "geometry": (
+        """<p>Geometry properties are independent of container layout and CRS. Profiles bind geometry-type """
+        """concepts, allowing curves, surfaces, collections and format extensions without adding format-specific """
+        """terms to this aspect.</p><h2>Ordinate semantics</h2><p>The independent hasZ and hasM flags distinguish """
+        """XY, XYZ, XYM and XYZM. Missing flags mean unknown, not false. <span class="req" """
+        """id="req-geometry-document-1"></span>A measure ordinate MUST NOT be treated as elevation or time without """
+        """an explicit semantic mapping. <span class="req" id="req-geometry-document-2"></span>Legacy """
+        """dimensionality values alone cannot distinguish XYZ from XYM; importers SHOULD emit both flags when the """
+        """source carries them.</p><p>Reference: <a """
+        """href="https://gdal.org/en/stable/development/rfc/rfc61_support_for_measured_geometries.html">GDAL """
+        """measured geometry model</a>. No geometry parser or topology engine is introduced by these """
+        """properties.</p>"""
+    ),
 }
 for module in prose:
- directory=ROOT/'specification/aspect'/module;ttl=directory/(module+'.ttl');text=ttl.read_text(encoding='utf-8');g=Graph().parse(data=text,format='turtle')
- ns=f'https://hexplain.io/ns/aspect/{module}#'
- terms=sorted(s for s in set(g.subjects()) if isinstance(s,URIRef) and str(s).startswith(ns) and any((s,RDF.type,t) in g for t in [OWL.Class,OWL.ObjectProperty,OWL.DatatypeProperty]))
- glossary='<h2>Term reference</h2><dl>'+''.join(f'<dt id="{esc(str(s).split("#")[-1])}">{esc(str(s).split("#")[-1])}</dt><dd>{esc(str(g.value(s,RDFS.comment) or g.value(s,RDFS.label)))}</dd>' for s in terms)+'</dl>'
- body=f'<nav><a href="{module}.ttl">Canonical Turtle</a><a href="../../coverage/index.html">GDAL coverage</a><a href="../../ontology-design/index.html">Modeling policy</a></nav>'+prose[module]+glossary+'<section id="normative-owl"><h2>Normative vocabulary and SHACL</h2><pre class="nohighlight">'+esc(text,quote=False)+'</pre></section>'
- info,modified=status_of(module)
- version=info.split()[0]
- status=('Working draft' if 'working draft' in info else 'Version '+version)+(' · modified '+modified if modified else '')
- (directory/'index.html').write_text(page(module.title()+' aspect '+version,body,'../../index.html',status),encoding='utf-8',newline='\n')
+    directory = ROOT / "specification/aspect" / module
+    ttl = directory / (module + ".ttl")
+    text = ttl.read_text(encoding="utf-8")
+    g = Graph().parse(data=text, format="turtle")
+    ns = f"https://hexplain.io/ns/aspect/{module}#"
+    terms = sorted(
+        s
+        for s in set(g.subjects())
+        if isinstance(s, URIRef)
+        and str(s).startswith(ns)
+        and any((s, RDF.type, t) in g for t in [OWL.Class, OWL.ObjectProperty, OWL.DatatypeProperty])
+    )
+    glossary = (
+        "<h2>Term reference</h2><dl>"
+        + "".join(
+            f"<dt "
+            f'id="{esc(str(s).split("#")[-1])}">{esc(str(s).split("#")[-1])}</dt>'
+            f"<dd>{esc(str(g.value(s, RDFS.comment) or g.value(s, RDFS.label)))}</dd>"
+            for s in terms
+        )
+        + "</dl>"
+    )
+    body = (
+        f'<nav><a href="{module}.ttl">Canonical Turtle</a><a href="../../coverage/index.html">GDAL '
+        f'coverage</a><a href="../../ontology-design/index.html">Modeling policy</a></nav>'
+        + prose[module]
+        + glossary
+        + '<section id="normative-owl"><h2>Normative vocabulary and SHACL</h2><pre class="nohighlight">'
+        + esc(text, quote=False)
+        + "</pre></section>"
+    )
+    info, modified = status_of(module)
+    version = info.split()[0]
+    status = ("Working draft" if "working draft" in info else "Version " + version) + (
+        " · modified " + modified if modified else ""
+    )
+    write_page(directory / "index.html", page(module.title() + " aspect " + version, body, "../../index.html", status))
 
-policy='''<p>Hexplain separates physical byte description (BDDO), array addressing (DLV), semantic lifting (Core), reusable aspects, controlled concept registers and format profiles. This separation is a compatibility boundary.</p>
-<h2>Rules for ontology changes</h2><ol><li><b>Model entities and concepts separately.</b> OWL classes and properties describe the domain; SKOS concepts provide controlled values. SKOS matching predicates are reserved for concepts. Related external ontology terms use rdfs:seeAlso until a reviewed logical alignment establishes the required entailment. Similar names do not justify owl:equivalentClass or owl:equivalentProperty.</li><li><b>Separate inference from validation.</b> RDFS ranges and OWL axioms describe meaning under an open-world model. SHACL supplies explicit validation constraints. Domain declarations can infer unexpected types on every use of a property, so reusable facets use scoped shapes instead. Shape targets include linked objects where omitting rdf:type would otherwise bypass validation.</li><li><b>State completeness boundaries.</b> A partial graph may omit bands; an explicitly declared array dimension list is complete. Required values are scoped to an asserted model rather than imposed on every asset. No closed-world completeness is inferred from RDF absence.</li><li><b>Specify mathematics and units.</b> State index bases, coordinate conventions, numeric domains, rounding, missing-value behavior and failure conditions. Keep byte offsets, calibration offsets, georeferencing origins and coordinate epochs distinct. Ordered values use validated finite lists; order must not be guessed from triple order.</li><li><b>Keep extensions reusable.</b> Core and aspects do not name individual binary formats. Open concept schemes and profiles carry format-specific choices. Reuse units and CRS identifiers rather than inventing a parallel authority registry.</li><li><b>Version validation changes.</b> Every changed module declares a new owl:versionIRI and owl:versionInfo, an owl:priorVersion naming a version that a pinned snapshot has frozen, and dcterms:modified; the raster, spatial-reference and geometry aspects are working drafts (VERSIONS). Stable namespace IRIs remain unchanged. A stricter shape is a validation compatibility change and must be described in migration notes. No claim is made that draft version IRIs are already deployed.</li><li><b>Require evidence.</b> Every capability claim identifies its level: vocabulary expression, RDF validation, compilation, binary parsing, payload decoding, semantic output or independent conformance. Positive fixtures alone are insufficient; test malformed lists, numeric boundaries, missing declarations and nonfinite values.</li></ol>
-<h2 id="controlled-values">Controlled values: one idiom per category</h2><p>A value drawn from a fixed or managed set is modeled in exactly one of three ways, chosen by who may extend the set. <code>tools/test_controlled_values.py</code> checks every value against them; values older than this rule that fit none are listed there, with the reason, and the list may only shrink.</p><ol><li><b>Closed enumeration</b> (the vocabulary owns every value): an owl:Class, individuals typed with it, and a shape that lists every individual in <code>sh:in</code>. Examples: bddo:Endianness, conf:FindingKind, conf:EvaluationOutcome, hexplain:RegisterStatus. Adding a value is a vocabulary change.</li><li><b>Open individual set</b> (other modules and profiles add values): an owl:Class, constrained with <code>sh:class</code>, whose individuals anyone may add. Examples: bddo:DataType primitives, dlv:Axis, the hxf function catalogue.</li><li><b>Swappable values</b> (a jurisdiction or community owns the list): skos:Concept in a register module, reached through a property whose range is skos:Concept and bound per profile with hexplain:RegisterBinding. Examples: codecs, part roles, security markings. A register concept is never deleted: it is deprecated with a hexplain:status, a history note and dcterms:isReplacedBy. Links from a concept to an ontology individual use hexplain:correspondsTo, never a SKOS mapping property.</li></ol><p>A format's wire codes (PNG's colour type, a NITF digraph) are none of these: they belong in that format's profile, which maps them to one of the three.</p>
-<h2 id="documentation-annotations">Documentation annotations</h2><ol><li><b>One definition, stated once.</b> A term's <code>rdfs:comment</code> is its author's definition. A <code>skos:definition</code> is added only where it says what no comment says: an editorial definition for a term whose source gives none (<code>tools/_term_editorial.py</code>), or a generated one for a shape or primitive datatype. The two never repeat each other; the term reference shows the <code>skos:definition</code> when there is one and the comment otherwise.</li><li><b>Scope notes are about the term.</b> A <code>skos:scopeNote</code> says how to use that particular term. The module's note sits on its ontology; a shape's activation and a property's shape usage are rows of the term reference, not notes.</li><li><b>Generated prose never templates SPARQL.</b> A generated definition never copies a message that names result variables (<code>{?x}</code>); a shape with nothing else to say gets an editorial <code>rdfs:comment</code>.</li><li><b>English, tagged.</b> Every <code>rdfs:label</code>, <code>rdfs:comment</code> and SKOS documentation literal of a family term is tagged <code>@en</code>.</li><li><b>Readable generated Turtle.</b> <code>tools/_build_term_reference.py --enrich</code> appends its annotations after the marker <code># BEGIN GENERATED TERM DOCUMENTATION</code> as prefixed Turtle, one statement per term; it adds annotations only. <code>tools/test_documentation_annotations.py</code> and <code>tools/test_language_tags.py</code> check these rules.</li></ol>
-<h2 id="hel-expressions">HEL expressions and versions</h2><p>A HEL expression is RDF text: <code>bddo:sizeFromExpression</code>, <code>bddo:condition</code>, <code>bddo:validIf</code>, <code>hexplain:condition</code>, <code>hexplain:valueExpression</code>, <code>dlv:dimensionStrideFromExpression</code>, <code>conf:assertion</code>, the members of <code>bddo:hasArgument</code> and the other expression-valued properties. Their shapes accept a literal typed <code>xsd:string</code>, as every existing description writes it, or <code>bddo:HelExpression</code>, a datatype whose lexical space is HEL expression text and whose values are strings, so both forms satisfy the <code>xsd:string</code> range. Authoring tools SHOULD emit <code>bddo:HelExpression</code>, which lets a reader tell an expression from ordinary text. A description MAY state the HEL version its expressions are written against with <code>bddo:helVersion</code> on its ontology (<code>"1.0"</code>); absent, it is the version of the specification edition the description conforms to. Both terms are in <code>bddo</code>, not <code>core</code>, because <code>bddo</code> is the lowest layer that holds expressions and must load without <code>core</code>.</p>
-<h2 id="alignments">Deprecation, units and external alignments</h2><ol><li><b>Deprecation.</b> A deprecated term names its replacement with <code>dcterms:isReplacedBy</code> or, where no single term replaces it, says why in a <code>skos:historyNote</code> (<code>tools/test_deprecations.py</code>).</li><li><b>Units.</b> A property whose values have a fixed unit says so in its definition and links the QUDT unit and quantity kind with <code>rdfs:seeAlso</code>. <code>qudt:hasUnit</code> and <code>qudt:hasQuantityKind</code> describe quantities, not properties, and are not asserted on a property.</li><li><b>Alignment.</b> <code>rdfs:subPropertyOf</code> or <code>rdfs:subClassOf</code> to an external term is asserted only when every use of the family term entails the external statement, domain and range included (<code>afs:modificationTime</code> is a <code>dcterms:modified</code>; <code>abnd:hasPart</code> a <code>dcterms:hasPart</code>). Otherwise the link is <code>rdfs:seeAlso</code>; SKOS mapping properties relate concepts only (rule 1 above).</li><li><b>Licence.</b> Every module declares <code>dcterms:license</code> CC BY 4.0 and its <code>dcterms:creator</code> (<code>tools/test_ontology_licenses.py</code>; see <code>LICENSING.md</code>).</li></ol>
-<h2 id="naming">Naming</h2><p>Classes and datatypes are UpperCamelCase, properties lowerCamelCase. Individuals were named in both styles before this rule (<code>bddo:BigEndian</code>, <code>conf:Violation</code>, <code>bddo:baseInteger</code>, <code>dlv:axisX</code>, <code>hexplain:statusValid</code>), and they keep their names: an individual's IRI is written into every description that uses it, so renaming one is a breaking change. A NEW individual is UpperCamelCase, like the values of a closed enumeration (<code>abnd:Containment</code>, <code>conf:NotReached</code>), with two exceptions: a value added to an existing set follows the case of that set's other values (a new axis is named like <code>dlv:axisX</code>, a new lifecycle status like <code>hexplain:statusValid</code>), and a value with an established spelling of its own keeps it (a primitive datatype <code>bddo:uint16le</code>, a character encoding <code>bddo:utf8</code>, a function as SPARQL calls it, <code>hxf:bytes</code>). Every individual of a family class is declared <code>owl:NamedIndividual</code> (<code>tools/test_named_individuals.py</code>); register concepts are <code>skos:Concept</code> instead.</p>
-<h2 id="namespace-prefixes">Namespace prefixes</h2><p>Prefixes and namespace IRIs were chosen at different times and do not always match: <code>adv</code> names the audio namespace, the image vocabulary sits in directory <code>idv</code> but declares <code>img</code>, <code>gv</code> is the geo namespace, <code>hexplain</code> the core and <code>hxf</code> the function library, <code>axv</code> the archive, <code>dfv</code> the document and font and <code>npv</code> the network vocabulary, and <code>menc</code> and <code>usnato</code> are register prefixes beside the <code>r…</code> ones. None of them is renamed; a published prefix and namespace IRI are part of every description that uses them. This table is the authority, kept as the <code>namespaces</code> list of <a href="../family.json"><code>specification/family.json</code></a>; <code>tools/test_namespace_prefixes.py</code> checks that every module declares exactly its row (<code>vann:preferredNamespacePrefix</code>, <code>vann:preferredNamespaceUri</code>). A shapes document (<code>conf/shapes.ttl</code>, <code>req/shapes.ttl</code>) declares no prefix of its own: its terms are in its vocabulary's namespace.</p><div class="scroll"><table><thead><tr><th>Prefix</th><th>Namespace</th><th>Ontology</th><th>File</th></tr></thead><tbody>NAMESPACE_ROWS</tbody></table></div>
-<h2 id="shapes-packaging">Where shapes live</h2><p>A module's SHACL shapes are in the module's own Turtle, beside the terms they validate, so loading a vocabulary loads its validation rules. Two modules are split: <code>conf</code> and <code>req</code> publish their shapes as separate ontologies, <code>conf/shapes.ttl</code> and <code>req/shapes.ttl</code>. The conformance vocabulary is read by report consumers that never validate, and its shapes need <code>core</code> (byte offsets of findings) and, through it, <code>bddo</code> (the admissible <code>conf:scope</code> values), which the vocabulary itself does not import; embedding them would make every report reader load the physical layer. <code>req</code> follows the same layout so that the requirement/conformance pair is packaged alike. A new module embeds its shapes unless its shapes need imports its vocabulary does not.</p>
-<h2 id="validation-messages">Validation messages and severity</h2><p>Every property shape whose results a validator reports carries an <code>sh:message</code> saying what the constraint wants, in terms of the property (<code>tools/test_shape_messages.py</code>). A property shape nested in <code>sh:not</code>, <code>sh:or</code>, <code>sh:and</code>, <code>sh:xone</code> or <code>sh:node</code> is exempt: SHACL reports the enclosing constraint, with the enclosing message. A shape enforcing a MUST reports at the default <code>sh:Violation</code>; one enforcing a SHOULD reports at <code>sh:Warning</code> (the use of a deprecated register value, a sensitivity level recorded without its verbatim text); advice at MAY level is <code>sh:Info</code> or no shape at all. Any result, whatever its severity, makes <code>sh:conforms</code> false, so adding a Warning or Info shape is itself a validation compatibility change.</p>
-<h2>Acceptance bar for 10/10</h2><p>A maximum score requires reviewed competency questions across representative format families, independent semantic/interoperability review, a versioned compatibility policy, actual binary corpora with expected results, and at least one independent implementation or differential oracle. A count of ontology terms or driver names cannot substitute for these. This revision improves the model but does not meet that entire bar.</p>
-<h2>What changed</h2><p>Misleading SKOS mappings on ontology entities were replaced with non-entailing references. The incorrect CRS-WKT/geometry-WKT association was removed. Raster grids, bands, masks, calibration and arbitrary-rank arrays gained explicit models. Spatial-reference validation now requires finite affines (skews optional and zero when absent), distinguishes GCP CRS, and describes rational-polynomial metadata with an explicit basis contract. Geometry flags preserve Z/M meaning.</p>
-<h2>Standards basis</h2><ul><li><a href="https://www.w3.org/TR/skos-reference/#mapping">W3C SKOS mapping vocabulary</a></li><li><a href="https://www.w3.org/TR/shacl/">W3C SHACL validation model</a></li><li><a href="https://www.w3.org/TR/owl2-primer/">W3C OWL 2 semantics</a></li><li><a href="https://www.w3.org/TR/ld-bp/">W3C linked-data publication practices</a></li></ul><p><a href="../coverage/index.html">Inspect the GDAL evidence inventory</a></p>'''
-versions=', '.join(f"{m} {status_of(m)[0]}" for m in ['raster','spatialref','geometry'])
-policy=policy.replace('VERSIONS',esc(versions))
-_family=json.loads((ROOT/'specification/family.json').read_text(encoding='utf-8'))
-policy=policy.replace('NAMESPACE_ROWS',''.join(f'<tr><td><code>{esc(r["prefix"])}</code></td><td><code>{esc(r["namespace"])}</code></td><td><code>{esc(r["ontology"])}</code></td><td><a href="../{esc(r["file"])}">{esc(r["file"])}</a></td></tr>' for r in _family['namespaces']))
-latest=max(status_of(m)[1] for m in ['raster','spatialref','geometry'])
-directory=ROOT/'specification/ontology-design';directory.mkdir(exist_ok=True);(directory/'index.html').write_text(page('Ontology modeling policy',policy,'../index.html','Modeling policy · aspects last modified '+latest),encoding='utf-8',newline='\n')
+policy = """<p>Hexplain separates physical byte description (BDDO), array addressing (DLV), semantic lifting (Core), \
+reusable aspects, controlled concept registers and format profiles. This separation is a compatibility boundary.</p>
+<h2>Rules for ontology changes</h2><ol><li><b>Model entities and concepts separately.</b> OWL classes and properties \
+describe the domain; SKOS concepts provide controlled values. SKOS matching predicates are reserved for concepts. \
+Related external ontology terms use rdfs:seeAlso until a reviewed logical alignment establishes the required \
+entailment. Similar names do not justify owl:equivalentClass or owl:equivalentProperty.</li><li><b>Separate \
+inference from validation.</b> RDFS ranges and OWL axioms describe meaning under an open-world model. SHACL supplies \
+explicit validation constraints. Domain declarations can infer unexpected types on every use of a property, so \
+reusable facets use scoped shapes instead. Shape targets include linked objects where omitting rdf:type would \
+otherwise bypass validation.</li><li><b>State completeness boundaries.</b> A partial graph may omit bands; an \
+explicitly declared array dimension list is complete. Required values are scoped to an asserted model rather than \
+imposed on every asset. No closed-world completeness is inferred from RDF absence.</li><li><b>Specify mathematics \
+and units.</b> State index bases, coordinate conventions, numeric domains, rounding, missing-value behavior and \
+failure conditions. Keep byte offsets, calibration offsets, georeferencing origins and coordinate epochs distinct. \
+Ordered values use validated finite lists; order must not be guessed from triple order.</li><li><b>Keep extensions \
+reusable.</b> Core and aspects do not name individual binary formats. Open concept schemes and profiles carry \
+format-specific choices. Reuse units and CRS identifiers rather than inventing a parallel authority \
+registry.</li><li><b>Version validation changes.</b> Every changed module declares a new owl:versionIRI and \
+owl:versionInfo, an owl:priorVersion naming a version that a pinned snapshot has frozen, and dcterms:modified; the \
+raster, spatial-reference, geometry and structure aspects are working drafts (VERSIONS). Stable namespace IRIs remain \
+unchanged. A stricter shape is a validation compatibility change and must be described in migration notes. No claim \
+is made that draft version IRIs are already deployed.</li><li><b>Require evidence.</b> Every capability claim \
+identifies its level: vocabulary expression, RDF validation, compilation, binary parsing, payload decoding, semantic \
+output or independent conformance. Positive fixtures alone are insufficient; test malformed lists, numeric \
+boundaries, missing declarations and nonfinite values.</li></ol>
+<h2 id="controlled-values">Controlled values: one idiom per category</h2><p>A value drawn from a fixed or managed \
+set is modeled in exactly one of three ways, chosen by who may extend the set. \
+<code>tools/test_controlled_values.py</code> checks every value against them; values older than this rule that fit \
+none are listed there, with the reason, and the list may only shrink.</p><ol><li><b>Closed enumeration</b> (the \
+vocabulary owns every value): an owl:Class, individuals typed with it, and a shape that lists every individual in \
+<code>sh:in</code>. Examples: bddo:Endianness, conf:FindingKind, conf:EvaluationOutcome, hexplain:RegisterStatus. \
+Adding a value is a vocabulary change.</li><li><b>Open individual set</b> (other modules and profiles add values): \
+an owl:Class, constrained with <code>sh:class</code>, whose individuals anyone may add. Examples: bddo:DataType \
+primitives, dlv:Axis, the hxf function catalogue.</li><li><b>Swappable values</b> (a jurisdiction or community owns \
+the list): skos:Concept in a register module, reached through a property whose range is skos:Concept and bound per \
+profile with hexplain:RegisterBinding. Examples: codecs, part roles, security markings. A register concept is never \
+deleted: it is deprecated with a hexplain:status, a history note and dcterms:isReplacedBy. Links from a concept to \
+an ontology individual use hexplain:correspondsTo, never a SKOS mapping property.</li></ol><p>A format's wire codes \
+(PNG's colour type, a NITF digraph) are none of these: they belong in that format's profile, which maps them to one \
+of the three.</p>
+<h2 id="documentation-annotations">Documentation annotations</h2><ol><li><b>One definition, stated once.</b> A \
+term's <code>rdfs:comment</code> is its author's definition. A <code>skos:definition</code> is added only where it \
+says what no comment says: an editorial definition for a term whose source gives none \
+(<code>tools/_term_editorial.py</code>), or a generated one for a shape or primitive datatype. The two never repeat \
+each other; the term reference shows the <code>skos:definition</code> when there is one and the comment \
+otherwise.</li><li><b>Scope notes are about the term.</b> A <code>skos:scopeNote</code> says how to use that \
+particular term. The module's note sits on its ontology; a shape's activation and a property's shape usage are rows \
+of the term reference, not notes.</li><li><b>Generated prose never templates SPARQL.</b> A generated definition \
+never copies a message that names result variables (<code>{?x}</code>); a shape with nothing else to say gets an \
+editorial <code>rdfs:comment</code>.</li><li><b>English, tagged.</b> Every <code>rdfs:label</code>, \
+<code>rdfs:comment</code> and SKOS documentation literal of a family term is tagged \
+<code>@en</code>.</li><li><b>Generated annotations live beside the module, not in it.</b> \
+<code>tools/_build_term_reference.py --enrich</code> writes each module's generated labels, definitions and scope \
+notes to a sibling annotation graph, <code>&lt;module&gt;-doc.ttl</code> (<code>bddo/bddo-doc.ttl</code> beside \
+<code>bddo/bddo.ttl</code>), as prefixed Turtle, one statement per term. That file states \
+<code>rdfs:label</code>, <code>skos:definition</code> and <code>skos:scopeNote</code> only, declares no ontology, \
+and is listed in <code>family.json</code> (<code>files</code> and the <code>documentation</code> map), so loading \
+the family loads it. The canonical file is never written by a generator: it holds what its author wrote, which is \
+what an <code>owl:versionIRI</code> names and what a diff of it shows.</li><li><b>Ownership is authored.</b> \
+Every term's <code>rdfs:isDefinedBy</code> is stated in the canonical file that declares it, never in the \
+annotation graph. <code>tools/test_term_reference.py</code>, \
+<code>tools/test_documentation_annotations.py</code> and <code>tools/test_language_tags.py</code> check these \
+rules.</li></ol>
+<h2 id="hel-expressions">HEL expressions and versions</h2><p>A HEL expression is RDF text: \
+<code>bddo:sizeFromExpression</code>, <code>bddo:condition</code>, <code>bddo:validIf</code>, \
+<code>hexplain:condition</code>, <code>hexplain:valueExpression</code>, \
+<code>dlv:dimensionStrideFromExpression</code>, <code>conf:assertion</code>, the members of \
+<code>bddo:hasArgument</code> and the other expression-valued properties. Their shapes accept a literal typed \
+<code>xsd:string</code>, as every existing description writes it, or <code>bddo:HelExpression</code>, a datatype \
+whose lexical space is HEL expression text and whose values are strings, so both forms satisfy the \
+<code>xsd:string</code> range. Authoring tools SHOULD emit <code>bddo:HelExpression</code>, which lets a reader tell \
+an expression from ordinary text. A description MAY state the HEL version its expressions are written against with \
+<code>bddo:helVersion</code> on its ontology (<code>"1.0"</code>); absent, it is the version of the specification \
+edition the description conforms to. Both terms are in <code>bddo</code>, not <code>core</code>, because \
+<code>bddo</code> is the lowest layer that holds expressions and must load without <code>core</code>.</p>
+<h2 id="alignments">Deprecation, units and external alignments</h2><ol><li><b>Deprecation.</b> A deprecated term \
+names its replacement with <code>dcterms:isReplacedBy</code> or, where no single term replaces it, says why in a \
+<code>skos:historyNote</code> (<code>tools/test_deprecations.py</code>).</li><li><b>Units.</b> A property whose \
+values have a fixed unit says so in its definition and links the QUDT unit and quantity kind with \
+<code>rdfs:seeAlso</code>. <code>qudt:hasUnit</code> and <code>qudt:hasQuantityKind</code> describe quantities, not \
+properties, and are not asserted on a property.</li><li><b>Alignment.</b> <code>rdfs:subPropertyOf</code> or \
+<code>rdfs:subClassOf</code> to an external term is asserted only when every use of the family term entails the \
+external statement, domain and range included (<code>afs:modificationTime</code> is a <code>dcterms:modified</code>; \
+<code>abnd:hasPart</code> a <code>dcterms:hasPart</code>). Otherwise the link is <code>rdfs:seeAlso</code>; SKOS \
+mapping properties relate concepts only (rule 1 above).</li><li><b>Licence.</b> Every module declares \
+<code>dcterms:license</code> CC BY 4.0 and its <code>dcterms:creator</code> \
+(<code>tools/test_ontology_licenses.py</code>; see <code>LICENSING.md</code>).</li></ol>
+<h2 id="naming">Naming</h2><p>Classes and datatypes are UpperCamelCase, properties lowerCamelCase. Individuals were \
+named in both styles before this rule (<code>bddo:BigEndian</code>, <code>conf:Violation</code>, \
+<code>bddo:baseInteger</code>, <code>dlv:axisX</code>, <code>hexplain:statusValid</code>), and they keep their \
+names: an individual's IRI is written into every description that uses it, so renaming one is a breaking change. A \
+NEW individual is UpperCamelCase, like the values of a closed enumeration (<code>abnd:Containment</code>, \
+<code>conf:NotReached</code>), with two exceptions: a value added to an existing set follows the case of that set's \
+other values (a new axis is named like <code>dlv:axisX</code>, a new lifecycle status like \
+<code>hexplain:statusValid</code>), and a value with an established spelling of its own keeps it (a primitive \
+datatype <code>bddo:uint16le</code>, a character encoding <code>bddo:utf8</code>, a function as SPARQL calls it, \
+<code>hxf:bytes</code>). Every individual of a family class is declared <code>owl:NamedIndividual</code> \
+(<code>tools/test_named_individuals.py</code>); register concepts are <code>skos:Concept</code> instead.</p>
+<h2 id="namespace-prefixes">Namespace prefixes</h2><p>Prefixes and namespace IRIs were chosen at different times and \
+do not always match: <code>adv</code> names the audio namespace, the image vocabulary sits in directory \
+<code>idv</code> but declares <code>img</code>, <code>gv</code> is the geo namespace, <code>hexplain</code> the core \
+and <code>hxf</code> the function library, <code>axv</code> the archive, <code>dfv</code> the document and font and \
+<code>npv</code> the network vocabulary, <code>menc</code> and <code>usnato</code> are register prefixes beside \
+the <code>r…</code> ones, and <code>st</code> is the structure aspect's prefix, without the leading <code>a</code> \
+the other aspect prefixes carry. None of them is renamed; a published prefix and namespace IRI are part of every \
+description that uses them. This table is the authority, kept as the <code>namespaces</code> list of <a \
+href="../family.json"><code>specification/family.json</code></a>; <code>tools/test_namespace_prefixes.py</code> \
+checks that every module declares exactly its row (<code>vann:preferredNamespacePrefix</code>, \
+<code>vann:preferredNamespaceUri</code>). A shapes document (<code>conf/shapes.ttl</code>, \
+<code>req/shapes.ttl</code>) declares no prefix of its own: its terms are in its vocabulary's namespace.</p><div \
+class="scroll"><table><thead><tr><th>Prefix</th><th>Namespace</th><th>Ontology</th><th>File</th></tr></thead><tbody>\
+NAMESPACE_ROWS</tbody></table></div>
+<h2 id="shapes-packaging">Where shapes live</h2><p>A module's SHACL shapes are in the module's own Turtle, beside \
+the terms they validate, so loading a vocabulary loads its validation rules. Two modules are split: \
+<code>conf</code> and <code>req</code> publish their shapes as separate ontologies, <code>conf/shapes.ttl</code> and \
+<code>req/shapes.ttl</code>. The conformance vocabulary is read by report consumers that never validate, and its \
+shapes need <code>core</code> (byte offsets of findings) and, through it, <code>bddo</code> (the admissible \
+<code>conf:scope</code> values), which the vocabulary itself does not import; embedding them would make every report \
+reader load the physical layer. <code>req</code> follows the same layout so that the requirement/conformance pair is \
+packaged alike. A new module embeds its shapes unless its shapes need imports its vocabulary does not.</p>
+<h2 id="validation-messages">Validation messages and severity</h2><p>Every property shape whose results a validator \
+reports carries an <code>sh:message</code> saying what the constraint wants, in terms of the property \
+(<code>tools/test_shape_messages.py</code>). A property shape nested in <code>sh:not</code>, <code>sh:or</code>, \
+<code>sh:and</code>, <code>sh:xone</code> or <code>sh:node</code> is exempt: SHACL reports the enclosing constraint, \
+with the enclosing message. A shape enforcing a MUST reports at the default <code>sh:Violation</code>; one enforcing \
+a SHOULD reports at <code>sh:Warning</code> (the use of a deprecated register value, a sensitivity level recorded \
+without its verbatim text); advice at MAY level is <code>sh:Info</code> or no shape at all. Any result, whatever its \
+severity, makes <code>sh:conforms</code> false, so adding a Warning or Info shape is itself a validation \
+compatibility change.</p>
+<h2>Acceptance bar for 10/10</h2><p>A maximum score requires reviewed competency questions across representative \
+format families, independent semantic/interoperability review, a versioned compatibility policy, actual binary \
+corpora with expected results, and at least one independent implementation or differential oracle. A count of \
+ontology terms or driver names cannot substitute for these. This revision improves the model but does not meet that \
+entire bar.</p>
+<h2>What changed</h2><p>Misleading SKOS mappings on ontology entities were replaced with non-entailing references. \
+The incorrect CRS-WKT/geometry-WKT association was removed. Raster grids, bands, masks, calibration and \
+arbitrary-rank arrays gained explicit models. Spatial-reference validation now requires finite affines (skews \
+optional and zero when absent), distinguishes GCP CRS, and describes rational-polynomial metadata with an explicit \
+basis contract. Geometry flags preserve Z/M meaning.</p>
+<h2>Standards basis</h2><ul><li><a href="https://www.w3.org/TR/skos-reference/#mapping">W3C SKOS mapping \
+vocabulary</a></li><li><a href="https://www.w3.org/TR/shacl/">W3C SHACL validation model</a></li><li><a \
+href="https://www.w3.org/TR/owl2-primer/">W3C OWL 2 semantics</a></li><li><a href="https://www.w3.org/TR/ld-bp/">W3C \
+linked-data publication practices</a></li></ul><p><a href="../coverage/index.html">Inspect the GDAL evidence \
+inventory</a></p>"""
+DRAFT_ASPECTS = ["raster", "spatialref", "geometry", "structure"]
+versions = ", ".join(f"{m} {status_of(m)[0]}" for m in DRAFT_ASPECTS)
+policy = policy.replace("VERSIONS", esc(versions))
+_family = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))
+policy = policy.replace(
+    "NAMESPACE_ROWS",
+    "".join(
+        f"<tr><td><code>{esc(r['prefix'])}</code></td><td><code>{esc(r['namespace'])}</code></td>"
+        f"<td><code>{esc(r['ontology'])}</code></td><td><a "
+        f'href="../{esc(r["file"])}">{esc(r["file"])}</a></td></tr>'
+        for r in sorted(_family["namespaces"], key=lambda r: r["prefix"])
+    ),
+)
+latest = max(status_of(m)[1] for m in DRAFT_ASPECTS)
+directory = ROOT / "specification/ontology-design"
+directory.mkdir(exist_ok=True)
+write_page(
+    directory / "index.html",
+    page("Ontology modeling policy", policy, "../index.html", "Modeling policy · aspects last modified " + latest),
+)
 
-inventory=json.loads((ROOT/'specification/coverage/gdal-drivers.json').read_text(encoding='utf-8'))
-counts=Counter(r['kind'] for r in inventory['drivers'])
-families=[
-('Raw and tiled grids','GeoTIFF / COG, ENVI, EHdr, BMP, DTED','BDDO sizes/endianness; DLV strides, sub-byte packing and conditional cell types and dimension orders are executed, chunking is declared only; raster bands and affine model','Padded rows and decoded samples compared for BMP at 1, 4, 8 and 24 bits, and elevations for DTED; full profiles, sparse and tiled chunk tables, and further endian variants remain.'),
-('Hierarchical scientific arrays','HDF4/5, netCDF, Zarr, BAG, KEA','Logical groups, shared dimensions, scalars, zero extents and calibration; existing physical layouts','Runtime schemas, compound/string arrays, chunk-store lookup, fill values and codec pipelines need corpus evidence.'),
-('Segmented and satellite imagery','NITF, SAR/CEOS, PDS, SAFE, DIMAP','Existing dispatch/bundles/tree documents plus affine/GCP/RPC semantic model','Public polynomial basis, profile mappings, decoder availability and geolocation oracle.'),
-('Encoded imagery and weather grids','JPEG, JPEG 2000, PNG, GRIB, AVIF','Framing, codec identity/pipelines and logical samples','An opaque payload is container coverage only. Entropy decoding, predictors and template variants require codec-specific tests.'),
-('Indexed databases and containers','GeoPackage, MBTiles, SQLite, FileGDB, PMTiles','Page/record framing and bundle concepts; logical raster/vector meaning','Database traversal, overflow pages, keys and data-driven schemas remain substantial execution gaps. No universal delegated-access claim is made.'),
-('Binary vector records','Shapefile, FlatGeobuf, MVT, Arrow, Parquet','Existing variable-length values and dispatch; independent Z/M flags','Schema evolution, dictionary encodings, offsets, geometry variants and full semantic graph validation.'),
-('Manifest and tree grammars','PDS4, GML, KML, JSON metadata, office bundles','Existing XML/JSON addressing, nested records and asset bundles','Namespace/escaping/security cases and cross-file association tests. Text wrappers are not counted as additional binary formats.'),
-('Services, virtual drivers and SDKs','WMS/WCS, relational connections, virtual/SDK drivers','Useful source metadata may be described','Not a static byte-stream support claim. Availability of a GDAL driver does not establish an open binary specification.'),
+inventory = json.loads((ROOT / "specification/coverage/gdal-drivers.json").read_text(encoding="utf-8"))
+counts = Counter(r["kind"] for r in inventory["drivers"])
+families = [
+    (
+        "Raw and tiled grids",
+        "GeoTIFF / COG, ENVI, EHdr, BMP, DTED",
+        "BDDO sizes/endianness; DLV strides, sub-byte packing and conditional cell types and dimension "
+        "orders are executed, chunking is declared only; raster bands and affine model",
+        "Padded rows and decoded samples compared for BMP at 1, 4, 8 and 24 bits, and elevations for DTED; "
+        "full profiles, sparse and tiled chunk tables, and further endian variants remain.",
+    ),
+    (
+        "Hierarchical scientific arrays",
+        "HDF4/5, netCDF, Zarr, BAG, KEA",
+        "Logical groups, shared dimensions, scalars, zero extents and calibration; existing physical layouts",
+        "Runtime schemas, compound/string arrays, chunk-store lookup, fill values and codec pipelines need "
+        "corpus evidence.",
+    ),
+    (
+        "Segmented and satellite imagery",
+        "NITF, SAR/CEOS, PDS, SAFE, DIMAP",
+        "Existing dispatch/bundles/tree documents plus affine/GCP/RPC semantic model",
+        "Public polynomial basis, profile mappings, decoder availability and geolocation oracle.",
+    ),
+    (
+        "Encoded imagery and weather grids",
+        "JPEG, JPEG 2000, PNG, GRIB, AVIF",
+        "Framing, codec identity/pipelines and logical samples",
+        "An opaque payload is container coverage only. Entropy decoding, predictors and template variants "
+        "require codec-specific tests.",
+    ),
+    (
+        "Indexed databases and containers",
+        "GeoPackage, MBTiles, SQLite, FileGDB, PMTiles",
+        "Page/record framing and bundle concepts; logical raster/vector meaning",
+        "Database traversal, overflow pages, keys and data-driven schemas remain substantial execution gaps. "
+        "No universal delegated-access claim is made.",
+    ),
+    (
+        "Binary vector records",
+        "Shapefile, FlatGeobuf, MVT, Arrow, Parquet",
+        "Existing variable-length values and dispatch; independent Z/M flags",
+        "Schema evolution, dictionary encodings, offsets, geometry variants and full semantic graph validation.",
+    ),
+    (
+        "Manifest and tree grammars",
+        "PDS4, GML, KML, JSON metadata, office bundles",
+        "Existing XML/JSON addressing, nested records and asset bundles",
+        "Namespace/escaping/security cases and cross-file association tests. Text wrappers are not counted "
+        "as additional binary formats.",
+    ),
+    (
+        "Services, virtual drivers and SDKs",
+        "WMS/WCS, relational connections, virtual/SDK drivers",
+        "Useful source metadata may be described",
+        "Not a static byte-stream support claim. Availability of a GDAL driver does not establish an open "
+        "binary specification.",
+    ),
 ]
-table=''.join('<tr>'+''.join('<td>'+esc(x)+'</td>' for x in row)+'</tr>' for row in families)
-def profile_cell(r):
-    ps=r.get('profiles',[])
-    if not ps:return '<span class="muted">—</span>'
-    return ', '.join(f'<a href="{esc(p["iri"])}">{esc(p["name"])}</a> <small>({esc(p["verification"])})</small>' for p in ps)
-rows=''.join(f'<tr data-search="{esc((r["name"]+" "+r["key"]+" "+" ".join(r["capability_families"])+" "+" ".join(p["name"] for p in r.get("profiles",[]))).lower())}"><td>{esc(r["kind"])}</td><td><a href="{esc(r["source"])}">{esc(r["name"])}</a></td><td>{esc(", ".join(r["capability_families"]) or "Unassessed")}</td><td>{profile_cell(r)}</td><td>Not runtime verified</td></tr>' for r in inventory['drivers'])
-body=f'''<p>Snapshot: <b>{len(inventory['drivers'])} documentation pages</b> from GDAL <b>{inventory['gdal_release']}</b> — 160 raster and 86 vector pages. This is an inventory denominator, not a supported-format count. A page can cover multiple drivers; separate drivers can share one binary format.</p><p class="note">The older hand-maintained 245-driver survey remains historical. Its “full” tiers are not imported as verified support. The original inventory remains a documentation snapshot. The linked differential report now records sample-level runtime evidence and explicit remaining gaps.</p><nav><a href="gdal-drivers.json">Machine-readable inventory</a><a href="gdal-tests/index.html">GDAL samples and differential results</a><a href="writer-tests/index.html">Writer layout contract</a><a href="../ontology-design/index.html">Ontology policy</a><a href="../aspect/raster/index.html">Raster / array model</a><a href="../aspect/spatialref/index.html">Georeferencing</a><a href="../aspect/geometry/index.html">Geometry</a></nav>
-<h2>Capabilities that scale across format families</h2><p>These are engineering assessments of reusable building blocks, not promises of complete format implementations.</p><div class="scroll"><table><thead><tr><th>Family</th><th>Examples</th><th>Available descriptive mechanisms</th><th>Evidence still needed</th></tr></thead><tbody>{table}</tbody></table></div>
-<h2>Evidence ladder</h2><ol><li>Term exists and has a precise contract.</li><li>Representative RDF description passes SHACL; malformed variants fail.</li><li>Authoring syntax compiles the intended description without semantic loss.</li><li>A binary corpus parses correctly across versions, endianness and boundary cases.</li><li>Payloads decode and semantic output agrees with independent expected values.</li><li>Independent implementations interoperate and unsupported cases fail explicitly.</li></ol><p>Promoting an inventory row to runtime verified requires repository evidence paths. Driver-wide or “full format” certification needs a declared subset and corpus, not one successful sample.</p>
-<h2>Priorities for the broadest binary coverage</h2><ol><li>Build differential corpora for GeoTIFF/BigTIFF/COG, NITF, ENVI/EHdr and Shapefile first: shared pointer, stride, endian, bundle and geometry mechanisms exercise many families.</li><li>Add scientific-container cases for HDF5/netCDF/Zarr: shared axes, empty arrays, compound values, chunk lookup, fill masks and decoding.</li><li>Exercise FlatGeobuf/MVT/Arrow/Parquet schema evolution and unknown-field handling; preserve exact offsets and measured geometries.</li><li>Define and prototype external access contracts for SQLite/GeoPackage and runtime schemas before claiming row-level support. Do not turn a byte ontology into an undocumented query engine.</li></ol>
-<h2>Inventory</h2><div class="controls"><label for="filter">Filter by driver, capability family or profile</label><br><input id="filter" type="search"><p id="count" aria-live="polite">{len(inventory['drivers'])} entries</p></div><div class="scroll"><table><thead><tr><th>Kind</th><th>Released source</th><th>Planning tags</th><th>Profiles</th><th>Evidence status</th></tr></thead><tbody id="drivers">{rows}</tbody></table></div><p class="muted">Sources are pinned to released documentation and hashed. Refresh explicitly with tools/_refresh_gdal_inventory.py; CI checks the saved data offline. Tags are inferences and intentionally non-exhaustive. A profile link names a description in the profile library by its ontology IRI; parse-verified means a behavioural test in hexplain-tools parses corpus samples with it. A profile is a description, not runtime evidence, so the evidence column is unchanged.</p>
-<script>document.getElementById('filter').addEventListener('input',e=>{{let n=0;document.querySelectorAll('#drivers tr').forEach(r=>{{r.hidden=!r.dataset.search.includes(e.target.value.toLowerCase());if(!r.hidden)n++}});document.getElementById('count').textContent=n+' entries';}});</script>'''
-(ROOT/'specification/coverage/index.html').write_text(page('GDAL coverage & evidence',body,'../index.html','Evidence inventory · GDAL '+str(inventory.get('gdal_release',''))),encoding='utf-8',newline='\n')
-print('Built three aspect references, ontology policy and GDAL inventory page')
-from _build_term_reference import build as build_term_references
+table = "".join("<tr>" + "".join("<td>" + esc(x) + "</td>" for x in row) + "</tr>" for row in families)
+
+
+def profile_cell(r: dict[str, Any]) -> str:
+    ps = r.get("profiles", [])
+    if not ps:
+        return '<span class="muted">—</span>'
+    return ", ".join(
+        f'<a href="{esc(p["iri"])}">{esc(p["name"])}</a> <small>({esc(p["verification"])})</small>' for p in ps
+    )
+
+
+def search_key(r: dict[str, Any]) -> str:
+    """The lower-cased text a driver row is found by: its name, key, capability families and profiles."""
+    words = [
+        r["name"],
+        r["key"],
+        " ".join(r["capability_families"]),
+        " ".join(p["name"] for p in r.get("profiles", [])),
+    ]
+    return " ".join(words).lower()
+
+
+rows = "".join(
+    f"<tr "
+    f'data-search="{esc(search_key(r))}"><td>{esc(r["kind"])}</td><td><a '
+    f'href="{esc(r["source"])}">{esc(r["name"])}</a></td>'
+    f"<td>{esc(', '.join(r['capability_families']) or 'Unassessed')}</td><td>{profile_cell(r)}</td><td>Not "
+    f"runtime verified</td></tr>"
+    for r in inventory["drivers"]
+)
+body = f"""<p>Snapshot: <b>{len(inventory["drivers"])} documentation pages</b> from GDAL \
+<b>{inventory["gdal_release"]}</b> — 160 raster and 86 vector pages. This is an inventory denominator, not a \
+supported-format count. A page can cover multiple drivers; separate drivers can share one binary format.</p><p \
+class="note">The older hand-maintained 245-driver survey remains historical. Its “full” tiers are not imported as \
+verified support. The original inventory remains a documentation snapshot. The linked differential report now \
+records sample-level runtime evidence and explicit remaining gaps.</p><nav><a \
+href="gdal-drivers.json">Machine-readable inventory</a><a href="gdal-tests/index.html">GDAL samples and differential \
+results</a><a href="writer-tests/index.html">Writer layout contract</a><a \
+href="../ontology-design/index.html">Ontology policy</a><a href="../aspect/raster/index.html">Raster / array \
+model</a><a href="../aspect/spatialref/index.html">Georeferencing</a><a \
+href="../aspect/geometry/index.html">Geometry</a></nav>
+<h2>Capabilities that scale across format families</h2><p>These are engineering assessments of reusable building \
+blocks, not promises of complete format implementations.</p><div \
+class="scroll"><table><thead><tr><th>Family</th><th>Examples</th><th>Available descriptive \
+mechanisms</th><th>Evidence still needed</th></tr></thead><tbody>{table}</tbody></table></div>
+<h2>Evidence ladder</h2><ol><li>Term exists and has a precise contract.</li><li>Representative RDF description \
+passes SHACL; malformed variants fail.</li><li>Authoring syntax compiles the intended description without semantic \
+loss.</li><li>A binary corpus parses correctly across versions, endianness and boundary cases.</li><li>Payloads \
+decode and semantic output agrees with independent expected values.</li><li>Independent implementations interoperate \
+and unsupported cases fail explicitly.</li></ol><p>Promoting an inventory row to runtime verified requires \
+repository evidence paths. Driver-wide or “full format” certification needs a declared subset and corpus, not one \
+successful sample.</p>
+<h2>Priorities for the broadest binary coverage</h2><ol><li>Build differential corpora for GeoTIFF/BigTIFF/COG, \
+NITF, ENVI/EHdr and Shapefile first: shared pointer, stride, endian, bundle and geometry mechanisms exercise many \
+families.</li><li>Add scientific-container cases for HDF5/netCDF/Zarr: shared axes, empty arrays, compound values, \
+chunk lookup, fill masks and decoding.</li><li>Exercise FlatGeobuf/MVT/Arrow/Parquet schema evolution and \
+unknown-field handling; preserve exact offsets and measured geometries.</li><li>Define and prototype external access \
+contracts for SQLite/GeoPackage and runtime schemas before claiming row-level support. Do not turn a byte ontology \
+into an undocumented query engine.</li></ol>
+<h2>Inventory</h2><div class="controls"><label for="filter">Filter by driver, capability family or \
+profile</label><br><input id="filter" type="search"><p id="count" aria-live="polite">{len(inventory["drivers"])} \
+entries</p></div><div class="scroll"><table><thead><tr><th>Kind</th><th>Released source</th><th>Planning \
+tags</th><th>Profiles</th><th>Evidence status</th></tr></thead><tbody id="drivers">{rows}</tbody></table></div><p \
+class="muted">Sources are pinned to released documentation and hashed. Refresh explicitly with \
+tools/_refresh_gdal_inventory.py; CI checks the saved data offline. Tags are inferences and intentionally \
+non-exhaustive. A profile link names a description in the profile library by its ontology IRI; parse-verified means \
+a behavioural test in hexplain-tools parses corpus samples with it. A profile is a description, not runtime \
+evidence, so the evidence column is unchanged.</p>
+<script>document.getElementById('filter').addEventListener('input',e=>{{let n=0;document.querySelectorAll('#drivers \
+tr').forEach(r=>{{r.hidden=!r.dataset.search.includes(e.target.value.toLowerCase());if(!r.hidden)n++}});\
+document.getElementById('count').textContent=n+' entries';}});</script>"""
+write_page(
+    ROOT / "specification/coverage/index.html",
+    page(
+        "GDAL coverage & evidence",
+        body,
+        "../index.html",
+        "Evidence inventory · GDAL " + str(inventory.get("gdal_release", "")),
+    ),
+)
+print("Built three aspect references, ontology policy and GDAL inventory page")
+
 build_term_references()
+# The term-reference build rewrites the catalogue page without the print stylesheet link; restore it.
+_catalogue = ROOT / "specification/reference/index.html"
+write_page(_catalogue, _catalogue.read_text(encoding="utf-8"))

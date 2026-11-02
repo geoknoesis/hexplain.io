@@ -1,0 +1,35 @@
+# expect: ex:FillWithoutBoundary bddo:PaddingShape sh:MinCountConstraintComponent
+# expect: ex:TwoByteFill bddo:FieldShape sh:PatternConstraintComponent
+# expect: ex:ZeroBoundary bddo:FieldShape sh:MinExclusiveConstraintComponent
+# expect: ex:ZeroStruct bddo:StructShape sh:MinExclusiveConstraintComponent
+# expect: ex:TextBoundary bddo:RangeDatatypeShape sh:NodeConstraintComponent
+# expect: ex:TwoBoundaries bddo:StructShape sh:MaxCountConstraintComponent
+# expect: ex:WordFill bddo:StructShape sh:PatternConstraintComponent
+# expect: ex:TwoFills bddo:FieldShape sh:MaxCountConstraintComponent
+# expect: ex:TextFill bddo:FieldShape sh:DatatypeConstraintComponent
+# expect: ex:TwoFieldBoundaries bddo:FieldShape sh:MaxCountConstraintComponent
+# expect: ex:TwoStructFills bddo:StructShape sh:MaxCountConstraintComponent
+# expect: ex:TextStructFill bddo:StructShape sh:DatatypeConstraintComponent
+# expect: ex:TwoAlignments bddo:StructShape sh:MaxCountConstraintComponent
+# expect: ex:ZeroStructBoundary bddo:StructShape sh:MinExclusiveConstraintComponent
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/pad#> .
+
+ex:FillWithoutBoundary a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:padByte "00"^^xsd:hexBinary .
+ex:TwoByteFill a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:padTo 4 ; bddo:padByte "0000"^^xsd:hexBinary .
+ex:ZeroBoundary a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:padTo 0 .
+ex:ZeroStruct a bddo:Struct ; bddo:alignment 0 ; bddo:hasField ( ex:ZeroBoundary ) .
+ex:TextBoundary a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:padTo "4" .
+ex:TwoBoundaries a bddo:Struct ; bddo:padTo 4 , 8 ; bddo:hasField ( ex:TextBoundary ) .
+ex:WordFill a bddo:Struct ; bddo:padTo 4 ; bddo:padByte "FFFF"^^xsd:hexBinary ; bddo:hasField ( ex:TextBoundary ) .
+# Each padding property is stated at most once, and a fill is a hexBinary byte, on a field and on a struct alike.
+ex:TwoFills a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:padTo 4 ; bddo:padByte "00"^^xsd:hexBinary , "FF"^^xsd:hexBinary .
+ex:TextFill a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:padTo 4 ; bddo:padByte "00" .
+ex:TwoFieldBoundaries a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:padTo 4 , 8 .
+ex:TwoStructFills a bddo:Struct ; bddo:padTo 4 ; bddo:padByte "00"^^xsd:hexBinary , "FF"^^xsd:hexBinary ; bddo:hasField ( ex:TwoFills ) .
+ex:TextStructFill a bddo:Struct ; bddo:padTo 4 ; bddo:padByte "00" ; bddo:hasField ( ex:TwoFills ) .
+ex:TwoAlignments a bddo:Struct ; bddo:alignment 4 , 8 ; bddo:hasField ( ex:TwoFills ) .
+ex:ZeroStructBoundary a bddo:Struct ; bddo:padTo 0 ; bddo:hasField ( ex:TwoFills ) .

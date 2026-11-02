@@ -32,22 +32,35 @@ convenience at the time and as coupling a year later, so each is checked here:
 Profiles are deliberately NOT checked: a profile describing NITF is supposed to say NITF.
 """
 
-import glob
+from __future__ import annotations
+
 import pathlib
 import re
 import sys
 
 import rdflib
+from _family import is_documentation
+from rdflib import Graph
 
+ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 SKOS = rdflib.Namespace("http://www.w3.org/2004/02/skos/core#")
 REGISTER_NS = "https://hexplain.io/ns/register/"
 ASPECT_NS = "https://hexplain.io/ns/aspect/"
 
+
 #: Vocabularies that must be format-neutral: the three foundations plus every aspect.
-def normative_files():
-    return ["specification/bddo/bddo.ttl", "specification/dlv/dlv.ttl",
-            "specification/hexplain/core.ttl"] + sorted(glob.glob("specification/aspect/*/*.ttl"))
+def repository_files(pattern: str) -> list[str]:
+    """Repository-relative POSIX paths matching ``pattern``, wherever the gate is started from."""
+    return sorted(p.relative_to(ROOT).as_posix() for p in ROOT.glob(pattern) if p.is_file())
+
+
+def normative_files() -> list[str]:
+    foundations = ["specification/bddo/bddo.ttl", "specification/dlv/dlv.ttl", "specification/hexplain/core.ttl"]
+    # A module's generated annotation graph (<module>-doc.ttl) declares no term and no ontology: the
+    # names it documents are checked where they are declared.
+    aspects = [f for f in repository_files("specification/aspect/*/*.ttl") if not is_documentation(f)]
+    return foundations + aspects
 
 
 #: Names that would betray a bias in a term. Matched against camelCase WORDS rather than as
@@ -60,38 +73,134 @@ def normative_files():
 #: list cannot be the whole defence, and the aspects themselves have to be designed so that a
 #: system's own categories arrive through a register rather than as properties.
 FORMAT_WORDS = {
-    "nitf", "tiff", "geotiff", "png", "jpeg", "jpg", "gif", "bmp", "webp", "exr", "dds",
-    "ktx", "avif", "heif", "jp2", "envi", "ehdr", "esri", "shapefile", "geopackage", "gpkg",
-    "mbtiles", "hdf", "hdf4", "hdf5", "netcdf", "grib", "zarr", "pds", "isis", "vicar",
-    "dted", "fits", "zip", "pdf", "dwg", "dxf", "gml", "kml", "csv", "geojson", "parquet",
-    "arrow", "protobuf", "mvt", "las", "laz", "e57", "sentinel", "landsat", "erdas",
-    "idrisi", "saga", "ilwis", "pcidsk", "s57", "bag", "mrsid", "ecw", "shp", "dbf",
+    "nitf",
+    "tiff",
+    "geotiff",
+    "png",
+    "jpeg",
+    "jpg",
+    "gif",
+    "bmp",
+    "webp",
+    "exr",
+    "dds",
+    "ktx",
+    "avif",
+    "heif",
+    "jp2",
+    "envi",
+    "ehdr",
+    "esri",
+    "shapefile",
+    "geopackage",
+    "gpkg",
+    "mbtiles",
+    "hdf",
+    "hdf4",
+    "hdf5",
+    "netcdf",
+    "grib",
+    "zarr",
+    "pds",
+    "isis",
+    "vicar",
+    "dted",
+    "fits",
+    "zip",
+    "pdf",
+    "dwg",
+    "dxf",
+    "gml",
+    "kml",
+    "csv",
+    "geojson",
+    "parquet",
+    "arrow",
+    "protobuf",
+    "mvt",
+    "las",
+    "laz",
+    "e57",
+    "sentinel",
+    "landsat",
+    "erdas",
+    "idrisi",
+    "saga",
+    "ilwis",
+    "pcidsk",
+    "s57",
+    "bag",
+    "mrsid",
+    "ecw",
+    "shp",
+    "dbf",
     # Jurisdictions, standards bodies and national policy identifiers.
-    "ism", "nato", "capco", "fips", "dod", "dni", "nga", "nist", "iso", "ogc", "w3c", "ieee",
-    "itu", "gsc", "tlp", "eo", "usa", "us", "uk", "eu", "nsa", "cia", "fbi", "ansi", "din",
-    "jis", "milstd", "stanag", "ccitt", "etsi", "oasis", "niso",
+    "ism",
+    "nato",
+    "capco",
+    "fips",
+    "dod",
+    "dni",
+    "nga",
+    "nist",
+    "iso",
+    "ogc",
+    "w3c",
+    "ieee",
+    "itu",
+    "gsc",
+    "tlp",
+    "eo",
+    "usa",
+    "us",
+    "uk",
+    "eu",
+    "nsa",
+    "cia",
+    "fbi",
+    "ansi",
+    "din",
+    "jis",
+    "milstd",
+    "stanag",
+    "ccitt",
+    "etsi",
+    "oasis",
+    "niso",
 }
 
 #: Exempt terms, each with the reason it is not a bias. An ALGORITHM named after its
 #: specifying document is not a format leaking in -- bddo already carries crc32, adler32, md5
 #: and sha256 on exactly that basis.
 EXEMPT = {
-    "sqliteVarint":
-        "An integer ENCODING, not a format. SQLite specifies it the way DWARF specifies "
-        "LEB128, and it is used across GeoPackage, MBTiles and Rasterlite rather than by one "
-        "format. Same category as bddo:crc32 / bddo:md5, which are also named for their "
-        "specifying documents. A descriptive rename (bigEndianVarint) would be LESS precise: "
-        "it would not distinguish this scheme's nine-byte rule from any other big-endian "
-        "varint.",
+    "ieee754": "A floating-point BIT LAYOUT named after its specifying standard, as bddo:crc32 and bddo:md5 "
+    "are named after theirs: the bddo:FloatFormat individual for IEEE 754 binary interchange, the "
+    "default against which bddo:ibmHexadecimal, bddo:vaxF and bddo:bfloat16 are the exceptions. "
+    "No format and no jurisdiction is named; a descriptive rename (binaryInterchange) would be "
+    "less precise, since the standard is what fixes the bit layout.",
+    **{
+        name: "A CHARACTER SET named by the document that defines it, as bddo:crc32 and bddo:ieee754 are: "
+        "the bddo:Encoding individual for one part of ISO/IEC 8859 (or for Shift_JIS, whose name "
+        "contains a standards body's). The name is the charset's own; no file format is named and "
+        "no authority's policy is encoded. A descriptive alias (latin2, cyrillic) names a script "
+        "several charsets cover and would be ambiguous."
+        for name in ("iso8859_2", "iso8859_5", "iso8859_7", "iso8859_9", "iso8859_15", "shiftJis")
+    },
+    "sqliteVarint": "An integer ENCODING, not a format. SQLite specifies it the way DWARF specifies "
+    "LEB128, and it is used across GeoPackage, MBTiles and Rasterlite rather than by one "
+    "format. Same category as bddo:crc32 / bddo:md5, which are also named for their "
+    "specifying documents. A descriptive rename (bigEndianVarint) would be LESS precise: "
+    "it would not distinguish this scheme's nine-byte rule from any other big-endian "
+    "varint.",
 }
 
 
-def words(local_name):
+def words(local_name: str) -> set[str]:
     """camelCase / PascalCase / kebab split, lowercased."""
     return {w.lower() for w in re.findall(r"[A-Z]+(?![a-z])|[A-Z][a-z]*|[a-z]+|\d+", local_name)}
 
 
-def local_names(graph, ontology_iri):
+def local_names(graph: Graph, ontology_iri: str) -> set[str]:
     out = set()
     for node in set(graph.subjects()):
         if isinstance(node, rdflib.URIRef) and str(node).startswith(ontology_iri + "#"):
@@ -99,56 +208,58 @@ def local_names(graph, ontology_iri):
     return out
 
 
-def main():
-    problems = []
-    checked_terms = 0
-
-    for path in normative_files():
-        g = rdflib.Graph()
-        g.parse(data=pathlib.Path(path).read_text(encoding="utf-8"), format="turtle")
-        ont = next((str(s) for s in g.subjects(rdflib.RDF.type, rdflib.OWL.Ontology)), None)
-        if ont is None:
-            problems.append(f"{path}: no owl:Ontology declaration, cannot scope its terms")
+def _format_name_problems(path: str, g: Graph, ont: str) -> tuple[int, list[str]]:
+    """Rule 1, format names in term names: the number of terms checked and the offending ones."""
+    checked, problems = 0, []
+    for name in sorted(local_names(g, ont)):
+        if name in EXEMPT:
             continue
+        checked += 1
+        hit = words(name) & FORMAT_WORDS
+        if hit:
+            problems.append(
+                f"{path}: term '{name}' names a format or jurisdiction "
+                f"({', '.join(sorted(hit))}). A normative vocabulary serves any format and "
+                f"any authority's rules, not one. Either rename it, move it to a profile "
+                f"or register, or add it to EXEMPT with the reason."
+            )
+    return checked, problems
 
-        # 1 -- format names in term names
-        for name in sorted(local_names(g, ont)):
-            if name in EXEMPT:
-                continue
-            checked_terms += 1
-            hit = words(name) & FORMAT_WORDS
-            if hit:
+
+def _register_reference_problems(path: str, g: Graph) -> list[str]:
+    """Rule 2: normative vocabularies must not reference a register."""
+    problems = []
+    for s, _p, o in g:
+        for node, role in ((s, "subject"), (o, "object")):
+            if isinstance(node, rdflib.URIRef) and str(node).startswith(REGISTER_NS):
                 problems.append(
-                    f"{path}: term '{name}' names a format or jurisdiction "
-                    f"({', '.join(sorted(hit))}). A normative vocabulary serves any format and "
-                    f"any authority's rules, not one. Either rename it, move it to a profile "
-                    f"or register, or add it to EXEMPT with the reason."
+                    f"{path}: references register term <{node}> as a {role}. Aspects do "
+                    f"not import registers -- that absence is what lets a profile bind a "
+                    f"different one."
                 )
+    return problems
 
-        # 2 -- normative vocabularies must not reference a register
-        for s, _p, o in g:
-            for node, role in ((s, "subject"), (o, "object")):
-                if isinstance(node, rdflib.URIRef) and str(node).startswith(REGISTER_NS):
-                    problems.append(
-                        f"{path}: references register term <{node}> as a {role}. Aspects do "
-                        f"not import registers -- that absence is what lets a profile bind a "
-                        f"different one."
-                    )
 
-        # 4 -- aspects declare no concepts
-        if "/aspect/" in path.replace("\\", "/"):
-            for kind in (SKOS.Concept, SKOS.ConceptScheme, SKOS.Collection):
-                for s in g.subjects(rdflib.RDF.type, kind):
-                    problems.append(
-                        f"{path}: declares {str(kind).split('#')[-1]} <{s}>. Concepts belong "
-                        f"in a register under specification/register/, so a profile can bind "
-                        f"a different set of values."
-                    )
+def _aspect_concept_problems(path: str, g: Graph) -> list[str]:
+    """Rule 4: aspects declare no concepts."""
+    problems = []
+    if "/aspect/" in path:
+        for kind in (SKOS.Concept, SKOS.ConceptScheme, SKOS.Collection):
+            for s in g.subjects(rdflib.RDF.type, kind):
+                problems.append(
+                    f"{path}: declares {str(kind).split('#')[-1]} <{s}>. Concepts belong "
+                    f"in a register under specification/register/, so a profile can bind "
+                    f"a different set of values."
+                )
+    return problems
 
-    # 3 -- registers must not reference an aspect
-    for path in sorted(glob.glob("specification/register/*/*.ttl")):
+
+def _aspect_reference_problems() -> list[str]:
+    """Rule 3: registers must not reference an aspect."""
+    problems = []
+    for path in repository_files("specification/register/*/*.ttl"):
         g = rdflib.Graph()
-        g.parse(data=pathlib.Path(path).read_text(encoding="utf-8"), format="turtle")
+        g.parse(data=(ROOT / path).read_text(encoding="utf-8"), format="turtle")
         for s, p, o in g:
             for node in (s, p, o):
                 if isinstance(node, rdflib.URIRef) and str(node).startswith(ASPECT_NS):
@@ -157,17 +268,36 @@ def main():
                         f"way; a register that names the property it serves cannot be reused "
                         f"by another."
                     )
+    return problems
+
+
+def main() -> int:
+    problems = []
+    checked_terms = 0
+
+    for path in normative_files():
+        g = rdflib.Graph()
+        g.parse(data=(ROOT / path).read_text(encoding="utf-8"), format="turtle")
+        ont = next((str(s) for s in g.subjects(rdflib.RDF.type, rdflib.OWL.Ontology)), None)
+        if ont is None:
+            problems.append(f"{path}: no owl:Ontology declaration, cannot scope its terms")
+            continue
+        checked, named = _format_name_problems(path, g, ont)
+        checked_terms += checked
+        problems += named + _register_reference_problems(path, g) + _aspect_concept_problems(path, g)
+
+    problems += _aspect_reference_problems()
 
     if checked_terms < 150:
-        problems.append(
-            f"only {checked_terms} terms checked -- the scan is not reaching the vocabularies"
-        )
+        problems.append(f"only {checked_terms} terms checked -- the scan is not reaching the vocabularies")
 
     if problems:
         print("FAIL:\n  " + "\n  ".join(problems))
         return 1
-    print(f"PASS: {checked_terms} normative terms name no format or jurisdiction; "
-          f"{len(EXEMPT)} reasoned exemption(s); register boundary holds both ways")
+    print(
+        f"PASS: {checked_terms} normative terms name no format or jurisdiction; "
+        f"{len(EXEMPT)} reasoned exemption(s); register boundary holds both ways"
+    )
     return 0
 
 

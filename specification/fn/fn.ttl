@@ -19,9 +19,10 @@
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
 <https://hexplain.io/ns/fn> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/fn/fn-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/fn/0.3> ; owl:versionInfo "0.3" ;
     owl:priorVersion <https://hexplain.io/ns/fn/0.2> ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
     # Every vocabulary whose terms the functions read (hxf:reads) or name in their bodies.
     owl:imports <https://hexplain.io/ns/core> , <https://hexplain.io/ns/dlv> ,
         <https://hexplain.io/ns/aspect/raster> , <https://hexplain.io/ns/aspect/spatialref> ,
@@ -89,7 +90,7 @@
     :signature "bytes(node: IRI) -> xsd:hexBinary | bytes(node: IRI, offset: integer, length: integer) -> xsd:hexBinary" ;
     :reads hexplain:byteOffset, hexplain:byteLength ;
     rdfs:comment "The node's bytes as they sit in the file, whole or a slice relative to the node. Unbound when the slice leaves the node or exceeds hxf:maxBytesPerCall."@en ;
-    :unboundWhen "The node has no recorded byte range, or the requested window lies outside the asset."@en .
+    :unboundWhen "The node has no recorded byte range; the requested slice [offset, offset + length) does not lie within the node's own bytes; or its length exceeds hxf:maxBytesPerCall."@en .
 :decodedBytes a owl:NamedIndividual , :Function ; :kind :Native ; :layer 0 ; rdfs:label "decoded bytes"@en ;
     :signature "decodedBytes(node: IRI) -> xsd:hexBinary" ;
     :reads hexplain:isEncodedWith, hexplain:hasEncodingStep ;
@@ -165,7 +166,7 @@
 :isNoData a owl:NamedIndividual , :Function , sh:SPARQLFunction ; :kind :Pure ; :layer 3 ; rdfs:label "is no-data"@en ;
     :signature "isNoData(band: IRI, value: number) -> xsd:boolean" ;
     :reads araster:noDataValue, araster:hasBand, asamp:sampleFormat, asamp:bitDepth ;
-    rdfs:comment "True when value equals the no-data value in effect: the band's own araster:noDataValue, else that of the grid that has the band (araster:hasBand). The two are compared in the band's declared numeric type, stated by asamp:sampleFormat and asamp:bitDepth on the band or, failing that, on the grids that have it (which must then agree): for asamp:Float with bitDepth 32 both are first rounded to the nearest binary32 value, so a float32 no-data value written in decimal (for example -3.4028234663852886e38) matches the stored float32 sample; for an integer format both must be the same integer; with no declared type they are compared as xsd:double. A NaN no-data value matches a NaN value, although NaN never equals itself numerically. False when no no-data value is in effect. Deterministic: exactly one answer or none. The SPARQL body relies on xsd:float casts rounding to binary32, as Apache Jena's do; a SPARQL processor that holds xsd:float in binary64 compares such values as doubles."@en ;
+    rdfs:comment "True when value equals the no-data value in effect: the band's own araster:noDataValue, else that of the grid that has the band (araster:hasBand). The two are compared in the band's declared numeric type, stated by asamp:sampleFormat and asamp:bitDepth on the band or, failing that, on the grids that have it (which must then agree): for asamp:Float with bitDepth 32 both are first rounded to the nearest binary32 value, so a float32 no-data value written in decimal (for example -3.4028234663852886e38) matches the stored float32 sample; for asamp:SignedInteger or asamp:UnsignedInteger both must be the same integer, compared exactly (as xsd:decimal, never through xsd:double, so two 64-bit values that round to one double stay distinct, and a value with a fractional part matches no integer no-data value); with no declared type, or another format, they are compared as xsd:double. A NaN no-data value matches a NaN value, although NaN never equals itself numerically. False when no no-data value is in effect. Deterministic: exactly one answer or none. The SPARQL body relies on xsd:float casts rounding to binary32, as Apache Jena's do; a SPARQL processor that holds xsd:float in binary64 compares such values as doubles."@en ;
     :unboundWhen "The band carries more than one distinct araster:noDataValue, or it has none and the grids having it carry more than one distinct one between them; or the sample format or bit depth in effect is ambiguous (several of the band's own, or none of its own and the grids having it disagree): which applies is undefined, so no value is returned rather than an arbitrary one."@en ;
     sh:parameter [ sh:path :arg1 ; sh:order 0 ; sh:description "band" ] , [ sh:path :arg2 ; sh:order 1 ; sh:description "value" ] ;
     sh:returnType xsd:boolean ;
@@ -193,12 +194,13 @@
   OPTIONAL { ?gb <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/sampling#bitDepth> ?bitsGrid }
   BIND ( COALESCE(?fmtOwn, ?fmtGrid) AS ?fmt ) BIND ( COALESCE(?bitsOwn, ?bitsGrid) AS ?bits )
   BIND ( BOUND(?fmt) && ?fmt = <https://hexplain.io/ns/aspect/sampling#Float> && BOUND(?bits) && xsd:integer(?bits) = 32 AS ?f32 )
+  BIND ( BOUND(?fmt) && ?fmt IN (<https://hexplain.io/ns/aspect/sampling#SignedInteger>, <https://hexplain.io/ns/aspect/sampling#UnsignedInteger>) AS ?int )
   BIND ( IF(?hasOwn,
     EXISTS { $arg1 <https://hexplain.io/ns/aspect/raster#noDataValue> ?nd .
-             FILTER ( IF(?f32, xsd:float(?nd) = xsd:float($arg2), xsd:double(?nd) = xsd:double($arg2))
+             FILTER ( IF(?f32, xsd:float(?nd) = xsd:float($arg2), IF(?int, xsd:decimal(?nd) = xsd:decimal($arg2), xsd:double(?nd) = xsd:double($arg2)))
                       || ( xsd:double(?nd) != xsd:double(?nd) && xsd:double($arg2) != xsd:double($arg2) ) ) },
     EXISTS { ?grid <https://hexplain.io/ns/aspect/raster#hasBand> $arg1 ; <https://hexplain.io/ns/aspect/raster#noDataValue> ?nd .
-             FILTER ( IF(?f32, xsd:float(?nd) = xsd:float($arg2), xsd:double(?nd) = xsd:double($arg2))
+             FILTER ( IF(?f32, xsd:float(?nd) = xsd:float($arg2), IF(?int, xsd:decimal(?nd) = xsd:decimal($arg2), xsd:double(?nd) = xsd:double($arg2)))
                       || ( xsd:double(?nd) != xsd:double(?nd) && xsd:double($arg2) != xsd:double($arg2) ) ) } )
     AS ?result )
 }""" .
@@ -343,6 +345,7 @@
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
 hxf:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
 hxf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/fn> ;
@@ -362,49 +365,36 @@ hxf:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     sh:property [ sh:path hxf:total ; sh:datatype xsd:boolean ;
         sh:message "hxf:total takes an xsd:boolean literal (rdfs:range xsd:boolean)." ] .
 
-# BEGIN GENERATED TERM DOCUMENTATION
-# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-@prefix hxf: <https://hexplain.io/ns/fn#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-
-<https://hexplain.io/ns/fn> skos:scopeNote "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it."@en .
-hxf:IntegerValueShape skos:definition "Applied through references from other shapes. A conforming value is an integer (of any XSD integer datatype)."@en .
-hxf:Native rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:NativeFunctionShape rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:Pure rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:RangeDatatypeShape skos:definition "Applies to subjects using hxf:layer, hxf:maxBytesPerCall, hxf:maxCellsPerWindow, hxf:signature, hxf:total. hxf:layer takes an integer (rdfs:range xsd:integer). hxf:maxBytesPerCall takes a positive integer (rdfs:range xsd:positiveInteger). hxf:maxCellsPerWindow takes a positive integer (rdfs:range xsd:positiveInteger). hxf:signature takes an xsd:string literal (rdfs:range xsd:string). hxf:total takes an xsd:boolean literal (rdfs:range xsd:boolean)."@en .
-hxf:arg1 rdfs:label "arg1"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:arg2 rdfs:label "arg2"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:arg3 rdfs:label "arg3"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:bytes rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:calibrate rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:cell rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:column rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:decode rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:decodedBytes rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:digest rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:explain rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:extent rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:hel rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:isNoData rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:kind rdfs:label "kind"@en .
-hxf:layer rdfs:label "layer"@en .
-hxf:layout rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:physicalAt rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:rank rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:reads rdfs:label "reads"@en .
-hxf:row rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:sampleAt rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:sampleAtTime rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:sampleAtWorld rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:signature rdfs:label "signature"@en .
-hxf:stat rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:value rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:window rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:wkt rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:worldX rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
-hxf:worldY rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+# ---------- Term ownership ----------
+# rdfs:isDefinedBy for the terms whose declaration above does not state it. A new term states
+# its own; tools/test_term_reference.py requires it of every term this file defines.
+:Native rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:NativeFunctionShape rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:Pure rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:arg1 rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:arg2 rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:arg3 rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:bytes rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:calibrate rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:cell rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:column rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:decode rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:decodedBytes rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:digest rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:explain rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:extent rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:hel rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:isNoData rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:layout rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:physicalAt rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:rank rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:row rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:sampleAt rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:sampleAtTime rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:sampleAtWorld rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:stat rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:value rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:window rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:wkt rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:worldX rdfs:isDefinedBy <https://hexplain.io/ns/fn> .
+:worldY rdfs:isDefinedBy <https://hexplain.io/ns/fn> .

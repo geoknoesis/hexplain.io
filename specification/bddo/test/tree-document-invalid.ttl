@@ -1,4 +1,5 @@
 # expect: ex:ConfusedDocument bddo:TreeDocumentShape sh:SPARQLConstraintComponent
+# expect: ex:OffsetDocument bddo:TreeDocumentShape sh:NodeConstraintComponent
 @prefix bddo: <https://hexplain.io/ns/bddo#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
@@ -19,3 +20,6 @@ ex:ConfusedDocument a bddo:TreeDocument ;
     bddo:hasField ( ex:Member ) .
 
 ex:Member a bddo:Field ; bddo:dataType bddo:string ; bddo:nodePath "/pds:thing" .
+# A tree document field located by a computed byte offset as well as its path.
+ex:OffsetDocument a bddo:TreeDocument ; bddo:treeSyntax bddo:json ; bddo:hasField ( ex:OffsetDocument.a ) .
+ex:OffsetDocument.a a bddo:Field ; bddo:dataType bddo:asciiInteger ; bddo:nodePath "/a" ; bddo:atOffsetFromExpression "4" .

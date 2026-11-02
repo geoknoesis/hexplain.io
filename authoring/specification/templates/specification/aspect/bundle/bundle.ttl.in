@@ -16,9 +16,10 @@
 @prefix vann:    <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/aspect/bundle> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/aspect/bundle/bundle-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/aspect/bundle/1.5> ; owl:versionInfo "1.5" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/bundle/1.4> ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/bddo> ;
     rdfs:label "Hexplain Aspect — Bundle (hx-bundle)"@en ;
     rdfs:comment "Base aspect for multi-part assets: one logical Asset realized by N physical Parts, bound by containment, naming-convention, manifest-reference, or concatenation. Part aspect facets lift onto the Asset for a unified semantic view."@en ;
@@ -215,24 +216,22 @@ abnd:PartSpecShape a sh:NodeShape ;
     sh:targetObjectsOf abnd:partSpec ;
     sh:property [ sh:path abnd:pathPattern ; sh:datatype xsd:string ;
         sh:message "Each value of abnd:pathPattern is an xsd:string literal." ] ;
-    sh:property [ sh:path abnd:minParts ; {{constraint:pattern_237}} ; sh:minInclusive 0 ; sh:maxCount 1 ;
+    sh:property [ sh:path abnd:minParts ; sh:node abnd:IntegerValueShape ; sh:minInclusive 0 ; sh:maxCount 1 ;
         sh:message "abnd:minParts takes at most one value; each is an integer (of any XSD integer datatype) at least 0." ] ;
-    sh:property [ sh:path abnd:maxParts ; {{constraint:pattern_237}} ; sh:minInclusive 0 ; sh:maxCount 1 ;
+    sh:property [ sh:path abnd:maxParts ; sh:node abnd:IntegerValueShape ; sh:minInclusive 0 ; sh:maxCount 1 ;
         sh:message "abnd:maxParts takes at most one value; each is an integer (of any XSD integer datatype) at least 0." ] ;
     sh:property [ sh:path abnd:nestedProfile ; sh:class abnd:BundleProfile ; sh:maxCount 1 ;
         sh:message "abnd:nestedProfile takes at most one value; each is an instance of abnd:BundleProfile." ] ;
-    sh:not [ sh:and (
-        [ sh:property [ sh:path abnd:extension ; sh:minCount 1 ] ]
-        [ sh:property [ sh:path abnd:pathPattern ; sh:minCount 1 ] ] ) ] ;
     # Native rather than sh:sparql: sh:lessThanOrEquals says exactly this, and unlike a SPARQL
     # constraint it reports the offending path and value, so a finding points at abnd:minParts
     # instead of only at the spec that carries it.
     sh:property [ sh:path abnd:minParts ; sh:lessThanOrEquals abnd:maxParts ;
         sh:message "abnd:maxParts must not be less than abnd:minParts." ] ;
-    # Located one way: a spec with neither an extension nor a pattern matches no file.
-    sh:or ( [ sh:property [ sh:path abnd:extension ; sh:minCount 1 ] ]
-            [ sh:property [ sh:path abnd:pathPattern ; sh:minCount 1 ] ] ) ;
-    sh:message "A part spec is located by abnd:extension or abnd:pathPattern; with neither it matches no file." ;
+    # Located exactly one way: a spec with neither an extension nor a pattern matches no file,
+    # and one with both would have two answers to which files it matches.
+    sh:xone ( [ sh:property [ sh:path abnd:extension ; sh:minCount 1 ] ]
+              [ sh:property [ sh:path abnd:pathPattern ; sh:minCount 1 ] ] ) ;
+    sh:message "A part spec is located exactly one way, by abnd:extension or by abnd:pathPattern: with neither it matches no file, and it never states both." ;
     # Whole-string rules. An extension is a dot and one or more dot-separated steps, none empty
     # and none holding a path separator or a drive colon. A pattern is one or more '/'-separated
     # segments relative to the asset root: no empty segment (so no leading '/', trailing '/' or
@@ -290,8 +289,12 @@ abnd:BundleProfileShape a sh:NodeShape ;
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
 # subjects-of, so an untyped subject is checked too (tools/test_range_datatypes.py).
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
+# One copy per module, byte-identical to bddo:IntegerValueShape (the master; template in
+# specification/shared-patterns/integer-value-shape.ttl.template): shapes are validated module by
+# module, and a sh:node into another module's graph is silently satisfied when that module is not loaded.
 abnd:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
     {{constraint:pattern_237}} .
 abnd:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> ;
@@ -320,3 +323,16 @@ abnd:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     sh:property [ sh:path abnd:stem ; sh:datatype xsd:string ;
         sh:message "abnd:stem takes an xsd:string literal (rdfs:range xsd:string)." ] .
 
+# ---------- Term ownership ----------
+# rdfs:isDefinedBy for the terms whose declaration above does not state it. A new term states
+# its own; tools/test_term_reference.py requires it of every term this file defines.
+:AssetShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> .
+:Concatenation rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> .
+:Containment rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> .
+:LiftByCarriedAspectRule rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> .
+:ManifestReference rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> .
+:NamingConvention rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> .
+:PartShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> .
+:PartSpecShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> .
+:RequiredPartsShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> .
+:_prefixes rdfs:isDefinedBy <https://hexplain.io/ns/aspect/bundle> .

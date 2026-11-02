@@ -1,14 +1,20 @@
 """Compare normalized Jena/pySHACL diagnostics for the frozen layout/security corpus."""
+
+from __future__ import annotations
+
 import argparse
 import base64
-from collections import Counter
 import hashlib
 import json
+from collections import Counter
+from datetime import UTC, datetime
 from importlib.metadata import version
-from datetime import datetime, timezone
 from pathlib import Path
-from rdflib import Graph, Namespace, BNode
+from typing import Any
+
 from pyshacl import validate
+from rdflib import BNode, Graph, Literal, Namespace
+
 SH = Namespace("http://www.w3.org/ns/shacl#")
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -17,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 COMPARED = (SH.focusNode, SH.resultPath, SH.sourceConstraintComponent, SH.resultSeverity, SH.value)
 
 
-def normalize(graph):
+def normalize(graph: Graph) -> tuple[Counter[tuple[str, ...]], int]:
     """Multiset of comparable diagnostic fields, plus the unresolvable source-shape count.
 
     sh:sourceShape is usually a blank node in the shapes graph, and the exported Jena
@@ -32,7 +38,9 @@ def normalize(graph):
         for predicate in COMPARED:
             values = list(graph.objects(result, predicate))
             assert len(values) <= 1, (predicate, values)
-            assert not any(isinstance(v, BNode) for v in values), "Blank-node diagnostic requires structural normalization"
+            assert not any(isinstance(v, BNode) for v in values), (
+                "Blank-node diagnostic requires structural normalization"
+            )
             row.append(values[0].n3() if values else "")
         shapes = list(graph.objects(result, SH.sourceShape))
         assert len(shapes) <= 1, (SH.sourceShape, shapes)
@@ -44,19 +52,30 @@ def normalize(graph):
         rows.append(tuple(row))
     return Counter(rows), anonymous_shapes
 
-def main():
+
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("reports", type=Path)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("reports", type=Path, help="Directory holding the validators' raw SHACL reports")
+    parser.add_argument("--output", type=Path, required=True, help="Where to write the comparison evidence")
     args = parser.parse_args()
-    evidence = dict(schema_version=2, status="running", started_utc=datetime.now(timezone.utc).isoformat(),
-                    versions={name: version(name) for name in ("rdflib", "pyshacl")},
-                    inputs={}, cases=[], scope="Top-level diagnostic multiset over focus node, result path, constraint component, severity, value term and named source shape; counts blank-node source shapes and nested detail asymmetry without comparing nested structure or engine-authored messages")
-    def save():
+    evidence: dict[str, Any] = dict(
+        schema_version=2,
+        status="running",
+        started_utc=datetime.now(UTC).isoformat(),
+        versions={name: version(name) for name in ("rdflib", "pyshacl")},
+        inputs={},
+        cases=[],
+        scope="Top-level diagnostic multiset over focus node, result path, constraint component, severity, value term "
+        "and named source shape; counts blank-node source shapes and nested detail asymmetry without comparing "
+        "nested structure or engine-authored messages",
+    )
+
+    def save() -> None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         temporary = args.output.with_suffix(args.output.suffix + ".tmp")
-        temporary.write_text(json.dumps(evidence, indent=2)+"\n", encoding="utf-8", newline="\n")
+        temporary.write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8", newline="\n")
         temporary.replace(args.output)
+
     save()
     try:
         compare(args, evidence)
@@ -65,44 +84,62 @@ def main():
         evidence.update(status="failed", error=str(error))
         raise
     finally:
-        evidence["finished_utc"] = datetime.now(timezone.utc).isoformat()
+        evidence["finished_utc"] = datetime.now(UTC).isoformat()
         save()
     print(f"PASS: {len(evidence['cases'])} cross-validator diagnostic comparisons")
 
-def compare(args, evidence):
+
+def compare(args: argparse.Namespace, evidence: dict[str, Any]) -> None:
     cases = evidence["cases"]
     for suite, shapes in {
-        "layout": [("layout-competency-shapes.ttl", "specification/dlv/dlv.ttl"), ("compound-competency-shapes.ttl", "specification/aspect/bundle/bundle.ttl")],
-        "security": [("security-profile.ttl", "specification/validation/test/security-profile.ttl")]
+        "layout": [
+            ("layout-competency-shapes.ttl", "specification/dlv/dlv.ttl"),
+            ("compound-competency-shapes.ttl", "specification/aspect/bundle/bundle.ttl"),
+        ],
+        "security": [("security-profile.ttl", "specification/validation/test/security-profile.ttl")],
     }.items():
         shape_graph = Graph()
         for copied, source in shapes:
-            assert (args.reports/copied).read_text(encoding="utf-8") == (ROOT/source).read_text(encoding="utf-8"), source
-            source_text = (ROOT/source).read_text(encoding="utf-8")
+            assert (args.reports / copied).read_text(encoding="utf-8") == (ROOT / source).read_text(encoding="utf-8"), (
+                source
+            )
+            source_text = (ROOT / source).read_text(encoding="utf-8")
             evidence["inputs"][source] = hashlib.sha256(source_text.encode("utf-8")).hexdigest()
             shape_graph.parse(data=source_text, format="turtle")
-        corpus = ROOT/f"specification/validation/test/{suite}-competency.tsv"
+        corpus = ROOT / f"specification/validation/test/{suite}-competency.tsv"
         text = corpus.read_text(encoding="utf-8")
-        assert text == (args.reports/corpus.name).read_text(encoding="utf-8")
+        assert text == (args.reports / corpus.name).read_text(encoding="utf-8")
         evidence["inputs"][corpus.relative_to(ROOT).as_posix()] = hashlib.sha256(text.encode("utf-8")).hexdigest()
         lines = [line for line in text.splitlines() if line and not line.startswith("#")]
-        for index,line in enumerate(lines):
+        for index, line in enumerate(lines):
             name, expected, path, encoded = line.split("\t")
             data = Graph().parse(data=base64.b64decode(encoded), format="turtle")
             conforms, report, _ = validate(data, shacl_graph=shape_graph, inference="none", advanced=False)
-            jena_file = args.reports/f"{suite}-{index}.ttl"
+            jena_file = args.reports / f"{suite}-{index}.ttl"
             jena = Graph().parse(jena_file)
             assert bool(conforms) == (expected == "true"), name
-            assert bool(next(jena.objects(None, SH.conforms)).toPython()) == bool(conforms), name
+            stated = next(jena.objects(None, SH.conforms))
+            assert isinstance(stated, Literal) and bool(stated.toPython()) == bool(conforms), name
             (a, a_anonymous), (b, b_anonymous) = normalize(report), normalize(jena)
-            assert a == b, (suite,name,"pySHACL",a,"Jena",b)
-            assert a_anonymous == b_anonymous, (suite,name,"anonymous source shapes",a_anonymous,b_anonymous)
-            pyshacl_details = len(list(report.triples((None,SH.detail,None))))
-            jena_details = len(list(jena.triples((None,SH.detail,None))))
-            cases.append(dict(suite=suite,name=name,conforms=bool(conforms),diagnostics=sum(a.values()),
-                              compared_fields=len(COMPARED)+1,anonymous_source_shapes=a_anonymous,
-                              pyshacl_detail_links=pyshacl_details,jena_detail_links=jena_details,
-                              detail_asymmetry=pyshacl_details != jena_details,
-                              jena_report_sha256=hashlib.sha256(jena_file.read_bytes()).hexdigest()))
-if __name__ == "__main__": main()
+            assert a == b, (suite, name, "pySHACL", a, "Jena", b)
+            assert a_anonymous == b_anonymous, (suite, name, "anonymous source shapes", a_anonymous, b_anonymous)
+            pyshacl_details = len(list(report.triples((None, SH.detail, None))))
+            jena_details = len(list(jena.triples((None, SH.detail, None))))
+            cases.append(
+                dict(
+                    suite=suite,
+                    name=name,
+                    conforms=bool(conforms),
+                    diagnostics=sum(a.values()),
+                    compared_fields=len(COMPARED) + 1,
+                    anonymous_source_shapes=a_anonymous,
+                    pyshacl_detail_links=pyshacl_details,
+                    jena_detail_links=jena_details,
+                    detail_asymmetry=pyshacl_details != jena_details,
+                    jena_report_sha256=hashlib.sha256(jena_file.read_bytes()).hexdigest(),
+                )
+            )
 
+
+if __name__ == "__main__":
+    main()

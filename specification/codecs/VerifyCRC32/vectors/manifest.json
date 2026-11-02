@@ -1,0 +1,99 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#VerifyCRC32",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "contract",
+      "url": "https://hexplain.io/ns/register/media-encoding#VerifyCRC32",
+      "description": "Authored from the definition; every expected CRC-32 computed with zlib's crc32 through CPython's zlib module (the check value of the ASCII digits 123456789 is 3421780262, 0xCBF43926).",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "verifycrc32-1",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "expected": 3421780262
+          },
+          "input": {
+            "hex": "313233343536373839"
+          },
+          "expect": {
+            "hex": "313233343536373839"
+          }
+        }
+      ]
+    },
+    {
+      "id": "verifycrc32-2",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "expected": 0
+          },
+          "input": {
+            "hex": "313233343536373839"
+          },
+          "expect": {
+            "error": "Checksum"
+          }
+        }
+      ]
+    },
+    {
+      "id": "verifycrc32-3",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "expected": 3421780262
+          },
+          "input": {
+            "hex": "313233343536373839"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 8
+        }
+      ]
+    },
+    {
+      "id": "round-trip",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "expected": 907060870
+          },
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "expected": 907060870
+          },
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    }
+  ]
+}

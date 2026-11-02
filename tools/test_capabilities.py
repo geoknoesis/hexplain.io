@@ -1,48 +1,89 @@
 """Capability claims must be regenerated from evidence, never asserted by hand."""
+
+from __future__ import annotations
+
+import hashlib
 import json
+from pathlib import Path
 
-from _capabilities import COVERAGE, EVIDENCE, ROOT, TARGET, build, digest
+from _capabilities import COVERAGE, EVIDENCE, ROOT, TARGET, build
+from _specification_coverage import check as check_constructs
 
-published = TARGET.read_text(encoding='utf-8')
-assert published == build(), 'Regenerate specification/capabilities.json from current evidence'
 
-matrix = json.loads(published)
-assert matrix['schema_version'] == 1
+def digest(path: Path) -> str:
+    """SHA-256 of the evidence with its line endings normalised to LF first, so a CRLF checkout of a text file
+    (autocrlf, an editor that rewrote it) hashes as the LF file the matrix recorded."""
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")).hexdigest()
 
-# The matrix must describe exactly the modules the reference manifest documents.
-reference = json.loads((ROOT/'specification/reference/manifest.json').read_text(encoding='utf-8'))
-assert [m['module'] for m in matrix['modules']] == sorted(e['module'] for e in reference), 'Module set drifted'
 
-# Recorded evidence must still exist and hash to the recorded value, so no capability
-# outlives the measurement that produced it.
-assert set(matrix['evidence']) == {p.relative_to(ROOT).as_posix() for p in EVIDENCE}
-for relative, recorded in matrix['evidence'].items():
-    assert digest(ROOT/relative) == recorded, f'{relative} changed since the matrix was generated'
+def main() -> int:
+    check_constructs()
+    published = TARGET.read_text(encoding="utf-8")
+    assert published == build(), "Regenerate specification/capabilities.json from current evidence"
 
-for row in matrix['modules']:
-    module = row['module']
-    # An obligation without a two-sided witness would be validation capability that no
-    # component evaluation supports.
-    assert row['two_sided_obligations'] == row['constraint_obligations'], (
-        f"{module}: {row['constraint_obligations'] - row['two_sided_obligations']} obligations lack two-sided evidence")
-    assert row['exercised_resources'] <= row['traced_resources'], module
-    assert row['resources_asserting_result_path'] <= row['traced_resources'], module
-    if row['shapes']:
-        assert row['constraint_obligations'] > 0, f'{module}: publishes shapes but has no measured obligation'
+    matrix = json.loads(published)
+    assert matrix["schema_version"] == 2
 
-# Every measured obligation is attributed, either to a documented module or to a named
-# non-module source. Evidence may not be silently dropped.
-coverage = json.loads(COVERAGE.read_text(encoding='utf-8'))
-attributed = sum(row['constraint_obligations'] for row in matrix['modules'])
-unattributed = sum(matrix['unattributed_obligations'].values())
-assert attributed + unattributed == len(coverage['constraints']) == matrix['totals']['measured_obligations'], (
-    'Matrix loses measured obligations', attributed, unattributed, len(coverage['constraints']))
+    # The matrix must describe exactly the modules the reference manifest documents.
+    reference = json.loads((ROOT / "specification/reference/manifest.json").read_text(encoding="utf-8"))
+    assert [m["module"] for m in matrix["modules"]] == sorted(e["module"] for e in reference), "Module set drifted"
 
-totals = matrix['totals']
-assert totals['modules'] == len(matrix['modules'])
-for field in ('terms', 'constraint_obligations', 'two_sided_obligations', 'traced_resources', 'exercised_resources'):
-    assert totals[field] == sum(row[field] for row in matrix['modules']), field
+    # Recorded evidence must still exist and hash to the recorded value, so no capability
+    # outlives the measurement that produced it.
+    assert set(matrix["evidence"]) == {p.relative_to(ROOT).as_posix() for p in EVIDENCE}
+    for relative, recorded in matrix["evidence"].items():
+        assert digest(ROOT / relative) == recorded, f"{relative} changed since the matrix was generated"
 
-print(f"PASS: {totals['modules']} modules; {totals['measured_obligations']} measured obligations all two-sided "
-      f"({unattributed} outside documented modules); {totals['exercised_resources']} of {totals['traced_resources']} "
-      f"resources exercised by a competency case")
+    for row in matrix["modules"]:
+        module = row["module"]
+        # An obligation without a two-sided witness would be validation capability that no
+        # component evaluation supports.
+        assert row["two_sided_obligations"] == row["constraint_obligations"], (
+            f"{module}: {row['constraint_obligations'] - row['two_sided_obligations']} obligations lack "
+            "two-sided evidence"
+        )
+        assert row["exercised_resources"] <= row["traced_resources"], module
+        assert row["resources_asserting_result_path"] <= row["traced_resources"], module
+        assert row["contract_referenced_resources"] <= row["traced_resources"], module
+        if row["shapes"]:
+            assert row["authored_positive_cases"] > 0, f"{module}: no positive authored contract"
+            assert row["authored_negative_cases"] > 0, f"{module}: no negative authored contract"
+            assert row["constraint_obligations"] > 0, f"{module}: publishes shapes but has no measured obligation"
+
+    # Every measured obligation is attributed, either to a documented module or to a named
+    # non-module source. Evidence may not be silently dropped.
+    coverage = json.loads(COVERAGE.read_text(encoding="utf-8"))
+    attributed = sum(row["constraint_obligations"] for row in matrix["modules"])
+    unattributed = sum(matrix["unattributed_obligations"].values())
+    assert attributed + unattributed == len(coverage["constraints"]) == matrix["totals"]["measured_obligations"], (
+        "Matrix loses measured obligations",
+        attributed,
+        unattributed,
+        len(coverage["constraints"]),
+    )
+
+    totals = matrix["totals"]
+    assert totals["modules"] == len(matrix["modules"])
+    for field in (
+        "terms",
+        "constraint_obligations",
+        "two_sided_obligations",
+        "traced_resources",
+        "exercised_resources",
+        "contract_referenced_resources",
+    ):
+        assert totals[field] == sum(row[field] for row in matrix["modules"]), field
+
+    assert totals["authored_contract_cases"] == sum(matrix["unattributed_contract_cases"].values()) + sum(
+        r["authored_positive_cases"] + r["authored_negative_cases"] for r in matrix["modules"]
+    )
+    print(
+        f"PASS: {totals['modules']} modules; {totals['measured_obligations']} measured obligations all two-sided "
+        f"({unattributed} outside documented modules); {totals['exercised_resources']} of {totals['traced_resources']} "
+        f"resources exercised by a competency case"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

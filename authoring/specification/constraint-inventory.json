@@ -161,14 +161,6 @@
       ]
     },
     {
-      "id": "pattern_156",
-      "kind": "property constraint",
-      "fragment": "[ sh:path bddo:separatedBy ; sh:minCount 1 ]",
-      "consumers": [
-        "specification/bddo/bddo.ttl"
-      ]
-    },
-    {
       "id": "pattern_158",
       "kind": "property constraint",
       "fragment": "[ sh:path bddo:size ; sh:minExclusive 0 ; sh:maxCount 1 ; sh:message \"bddo:size takes at most one value; each is a number greater than 0.\" ]",
@@ -250,30 +242,45 @@
       ]
     },
     {
-      "id": "pattern_234",
-      "kind": "value alternatives",
-      "fragment": "sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:short ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:unsignedByte ] )",
-      "consumers": [
-        "specification/npv/net.ttl"
-      ]
-    },
-    {
-      "id": "pattern_236",
-      "kind": "value alternatives",
-      "fragment": "sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] )",
-      "consumers": [
-        "specification/vdv/video.ttl"
-      ]
-    },
-    {
       "id": "pattern_237",
       "kind": "value alternatives",
       "fragment": "sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] )",
       "consumers": [
+        "specification/adv/audio.ttl",
         "specification/aspect/bundle/bundle.ttl",
         "specification/aspect/geometry/geometry.ttl",
+        "specification/aspect/raster/raster.ttl",
         "specification/aspect/sampling/sampling.ttl",
-        "specification/dlv/dlv.ttl"
+        "specification/bddo/bddo.ttl",
+        "specification/dlv/dlv.ttl",
+        "specification/hexplain/core.ttl",
+        "specification/idv/image.ttl",
+        "specification/npv/net.ttl",
+        "specification/vdv/video.ttl"
+      ]
+    },
+    {
+      "id": "registered_encodings",
+      "kind": "value alternatives",
+      "fragment": "bddo:utf8 bddo:ascii bddo:utf16le bddo:utf16be bddo:latin1 bddo:utf32le bddo:utf32be bddo:ucs2le bddo:ucs2be bddo:windows1252 bddo:iso8859_2 bddo:iso8859_5 bddo:iso8859_7 bddo:iso8859_9 bddo:iso8859_15 bddo:ebcdic037 bddo:shiftJis",
+      "consumers": [
+        "specification/bddo/bddo.ttl"
+      ]
+    },
+    {
+      "id": "registered_charsets",
+      "kind": "value alternatives",
+      "fragment": "UTF-8|US-ASCII|UTF-16LE|UTF-16BE|ISO-8859-1|UTF-32LE|UTF-32BE|windows-1252|ISO-8859-2|ISO-8859-5|ISO-8859-7|ISO-8859-9|ISO-8859-15|IBM037|Shift_JIS",
+      "consumers": [
+        "specification/bddo/bddo.ttl"
+      ]
+    },
+    {
+      "id": "float_format",
+      "kind": "property constraint",
+      "fragment": "[ sh:path bddo:floatFormat ; sh:maxCount 1 ; sh:in ( bddo:ieee754 bddo:ibmHexadecimal bddo:vaxF bddo:vaxD bddo:vaxG bddo:bfloat16 ) ;\n        sh:message \"bddo:floatFormat takes at most one value; each is one of bddo:ieee754, bddo:ibmHexadecimal, bddo:vaxF, bddo:vaxD, bddo:vaxG or bddo:bfloat16.\" ]",
+      "consumers": [
+        "specification/bddo/bddo.ttl"
       ]
     }
   ],
@@ -334,6 +341,11 @@
       "template": "templates/specification/bddo/bddo.ttl.in",
       "activation": [
         {
+          "shape": "https://hexplain.io/ns/bddo#AlignmentOriginShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#alignmentOrigin"
+        },
+        {
           "shape": "https://hexplain.io/ns/bddo#ArgumentArityShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/bddo#armDataType"
@@ -359,6 +371,31 @@
           "target": "https://hexplain.io/ns/bddo#Field"
         },
         {
+          "shape": "https://hexplain.io/ns/bddo#BcdShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#bcd"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#ChecksumRangeEndShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/bddo#Checksum"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#ChecksumRangeEndShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetObjectsOf",
+          "target": "https://hexplain.io/ns/bddo#checksum"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#ChecksumRangeStartShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/bddo#Checksum"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#ChecksumRangeStartShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetObjectsOf",
+          "target": "https://hexplain.io/ns/bddo#checksum"
+        },
+        {
           "shape": "https://hexplain.io/ns/bddo#ChecksumShape",
           "predicate": "http://www.w3.org/ns/shacl#targetClass",
           "target": "https://hexplain.io/ns/bddo#Checksum"
@@ -379,6 +416,31 @@
           "target": "https://hexplain.io/ns/bddo#CustomCrc"
         },
         {
+          "shape": "https://hexplain.io/ns/bddo#CustomEncodingCharsetShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/bddo#CustomEncoding"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#CustomEncodingIdentityShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/bddo#CustomEncoding"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#CustomEncodingIdentityShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#ianaCharset"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#CustomEncodingShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/bddo#CustomEncoding"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#CustomEncodingShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#ianaCharset"
+        },
+        {
           "shape": "https://hexplain.io/ns/bddo#DataTypeRuleShape",
           "predicate": "http://www.w3.org/ns/shacl#targetClass",
           "target": "https://hexplain.io/ns/bddo#DataTypeRule"
@@ -397,6 +459,31 @@
           "shape": "https://hexplain.io/ns/bddo#DelimitedTableShape",
           "predicate": "http://www.w3.org/ns/shacl#targetClass",
           "target": "https://hexplain.io/ns/bddo#DelimitedTable"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#DeprecatedBaseTypeShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#baseType"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#DeprecatedEndiannessShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#hasEndianness"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#DeprecatedEndiannessUseShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#endianness"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#DeprecatedEndiannessUseShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#hasEndianness"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#DeprecatedVaxFWidthShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#floatFormat"
         },
         {
           "shape": "https://hexplain.io/ns/bddo#DerivedFieldShape",
@@ -437,6 +524,11 @@
           "shape": "https://hexplain.io/ns/bddo#DispatchArmShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/bddo#armTable"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#DispatchDefaultShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#dispatchDefault"
         },
         {
           "shape": "https://hexplain.io/ns/bddo#DispatchKeyUniquenessShape",
@@ -484,6 +576,16 @@
           "target": "https://hexplain.io/ns/bddo#Field"
         },
         {
+          "shape": "https://hexplain.io/ns/bddo#FixedPointScaleRangeShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#fixedPointScale"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#FloatFormatWidthShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#floatFormat"
+        },
+        {
           "shape": "https://hexplain.io/ns/bddo#GroupedRecordsShape",
           "predicate": "http://www.w3.org/ns/shacl#targetClass",
           "target": "https://hexplain.io/ns/bddo#DelimitedRecords"
@@ -502,6 +604,16 @@
           "shape": "https://hexplain.io/ns/bddo#KeyValueHeaderShape",
           "predicate": "http://www.w3.org/ns/shacl#targetClass",
           "target": "https://hexplain.io/ns/bddo#KeyValueHeader"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#LocalBindingKindShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/bddo#LocalBinding"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#LocalBindingKindShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#localExpression"
         },
         {
           "shape": "https://hexplain.io/ns/bddo#LocalBindingShape",
@@ -549,6 +661,36 @@
           "target": "https://hexplain.io/ns/bddo#numericBase"
         },
         {
+          "shape": "https://hexplain.io/ns/bddo#NumericRepresentationShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#bcd"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#NumericRepresentationShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#fixedPointScale"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#NumericRepresentationShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#floatFormat"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#OffsetBaseFieldShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#offsetBase"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#OffsetBaseFieldShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#offsetBaseField"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#PaddingShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#padByte"
+        },
+        {
           "shape": "https://hexplain.io/ns/bddo#ParameterShape",
           "predicate": "http://www.w3.org/ns/shacl#targetClass",
           "target": "https://hexplain.io/ns/bddo#Parameter"
@@ -577,6 +719,11 @@
           "shape": "https://hexplain.io/ns/bddo#RangeDatatypeShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/bddo#atOffsetFromExpression"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#RangeDatatypeShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#bcd"
         },
         {
           "shape": "https://hexplain.io/ns/bddo#RangeDatatypeShape",
@@ -671,12 +818,22 @@
         {
           "shape": "https://hexplain.io/ns/bddo#RangeDatatypeShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#fixedPointScale"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#RangeDatatypeShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/bddo#groupCloseToken"
         },
         {
           "shape": "https://hexplain.io/ns/bddo#RangeDatatypeShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/bddo#groupOpenToken"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#RangeDatatypeShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#ianaCharset"
         },
         {
           "shape": "https://hexplain.io/ns/bddo#RangeDatatypeShape",
@@ -732,6 +889,16 @@
           "shape": "https://hexplain.io/ns/bddo#RangeDatatypeShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/bddo#numericBase"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#RangeDatatypeShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#padByte"
+        },
+        {
+          "shape": "https://hexplain.io/ns/bddo#RangeDatatypeShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#padTo"
         },
         {
           "shape": "https://hexplain.io/ns/bddo#RangeDatatypeShape",
@@ -834,6 +1001,11 @@
           "target": "https://hexplain.io/ns/bddo#Field"
         },
         {
+          "shape": "https://hexplain.io/ns/bddo#SeparatedFieldExtentShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/bddo#separatedBy"
+        },
+        {
           "shape": "https://hexplain.io/ns/bddo#StructShape",
           "predicate": "http://www.w3.org/ns/shacl#targetClass",
           "target": "https://hexplain.io/ns/bddo#Struct"
@@ -885,12 +1057,32 @@
           "target": "https://hexplain.io/ns/dlv#CellDataTypeRule"
         },
         {
+          "shape": "https://hexplain.io/ns/dlv#CellTypeChoiceShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/dlv#DataLayout"
+        },
+        {
           "shape": "https://hexplain.io/ns/dlv#ChunkedLayoutShape",
           "predicate": "http://www.w3.org/ns/shacl#targetClass",
           "target": "https://hexplain.io/ns/dlv#DataLayout"
         },
         {
           "shape": "https://hexplain.io/ns/dlv#DataLayoutShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/dlv#DataLayout"
+        },
+        {
+          "shape": "https://hexplain.io/ns/dlv#DimensionChunkExtentShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/dlv#Dimension"
+        },
+        {
+          "shape": "https://hexplain.io/ns/dlv#DimensionExtentShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/dlv#Dimension"
+        },
+        {
+          "shape": "https://hexplain.io/ns/dlv#DimensionOrderChoiceShape",
           "predicate": "http://www.w3.org/ns/shacl#targetClass",
           "target": "https://hexplain.io/ns/dlv#DataLayout"
         },
@@ -912,12 +1104,27 @@
         {
           "shape": "https://hexplain.io/ns/dlv#RangeDatatypeShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/dlv#cellBitWidthFromExpression"
+        },
+        {
+          "shape": "https://hexplain.io/ns/dlv#RangeDatatypeShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/dlv#chunkSize"
         },
         {
           "shape": "https://hexplain.io/ns/dlv#RangeDatatypeShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/dlv#chunkSizeFromExpression"
+        },
+        {
+          "shape": "https://hexplain.io/ns/dlv#RangeDatatypeShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/dlv#dimensionSize"
+        },
+        {
+          "shape": "https://hexplain.io/ns/dlv#RangeDatatypeShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/dlv#dimensionSizeFromExpression"
         },
         {
           "shape": "https://hexplain.io/ns/dlv#RangeDatatypeShape",
@@ -977,6 +1184,51 @@
           "target": "https://hexplain.io/ns/core#ClassMappingRule"
         },
         {
+          "shape": "https://hexplain.io/ns/core#CodecContractBindingShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#codecContract"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecContractShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/core#CodecContract"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecContractShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#codecKind"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecContractShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#contractVersion"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecContractShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#declaresParameter"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecContractShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#encodes"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecContractShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#keepsSession"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecContractShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#raisesCategory"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecContractShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#vectorSuiteVersion"
+        },
+        {
           "shape": "https://hexplain.io/ns/core#CodecParameterShape",
           "predicate": "http://www.w3.org/ns/shacl#targetClass",
           "target": "https://hexplain.io/ns/core#CodecParameter"
@@ -989,12 +1241,82 @@
         {
           "shape": "https://hexplain.io/ns/core#CodecParameterShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#parameterExpression"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecParameterShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/core#parameterName"
         },
         {
           "shape": "https://hexplain.io/ns/core#CodecParameterShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/core#parameterValue"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecParameterSpecShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/core#CodecParameterSpec"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecParameterSpecShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#allowedValue"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecParameterSpecShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#defaultValue"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecParameterSpecShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#listLength"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecParameterSpecShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#listValued"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecParameterSpecShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#maximumValue"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecParameterSpecShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#minimumValue"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecParameterSpecShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#parameterKey"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecParameterSpecShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#parameterType"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecParameterSpecShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#requiredParameter"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecSelectionShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#codecCandidates"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecSelectionShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#codecFromExpression"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#CodecSessionScopeShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#codecSessionScope"
         },
         {
           "shape": "https://hexplain.io/ns/core#EncodingPipelineShape",
@@ -1010,6 +1332,11 @@
           "shape": "https://hexplain.io/ns/core#EncodingStepShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/core#codec"
+        },
+        {
+          "shape": "https://hexplain.io/ns/core#EncodingStepShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/core#codecFromExpression"
         },
         {
           "shape": "https://hexplain.io/ns/core#EncodingStepShape",
@@ -1382,6 +1709,36 @@
       "template": "templates/specification/aspect/geometry/geometry.ttl.in",
       "activation": [
         {
+          "shape": "https://hexplain.io/ns/aspect/geometry#GeometryMembershipShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/aspect/geometry#hasMember"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/geometry#GeometryRecordShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/aspect/geometry#GeometryRecord"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/geometry#GeometryRecordShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/aspect/geometry#hasGeometry"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/geometry#GeometryShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetClass",
+          "target": "https://hexplain.io/ns/aspect/geometry#Geometry"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/geometry#GeometryShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetObjectsOf",
+          "target": "https://hexplain.io/ns/aspect/geometry#hasGeometry"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/geometry#GeometryShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetObjectsOf",
+          "target": "https://hexplain.io/ns/aspect/geometry#hasMember"
+        },
+        {
           "shape": "https://hexplain.io/ns/aspect/geometry#OrdinateShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/aspect/geometry#dimensionality"
@@ -1421,6 +1778,11 @@
           "shape": "https://hexplain.io/ns/aspect/raster#BandMembershipShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/aspect/raster#hasBand"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/raster#FormatNoDataShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/aspect/raster#formatNoDataValue"
         },
         {
           "shape": "https://hexplain.io/ns/aspect/raster#GroupHierarchyShape",
@@ -1511,6 +1873,41 @@
           "shape": "https://hexplain.io/ns/aspect/raster#SampleArrayShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/aspect/raster#dimensions"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/raster#StoredBoundsShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/aspect/raster#boundsMaxX"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/raster#StoredBoundsShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/aspect/raster#boundsMaxY"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/raster#StoredBoundsShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/aspect/raster#boundsMinX"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/raster#StoredBoundsShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/aspect/raster#boundsMinY"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/raster#StoredBoundsShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/aspect/raster#boundsRegistration"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/raster#ValueRangeShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/aspect/raster#maximumValue"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/raster#ValueRangeShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/aspect/raster#minimumValue"
         }
       ]
     },
@@ -1518,6 +1915,11 @@
       "source": "specification/aspect/sampling/sampling.ttl",
       "template": "templates/specification/aspect/sampling/sampling.ttl.in",
       "activation": [
+        {
+          "shape": "https://hexplain.io/ns/aspect/sampling#SampleFormatAgreementShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/aspect/sampling#sampleFormatName"
+        },
         {
           "shape": "https://hexplain.io/ns/aspect/sampling#SamplingShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
@@ -1532,6 +1934,11 @@
           "shape": "https://hexplain.io/ns/aspect/sampling#SamplingShape",
           "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
           "target": "https://hexplain.io/ns/aspect/sampling#sampleFormat"
+        },
+        {
+          "shape": "https://hexplain.io/ns/aspect/sampling#SamplingShape",
+          "predicate": "http://www.w3.org/ns/shacl#targetSubjectsOf",
+          "target": "https://hexplain.io/ns/aspect/sampling#sampleFormatName"
         }
       ]
     },

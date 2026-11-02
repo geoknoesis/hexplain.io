@@ -1,0 +1,126 @@
+# expect: ex:NoRegion aprot:EncryptedRegionShape sh:MinCountConstraintComponent
+# expect: ex:TwoRegions aprot:EncryptedRegionShape sh:MaxCountConstraintComponent
+# expect: ex:TypeRegion aprot:EncryptedRegionShape sh:OrConstraintComponent
+# expect: ex:BlankRegion aprot:EncryptedRegionShape sh:NodeKindConstraintComponent
+# expect: ex:NoCipher aprot:EncryptedRegionShape sh:MinCountConstraintComponent
+# expect: ex:TwoCiphers aprot:EncryptedRegionShape sh:MaxCountConstraintComponent
+# expect: ex:TextCipher aprot:EncryptedRegionShape sh:NodeKindConstraintComponent
+# expect: ex:UnknownCipher aprot:EncryptedRegionShape sh:ClassConstraintComponent
+# expect: ex:TwoKeys aprot:EncryptedRegionShape sh:MaxCountConstraintComponent
+# expect: ex:StructKey aprot:EncryptedRegionShape sh:ClassConstraintComponent
+# expect: ex:TwoNonces aprot:EncryptedRegionShape sh:MaxCountConstraintComponent
+# expect: ex:StructNonce aprot:EncryptedRegionShape sh:ClassConstraintComponent
+# expect: ex:TwoAad aprot:EncryptedRegionShape sh:MaxCountConstraintComponent
+# expect: ex:FieldAad aprot:EncryptedRegionShape sh:ClassConstraintComponent
+# expect: ex:Untyped aprot:EncryptedRegionShape sh:MinCountConstraintComponent
+# expect: ex:NoAlgorithm aprot:SignatureShape sh:MinCountConstraintComponent
+# expect: ex:TwoAlgorithms aprot:SignatureShape sh:MaxCountConstraintComponent
+# expect: ex:BlankAlgorithm aprot:SignatureShape sh:NodeKindConstraintComponent
+# expect: ex:UnknownAlgorithm aprot:SignatureShape sh:ClassConstraintComponent
+# expect: ex:NoValue aprot:SignatureShape sh:MinCountConstraintComponent
+# expect: ex:TwoValues aprot:SignatureShape sh:MaxCountConstraintComponent
+# expect: ex:StructValue aprot:SignatureShape sh:ClassConstraintComponent
+# expect: ex:NoCover aprot:SignatureShape sh:MinCountConstraintComponent
+# expect: ex:TwoCovers aprot:SignatureShape sh:MaxCountConstraintComponent
+# expect: ex:FieldCover aprot:SignatureShape sh:ClassConstraintComponent
+# expect: ex:TwoSigners aprot:SignatureShape sh:MaxCountConstraintComponent
+# expect: ex:StructSigner aprot:SignatureShape sh:ClassConstraintComponent
+# expect: ex:NoCode aprot:ErrorCorrectionShape sh:MinCountConstraintComponent
+# expect: ex:TwoCodes aprot:ErrorCorrectionShape sh:MaxCountConstraintComponent
+# expect: ex:TextCode aprot:ErrorCorrectionShape sh:NodeKindConstraintComponent
+# expect: ex:UnknownCode aprot:ErrorCorrectionShape sh:ClassConstraintComponent
+# expect: ex:NoData aprot:ErrorCorrectionShape sh:MinCountConstraintComponent
+# expect: ex:TwoData aprot:ErrorCorrectionShape sh:MaxCountConstraintComponent
+# expect: ex:FieldData aprot:ErrorCorrectionShape sh:ClassConstraintComponent
+# expect: ex:NoParity aprot:ErrorCorrectionShape sh:MinCountConstraintComponent
+# expect: ex:TwoParity aprot:ErrorCorrectionShape sh:MaxCountConstraintComponent
+# expect: ex:FieldParity aprot:ErrorCorrectionShape sh:ClassConstraintComponent
+# expect: ex:OpenRange aprot:ByteRangeShape sh:MinCountConstraintComponent
+# expect: ex:HeadlessRange aprot:ByteRangeShape sh:MinCountConstraintComponent
+# expect: ex:TwoStarts aprot:ByteRangeShape sh:MaxCountConstraintComponent
+# expect: ex:TwoEnds aprot:ByteRangeShape sh:MaxCountConstraintComponent
+# expect: ex:StructStart aprot:ByteRangeShape sh:ClassConstraintComponent
+# expect: ex:StructEnd aprot:ByteRangeShape sh:ClassConstraintComponent
+# One declaration per broken rule: each protection declaration names its region or value field,
+# its algorithm as a register concept and its ranges exactly once, and a range has both bounds.
+@prefix aprot: <https://hexplain.io/ns/aspect/protection#> .
+@prefix rprot: <https://hexplain.io/ns/register/protection#> .
+@prefix bddo:  <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix ex:    <https://example.org/protection#> .
+
+ex:Packet a bddo:Struct ; bddo:hasField ( ex:Packet.keyId ex:Packet.nonce ex:Packet.header ex:Packet.body
+    ex:Packet.parity ex:Packet.signer ex:Packet.signature ) .
+ex:Packet.keyId a bddo:Field ; bddo:dataType bddo:uint32be .
+ex:Packet.nonce a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 12 .
+ex:Packet.header a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 16 .
+ex:Packet.body a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 223 .
+ex:Packet.parity a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 32 .
+ex:Packet.signer a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 8 .
+ex:Packet.signature a bddo:Field ; bddo:dataType bddo:bytes ; bddo:size 64 .
+ex:R a aprot:ByteRange ; aprot:fromField ex:Packet.header ; aprot:toField ex:Packet.body .
+ex:R2 a aprot:ByteRange ; aprot:fromField ex:Packet.parity ; aprot:toField ex:Packet.parity .
+
+ex:NoRegion a aprot:EncryptedRegion ; aprot:cipher rprot:AESCBC .
+ex:TwoRegions a aprot:EncryptedRegion ; aprot:region ex:Packet.body , ex:Packet.header ; aprot:cipher rprot:AESCBC .
+ex:TypeRegion a aprot:EncryptedRegion ; aprot:region bddo:uint8 ; aprot:cipher rprot:AESCBC .
+ex:BlankRegion a aprot:EncryptedRegion ; aprot:region [ a bddo:Field ; bddo:dataType bddo:uint8 ] ; aprot:cipher rprot:AESCBC .
+ex:NoCipher a aprot:EncryptedRegion ; aprot:region ex:Packet.body .
+ex:TwoCiphers a aprot:EncryptedRegion ; aprot:region ex:Packet.body ; aprot:cipher rprot:AESCBC , rprot:AESCTR .
+ex:TextCipher a aprot:EncryptedRegion ; aprot:region ex:Packet.body ; aprot:cipher "AES-256-CBC" .
+ex:UnknownCipher a aprot:EncryptedRegion ; aprot:region ex:Packet.body ; aprot:cipher ex:homemade .
+ex:TwoKeys a aprot:EncryptedRegion ; aprot:region ex:Packet.body ; aprot:cipher rprot:AESCBC ;
+    aprot:keyIdentifierField ex:Packet.keyId , ex:Packet.signer .
+ex:StructKey a aprot:EncryptedRegion ; aprot:region ex:Packet.body ; aprot:cipher rprot:AESCBC ; aprot:keyIdentifierField ex:Packet .
+ex:TwoNonces a aprot:EncryptedRegion ; aprot:region ex:Packet.body ; aprot:cipher rprot:AESCTR ;
+    aprot:nonceField ex:Packet.nonce , ex:Packet.header .
+ex:StructNonce a aprot:EncryptedRegion ; aprot:region ex:Packet.body ; aprot:cipher rprot:AESCTR ; aprot:nonceField ex:Packet .
+ex:TwoAad a aprot:EncryptedRegion ; aprot:region ex:Packet.body ; aprot:cipher rprot:AESGCM ;
+    aprot:additionalAuthenticatedData ex:R , ex:R2 .
+ex:FieldAad a aprot:EncryptedRegion ; aprot:region ex:Packet.body ; aprot:cipher rprot:AESGCM ;
+    aprot:additionalAuthenticatedData ex:Packet.header .
+# A declaration whose rdf:type was forgotten is still checked, through its properties.
+ex:Untyped aprot:cipher rprot:AESCBC .
+
+ex:NoAlgorithm a aprot:Signature ; aprot:signatureValueField ex:Packet.signature ; aprot:covers ex:R .
+ex:TwoAlgorithms a aprot:Signature ; aprot:signatureAlgorithm rprot:ECDSA , rprot:RSAPSS ;
+    aprot:signatureValueField ex:Packet.signature ; aprot:covers ex:R .
+ex:BlankAlgorithm a aprot:Signature ; aprot:signatureAlgorithm [ a skos:Concept ] ;
+    aprot:signatureValueField ex:Packet.signature ; aprot:covers ex:R .
+ex:UnknownAlgorithm a aprot:Signature ; aprot:signatureAlgorithm ex:homemade ;
+    aprot:signatureValueField ex:Packet.signature ; aprot:covers ex:R .
+ex:NoValue a aprot:Signature ; aprot:signatureAlgorithm rprot:RSAPKCS1v15 ; aprot:covers ex:R .
+ex:TwoValues a aprot:Signature ; aprot:signatureAlgorithm rprot:RSAPKCS1v15 ;
+    aprot:signatureValueField ex:Packet.signature , ex:Packet.parity ; aprot:covers ex:R .
+ex:StructValue a aprot:Signature ; aprot:signatureAlgorithm rprot:RSAPKCS1v15 ; aprot:signatureValueField ex:Packet ; aprot:covers ex:R .
+ex:NoCover a aprot:Signature ; aprot:signatureAlgorithm rprot:Ed25519 ; aprot:signatureValueField ex:Packet.signature .
+ex:TwoCovers a aprot:Signature ; aprot:signatureAlgorithm rprot:Ed25519 ; aprot:signatureValueField ex:Packet.signature ;
+    aprot:covers ex:R , ex:R2 .
+ex:FieldCover a aprot:Signature ; aprot:signatureAlgorithm rprot:Ed25519 ; aprot:signatureValueField ex:Packet.signature ;
+    aprot:covers ex:Packet.body .
+ex:TwoSigners a aprot:Signature ; aprot:signatureAlgorithm rprot:Ed25519 ; aprot:signatureValueField ex:Packet.signature ;
+    aprot:covers ex:R ; aprot:signerIdentifierField ex:Packet.signer , ex:Packet.keyId .
+ex:StructSigner a aprot:Signature ; aprot:signatureAlgorithm rprot:Ed25519 ; aprot:signatureValueField ex:Packet.signature ;
+    aprot:covers ex:R ; aprot:signerIdentifierField ex:Packet .
+
+ex:NoCode a aprot:ErrorCorrection ; aprot:dataRange ex:R ; aprot:parityRange ex:R2 .
+ex:TwoCodes a aprot:ErrorCorrection ; aprot:errorCorrectingCode rprot:BCH , rprot:Hamming ; aprot:dataRange ex:R ; aprot:parityRange ex:R2 .
+ex:TextCode a aprot:ErrorCorrection ; aprot:errorCorrectingCode "RS(255,223)" ; aprot:dataRange ex:R ; aprot:parityRange ex:R2 .
+ex:UnknownCode a aprot:ErrorCorrection ; aprot:errorCorrectingCode ex:homemade ; aprot:dataRange ex:R ; aprot:parityRange ex:R2 .
+ex:NoData a aprot:ErrorCorrection ; aprot:errorCorrectingCode rprot:Hamming ; aprot:parityRange ex:R2 .
+ex:TwoData a aprot:ErrorCorrection ; aprot:errorCorrectingCode rprot:Hamming ; aprot:dataRange ex:R , ex:R2 ; aprot:parityRange ex:R2 .
+ex:FieldData a aprot:ErrorCorrection ; aprot:errorCorrectingCode rprot:Hamming ; aprot:dataRange ex:Packet.body ; aprot:parityRange ex:R2 .
+ex:NoParity a aprot:ErrorCorrection ; aprot:errorCorrectingCode rprot:BCH ; aprot:dataRange ex:R .
+ex:TwoParity a aprot:ErrorCorrection ; aprot:errorCorrectingCode rprot:BCH ; aprot:dataRange ex:R ; aprot:parityRange ex:R , ex:R2 .
+ex:FieldParity a aprot:ErrorCorrection ; aprot:errorCorrectingCode rprot:BCH ; aprot:dataRange ex:R ; aprot:parityRange ex:Packet.parity .
+
+ex:OpenRange a aprot:ByteRange ; aprot:fromField ex:Packet.header .
+ex:HeadlessRange aprot:toField ex:Packet.body .
+ex:TwoStarts a aprot:ByteRange ; aprot:fromField ex:Packet.header , ex:Packet.body ; aprot:toField ex:Packet.body .
+ex:TwoEnds a aprot:ByteRange ; aprot:fromField ex:Packet.header ; aprot:toField ex:Packet.body , ex:Packet.parity .
+ex:StructStart a aprot:ByteRange ; aprot:fromField ex:Packet ; aprot:toField ex:Packet.body .
+ex:StructEnd a aprot:ByteRange ; aprot:fromField ex:Packet.header ; aprot:toField ex:Packet .

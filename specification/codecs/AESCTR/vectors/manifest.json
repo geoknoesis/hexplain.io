@@ -1,0 +1,301 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#AESCTR",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "nist",
+      "url": "https://csrc.nist.gov/pubs/sp/800/38/a/final",
+      "description": "NIST SP 800-38A, Appendix F.5.1 (CTR-AES128.Encrypt): the first two blocks, whose second counter block carries out of the low byte. Re-verified with pyca/cryptography 46.0.3 (OpenSSL 3.5.4).",
+      "licence": "Public test data (NIST CSRC)"
+    },
+    {
+      "id": "contract",
+      "url": "https://hexplain.io/ns/register/media-encoding#AESCTR",
+      "description": "Authored from the definition with public test keys (the all-zero AES-128 key unless a vector binds another): known answers computed with pyca/cryptography 46.0.3 (OpenSSL 3.5.4); malformed inputs, wrong lengths and absent bindings made here. A round trip through a fixed known answer pins the encoded bytes; one that expects only success does not prescribe them.",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "known-decode",
+      "source": "contract",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "00000000000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            }
+          },
+          "input": {
+            "hex": "00000000000000000000000000000000"
+          },
+          "expect": {
+            "hex": "66e94bd4ef8a2c3b884cfa59ca342b2e"
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-trip",
+      "source": "contract",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "00000000000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            }
+          },
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "00000000000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            }
+          },
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "missing-key",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "00000000000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            }
+          },
+          "input": {
+            "hex": "00000000000000000000000000000000"
+          },
+          "expect": {
+            "error": "Unsupported"
+          }
+        }
+      ]
+    },
+    {
+      "id": "output-limit",
+      "source": "contract",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "00000000000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            }
+          },
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 0
+        }
+      ]
+    },
+    {
+      "id": "invalid-external-key",
+      "source": "contract",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00"
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "00000000000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            }
+          },
+          "input": {
+            "hex": "00000000000000000000000000000000"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "counter-carry",
+      "source": "contract",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "000000000000000000000000ffffffff"
+            }
+          },
+          "input": {
+            "hex": "0000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "expect": {
+            "hex": "28c16380c491088ca019f8a76853b1e872535b7fe0f0f777cedcd55cd77e2ddf"
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "000000000000000000000000ffffffff"
+            }
+          },
+          "input": {
+            "hex": "28c16380c491088ca019f8a76853b1e872535b7fe0f0f777cedcd55cd77e2ddf"
+          },
+          "expect": {
+            "hex": "0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sp800-38a-f51",
+      "source": "nist",
+      "inputs": {
+        "cipherKey": {
+          "sp800-38a": {
+            "hex": "2b7e151628aed2a6abf7158809cf4f3c"
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "keyRef": "sp800-38a",
+            "iv": {
+              "hex": "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+            }
+          },
+          "input": {
+            "hex": "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+          },
+          "expect": {
+            "hex": "874d6191b620e3261bef6864990db6ce9806f66b7970fdff8617187bb9fffdff"
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "sp800-38a",
+            "iv": {
+              "hex": "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+            }
+          },
+          "input": {
+            "hex": "874d6191b620e3261bef6864990db6ce9806f66b7970fdff8617187bb9fffdff"
+          },
+          "expect": {
+            "hex": "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+          }
+        }
+      ]
+    },
+    {
+      "id": "wrong-iv-length",
+      "source": "contract",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "000000000000000000000000"
+            }
+          },
+          "input": {
+            "hex": "00000000000000000000000000000000"
+          },
+          "expect": {
+            "error": "Description"
+          }
+        }
+      ]
+    }
+  ]
+}

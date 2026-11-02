@@ -12,11 +12,12 @@
 @prefix vann:    <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/conf> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/conf/conf-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/conf/1.3> ;
     owl:priorVersion <https://hexplain.io/ns/conf/1.2> ;
     rdfs:label "Hexplain Conformance Vocabulary"@en ;
     owl:versionInfo "1.3" ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
     # The vocabulary needs only req. Its shapes document (conf/shapes.ttl) imports core, which
     # supplies hexplain:byteOffset/byteLength for locating findings and imports bddo, whose
     # Struct and Field are the admissible conf:scope values.
@@ -247,7 +248,7 @@ a parse attribution naming it is a description error."""@en ;
     skos:scopeNote "Use at most once on a conf:Run, and only when conf:truncated is true."@en ;
     rdfs:range xsd:string .
 :versionScopingApplied a owl:DatatypeProperty ; rdfs:label "version scoping applied"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
-    rdfs:comment "True when the caller supplied the input's format version and req:appliesToVersion was applied; false when no version was supplied and every requirement was evaluated."@en ;
+    rdfs:comment "True when the caller supplied the input's format version and req:appliesToVersion was applied; false when no version was supplied and every requirement was evaluated. Absent, version scoping is taken not to have been applied, so no outcome is conf:NotApplicable."@en ;
     skos:scopeNote "Use at most once on a conf:Run; state conf:fileVersion with true."@en ;
     rdfs:range xsd:boolean .
 :fileVersion a owl:DatatypeProperty ; rdfs:label "file version"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/conf> ;
@@ -268,14 +269,10 @@ a parse attribution naming it is a description error."""@en ;
     skos:scopeNote "Use at most once on a conf:Run, when the caller chose a fail-on severity."@en ;
     rdfs:range sh:Severity .
 
-# BEGIN GENERATED TERM DOCUMENTATION
-# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-@prefix conf: <https://hexplain.io/ns/conf#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-
-<https://hexplain.io/ns/conf> skos:scopeNote "Import to bind executable HEL assertions and parse attributions to the requirements they check, and to read or write the run reports of a Conformance Evaluator. Load conf/shapes.ttl to validate profiles and reports."@en .
-conf:assertion rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
-conf:message rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
-conf:satisfies rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
-conf:scope rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
+# ---------- Term ownership ----------
+# rdfs:isDefinedBy for the terms whose declaration above does not state it. A new term states
+# its own; tools/test_term_reference.py requires it of every term this file defines.
+:assertion rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
+:message rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
+:satisfies rdfs:isDefinedBy <https://hexplain.io/ns/conf> .
+:scope rdfs:isDefinedBy <https://hexplain.io/ns/conf> .

@@ -1,0 +1,19 @@
+# A table names more records than it declares, states two row counts, names a literal column;
+# a record is shared by two tables; a record is a literal.
+# expect: ex:overfull atab:RecordCountShape sh:SPARQLConstraintComponent
+# expect: ex:twoCounts atab:TableShape sh:MaxCountConstraintComponent
+# expect: ex:literalColumn atab:TableShape sh:NodeKindConstraintComponent
+# expect: ex:shared atab:RecordShape sh:MaxCountConstraintComponent
+# expect: ex:literalRecord atab:TableShape sh:NodeConstraintComponent
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix atab: <https://hexplain.io/ns/aspect/tabular#> .
+@prefix ex:   <https://hexplain.io/test/tabular-records-invalid#> .
+
+ex:overfull a atab:Table ; atab:rowCount 1 ; atab:hasRecord ex:a, ex:b .
+ex:twoCounts a atab:Table ; atab:rowCount 1, 2 .
+ex:literalColumn a atab:Table ; atab:hasField "NAME" .
+ex:shared a atab:Record .
+ex:t1 atab:hasRecord ex:shared .
+ex:t2 atab:hasRecord ex:shared .
+ex:literalRecord atab:hasRecord "row" .

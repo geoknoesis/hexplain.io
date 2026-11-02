@@ -1,0 +1,15 @@
+# expect: ex:OldVaxDouble bddo:DeprecatedVaxFWidthShape sh:SPARQLConstraintComponent sh:Warning
+# expect: ex:oldVax64 bddo:DeprecatedVaxFWidthShape sh:SPARQLConstraintComponent sh:Warning
+# bddo:vaxF on a 64-bit float is the deprecated spelling of bddo:vaxD. It keeps its meaning
+# (D_floating), so the description is valid; the only results are the two advisory ones above.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/vax#> .
+
+ex:OldVaxDouble a bddo:Field ; bddo:dataType bddo:float64le ; bddo:floatFormat bddo:vaxF .
+ex:oldVax64 a bddo:DataType ; bddo:baseType bddo:baseFloat ; bddo:bitWidth 64 ; bddo:endianness bddo:LittleEndian ;
+    bddo:xsdType xsd:double ; bddo:floatFormat bddo:vaxF .
+# At 32 bits it is F_floating, and nothing is reported.
+ex:VaxReal a bddo:Field ; bddo:dataType bddo:float32le ; bddo:floatFormat bddo:vaxF .

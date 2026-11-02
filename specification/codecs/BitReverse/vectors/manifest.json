@@ -1,0 +1,110 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#BitReverse",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "definition",
+      "description": "Computed by hand from the codec's definition.",
+      "licence": "CC0-1.0"
+    },
+    {
+      "id": "round-trip",
+      "url": "https://hexplain.io/specification/processing/#round-trip",
+      "description": "Round trips worked by hand from the codec's definition (a transform) or fed through the previous step's output (a compressor, encoded with zlib for the expectation-free encode step).",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "bytes",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0180f000ff"
+          },
+          "expect": {
+            "hex": "80010f00ff"
+          }
+        }
+      ],
+      "source": "definition"
+    },
+    {
+      "id": "empty",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": ""
+          },
+          "expect": {
+            "hex": ""
+          }
+        }
+      ],
+      "source": "definition"
+    },
+    {
+      "id": "encode-is-decode",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {},
+          "input": {
+            "hex": "03"
+          },
+          "expect": {
+            "hex": "c0"
+          }
+        }
+      ],
+      "source": "definition"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0000000000000000"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 4
+        }
+      ],
+      "source": "definition"
+    },
+    {
+      "id": "round-trip",
+      "source": "round-trip",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {},
+          "input": {
+            "hex": "03"
+          },
+          "expect": {
+            "hex": "c0"
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "c0"
+          },
+          "expect": {
+            "hex": "03"
+          }
+        }
+      ]
+    }
+  ]
+}

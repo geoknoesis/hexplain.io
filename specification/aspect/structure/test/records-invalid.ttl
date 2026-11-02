@@ -1,0 +1,22 @@
+# A typed member without a name, a member with two names, a non-string type name, an element
+# count that is negative, a byte count beyond xsd:unsignedLong, two element counts, and an item
+# with two values.
+# expect: ex:nameless st:MemberShape sh:MinCountConstraintComponent
+# expect: ex:twoNames st:MemberShape sh:MaxCountConstraintComponent
+# expect: ex:numericType st:RangeDatatypeShape sh:DatatypeConstraintComponent
+# expect: ex:negative st:CountShape sh:MinInclusiveConstraintComponent
+# expect: ex:huge st:CountShape sh:MaxInclusiveConstraintComponent
+# expect: ex:twoCounts st:CountShape sh:MaxCountConstraintComponent
+# expect: ex:twoValues st:SingleValueShape sh:MaxCountConstraintComponent
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix st:   <https://hexplain.io/ns/aspect/structure#> .
+@prefix ex:   <https://hexplain.io/test/structure-records-invalid#> .
+
+ex:nameless a st:Member ; st:value 1 .
+ex:twoNames st:name "a" , "b" .
+ex:numericType st:name "kind" ; st:dataType 32 .
+ex:negative st:elementCount -1 .
+ex:huge st:byteCount 18446744073709551616 .
+ex:twoCounts st:elementCount 1 , 2 .
+ex:twoValues a st:Item ; st:value 1 , 2 .

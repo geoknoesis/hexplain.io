@@ -1,5 +1,6 @@
 # Hexplain Aspect — Integrity (hx-integrity) 1.2
-# Governance aspect: verification of content bytes (checksums, hashes, signatures).
+# Governance aspect: verification of content bytes (checksums and hashes). Signatures, message
+# authentication codes and error-correcting codes are described by hx-protection.
 # Cross-cutting across archives, network payloads, and any format carrying a checksum.
 @prefix :       <https://hexplain.io/ns/aspect/integrity#> .
 @prefix aintg:  <https://hexplain.io/ns/aspect/integrity#> .
@@ -12,17 +13,20 @@
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 
 <https://hexplain.io/ns/aspect/integrity> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/aspect/integrity/integrity-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/aspect/integrity/1.2> ; owl:versionInfo "1.2" ;
     owl:priorVersion <https://hexplain.io/ns/aspect/integrity/1.1> ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
     rdfs:label "Hexplain Aspect — Integrity (hx-integrity)"@en ;
-    rdfs:comment "Aspect for byte-integrity verification: checksum value and algorithm (signatures/ECC to follow). Cross-cutting across archives, network, and other formats."@en ;
+    rdfs:comment "Aspect for byte-integrity verification: checksum value and algorithm. Cross-cutting across archives, network, and other formats. Signatures, message authentication codes and error-correcting codes are described, not verified, by the protection aspect (hx-protection)."@en ;
     dcterms:created "2026-07-22"^^xsd:date ; dcterms:creator <https://geoknoesis.com> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     vann:preferredNamespacePrefix "aintg" ; vann:preferredNamespaceUri "https://hexplain.io/ns/aspect/integrity#" .
 
-:checksum a owl:DatatypeProperty ; rdfs:label "checksum"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ; rdfs:range xsd:hexBinary ; rdfs:comment "Checksum/hash value over the content bytes."@en .
-:checksumAlgorithm a owl:ObjectProperty ; rdfs:label "checksum algorithm"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ; rdfs:range skos:Concept ; rdfs:comment "Algorithm used, from a checksum-algorithm register bound by the profile."@en .
+:checksum a owl:DatatypeProperty ; rdfs:label "checksum"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ; rdfs:range xsd:hexBinary ; rdfs:comment "Checksum/hash value over the content bytes."@en ;
+    skos:scopeNote "Use on a lifted resource for the digest VALUE recorded about its bytes, as hexBinary. Not bddo:checksum, which links the physical field carrying a checksum to the bddo:Checksum declaration a processor verifies it against."@en .
+:checksumAlgorithm a owl:ObjectProperty ; rdfs:label "checksum algorithm"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/integrity> ; rdfs:range skos:Concept ; rdfs:comment "Algorithm used, from a checksum-algorithm register bound by the profile."@en ;
+    skos:scopeNote "Use on a lifted resource, naming a concept of the checksum register the profile binds. Not bddo:checksumAlgorithm, which names the bddo:ChecksumAlgorithm individual (or bddo:CustomCrc) a processor computes; the register's concepts link to those individuals with hexplain:correspondsTo."@en .
 
 # ---------- Range datatype shapes ----------
 # Each XSD rdfs:range above, enforced wherever the property is used: activation is by
@@ -33,11 +37,3 @@ aintg:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     sh:targetSubjectsOf aintg:checksum ;
     sh:property [ sh:path aintg:checksum ; sh:datatype xsd:hexBinary ;
         sh:message "aintg:checksum takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)." ] .
-
-# BEGIN GENERATED TERM DOCUMENTATION
-# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-@prefix aintg: <https://hexplain.io/ns/aspect/integrity#> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-
-<https://hexplain.io/ns/aspect/integrity> skos:scopeNote "Use for recorded integrity information about bytes or resources; the presence of a digest is distinct from successful verification."@en .
-aintg:RangeDatatypeShape skos:definition "Applies to subjects using aintg:checksum. aintg:checksum takes an xsd:hexBinary literal (rdfs:range xsd:hexBinary)."@en .

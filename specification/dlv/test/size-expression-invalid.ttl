@@ -1,0 +1,44 @@
+# expect: ex:TwoExtents dlv:DimensionExtentShape sh:XoneConstraintComponent
+# expect: ex:TwoChunks dlv:DimensionChunkExtentShape sh:XoneConstraintComponent
+# expect: ex:TwoWidths dlv:DataLayoutShape sh:SPARQLConstraintComponent
+# expect: ex:NumberWidth dlv:DataLayoutShape sh:OrConstraintComponent
+# expect: ex:NumberWidth dlv:RangeDatatypeShape sh:OrConstraintComponent
+# expect: ex:Unlocated dlv:ChunkedLayoutShape sh:SPARQLConstraintComponent
+# expect: ex:TwoExtentExpressions dlv:DimensionShape sh:MaxCountConstraintComponent
+# expect: ex:NumberExtent dlv:DimensionShape sh:OrConstraintComponent
+# expect: ex:TwoChunkExpressions dlv:DimensionShape sh:MaxCountConstraintComponent
+# expect: ex:NumberChunk dlv:DimensionShape sh:OrConstraintComponent
+# expect: ex:TwoWidthExpressions dlv:DataLayoutShape sh:MaxCountConstraintComponent
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix dlv:  <https://hexplain.io/ns/dlv#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <https://hexplain.io/test/size-expression-invalid#> .
+
+ex:Rows a bddo:Field ; bddo:dataType bddo:uint32 .
+ex:Offsets a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:repeatCount 4 .
+
+# An extent stated twice, fixed and computed.
+ex:TwoExtents a dlv:Dimension ; dlv:hasAxis dlv:axisY ; dlv:dimensionSize 1024 ; dlv:dimensionSizeFromExpression "instance.rows" .
+# A chunk extent stated twice, read and computed.
+ex:TwoChunks a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSize 1024 ;
+    dlv:chunkSizeFromField ex:Rows ; dlv:chunkSizeFromExpression "instance.rows / 4" .
+# A packed width stated twice, fixed and computed.
+ex:TwoWidths a dlv:DataLayout ; dlv:cellDataType bddo:uint8 ; dlv:hasDimension ( ex:Dim ) ;
+    dlv:cellBitWidth 4 ; dlv:cellBitWidthFromExpression "instance.bits" .
+ex:Dim a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSize 8 .
+# An expression is text, not a number.
+ex:NumberWidth a dlv:DataLayout ; dlv:cellDataType bddo:uint8 ; dlv:hasDimension ( ex:Dim ) ;
+    dlv:cellBitWidthFromExpression 4 .
+# A chunk extent computed on a dimension makes the layout chunked, so it needs a chunk table.
+ex:Unlocated a dlv:DataLayout ; dlv:cellDataType bddo:uint8 ; dlv:hasDimension ( ex:Tiled ) .
+ex:Tiled a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSize 1024 ; dlv:chunkSizeFromExpression "instance.rows / 4" .
+# Each expression is stated at most once and is text.
+ex:TwoExtentExpressions a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSizeFromExpression "instance.rows" , "instance.rows * 2" .
+ex:NumberExtent a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSizeFromExpression 1024 .
+ex:TwoChunkExpressions a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSize 1024 ; dlv:chunkSizeFromExpression "instance.rows / 4" , "instance.rows / 8" .
+ex:NumberChunk a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSize 1024 ; dlv:chunkSizeFromExpression 256 .
+ex:TwoWidthExpressions a dlv:DataLayout ; dlv:cellDataType bddo:uint8 ; dlv:hasDimension ( ex:Dim ) ;
+    dlv:cellBitWidthFromExpression "instance.bits" , "instance.bits * 2" .

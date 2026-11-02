@@ -1,0 +1,180 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#Gzip",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "zlib",
+      "url": "https://zlib.net/",
+      "description": "Compressed with zlib 1.2.13 through CPython 3.11.4 (tools/codecs/_generate_minimum_vectors.py); corruptions are single-byte edits of those streams.",
+      "licence": "zlib licence (library); inputs CC0-1.0"
+    },
+    {
+      "id": "round-trip",
+      "url": "https://hexplain.io/specification/processing/#round-trip",
+      "description": "Round trips worked by hand from the codec's definition (a transform) or fed through the previous step's output (a compressor, encoded with zlib for the expectation-free encode step).",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "one-member",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "1f8b080000000000000af348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea00f584949d000a0000"
+          },
+          "expect": {
+            "sha256": "0d587915c91aa7c0876b7bfa7fd8a6bd963cf02161b42d8e9bee45f2238de0e1",
+            "size": 2560
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "two-members",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "1f8b080000000000000af348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea00f584949d000a00001f8b080000000000000af348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea00f584949d000a0000"
+          },
+          "expect": {
+            "sha256": "15c55266191869dfe222d376a183a2bc69daaa9d3c44d0cb937b80301dcd4b08",
+            "size": 5120
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "crc-mismatch",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "1f8b080000000000000af348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea00f484949d000a0000"
+          },
+          "expect": {
+            "error": "Checksum"
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "length-mismatch",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "1f8b080000000000000af348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea00f584949d000a0001"
+          },
+          "expect": {
+            "error": "Checksum"
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "trailing-refused",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "1f8b080000000000000af348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea00f584949d000a00006a756e6b"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "trailing-ignored",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "trailing": "ignore"
+          },
+          "input": {
+            "hex": "1f8b080000000000000af348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea00f584949d000a00006a756e6b"
+          },
+          "expect": {
+            "sha256": "0d587915c91aa7c0876b7bfa7fd8a6bd963cf02161b42d8e9bee45f2238de0e1",
+            "size": 2560
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "empty",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": ""
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "1f8b080000000000000af348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea00f584949d000a0000"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 100
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "round-trip",
+      "source": "round-trip",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {},
+          "input": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220"
+          }
+        }
+      ]
+    }
+  ]
+}

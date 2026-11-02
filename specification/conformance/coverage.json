@@ -1,10 +1,11 @@
 {
  "cases": {
-  "physical-parser": 373,
-  "semantic-emitter": 36,
+  "physical-parser": 526,
+  "semantic-emitter": 49,
   "bundle-processor": 13,
-  "hdl-compiler": 168,
-  "conformance-evaluator": 41
+  "hdl-compiler": 222,
+  "conformance-evaluator": 41,
+  "writer": 88
  },
  "excluded": {
   "blanket": [
@@ -18,26 +19,45 @@
  },
  "processorMust": {
   "Physical Parser": {
-   "total": 205,
-   "covered": 203,
+   "total": 306,
+   "covered": 282,
    "notSuiteTestable": {
     "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's shape gates (test_shapes, test_vocab_shapes) apply it.",
-    "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the condition is asserted by the HEL vectors (validation/test/hel-vectors.tsv, req-hel-conformance-9)."
+    "req-hel-array-values-1": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: len(project(rows, v)); all(project(rows, repeatValue(v, 2)), self[0] == self[1])",
+    "req-hel-array-values-2": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: project(rows, v) == xs",
+    "req-hel-array-values-3": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: sizeof(project(rows, v))",
+    "req-hel-error-conditions-1": "A processor case observes only the Processing Model category (Expression); the condition is asserted by the HEL vectors (validation/test/hel-vectors.tsv, req-hel-conformance-9).",
+    "req-hel-ext-quantifiers-10": "HEL is free of side effects, so evaluating an argument once before the call is observable only through element-budget charges; inspect the evaluator.",
+    "req-hel-ext-quantifiers-11": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: all(xs, 10 / (3 - self) > 5); countWhere(xs, 10 / (3 - self) > 5)",
+    "req-hel-ext-quantifiers-12": "Needs a parsed unsigned 64-bit value above 2^63-1 passed to floatCast and the integer functions; inspect the evaluator.",
+    "req-hel-ext-quantifiers-13": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: repeatValue(7, -1)",
+    "req-hel-ext-quantifiers-14": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: slice(xs, 2, 2); slice('abc', 0, 1)",
+    "req-hel-ext-quantifiers-15": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: integralScan(xs, 0, 65, 0); integralScan(xs, 128, 8, 0)",
+    "req-hel-ext-quantifiers-16": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: modularAdd(1, 1, 0)",
+    "req-hel-ext-quantifiers-17": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: integerBytes(256, 1, false); integerBytes(-129, 1, true)",
+    "req-hel-ext-quantifiers-18": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: integerText(concatBytes(), true, true); integerText('ab', true, true)",
+    "req-hel-ext-quantifiers-19": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: unicodeText(repeatValue(55296, 1)); unicodeText(repeatValue('a', 1))",
+    "req-hel-ext-quantifiers-20": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: join(xs, ',')",
+    "req-hel-ext-quantifiers-21": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: integerPrecision(0, true)",
+    "req-hel-ext-quantifiers-22": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: decimalText('012', 1); decimalText('-0', 1)",
+    "req-hel-ext-quantifiers-23": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: patchValues(xs, repeatValue(3, 1), repeatValue(9, 1)); patchValues(xs, repeatValue(0, 2), repeatValue(9, 2))",
+    "req-hel-ext-quantifiers-8": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: sumOf(rows, 'a'); sumOf(rows, 9223372036854775807)",
+    "req-hel-ext-quantifiers-9": "HEL has no Null literal, so neither a vector nor a case can make project's element expression yield Null on demand; inspect the evaluator.",
+    "req-hel-ext-text-7": "A statement in the processor's claims or report environment, not a result of a parse; it is checked by reading the published report.",
+    "req-pm-alignment-padding-3": "Verifying a fill byte is optional (a processor MAY compare the padding with bddo:padByte), so a case cannot tell a processor that does not verify from one that verified and agreed; the rule binds only what a verifying processor reports.",
+    "req-pm-resource-limits-3": "A wall-clock limit and cancellation by the caller are implementation safeguards with no normative values: a case cannot make one fire on demand. The configured limits' ResourceLimit outcome is req-pm-resource-limits-1's, which the pp-limit-* cases exercise."
    },
    "uncovered": []
   },
   "Semantic Emitter": {
-   "total": 30,
-   "covered": 21,
+   "total": 33,
+   "covered": 27,
    "notSuiteTestable": {
     "req-core-punning-1": "Whether a processor relies on a DL entailment is not observable from its output: a case cannot tell a processor that did not reason from one whose reasoning happened to agree.",
     "req-geometry-document-1": "Binds a consumer that interprets lifted geometry; a Semantic Emitter emits the mapped ordinates unchanged, and the suite has no case format for interpretation.",
     "req-pm-privacy-1": "The runner cannot tell a base IRI derived from the input's file name from any other base the processor reports; se-base-reported checks that the base is chosen and reported.",
+    "req-pm-value-mapping-3": "Which scales beyond -4096..4096 a processor supports is its own: no case can name a scale that every conforming processor refuses. The supported range is asserted by req-pm-value-mapping-2.",
     "req-raster-document-3": "Binds a consumer that interprets a raster description; cell addressing is the data layout's (DLV), which the Physical Parser cases cover.",
-    "req-spatialref-document-10": "Binds a processor that evaluates rational polynomial transforms, which no processor class of the Processing Model does.",
-    "req-spatialref-document-11": "Binds a processor that evaluates rational polynomial transforms, which no processor class of the Processing Model does.",
-    "req-spatialref-document-2": "Binds a processor that evaluates spatial-reference transforms (the hxf function library's world and cell functions), which the processor suite does not exercise.",
-    "req-spatialref-document-3": "Binds a processor that evaluates spatial-reference transforms (the hxf function library's hxf:column and hxf:row), which the processor suite does not exercise.",
     "req-spatialref-document-4": "A documentation requirement on a floating-point implementation, checked by reading its documentation."
    },
    "uncovered": []
@@ -49,8 +69,8 @@
    "uncovered": []
   },
   "HDL Compiler": {
-   "total": 49,
-   "covered": 48,
+   "total": 64,
+   "covered": 63,
    "notSuiteTestable": {
     "req-hdl-modules-3": "The import bounds are the compiler's own; a case would need an imported file larger than every conforming compiler's bound, and no size is."
    },
@@ -61,13 +81,19 @@
    "covered": 22,
    "notSuiteTestable": {},
    "uncovered": []
+  },
+  "Writer": {
+   "total": 25,
+   "covered": 25,
+   "notSuiteTestable": {},
+   "uncovered": []
   }
  },
  "requirements": {
   "physical-parser": {
    "MUST": {
-    "total": 149,
-    "covered": 148
+    "total": 209,
+    "covered": 206
    },
    "SHOULD": {
     "total": 5,
@@ -76,21 +102,21 @@
   },
   "hel": {
    "MUST": {
-    "total": 56,
-    "covered": 55
+    "total": 97,
+    "covered": 76
    },
    "SHOULD": {
-    "total": 2,
+    "total": 1,
     "covered": 1
    }
   },
   "semantic-emitter": {
    "MUST": {
-    "total": 30,
-    "covered": 21
+    "total": 33,
+    "covered": 27
    },
    "SHOULD": {
-    "total": 2,
+    "total": 5,
     "covered": 0
    }
   },
@@ -116,8 +142,18 @@
   },
   "hdl-compiler": {
    "MUST": {
-    "total": 49,
-    "covered": 48
+    "total": 64,
+    "covered": 63
+   },
+   "SHOULD": {
+    "total": 1,
+    "covered": 0
+   }
+  },
+  "writer": {
+   "MUST": {
+    "total": 25,
+    "covered": 25
    },
    "SHOULD": {
     "total": 0,
@@ -125,7 +161,913 @@
    }
   }
  },
+ "writer": {
+  "roundTrip": {
+   "trees": 253,
+   "outcomes": {
+    "Unsupported": 17,
+    "Validation": 7,
+    "round-trip": 229
+   }
+  },
+  "cases": [
+   {
+    "id": "w-alignment",
+    "title": "bddo:alignment writes fill bytes to the next multiple of the alignment",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-bcd",
+    "title": "Packed decimal is written two digits to a byte, zero-padded, in the byte order in force",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-37"
+    ]
+   },
+   {
+    "id": "w-bcd-negative",
+    "title": "A negative number has no packed-decimal form",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-37"
+    ]
+   },
+   {
+    "id": "w-bcd-too-many-digits",
+    "title": "A number of more digits than the field holds is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-37"
+    ]
+   },
+   {
+    "id": "w-bit-field-realigned",
+    "title": "The unused bits of a partial byte are written 0",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-bits-field-order-overrides-struct",
+    "title": "A field's own bit order is the effective one, and a change of order starts a new byte",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-25",
+     "req-pm-serialisation-26"
+    ]
+   },
+   {
+    "id": "w-bits-lsb-first",
+    "title": "Bit fields are packed least-significant bit first under bddo:LSBFirst",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17",
+     "req-pm-serialisation-26"
+    ]
+   },
+   {
+    "id": "w-bound-length-not-padded-without-trim-null",
+    "title": "A string without trimNull must be exactly its bound length",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-22",
+     "req-pm-serialisation-30"
+    ]
+   },
+   {
+    "id": "w-byte-order",
+    "title": "Integers are written in the effective byte order",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-byte-order-conditional-big",
+    "title": "The same description writes the other byte order for the other value",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-byte-order-conditional-little",
+    "title": "A conditional byte order is evaluated over the fields written so far",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-checksum-covers-later-bytes",
+    "title": "A checksum is patched after its struct is written, in the field's byte order",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-19"
+    ]
+   },
+   {
+    "id": "w-checksum-filled",
+    "title": "An unbound checksum field is computed over the covered bytes and back-patched",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-19",
+     "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-checksum-inconsistent",
+    "title": "A bound checksum over bytes the tree determines must equal its recomputation",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-22"
+    ]
+   },
+   {
+    "id": "w-checksum-innermost-first",
+    "title": "An outer checksum covers the patched bytes of an inner one",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-19"
+    ]
+   },
+   {
+    "id": "w-chunk-table",
+    "title": "A layout with a chunk table is outside what this version writes",
+    "outcome": "Unsupported",
+    "requirements": [
+     "req-pm-serialisation-20"
+    ]
+   },
+   {
+    "id": "w-codec-compressor-round-trip",
+    "title": "A compressed field parses back to the tree it was written from",
+    "outcome": "round-trip",
+    "requirements": [
+     "req-pm-serialisation-18"
+    ]
+   },
+   {
+    "id": "w-codec-delta-step",
+    "title": "An encoding step is encoded by its codec's contract with the step's parameters",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-18"
+    ]
+   },
+   {
+    "id": "w-codec-encode-exceeds-limit",
+    "title": "An encode output beyond the decoded-byte limit is a resource-limit error",
+    "outcome": "ResourceLimit",
+    "requirements": [
+     "req-pm-serialisation-18"
+    ]
+   },
+   {
+    "id": "w-codec-length-recomputed",
+    "title": "A length and a checksum that rest on encoded bytes are recomputed whatever the tree binds",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-18",
+     "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-codec-literal-region-fits",
+    "title": "An encoding that fills its literal region is written",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-18",
+     "req-pm-serialisation-29"
+    ]
+   },
+   {
+    "id": "w-codec-literal-region-overflow",
+    "title": "An encoding longer than its literal region is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-29"
+    ]
+   },
+   {
+    "id": "w-codec-literal-region-short",
+    "title": "An encoding shorter than its literal region is refused when its codec would read the fill",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-29"
+    ]
+   },
+   {
+    "id": "w-codec-no-encode-direction",
+    "title": "A codec whose contract defines no encode direction is refused with Unsupported feature",
+    "outcome": "Unsupported",
+    "requirements": [
+     "req-pm-serialisation-18"
+    ]
+   },
+   {
+    "id": "w-codec-pipeline-kinds-disconnected",
+    "title": "A pipeline whose kinds do not connect is a description error, whatever the tree",
+    "outcome": "Description",
+    "requirements": [
+     "req-pm-serialisation-18"
+    ]
+   },
+   {
+    "id": "w-codec-substream-struct",
+    "title": "An encoded struct is serialised to a fresh sub-stream, then encoded",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-18",
+     "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-conditional-data-type-default",
+    "title": "A field whose rules all fail is written in its declared data type",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-conditional-data-type-selected",
+    "title": "A conditional data type is evaluated over the fields written so far",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17",
+     "req-pm-serialisation-28"
+    ]
+   },
+   {
+    "id": "w-conditional-data-type-wrong-members",
+    "title": "A node that is not of the selected type is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-container-key-value",
+    "title": "A key/value header is outside what this version writes",
+    "outcome": "Unsupported",
+    "requirements": [
+     "req-pm-serialisation-20"
+    ]
+   },
+   {
+    "id": "w-container-nested-delimited-table",
+    "title": "A text container reached through a field of a byte-level struct is refused",
+    "outcome": "Unsupported",
+    "requirements": [
+     "req-pm-serialisation-20"
+    ]
+   },
+   {
+    "id": "w-container-tree-document",
+    "title": "A tree document is outside what this version writes",
+    "outcome": "Unsupported",
+    "requirements": [
+     "req-pm-serialisation-20"
+    ]
+   },
+   {
+    "id": "w-count-filled",
+    "title": "An unbound count field is filled with the number of elements",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-count-inconsistent",
+    "title": "A bound count that differs from the number of elements is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-22"
+    ]
+   },
+   {
+    "id": "w-dispatch-selected",
+    "title": "A dispatched node is serialised as the struct its key selects",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-dispatch-wrong-members",
+    "title": "A node whose members are not the selected struct's fields is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-field-order",
+    "title": "Fields are written in list order, a sync struct beginning with its marker",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-fixed-point-raw-integer",
+    "title": "A fixed-point scale changes nothing a Writer does",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-38"
+    ]
+   },
+   {
+    "id": "w-fixed-value-filled",
+    "title": "A fixed-value field the tree leaves unbound is written as its constant",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-fixed-value-mismatch",
+    "title": "A tree that binds another value than the constant is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-float-bfloat16",
+    "title": "A bfloat16 is the sixteen high bits of the binary32 value, the infinities included",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-35"
+    ]
+   },
+   {
+    "id": "w-float-bfloat16-low-bits",
+    "title": "A binary32 value with low bits set has no bfloat16 form",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-36"
+    ]
+   },
+   {
+    "id": "w-float-ibm-hexadecimal",
+    "title": "An IBM hexadecimal float is written as the normalised number of the format",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-33"
+    ]
+   },
+   {
+    "id": "w-float-ibm-nan",
+    "title": "A NaN has no IBM hexadecimal form",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-36"
+    ]
+   },
+   {
+    "id": "w-float-ibm-significand-not-exact",
+    "title": "A value whose significand the IBM format cannot carry is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-36"
+    ]
+   },
+   {
+    "id": "w-float-vax",
+    "title": "A VAX float is written in the format's own word order",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-34"
+    ]
+   },
+   {
+    "id": "w-float-vax-infinity",
+    "title": "An infinity has no VAX form",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-36"
+    ]
+   },
+   {
+    "id": "w-float-vax-negative-zero",
+    "title": "A negative zero has no VAX form",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-36"
+    ]
+   },
+   {
+    "id": "w-length-filled",
+    "title": "An unbound length field is filled with the dependent field's byte length",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-length-inconsistent",
+    "title": "A bound length that differs from its recomputation is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-22"
+    ]
+   },
+   {
+    "id": "w-length-terminator-included",
+    "title": "A recomputed length counts the terminator",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-21",
+     "req-pm-serialisation-31"
+    ]
+   },
+   {
+    "id": "w-offset-addressed",
+    "title": "An offset-addressed field is written at its target and the cursor restored",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-offset-before-stream-start",
+    "title": "An offset target before the start of the stream is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-offset-conflict",
+    "title": "A target already written with different bytes is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-pad-to-pad-byte",
+    "title": "The padding of a bddo:padTo is its declared bddo:padByte, and 00 when none is declared",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-pad-to-struct-origin",
+    "title": "bddo:padTo under bddo:structOrigin is written relative to the struct's own start",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-25"
+    ]
+   },
+   {
+    "id": "w-parameterised-struct",
+    "title": "A node under a parameterised struct is serialised with the arguments its field names",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-parameterised-struct-argument-mismatch",
+    "title": "A size the arguments give that the node does not serialise to is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-17"
+    ]
+   },
+   {
+    "id": "w-presence-absent",
+    "title": "A field whose presence condition is false is not written",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-12"
+    ]
+   },
+   {
+    "id": "w-presence-absent-bound",
+    "title": "A field bound where its presence condition is false is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-12"
+    ]
+   },
+   {
+    "id": "w-presence-present",
+    "title": "A field whose presence condition is true is written in its place",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-12"
+    ]
+   },
+   {
+    "id": "w-presence-present-unbound",
+    "title": "A field unbound where its presence condition is true is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-12"
+    ]
+   },
+   {
+    "id": "w-region-filled",
+    "title": "A region of literal size is filled to its end after a shorter value",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-28"
+    ]
+   },
+   {
+    "id": "w-region-overflow",
+    "title": "A value longer than its region of literal size is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-28"
+    ]
+   },
+   {
+    "id": "w-repeat-until-to-end-not-padded",
+    "title": "A to-end sequence that its condition ends is written as its elements, with no padding",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-32"
+    ]
+   },
+   {
+    "id": "w-separated-region-start",
+    "title": "The first token of a region is preceded by nothing, so tokens of adjacent regions abut",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-27"
+    ]
+   },
+   {
+    "id": "w-separated-tokens",
+    "title": "A separated token is preceded by one space when a token precedes it",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-27"
+    ]
+   },
+   {
+    "id": "w-size-expression-mismatch",
+    "title": "A size given by an expression is not inverted",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-struct-size-filled",
+    "title": "A struct's declared size is a region, filled to its end",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-14"
+    ]
+   },
+   {
+    "id": "w-struct-size-overflow",
+    "title": "Fields that do not fit their struct's declared size are refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-14"
+    ]
+   },
+   {
+    "id": "w-terminator-in-value",
+    "title": "A value in which its terminator occurs is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-31"
+    ]
+   },
+   {
+    "id": "w-text-encodings",
+    "title": "A string is encoded in its bddo:encoding",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-number-bound-width",
+    "title": "A width a bound field gives is the width to write",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-number-floats",
+    "title": "A Float written as text takes the canonical Float spelling; nan is followed by spaces",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-number-infinity",
+    "title": "An infinite Float has no text-number spelling",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-number-integers",
+    "title": "An Integer written as text is rendered canonically and zero-padded to a literal width",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-number-overflow",
+    "title": "A text number whose rendering does not fit its width is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-too-long",
+    "title": "A string longer than its fixed width is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-trim-null-padded",
+    "title": "A fixed-size trimNull string is followed by NUL code units to its width",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-text-unrepresentable",
+    "title": "A character the encoding cannot represent is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-23"
+    ]
+   },
+   {
+    "id": "w-tree-required-unbound",
+    "title": "A tree that leaves a required field unbound is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-tree-scalar-for-repeated",
+    "title": "A single value for a repeated field is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-tree-struct-for-scalar",
+    "title": "A struct node for a scalar field is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-tree-undeclared-key",
+    "title": "A tree that binds a field the description does not declare is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-1"
+    ]
+   },
+   {
+    "id": "w-trim-null-bound-length-padded",
+    "title": "A trimNull string under a bound length is NUL-padded to that length",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-23",
+     "req-pm-serialisation-30"
+    ]
+   },
+   {
+    "id": "w-trim-null-bound-length-too-long",
+    "title": "A value longer than its bound length is refused",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-30"
+    ]
+   },
+   {
+    "id": "w-trim-null-unbound-length-filled",
+    "title": "A trimNull string under an unbound length is written at its own length",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-21"
+    ]
+   },
+   {
+    "id": "w-varint-shortest",
+    "title": "A varint is written in the shortest encoding of its value",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-26"
+    ]
+   }
+  ],
+  "requirements": {
+   "req-pm-serialisation-1": [
+    "w-field-order",
+    "w-fixed-value-filled",
+    "w-fixed-value-mismatch",
+    "w-size-expression-mismatch",
+    "w-tree-required-unbound",
+    "w-tree-scalar-for-repeated",
+    "w-tree-struct-for-scalar",
+    "w-tree-undeclared-key"
+   ],
+   "req-pm-serialisation-12": [
+    "w-presence-absent",
+    "w-presence-absent-bound",
+    "w-presence-present",
+    "w-presence-present-unbound"
+   ],
+   "req-pm-serialisation-14": [
+    "w-struct-size-filled",
+    "w-struct-size-overflow"
+   ],
+   "req-pm-serialisation-17": [
+    "w-bits-lsb-first",
+    "w-byte-order",
+    "w-byte-order-conditional-big",
+    "w-byte-order-conditional-little",
+    "w-conditional-data-type-default",
+    "w-conditional-data-type-selected",
+    "w-conditional-data-type-wrong-members",
+    "w-dispatch-selected",
+    "w-dispatch-wrong-members",
+    "w-parameterised-struct",
+    "w-parameterised-struct-argument-mismatch"
+   ],
+   "req-pm-serialisation-18": [
+    "w-codec-compressor-round-trip",
+    "w-codec-delta-step",
+    "w-codec-encode-exceeds-limit",
+    "w-codec-length-recomputed",
+    "w-codec-literal-region-fits",
+    "w-codec-no-encode-direction",
+    "w-codec-pipeline-kinds-disconnected",
+    "w-codec-substream-struct"
+   ],
+   "req-pm-serialisation-19": [
+    "w-checksum-covers-later-bytes",
+    "w-checksum-filled",
+    "w-checksum-innermost-first"
+   ],
+   "req-pm-serialisation-20": [
+    "w-chunk-table",
+    "w-container-key-value",
+    "w-container-nested-delimited-table",
+    "w-container-tree-document"
+   ],
+   "req-pm-serialisation-21": [
+    "w-checksum-filled",
+    "w-codec-length-recomputed",
+    "w-codec-substream-struct",
+    "w-count-filled",
+    "w-length-filled",
+    "w-length-terminator-included",
+    "w-trim-null-unbound-length-filled"
+   ],
+   "req-pm-serialisation-22": [
+    "w-bound-length-not-padded-without-trim-null",
+    "w-checksum-inconsistent",
+    "w-count-inconsistent",
+    "w-length-inconsistent"
+   ],
+   "req-pm-serialisation-23": [
+    "w-text-encodings",
+    "w-text-number-bound-width",
+    "w-text-number-floats",
+    "w-text-number-infinity",
+    "w-text-number-integers",
+    "w-text-number-overflow",
+    "w-text-too-long",
+    "w-text-trim-null-padded",
+    "w-text-unrepresentable",
+    "w-trim-null-bound-length-padded"
+   ],
+   "req-pm-serialisation-24": [
+    "round-trip mode"
+   ],
+   "req-pm-serialisation-25": [
+    "w-alignment",
+    "w-bit-field-realigned",
+    "w-bits-field-order-overrides-struct",
+    "w-offset-addressed",
+    "w-offset-before-stream-start",
+    "w-offset-conflict",
+    "w-pad-to-pad-byte",
+    "w-pad-to-struct-origin"
+   ],
+   "req-pm-serialisation-26": [
+    "w-bits-field-order-overrides-struct",
+    "w-bits-lsb-first",
+    "w-varint-shortest"
+   ],
+   "req-pm-serialisation-27": [
+    "w-separated-region-start",
+    "w-separated-tokens"
+   ],
+   "req-pm-serialisation-28": [
+    "w-conditional-data-type-selected",
+    "w-region-filled",
+    "w-region-overflow"
+   ],
+   "req-pm-serialisation-29": [
+    "w-codec-literal-region-fits",
+    "w-codec-literal-region-overflow",
+    "w-codec-literal-region-short"
+   ],
+   "req-pm-serialisation-30": [
+    "w-bound-length-not-padded-without-trim-null",
+    "w-trim-null-bound-length-padded",
+    "w-trim-null-bound-length-too-long"
+   ],
+   "req-pm-serialisation-31": [
+    "w-length-terminator-included",
+    "w-terminator-in-value"
+   ],
+   "req-pm-serialisation-32": [
+    "w-repeat-until-to-end-not-padded"
+   ],
+   "req-pm-serialisation-33": [
+    "w-float-ibm-hexadecimal"
+   ],
+   "req-pm-serialisation-34": [
+    "w-float-vax"
+   ],
+   "req-pm-serialisation-35": [
+    "w-float-bfloat16"
+   ],
+   "req-pm-serialisation-36": [
+    "w-float-bfloat16-low-bits",
+    "w-float-ibm-nan",
+    "w-float-ibm-significand-not-exact",
+    "w-float-vax-infinity",
+    "w-float-vax-negative-zero"
+   ],
+   "req-pm-serialisation-37": [
+    "w-bcd",
+    "w-bcd-negative",
+    "w-bcd-too-many-digits"
+   ],
+   "req-pm-serialisation-38": [
+    "w-fixed-point-raw-integer"
+   ]
+  }
+ },
  "citations": {
+  "req-pm-alignment-padding-1": [
+   "pp-align-struct",
+   "pp-align-struct-each-instance",
+   "pp-align-struct-origin-field",
+   "pp-align-struct-origin-padding",
+   "pp-pad-field",
+   "pp-pad-field-at-offset",
+   "pp-pad-field-on-boundary",
+   "pp-pad-origin-is-the-stream",
+   "pp-pad-repeated-field",
+   "pp-pad-struct-extent"
+  ],
+  "req-pm-alignment-padding-2": [
+   "pp-pad-past-region"
+  ],
+  "req-pm-alignment-padding-3": [],
+  "req-pm-alignment-padding-4": [
+   "pp-pad-field"
+  ],
+  "req-pm-alignment-padding-5": [
+   "pp-pad-byte-without-pad-to"
+  ],
+  "req-pm-alignment-padding-6": [
+   "pp-align-struct-origin-field",
+   "pp-align-struct-origin-padding"
+  ],
+  "req-pm-alignment-padding-7": [
+   "pp-align-derived-field"
+  ],
   "req-pm-bit-cursor-1": [
    "pp-bits-lsb-first",
    "pp-bits-msb-first",
@@ -137,6 +1079,7 @@
    "pp-bits-span-byte-boundary"
   ],
   "req-pm-bit-cursor-3": [
+   "pp-bits-field-order-overrides-struct",
    "pp-bits-lsb-first",
    "pp-bits-msb-first"
   ],
@@ -180,6 +1123,53 @@
    "pp-int-conditional-endianness",
    "pp-int-conditional-endianness-provisional"
   ],
+  "req-pm-byte-order-8": [
+   "pp-bits-field-order-overrides-struct",
+   "pp-bits-field-order-without-struct-order"
+  ],
+  "req-pm-byte-order-9": [
+   "pp-bits-field-order-overrides-struct",
+   "pp-bits-field-order-without-struct-order"
+  ],
+  "req-pm-codec-contracts-1": [
+   "pp-codec-parameter-expression-value",
+   "pp-codec-selection-by-iri",
+   "pp-codec-selection-by-local-name"
+  ],
+  "req-pm-codec-contracts-2": [
+   "pp-codec-parameter-expression-unknown-name",
+   "pp-codec-parameter-literal-wrong-type"
+  ],
+  "req-pm-codec-contracts-3": [
+   "pp-codec-pipeline-kinds-disconnected"
+  ],
+  "req-pm-codec-contracts-4": [
+   "pp-codec-contract-decoded-byte-limit"
+  ],
+  "req-pm-codec-contracts-5": [
+   "hc-encoded-with-catalogue-codec"
+  ],
+  "req-pm-codec-contracts-6": [
+   "pp-codec-delta-row-not-whole-pixels"
+  ],
+  "req-pm-codec-selection-1": [
+   "pp-codec-selection-duplicate-candidates",
+   "pp-codec-selection-unclaimed-candidate"
+  ],
+  "req-pm-codec-selection-2": [
+   "pp-codec-selection-by-iri",
+   "pp-codec-selection-by-local-name",
+   "pp-codec-selection-names-no-candidate",
+   "pp-codec-selection-not-a-string"
+  ],
+  "req-pm-codec-selection-3": [
+   "pp-codec-selection-parameter-on-selecting-step",
+   "pp-codec-selection-with-codec",
+   "pp-codec-selection-without-candidates"
+  ],
+  "req-pm-codec-sessions-1": [
+   "pp-codec-session-per-instance"
+  ],
   "req-pm-computed-values-1": [
    "se-value-natural-array-node",
    "se-value-natural-boolean",
@@ -219,6 +1209,7 @@
    "se-value-natural-bytes"
   ],
   "req-pm-computed-values-8": [
+   "se-value-expression-absent-later-field",
    "se-value-natural-null"
   ],
   "req-pm-computed-values-9": [
@@ -308,7 +1299,11 @@
    "pp-hel-forward-reference-parent",
    "pp-hel-forward-reference-size",
    "pp-let-forward-reference",
-   "pp-param-argument-forward-reference"
+   "pp-param-argument-forward-reference",
+   "se-class-guard-later-field",
+   "se-map-guard-later-field",
+   "se-value-expression-absent-later-field",
+   "se-value-expression-later-field"
   ],
   "req-pm-context-2": [],
   "req-pm-context-3": [
@@ -318,9 +1313,32 @@
    "pp-param-type-mismatch-evaluated"
   ],
   "req-pm-data-layouts-1": [
+   "pp-layout-cell-type-first-forward",
+   "pp-layout-cell-type-first-reverse",
    "pp-layout-conditional-cell-no-arm",
+   "pp-layout-dimension-order-first-forward",
+   "pp-layout-dimension-order-first-reverse",
+   "pp-layout-packed-float-from-field",
    "pp-layout-read-as-bytes",
-   "pp-layout-size-not-integer"
+   "pp-layout-size-expression-not-integer",
+   "pp-layout-size-from-expression",
+   "pp-layout-size-not-integer",
+   "pp-layout-stride-from-field-zero"
+  ],
+  "req-pm-data-layouts-2": [
+   "pp-layout-size-expression-not-integer",
+   "pp-layout-size-from-expression"
+  ],
+  "req-pm-data-layouts-3": [
+   "pp-layout-cells-hilbert",
+   "pp-layout-cells-morton"
+  ],
+  "req-pm-data-layouts-4": [
+   "pp-layout-packed-float",
+   "pp-layout-packed-float-from-field"
+  ],
+  "req-pm-data-layouts-5": [
+   "pp-layout-stride-from-field-zero"
   ],
   "req-pm-delimited-records-1": [
    "pp-records-bom-crlf-comments",
@@ -363,15 +1381,28 @@
    "pp-offset-stream-end-substream",
    "se-encoded-substream"
   ],
-  "req-pm-emission-2": [],
+  "req-pm-emission-2": [
+   "se-enum-both-properties",
+   "se-enum-both-properties-no-symbol",
+   "se-enum-flags-symbols-with-literal",
+   "se-enum-symbol-with-literal",
+   "se-enum-value-without-symbol"
+  ],
   "req-pm-emission-3": [
    "se-class-and-literals"
   ],
   "req-pm-emission-4": [
-   "se-class-and-literals"
+   "se-class-and-literals",
+   "se-class-guard-later-field"
   ],
   "req-pm-emission-5": [
    "se-class-and-literals",
+   "se-enum-flags-symbols-with-literal",
+   "se-enum-symbol-with-literal",
+   "se-enum-value-without-symbol",
+   "se-fixed-point-scale",
+   "se-lexical-forms-canonical",
+   "se-lexical-forms-computed",
    "se-parameters-and-bindings-not-emitted",
    "se-value-datatype-bytes-as-base64",
    "se-value-datatype-float-as-decimal",
@@ -381,6 +1412,8 @@
    "se-value-datatype-out-of-range",
    "se-value-datatype-string-as-integer",
    "se-value-expression",
+   "se-value-expression-absent-later-field",
+   "se-value-expression-later-field",
    "se-value-natural-array-node",
    "se-value-natural-boolean",
    "se-value-natural-bytes",
@@ -393,11 +1426,14 @@
    "se-value-natural-unsigned-beyond-long"
   ],
   "req-pm-emission-6": [
+   "se-enum-both-properties",
+   "se-enum-both-properties-no-symbol",
    "se-enum-symbol-object",
    "se-object-property"
   ],
   "req-pm-emission-7": [
-   "se-conditional-mapping"
+   "se-conditional-mapping",
+   "se-map-guard-later-field"
   ],
   "req-pm-emission-8": [
    "se-root-sequence"
@@ -407,6 +1443,20 @@
   ],
   "req-pm-emission-10": [
    "se-parameters-and-bindings-not-emitted"
+  ],
+  "req-pm-emission-11": [
+   "se-class-guard-later-field",
+   "se-map-guard-later-field",
+   "se-value-expression-absent-later-field",
+   "se-value-expression-later-field"
+  ],
+  "req-pm-emission-12": [
+   "se-lexical-forms-canonical",
+   "se-lexical-forms-computed"
+  ],
+  "req-pm-emission-13": [
+   "se-enum-both-properties",
+   "se-enum-both-properties-no-symbol"
   ],
   "req-pm-errors-1": [
    "pp-checksum-crc32-mismatch",
@@ -422,8 +1472,13 @@
    "pp-bits-past-end",
    "pp-bounds-nested-region",
    "pp-checksum-coverage-out-of-bounds",
+   "pp-offset-current-negative-outside",
+   "pp-offset-negative-stream-end",
+   "pp-offset-negative-stream-start",
    "pp-offset-outside-region",
+   "pp-offset-parent-start-negative",
    "pp-offset-past-end",
+   "pp-pad-past-region",
    "pp-read-past-end",
    "pp-rep-count-negative",
    "pp-rep-zero-byte-element",
@@ -443,11 +1498,15 @@
    "bp-pattern-count",
    "bp-required-part-missing",
    "bp-unmatched-file",
+   "pp-bcd-invalid-nibble",
+   "pp-codec-parameter-expression-out-of-range",
+   "pp-codec-selection-names-no-candidate",
    "pp-fixed-float32-mismatch",
    "pp-fixed-numeric-mismatch",
    "pp-fixed-string-mismatch",
    "pp-fixed-string-on-bytes-not-hex",
    "pp-flat-value-sequence-count",
+   "pp-float-vax-reserved-operand",
    "pp-float16-fixed-value-mismatch",
    "pp-kv-empty-numeric-value",
    "pp-kv-grouped-unclosed",
@@ -478,6 +1537,7 @@
    "pp-codec-gzip-isize-mismatch",
    "pp-codec-lz4-content-checksum-mismatch",
    "pp-codec-zlib-adler-mismatch",
+   "pp-codec-zlib-trailing-ignore-adler-mismatch",
    "pp-codec-zstd-checksum-mismatch",
    "pp-codec-zstd-content-size-mismatch",
    "pp-crc-custom-mismatch",
@@ -486,14 +1546,18 @@
   "req-pm-errors-6": [
    "bp-missing-part-reference",
    "bp-unknown-part-key",
+   "pp-codec-parameter-expression-wrong-type",
+   "pp-codec-selection-not-a-string",
    "pp-hel-and-evaluates-both-operands",
    "pp-hel-asset-outside-bundle",
    "pp-hel-bytes-malformed-argument",
    "pp-hel-bytes-ordering",
    "pp-hel-comparison-chain",
+   "pp-hel-computed-array-result",
    "pp-hel-concat-number",
    "pp-hel-division-by-zero",
    "pp-hel-float-division-by-zero",
+   "pp-hel-float-remainder-by-zero",
    "pp-hel-float-result-count",
    "pp-hel-float-result-size",
    "pp-hel-forward-reference-derived",
@@ -508,12 +1572,30 @@
    "pp-hel-integer-overflow",
    "pp-hel-literal-range",
    "pp-hel-logical-operand-types",
+   "pp-hel-math-min-no-arguments",
+   "pp-hel-math-min-string",
+   "pp-hel-math-rounding-infinity",
+   "pp-hel-math-rounding-nan",
+   "pp-hel-math-rounding-overflow",
+   "pp-hel-math-tostring-string",
    "pp-hel-non-ascii-identifier",
    "pp-hel-null-arithmetic",
    "pp-hel-part-extension-outside-bundle",
    "pp-hel-presence-result-type",
    "pp-hel-quantifier-non-boolean",
    "pp-hel-quantifier-not-array",
+   "pp-hel-regex-anchors",
+   "pp-hel-regex-backreference",
+   "pp-hel-regex-hex-escape",
+   "pp-hel-regex-hyphen-misplaced",
+   "pp-hel-regex-lazy-quantifier",
+   "pp-hel-regex-lookahead",
+   "pp-hel-regex-non-capturing-group",
+   "pp-hel-regex-pattern-from-data",
+   "pp-hel-regex-quantifier-bound",
+   "pp-hel-regex-unknown-block",
+   "pp-hel-regex-word-boundary",
+   "pp-hel-reserved-word-call",
    "pp-hel-self-where-undefined",
    "pp-hel-shift-count-range",
    "pp-hel-shift-overflow",
@@ -532,6 +1614,7 @@
    "pp-hel-unknown-function",
    "pp-hel-version-current-unknown-function",
    "pp-layout-conditional-cell-no-arm",
+   "pp-layout-size-expression-not-integer",
    "pp-layout-size-not-integer",
    "pp-param-type-mismatch-evaluated",
    "pp-struct-size-never-bound",
@@ -549,11 +1632,24 @@
    "ce-duplicate-requirement-identity-blank",
    "ce-parse-attribution-resource-limit",
    "ce-requirement-without-statement",
+   "pp-bcd-signed",
+   "pp-checksum-adler32-field-width",
+   "pp-checksum-digest-field-short",
+   "pp-checksum-digest-field-width",
    "pp-codec-delta-element-size-out-of-range",
    "pp-codec-delta-missing-element-size",
    "pp-codec-delta-unknown-parameter",
    "pp-codec-lz4-block-missing-size",
    "pp-codec-lz4-block-shorthand",
+   "pp-codec-parameter-both-literal-and-expression",
+   "pp-codec-parameter-expression-unknown-name",
+   "pp-codec-parameter-literal-wrong-type",
+   "pp-codec-parameter-neither-literal-nor-expression",
+   "pp-codec-pipeline-kinds-disconnected",
+   "pp-codec-selection-duplicate-candidates",
+   "pp-codec-selection-parameter-on-selecting-step",
+   "pp-codec-selection-with-codec",
+   "pp-codec-selection-without-candidates",
    "pp-codec-zstd-parameter-unknown",
    "pp-conflict-count-and-until",
    "pp-conflict-two-count-forms",
@@ -570,12 +1666,15 @@
    "pp-fixed-number-on-bytes",
    "pp-fixed-out-of-range",
    "pp-fixed-string-on-numeric",
+   "pp-float-format-width",
    "pp-float16-fixed-value-overflow",
    "pp-hel-duplicate-local-name",
    "pp-hel-version-malformed",
    "pp-layout-packed-float",
+   "pp-layout-packed-float-from-field",
    "pp-let-in-header",
    "pp-let-name-clash",
+   "pp-pad-byte-without-pad-to",
    "pp-param-arguments-without-parameters",
    "pp-param-arity-mismatch",
    "pp-param-field-name-clash",
@@ -596,20 +1695,26 @@
    "bp-nested-profile-unclaimed",
    "pp-codec-beyond-minimum-set",
    "pp-codec-delta-predictor-3",
+   "pp-codec-selection-unclaimed-candidate",
    "pp-codec-zstd-dictionary",
+   "pp-encoding-custom-unsupported",
    "pp-hel-extension-group-unclaimed",
    "pp-hel-version-newer-minor-unknown-function",
    "pp-hel-version-other-major",
    "pp-layout-chunk-order-unclaimed"
   ],
   "req-pm-errors-11": [
-   "pp-codec-beyond-minimum-set"
+   "pp-codec-beyond-minimum-set",
+   "pp-codec-selection-unclaimed-candidate"
   ],
   "req-pm-errors-12": [
+   "pp-codec-contract-decoded-byte-limit",
    "pp-codec-decoded-byte-limit",
    "pp-codec-lz4-block-declared-size-over-limit",
    "pp-codec-lz4-frame-declared-size-over-limit",
    "pp-codec-zstd-declared-size-over-limit",
+   "pp-limit-collection-output",
+   "pp-limit-collection-traversal",
    "pp-limit-depth-exceeded",
    "pp-limit-hel-depth",
    "pp-limit-hel-length",
@@ -618,6 +1723,7 @@
    "pp-limit-no-cheaper-interpretation",
    "pp-limit-quantifier-evaluations",
    "pp-limit-regex-steps",
+   "pp-limit-text-conversion",
    "pp-limit-tree-depth",
    "pp-limit-visited-nodes",
    "pp-param-recursion-depth-limit",
@@ -641,24 +1747,45 @@
    "pp-hel-comparison-chain",
    "pp-hel-literal-range",
    "pp-hel-non-ascii-identifier",
+   "pp-hel-reserved-word-call",
    "pp-hel-reserved-word-key",
+   "pp-hel-root-as-function-name",
+   "pp-hel-root-as-key",
    "pp-hel-unknown-escape"
   ],
   "req-pm-errors-17": [
    "pp-codec-zstd-dictionary"
   ],
+  "req-pm-inputs-outputs-1": [
+   "pp-hel-stream-length-before-first-field"
+  ],
+  "req-pm-inputs-outputs-2": [
+   "pp-float-vax-f-64-deprecated",
+   "pp-valid-despite-warning"
+  ],
   "req-pm-introduction-1": [],
   "req-pm-iri-minting-1": [
    "se-base-reported",
    "se-class-and-literals",
+   "se-class-guard-later-field",
    "se-conditional-class-mapping",
    "se-conditional-mapping",
    "se-data-layout-array-node",
    "se-encoded-substream",
+   "se-enum-both-properties",
+   "se-enum-both-properties-no-symbol",
+   "se-enum-flags-symbols-with-literal",
    "se-enum-symbol-object",
+   "se-enum-symbol-with-literal",
+   "se-enum-value-without-symbol",
+   "se-fixed-point-scale",
+   "se-fixed-point-scale-range",
    "se-key-percent-encoding",
    "se-key-percent-sign",
    "se-language-tags",
+   "se-lexical-forms-canonical",
+   "se-lexical-forms-computed",
+   "se-map-guard-later-field",
    "se-nested-paths",
    "se-object-property",
    "se-root-sequence",
@@ -673,6 +1800,8 @@
    "se-value-datatype-out-of-range",
    "se-value-datatype-string-as-integer",
    "se-value-expression",
+   "se-value-expression-absent-later-field",
+   "se-value-expression-later-field",
    "se-value-natural-array-node",
    "se-value-natural-boolean",
    "se-value-natural-bytes",
@@ -690,14 +1819,25 @@
   "req-pm-iri-minting-3": [
    "se-base-reported",
    "se-class-and-literals",
+   "se-class-guard-later-field",
    "se-conditional-class-mapping",
    "se-conditional-mapping",
    "se-data-layout-array-node",
    "se-encoded-substream",
+   "se-enum-both-properties",
+   "se-enum-both-properties-no-symbol",
+   "se-enum-flags-symbols-with-literal",
    "se-enum-symbol-object",
+   "se-enum-symbol-with-literal",
+   "se-enum-value-without-symbol",
+   "se-fixed-point-scale",
+   "se-fixed-point-scale-range",
    "se-key-percent-encoding",
    "se-key-percent-sign",
    "se-language-tags",
+   "se-lexical-forms-canonical",
+   "se-lexical-forms-computed",
+   "se-map-guard-later-field",
    "se-nested-paths",
    "se-object-property",
    "se-root-sequence",
@@ -712,6 +1852,8 @@
    "se-value-datatype-out-of-range",
    "se-value-datatype-string-as-integer",
    "se-value-expression",
+   "se-value-expression-absent-later-field",
+   "se-value-expression-later-field",
    "se-value-natural-array-node",
    "se-value-natural-boolean",
    "se-value-natural-bytes",
@@ -751,13 +1893,16 @@
    "pp-codec-pipeline-reverse-order",
    "pp-codec-zlib",
    "pp-codec-zlib-adler-mismatch",
-   "pp-codec-zlib-trailing-bytes"
+   "pp-codec-zlib-trailing-bytes",
+   "pp-codec-zlib-trailing-refuse"
   ],
   "req-pm-minimum-codecs-6": [
    "pp-codec-gzip-crc-mismatch",
    "pp-codec-gzip-isize-mismatch",
    "pp-codec-gzip-members",
-   "pp-codec-gzip-trailing-garbage"
+   "pp-codec-gzip-trailing-garbage",
+   "pp-codec-gzip-trailing-ignore",
+   "pp-codec-gzip-trailing-ignore-truncated-member"
   ],
   "req-pm-minimum-codecs-7": [
    "pp-codec-delta-16-bit",
@@ -765,6 +1910,7 @@
    "pp-codec-delta-partial-sample",
    "pp-codec-delta-predictor-1",
    "pp-codec-delta-row-bytes",
+   "pp-codec-delta-row-not-whole-pixels",
    "pp-codec-delta-samples-per-pixel",
    "pp-codec-pipeline-reverse-order"
   ],
@@ -781,7 +1927,15 @@
    "pp-codec-deflate-truncated",
    "pp-codec-lz4-frame-truncated",
    "pp-codec-zlib-trailing-bytes",
+   "pp-codec-zlib-trailing-ignore",
+   "pp-codec-zlib-trailing-refuse",
    "pp-codec-zstd-truncated"
+  ],
+  "req-pm-minimum-codecs-11": [
+   "pp-codec-gzip-trailing-ignore",
+   "pp-codec-gzip-trailing-ignore-truncated-member",
+   "pp-codec-zlib-trailing-ignore",
+   "pp-codec-zlib-trailing-ignore-adler-mismatch"
   ],
   "req-pm-multi-part-assets-1": [
    "bp-carried-part",
@@ -801,6 +1955,54 @@
   "req-pm-multi-part-assets-4": [
    "bp-carried-part"
   ],
+  "req-pm-numeric-representation-1": [
+   "pp-float-bfloat16",
+   "pp-float-format-on-data-type",
+   "pp-float-ibm-hexadecimal",
+   "pp-float-vax",
+   "pp-float-vax-d-g",
+   "pp-float-vax-f-64-deprecated",
+   "pp-float-vax-reserved-operand"
+  ],
+  "req-pm-numeric-representation-2": [
+   "pp-float-bfloat16",
+   "pp-float-ieee754",
+   "pp-float16-normal-values"
+  ],
+  "req-pm-numeric-representation-3": [
+   "pp-float-format-on-data-type",
+   "pp-float-ibm-hexadecimal"
+  ],
+  "req-pm-numeric-representation-4": [
+   "pp-float-vax",
+   "pp-float-vax-f-64-deprecated",
+   "pp-float-vax-reserved-operand"
+  ],
+  "req-pm-numeric-representation-5": [
+   "pp-float-bfloat16"
+  ],
+  "req-pm-numeric-representation-6": [
+   "pp-float-ibm-hexadecimal",
+   "pp-float-vax",
+   "pp-float-vax-d-g"
+  ],
+  "req-pm-numeric-representation-7": [
+   "pp-float-format-width"
+  ],
+  "req-pm-numeric-representation-8": [
+   "pp-bcd"
+  ],
+  "req-pm-numeric-representation-9": [
+   "pp-bcd-invalid-nibble"
+  ],
+  "req-pm-numeric-representation-10": [
+   "pp-float-vax",
+   "pp-float-vax-d-g",
+   "pp-float-vax-f-64-deprecated"
+  ],
+  "req-pm-numeric-representation-11": [
+   "pp-float-vax-d-g"
+  ],
   "req-pm-optional-codecs-1": [
    "pp-codec-lz4-block-bad-offset",
    "pp-codec-lz4-block-missing-size",
@@ -819,6 +2021,8 @@
    "pp-codec-zstd-declared-size-over-limit"
   ],
   "req-pm-optional-codecs-3": [
+   "pp-claims-statement",
+   "pp-codec-beyond-minimum-set",
    "pp-codec-lz4-block",
    "pp-codec-lz4-block-bad-offset",
    "pp-codec-lz4-block-declared-size-over-limit",
@@ -867,6 +2071,18 @@
    "pp-codec-lz4-block-missing-size",
    "pp-codec-lz4-block-shorthand"
   ],
+  "req-pm-parameter-expressions-1": [
+   "pp-codec-parameter-expression-unknown-name"
+  ],
+  "req-pm-parameter-expressions-2": [
+   "pp-codec-parameter-expression-out-of-range",
+   "pp-codec-parameter-expression-value",
+   "pp-codec-parameter-expression-wrong-type"
+  ],
+  "req-pm-parameter-expressions-3": [
+   "pp-codec-parameter-both-literal-and-expression",
+   "pp-codec-parameter-neither-literal-nor-expression"
+  ],
   "req-pm-parsefield-1": [
    "pp-dispatch-duplicate-key",
    "pp-dispatch-expression-and-default",
@@ -896,14 +2112,18 @@
   ],
   "req-pm-parsefield-7": [
    "pp-bits-offset-read-restores-bit-cursor",
+   "pp-offset-current-negative",
    "pp-offset-current-position",
+   "pp-offset-field-start",
    "pp-offset-from-field-and-expression",
    "pp-offset-literal-restores-cursor",
+   "pp-offset-parent-start",
    "pp-offset-stream-end",
    "pp-offset-stream-end-in-region",
    "pp-offset-stream-end-nested-region",
    "pp-offset-stream-end-substream",
-   "pp-offset-stream-scope"
+   "pp-offset-stream-scope",
+   "pp-pad-field-at-offset"
   ],
   "req-pm-parsefield-8": [
    "pp-int24-repeated",
@@ -967,13 +2187,18 @@
    "pp-uint24-fixed-hex-width"
   ],
   "req-pm-parsefield-15": [
-   "se-enum-symbol-object"
+   "se-enum-flags-symbols-with-literal",
+   "se-enum-symbol-object",
+   "se-enum-symbol-with-literal",
+   "se-enum-value-without-symbol"
   ],
   "req-pm-parsefield-16": [
    "pp-checksum-adler32",
    "pp-checksum-covers-expressions",
    "pp-checksum-crc16-ccitt-false",
    "pp-checksum-crc32",
+   "pp-checksum-digest-field-short",
+   "pp-checksum-digest-field-width",
    "pp-checksum-empty-range",
    "pp-checksum-md5",
    "pp-checksum-sha1",
@@ -1035,6 +2260,45 @@
    "pp-float16-fixed-value-mismatch",
    "pp-float16-fixed-value-overflow"
   ],
+  "req-pm-parsefield-27": [
+   "pp-offset-parent-start",
+   "pp-offset-parent-start-after-sync"
+  ],
+  "req-pm-parsefield-28": [
+   "pp-offset-parent-start"
+  ],
+  "req-pm-parsefield-29": [
+   "pp-offset-parent-start-negative",
+   "pp-offset-parent-start-outside-region"
+  ],
+  "req-pm-parsefield-30": [
+   "pp-checksum-adler32-field-width"
+  ],
+  "req-pm-parsefield-31": [
+   "pp-pad-field",
+   "pp-pad-field-at-offset-checks-first",
+   "pp-pad-field-on-boundary",
+   "pp-pad-repeated-field"
+  ],
+  "req-pm-parsefield-32": [
+   "pp-offset-negative-stream-end",
+   "pp-offset-negative-stream-start"
+  ],
+  "req-pm-parsefield-33": [
+   "pp-offset-current-negative",
+   "pp-offset-current-negative-outside"
+  ],
+  "req-pm-parsefield-34": [
+   "pp-pad-field-at-offset",
+   "pp-pad-field-at-offset-checks-first"
+  ],
+  "req-pm-parsefield-35": [
+   "pp-offset-field-start",
+   "pp-offset-field-start-outside"
+  ],
+  "req-pm-parsefield-36": [
+   "pp-offset-field-start-absent-base"
+  ],
   "req-pm-parsestruct-1": [
    "pp-members-in-list-order"
   ],
@@ -1042,6 +2306,7 @@
    "pp-sync-marker"
   ],
   "req-pm-parsestruct-3": [
+   "pp-offset-parent-start-after-sync",
    "pp-sync-bounded-by-region",
    "pp-sync-marker",
    "pp-sync-marker-at-cursor",
@@ -1052,6 +2317,7 @@
    "pp-hel-sizeof-nodes"
   ],
   "req-pm-parsestruct-5": [
+   "pp-offset-parent-start-outside-region",
    "pp-offset-stream-end-in-region",
    "pp-size-to-end-of-region",
    "pp-struct-size-from-own-field",
@@ -1087,6 +2353,14 @@
    "pp-let-with-parameter",
    "pp-param-quantifier-element"
   ],
+  "req-pm-parsestruct-11": [
+   "pp-align-struct",
+   "pp-align-struct-each-instance"
+  ],
+  "req-pm-parsestruct-12": [
+   "pp-pad-origin-is-the-stream",
+   "pp-pad-struct-extent"
+  ],
   "req-pm-privacy-1": [],
   "req-pm-privacy-2": [],
   "req-pm-recovery-1": [
@@ -1116,6 +2390,8 @@
   ],
   "req-pm-resource-limits-1": [
    "pp-codec-decoded-byte-limit",
+   "pp-limit-collection-output",
+   "pp-limit-collection-traversal",
    "pp-limit-depth-at-limit",
    "pp-limit-depth-exceeded",
    "pp-limit-hel-depth",
@@ -1125,6 +2401,7 @@
    "pp-limit-no-cheaper-interpretation",
    "pp-limit-quantifier-evaluations",
    "pp-limit-regex-steps",
+   "pp-limit-text-conversion",
    "pp-limit-tree-depth",
    "pp-limit-visited-nodes",
    "pp-param-recursion-depth-limit",
@@ -1134,24 +2411,12 @@
    "pp-limit-depth-default",
    "pp-limit-hel-default-depth"
   ],
-  "req-pm-resource-limits-3": [
-   "ce-lenient-parse-resource-limit",
-   "pp-codec-decoded-byte-limit",
-   "pp-limit-depth-exceeded",
-   "pp-limit-hel-depth",
-   "pp-limit-hel-length",
-   "pp-limit-input-bytes",
-   "pp-limit-materialized-bytes",
-   "pp-limit-quantifier-evaluations",
-   "pp-limit-regex-steps",
-   "pp-limit-tree-depth",
-   "pp-limit-visited-nodes",
-   "se-triple-limit"
-  ],
+  "req-pm-resource-limits-3": [],
   "req-pm-resource-limits-4": [
    "pp-limit-no-cheaper-interpretation"
   ],
   "req-pm-security-decompression-1": [
+   "pp-codec-contract-decoded-byte-limit",
    "pp-codec-lz4-block-declared-size-over-limit",
    "pp-codec-lz4-frame-declared-size-over-limit",
    "pp-codec-zstd-declared-size-over-limit"
@@ -1162,6 +2427,155 @@
   ],
   "req-pm-security-resources-1": [
    "pp-limit-visited-nodes"
+  ],
+  "req-pm-serialisation-1": [
+   "w-field-order",
+   "w-fixed-value-filled",
+   "w-fixed-value-mismatch",
+   "w-size-expression-mismatch",
+   "w-tree-required-unbound",
+   "w-tree-scalar-for-repeated",
+   "w-tree-struct-for-scalar",
+   "w-tree-undeclared-key"
+  ],
+  "req-pm-serialisation-12": [
+   "w-presence-absent",
+   "w-presence-absent-bound",
+   "w-presence-present",
+   "w-presence-present-unbound"
+  ],
+  "req-pm-serialisation-14": [
+   "w-struct-size-filled",
+   "w-struct-size-overflow"
+  ],
+  "req-pm-serialisation-17": [
+   "w-bits-lsb-first",
+   "w-byte-order",
+   "w-byte-order-conditional-big",
+   "w-byte-order-conditional-little",
+   "w-conditional-data-type-default",
+   "w-conditional-data-type-selected",
+   "w-conditional-data-type-wrong-members",
+   "w-dispatch-selected",
+   "w-dispatch-wrong-members",
+   "w-parameterised-struct",
+   "w-parameterised-struct-argument-mismatch"
+  ],
+  "req-pm-serialisation-18": [
+   "w-codec-compressor-round-trip",
+   "w-codec-delta-step",
+   "w-codec-encode-exceeds-limit",
+   "w-codec-length-recomputed",
+   "w-codec-literal-region-fits",
+   "w-codec-no-encode-direction",
+   "w-codec-pipeline-kinds-disconnected",
+   "w-codec-substream-struct"
+  ],
+  "req-pm-serialisation-19": [
+   "w-checksum-covers-later-bytes",
+   "w-checksum-filled",
+   "w-checksum-innermost-first"
+  ],
+  "req-pm-serialisation-20": [
+   "w-chunk-table",
+   "w-container-key-value",
+   "w-container-nested-delimited-table",
+   "w-container-tree-document"
+  ],
+  "req-pm-serialisation-21": [
+   "w-checksum-filled",
+   "w-codec-length-recomputed",
+   "w-codec-substream-struct",
+   "w-count-filled",
+   "w-length-filled",
+   "w-length-terminator-included",
+   "w-trim-null-unbound-length-filled"
+  ],
+  "req-pm-serialisation-22": [
+   "w-bound-length-not-padded-without-trim-null",
+   "w-checksum-inconsistent",
+   "w-count-inconsistent",
+   "w-length-inconsistent"
+  ],
+  "req-pm-serialisation-23": [
+   "w-text-encodings",
+   "w-text-number-bound-width",
+   "w-text-number-floats",
+   "w-text-number-infinity",
+   "w-text-number-integers",
+   "w-text-number-overflow",
+   "w-text-too-long",
+   "w-text-trim-null-padded",
+   "w-text-unrepresentable",
+   "w-trim-null-bound-length-padded"
+  ],
+  "req-pm-serialisation-24": [
+   "round-trip mode"
+  ],
+  "req-pm-serialisation-25": [
+   "w-alignment",
+   "w-bit-field-realigned",
+   "w-bits-field-order-overrides-struct",
+   "w-offset-addressed",
+   "w-offset-before-stream-start",
+   "w-offset-conflict",
+   "w-pad-to-pad-byte",
+   "w-pad-to-struct-origin"
+  ],
+  "req-pm-serialisation-26": [
+   "w-bits-field-order-overrides-struct",
+   "w-bits-lsb-first",
+   "w-varint-shortest"
+  ],
+  "req-pm-serialisation-27": [
+   "w-separated-region-start",
+   "w-separated-tokens"
+  ],
+  "req-pm-serialisation-28": [
+   "w-conditional-data-type-selected",
+   "w-region-filled",
+   "w-region-overflow"
+  ],
+  "req-pm-serialisation-29": [
+   "w-codec-literal-region-fits",
+   "w-codec-literal-region-overflow",
+   "w-codec-literal-region-short"
+  ],
+  "req-pm-serialisation-30": [
+   "w-bound-length-not-padded-without-trim-null",
+   "w-trim-null-bound-length-padded",
+   "w-trim-null-bound-length-too-long"
+  ],
+  "req-pm-serialisation-31": [
+   "w-length-terminator-included",
+   "w-terminator-in-value"
+  ],
+  "req-pm-serialisation-32": [
+   "w-repeat-until-to-end-not-padded"
+  ],
+  "req-pm-serialisation-33": [
+   "w-float-ibm-hexadecimal"
+  ],
+  "req-pm-serialisation-34": [
+   "w-float-vax"
+  ],
+  "req-pm-serialisation-35": [
+   "w-float-bfloat16"
+  ],
+  "req-pm-serialisation-36": [
+   "w-float-bfloat16-low-bits",
+   "w-float-ibm-nan",
+   "w-float-ibm-significand-not-exact",
+   "w-float-vax-infinity",
+   "w-float-vax-negative-zero"
+  ],
+  "req-pm-serialisation-37": [
+   "w-bcd",
+   "w-bcd-negative",
+   "w-bcd-too-many-digits"
+  ],
+  "req-pm-serialisation-38": [
+   "w-fixed-point-raw-integer"
   ],
   "req-pm-size-resolution-1": [],
   "req-pm-size-resolution-2": [
@@ -1179,6 +2593,7 @@
    "pp-bits-msb-first"
   ],
   "req-pm-size-resolution-6": [
+   "pp-separated-abutting-regions",
    "pp-separated-tokens"
   ],
   "req-pm-size-resolution-7": [
@@ -1244,6 +2659,26 @@
    "pp-term-not-found"
   ],
   "req-pm-text-decoding-1": [
+   "pp-encoding-iso8859-7-unassigned-ae",
+   "pp-encoding-iso8859-7-unassigned-d2",
+   "pp-encoding-iso8859-7-unassigned-ff",
+   "pp-encoding-shift-jis-lead-without-trail",
+   "pp-encoding-shift-jis-trail-7f",
+   "pp-encoding-shift-jis-trail-out-of-range",
+   "pp-encoding-shift-jis-unassigned-pair",
+   "pp-encoding-ucs2be-lone-surrogate",
+   "pp-encoding-ucs2be-surrogate-pair",
+   "pp-encoding-ucs2le-surrogate-pair",
+   "pp-encoding-utf32be-out-of-range",
+   "pp-encoding-utf32be-surrogate",
+   "pp-encoding-utf32le-out-of-range",
+   "pp-encoding-utf32le-partial-code-unit",
+   "pp-encoding-utf32le-surrogate",
+   "pp-encoding-windows1252-unassigned-81",
+   "pp-encoding-windows1252-unassigned-8d",
+   "pp-encoding-windows1252-unassigned-8f",
+   "pp-encoding-windows1252-unassigned-90",
+   "pp-encoding-windows1252-unassigned-9d",
    "pp-hel-bytes-malformed-argument",
    "pp-hel-bytes-vs-string",
    "pp-str-ascii-high-byte",
@@ -1257,6 +2692,26 @@
   ],
   "req-pm-text-decoding-2": [
    "ce-recovery-malformed-text",
+   "pp-encoding-iso8859-7-unassigned-ae",
+   "pp-encoding-iso8859-7-unassigned-d2",
+   "pp-encoding-iso8859-7-unassigned-ff",
+   "pp-encoding-shift-jis-lead-without-trail",
+   "pp-encoding-shift-jis-trail-7f",
+   "pp-encoding-shift-jis-trail-out-of-range",
+   "pp-encoding-shift-jis-unassigned-pair",
+   "pp-encoding-ucs2be-lone-surrogate",
+   "pp-encoding-ucs2be-surrogate-pair",
+   "pp-encoding-ucs2le-surrogate-pair",
+   "pp-encoding-utf32be-out-of-range",
+   "pp-encoding-utf32be-surrogate",
+   "pp-encoding-utf32le-out-of-range",
+   "pp-encoding-utf32le-partial-code-unit",
+   "pp-encoding-utf32le-surrogate",
+   "pp-encoding-windows1252-unassigned-81",
+   "pp-encoding-windows1252-unassigned-8d",
+   "pp-encoding-windows1252-unassigned-8f",
+   "pp-encoding-windows1252-unassigned-90",
+   "pp-encoding-windows1252-unassigned-9d",
    "pp-str-ascii-high-byte",
    "pp-str-trim-null-value-malformed",
    "pp-str-utf16-lone-surrogate",
@@ -1273,10 +2728,101 @@
    "pp-str-trim-null-utf8-padding-not-decoded",
    "pp-str-trim-null-value-malformed"
   ],
+  "req-pm-text-decoding-5": [
+   "pp-encoding-custom-unsupported"
+  ],
+  "req-pm-text-decoding-6": [
+   "pp-encoding-custom-unsupported"
+  ],
+  "req-pm-text-decoding-7": [
+   "pp-encoding-custom-known-charset",
+   "pp-valid-despite-warning"
+  ],
+  "req-pm-text-decoding-8": [],
+  "req-pm-text-decoding-9": [
+   "pp-encoding-ebcdic037-decodes",
+   "pp-encoding-iso8859-15-decodes",
+   "pp-encoding-iso8859-2-decodes",
+   "pp-encoding-iso8859-5-decodes",
+   "pp-encoding-iso8859-7-decodes",
+   "pp-encoding-iso8859-7-unassigned-ae",
+   "pp-encoding-iso8859-7-unassigned-d2",
+   "pp-encoding-iso8859-7-unassigned-ff",
+   "pp-encoding-iso8859-9-decodes",
+   "pp-encoding-shift-jis-decodes",
+   "pp-encoding-shift-jis-lead-without-trail",
+   "pp-encoding-shift-jis-trail-7f",
+   "pp-encoding-shift-jis-trail-out-of-range",
+   "pp-encoding-shift-jis-unassigned-pair",
+   "pp-encoding-ucs2be-decodes",
+   "pp-encoding-ucs2be-lone-surrogate",
+   "pp-encoding-ucs2be-surrogate-pair",
+   "pp-encoding-ucs2le-decodes",
+   "pp-encoding-ucs2le-surrogate-pair",
+   "pp-encoding-utf32be-byte-order-mark-is-content",
+   "pp-encoding-utf32be-decodes",
+   "pp-encoding-utf32be-out-of-range",
+   "pp-encoding-utf32be-surrogate",
+   "pp-encoding-utf32le-decodes",
+   "pp-encoding-utf32le-out-of-range",
+   "pp-encoding-utf32le-partial-code-unit",
+   "pp-encoding-utf32le-surrogate",
+   "pp-encoding-windows1252-decodes",
+   "pp-encoding-windows1252-unassigned-81",
+   "pp-encoding-windows1252-unassigned-8d",
+   "pp-encoding-windows1252-unassigned-8f",
+   "pp-encoding-windows1252-unassigned-90",
+   "pp-encoding-windows1252-unassigned-9d"
+  ],
+  "req-pm-text-decoding-10": [
+   "pp-encoding-utf32be-byte-order-mark-is-content",
+   "pp-encoding-utf32be-decodes",
+   "pp-encoding-utf32be-out-of-range",
+   "pp-encoding-utf32be-surrogate",
+   "pp-encoding-utf32le-decodes",
+   "pp-encoding-utf32le-out-of-range",
+   "pp-encoding-utf32le-partial-code-unit",
+   "pp-encoding-utf32le-surrogate"
+  ],
+  "req-pm-text-decoding-11": [
+   "pp-encoding-ucs2be-decodes",
+   "pp-encoding-ucs2be-lone-surrogate",
+   "pp-encoding-ucs2be-surrogate-pair",
+   "pp-encoding-ucs2le-decodes",
+   "pp-encoding-ucs2le-surrogate-pair"
+  ],
+  "req-pm-text-decoding-12": [
+   "pp-encoding-ebcdic037-decodes",
+   "pp-encoding-iso8859-15-decodes",
+   "pp-encoding-iso8859-2-decodes",
+   "pp-encoding-iso8859-5-decodes",
+   "pp-encoding-iso8859-7-decodes",
+   "pp-encoding-iso8859-7-unassigned-ae",
+   "pp-encoding-iso8859-7-unassigned-d2",
+   "pp-encoding-iso8859-7-unassigned-ff",
+   "pp-encoding-iso8859-9-decodes",
+   "pp-encoding-windows1252-decodes",
+   "pp-encoding-windows1252-unassigned-81",
+   "pp-encoding-windows1252-unassigned-8d",
+   "pp-encoding-windows1252-unassigned-8f",
+   "pp-encoding-windows1252-unassigned-90",
+   "pp-encoding-windows1252-unassigned-9d"
+  ],
+  "req-pm-text-decoding-13": [
+   "pp-encoding-shift-jis-decodes",
+   "pp-encoding-shift-jis-lead-without-trail",
+   "pp-encoding-shift-jis-trail-7f",
+   "pp-encoding-shift-jis-trail-out-of-range",
+   "pp-encoding-shift-jis-unassigned-pair"
+  ],
+  "req-pm-text-decoding-14": [
+   "pp-claims-statement"
+  ],
   "req-pm-text-numbers-1": [
    "pp-separated-multibyte-encoding"
   ],
   "req-pm-text-numbers-2": [
+   "pp-separated-abutting-regions",
    "pp-separated-tokens"
   ],
   "req-pm-text-numbers-3": [
@@ -1302,6 +2848,20 @@
    "pp-kv-empty-numeric-value",
    "pp-kv-non-number"
   ],
+  "req-pm-value-mapping-1": [
+   "se-fixed-point-scale",
+   "se-fixed-point-scale-range"
+  ],
+  "req-pm-value-mapping-2": [
+   "se-fixed-point-scale-range"
+  ],
+  "req-pm-value-mapping-3": [],
+  "req-hel-array-values-1": [],
+  "req-hel-array-values-2": [],
+  "req-hel-array-values-3": [],
+  "req-hel-array-values-4": [
+   "pp-hel-computed-array-result"
+  ],
   "req-hel-coercion-1": [
    "pp-hel-null-arithmetic",
    "pp-valid-if-evaluation-failure"
@@ -1314,13 +2874,19 @@
    "pp-hel-comparison-chain",
    "pp-hel-literal-range",
    "pp-hel-non-ascii-identifier",
+   "pp-hel-reserved-word-call",
+   "pp-hel-root-as-function-name",
+   "pp-hel-root-as-key",
    "pp-hel-unknown-escape"
   ],
   "req-hel-conformance-2": [
    "pp-hel-comparison-chain",
    "pp-hel-literal-range",
    "pp-hel-non-ascii-identifier",
+   "pp-hel-reserved-word-call",
    "pp-hel-reserved-word-key",
+   "pp-hel-root-as-function-name",
+   "pp-hel-root-as-key",
    "pp-hel-string-control-characters",
    "pp-hel-unknown-escape"
   ],
@@ -1369,11 +2935,14 @@
   "req-hel-conformance-8": [
    "pp-hel-flat-chain-depth",
    "pp-hel-flat-conjunction-depth",
+   "pp-limit-collection-output",
+   "pp-limit-collection-traversal",
    "pp-limit-hel-default-depth",
    "pp-limit-hel-depth",
    "pp-limit-hel-length",
    "pp-limit-quantifier-evaluations",
-   "pp-limit-regex-steps"
+   "pp-limit-regex-steps",
+   "pp-limit-text-conversion"
   ],
   "req-hel-conformance-9": [
    "pp-hel-vector-rows"
@@ -1384,6 +2953,10 @@
   ],
   "req-hel-core-functions-1": [
    "pp-hel-core-functions",
+   "pp-hel-math-abs-min-max",
+   "pp-hel-math-min-no-arguments",
+   "pp-hel-math-min-string",
+   "pp-hel-math-rounding",
    "pp-hel-sizeof-nodes"
   ],
   "req-hel-core-functions-2": [
@@ -1417,6 +2990,31 @@
   "req-hel-ext-quantifiers-4": [
    "pp-limit-quantifier-evaluations"
   ],
+  "req-hel-ext-quantifiers-5": [
+   "pp-limit-collection-output",
+   "pp-limit-collection-traversal",
+   "pp-limit-text-conversion"
+  ],
+  "req-hel-ext-quantifiers-6": [
+   "pp-limit-collection-output",
+   "pp-limit-text-conversion"
+  ],
+  "req-hel-ext-quantifiers-8": [],
+  "req-hel-ext-quantifiers-9": [],
+  "req-hel-ext-quantifiers-10": [],
+  "req-hel-ext-quantifiers-11": [],
+  "req-hel-ext-quantifiers-12": [],
+  "req-hel-ext-quantifiers-13": [],
+  "req-hel-ext-quantifiers-14": [],
+  "req-hel-ext-quantifiers-15": [],
+  "req-hel-ext-quantifiers-16": [],
+  "req-hel-ext-quantifiers-17": [],
+  "req-hel-ext-quantifiers-18": [],
+  "req-hel-ext-quantifiers-19": [],
+  "req-hel-ext-quantifiers-20": [],
+  "req-hel-ext-quantifiers-21": [],
+  "req-hel-ext-quantifiers-22": [],
+  "req-hel-ext-quantifiers-23": [],
   "req-hel-ext-temporal-1": [
    "pp-hel-temporal-date-only"
   ],
@@ -1429,9 +3027,41 @@
   "req-hel-ext-text-1": [
    "pp-hel-text-pattern-not-string"
   ],
-  "req-hel-ext-text-2": [],
   "req-hel-ext-text-3": [
+   "pp-limit-regex-idle-iterations",
    "pp-limit-regex-steps"
+  ],
+  "req-hel-ext-text-4": [
+   "pp-hel-regex-anchors",
+   "pp-hel-regex-backreference",
+   "pp-hel-regex-hex-escape",
+   "pp-hel-regex-hyphen-in-class",
+   "pp-hel-regex-lazy-quantifier",
+   "pp-hel-regex-lookahead",
+   "pp-hel-regex-non-capturing-group",
+   "pp-hel-regex-pattern-from-data",
+   "pp-hel-regex-quantifier-bound",
+   "pp-hel-regex-word-boundary",
+   "pp-hel-regex-xsd-constructs"
+  ],
+  "req-hel-ext-text-5": [
+   "pp-hel-regex-unknown-block"
+  ],
+  "req-hel-ext-text-6": [
+   "pp-hel-regex-hyphen-in-class",
+   "pp-hel-regex-hyphen-misplaced"
+  ],
+  "req-hel-ext-text-7": [],
+  "req-hel-ext-text-8": [
+   "pp-limit-regex-counted-bound-above-cap",
+   "pp-limit-regex-idle-iterations"
+  ],
+  "req-hel-ext-text-9": [
+   "pp-limit-regex-counted-within-caps",
+   "pp-limit-regex-idle-iterations"
+  ],
+  "req-hel-ext-text-10": [
+   "pp-limit-regex-counted-within-caps"
   ],
   "req-hel-extension-groups-1": [
    "pp-hel-extension-group-unclaimed",
@@ -1449,10 +3079,20 @@
    "pp-hel-literal-extremes",
    "pp-hel-literal-range"
   ],
+  "req-hel-formal-grammar-3": [
+   "pp-hel-not-is-an-operator",
+   "pp-hel-reserved-word-call",
+   "pp-hel-root-as-function-name"
+  ],
+  "req-hel-formal-grammar-4": [
+   "pp-hel-root-as-function-name",
+   "pp-hel-root-as-key"
+  ],
   "req-hel-key-resolution-1": [
    "pp-hel-duplicate-local-name"
   ],
   "req-hel-key-resolution-2": [
+   "pp-hel-parent-non-leading",
    "pp-hel-undefined-name-after-first-step",
    "pp-let-not-reachable-through-parent",
    "pp-let-not-reachable-through-self"
@@ -1465,6 +3105,29 @@
   ],
   "req-hel-key-resolution-5": [
    "pp-hel-duplicate-local-name"
+  ],
+  "req-hel-math-1": [
+   "pp-hel-math-rounding",
+   "pp-hel-math-rounding-infinity",
+   "pp-hel-math-rounding-nan",
+   "pp-hel-math-rounding-overflow"
+  ],
+  "req-hel-math-2": [
+   "pp-hel-math-abs-min-max"
+  ],
+  "req-hel-math-3": [
+   "pp-hel-math-tostring",
+   "pp-hel-math-tostring-string"
+  ],
+  "req-hel-math-4": [
+   "pp-hel-math-tostring",
+   "pp-hel-math-tostring-shortest-digits"
+  ],
+  "req-hel-math-5": [
+   "pp-hel-math-unsigned-64"
+  ],
+  "req-hel-math-6": [
+   "pp-hel-math-tostring-shortest-digits"
   ],
   "req-hel-name-binding-1": [
    "hc-repeat-until-container-fallback",
@@ -1480,13 +3143,20 @@
    "pp-rep-until-struct-parent"
   ],
   "req-hel-name-binding-2": [],
+  "req-hel-name-binding-3": [
+   "se-class-guard-later-field",
+   "se-map-guard-later-field",
+   "se-value-expression-absent-later-field",
+   "se-value-expression-later-field"
+  ],
   "req-hel-numeric-semantics-1": [
    "pp-hel-integer-overflow"
   ],
   "req-hel-numeric-semantics-2": [
    "pp-hel-and-evaluates-both-operands",
    "pp-hel-division-by-zero",
-   "pp-hel-float-division-by-zero"
+   "pp-hel-float-division-by-zero",
+   "pp-hel-float-remainder-by-zero"
   ],
   "req-hel-numeric-semantics-3": [
    "pp-hel-shift-count-range"
@@ -1495,6 +3165,7 @@
    "pp-hel-shift-overflow"
   ],
   "req-hel-numeric-semantics-5": [
+   "pp-hel-math-unsigned-64",
    "pp-hel-uint64-exact",
    "pp-hel-uint64-integer-arithmetic",
    "pp-int-uint64-above-int64"
@@ -1503,6 +3174,10 @@
    "pp-hel-index-float",
    "pp-hel-index-negative",
    "pp-hel-index-out-of-range"
+  ],
+  "req-hel-numeric-semantics-7": [
+   "pp-hel-float-remainder",
+   "pp-hel-float-remainder-by-zero"
   ],
   "req-hel-operator-precedence-1": [
    "pp-hel-ternary-guard"
@@ -1528,6 +3203,12 @@
   "req-hel-reserved-roots-3": [
    "pp-param-quantifier-element",
    "pp-param-quantifier-holding-struct"
+  ],
+  "req-hel-reserved-roots-4": [
+   "pp-hel-parent-non-leading"
+  ],
+  "req-hel-reserved-roots-5": [
+   "pp-hel-stream-key-parent-is-null"
   ],
   "req-hel-tonumber-1": [
    "pp-hel-tonumber-float-lexeme",
@@ -1618,16 +3299,6 @@
    "hc-pipeline-and-encoded-with",
    "hc-yaml-duplicate-struct-key"
   ],
-  "req-hdl-clauses-4": [
-   "hc-float-count",
-   "hc-float-offset",
-   "hc-float-size",
-   "hc-negative-count",
-   "hc-negative-offset",
-   "hc-negative-size",
-   "hc-size-zero",
-   "hc-stride-zero"
-  ],
   "req-hdl-clauses-5": [
    "hc-fixed-boolean",
    "hc-fixed-curie",
@@ -1636,6 +3307,8 @@
    "hc-fixed-string-on-numeric",
    "hc-fixed-strings",
    "hc-fixed-strings-yaml",
+   "hc-float-format-vax",
+   "hc-float-format-vax-yaml",
    "hc-prop-bare-name",
    "hc-prop-iri",
    "hc-prop-values",
@@ -1643,7 +3316,38 @@
    "hc-switch-name-key",
    "hc-switch-name-key-yaml"
   ],
+  "req-hdl-clauses-6": [
+   "hc-bit-order-field"
+  ],
+  "req-hdl-clauses-7": [
+   "hc-float-count",
+   "hc-float-offset",
+   "hc-float-size",
+   "hc-negative-count",
+   "hc-negative-offset",
+   "hc-negative-offset-from-stream-end",
+   "hc-negative-size",
+   "hc-size-zero",
+   "hc-stride-zero"
+  ],
+  "req-hdl-clauses-8": [
+   "hc-negative-offset-from-current"
+  ],
+  "req-hdl-clauses-9": [
+   "hc-offset-field-start",
+   "hc-offset-field-start-later-field",
+   "hc-offset-field-start-not-a-field",
+   "hc-offset-field-start-yaml",
+   "hc-offset-field-start-yaml-no-field",
+   "hc-offset-field-yaml-other-base"
+  ],
+  "req-hdl-clauses-10": [
+   "hc-align-origin",
+   "hc-align-origin-unknown",
+   "hc-align-origin-yaml"
+  ],
   "req-hdl-compilation-model-1": [
+   "hc-align-origin-unknown",
    "hc-aspect-prefix-not-predeclared",
    "hc-backtick-in-run",
    "hc-bad-hex-literal",
@@ -1658,6 +3362,7 @@
    "hc-count-and-until",
    "hc-derive-with-repeat",
    "hc-duplicate-struct",
+   "hc-encoded-with-unknown-register-concept",
    "hc-evaluation-instant-in-parse",
    "hc-fixed-boolean",
    "hc-fixed-curie",
@@ -1694,13 +3399,28 @@
    "hc-lone-surrogate",
    "hc-max-below-min",
    "hc-min-without-pattern",
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml",
    "hc-namespace-not-absolute",
    "hc-negative-count",
    "hc-negative-offset",
+   "hc-negative-offset-from-stream-end",
    "hc-negative-size",
    "hc-non-ascii-align",
    "hc-non-ascii-digit",
    "hc-non-ascii-hex-digit",
+   "hc-offset-field-start-later-field",
+   "hc-offset-field-start-not-a-field",
+   "hc-offset-field-start-yaml-no-field",
+   "hc-offset-field-yaml-other-base",
    "hc-param-argument-forward-reference",
    "hc-param-arguments-for-plain-struct",
    "hc-param-arity-mismatch",
@@ -1715,7 +3435,8 @@
    "hc-param-undeclared",
    "hc-param-unknown-type",
    "hc-pipeline-and-encoded-with",
-   "hc-pipeline-non-integer-parameter",
+   "hc-pipeline-duplicate-parameter",
+   "hc-pipeline-unknown-register-concept",
    "hc-prop-bare-name",
    "hc-quoted-key-without-alias",
    "hc-repeat-until-ambiguous",
@@ -1725,6 +3446,8 @@
    "hc-seek-without-at",
    "hc-self-outside-scope",
    "hc-self-reference",
+   "hc-shared-namespace-root-and-module",
+   "hc-shared-namespace-two-modules",
    "hc-size-zero",
    "hc-stride-zero",
    "hc-switch-and-dispatch",
@@ -1747,15 +3470,39 @@
    "hc-yaml-duplicate-struct-key",
    "hc-yaml-format-and-module",
    "hc-yaml-import-key",
+   "hc-yaml-key-bit-length-on-byte-field",
+   "hc-yaml-key-container-option-on-struct",
    "hc-yaml-null-list-entry",
+   "hc-yaml-quoted-hex-separator",
+   "hc-yaml-quoted-hex-sync",
+   "hc-yaml-quoted-hex-terminator",
    "hc-yaml-seek-without-at",
    "hc-yaml-switch-and-dispatch",
+   "hc-yaml-unknown-key-bundle-part",
+   "hc-yaml-unknown-key-checksum",
+   "hc-yaml-unknown-key-dims-entry",
+   "hc-yaml-unknown-key-dispatch",
+   "hc-yaml-unknown-key-enum",
+   "hc-yaml-unknown-key-layout",
+   "hc-yaml-unknown-key-struct",
+   "hc-yaml-value-kind-alias-mapping",
+   "hc-yaml-value-kind-bit-length-sequence",
+   "hc-yaml-value-kind-fields-scalar",
+   "hc-yaml-value-kind-flag-string",
+   "hc-yaml-value-kind-hex-number",
+   "hc-yaml-value-kind-layout-scalar",
+   "hc-yaml-value-kind-null-for-mapping",
+   "hc-yaml-value-kind-structs-sequence",
    "hc-yaml-version-spelling"
   ],
   "req-hdl-conformance-section-1": [
+   "hc-align-origin",
+   "hc-align-origin-unknown",
+   "hc-align-origin-yaml",
    "hc-aspect-prefix-not-predeclared",
    "hc-backtick-in-run",
    "hc-bad-hex-literal",
+   "hc-bit-order-field",
    "hc-bracket-size-after-u24",
    "hc-bracket-size-on-u32",
    "hc-bundle-profile",
@@ -1772,12 +3519,18 @@
    "hc-checksum-fixed-terminator",
    "hc-checksum-fixed-terminator-yaml",
    "hc-checksum-named-crcs",
+   "hc-codec-switch-and-session",
+   "hc-codec-switch-and-session-yaml",
    "hc-contextual-keywords",
    "hc-contextual-keywords-yaml",
    "hc-count-and-until",
    "hc-derive-with-repeat",
+   "hc-dispatch-arm-iris",
+   "hc-dispatch-arm-iris-yaml",
    "hc-duplicate-struct",
    "hc-element-key",
+   "hc-encoded-with-catalogue-codec",
+   "hc-encoded-with-unknown-register-concept",
    "hc-evaluation-instant-in-parse",
    "hc-field-and-expression-forms",
    "hc-field-and-expression-forms-yaml",
@@ -1790,6 +3543,8 @@
    "hc-fixed-strings",
    "hc-fixed-strings-yaml",
    "hc-float-count",
+   "hc-float-format-vax",
+   "hc-float-format-vax-yaml",
    "hc-float-offset",
    "hc-float-size",
    "hc-format-without-struct",
@@ -1827,13 +3582,31 @@
    "hc-lone-surrogate",
    "hc-max-below-min",
    "hc-min-without-pattern",
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml",
    "hc-namespace-not-absolute",
    "hc-negative-count",
    "hc-negative-offset",
+   "hc-negative-offset-from-current",
+   "hc-negative-offset-from-stream-end",
    "hc-negative-size",
    "hc-non-ascii-align",
    "hc-non-ascii-digit",
    "hc-non-ascii-hex-digit",
+   "hc-offset-field-start",
+   "hc-offset-field-start-later-field",
+   "hc-offset-field-start-not-a-field",
+   "hc-offset-field-start-yaml",
+   "hc-offset-field-start-yaml-no-field",
+   "hc-offset-field-yaml-other-base",
    "hc-param-argument-forward-reference",
    "hc-param-arguments-for-plain-struct",
    "hc-param-arity-mismatch",
@@ -1856,7 +3629,8 @@
    "hc-param-unknown-type",
    "hc-parent-path-several-containers",
    "hc-pipeline-and-encoded-with",
-   "hc-pipeline-non-integer-parameter",
+   "hc-pipeline-duplicate-parameter",
+   "hc-pipeline-unknown-register-concept",
    "hc-prop-bare-name",
    "hc-prop-iri",
    "hc-prop-values",
@@ -1883,6 +3657,8 @@
    "hc-self-reference",
    "hc-semantic-mapping",
    "hc-semantic-mapping-yaml",
+   "hc-shared-namespace-root-and-module",
+   "hc-shared-namespace-two-modules",
    "hc-size-zero",
    "hc-stride-zero",
    "hc-string-non-bmp",
@@ -1914,25 +3690,54 @@
    "hc-yaml-duplicate-key",
    "hc-yaml-duplicate-struct-key",
    "hc-yaml-format-and-module",
+   "hc-yaml-hex-mapping",
    "hc-yaml-import-key",
+   "hc-yaml-key-bit-length-on-byte-field",
+   "hc-yaml-key-container-option-on-struct",
    "hc-yaml-null-list-entry",
+   "hc-yaml-quoted-hex-separator",
+   "hc-yaml-quoted-hex-sync",
+   "hc-yaml-quoted-hex-terminator",
    "hc-yaml-seek-without-at",
    "hc-yaml-surface",
    "hc-yaml-surface-text",
    "hc-yaml-switch-and-dispatch",
+   "hc-yaml-unknown-key-bundle-part",
+   "hc-yaml-unknown-key-checksum",
+   "hc-yaml-unknown-key-dims-entry",
+   "hc-yaml-unknown-key-dispatch",
+   "hc-yaml-unknown-key-enum",
+   "hc-yaml-unknown-key-layout",
+   "hc-yaml-unknown-key-struct",
+   "hc-yaml-value-kind-alias-mapping",
+   "hc-yaml-value-kind-bit-length-sequence",
+   "hc-yaml-value-kind-fields-scalar",
+   "hc-yaml-value-kind-flag-string",
+   "hc-yaml-value-kind-hex-number",
+   "hc-yaml-value-kind-layout-scalar",
+   "hc-yaml-value-kind-null-for-mapping",
+   "hc-yaml-value-kind-structs-sequence",
    "hc-yaml-version-spelling"
   ],
   "req-hdl-conformance-section-2": [
+   "hc-align-origin-yaml",
    "hc-bundle-profile-yaml",
    "hc-checksum-custom-crc-yaml",
    "hc-checksum-fixed-terminator-yaml",
+   "hc-codec-switch-and-session-yaml",
    "hc-contextual-keywords-yaml",
+   "hc-dispatch-arm-iris-yaml",
    "hc-field-and-expression-forms-yaml",
    "hc-fixed-strings-yaml",
+   "hc-float-format-vax-yaml",
    "hc-import-within-root-yaml",
    "hc-import-yaml-module",
    "hc-layout-cell-yaml",
    "hc-let-binding-yaml",
+   "hc-mint-collision-struct-enum-yaml",
+   "hc-offset-field-start-yaml",
+   "hc-offset-field-start-yaml-no-field",
+   "hc-offset-field-yaml-other-base",
    "hc-param-on-header",
    "hc-param-struct-yaml",
    "hc-param-switch-arms-yaml",
@@ -1950,6 +3755,7 @@
    "hc-switch-yaml",
    "hc-types-24-bit-and-half-yaml",
    "hc-yaml-format-and-module",
+   "hc-yaml-hex-mapping",
    "hc-yaml-import-key",
    "hc-yaml-seek-without-at",
    "hc-yaml-surface",
@@ -1962,6 +3768,9 @@
    "hc-unknown-escape"
   ],
   "req-hdl-conformance-section-4": [
+   "hc-align-origin",
+   "hc-align-origin-yaml",
+   "hc-bit-order-field",
    "hc-bundle-profile",
    "hc-bundle-profile-yaml",
    "hc-checksum-custom-crc",
@@ -1970,14 +3779,21 @@
    "hc-checksum-fixed-terminator",
    "hc-checksum-fixed-terminator-yaml",
    "hc-checksum-named-crcs",
+   "hc-codec-switch-and-session",
+   "hc-codec-switch-and-session-yaml",
    "hc-contextual-keywords",
    "hc-contextual-keywords-yaml",
+   "hc-dispatch-arm-iris",
+   "hc-dispatch-arm-iris-yaml",
    "hc-element-key",
+   "hc-encoded-with-catalogue-codec",
    "hc-field-and-expression-forms",
    "hc-field-and-expression-forms-yaml",
    "hc-fixed-24-bit-and-half",
    "hc-fixed-strings",
    "hc-fixed-strings-yaml",
+   "hc-float-format-vax",
+   "hc-float-format-vax-yaml",
    "hc-import-within-root",
    "hc-import-within-root-yaml",
    "hc-import-yaml-module",
@@ -1987,6 +3803,9 @@
    "hc-let-binding-yaml",
    "hc-let-reads-parameter",
    "hc-namespace-not-absolute",
+   "hc-negative-offset-from-current",
+   "hc-offset-field-start",
+   "hc-offset-field-start-yaml",
    "hc-param-element-scope",
    "hc-param-nested-arguments",
    "hc-param-recursion",
@@ -2026,6 +3845,7 @@
    "hc-types-24-bit-and-half-yaml",
    "hc-undeclared-prefix",
    "hc-use-not-absolute",
+   "hc-yaml-hex-mapping",
    "hc-yaml-surface",
    "hc-yaml-surface-text"
   ],
@@ -2055,6 +3875,9 @@
    "hc-undeclared-name"
   ],
   "req-hdl-conformance-section-6": [
+   "hc-align-origin",
+   "hc-align-origin-yaml",
+   "hc-bit-order-field",
    "hc-bundle-profile",
    "hc-bundle-profile-yaml",
    "hc-checksum-custom-crc",
@@ -2063,14 +3886,21 @@
    "hc-checksum-fixed-terminator",
    "hc-checksum-fixed-terminator-yaml",
    "hc-checksum-named-crcs",
+   "hc-codec-switch-and-session",
+   "hc-codec-switch-and-session-yaml",
    "hc-contextual-keywords",
    "hc-contextual-keywords-yaml",
+   "hc-dispatch-arm-iris",
+   "hc-dispatch-arm-iris-yaml",
    "hc-element-key",
+   "hc-encoded-with-catalogue-codec",
    "hc-field-and-expression-forms",
    "hc-field-and-expression-forms-yaml",
    "hc-fixed-24-bit-and-half",
    "hc-fixed-strings",
    "hc-fixed-strings-yaml",
+   "hc-float-format-vax",
+   "hc-float-format-vax-yaml",
    "hc-import-within-root",
    "hc-import-within-root-yaml",
    "hc-import-yaml-module",
@@ -2079,6 +3909,9 @@
    "hc-let-binding",
    "hc-let-binding-yaml",
    "hc-let-reads-parameter",
+   "hc-negative-offset-from-current",
+   "hc-offset-field-start",
+   "hc-offset-field-start-yaml",
    "hc-param-element-scope",
    "hc-param-nested-arguments",
    "hc-param-recursion",
@@ -2114,10 +3947,12 @@
    "hc-switch-yaml",
    "hc-types-24-bit-and-half",
    "hc-types-24-bit-and-half-yaml",
+   "hc-yaml-hex-mapping",
    "hc-yaml-surface",
    "hc-yaml-surface-text"
   ],
   "req-hdl-conformance-section-7": [
+   "hc-align-origin-unknown",
    "hc-aspect-prefix-not-predeclared",
    "hc-backtick-in-run",
    "hc-bad-hex-literal",
@@ -2132,6 +3967,7 @@
    "hc-count-and-until",
    "hc-derive-with-repeat",
    "hc-duplicate-struct",
+   "hc-encoded-with-unknown-register-concept",
    "hc-evaluation-instant-in-parse",
    "hc-fixed-boolean",
    "hc-fixed-curie",
@@ -2168,13 +4004,28 @@
    "hc-lone-surrogate",
    "hc-max-below-min",
    "hc-min-without-pattern",
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml",
    "hc-namespace-not-absolute",
    "hc-negative-count",
    "hc-negative-offset",
+   "hc-negative-offset-from-stream-end",
    "hc-negative-size",
    "hc-non-ascii-align",
    "hc-non-ascii-digit",
    "hc-non-ascii-hex-digit",
+   "hc-offset-field-start-later-field",
+   "hc-offset-field-start-not-a-field",
+   "hc-offset-field-start-yaml-no-field",
+   "hc-offset-field-yaml-other-base",
    "hc-param-argument-forward-reference",
    "hc-param-arguments-for-plain-struct",
    "hc-param-arity-mismatch",
@@ -2189,7 +4040,8 @@
    "hc-param-undeclared",
    "hc-param-unknown-type",
    "hc-pipeline-and-encoded-with",
-   "hc-pipeline-non-integer-parameter",
+   "hc-pipeline-duplicate-parameter",
+   "hc-pipeline-unknown-register-concept",
    "hc-prop-bare-name",
    "hc-quoted-key-without-alias",
    "hc-repeat-until-ambiguous",
@@ -2199,6 +4051,8 @@
    "hc-seek-without-at",
    "hc-self-outside-scope",
    "hc-self-reference",
+   "hc-shared-namespace-root-and-module",
+   "hc-shared-namespace-two-modules",
    "hc-size-zero",
    "hc-stride-zero",
    "hc-switch-and-dispatch",
@@ -2221,9 +4075,29 @@
    "hc-yaml-duplicate-struct-key",
    "hc-yaml-format-and-module",
    "hc-yaml-import-key",
+   "hc-yaml-key-bit-length-on-byte-field",
+   "hc-yaml-key-container-option-on-struct",
    "hc-yaml-null-list-entry",
+   "hc-yaml-quoted-hex-separator",
+   "hc-yaml-quoted-hex-sync",
+   "hc-yaml-quoted-hex-terminator",
    "hc-yaml-seek-without-at",
    "hc-yaml-switch-and-dispatch",
+   "hc-yaml-unknown-key-bundle-part",
+   "hc-yaml-unknown-key-checksum",
+   "hc-yaml-unknown-key-dims-entry",
+   "hc-yaml-unknown-key-dispatch",
+   "hc-yaml-unknown-key-enum",
+   "hc-yaml-unknown-key-layout",
+   "hc-yaml-unknown-key-struct",
+   "hc-yaml-value-kind-alias-mapping",
+   "hc-yaml-value-kind-bit-length-sequence",
+   "hc-yaml-value-kind-fields-scalar",
+   "hc-yaml-value-kind-flag-string",
+   "hc-yaml-value-kind-hex-number",
+   "hc-yaml-value-kind-layout-scalar",
+   "hc-yaml-value-kind-null-for-mapping",
+   "hc-yaml-value-kind-structs-sequence",
    "hc-yaml-version-spelling"
   ],
   "req-hdl-conformance-section-8": [
@@ -2295,6 +4169,8 @@
    "hc-field-and-expression-forms-yaml",
    "hc-let-binding",
    "hc-let-binding-yaml",
+   "hc-offset-field-start",
+   "hc-offset-field-start-yaml",
    "hc-param-struct",
    "hc-param-struct-yaml",
    "hc-struct-and-types",
@@ -2303,6 +4179,8 @@
    "hc-yaml-surface-text"
   ],
   "req-hdl-form-rule-2": [
+   "hc-align-origin",
+   "hc-align-origin-yaml",
    "hc-fixed-strings",
    "hc-fixed-strings-yaml",
    "hc-prop-values",
@@ -2344,7 +4222,9 @@
    "hc-backtick-in-run"
   ],
   "req-hdl-grammar-fields-1": [
-   "hc-pipeline-non-integer-parameter"
+   "hc-codec-switch-and-session",
+   "hc-codec-switch-and-session-yaml",
+   "hc-pipeline-duplicate-parameter"
   ],
   "req-hdl-grammar-keywords-1": [
    "hc-param-reserved-name",
@@ -2356,6 +4236,30 @@
   ],
   "req-hdl-grammar-lexical-1": [
    "hc-hyphenated-field-name"
+  ],
+  "req-hdl-iri-minting-1": [
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml"
+  ],
+  "req-hdl-iri-minting-2": [
+   "hc-mint-collision-alias-struct",
+   "hc-mint-collision-asset-bundle",
+   "hc-mint-collision-asset-part-struct",
+   "hc-mint-collision-bundle-struct",
+   "hc-mint-collision-dispatch-arms",
+   "hc-mint-collision-dispatch-table-struct",
+   "hc-mint-collision-enums",
+   "hc-mint-collision-parameters",
+   "hc-mint-collision-struct-enum",
+   "hc-mint-collision-struct-enum-yaml"
   ],
   "req-hdl-layout-1": [
    "pp-hel-asset-outside-bundle"
@@ -2390,6 +4294,15 @@
    "hc-import-outside-root"
   ],
   "req-hdl-modules-3": [],
+  "req-hdl-modules-4": [
+   "hc-dispatch-arm-iris",
+   "hc-dispatch-arm-iris-yaml",
+   "hc-mint-collision-dispatch-arms"
+  ],
+  "req-hdl-modules-5": [
+   "hc-shared-namespace-root-and-module",
+   "hc-shared-namespace-two-modules"
+  ],
   "req-hdl-parameters-1": [
    "hc-let-binding",
    "hc-let-binding-yaml",
@@ -2430,6 +4343,13 @@
    "hc-aspect-prefix-not-predeclared",
    "hc-undeclared-prefix"
   ],
+  "req-hdl-semantic-1": [
+   "hc-encoded-with-catalogue-codec"
+  ],
+  "req-hdl-semantic-2": [
+   "hc-encoded-with-unknown-register-concept",
+   "hc-pipeline-unknown-register-concept"
+  ],
   "req-hdl-types-1": [
    "hc-bracket-size-after-u24",
    "hc-bracket-size-on-u32"
@@ -2445,6 +4365,36 @@
    "hc-yaml-duplicate-key",
    "hc-yaml-duplicate-struct-key",
    "hc-yaml-null-list-entry"
+  ],
+  "req-hdl-yaml-3": [
+   "hc-yaml-hex-mapping"
+  ],
+  "req-hdl-yaml-4": [],
+  "req-hdl-yaml-5": [
+   "hc-yaml-quoted-hex-separator",
+   "hc-yaml-quoted-hex-sync",
+   "hc-yaml-quoted-hex-terminator"
+  ],
+  "req-hdl-yaml-6": [
+   "hc-yaml-key-bit-length-on-byte-field",
+   "hc-yaml-key-container-option-on-struct",
+   "hc-yaml-unknown-key-bundle-part",
+   "hc-yaml-unknown-key-checksum",
+   "hc-yaml-unknown-key-dims-entry",
+   "hc-yaml-unknown-key-dispatch",
+   "hc-yaml-unknown-key-enum",
+   "hc-yaml-unknown-key-layout",
+   "hc-yaml-unknown-key-struct"
+  ],
+  "req-hdl-yaml-7": [
+   "hc-yaml-value-kind-alias-mapping",
+   "hc-yaml-value-kind-bit-length-sequence",
+   "hc-yaml-value-kind-fields-scalar",
+   "hc-yaml-value-kind-flag-string",
+   "hc-yaml-value-kind-hex-number",
+   "hc-yaml-value-kind-layout-scalar",
+   "hc-yaml-value-kind-null-for-mapping",
+   "hc-yaml-value-kind-structs-sequence"
   ],
   "req-ce-conf-conformance-1": [
    "ce-absent-optional-fires-nothing",
@@ -2606,17 +4556,6 @@
    "pp-bits-realign-before-byte-field"
   ],
   "req-bddo-checksum-algorithms-1": [
-   "hc-checksum-named-crcs",
-   "pp-crc-crc16arc",
-   "pp-crc-crc16modbus",
-   "pp-crc-crc16x25",
-   "pp-crc-crc16xmodem",
-   "pp-crc-crc32bzip2",
-   "pp-crc-crc32c",
-   "pp-crc-crc32mpeg2",
-   "pp-crc-crc64ecma",
-   "pp-crc-crc64xz",
-   "pp-crc-crc8",
    "pp-crc-custom",
    "pp-crc-custom-24-bit",
    "pp-crc-custom-invalid-width"
@@ -2711,24 +4650,55 @@
   "req-spatialref-document-8": [],
   "req-spatialref-document-9": [],
   "req-spatialref-document-10": [],
-  "req-spatialref-document-11": []
+  "req-spatialref-document-11": [],
+  "req-spatialref-document-12": []
  },
  "withdrawn": [
   "req-ce-conf-conformance-11",
   "req-ce-conf-conformance-12",
+  "req-hdl-clauses-4",
+  "req-hel-ext-quantifiers-7",
+  "req-hel-ext-text-2",
   "req-pm-conformance-classes-9",
-  "req-pm-errors-15"
+  "req-pm-errors-15",
+  "req-pm-serialisation-11",
+  "req-pm-serialisation-13",
+  "req-pm-serialisation-15",
+  "req-pm-serialisation-16"
  ],
  "reports": [
   {
-   "path": "reports/hexplain-tools/0.1.0-snapshot.json",
+   "path": "reports/hexplain-tools/0.1.0-snapshot-354e7441707e.json",
    "name": "hexplain-tools",
    "version": "0.1.0-SNAPSHOT",
    "date": "2026-09-28T00:52:17Z",
    "digest": "354e7441707e92849d363795a2f8cf4ebc07cca8a4bbff55af74456c8e0c6f9d",
+   "superseded": true,
    "PASS": 630,
    "FAIL": 0,
    "SKIP": 1
+  },
+  {
+   "path": "reports/hexplain-tools/0.1.0-snapshot-529c1a9c7918.json",
+   "name": "hexplain-tools",
+   "version": "0.1.0-SNAPSHOT",
+   "date": "2026-10-13T15:03:14Z",
+   "digest": "529c1a9c7918b191a38094c28fea8df212c014b1fc34c4626014ee5f98c53828",
+   "superseded": true,
+   "PASS": 801,
+   "FAIL": 0,
+   "SKIP": 2
+  },
+  {
+   "path": "reports/hexplain-tools/0.1.0-snapshot-665b443c5f01.json",
+   "name": "hexplain-tools",
+   "version": "0.1.0-SNAPSHOT",
+   "date": "2026-10-15T21:56:45Z",
+   "digest": "665b443c5f019d43086b748ff36e624caac326fb46fb99838e3ed6fb002b9499",
+   "superseded": true,
+   "PASS": 927,
+   "FAIL": 0,
+   "SKIP": 4
   }
  ],
  "sections": {
@@ -2736,102 +4706,131 @@
   "bddo/index.html#odd-widths": 7,
   "bddo/index.html#parameterised-structs": 9,
   "conf/index.html#conformance": 1,
-  "hdl/index.html#bundle-profile": 4,
+  "dlv#conditional": 4,
+  "hdl/index.html#align-origin": 3,
+  "hdl/index.html#asset": 2,
+  "hdl/index.html#bundle-profile": 5,
   "hdl/index.html#checksums": 10,
   "hdl/index.html#clause-multiplicity": 13,
-  "hdl/index.html#clauses": 17,
+  "hdl/index.html#clauses": 23,
   "hdl/index.html#delimited": 6,
-  "hdl/index.html#escape-hatch": 8,
+  "hdl/index.html#escape-hatch": 10,
   "hdl/index.html#expressions": 21,
-  "hdl/index.html#form-rule": 8,
+  "hdl/index.html#field-bit-order": 1,
+  "hdl/index.html#form-rule": 9,
   "hdl/index.html#forward-references": 15,
   "hdl/index.html#grammar-common": 1,
   "hdl/index.html#grammar-document": 1,
   "hdl/index.html#grammar-expressions": 5,
-  "hdl/index.html#grammar-fields": 8,
+  "hdl/index.html#grammar-fields": 15,
   "hdl/index.html#grammar-keywords": 6,
   "hdl/index.html#grammar-layout": 1,
   "hdl/index.html#grammar-lexical": 5,
   "hdl/index.html#grammar-structs": 5,
   "hdl/index.html#import-resolution": 4,
-  "hdl/index.html#iri-minting": 7,
+  "hdl/index.html#iri-minting": 21,
   "hdl/index.html#layout": 5,
   "hdl/index.html#lexical": 20,
   "hdl/index.html#literal-datatypes": 2,
-  "hdl/index.html#literal-values": 22,
-  "hdl/index.html#modules": 8,
-  "hdl/index.html#parameters": 26,
+  "hdl/index.html#literal-values": 24,
+  "hdl/index.html#modules": 14,
+  "hdl/index.html#offset-field-start": 6,
+  "hdl/index.html#parameters": 27,
   "hdl/index.html#prefixes": 7,
   "hdl/index.html#raw-hel": 2,
   "hdl/index.html#repeat-until-names": 4,
   "hdl/index.html#root-keys": 3,
   "hdl/index.html#scalar-keys": 3,
-  "hdl/index.html#semantic": 4,
+  "hdl/index.html#semantic": 9,
   "hdl/index.html#structure": 2,
-  "hdl/index.html#types": 10,
+  "hdl/index.html#terms-without-a-clause": 2,
+  "hdl/index.html#types": 11,
   "hdl/index.html#versioning": 3,
-  "hdl/index.html#yaml": 38,
+  "hdl/index.html#yaml": 67,
+  "hel/index.html#array-values": 1,
   "hel/index.html#coercion": 9,
   "hel/index.html#conformance": 11,
-  "hel/index.html#core-functions": 10,
+  "hel/index.html#core-functions": 11,
   "hel/index.html#evaluation": 4,
   "hel/index.html#expression-depth": 2,
   "hel/index.html#expression-literals": 1,
   "hel/index.html#ext-geometry": 3,
-  "hel/index.html#ext-quantifiers": 5,
+  "hel/index.html#ext-quantifiers": 8,
   "hel/index.html#ext-register": 1,
   "hel/index.html#ext-temporal": 3,
-  "hel/index.html#ext-text": 3,
+  "hel/index.html#ext-text": 19,
   "hel/index.html#extension-groups": 2,
+  "hel/index.html#float-remainder": 1,
+  "hel/index.html#float-rendering": 1,
   "hel/index.html#key-resolution": 6,
   "hel/index.html#local-bindings": 2,
+  "hel/index.html#math": 11,
   "hel/index.html#name-binding": 9,
-  "hel/index.html#numeric-semantics": 13,
-  "hel/index.html#reserved-roots": 10,
-  "hel/index.html#syntax": 8,
+  "hel/index.html#non-leading-parent": 1,
+  "hel/index.html#numeric-semantics": 16,
+  "hel/index.html#reserved-roots": 13,
+  "hel/index.html#syntax": 12,
   "hel/index.html#tonumber": 4,
   "hel/index.html#undefined-names": 10,
   "hel/index.html#version-marker": 4,
   "hel/index.html#versioning": 5,
-  "processing#algorithm": 102,
-  "processing#bit-cursor": 8,
-  "processing#byte-order": 12,
-  "processing#computed-values": 17,
+  "processing#algorithm": 140,
+  "processing#alignment-origin": 1,
+  "processing#alignment-padding": 17,
+  "processing#bit-cursor": 13,
+  "processing#byte-order": 20,
+  "processing#claimed-encodings": 1,
+  "processing#codec-contracts": 9,
+  "processing#codec-selection": 9,
+  "processing#codec-sessions": 1,
+  "processing#codec-status": 1,
+  "processing#computed-values": 19,
   "processing#conflicting-forms": 5,
-  "processing#conformance-classes": 4,
+  "processing#conformance-classes": 6,
   "processing#conformance-evaluation": 41,
-  "processing#context": 5,
-  "processing#data-layouts": 5,
+  "processing#context": 6,
+  "processing#data-layouts": 16,
   "processing#delimited-records": 8,
-  "processing#delimited-tables": 7,
-  "processing#delta-parameters": 10,
-  "processing#emission": 15,
-  "processing#errors": 48,
+  "processing#delimited-tables": 8,
+  "processing#delta-parameters": 11,
+  "processing#emission": 26,
+  "processing#errors": 79,
+  "processing#evaluation-time": 4,
+  "processing#field-start": 3,
   "processing#fixed-values": 13,
+  "processing#framing-parameters": 5,
+  "processing#inputs-outputs": 1,
   "processing#iri-minting": 13,
-  "processing#key-value": 4,
+  "processing#key-value": 5,
   "processing#lz4-parameters": 4,
-  "processing#minimum-codecs": 25,
+  "processing#minimum-codecs": 38,
   "processing#multi-part-assets": 15,
-  "processing#optional-codecs": 21,
+  "processing#negative-offsets": 4,
+  "processing#numeric-representation": 25,
+  "processing#optional-codecs": 24,
   "processing#optional-features": 1,
+  "processing#parameter-expressions": 6,
   "processing#parameter-scope": 9,
+  "processing#parent-start": 4,
   "processing#recovery": 8,
   "processing#refusal": 2,
   "processing#repeat-until-bindings": 5,
-  "processing#resource-limits": 17,
-  "processing#security-decompression": 3,
+  "processing#resource-limits": 23,
+  "processing#round-trip": 2,
+  "processing#security-decompression": 4,
   "processing#security-resources": 1,
-  "processing#size-resolution": 21,
+  "processing#serialisation": 88,
+  "processing#size-resolution": 41,
   "processing#stream-metadata": 8,
-  "processing#struct-size": 8,
-  "processing#terminators": 8,
-  "processing#text-containers": 2,
-  "processing#text-decoding": 12,
-  "processing#text-numbers": 12,
-  "processing#tree-documents": 9,
+  "processing#struct-size": 10,
+  "processing#terminators": 10,
+  "processing#text-containers": 5,
+  "processing#text-decoding": 54,
+  "processing#text-numbers": 21,
+  "processing#tree-documents": 10,
   "processing#typed-cells": 3,
-  "processing#value-mapping": 7,
+  "processing#valid-description": 2,
+  "processing#value-mapping": 10,
   "req/index.html#conformance": 3
  }
 }

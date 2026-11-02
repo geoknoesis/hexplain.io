@@ -3,7 +3,7 @@
 # expect: ex:LiteralList bddo:ParameterisedStructShape sh:NodeKindConstraintComponent
 # expect: ex:BadMember bddo:ParameterisedStructShape sh:ClassConstraintComponent
 # expect: ex:BadMember bddo:ParameterisedStructShape sh:NodeKindConstraintComponent
-# expect: ex:NotAStruct bddo:ParameterisedStructShape sh:HasValueConstraintComponent
+# expect: ex:NotAStruct bddo:ParameterisedStructShape sh:ClassConstraintComponent
 # expect: ex:p1 bddo:ParameterShape sh:InConstraintComponent
 # expect: ex:p2 bddo:ParameterShape sh:MaxCountConstraintComponent
 # expect: ex:p3 bddo:ParameterShape sh:NotConstraintComponent
@@ -13,6 +13,11 @@
 # expect: ex:tooFew bddo:ArgumentArityShape sh:SPARQLConstraintComponent
 # expect: ex:tooMany bddo:ArgumentArityShape sh:SPARQLConstraintComponent
 # expect: ex:unexpected bddo:ArgumentArityShape sh:SPARQLConstraintComponent
+# expect: ex:unexpected bddo:ArgumentListShape sh:SPARQLConstraintComponent
+# expect: ex:primitiveArgs bddo:ArgumentListShape sh:SPARQLConstraintComponent
+# expect: ex:ruleOnlyArgs bddo:ArgumentListShape sh:SPARQLConstraintComponent
+# expect: ex:ParameterisedDefault bddo:DispatchDefaultShape sh:SPARQLConstraintComponent
+# expect: ex:tableField bddo:ArgumentArityShape sh:SPARQLConstraintComponent
 @prefix bddo: <https://hexplain.io/ns/bddo#> .
 @prefix ex:   <https://hexplain.io/test/parameters-invalid#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
@@ -42,3 +47,16 @@ ex:tooFew a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( "1" ) .
 # Two equal argument strings are still two arguments: three for two parameters.
 ex:tooMany a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( "1" "1" "1" ) .
 ex:unexpected a bddo:Field ; bddo:dataType ex:Plain ; bddo:hasArgument ( "1" ) .
+# Arguments for a primitive type, and arguments on a field that names no type of its own (they
+# belong on the rule that names the parameterised struct).
+ex:primitiveArgs a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:hasArgument ( "1" "2" ) .
+ex:ruleOnlyArgs a bddo:Field ; bddo:hasArgument ( "1" "1" ) ;
+    bddo:hasConditionalDataType ( [ a bddo:DataTypeRule ; bddo:condition "true" ; bddo:ruleDataType ex:Row ;
+        bddo:hasArgument ( "1" "1" ) ] ) .
+# A dispatch default is named without arguments, so it cannot be a parameterised struct.
+ex:ParameterisedDefault a bddo:DispatchTable ; bddo:dispatchOnExpression "1" ; bddo:dispatchDefault ex:Row .
+# A parameterised delimited table is a struct like any other: naming it needs its arguments.
+ex:Table a bddo:DelimitedTable ; bddo:fieldDelimiter "2c"^^xsd:hexBinary ; bddo:hasField ( ex:Table.c ) ;
+    bddo:hasParameter ( ex:Row.n ) .
+ex:Table.c a bddo:Field ; bddo:dataType bddo:asciiInteger .
+ex:tableField a bddo:Field ; bddo:dataType ex:Table .

@@ -1,0 +1,105 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#Brotli",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "contract",
+      "url": "https://www.rfc-editor.org/rfc/rfc7932",
+      "description": "Authored byte by byte from RFC 7932 (a window header and one uncompressed meta-block, then an empty last meta-block); every input checked with the Brotli C library 1.1.0 through the Python brotli module and with org.brotli:dec 0.1.2, which yield the expected output or reject what an error vector expects to fail.",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "brotli-1",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0b028068656c6c6f03"
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "brotli-2",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0b028068656c6c6f03"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 4
+        }
+      ]
+    },
+    {
+      "id": "brotli-3",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0b0280"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-trip",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {},
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "trailing-after-last",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "0b028068656c6c6f0300"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    }
+  ]
+}

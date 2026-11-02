@@ -12,9 +12,10 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/dlv> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/dlv/dlv-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/dlv/1.3> ; owl:versionInfo "1.3" ;
     owl:priorVersion <https://hexplain.io/ns/dlv/1.2> ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
     owl:imports <https://hexplain.io/ns/bddo> ;
     rdfs:label "Hexplain Data Layout Vocabulary (DLV)"@en ;
     rdfs:comment "Vocabulary for describing multi-dimensional array layout within a flat byte stream."@en ;
@@ -32,6 +33,8 @@
 :cellDataType a owl:ObjectProperty ; rdfs:label "cell data type"@en ; rdfs:range bddo:DataType ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
 :dimensionSize a owl:DatatypeProperty ; rdfs:label "dimension size"@en ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
 :dimensionSizeFromField a owl:ObjectProperty ; rdfs:label "dimension size from field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:dimensionSizeFromExpression a owl:DatatypeProperty ; rdfs:label "dimension size from expression"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
+    rdfs:comment "A HEL expression giving this dimension's extent in cells, evaluated in the context of the struct that holds the layout's field. Use when the extent is computed rather than fixed or stored: a packed bit mask whose row holds ceil(width / 8) bytes, a tiled grid whose tile count is a division of two header fields. Completes the triad with dimensionSize and dimensionSizeFromField, as dimensionStrideFromExpression does for strides: a lone sibling name takes the FromField form, anything else this one."@en .
 :dimensionStride a owl:DatatypeProperty ; rdfs:label "dimension stride"@en ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
     rdfs:comment "Bytes to advance per step along this dimension (pitch), as a fixed literal. When no stride is declared by any mechanism, addressing is contiguous (stride = size of the next-faster block). Stride stays in BYTES even for a bit-packed layout: rows of a packed grid are normally padded to a byte boundary while the cells within a row are not, so the pitch is whole bytes and dlv:cellBitWidth governs only the packing inside one row."@en .
 :dimensionStrideFromField a owl:ObjectProperty ; rdfs:label "dimension stride from field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
@@ -53,6 +56,8 @@
     rdfs:comment "Bits each cell occupies in the packed stream, when that is not the cell type's intrinsic width. Cells are contiguous in the bit stream and may straddle byte boundaries; a cell type is still required, to say how the bits are interpreted. Absent means cells occupy their type's natural width."@en .
 :cellBitWidthFromField a owl:ObjectProperty ; rdfs:label "cell bit width from field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
     rdfs:comment "The Field whose parsed value is the packed cell width in bits. GRIB2 carries this in its data-representation section, so the width is a property of the message rather than of the format."@en .
+:cellBitWidthFromExpression a owl:DatatypeProperty ; rdfs:label "cell bit width from expression"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
+    rdfs:comment "A HEL expression giving the packed cell width in bits, evaluated in the context of the struct that holds the layout's field. Use when the width is computed rather than fixed or stored: a header that carries bytes per sample rather than bits, or a width that depends on a mode flag. Mutually exclusive with dlv:cellBitWidth and dlv:cellBitWidthFromField."@en .
 :cellPackingOrder a owl:ObjectProperty ; rdfs:label "cell packing order"@en ; rdfs:range bddo:BitOrder ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
     rdfs:comment "Whether the first cell of a byte occupies its most or least significant bits. Default bddo:MSBFirst, which is what GRIB2, NITF and the 1-bit and 4-bit image formats all use; LSB-first packing exists but is rare. Only meaningful alongside dlv:cellBitWidth."@en .
 
@@ -62,8 +67,10 @@
 :ChunkOrder a owl:Class ; rdfs:label "Chunk Order"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
     rdfs:comment "The order in which chunks appear in the chunk offset table."@en .
 :chunkSize a owl:DatatypeProperty ; rdfs:label "chunk size"@en ; rdfs:range xsd:positiveInteger ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    rdfs:comment "Extent of one chunk (tile/block) along this dimension, in cells. When any Dimension of a DataLayout declares a chunk extent, the layout is chunked: the grid is partitioned into chunks of this shape and each chunk is located through the layout's chunk offset table. A trailing partial chunk is padded to the full chunk extent. A Dimension of a chunked layout that declares neither dlv:chunkSize nor dlv:chunkSizeFromField is chunked at its full extent, i.e. its chunk extent is its dlv:dimensionSize (or the value read through dlv:dimensionSizeFromField); a layout chunked on X alone therefore has chunks spanning all of Y. Within a chunked layout, dlv:dimensionStride addresses cells inside one chunk, not across the whole grid."@en .
+    rdfs:comment "Extent of one chunk (tile/block) along this dimension, in cells. When any Dimension of a DataLayout declares a chunk extent, the layout is chunked: the grid is partitioned into chunks of this shape and each chunk is located through the layout's chunk offset table. A trailing partial chunk is padded to the full chunk extent. A Dimension of a chunked layout that declares none of dlv:chunkSize, dlv:chunkSizeFromField and dlv:chunkSizeFromExpression is chunked at its full extent, i.e. its chunk extent is its dimension size (fixed, read from a field or computed); a layout chunked on X alone therefore has chunks spanning all of Y. Within a chunked layout, dlv:dimensionStride addresses cells inside one chunk, not across the whole grid."@en .
 :chunkSizeFromField a owl:ObjectProperty ; rdfs:label "chunk size from field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:chunkSizeFromExpression a owl:DatatypeProperty ; rdfs:label "chunk size from expression"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
+    rdfs:comment "A HEL expression giving the extent of one chunk along this dimension, in cells, evaluated in the context of the struct that holds the layout's field. Use when the tile extent is computed rather than fixed or stored, e.g. a tile width that is a block size in bytes divided by the cell width. Mutually exclusive with dlv:chunkSize and dlv:chunkSizeFromField; declaring it makes the layout chunked, as the other two do."@en .
 :chunkOffsetsFromField a owl:ObjectProperty ; rdfs:label "chunk offsets from field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
     rdfs:comment "The repeating Field holding each chunk's byte offset, indexed in chunkOrder (e.g. TIFF TileOffsets, NITF block offsets)."@en .
 :chunkLengthsFromField a owl:ObjectProperty ; rdfs:label "chunk lengths from field"@en ; rdfs:range bddo:Field ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
@@ -73,10 +80,19 @@
 :chunkOrder a owl:ObjectProperty ; rdfs:label "chunk order"@en ; rdfs:range :ChunkOrder ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
     rdfs:comment "Traversal order of the chunk offset table. Default dlv:rowMajor (chunks vary fastest along the fastest-varying dimension)."@en .
 
+# Key construction for the two space-filling orders is normative: two processors that disagree on
+# it read different chunks from the same offset table. Both take the layout's dimensions in declared
+# order (dlv:hasDimension, or the selected dlv:DimensionOrderRule), use each dimension's chunk index
+# (cell index divided by chunk size, counted from 0), and pad each dimension's chunk count to the
+# next power of two, so every dimension contributes the same number of bits, n. Table entries exist
+# only for chunks inside the real chunk counts: keys are visited in ascending order and a key whose
+# cell lies outside any dimension's real chunk count is skipped, taking no entry.
 :rowMajor a owl:NamedIndividual, :ChunkOrder ; rdfs:label "Row-major chunk order"@en .
 :columnMajor a owl:NamedIndividual, :ChunkOrder ; rdfs:label "Column-major chunk order"@en .
-:morton a owl:NamedIndividual, :ChunkOrder ; rdfs:label "Morton (Z-order) chunk order"@en .
-:hilbert a owl:NamedIndividual, :ChunkOrder ; rdfs:label "Hilbert curve chunk order"@en .
+:morton a owl:NamedIndividual, :ChunkOrder ; rdfs:label "Morton (Z-order) chunk order"@en ;
+    rdfs:comment "Chunks appear in the offset table in ascending Morton (Z-order) key. The key interleaves the bits of the chunk indices, taking the dimensions in declared order, least significant bit first, the first dimension contributing the lowest bit of each group: with d dimensions and chunk indices c0 .. c(d-1), bit j of dimension i is bit j*d + i of the key. Each dimension's chunk count is padded to the next power of two (a count that is already a power of two is unchanged), so every dimension contributes the same number of bits; the key of a cell outside a dimension's real chunk count is skipped and takes no table entry."@en .
+:hilbert a owl:NamedIndividual, :ChunkOrder ; rdfs:label "Hilbert curve chunk order"@en ;
+    rdfs:comment "Chunks appear in the offset table in ascending Hilbert-curve key. The key is the Hilbert index computed by Skilling's algorithm (J. Skilling, Programming the Hilbert curve, AIP Conference Proceedings 707, 2004) from the chunk indices, taken in the same dimension order as dlv:morton takes them, the first declared dimension being the algorithm's first axis, with n bits per dimension. Each dimension's chunk count is padded to the next power of two, and n is the base-2 logarithm of the largest padded count (the bit width of the largest chunk index), the same for every dimension; the key of a cell outside a dimension's real chunk count is skipped and takes no table entry."@en .
 
 :axisX a owl:NamedIndividual , :Axis ; rdfs:label "X Axis (Width)"@en .
 :axisY a owl:NamedIndividual , :Axis ; rdfs:label "Y Axis (Height)"@en .
@@ -100,7 +116,7 @@
     rdfs:comment "Ordered rdf:List of CellDataTypeRule. The first rule whose condition holds gives the layout's cell type. If no rule's condition holds, the cell type is undetermined and the layout cannot be read; a condition that cannot be evaluated is not a false condition, so it does not pass the choice to a later rule. Mutually exclusive with dlv:cellDataType."@en .
 :ruleCellDataType a owl:ObjectProperty ; rdfs:label "rule cell data type"@en ; rdfs:range bddo:DataType ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
 :hasConditionalDimensionOrder a owl:ObjectProperty ; rdfs:label "has conditional dimension order"@en ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    rdfs:comment "Ordered rdf:List of DimensionOrderRule. The first rule whose condition holds gives the layout's dimension order. If no rule's condition holds, the dimension order is undetermined and the layout cannot be read; a condition that cannot be evaluated is not a false condition, so it does not pass the choice to a later rule. Each rule names the SAME Dimension nodes in a different sequence -- band interleaving is a permutation of axes, not a different set of them. Mutually exclusive with dlv:hasDimension."@en .
+    rdfs:comment "Ordered rdf:List of DimensionOrderRule. The first rule whose condition holds gives the layout's dimension order. If no rule's condition holds, the dimension order is undetermined and the layout cannot be read; a condition that cannot be evaluated is not a false condition, so it does not pass the choice to a later rule. Each rule names the SAME Dimension nodes, each exactly once, in a different sequence -- band interleaving is a permutation of axes, not a different set of them (dlv:DataLayoutShape). Mutually exclusive with dlv:hasDimension."@en .
 :ruleDimensionOrder a owl:ObjectProperty ; rdfs:label "rule dimension order"@en ; rdfs:range rdf:List ; rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
     rdfs:comment "The ordered rdf:List of dlv:Dimension selected by a DimensionOrderRule, slowest- to fastest-varying."@en .
 
@@ -113,42 +129,62 @@ dlv:DataLayoutShape a sh:NodeShape ;
         sh:message "Each member of the dlv:hasDimension list is an instance of dlv:Dimension." ] ;
     sh:property [ sh:path dlv:cellDataType ; sh:class bddo:DataType ; sh:maxCount 1 ;
         sh:message "dlv:cellDataType takes at most one value; each is an instance of bddo:DataType." ] ;
-    sh:property [ sh:path dlv:cellBitWidth ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ;
+    sh:property [ sh:path dlv:cellBitWidth ; sh:node dlv:IntegerValueShape ; sh:minExclusive 0 ; sh:maxCount 1 ;
         sh:message "dlv:cellBitWidth takes at most one value; each is an integer (of any XSD integer datatype) greater than 0." ] ;
     sh:property [ sh:path dlv:cellBitWidthFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
         sh:message "dlv:cellBitWidthFromField takes at most one value; each is an instance of bddo:Field." ] ;
+    sh:property [ sh:path dlv:cellBitWidthFromExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:maxCount 1 ;
+        sh:message "dlv:cellBitWidthFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
     sh:property [ sh:path dlv:cellPackingOrder ; sh:maxCount 1 ;
         sh:in ( bddo:MSBFirst bddo:LSBFirst ) ;
         sh:message "dlv:cellPackingOrder takes at most one value; each is either bddo:MSBFirst or bddo:LSBFirst." ] ;
-    # A packed width is fixed or read, never both.
-    sh:not [ sh:and ( [ sh:property [ sh:path dlv:cellBitWidth ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minCount 1 ] ]
-                      [ sh:property [ sh:path dlv:cellBitWidthFromField ; sh:minCount 1 ] ] ) ] ;
+    # A packed width is fixed, read or computed: at most one of the three.
+    sh:sparql [ sh:message "A dlv:DataLayout must use at most one packed-width mechanism (cellBitWidth / cellBitWidthFromField / cellBitWidthFromExpression)." ;
+        sh:prefixes dlv:_prefixes ;
+        sh:select """SELECT $this WHERE {
+            $this ?p ?v .
+            FILTER(?p IN (dlv:cellBitWidth, dlv:cellBitWidthFromField, dlv:cellBitWidthFromExpression))
+        } GROUP BY $this HAVING (COUNT(DISTINCT ?p) > 1)""" ] ;
     # Packing order describes packing, so it needs a packed width to describe.
-    sh:sparql [ sh:message "dlv:cellPackingOrder is only meaningful with dlv:cellBitWidth or dlv:cellBitWidthFromField." ;
+    sh:sparql [ sh:message "dlv:cellPackingOrder is only meaningful with dlv:cellBitWidth, dlv:cellBitWidthFromField or dlv:cellBitWidthFromExpression." ;
         sh:prefixes dlv:_prefixes ;
         sh:select """SELECT $this WHERE {
             $this dlv:cellPackingOrder ?o .
             FILTER NOT EXISTS { $this dlv:cellBitWidth ?w }
             FILTER NOT EXISTS { $this dlv:cellBitWidthFromField ?f }
+            FILTER NOT EXISTS { $this dlv:cellBitWidthFromExpression ?e }
         }""" ] ;
     sh:property [ sh:path dlv:hasConditionalCellDataType ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
         sh:message "dlv:hasConditionalCellDataType takes at most one value; each is a resource (an IRI or a blank node)." ] ;
     sh:property [ sh:path dlv:hasConditionalDimensionOrder ; sh:maxCount 1 ; sh:nodeKind sh:BlankNodeOrIRI ;
         sh:message "dlv:hasConditionalDimensionOrder takes at most one value; each is a resource (an IRI or a blank node)." ] ;
-    # The cell type is fixed or chosen, never both and never neither.
-    sh:xone (
-        [ sh:property [ sh:path dlv:cellDataType ; sh:minCount 1 ] ;
-          sh:property [ sh:path dlv:hasConditionalCellDataType ; sh:maxCount 0 ] ]
-        [ sh:property [ sh:path dlv:hasConditionalCellDataType ; sh:minCount 1 ] ;
-          sh:property [ sh:path dlv:cellDataType ; sh:maxCount 0 ] ]
-    ) ;
-    # ...and so is the dimension order.
-    sh:xone (
-        [ sh:property [ sh:path dlv:hasDimension ; sh:minCount 1 ] ;
-          sh:property [ sh:path dlv:hasConditionalDimensionOrder ; sh:maxCount 0 ] ]
-        [ sh:property [ sh:path dlv:hasConditionalDimensionOrder ; sh:minCount 1 ] ;
-          sh:property [ sh:path dlv:hasDimension ; sh:maxCount 0 ] ]
-    ) ;
+    # Every rule of a conditional dimension order is a permutation of the same axes: it names each
+    # Dimension once, and every rule names the Dimension nodes the list's first rule names (two
+    # rules that differ from each other cannot both agree with the first).
+    sh:sparql [ sh:message "Rule {?rule} of dlv:hasConditionalDimensionOrder names Dimension {?d} more than once in its dlv:ruleDimensionOrder: every rule names each of the layout's Dimension nodes exactly once." ;
+        sh:prefixes dlv:_prefixes ;
+        sh:select """SELECT DISTINCT $this ?rule ?d WHERE {
+            $this dlv:hasConditionalDimensionOrder/rdf:rest*/rdf:first ?rule .
+            ?rule dlv:ruleDimensionOrder/rdf:rest* ?n1 , ?n2 .
+            ?n1 rdf:first ?d . ?n2 rdf:first ?d .
+            FILTER(!sameTerm(?n1, ?n2))
+        }""" ] ;
+    sh:sparql [ sh:message "Rule {?rule} of dlv:hasConditionalDimensionOrder does not name the same Dimension nodes as the first rule ({?d} is named by one and not the other): each rule is a permutation of the same dimensions, never a different set of them." ;
+        sh:prefixes dlv:_prefixes ;
+        sh:select """SELECT DISTINCT $this ?rule ?d WHERE {
+            $this dlv:hasConditionalDimensionOrder ?list .
+            ?list rdf:first ?first .
+            ?list rdf:rest+/rdf:first ?rule .
+            {
+                ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d .
+                FILTER NOT EXISTS { ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
+            } UNION {
+                ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d .
+                FILTER NOT EXISTS { ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
+            }
+        }""" ] ;
+    # The two choices a layout makes (cell type, dimension order) are dlv:CellTypeChoiceShape
+    # and dlv:DimensionOrderChoiceShape.
     sh:property [ sh:path ( dlv:hasConditionalCellDataType [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
         sh:class dlv:CellDataTypeRule ;
         sh:message "Every member of a hasConditionalCellDataType list must be a dlv:CellDataTypeRule." ] ;
@@ -173,12 +209,8 @@ dlv:DimensionOrderRuleShape a sh:NodeShape ;
 
 dlv:DimensionShape a sh:NodeShape ;
     sh:targetClass dlv:Dimension ;
-    sh:xone (
-        [ sh:property [ sh:path dlv:dimensionSize ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minCount 1 ] ;
-          sh:property [ sh:path dlv:dimensionSizeFromField ; sh:maxCount 0 ] ]
-        [ sh:property [ sh:path dlv:dimensionSizeFromField ; sh:minCount 1 ] ;
-          sh:property [ sh:path dlv:dimensionSize ; sh:maxCount 0 ] ]
-    ) ;
+    # How a dimension states its extent and its chunk extent is dlv:DimensionExtentShape and
+    # dlv:DimensionChunkExtentShape.
     # A stride is optional, but at most one of the three mechanisms may be used.
     sh:sparql [ sh:message "A dlv:Dimension must use at most one stride mechanism (dimensionStride / dimensionStrideFromField / dimensionStrideFromExpression)." ;
         sh:prefixes dlv:_prefixes ;
@@ -187,20 +219,13 @@ dlv:DimensionShape a sh:NodeShape ;
             FILTER(?p IN (dlv:dimensionStride, dlv:dimensionStrideFromField,
                           dlv:dimensionStrideFromExpression))
         } GROUP BY $this HAVING (COUNT(DISTINCT ?p) > 1)""" ] ;
-    # A chunk extent is optional, but the two mechanisms are mutually exclusive.
-    sh:xone (
-        [ sh:property [ sh:path dlv:chunkSize ; sh:maxCount 0 ] ;
-          sh:property [ sh:path dlv:chunkSizeFromField ; sh:maxCount 0 ] ]
-        [ sh:property [ sh:path dlv:chunkSize ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minCount 1 ] ;
-          sh:property [ sh:path dlv:chunkSizeFromField ; sh:maxCount 0 ] ]
-        [ sh:property [ sh:path dlv:chunkSizeFromField ; sh:minCount 1 ] ;
-          sh:property [ sh:path dlv:chunkSize ; sh:maxCount 0 ] ]
-    ) ;
-    sh:property [ sh:path dlv:dimensionSize ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ;
+    sh:property [ sh:path dlv:dimensionSize ; sh:node dlv:IntegerValueShape ; sh:minExclusive 0 ; sh:maxCount 1 ;
         sh:message "dlv:dimensionSize takes at most one value; each is an integer (of any XSD integer datatype) greater than 0." ] ;
     sh:property [ sh:path dlv:dimensionSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
         sh:message "dlv:dimensionSizeFromField takes at most one value; each is an instance of bddo:Field." ] ;
-    sh:property [ sh:path dlv:dimensionStride ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ;
+    sh:property [ sh:path dlv:dimensionSizeFromExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:maxCount 1 ;
+        sh:message "dlv:dimensionSizeFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
+    sh:property [ sh:path dlv:dimensionStride ; sh:node dlv:IntegerValueShape ; sh:minExclusive 0 ; sh:maxCount 1 ;
         sh:message "dlv:dimensionStride takes at most one value; each is an integer (of any XSD integer datatype) greater than 0." ] ;
     sh:property [ sh:path dlv:dimensionStrideFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
         sh:message "dlv:dimensionStrideFromField takes at most one value; each is an instance of bddo:Field." ] ;
@@ -208,16 +233,77 @@ dlv:DimensionShape a sh:NodeShape ;
         sh:message "dlv:dimensionStrideFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] ;
     sh:property [ sh:path dlv:hasAxis ; sh:nodeKind sh:IRI ; sh:class dlv:Axis ; sh:minCount 1 ; sh:maxCount 1 ;
         sh:message "dlv:hasAxis takes exactly one value, an IRI naming an instance of dlv:Axis." ] ;
-    sh:property [ sh:path dlv:chunkSize ; sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 ; sh:maxCount 1 ;
+    sh:property [ sh:path dlv:chunkSize ; sh:node dlv:IntegerValueShape ; sh:minExclusive 0 ; sh:maxCount 1 ;
         sh:message "dlv:chunkSize takes at most one value; each is an integer (of any XSD integer datatype) greater than 0." ] ;
     sh:property [ sh:path dlv:chunkSizeFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
-        sh:message "dlv:chunkSizeFromField takes at most one value; each is an instance of bddo:Field." ] .
+        sh:message "dlv:chunkSizeFromField takes at most one value; each is an instance of bddo:Field." ] ;
+    sh:property [ sh:path dlv:chunkSizeFromExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ; sh:maxCount 1 ;
+        sh:message "dlv:chunkSizeFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal)." ] .
+
+# The extent is fixed, read or computed: exactly one of the three.
+dlv:DimensionExtentShape a sh:NodeShape ; rdfs:label "Dimension extent shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
+    sh:targetClass dlv:Dimension ;
+    sh:message "A dlv:Dimension states its extent exactly one way: dlv:dimensionSize, dlv:dimensionSizeFromField or dlv:dimensionSizeFromExpression." ;
+    sh:xone (
+        [ sh:property [ sh:path dlv:dimensionSize ; sh:node dlv:IntegerValueShape ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:dimensionSizeFromField ; sh:maxCount 0 ] ;
+          sh:property [ sh:path dlv:dimensionSizeFromExpression ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:dimensionSizeFromField ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:dimensionSize ; sh:maxCount 0 ] ;
+          sh:property [ sh:path dlv:dimensionSizeFromExpression ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:dimensionSizeFromExpression ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:dimensionSize ; sh:maxCount 0 ] ;
+          sh:property [ sh:path dlv:dimensionSizeFromField ; sh:maxCount 0 ] ]
+    ) .
+# A chunk extent is optional, but the three mechanisms are mutually exclusive.
+dlv:DimensionChunkExtentShape a sh:NodeShape ; rdfs:label "Dimension chunk extent shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
+    sh:targetClass dlv:Dimension ;
+    sh:message "A dlv:Dimension states its chunk extent at most one way: dlv:chunkSize, dlv:chunkSizeFromField or dlv:chunkSizeFromExpression." ;
+    sh:xone (
+        [ sh:property [ sh:path dlv:chunkSize ; sh:maxCount 0 ] ;
+          sh:property [ sh:path dlv:chunkSizeFromField ; sh:maxCount 0 ] ;
+          sh:property [ sh:path dlv:chunkSizeFromExpression ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:chunkSize ; sh:node dlv:IntegerValueShape ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:chunkSizeFromField ; sh:maxCount 0 ] ;
+          sh:property [ sh:path dlv:chunkSizeFromExpression ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:chunkSizeFromField ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:chunkSize ; sh:maxCount 0 ] ;
+          sh:property [ sh:path dlv:chunkSizeFromExpression ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:chunkSizeFromExpression ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:chunkSize ; sh:maxCount 0 ] ;
+          sh:property [ sh:path dlv:chunkSizeFromField ; sh:maxCount 0 ] ]
+    ) .
+# The cell type is fixed or chosen, never both and never neither...
+dlv:CellTypeChoiceShape a sh:NodeShape ; rdfs:label "Cell type choice shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
+    sh:targetClass dlv:DataLayout ;
+    sh:message "A dlv:DataLayout fixes its cell type (dlv:cellDataType) or chooses it (dlv:hasConditionalCellDataType): exactly one of the two." ;
+    sh:xone (
+        [ sh:property [ sh:path dlv:cellDataType ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:hasConditionalCellDataType ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:hasConditionalCellDataType ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:cellDataType ; sh:maxCount 0 ] ]
+    ) .
+# ...and so is the dimension order.
+dlv:DimensionOrderChoiceShape a sh:NodeShape ; rdfs:label "Dimension order choice shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
+    sh:targetClass dlv:DataLayout ;
+    sh:message "A dlv:DataLayout fixes its dimension order (dlv:hasDimension) or chooses it (dlv:hasConditionalDimensionOrder): exactly one of the two." ;
+    sh:xone (
+        [ sh:property [ sh:path dlv:hasDimension ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:hasConditionalDimensionOrder ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path dlv:hasConditionalDimensionOrder ; sh:minCount 1 ] ;
+          sh:property [ sh:path dlv:hasDimension ; sh:maxCount 0 ] ]
+    ) .
 
 dlv:_prefixes sh:declare
     [ sh:prefix "dlv" ; sh:namespace "https://hexplain.io/ns/dlv#"^^xsd:anyURI ] ,
     [ sh:prefix "rdf" ; sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ] .
 
-# A chunked layout must say where its chunks are.
+# A chunked layout must say where its chunks are, whichever way it orders its dimensions: fixed
+# (dlv:hasDimension) or chosen (the dimensions of its dlv:hasConditionalDimensionOrder rules).
 dlv:ChunkedLayoutShape a sh:NodeShape ;
     sh:targetClass dlv:DataLayout ;
     sh:property [ sh:path dlv:chunkOffsetsFromField ; sh:class bddo:Field ; sh:maxCount 1 ;
@@ -229,11 +315,12 @@ dlv:ChunkedLayoutShape a sh:NodeShape ;
         sh:message "dlv:chunkOffsetBase takes at most one value; each is one of bddo:streamStart, bddo:streamEnd, bddo:parentStart or bddo:currentPosition." ] ;
     sh:property [ sh:path dlv:chunkOrder ; sh:maxCount 1 ; sh:class dlv:ChunkOrder ;
         sh:message "dlv:chunkOrder takes at most one value; each is an instance of dlv:ChunkOrder." ] ;
-    sh:sparql [ sh:message "A chunked dlv:DataLayout (any Dimension declaring dlv:chunkSize or dlv:chunkSizeFromField) must declare dlv:chunkOffsetsFromField." ;
+    sh:sparql [ sh:message "A chunked dlv:DataLayout (any Dimension declaring dlv:chunkSize, dlv:chunkSizeFromField or dlv:chunkSizeFromExpression) must declare dlv:chunkOffsetsFromField." ;
         sh:prefixes dlv:_prefixes ;
         sh:select """SELECT $this WHERE {
-            $this dlv:hasDimension/rdf:rest*/rdf:first ?d .
-            { ?d dlv:chunkSize ?c } UNION { ?d dlv:chunkSizeFromField ?c }
+            { $this dlv:hasDimension/rdf:rest*/rdf:first ?d }
+            UNION { $this dlv:hasConditionalDimensionOrder/rdf:rest*/rdf:first/dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
+            { ?d dlv:chunkSize ?c } UNION { ?d dlv:chunkSizeFromField ?c } UNION { ?d dlv:chunkSizeFromExpression ?c }
             FILTER NOT EXISTS { $this dlv:chunkOffsetsFromField ?o }
         }""" ] .
 
@@ -243,76 +330,50 @@ dlv:ChunkedLayoutShape a sh:NodeShape ;
 # Integer ranges accept any XSD integer-family datatype within the range's bounds.
 dlv:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
     sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
 dlv:RangeDatatypeShape a sh:NodeShape ; rdfs:label "Range datatype shape"@en ;
     rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
     sh:targetSubjectsOf dlv:cellBitWidth ,
+        dlv:cellBitWidthFromExpression ,
         dlv:chunkSize ,
+        dlv:chunkSizeFromExpression ,
         dlv:dimensionSize ,
+        dlv:dimensionSizeFromExpression ,
         dlv:dimensionStride ,
         dlv:dimensionStrideFromExpression ;
     sh:property [ sh:path dlv:cellBitWidth ; sh:node dlv:IntegerValueShape ; sh:minInclusive 1 ;
         sh:message "dlv:cellBitWidth takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path dlv:cellBitWidthFromExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ;
+        sh:message "dlv:cellBitWidthFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path dlv:chunkSize ; sh:node dlv:IntegerValueShape ; sh:minInclusive 1 ;
         sh:message "dlv:chunkSize takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path dlv:chunkSizeFromExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ;
+        sh:message "dlv:chunkSizeFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path dlv:dimensionSize ; sh:node dlv:IntegerValueShape ; sh:minInclusive 1 ;
         sh:message "dlv:dimensionSize takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
+    sh:property [ sh:path dlv:dimensionSizeFromExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ;
+        sh:message "dlv:dimensionSizeFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] ;
     sh:property [ sh:path dlv:dimensionStride ; sh:node dlv:IntegerValueShape ; sh:minInclusive 1 ;
         sh:message "dlv:dimensionStride takes a positive integer (rdfs:range xsd:positiveInteger)." ] ;
     sh:property [ sh:path dlv:dimensionStrideFromExpression ; sh:or ( [ sh:datatype xsd:string ] [ sh:datatype bddo:HelExpression ] ) ;
         sh:message "dlv:dimensionStrideFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)." ] .
 
-# BEGIN GENERATED TERM DOCUMENTATION
-# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-@prefix dlv: <https://hexplain.io/ns/dlv#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-
-<https://hexplain.io/ns/dlv> skos:scopeNote "Use in declarations of physical multi-dimensional storage. Logical axis meaning is distinct from byte strides, chunk order and encoded payload interpretation."@en .
-dlv:Axis skos:definition "The logical meaning of a dimension, independent of the dimension's extent or storage stride."@en .
-dlv:CellDataTypeRuleShape rdfs:label "Cell Data Type Rule Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "Applies to instances of dlv:CellDataTypeRule. bddo:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). dlv:ruleCellDataType takes exactly one value, an instance of bddo:DataType."@en .
-dlv:ChunkedLayoutShape rdfs:label "Chunked Layout Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "Applies to instances of dlv:DataLayout. dlv:chunkLengthsFromField takes at most one value; each is an instance of bddo:Field. dlv:chunkOffsetBase takes at most one value; each is one of bddo:streamStart, bddo:streamEnd, bddo:parentStart or bddo:currentPosition. dlv:chunkOffsetsFromField takes at most one value; each is an instance of bddo:Field. dlv:chunkOrder takes at most one value; each is an instance of dlv:ChunkOrder. A chunked dlv:DataLayout (any Dimension declaring dlv:chunkSize or dlv:chunkSizeFromField) must declare dlv:chunkOffsetsFromField."@en .
-dlv:DataLayout skos:definition "A declaration of how logical array cells are addressed in a physical byte region, including dimensions, strides, cell type and optional chunking."@en .
-dlv:DataLayoutShape rdfs:label "Data Layout Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "Applies to instances of dlv:DataLayout. dlv:cellBitWidth takes at most one value; each is an integer (of any XSD integer datatype) greater than 0. dlv:cellBitWidthFromField takes at most one value; each is an instance of bddo:Field. dlv:cellDataType takes at most one value; each is an instance of bddo:DataType. dlv:cellPackingOrder takes at most one value; each is either bddo:MSBFirst or bddo:LSBFirst. dlv:hasConditionalCellDataType takes at most one value; each is a resource (an IRI or a blank node). dlv:hasConditionalDimensionOrder takes at most one value; each is a resource (an IRI or a blank node). dlv:hasDimension takes at most one value; each is a resource (an IRI or a blank node). Each member of the dlv:hasDimension list is an instance of dlv:Dimension. Every member of a hasConditionalCellDataType list must be a dlv:CellDataTypeRule. Every member of a hasConditionalDimensionOrder list must be a dlv:DimensionOrderRule. dlv:cellPackingOrder is only meaningful with dlv:cellBitWidth or dlv:cellBitWidthFromField."@en .
-dlv:Dimension skos:definition "One position in a data layout's ordered dimensions, with an extent, optional stride or chunk size, and optional axis meaning."@en .
-dlv:DimensionOrderRuleShape rdfs:label "Dimension Order Rule Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "Applies to instances of dlv:DimensionOrderRule. bddo:condition takes exactly one value, a HEL expression (an xsd:string or bddo:HelExpression literal). dlv:ruleDimensionOrder takes exactly one value, a resource (an IRI or a blank node). Every member of a ruleDimensionOrder list must be a dlv:Dimension."@en .
-dlv:DimensionShape rdfs:label "Dimension Shape"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "Applies to instances of dlv:Dimension. Each focus node is either a value or a value, and a value, a value or a value. dlv:chunkSize takes at most one value; each is an integer (of any XSD integer datatype) greater than 0. dlv:chunkSizeFromField takes at most one value; each is an instance of bddo:Field. dlv:dimensionSize takes at most one value; each is an integer (of any XSD integer datatype) greater than 0. dlv:dimensionSizeFromField takes at most one value; each is an instance of bddo:Field. dlv:dimensionStride takes at most one value; each is an integer (of any XSD integer datatype) greater than 0. dlv:dimensionStrideFromExpression takes at most one value; each is a HEL expression (an xsd:string or bddo:HelExpression literal). dlv:dimensionStrideFromField takes at most one value; each is an instance of bddo:Field. dlv:hasAxis takes exactly one value, an IRI naming an instance of dlv:Axis. A dlv:Dimension must use at most one stride mechanism (dimensionStride / dimensionStrideFromField / dimensionStrideFromExpression)."@en .
-dlv:IntegerValueShape skos:definition "Applied through references from other shapes. A conforming value is an integer (of any XSD integer datatype)."@en .
-dlv:RangeDatatypeShape skos:definition "Applies to subjects using dlv:cellBitWidth, dlv:chunkSize, dlv:dimensionSize, dlv:dimensionStride, dlv:dimensionStrideFromExpression. dlv:cellBitWidth takes a positive integer (rdfs:range xsd:positiveInteger). dlv:chunkSize takes a positive integer (rdfs:range xsd:positiveInteger). dlv:dimensionSize takes a positive integer (rdfs:range xsd:positiveInteger). dlv:dimensionStride takes a positive integer (rdfs:range xsd:positiveInteger). dlv:dimensionStrideFromExpression takes a HEL expression, an xsd:string or bddo:HelExpression literal (rdfs:range xsd:string)."@en .
-dlv:_prefixes rdfs:label "prefixes"@en ;
-    rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data."@en .
-dlv:axisBand rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "The axis indexing separate bands or channels of a multi-component array."@en .
-dlv:axisTime rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "The temporal axis of a layout; sample spacing and time reference must be described separately."@en .
-dlv:axisX rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "The logical horizontal or first spatial coordinate axis of a layout."@en .
-dlv:axisY rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "The logical vertical-in-grid or second spatial coordinate axis of a layout; ground-coordinate direction is specified separately."@en .
-dlv:axisZ rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "The third spatial coordinate axis of a layout."@en .
-dlv:cellDataType skos:definition "The datatype of a single array cell before any conditional cell-type rule is applied."@en .
-dlv:chunkSizeFromField skos:definition "The field whose parsed value supplies the number of cells per chunk along a dimension."@en .
-dlv:columnMajor rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "Chunk enumeration convention in which the first logical dimension varies fastest."@en .
-dlv:dimensionSize skos:definition "The fixed number of cells along a physical-layout dimension."@en .
-dlv:dimensionSizeFromField skos:definition "The field whose parsed value supplies a layout dimension's extent."@en .
-dlv:hasAxis skos:definition "The logical axis assigned to a physical-layout dimension; it does not itself establish byte order."@en .
-dlv:hilbert rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "Chunk traversal following a Hilbert space-filling order; the profile/processor must identify the applicable dimension and boundary convention."@en .
-dlv:morton rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "Chunk traversal ordered by interleaving coordinate bits into a Morton or Z-order key; the profile/processor must agree on dimensionality and bounds."@en .
-dlv:rowMajor rdfs:isDefinedBy <https://hexplain.io/ns/dlv> ;
-    skos:definition "Chunk enumeration convention in which the last logical dimension varies fastest."@en .
-dlv:ruleCellDataType skos:definition "The cell datatype selected when the associated conditional rule matches."@en .
+# ---------- Term ownership ----------
+# rdfs:isDefinedBy for the terms whose declaration above does not state it. A new term states
+# its own; tools/test_term_reference.py requires it of every term this file defines.
+:CellDataTypeRuleShape rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:ChunkedLayoutShape rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:DataLayoutShape rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:DimensionOrderRuleShape rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:DimensionShape rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:_prefixes rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:axisBand rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:axisTime rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:axisX rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:axisY rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:axisZ rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:columnMajor rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:hilbert rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:morton rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .
+:rowMajor rdfs:isDefinedBy <https://hexplain.io/ns/dlv> .

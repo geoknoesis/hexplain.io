@@ -1,0 +1,13 @@
+format: t
+namespace: "https://example.org/hc-yaml-unknown-key-dispatch#"
+structs:
+  Root:
+    fields:
+      - { name: kind, type: u8 }
+      - name: body
+        type: bytes
+        size: ".."
+        dispatch: { name: T, on: kind, fallback: Blob, cases: { 1: Blob } }
+  Blob:
+    fields:
+      - { name: raw, type: bytes, size: ".." }

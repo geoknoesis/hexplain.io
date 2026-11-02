@@ -1,0 +1,186 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#Deflate",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "zlib",
+      "url": "https://zlib.net/",
+      "description": "Compressed with zlib 1.2.13 through CPython 3.11.4 (tools/codecs/_generate_minimum_vectors.py); corruptions are single-byte edits of those streams.",
+      "licence": "zlib licence (library); inputs CC0-1.0"
+    },
+    {
+      "id": "round-trip",
+      "url": "https://hexplain.io/specification/processing/#round-trip",
+      "description": "Round trips worked by hand from the codec's definition (a transform) or fed through the previous step's output (a compressor, encoded with zlib for the expectation-free encode step).",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "level6",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "f348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea00"
+          },
+          "expect": {
+            "sha256": "0d587915c91aa7c0876b7bfa7fd8a6bd963cf02161b42d8e9bee45f2238de0e1",
+            "size": 2560
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "truncated",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "f348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "trailing-bytes",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "f348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea0000"
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "hex": "f348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea00"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 100
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "bad-level",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "level": 10
+          },
+          "input": {
+            "hex": "f348ad28c849cccc5348494dce4f492d5628c94855c8cdcccbcc2dcd550089242b14a796e829788caa1b5537aa6e54dda8ba5175a3ea46d58daa1b16ea00"
+          },
+          "expect": {
+            "error": "Description"
+          }
+        }
+      ],
+      "source": "zlib"
+    },
+    {
+      "id": "round-trip",
+      "source": "round-trip",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {},
+          "input": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220726f756e642074726970207468726f7567682074686520636f6d70726573736f7220"
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-trip-level-0",
+      "source": "round-trip",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "level": 0
+          },
+          "input": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20"
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-trip-level-9",
+      "source": "round-trip",
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "level": 9
+          },
+          "input": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {},
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20726f756e642074726970207468726f7567682074686520636f6d70726573736f72206174206120737461746564206c6576656c20"
+          }
+        }
+      ]
+    }
+  ]
+}

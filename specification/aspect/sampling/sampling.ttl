@@ -13,8 +13,9 @@
 @prefix vann:   <http://purl.org/vocab/vann/> .
 
 <https://hexplain.io/ns/aspect/sampling> a owl:Ontology ;
+    rdfs:seeAlso <https://hexplain.io/specification/aspect/sampling/sampling-doc.ttl> ;
     owl:versionIRI <https://hexplain.io/ns/aspect/sampling/1.2> ; owl:versionInfo "1.2" ;
-    dcterms:modified "2026-09-27"^^xsd:date ;
+    dcterms:modified "2026-10-14"^^xsd:date ;
     owl:priorVersion <https://hexplain.io/ns/aspect/sampling/1.1> ;
     rdfs:label "Hexplain Aspect — Sampling (hx-sampling)"@en ;
     rdfs:comment "Base aspect for quantised sample values (bit depth, component count, sample format). Shared by raster, signal, and point-cloud representations."@en ;
@@ -28,37 +29,53 @@
 :componentCount a owl:DatatypeProperty ; rdfs:label "component count"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ; rdfs:range xsd:positiveInteger ; rdfs:comment "Number of components per sample — colour channels/bands for raster, channels for signal."@en .
 :sampleFormat a owl:ObjectProperty ; rdfs:label "sample format"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ; rdfs:comment "Numeric interpretation of each stored sample."@en .
 
+:sampleFormatName a owl:DatatypeProperty ; rdfs:label "sample format name"@en ; rdfs:range xsd:string ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ;
+    rdfs:comment "The numeric interpretation of each stored sample as a literal token: \"signedInteger\", \"unsignedInteger\" or \"float\", the local names of asamp:SignedInteger, asamp:UnsignedInteger and asamp:Float, and meaning exactly what asamp:sampleFormat with that individual means. It exists because a mapping from a field or a constant produces a literal, and asamp:sampleFormat takes an IRI."@en ;
+    skos:scopeNote "State one of the two, asamp:sampleFormat or asamp:sampleFormatName; a resource that states both states the same format twice (asamp:SampleFormatAgreementShape)."@en .
 :SignedInteger a owl:NamedIndividual ; rdfs:label "Signed integer"@en .
 :UnsignedInteger a owl:NamedIndividual ; rdfs:label "Unsigned integer"@en .
 :Float a owl:NamedIndividual ; rdfs:label "Floating point"@en .
 
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 # Optional properties: declaring one activates value checks, not a completeness requirement.
+# One copy per module, byte-identical to bddo:IntegerValueShape (the master; template in
+# specification/shared-patterns/integer-value-shape.ttl.template): shapes are validated module by
+# module, and a sh:node into another module's graph is silently satisfied when that module is not loaded.
+asamp:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
+    rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ;
+    sh:message "An integer value is a literal of an XSD integer-family datatype (xsd:integer, xsd:positiveInteger, xsd:nonNegativeInteger, xsd:int, xsd:long, xsd:unsignedInt, xsd:unsignedLong, xsd:short, xsd:unsignedShort, xsd:byte or xsd:unsignedByte)." ;
+    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) .
 :PositiveIntegerShape a sh:NodeShape ; rdfs:label "Positive sample count"@en ;
     skos:definition "A positive integral quantity using an XML Schema integer-family datatype. Fractional values and numeric strings are not counts."@en ;
-    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:positiveInteger ] [ sh:datatype xsd:nonNegativeInteger ] [ sh:datatype xsd:int ] [ sh:datatype xsd:long ] [ sh:datatype xsd:unsignedInt ] [ sh:datatype xsd:unsignedLong ] [ sh:datatype xsd:short ] [ sh:datatype xsd:unsignedShort ] [ sh:datatype xsd:byte ] [ sh:datatype xsd:unsignedByte ] ) ; sh:minExclusive 0 .
+    sh:message "A sample count is a positive integer literal (an XSD integer-family datatype, greater than 0)." ;
+    sh:and ( asamp:IntegerValueShape [ sh:minExclusive 0 ] ) .
 :SamplingShape a sh:NodeShape ; rdfs:label "Sampling values"@en ;
     skos:definition "Validates optional sample precision, component count and numeric interpretation wherever those sampling properties occur."@en ;
-    sh:targetSubjectsOf :bitDepth, :componentCount, :sampleFormat ;
+    sh:targetSubjectsOf :bitDepth, :componentCount, :sampleFormat, :sampleFormatName ;
     sh:property [ sh:path :bitDepth ; sh:node :PositiveIntegerShape ; sh:maxCount 1 ;
         sh:message "asamp:bitDepth takes at most one value; each is a value conforming to asamp:PositiveIntegerShape." ] ;
     sh:property [ sh:path :componentCount ; sh:node :PositiveIntegerShape ; sh:maxCount 1 ;
         sh:message "asamp:componentCount takes at most one value; each is a value conforming to asamp:PositiveIntegerShape." ] ;
     sh:property [ sh:path :sampleFormat ; sh:in ( :SignedInteger :UnsignedInteger :Float ) ; sh:maxCount 1 ;
-        sh:message "asamp:sampleFormat takes at most one value; each is one of asamp:SignedInteger, asamp:UnsignedInteger or asamp:Float." ] .
+        sh:message "asamp:sampleFormat takes at most one value; each is one of asamp:SignedInteger, asamp:UnsignedInteger or asamp:Float." ] ;
+    sh:property [ sh:path :sampleFormatName ; sh:datatype xsd:string ; sh:in ( "signedInteger" "unsignedInteger" "float" ) ; sh:maxCount 1 ;
+        sh:message "asamp:sampleFormatName takes at most one value; each is one of the xsd:string literals signedInteger, unsignedInteger or float." ] .
+:SampleFormatAgreementShape a sh:NodeShape ; rdfs:label "Sample format agreement"@en ; rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ;
+    skos:definition "A resource that states both asamp:sampleFormat and asamp:sampleFormatName states the same format in both."@en ;
+    sh:targetSubjectsOf :sampleFormatName ;
+    sh:sparql [ sh:message "asamp:sampleFormatName {?name} and asamp:sampleFormat {?format} name different formats." ;
+        sh:select """
+      PREFIX asamp: <https://hexplain.io/ns/aspect/sampling#>
+      SELECT $this ?name ?format WHERE {
+        $this asamp:sampleFormatName ?name ; asamp:sampleFormat ?format .
+        FILTER(STR(?format) != CONCAT(STR(asamp:), UCASE(SUBSTR(STR(?name), 1, 1)), SUBSTR(STR(?name), 2)))
+      }""" ] .
 
-# BEGIN GENERATED TERM DOCUMENTATION
-# Editorial annotations only; OWL axioms and SHACL constraints above are unchanged.
-@prefix asamp: <https://hexplain.io/ns/aspect/sampling#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-
-<https://hexplain.io/ns/aspect/sampling> skos:scopeNote "Use for quantized sample interpretation shared by raster, signal and point-cloud data. Precision, component organization and numeric interpretation are separate declarations."@en .
-asamp:Float rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ;
-    skos:definition "Sample interpretation using floating-point numeric values rather than integer quantization codes."@en .
-asamp:PositiveIntegerShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> .
-asamp:SamplingShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> .
-asamp:SignedInteger rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ;
-    skos:definition "Sample interpretation admitting negative and nonnegative integral values; precision is stated separately."@en .
-asamp:UnsignedInteger rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> ;
-    skos:definition "Sample interpretation admitting only nonnegative integral values; precision is stated separately."@en .
+# ---------- Term ownership ----------
+# rdfs:isDefinedBy for the terms whose declaration above does not state it. A new term states
+# its own; tools/test_term_reference.py requires it of every term this file defines.
+:Float rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> .
+:PositiveIntegerShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> .
+:SamplingShape rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> .
+:SignedInteger rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> .
+:UnsignedInteger rdfs:isDefinedBy <https://hexplain.io/ns/aspect/sampling> .

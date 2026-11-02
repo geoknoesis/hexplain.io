@@ -11,28 +11,50 @@
   * hdl-compiler, error        {"diagnostics": [{"severity": "ERROR", "line": 3, ...}], "output": false}
   * conformance-evaluator      the run summarised as JSON (expected-report.json), or the run report as RDF
                                (expected-report.ttl)
-  * pp-claims-statement        the processor's claims statement, JSON                              (expected-claims.json)
+  * pp-claims-statement        the processor's claims statement, JSON
+(expected-claims.json)
+  * writer, success            the bytes written, as they are (a binary file)                    (expected.hex)
+  * writer, round trip         the tree the written stream parses back to, canonical JSON         (expected.json)
 
 The comparison follows specification/conformance/index.html#canonicalisation; this module is the reference
 reading of that section, and the gate tools/test_conformance_comparator.py tests it. It uses only the standard
 library and rdflib. The exit status is 0 when the output matches and 1 otherwise, with the first differences
 printed.
 """
+
+from __future__ import annotations
+
 import argparse
 import json
+import re
 import sys
+from decimal import Decimal
+from math import copysign
 from pathlib import Path
+from typing import Any
 
 import rdflib
 from rdflib import BNode, Literal, URIRef
 from rdflib.compare import graph_diff, to_isomorphic
 from rdflib.namespace import RDF, XSD
+from rdflib.term import Node
+
+# A Semantic Emitter's literals compare by lexical form (the Processing Model requires the canonical one, Semantic
+# Triple Emission, lexical forms), so rdflib must keep the form it parsed rather than rewrite it by value.
+rdflib.NORMALIZE_LITERALS = False
 
 HERE = Path(__file__).resolve().parent
+#: The classes whose graphs compare typed literals by value (the lexical form is not fixed for them): the HDL
+#: Compiler, whose specification fixes datatypes only, and the Conformance Evaluator's RDF run report.
+BY_VALUE = {"hdl-compiler", "conformance-evaluator"}
 sys.path.insert(0, str(HERE))
 
 import hel  # noqa: E402
-from suite import CATEGORIES, REPORTED_BASE  # noqa: E402
+import round_trip  # noqa: E402
+from suite import CATEGORIES, REPORTED_BASE, parse_hex, strict_json  # noqa: E402
+
+#: The file a runner writes an error category to, and a case's description.
+ERROR_FILE, DESCRIPTION = "error.json", "description.ttl"
 
 BDDO = "https://hexplain.io/ns/bddo#"
 CORE = "https://hexplain.io/ns/core#"
@@ -42,36 +64,92 @@ OWL = "http://www.w3.org/2002/07/owl#"
 SH = "http://www.w3.org/ns/shacl#"
 
 #: The HEL-bearing properties of the HEL name-binding table: their literals compare by expression equivalence.
-HEL_PROPERTIES = {URIRef(BDDO + p) for p in ("isPresentIf", "sizeFromExpression", "repeatCountFromExpression",
-                                             "atOffsetFromExpression", "repeatUntil", "validIf", "valueFromExpression",
-                                             "dispatchOnExpression", "condition", "coversFromExpression",
-                                             "coversToExpression", "coversExpression", "localExpression")} | {
-    URIRef(DLV + "dimensionStrideFromExpression"), URIRef(CORE + "condition"), URIRef(CORE + "valueExpression"),
-    URIRef(CONF + "assertion")}
+HEL_PROPERTIES = {
+    URIRef(BDDO + p)
+    for p in (
+        "isPresentIf",
+        "sizeFromExpression",
+        "repeatCountFromExpression",
+        "atOffsetFromExpression",
+        "repeatUntil",
+        "validIf",
+        "valueFromExpression",
+        "dispatchOnExpression",
+        "condition",
+        "coversFromExpression",
+        "coversToExpression",
+        "coversExpression",
+        "localExpression",
+    )
+} | {
+    URIRef(DLV + "dimensionStrideFromExpression"),
+    URIRef(CORE + "condition"),
+    URIRef(CORE + "valueExpression"),
+    URIRef(CORE + "parameterExpression"),
+    URIRef(CORE + "codecFromExpression"),
+    URIRef(CONF + "assertion"),
+}
 HEL_EXPRESSION = URIRef(BDDO + "HelExpression")
 #: bddo:hasArgument's value is an rdf:List whose members are HEL expressions (HEL, name binding).
 HAS_ARGUMENT = URIRef(BDDO + "hasArgument")
 #: The optional physical-extent annotations a processor MAY add to a minted resource.
 EXTENTS = {URIRef(CORE + "byteOffset"), URIRef(CORE + "byteLength")}
 #: Predicates of an owl:Ontology header, ignored in an HDL Compiler graph unless the case compares the header.
-HEADER_PREDICATES = {RDF.type, URIRef(OWL + "imports"), URIRef(OWL + "versionIRI"), URIRef(OWL + "versionInfo"),
-                     URIRef(OWL + "priorVersion"), URIRef(OWL + "backwardCompatibleWith"),
-                     URIRef(OWL + "incompatibleWith")}
-HEADER_NAMESPACES = ("http://www.w3.org/2000/01/rdf-schema#", "http://purl.org/dc/terms/", "http://purl.org/vocab/vann/",
-                     "http://purl.org/dc/elements/1.1/")
+HEADER_PREDICATES = {
+    RDF.type,
+    URIRef(OWL + "imports"),
+    URIRef(OWL + "versionIRI"),
+    URIRef(OWL + "versionInfo"),
+    URIRef(OWL + "priorVersion"),
+    URIRef(OWL + "backwardCompatibleWith"),
+    URIRef(OWL + "incompatibleWith"),
+}
+HEADER_NAMESPACES = (
+    "http://www.w3.org/2000/01/rdf-schema#",
+    "http://purl.org/dc/terms/",
+    "http://purl.org/vocab/vann/",
+    "http://purl.org/dc/elements/1.1/",
+)
 #: conf:errorCategory's deprecated string form, and the individual each string names.
-CATEGORY_IRIS = {"Sync": "SyncError", "Bounds": "BoundsError", "Validation": "ValidationError",
-                 "Checksum": "ChecksumError", "Expression": "ExpressionError", "Dispatch": "DispatchError",
-                 "Description": "DescriptionError", "Unsupported": "UnsupportedFeature"}
+CATEGORY_IRIS = {
+    "Sync": "SyncError",
+    "Bounds": "BoundsError",
+    "Validation": "ValidationError",
+    "Checksum": "ChecksumError",
+    "Expression": "ExpressionError",
+    "Dispatch": "DispatchError",
+    "Description": "DescriptionError",
+    "Unsupported": "UnsupportedFeature",
+}
 
 
 class Mismatch(Exception):
     pass
 
 
+class UnreadableOutput(ValueError):
+    """An implementation's output that is not the JSON it must be: a case failure, not a comparator failure."""
+
+
+def read_actual_json(path: Path) -> Any:
+    """The JSON an implementation wrote at [path], read strictly (suite.strict_json): a repeated member or a
+    NaN/Infinity token makes the output unreadable rather than silently picking one of its values."""
+    try:
+        return strict_json(path.read_text(encoding="utf-8"))
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise UnreadableOutput(f"{path.name} is not valid JSON: {exc}") from exc
+
+
+#: A triple of an rdflib graph.
+Triple = tuple[Node, Node, Node]
+#: A blank node of an expected run report bound to a node of the actual report.
+Binding = dict[Node, Node]
+
+
 # ----------------------------------------------------------------------------------------------- parsed trees
 
-def compare_tree(expected, actual, path="$"):
+
+def compare_tree(expected: Any, actual: Any, path: str = "$") -> list[str]:
     """Differences between an expected canonical tree and an actual one, both as parsed JSON (int and float kept apart:
     json.loads reads 1 as int and 1.0 as float, which is the canonical form's distinction). [] when they match."""
     if expected is None:
@@ -79,9 +157,9 @@ def compare_tree(expected, actual, path="$"):
     if isinstance(expected, dict):
         if not isinstance(actual, dict):
             return [f"{path}: expected a struct, got {actual!r}"]
-        if set(expected) != set(actual):
+        if expected.keys() != actual.keys():
             return [f"{path}: expected members {sorted(expected)}, got {sorted(actual)}"]
-        out = []
+        out: list[str] = []
         for k in expected:
             out += compare_tree(expected[k], actual[k], f"{path}.{k}")
         return out
@@ -100,14 +178,20 @@ def compare_tree(expected, actual, path="$"):
         ok = isinstance(actual, int) and not isinstance(actual, bool) and actual == expected
         return [] if ok else [f"{path}: expected the integer {expected}, got {actual!r}"]
     if isinstance(expected, float):
-        ok = isinstance(actual, float) and actual == expected
+        # -0.0 is not 0.0: the Processing Model keeps the sign of a zero (a zero "of its sign", the bits of -0.0).
+        ok = isinstance(actual, float) and actual == expected and copysign(1.0, actual) == copysign(1.0, expected)
         return [] if ok else [f"{path}: expected the float {expected!r}, got {actual!r}"]
-    return [] if actual == expected and type(actual) is type(expected) else [f"{path}: expected {expected!r}, got {actual!r}"]
+    return (
+        []
+        if actual == expected and type(actual) is type(expected)
+        else [f"{path}: expected {expected!r}, got {actual!r}"]
+    )
 
 
 # ----------------------------------------------------------------------------------------------- graphs
 
-def load_graph(path_or_text, base="urn:example:base"):
+
+def load_graph(path_or_text: Path | str, base: str = "urn:example:base") -> rdflib.Graph:
     g = rdflib.Graph()
     text = Path(path_or_text).read_text(encoding="utf-8") if isinstance(path_or_text, Path) else path_or_text
     fmt = "nt" if isinstance(path_or_text, Path) and path_or_text.suffix == ".nt" else "turtle"
@@ -115,19 +199,29 @@ def load_graph(path_or_text, base="urn:example:base"):
     return g
 
 
-def _argument_cells(g):
+def _argument_cells(g: rdflib.Graph) -> set[Node]:
     """The rdf:List cells of every bddo:hasArgument list: their rdf:first members are HEL expressions."""
-    cells, pending = set(), list(g.objects(None, HAS_ARGUMENT))
+    cells: set[Node] = set()
+    pending = list(g.objects(None, HAS_ARGUMENT))
     while pending:
         cell = pending.pop()
         if cell in cells or cell == RDF.nil:
             continue
         cells.add(cell)
-        pending += list(g.objects(cell, RDF.rest))
+        pending.extend(g.objects(cell, RDF.rest))
     return cells
 
 
-def _canonical_literal(p, o, hel_bearing=False):
+def _decimal_lexical(value: Decimal) -> str:
+    """The canonical xsd:decimal lexical form of [value]: no redundant zeros, at least one fraction digit, and no
+    negative zero, so "1.0", "1.00" and "01.0" are one value."""
+    text = format(value.normalize(), "f")
+    if "." not in text:
+        text += ".0"
+    return "0.0" if text in ("-0.0", "0.0") else text
+
+
+def _canonical_literal(p: Node, o: Node, hel_bearing: bool = False, by_value: bool = False) -> Node:
     if not isinstance(o, Literal):
         return o
     # A HEL expression typed bddo:HelExpression is the same expression as the xsd:string one (HEL, expression
@@ -135,29 +229,91 @@ def _canonical_literal(p, o, hel_bearing=False):
     if (hel_bearing or p in HEL_PROPERTIES) and (o.datatype in (None, XSD.string, HEL_EXPRESSION)) and not o.language:
         c = hel.canonical(str(o))
         return Literal(c if c is not None else str(o))
-    if o.datatype is None or o.language:
+    if o.datatype == XSD.string and not o.language:
+        # RDF 1.1: a simple literal IS an xsd:string literal ("x" and "x"^^xsd:string are one term).
+        return Literal(str(o))
+    if o.datatype is None or o.language or not by_value:
+        # An emitted literal compares as written: the Processing Model fixes its canonical lexical form.
         return o
     try:
-        return Literal(str(o), datatype=o.datatype, normalize=True) if o.ill_typed is False else o
+        if o.ill_typed is not False:
+            return o  # An ill-formed literal keeps its lexical form.
+        value = o.toPython()
+        if isinstance(value, Decimal) and value.is_finite():
+            # rdflib keeps a decimal's trailing zeros ("1.00" stays "1.00"); by value they do not matter.
+            return Literal(_decimal_lexical(value), datatype=o.datatype)
+        return Literal(str(o), datatype=o.datatype, normalize=True)
     except Exception:  # noqa: BLE001 -- an ill-formed literal keeps its lexical form
         return o
 
 
-def normalise_graph(g, *, cls=None, manifest=None, reported_base=None, header=None):
-    """The graph a case compares: extents removed, the bundle profile's closure removed (Bundle Processor), the
-    ontology header removed (HDL Compiler, unless the case compares it), the reported base rewritten to the
-    placeholder, typed literals in canonical lexical form with their datatype unchanged, HEL literals canonical."""
+#: The lexical space of xsd:nonNegativeInteger (an optional sign, digits; a minus sign only before zero).
+NON_NEGATIVE_INTEGER = re.compile(r"\+?[0-9]+|-0+")
+
+
+def _valid_extent(o: Node) -> bool:
+    """Whether [o] is an extent value the Processing Model allows: a literal typed xsd:nonNegativeInteger whose
+    lexical form is in that datatype's lexical space (Semantic Triple Emission)."""
+    return (
+        isinstance(o, Literal)
+        and o.datatype == XSD.nonNegativeInteger
+        and NON_NEGATIVE_INTEGER.fullmatch(str(o)) is not None
+    )
+
+
+def _extent_bearers(g: rdflib.Graph) -> set[Node]:
+    """The resources of [g] described by more than their extents: the minted resources an extent may annotate."""
+    return {s for s, p, _ in g if p not in EXTENTS}
+
+
+def _ignorable_extent(s: Node, o: Node, minted: set[Node], bases: tuple[str, ...], described: set[Node]) -> bool:
+    """Whether an extent triple on [s] (after rebasing) is the optional annotation the Processing Model allows, and so
+    is removed: a valid xsd:nonNegativeInteger on a resource the expected graph has ([minted]), on an IRI minted
+    under the case's base ([bases]), or on a blank node the graph otherwise describes ([described]). Any other
+    extent stays in the graph, where it is reported as an unexpected triple: the instance graph "holds nothing else"
+    (processing/index.html#emission)."""
+    if not _valid_extent(o):
+        return False
+    if s in minted:
+        return True
+    if isinstance(s, BNode):
+        return s in described
+    text = str(s)
+    return any(text == base or text.startswith(base + "#") or text.startswith(base + "/") for base in bases)
+
+
+def normalise_graph(
+    g: rdflib.Graph,
+    *,
+    cls: str | None = None,
+    manifest: dict[str, Any] | None = None,
+    reported_base: str | None = None,
+    header: bool | None = None,
+    minted: set[Node] | None = None,
+) -> rdflib.Graph:
+    """The graph a case compares: the allowed extents removed, the bundle profile's closure removed (Bundle
+    Processor), the ontology header removed (HDL Compiler, unless the case compares it), the reported base rewritten
+    to the placeholder, xsd:string literals as simple literals, typed literals as written (by value for an HDL
+    Compiler graph, whose datatypes alone are fixed), HEL literals canonical.
+
+    [minted] is the subjects of the normalised expected graph, when [g] is an implementation's output: an extent is
+    removed only from one of them, from an IRI under the case's base, or from a blank node the output otherwise
+    describes, and only when it is a valid xsd:nonNegativeInteger (_ignorable_extent). Without [minted] (the
+    expected graph itself) the graph's own described resources are the minted ones."""
     manifest = manifest or {}
-    drop = set()
+    described = _extent_bearers(g)
+    owners = described if minted is None else minted
+    bases = tuple(b.split("#")[0] for b in (REPORTED_BASE, manifest.get("base")) if isinstance(b, str) and b)
+    drop: set[Triple] = set()
+    closure: set[Node] = set()
     if cls == "bundle-processor" and manifest.get("bundleProfile"):
-        pending, closure = [URIRef(manifest["bundleProfile"])], set()
+        pending: list[Node] = [URIRef(manifest["bundleProfile"])]
         while pending:
             node = pending.pop()
             if node in closure:
                 continue
             closure.add(node)
-            pending += [o for o in g.objects(node, None) if isinstance(o, BNode)]
-        drop |= {t for t in g if t[0] in closure}
+            pending.extend(o for o in g.objects(node, None) if isinstance(o, BNode))
     compare_header = manifest.get("compareOntologyHeader", False) if header is None else header
     if cls == "hdl-compiler" and not compare_header:
         for s in set(g.subjects(RDF.type, URIRef(OWL + "Ontology"))):
@@ -165,31 +321,34 @@ def normalise_graph(g, *, cls=None, manifest=None, reported_base=None, header=No
                 if p in HEADER_PREDICATES or str(p).startswith(HEADER_NAMESPACES):
                     drop.add((s, p, o))
     arguments = _argument_cells(g)
+    by_value = cls in BY_VALUE
     out = rdflib.Graph()
     for s, p, o in g:
-        if p in EXTENTS or (s, p, o) in drop:
+        if s in closure or (s, p, o) in drop:
             continue
         argument = p == RDF.first and s in arguments
         if reported_base:
             s, o = (_rebase(t, reported_base) for t in (s, o))
-        out.add((s, p, _canonical_literal(p, o, argument)))
+        if p in EXTENTS and _ignorable_extent(s, o, owners, bases, described):
+            continue
+        out.add((s, p, _canonical_literal(p, o, argument, by_value=by_value)))
     return out
 
 
-def _rebase(term, base):
+def _rebase(term: Node, base: str) -> Node:
     if isinstance(term, URIRef):
         text = str(term)
         stem = base.split("#")[0]
         if text == stem or text.startswith(stem + "#"):
-            return URIRef(REPORTED_BASE + text[len(stem):])
+            return URIRef(REPORTED_BASE + text[len(stem) :])
     return term
 
 
-def compare_graph(expected, actual, **kw):
+def compare_graph(expected: rdflib.Graph, actual: rdflib.Graph, **kw: Any) -> list[str]:
     """Differences between two graphs (rdflib Graphs) after normalise_graph; [] when isomorphic."""
     base = kw.pop("reported_base", None)
     e = normalise_graph(expected, **kw)
-    a = normalise_graph(actual, reported_base=base, **kw)
+    a = normalise_graph(actual, reported_base=base, minted=set(e.subjects()), **kw)
     ie, ia = to_isomorphic(e), to_isomorphic(a)
     if ie == ia:
         return []
@@ -200,77 +359,145 @@ def compare_graph(expected, actual, **kw):
     return lines
 
 
-def _nt(g):
+def _nt(g: rdflib.Graph) -> list[str]:
     return [f"{s.n3()} {p.n3()} {o.n3()}" for s, p, o in g]
 
 
 # ----------------------------------------------------------------------------------------------- errors
 
-def compare_error(expected, actual, category_map=None):
-    got = (actual or {}).get("category")
-    got = (category_map or {}).get(got, got)
+
+def compare_error(expected: dict[str, Any], actual: Any, category_map: dict[str, str] | None = None) -> list[str]:
+    names: dict[Any, str] = category_map or {}
+    if not isinstance(actual, dict) or not isinstance(actual.get("category"), str):
+        return [f"expected a {expected['category']} error, got {actual!r}"]
+    got = actual["category"]
+    got = names.get(got, got)
     if got not in CATEGORIES:
         return [f"expected a {expected['category']} error, got {actual!r}"]
     return [] if got == expected["category"] else [f"expected a {expected['category']} error, got {got}"]
 
 
-def compare_hdl_error(expected, actual):
+def compare_alternative_error(
+    manifest: dict[str, Any], actual: Any, category_map: dict[str, str] | None = None
+) -> list[str]:
+    """An alternative must explicitly name a valid category; absent and null are never error outcomes."""
+    allowed = manifest.get("orError")
+    if allowed not in CATEGORIES:
+        return [f"the case requires successful output, got an error artifact: {actual!r}"]
+    return compare_error({"category": allowed}, actual, category_map)
+
+
+def compare_bytes(expected: bytes, actual: bytes) -> list[str]:
+    """Differences between the bytes a Writer case expects and the bytes written: the comparison is exact."""
+    if expected == actual:
+        return []
+    shared = min(len(expected), len(actual))
+    at = next((i for i in range(shared) if expected[i] != actual[i]), shared)
+    want, got = (data[at : at + 8].hex() or "the end" for data in (expected, actual))
+    return [
+        f"expected {len(expected)} bytes, got {len(actual)}; the first difference is at offset {at}: "
+        f"expected {want}, got {got}"
+    ]
+
+
+def compare_hdl_error(expected: dict[str, Any], actual: Any) -> list[str]:
     """An HDL Compiler error case: at least one ERROR diagnostic (at the stated line, when the case states one) and no
     compiled output."""
-    diags = [d for d in (actual or {}).get("diagnostics", []) if str(d.get("severity", "")).upper() == "ERROR"]
+    if not isinstance(actual, dict):
+        return ["compiler diagnostics must be an object"]
+    diagnostics = actual.get("diagnostics", [])
+    if not isinstance(diagnostics, list) or any(not isinstance(d, dict) for d in diagnostics):
+        return ["diagnostics must be an array of objects"]
+    diags = [d for d in diagnostics if str(d.get("severity", "")).upper() == "ERROR"]
     out = []
     if not diags:
         out.append(f"expected an ERROR diagnostic, got {actual!r}")
-    elif "line" in expected and not any(d.get("line") == expected["line"] for d in diags):
+    elif "line" in expected and not any(type(d.get("line")) is int and d["line"] == expected["line"] for d in diags):
         out.append(f"expected an ERROR at line {expected['line']}, got lines {[d.get('line') for d in diags]}")
-    if (actual or {}).get("output"):
+    if actual.get("output"):
         out.append("the compiler produced output for input it reported an ERROR for")
     return out
 
 
 # ----------------------------------------------------------------------------------------------- run reports
 
-def compare_report_json(expected, actual):
+
+def compare_report_json(expected: dict[str, Any], actual: dict[str, Any]) -> list[str]:
     """The summary comparison: verdict, truncation, scoping and every listed outcome equal; findings one for one, each
     on the members the expected finding states."""
+    if not isinstance(actual, dict):
+        return ["the report must be an object"]
     out = []
     for key in ("verdict", "truncated", "versionScopingApplied"):
-        if key in expected and expected[key] != actual.get(key):
+        if key in expected and not _finding_member(key, expected[key], actual.get(key)):
             out.append(f"{key}: expected {expected[key]!r}, got {actual.get(key)!r}")
+    outcomes = actual.get("outcomes", {})
+    if not isinstance(outcomes, dict):
+        return out + ["outcomes must be an object"]
     for req, value in expected.get("outcomes", {}).items():
-        got = actual.get("outcomes", {}).get(req)
-        if got != value:
+        got = outcomes.get(req)
+        if not _finding_member(req, value, got):
             out.append(f"outcome of {req}: expected {value}, got {got}")
     if "findings" in expected:
-        have = list(actual.get("findings", []))
-        if len(expected["findings"]) != len(have):
-            out.append(f"expected {len(expected['findings'])} finding(s), got {len(have)}")
-        for want in expected["findings"]:
-            match = next((h for h in have if all(_finding_member(k, v, h.get(k)) for k, v in want.items())), None)
-            if match is None:
-                out.append(f"no finding matches {want}")
-            else:
-                have.remove(match)
+        have = actual.get("findings", [])
+        if not isinstance(have, list) or any(not isinstance(h, dict) for h in have):
+            return out + ["findings must be an array of objects"]
+        out.extend(_match_findings(expected["findings"], have))
     return out
 
 
-def _finding_member(key, want, got):
+def _match_findings(wants: list[dict[str, Any]], have: list[dict[str, Any]]) -> list[str]:
+    """Match partial finding patterns without depending on report ordering."""
+    out: list[str] = []
+    if len(wants) != len(have):
+        out.append(f"expected {len(wants)} finding(s), got {len(have)}")
+    # Augmenting paths find a complete bipartite matching even when patterns overlap.
+    edges = [
+        [i for i, h in enumerate(have) if all(_finding_member(k, v, h.get(k)) for k, v in w.items())] for w in wants
+    ]
+    owners: dict[int, int] = {}
+    for start in range(len(wants)):
+        pending = [start]
+        previous: dict[int, tuple[int, int] | None] = {start: None}
+        end: tuple[int, int] | None = None
+        for want in pending:
+            for candidate in edges[want]:
+                if candidate not in owners:
+                    end = (want, candidate)
+                    break
+                owner = owners[candidate]
+                if owner not in previous:
+                    previous[owner] = (want, candidate)
+                    pending.append(owner)
+            if end is not None:
+                break
+        if end is None:
+            out.append(f"no distinct finding matches {wants[start]}")
+            continue
+        while end is not None:
+            want, candidate = end
+            owners[candidate] = want
+            end = previous[want]
+    return out
+
+
+def _finding_member(key: str, want: Any, got: Any) -> bool:
     if key == "requirements":
-        return sorted(want) == sorted(got or [])
-    return want == got
+        return isinstance(got, list) and all(isinstance(v, str) for v in got) and sorted(want) == sorted(got)
+    return type(want) is type(got) and want == got
 
 
-def _report_graph(g):
+def _report_graph(g: rdflib.Graph) -> rdflib.Graph:
     """A report graph with conf:errorCategory strings read as the category individuals they name."""
     out = rdflib.Graph()
     for s, p, o in g:
         if p == URIRef(CONF + "errorCategory") and isinstance(o, Literal) and str(o) in CATEGORY_IRIS:
             o = URIRef(CONF + CATEGORY_IRIS[str(o)])
-        out.add((s, p, _canonical_literal(p, o)))
+        out.add((s, p, _canonical_literal(p, o, by_value=True)))
     return out
 
 
-def compare_report_ttl(expected, actual):
+def compare_report_ttl(expected: rdflib.Graph, actual: rdflib.Graph) -> list[str]:
     """The expected run report maps into the actual one: each blank node of the expected graph is a variable, bound
     injectively to a node of the actual graph so that every expected triple is an actual triple. The actual run must
     have exactly as many conf:finding values as the expected run, unless the expected run is truncated."""
@@ -290,30 +517,32 @@ def compare_report_ttl(expected, actual):
     binding = _embed(list(e), a, {runs_e[0]: runs_a[0]} if isinstance(runs_e[0], BNode) else {})
     if binding is None:
         unmatched = [t for t in e if not _triple_in(t, a)]
-        out.append("the expected report does not map into the actual one; expected triples with no counterpart: "
-                   + "; ".join(f"{s.n3()} {p.n3()} {o.n3()}" for s, p, o in unmatched[:10]))
+        out.append(
+            "the expected report does not map into the actual one; expected triples with no counterpart: "
+            + "; ".join(f"{s.n3()} {p.n3()} {o.n3()}" for s, p, o in unmatched[:10])
+        )
     return out
 
 
-def _triple_in(t, g):
+def _triple_in(t: Triple, g: rdflib.Graph) -> bool:
     s, p, o = (None if isinstance(x, BNode) else x for x in t)
     return any(True for _ in g.triples((s, p, o)))
 
 
-def _embed(triples, g, binding):
+def _embed(triples: list[Triple], g: rdflib.Graph, binding: Binding) -> Binding | None:
     """A mapping of the blank nodes of [triples] into g's nodes, extending [binding], under which every triple is in g;
     None when there is none. Backtracking, most-constrained triple first."""
     if not triples:
         return binding
 
-    def unbound(t):
+    def unbound(t: Triple) -> int:
         return sum(1 for x in (t[0], t[2]) if isinstance(x, BNode) and x not in binding)
 
     triples = sorted(triples, key=unbound)
     s, p, o = triples[0]
     rest = triples[1:]
 
-    def resolve(x):
+    def resolve(x: Node) -> Node | None:
         return binding.get(x) if isinstance(x, BNode) else x
 
     for cs, _, co in g.triples((resolve(s), p, resolve(o))):
@@ -334,10 +563,11 @@ def _embed(triples, g, binding):
     return None
 
 
-def report_shape_violations(report):
+def report_shape_violations(report: rdflib.Graph) -> list[str]:
     """The SHACL results of a run report validated on its own against the conf and req shapes (the report carries the
     requirement and constraint descriptions it cites). Uses pyshacl, a dependency of the specification tooling."""
     from pyshacl import validate  # imported here: only the RDF report cases need it
+
     root = HERE.parents[1] / "specification"
     shapes = rdflib.Graph()
     for part in ("conf/shapes.ttl", "req/shapes.ttl"):
@@ -345,8 +575,9 @@ def report_shape_violations(report):
     ontology = rdflib.Graph()
     for part in ("conf/conf.ttl", "req/req.ttl"):
         ontology.parse(root / part, format="turtle")
-    conforms, results, _ = validate(report, shacl_graph=shapes, ont_graph=ontology, inference="none",
-                                    advanced=True, allow_warnings=True)
+    conforms, results, _ = validate(
+        report, shacl_graph=shapes, ont_graph=ontology, inference="none", advanced=True, allow_warnings=True
+    )
     if conforms:
         return []
     messages = sorted({str(m) for m in results.objects(None, URIRef(SH + "resultMessage"))})
@@ -355,7 +586,8 @@ def report_shape_violations(report):
 
 # ----------------------------------------------------------------------------------------------- claims
 
-def compare_claims(expected, actual):
+
+def compare_claims(expected: dict[str, Any], actual: dict[str, Any]) -> list[str]:
     out = []
     for key in expected.get("required", []):
         if key not in actual:
@@ -363,54 +595,168 @@ def compare_claims(expected, actual):
     for key in ("classes", "optionalFeatures"):
         allowed = set(expected.get(key, []))
         value = actual.get(key, [])
-        stated = {k for k, v in value.items() if (v.get("claimed") if isinstance(v, dict) else v)} if isinstance(value, dict) else set(value)
+        stated = (
+            {k for k, v in value.items() if (v.get("claimed") if isinstance(v, dict) else v)}
+            if isinstance(value, dict)
+            else set(value)
+        )
         for item in sorted(stated - allowed):
             out.append(f"{key}: {item!r} is not in the Processing Model's closed list")
         for item in expected.get("mustInclude", {}).get(key, []):
             if item not in stated:
                 out.append(f"{key}: a processor running this case claims {item!r}")
-    return out
+    stated_codecs = actual.get("codecs", [])
+    if not isinstance(stated_codecs, list):
+        out.append("codecs: the claims statement's codecs member is not an array of codec IRIs")
+        stated_codecs = []
+    stated_codecs = set(stated_codecs)
+    for iri in sorted(stated_codecs):
+        if not iri.startswith("https://hexplain.io/ns/register/media-encoding#"):
+            out.append(f"codecs: {iri!r} is not a media-encoding register IRI")
+    for iri in expected.get("mustInclude", {}).get("codecs", []):
+        if iri not in stated_codecs:
+            out.append(f"codecs: a conforming processor decodes {iri!r}")
+    return out + claimed_encoding_problems(expected, actual)
+
+
+def claimed_encoding_problems(expected: dict[str, Any], actual: dict[str, Any]) -> list[str]:
+    """The `encodings` member of a claims statement, where it is present: an array of the IRIs of registered
+    bddo:Encoding individuals (the case's `encodings` is the registered set)."""
+    stated = actual.get("encodings", [])
+    if not isinstance(stated, list) or not all(isinstance(iri, str) for iri in stated):
+        return ["encodings: the claims statement's encodings member is not an array of bddo:Encoding IRIs"]
+    registered = set(expected.get("encodings", []))
+    return [f"encodings: {iri!r} is not a registered bddo:Encoding" for iri in sorted(set(stated) - registered)]
 
 
 # ----------------------------------------------------------------------------------------------- one case
 
-def expected_artifact(case_dir):
-    for name in ("expected.json", "expected.ttl", "expected-error.json", "expected-report.json", "expected-report.ttl",
-                 "expected-claims.json"):
+
+def expected_artifact(case_dir: Path) -> str:
+    for name in (
+        "expected.json",
+        "expected.ttl",
+        "expected-error.json",
+        "expected-report.json",
+        "expected-report.ttl",
+        "expected-claims.json",
+        "expected.hex",
+    ):
         if (case_dir / name).is_file():
             return name
     raise Mismatch(f"{case_dir}: no expected artifact")
 
 
-def compare_case(case_dir, actual_path, reported_base=None, category_map=None):
+def compare_case(
+    case_dir: Path | str,
+    actual_path: Path | str,
+    reported_base: str | None = None,
+    category_map: dict[str, str] | None = None,
+) -> list[str]:
     """Differences between the output at [actual_path] and the expectation of the case at [case_dir]."""
     case_dir, actual_path = Path(case_dir), Path(actual_path)
     manifest = json.loads((case_dir / "manifest.json").read_text(encoding="utf-8"))
-    cls = manifest["class"]
     name = expected_artifact(case_dir)
+    try:
+        return _compare_case(case_dir, actual_path, manifest, name, reported_base, category_map)
+    except UnreadableOutput as exc:
+        return [str(exc)]
+
+
+def _compare_case(
+    case_dir: Path,
+    actual_path: Path,
+    manifest: dict[str, Any],
+    name: str,
+    reported_base: str | None,
+    category_map: dict[str, str] | None,
+) -> list[str]:
+    # An error outcome is the error artifact (error.json, written with a nonzero exit), never a successful output
+    # whose body happens to hold a "category" member. An HDL Compiler reports its error as diagnostics instead.
+    if name == "expected-error.json" and manifest["class"] != "hdl-compiler" and actual_path.name != ERROR_FILE:
+        return [f"the case requires an error, reported as {ERROR_FILE}; got the output {actual_path.name}"]
+    if actual_path.name == ERROR_FILE and name != "expected-error.json":
+        actual = read_actual_json(actual_path) if actual_path.is_file() else None
+        return compare_alternative_error(manifest, actual, category_map)
+    if manifest["class"] == "writer":
+        return _compare_writer(case_dir, name, actual_path, category_map, manifest)
     if name.endswith(".json"):
-        expected = json.loads((case_dir / name).read_text(encoding="utf-8"))
-        actual = json.loads(actual_path.read_text(encoding="utf-8")) if actual_path.is_file() else None
-        if name == "expected.json":
-            return compare_tree(expected, actual)
-        if name == "expected-error.json":
-            if cls == "hdl-compiler":
-                return compare_hdl_error(expected, actual)
-            if isinstance(actual, dict) and "category" not in actual and cls == "conformance-evaluator" and manifest.get("orError"):
-                return [f"expected a {expected['category']} error, got a report"]
-            return compare_error(expected, actual, category_map)
-        if name == "expected-report.json":
-            if isinstance(actual, dict) and "category" in actual:
-                return [] if actual["category"] == manifest.get("orError") else [f"expected a report, got {actual}"]
-            return compare_report_json(expected, actual or {})
-        return compare_claims(expected, actual or {})
+        return _compare_json(case_dir, name, manifest, actual_path, category_map)
+    return _compare_graphs(case_dir, name, manifest, actual_path, reported_base, category_map)
+
+
+def _compare_writer(
+    case_dir: Path, name: str, actual_path: Path, category_map: dict[str, str] | None, manifest: dict[str, Any]
+) -> list[str]:
+    """A Writer case: the bytes written, the tree they parse back to, or the error raised."""
+    # A writer's output is bytes or an error: the file is read as JSON only when it is named as one (error.json).
+    if not actual_path.is_file():
+        return [f"no output at {actual_path}"]
+    read = read_actual_json(actual_path) if actual_path.suffix == ".json" else None
+    # A JSON output is an error, except for a case verified by round trip, whose JSON output is the re-parsed
+    # tree unless it is the runner's error file.
+    error = read if name != "expected.json" or actual_path.name == ERROR_FILE else None
+    if name == "expected.hex":
+        if error is not None:
+            return [f"expected bytes, got {error!r}"]
+        return compare_bytes(parse_hex((case_dir / name).read_text(encoding="ascii")), actual_path.read_bytes())
+    expected = json.loads((case_dir / name).read_text(encoding="utf-8"))
+    if name == "expected.json":
+        # "verify": "round-trip": the runner parsed the written stream back; [actual_path] is that tree, or the
+        # error the writer or the parser raised.
+        if error is not None or actual_path.suffix != ".json":
+            return [f"expected a stream that parses back to the tree, got {error or 'unparsed bytes'!r}"]
+        return round_trip.isomorphism_problems(
+            expected, read, round_trip.recomputed_paths(case_dir / DESCRIPTION, manifest.get("root"), expected)
+        )
+    if error is None:
+        return [f"expected a {expected['category']} error, got {actual_path.stat().st_size} bytes"]
+    return compare_error(expected, error, category_map)
+
+
+def _compare_json(
+    case_dir: Path, name: str, manifest: dict[str, Any], actual_path: Path, category_map: dict[str, str] | None
+) -> list[str]:
+    """A case whose expected artifact is JSON: a tree, an error, a run summary or a claims statement."""
+    cls = manifest["class"]
+    expected = json.loads((case_dir / name).read_text(encoding="utf-8"))
+    actual = read_actual_json(actual_path) if actual_path.is_file() else None
+    if name == "expected.json":
+        return compare_tree(expected, actual)
+    if name == "expected-error.json":
+        if cls == "hdl-compiler":
+            return compare_hdl_error(expected, actual)
+        if (
+            isinstance(actual, dict)
+            and "category" not in actual
+            and cls == "conformance-evaluator"
+            and manifest.get("orError")
+        ):
+            return [f"expected a {expected['category']} error, got a report"]
+        return compare_error(expected, actual, category_map)
+    if name == "expected-report.json":
+        if isinstance(actual, dict) and "category" in actual:
+            return compare_alternative_error(manifest, actual, category_map)
+        return compare_report_json(expected, actual or {})
+    return compare_claims(expected, actual or {})
+
+
+def _compare_graphs(
+    case_dir: Path,
+    name: str,
+    manifest: dict[str, Any],
+    actual_path: Path,
+    reported_base: str | None,
+    category_map: dict[str, str] | None = None,
+) -> list[str]:
+    """A case whose expected artifact is a graph: an emitted or compiled graph, or a run report as RDF."""
     expected_graph = load_graph(case_dir / name)
     if not actual_path.is_file():
         return [f"no output at {actual_path}"]
     if actual_path.suffix == ".json":
-        actual = json.loads(actual_path.read_text(encoding="utf-8"))
-        if name == "expected-report.ttl" and actual.get("category") == manifest.get("orError"):
-            return []
+        actual = read_actual_json(actual_path)
+        if name == "expected-report.ttl":
+            return compare_alternative_error(manifest, actual, category_map)
         return [f"expected a graph, got {actual!r}"]
     actual_graph = load_graph(actual_path)
     if name == "expected-report.ttl":
@@ -418,10 +764,11 @@ def compare_case(case_dir, actual_path, reported_base=None, category_map=None):
         if manifest.get("reportConformsToShapes"):
             problems += report_shape_violations(actual_graph)
         return problems
+    cls = manifest["class"]
     return compare_graph(expected_graph, actual_graph, cls=cls, manifest=manifest, reported_base=reported_base)
 
 
-def main(argv):
+def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("case", help="the case directory")
     ap.add_argument("actual", help="the implementation's output for the case")

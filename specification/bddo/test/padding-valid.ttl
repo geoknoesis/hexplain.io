@@ -1,0 +1,16 @@
+# Alignment positions a start; padding extends an end. On a struct, both apply per instance.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/pad#> .
+
+ex:Record a bddo:Struct ; bddo:alignment 4 ; bddo:padTo 16 ; bddo:padByte "00"^^xsd:hexBinary ;
+    bddo:hasField ( ex:Record.tag ex:Record.name ex:Record.value ) .
+ex:Record.tag a bddo:Field ; bddo:dataType bddo:uint8 .
+# The name is NUL-padded to a 4-byte boundary before the value is read.
+ex:Record.name a bddo:Field ; bddo:dataType bddo:string ; bddo:terminator "00"^^xsd:hexBinary ; bddo:padTo 4 ; bddo:padByte "00"^^xsd:hexBinary .
+ex:Record.value a bddo:Field ; bddo:dataType bddo:uint32 ; bddo:alignment 4 .
+# A boundary without a stated fill byte: the padding is skipped and never verified.
+ex:Trailer a bddo:Struct ; bddo:padTo 512 ; bddo:hasField ( ex:Trailer.crc ) .
+ex:Trailer.crc a bddo:Field ; bddo:dataType bddo:uint32le ; bddo:padTo 8 .

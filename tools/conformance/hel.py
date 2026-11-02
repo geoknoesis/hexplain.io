@@ -7,30 +7,46 @@ HEL grammar (specification/hel/index.html#syntax) into a tree of tuples and writ
 equivalent exactly when their canonical forms are equal. It checks syntax only: names, types and arity are the
 evaluator's business, and a string that does not parse is compared as written.
 """
-import re
 
-ROOTS = ("instance", "parent", "root", "self", "stream", "asset")
+from __future__ import annotations
+
+import re
+from collections.abc import Callable
+from typing import Any
+
+ROOTS = ("instance", "parent", "root", "self", "stream", "asset", "param")
 RESERVED = ROOTS + ("and", "or", "not", "true", "false")
-MAX_INTEGER = 2 ** 63 - 1
+MAX_INTEGER = 2**63 - 1
+#: A token's value: the literal's value, an identifier's or operator's lexeme, None for the end.
+TokenValue = str | int | float | None
+#: A token: its kind and its value.
+Token = tuple[str, TokenValue]
+#: An expression tree: a tuple tagged by its first member (lit, acc, un, bin, call, cond), the rest of which
+#: are names, literal values and subtrees as the tag says.
+Node = tuple[Any, ...]
 
 
 class HelSyntaxError(ValueError):
     pass
 
 
-_TOKEN = re.compile(r"""
+_TOKEN = re.compile(
+    r"""
     (?P<ws>[ \t\r\n]+)
   | (?P<hex>0[xX][0-9A-Za-z_]*)
   | (?P<float>[0-9]+\.[0-9]+(?:[eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+)
   | (?P<int>[0-9]+)
   | (?P<ident>[A-Za-z_][A-Za-z0-9_]*)
   | (?P<op>==|!=|<=|>=|<<|>>|[<>+\-*/%&|^~?:()\[\],.])
-""", re.X)
+""",
+    re.X,
+)
 
 
-def _string(text, i):
+def _string(text: str, i: int) -> tuple[str, int]:
     """The string literal starting at text[i] (a quote): (value, index after it)."""
-    out, j = [], i + 1
+    out: list[str] = []
+    j = i + 1
     while True:
         if j >= len(text):
             raise HelSyntaxError("unterminated string literal")
@@ -49,19 +65,19 @@ def _string(text, i):
             out.append(simple[e])
             j += 2
         elif e == "x":
-            h = text[j + 2:j + 4]
+            h = text[j + 2 : j + 4]
             if not re.fullmatch(r"[0-9A-Fa-f]{2}", h):
                 raise HelSyntaxError("\\x needs two hex digits")
             out.append(chr(int(h, 16)))
             j += 4
         elif e == "u":
-            h = text[j + 2:j + 6]
+            h = text[j + 2 : j + 6]
             if not re.fullmatch(r"[0-9A-Fa-f]{4}", h):
                 raise HelSyntaxError("\\u needs four hex digits")
             unit = int(h, 16)
             j += 6
             if 0xD800 <= unit <= 0xDBFF:
-                low = text[j:j + 6]
+                low = text[j : j + 6]
                 if not re.fullmatch(r"\\u[dD][c-fC-F][0-9A-Fa-f]{2}", low):
                     raise HelSyntaxError("a high surrogate must be followed by a low one")
                 unit = 0x10000 + ((unit - 0xD800) << 10) + (int(low[2:], 16) - 0xDC00)
@@ -73,8 +89,9 @@ def _string(text, i):
             raise HelSyntaxError(f"unknown escape \\{e}")
 
 
-def tokenize(text):
-    tokens, i = [], 0
+def tokenize(text: str) -> list[Token]:
+    tokens: list[Token] = []
+    i = 0
     while i < len(text):
         if text[i] == "'":
             value, i = _string(text, i)
@@ -84,27 +101,27 @@ def tokenize(text):
         if not m:
             raise HelSyntaxError(f"unexpected character {text[i]!r} at {i}")
         kind = m.lastgroup
-        lexeme = m.group(kind)
+        lexeme = m.group()
         i = m.end()
         if kind == "ws":
             continue
         if kind == "hex":
             if not re.fullmatch(r"0[xX][0-9A-Fa-f]+", lexeme):
                 raise HelSyntaxError(f"malformed hex literal {lexeme}")
-            value = int(lexeme[2:], 16)
-            if value > MAX_INTEGER:
+            integer = int(lexeme[2:], 16)
+            if integer > MAX_INTEGER:
                 raise HelSyntaxError(f"integer literal {lexeme} out of range")
-            tokens.append(("int", value))
+            tokens.append(("int", integer))
         elif kind == "int":
-            value = int(lexeme)
-            if value > MAX_INTEGER:
+            integer = int(lexeme)
+            if integer > MAX_INTEGER:
                 raise HelSyntaxError(f"integer literal {lexeme} out of range")
-            tokens.append(("int", value))
+            tokens.append(("int", integer))
         elif kind == "float":
-            value = float(lexeme)
-            if value in (float("inf"), float("-inf")):
+            real = float(lexeme)
+            if real in (float("inf"), float("-inf")):
                 raise HelSyntaxError(f"float literal {lexeme} is not finite")
-            tokens.append(("float", value))
+            tokens.append(("float", real))
         elif kind == "ident":
             tokens.append(("ident", lexeme))
         else:
@@ -114,37 +131,37 @@ def tokenize(text):
 
 
 class _Parser:
-    def __init__(self, text):
+    def __init__(self, text: str) -> None:
         self.tokens = tokenize(text)
         self.i = 0
 
-    def peek(self, offset=0):
+    def peek(self, offset: int = 0) -> Token:
         return self.tokens[min(self.i + offset, len(self.tokens) - 1)]
 
-    def next(self):
+    def next(self) -> Token:
         t = self.tokens[self.i]
         self.i += 1
         return t
 
-    def at(self, kind, value=None):
+    def at(self, kind: str, value: str | None = None) -> bool:
         t = self.peek()
         return t[0] == kind and (value is None or t[1] == value)
 
-    def expect(self, kind, value=None):
+    def expect(self, kind: str, value: str | None = None) -> Token:
         if not self.at(kind, value):
             raise HelSyntaxError(f"expected {value or kind}, found {self.peek()[1]!r}")
         return self.next()
 
-    def parse(self):
+    def parse(self) -> Node:
         e = self.expression()
         if not self.at("end"):
             raise HelSyntaxError(f"unexpected {self.peek()[1]!r}")
         return e
 
-    def expression(self):
+    def expression(self) -> Node:
         return self.conditional()
 
-    def conditional(self):
+    def conditional(self) -> Node:
         cond = self.or_expr()
         if self.at("op", "?"):
             self.next()
@@ -154,26 +171,32 @@ class _Parser:
             return ("cond", cond, then, other)
         return cond
 
-    def _chain(self, sub, ops, word=False):
+    def _chain(self, sub: Callable[[], Node], ops: tuple[str, ...], word: bool = False) -> Node:
         left = sub()
         while (self.at("ident") if word else self.at("op")) and self.peek()[1] in ops:
             op = self.next()[1]
             left = ("bin", op, left, sub())
         return left
 
-    def or_expr(self):
+    def or_expr(self) -> Node:
         return self._chain(self.and_expr, ("or",), word=True)
 
-    def and_expr(self):
+    def and_expr(self) -> Node:
         return self._chain(self.not_expr, ("and",), word=True)
 
-    def not_expr(self):
-        if self.at("ident", "not"):
+    def not_expr(self) -> Node:
+        # Prefix operators are folded in a loop: an expression 512 levels deep (the default HEL depth limit) must
+        # not cost 512 interpreter frames.
+        count = 0
+        while self.at("ident", "not"):
             self.next()
-            return ("un", "not", self.not_expr())
-        return self.comparison()
+            count += 1
+        node = self.comparison()
+        for _ in range(count):
+            node = ("un", "not", node)
+        return node
 
-    def comparison(self):
+    def comparison(self) -> Node:
         left = self.bit_or()
         if self.at("op") and self.peek()[1] in ("==", "!=", "<=", ">=", "<", ">"):
             op = self.next()[1]
@@ -182,31 +205,34 @@ class _Parser:
                 raise HelSyntaxError("comparisons do not chain")
         return left
 
-    def bit_or(self):
+    def bit_or(self) -> Node:
         return self._chain(self.bit_xor, ("|",))
 
-    def bit_xor(self):
+    def bit_xor(self) -> Node:
         return self._chain(self.bit_and, ("^",))
 
-    def bit_and(self):
+    def bit_and(self) -> Node:
         return self._chain(self.shift, ("&",))
 
-    def shift(self):
+    def shift(self) -> Node:
         return self._chain(self.add, ("<<", ">>"))
 
-    def add(self):
+    def add(self) -> Node:
         return self._chain(self.mul, ("+", "-"))
 
-    def mul(self):
+    def mul(self) -> Node:
         return self._chain(self.unary, ("*", "/", "%"))
 
-    def unary(self):
-        if self.at("op", "-") or self.at("op", "~"):
-            op = self.next()[1]
-            return ("un", op, self.unary())
-        return self.primary()
+    def unary(self) -> Node:
+        ops: list[TokenValue] = []
+        while self.at("op", "-") or self.at("op", "~"):
+            ops.append(self.next()[1])
+        node = self.primary()
+        for op in reversed(ops):
+            node = ("un", op, node)
+        return node
 
-    def primary(self):
+    def primary(self) -> Node:
         kind, value = self.peek()
         if kind in ("int", "float", "str"):
             self.next()
@@ -225,7 +251,7 @@ class _Parser:
             if self.peek(1) == ("op", "(") and value not in ROOTS:
                 self.next()
                 self.next()
-                args = []
+                args: list[Node] = []
                 if not self.at("op", ")"):
                     args.append(self.expression())
                     while self.at("op", ","):
@@ -236,16 +262,16 @@ class _Parser:
             return self.accessor()
         raise HelSyntaxError(f"unexpected {value!r}")
 
-    def accessor(self):
-        first = self.next()[1]
-        steps = []
+    def accessor(self) -> Node:
+        first = str(self.next()[1])
+        steps: list[tuple[str, str | Node]] = []
         root = first if first in ROOTS else "instance"
         if first not in ROOTS:
             steps.append(("key", first))
         while True:
             if self.at("op", "."):
                 self.next()
-                name = self.expect("ident")[1]
+                name = str(self.expect("ident")[1])
                 if name in RESERVED and name != "parent":
                     raise HelSyntaxError(f"{name} is a reserved word, not a key")
                 steps.append(("key", name))
@@ -257,20 +283,40 @@ class _Parser:
                 return ("acc", root, tuple(steps))
 
 
-def parse(text):
-    """The expression tree of a HEL string; raises HelSyntaxError when the grammar does not generate it."""
-    return _Parser(text).parse()
+def parse(text: str) -> Node:
+    """The expression tree of a HEL string; raises HelSyntaxError when the grammar does not generate it, or when
+    its parenthesised nesting is beyond what this recursive-descent parser can follow (it is then compared as
+    written)."""
+    try:
+        return _Parser(text).parse()
+    except RecursionError as exc:
+        raise HelSyntaxError("the expression is nested too deeply for the comparator's parser") from exc
 
 
-def _float(v):
-    """Java's Double.toString spelling, which the canonical form uses: the shortest digits that round-trip, written
-    plainly when the magnitude is in [1e-3, 1e7) and as d.dddE<n> otherwise."""
+def _float(v: float) -> str:
+    """HEL's Float rendering (hel/index.html#float-rendering), which the canonical form uses: the shortest digits
+    that round-trip, two digits where one would do, written plainly when the magnitude is in [1e-3, 1e7) and as
+    d.dddE<n> otherwise."""
     from decimal import Decimal
+
     if v == 0:
         return "0.0"
     sign, digits, exponent = Decimal(repr(abs(v))).as_tuple()
+    assert isinstance(exponent, int), "a finite float has an integer exponent"
     text = "".join(map(str, digits)).rstrip("0") or "0"
     scientific = len("".join(map(str, digits))) - 1 + exponent
+    if len(text) == 1:
+        # One digit reads back to the value: take the two-digit decimals that do, and the nearest of them. For a
+        # normal value that is the digit and a zero; near the smallest subnormal it is not (4.9E-324).
+        exact = Decimal(abs(v))
+        candidates: list[tuple[Decimal, int, int, int]] = []
+        for exp in (scientific - 1, scientific - 2):
+            for n in range(10, 100):
+                candidate = Decimal(n).scaleb(exp)
+                if float(candidate) == abs(v):
+                    candidates.append((abs(candidate - exact), n % 2, n, exp))
+        _, _, n, exp = min(candidates)
+        text, scientific = str(n).rstrip("0") or "0", exp + 1
     minus = "-" if v < 0 else ""
     if 1e-3 <= abs(v) < 1e7:
         plain = format(Decimal(repr(abs(v))), "f")
@@ -281,7 +327,7 @@ def _float(v):
     return minus + text[0] + "." + (text[1:] or "0") + "E" + str(scientific)
 
 
-def _quote(value):
+def _quote(value: str) -> str:
     out = ["'"]
     for c in value:
         if c == "\\":
@@ -289,20 +335,37 @@ def _quote(value):
         elif c == "'":
             out.append("\\'")
         elif (ord(c) < 0x20 and c not in "\t\n\r") or c == "\x7f":
-            out.append("\\x%02X" % ord(c))
+            out.append(f"\\x{ord(c):02X}")
         else:
             out.append(c)
     out.append("'")
     return "".join(out)
 
 
-def _grouped(node):
-    text = serialize(node)
+def _grouped(node: Node, text: str) -> str:
     return f"({text})" if node[0] in ("bin", "cond") else text
 
 
-def serialize(node):
-    """The canonical form of an expression tree (specification/hel/index.html#canonical-form)."""
+def _subtrees(node: Node) -> tuple[Node, ...]:
+    """The subexpressions of a node, in the order its canonical form writes them."""
+    kind = node[0]
+    if kind == "lit":
+        return ()
+    if kind == "acc":
+        return tuple(step[1] for step in node[2] if step[0] != "key")
+    if kind == "un":
+        return (node[2],)
+    if kind == "bin":
+        return (node[2], node[3])
+    if kind == "call":
+        return tuple(node[2])
+    if kind == "cond":
+        return (node[1], node[2], node[3])
+    raise ValueError(f"unknown node {node!r}")
+
+
+def _written(node: Node, parts: list[str]) -> str:
+    """The canonical form of [node], given the canonical forms of its _subtrees, in order."""
     kind = node[0]
     if kind == "lit":
         _, t, v = node
@@ -316,26 +379,42 @@ def serialize(node):
     if kind == "acc":
         _, root, steps = node
         out = [root]
+        indices = iter(parts)
         for step in steps:
-            out.append("." + step[1] if step[0] == "key" else "[" + serialize(step[1]) + "]")
+            out.append("." + step[1] if step[0] == "key" else "[" + next(indices) + "]")
         return "".join(out)
     if kind == "un":
         _, op, operand = node
-        return ("not " if op == "not" else op) + _grouped(operand)
+        return ("not " if op == "not" else op) + _grouped(operand, parts[0])
     if kind == "bin":
         _, op, left, right = node
-        return f"{_grouped(left)} {op} {_grouped(right)}"
+        return f"{_grouped(left, parts[0])} {op} {_grouped(right, parts[1])}"
     if kind == "call":
-        _, name, args = node
-        return name + "(" + ", ".join(serialize(a) for a in args) + ")"
-    if kind == "cond":
-        _, c, t, e = node
-        cond = f"({serialize(c)})" if c[0] == "cond" else serialize(c)
-        return f"{cond} ? {serialize(t)} : {serialize(e)}"
-    raise ValueError(f"unknown node {node!r}")
+        return node[1] + "(" + ", ".join(parts) + ")"
+    c = node[1]
+    cond = f"({parts[0]})" if c[0] == "cond" else parts[0]
+    return f"{cond} ? {parts[1]} : {parts[2]}"
 
 
-def canonical(text):
+def serialize(node: Node) -> str:
+    """The canonical form of an expression tree (specification/hel/index.html#canonical-form). Iterative, so an
+    expression as deep as HEL's default depth limit (512) is written without exhausting the interpreter stack."""
+    results: list[str] = []
+    tasks: list[tuple[bool, Node]] = [(False, node)]
+    while tasks:
+        ready, current = tasks.pop()
+        subtrees = _subtrees(current)
+        if not ready:
+            tasks.append((True, current))
+            tasks.extend((False, child) for child in reversed(subtrees))
+            continue
+        parts = results[len(results) - len(subtrees) :]
+        del results[len(results) - len(subtrees) :]
+        results.append(_written(current, parts))
+    return results[0]
+
+
+def canonical(text: str) -> str | None:
     """The canonical form of a HEL string, or None when it does not parse."""
     try:
         return serialize(parse(text))
@@ -343,8 +422,11 @@ def canonical(text):
         return None
 
 
-def equivalent(a, b):
-    """Whether two HEL strings denote the same expression (both parse, to one tree); otherwise, whether they are equal."""
+def equivalent(a: str, b: str) -> bool:
+    (
+        """Whether two HEL strings denote the same expression (both parse, to one tree); otherwise, whether they """
+        """are equal."""
+    )
     ca, cb = canonical(a), canonical(b)
     if ca is None or cb is None:
         return a == b

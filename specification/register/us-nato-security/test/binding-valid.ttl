@@ -1,0 +1,18 @@
+# The US and NATO level schemes bound to one property: a value of either is accepted, and each
+# resolved level keeps the verbatim text it was resolved from.
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix usnato: <https://hexplain.io/ns/register/us-nato-security#> .
+@prefix asec:   <https://hexplain.io/ns/aspect/security#> .
+@prefix ex:     <https://example.org/marking#> .
+
+ex:profile hexplain:usesRegister
+    [ a hexplain:RegisterBinding ; hexplain:forProperty asec:sensitivityLevel ; hexplain:register usnato:ClassificationLevelScheme ] ,
+    [ a hexplain:RegisterBinding ; hexplain:forProperty asec:sensitivityLevel ; hexplain:register usnato:NatoClassificationLevelScheme ] ,
+    [ a hexplain:RegisterBinding ; hexplain:forProperty asec:marking ; hexplain:register usnato:MarkingScheme ] .
+ex:report asec:markingSystem "US" ; asec:sensitivityLevel usnato:Secret ; asec:sensitivityLevelText "SECRET" ; asec:marking usnato:Efto .
+ex:brief asec:markingSystem "NATO" ; asec:sensitivityLevel usnato:NatoRestricted ; asec:sensitivityLevelText "NATO RESTRICTED" .

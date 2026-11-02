@@ -1,0 +1,57 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#BitRound",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "numcodecs",
+      "url": "https://github.com/zarr-developers/numcodecs",
+      "description": "Chunks written by numcodecs 0.16.5 with c-blosc 1.21.7.dev (numpy 2.3.2, Python 3.11.4) through hexplain-tools tests/gdal/zarr_codec_vectors.py (core/src/test/resources/zarr/numcodecs-vectors.json).",
+      "licence": "MIT (numcodecs), BSD-3-Clause (c-blosc); data CC0-1.0"
+    },
+    {
+      "id": "reference-engine",
+      "url": "https://github.com/geoknoesis/hexplain-tools",
+      "description": "Inputs derived here (tools/codecs/_complete_vectors.py) from this suite's own vectors: truncations, single-byte corruptions, lowered output limits and parameter settings; the category or output of each was confirmed with hexplain-tools 97c952f24508 (hexplain-codec vector) before it was recorded, since no independent implementation of this codec was at hand.",
+      "licence": "inputs as the vectors they derive from; expectations CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "bitround",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "keepbits": 5
+          },
+          "input": {
+            "hex": "0000000000800ac000000000008007c000000000008004c000000000008001c0000000000080fcbf000000000080f6bf000000000080f0bf000000000080e4bf000000000000d1bf000000000000bd3f000000000080df3f000000000000ec3f000000000000f43f000000000000fa3f00000000000000400000000000000340000000000000064000000000000009400000000000000c400000000000800f400000000000001140000000000080124000000000000014400000000000801540000000000000174000000000008018400000000000001a400000000000001c400000000000801d400000000000001f40"
+          },
+          "expect": {
+            "hex": "0000000000800ac000000000008007c000000000008004c000000000008001c0000000000080fcbf000000000080f6bf000000000080f0bf000000000080e4bf000000000000d1bf000000000000bd3f000000000080df3f000000000000ec3f000000000000f43f000000000000fa3f00000000000000400000000000000340000000000000064000000000000009400000000000000c400000000000800f400000000000001140000000000080124000000000000014400000000000801540000000000000174000000000008018400000000000001a400000000000001c400000000000801d400000000000001f40"
+          }
+        }
+      ],
+      "source": "numcodecs"
+    },
+    {
+      "id": "over-bound",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "keepbits": 5
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "input": {
+            "hex": "0000000000800ac000000000008007c000000000008004c000000000008001c0000000000080fcbf000000000080f6bf000000000080f0bf000000000080e4bf000000000000d1bf000000000000bd3f000000000080df3f000000000000ec3f000000000000f43f000000000000fa3f00000000000000400000000000000340000000000000064000000000000009400000000000000c400000000000800f400000000000001140000000000080124000000000000014400000000000801540000000000000174000000000008018400000000000001a400000000000001c400000000000801d400000000000001f40"
+          },
+          "maxOutputBytes": 239
+        }
+      ],
+      "source": "reference-engine"
+    }
+  ]
+}

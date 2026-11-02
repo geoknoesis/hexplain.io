@@ -1,0 +1,23 @@
+# expect: ex:NibbleBcd bddo:BcdShape sh:SPARQLConstraintComponent
+# expect: ex:VarBcd bddo:BcdShape sh:SPARQLConstraintComponent
+# expect: ex:ZigzagBcd bddo:BcdShape sh:SPARQLConstraintComponent
+# expect: ex:SqliteBcd bddo:BcdShape sh:SPARQLConstraintComponent
+# expect: ex:TextBcd bddo:BcdShape sh:SPARQLConstraintComponent
+# expect: ex:SignedBcd bddo:BcdShape sh:SPARQLConstraintComponent
+# expect: ex:signedBcdType bddo:BcdShape sh:SPARQLConstraintComponent
+# Packed BCD is two decimal digits in each whole byte of an unsigned binary integer. A bit
+# field is not whole bytes, a varint and a text number are not BCD bytes, and a signed type has
+# no sign nibble to read.
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/bcd#> .
+
+ex:NibbleBcd a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:bitLength 4 ; bddo:bcd true .
+ex:VarBcd a bddo:Field ; bddo:dataType bddo:varuint ; bddo:bcd true .
+ex:ZigzagBcd a bddo:Field ; bddo:dataType bddo:varint ; bddo:bcd true .
+ex:SqliteBcd a bddo:Field ; bddo:dataType bddo:sqliteVarint ; bddo:bcd true .
+ex:TextBcd a bddo:Field ; bddo:dataType bddo:asciiInteger ; bddo:size 4 ; bddo:bcd true .
+ex:SignedBcd a bddo:Field ; bddo:dataType bddo:int32 ; bddo:bcd true .
+ex:signedBcdType a bddo:DataType ; bddo:baseType bddo:baseInteger ; bddo:bitWidth 16 ; bddo:isSigned true ; bddo:bcd true .

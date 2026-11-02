@@ -1,0 +1,9 @@
+format: t
+namespace: "https://example.org/hc-offset-field-start-yaml#"
+structs:
+  Root:
+    fields:
+      - { name: header, type: u16 }
+      - { name: len, type: u8 }
+      - { name: body, type: u8, at: { offset: 8, from: field-start, field: header } }
+      - { name: tail, type: u8, at: { offset: len, from: field-start, field: header } }

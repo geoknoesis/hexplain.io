@@ -1,0 +1,19 @@
+format: t
+namespace: "https://example.org/hc-dispatch-arm-iris-yaml#"
+structs:
+  Root:
+    fields:
+      - { name: kind, type: ascii, size: 4 }
+      - name: body
+        type: bytes
+        size: ".."
+        dispatch: { name: T, on: kind, default: Blob, cases: { ftyp: A, 7: B, "7": A } }
+  A:
+    fields:
+      - { name: a, type: u8 }
+  B:
+    fields:
+      - { name: b, type: u8 }
+  Blob:
+    fields:
+      - { name: raw, type: bytes, size: ".." }

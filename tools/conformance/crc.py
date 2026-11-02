@@ -11,10 +11,12 @@ Both the conformance suite (tools/conformance/cases_*.py) and the catalogue gate
 depends on a table or a third-party package.
 """
 
+from __future__ import annotations
+
 CHECK_INPUT = b"123456789"
 
 
-def reflect(value, width):
+def reflect(value: int, width: int) -> int:
     """`value`'s low `width` bits in reverse order."""
     out = 0
     for _ in range(width):
@@ -23,7 +25,7 @@ def reflect(value, width):
     return out
 
 
-def crc(data, width, poly, init, refin, refout, xorout):
+def crc(data: bytes, width: int, poly: int, init: int, refin: bool, refout: bool, xorout: int) -> int:
     """The CRC of `data` under the Rocksoft model."""
     if not 8 <= width <= 64:
         raise ValueError("width is 8..64")
@@ -59,12 +61,21 @@ NAMED = {
     "crc32Bzip2": ("crc32bzip2", "CRC-32/BZIP2", 32, 0x04C11DB7, 0xFFFFFFFF, False, False, 0xFFFFFFFF, 0xFC891918),
     "crc32Mpeg2": ("crc32mpeg2", "CRC-32/MPEG-2", 32, 0x04C11DB7, 0xFFFFFFFF, False, False, 0x00000000, 0x0376E6E7),
     "crc64Ecma182": ("crc64ecma", "CRC-64/ECMA-182", 64, 0x42F0E1EBA9EA3693, 0, False, False, 0, 0x6C40DF5F0B497347),
-    "crc64Xz": ("crc64xz", "CRC-64/XZ", 64, 0x42F0E1EBA9EA3693, 0xFFFFFFFFFFFFFFFF, True, True,
-                0xFFFFFFFFFFFFFFFF, 0x995DC9BBDF1939FA),
+    "crc64Xz": (
+        "crc64xz",
+        "CRC-64/XZ",
+        64,
+        0x42F0E1EBA9EA3693,
+        0xFFFFFFFFFFFFFFFF,
+        True,
+        True,
+        0xFFFFFFFFFFFFFFFF,
+        0x995DC9BBDF1939FA,
+    ),
 }
 
 
-def named(name, data):
+def named(name: str, data: bytes) -> int:
     """The CRC of `data` under the named algorithm `name` (a BDDO individual's local name)."""
     _hdl, _label, width, poly, init, refin, refout, xorout, _check = NAMED[name]
     return crc(data, width, poly, init, refin, refout, xorout)

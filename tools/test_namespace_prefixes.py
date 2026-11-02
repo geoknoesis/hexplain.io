@@ -14,11 +14,17 @@ requires, for every vocabulary module (a shapes document claims no prefix of its
   * no two rows sharing a prefix or a namespace, and no row without a module;
   * the ontology-design page listing every row.
 """
+
+from __future__ import annotations
+
 import json
 import sys
+from collections.abc import Iterable
 from html import escape
 from pathlib import Path
+from typing import Any
 
+from _family import canonical_files
 from rdflib import OWL, RDF, Graph, Namespace
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,19 +32,22 @@ VANN = Namespace("http://purl.org/vocab/vann/")
 PAGE = ROOT / "specification/ontology-design/index.html"
 
 
-def declared(files):
+def declared(files: Iterable[str]) -> list[tuple[str, str, str, str]]:
     """(file, ontology, prefix, namespace) for every module that claims a prefix."""
     out = []
     for rel in files:
         g = Graph().parse(data=(ROOT / "specification" / rel).read_text(encoding="utf-8"), format="turtle")
         for ontology in g.subjects(RDF.type, OWL.Ontology):
-            prefix, uri = g.value(ontology, VANN.preferredNamespacePrefix), g.value(ontology, VANN.preferredNamespaceUri)
+            prefix, uri = (
+                g.value(ontology, VANN.preferredNamespacePrefix),
+                g.value(ontology, VANN.preferredNamespaceUri),
+            )
             if prefix is not None or uri is not None:
                 out.append((rel, str(ontology), str(prefix), str(uri)))
     return out
 
 
-def problems(rows, modules, page):
+def problems(rows: list[dict[str, Any]], modules: list[tuple[str, str, str, str]], page: str) -> list[str]:
     found = []
     for key in ("prefix", "namespace", "ontology"):
         values = [r[key] for r in rows]
@@ -47,7 +56,9 @@ def problems(rows, modules, page):
     by_file = {r["file"]: r for r in rows}
     for rel, ontology, prefix, uri in modules:
         row = by_file.get(rel)
-        expected = dict(prefix=prefix, namespace=uri, ontology=ontology, directory=str(Path(rel).parent.as_posix()), file=rel)
+        expected = dict(
+            prefix=prefix, namespace=uri, ontology=ontology, directory=str(Path(rel).parent.as_posix()), file=rel
+        )
         if row is None:
             found.append(f"{rel}: declares {prefix} -> {uri}, but family.json has no namespaces row for it")
         elif {k: row.get(k) for k in expected} != expected:
@@ -57,32 +68,38 @@ def problems(rows, modules, page):
     for r in rows:
         cell = f"<td><code>{escape(r['prefix'])}</code></td><td><code>{escape(r['namespace'])}</code></td>"
         if cell not in page:
-            found.append(f"{PAGE.relative_to(ROOT).as_posix()}: the namespace table lacks {r['prefix']} -> {r['namespace']}; "
-                         "run python tools/_build_ontology_docs.py")
+            found.append(
+                f"{PAGE.relative_to(ROOT).as_posix()}: the namespace table lacks {r['prefix']} -> {r['namespace']}; "
+                "run python tools/_build_ontology_docs.py"
+            )
     return found
 
 
-def self_test():
-    rows = [dict(prefix="x", namespace="urn:x#", ontology="urn:x", directory="x", file="x/x.ttl"),
-            dict(prefix="x", namespace="urn:y#", ontology="urn:y", directory="y", file="y/y.ttl")]
+def self_test() -> None:
+    rows = [
+        dict(prefix="x", namespace="urn:x#", ontology="urn:x", directory="x", file="x/x.ttl"),
+        dict(prefix="x", namespace="urn:y#", ontology="urn:y", directory="y", file="y/y.ttl"),
+    ]
     modules = [("x/x.ttl", "urn:x", "x", "urn:x#"), ("y/y.ttl", "urn:y", "y", "urn:y#")]
     found = problems(rows, modules, "")
     assert any("prefix x appears" in f for f in found) and any("y/y.ttl: declares" in f for f in found), found
 
 
-def main():
+def main() -> int:
     self_test()
     family = json.loads((ROOT / "specification/family.json").read_text(encoding="utf-8"))
     rows = family.get("namespaces")
     if not isinstance(rows, list):
         print("FAIL: specification/family.json has no namespaces table")
         return 1
-    found = problems(rows, declared(family["files"]), PAGE.read_text(encoding="utf-8"))
+    found = problems(rows, declared(canonical_files(ROOT / "specification")), PAGE.read_text(encoding="utf-8"))
     if found:
         print("FAIL:\n  " + "\n  ".join(found))
         return 1
-    print(f"PASS: {len(rows)} prefix/namespace/ontology/directory rows in family.json match every module's "
-          "declaration and the ontology-design table")
+    print(
+        f"PASS: {len(rows)} prefix/namespace/ontology/directory rows in family.json match every module's "
+        "declaration and the ontology-design table"
+    )
     return 0
 
 

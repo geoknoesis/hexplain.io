@@ -1,0 +1,352 @@
+{
+  "codec": "https://hexplain.io/ns/register/media-encoding#AESGCMSignature",
+  "suiteVersion": 1,
+  "sources": [
+    {
+      "id": "nist",
+      "url": "https://csrc.nist.gov/CSRC/media/Projects/Block-Cipher-Techniques/documents/BCM/proposed-modes/gcm/gcm-spec.pdf",
+      "description": "The tag of Test Case 1 of McGrew and Viega, The Galois/Counter Mode of Operation (GCM), revised 2005, as published by NIST's Block Cipher Techniques project (all-zero key and nonce, empty plaintext and AAD), placed in the envelope this register defines. Re-verified with pyca/cryptography 46.0.3 (OpenSSL 3.5.4).",
+      "licence": "Public test data (NIST CSRC)"
+    },
+    {
+      "id": "contract",
+      "url": "https://hexplain.io/ns/register/media-encoding#AESGCMSignature",
+      "description": "Authored from the definition with public test keys (the all-zero AES-128 key unless a vector binds another): known answers computed with pyca/cryptography 46.0.3 (OpenSSL 3.5.4); malformed inputs, wrong lengths and absent bindings made here. A round trip through a fixed known answer pins the encoded bytes; one that expects only success does not prescribe them.",
+      "licence": "CC0-1.0"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "known-decode",
+      "source": "nist",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        },
+        "aadPrefix": {
+          "empty-prefix": {
+            "hex": ""
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            },
+            "aad": {
+              "hex": ""
+            },
+            "aadPrefixRef": "empty-prefix"
+          },
+          "input": {
+            "hex": "00000000000000000000000058e2fccefa7e3061367f1d57a4e7455a"
+          },
+          "expect": {
+            "hex": ""
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-trip",
+      "source": "contract",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        },
+        "aadPrefix": {
+          "empty-prefix": {
+            "hex": ""
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            },
+            "aad": {
+              "hex": ""
+            },
+            "aadPrefixRef": "empty-prefix"
+          },
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            },
+            "aad": {
+              "hex": ""
+            },
+            "aadPrefixRef": "empty-prefix"
+          },
+          "input": {
+            "previous": true
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "missing-key",
+      "source": "contract",
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            },
+            "aad": {
+              "hex": ""
+            },
+            "aadPrefixRef": "empty-prefix"
+          },
+          "input": {
+            "hex": "00000000000000000000000058e2fccefa7e3061367f1d57a4e7455a"
+          },
+          "expect": {
+            "error": "Unsupported"
+          }
+        }
+      ]
+    },
+    {
+      "id": "output-limit",
+      "source": "contract",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        },
+        "aadPrefix": {
+          "empty-prefix": {
+            "hex": ""
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            },
+            "aad": {
+              "hex": ""
+            },
+            "aadPrefixRef": "empty-prefix"
+          },
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "error": "ResourceLimit"
+          },
+          "maxOutputBytes": 0
+        }
+      ]
+    },
+    {
+      "id": "truncated-tag",
+      "source": "contract",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        },
+        "aadPrefix": {
+          "empty-prefix": {
+            "hex": ""
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            },
+            "aad": {
+              "hex": ""
+            },
+            "aadPrefixRef": "empty-prefix"
+          },
+          "input": {
+            "hex": ""
+          },
+          "expect": {
+            "error": "Validation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "tampered-tag",
+      "source": "contract",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        },
+        "aadPrefix": {
+          "empty-prefix": {
+            "hex": ""
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "000000000000000000000000"
+            },
+            "keyMetadata": {
+              "hex": ""
+            },
+            "aad": {
+              "hex": ""
+            },
+            "aadPrefixRef": "empty-prefix"
+          },
+          "input": {
+            "hex": "00000000000000000000000000000000000000000000000000000000"
+          },
+          "expect": {
+            "error": "Checksum"
+          }
+        }
+      ]
+    },
+    {
+      "id": "known-answer-aad",
+      "source": "contract",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        },
+        "aadPrefix": {
+          "prefix": {
+            "hex": "ab"
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "000102030405060708090a0b"
+            },
+            "aad": {
+              "hex": "cd"
+            },
+            "aadPrefixRef": "prefix"
+          },
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "hex": "68656c6c6f000102030405060708090a0bb25af432b5e68230182f8b02610dcc4b"
+          }
+        },
+        {
+          "direction": "decode",
+          "params": {
+            "keyRef": "test",
+            "aad": {
+              "hex": "cd"
+            },
+            "aadPrefixRef": "prefix"
+          },
+          "input": {
+            "hex": "68656c6c6f000102030405060708090a0bb25af432b5e68230182f8b02610dcc4b"
+          },
+          "expect": {
+            "hex": "68656c6c6f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "wrong-iv-length",
+      "source": "contract",
+      "inputs": {
+        "cipherKey": {
+          "test": {
+            "hex": "00000000000000000000000000000000"
+          }
+        }
+      },
+      "steps": [
+        {
+          "direction": "encode",
+          "params": {
+            "keyRef": "test",
+            "iv": {
+              "hex": "0000000000000000000000"
+            }
+          },
+          "input": {
+            "hex": "68656c6c6f"
+          },
+          "expect": {
+            "error": "Description"
+          }
+        }
+      ]
+    }
+  ]
+}

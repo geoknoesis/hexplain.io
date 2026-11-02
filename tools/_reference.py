@@ -1,83 +1,201 @@
 """Shared ontology reference model; no network requests or file mutations on import."""
+
+from __future__ import annotations
+
+import contextlib
 import re
-from pathlib import Path
 from collections import defaultdict
-from rdflib import Graph,RDF,RDFS,OWL,URIRef,BNode,Namespace
+from collections.abc import Iterable
+from pathlib import Path
+
 import specgraph
-from _term_editorial import DEFINITIONS, SCOPE_NOTES
+from _family import documentation_name
 from _shape_text import PLACEHOLDER, Unhandled, constrains_value, value_phrase
 from _shape_text import message as shape_message
+from _term_editorial import DEFINITIONS, SCOPE_NOTES
+from rdflib import OWL, RDF, RDFS, BNode, Graph, Literal, Namespace, URIRef
+from rdflib.term import Node
 
-ROOT=Path(__file__).resolve().parent.parent
-SKOS=Namespace('http://www.w3.org/2004/02/skos/core#')
-SH=Namespace('http://www.w3.org/ns/shacl#')
-VANN=Namespace('http://purl.org/vocab/vann/')
-BDDO=Namespace('https://hexplain.io/ns/bddo#')
-ANNOTATION_MARKER='\n# BEGIN GENERATED TERM DOCUMENTATION\n'
-ANNOTATIONS={RDFS.label,RDFS.isDefinedBy,SKOS.definition,SKOS.scopeNote}
-TARGETS={SH.targetClass:'instances of',SH.targetSubjectsOf:'subjects using',SH.targetObjectsOf:'objects of',SH.targetNode:'the specific node'}
+ROOT = Path(__file__).resolve().parent.parent
+SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
+SH = Namespace("http://www.w3.org/ns/shacl#")
+VANN = Namespace("http://purl.org/vocab/vann/")
+BDDO = Namespace("https://hexplain.io/ns/bddo#")
+HX = Namespace("https://hexplain.io/ns/core#")
+#: Annotations that describe a term without changing what it means.
+ANNOTATIONS = {RDFS.label, RDFS.isDefinedBy, SKOS.definition, SKOS.scopeNote}
+#: The annotations a module's generated graph (<module>-doc.ttl) may state. rdfs:isDefinedBy is not
+#: among them: a term's ownership is stated in the canonical file that declares it.
+GENERATED_ANNOTATIONS = {RDFS.label, SKOS.definition, SKOS.scopeNote}
+TARGETS = {
+    SH.targetClass: "instances of",
+    SH.targetSubjectsOf: "subjects using",
+    SH.targetObjectsOf: "objects of",
+    SH.targetNode: "the specific node",
+}
 
-def modules():
-    out=defaultdict(list)
-    for path in specgraph.ontology_paths():out[Path(path).parent].append(Path(path))
-    return dict(sorted(out.items(),key=lambda x:str(x[0])))
 
-def load(paths,base=False):
-    g=Graph()
+def modules() -> dict[Path, list[Path]]:
+    out: defaultdict[Path, list[Path]] = defaultdict(list)
+    for path in specgraph.ontology_paths():
+        out[Path(path).parent].append(Path(path))
+    return dict(sorted(out.items(), key=lambda x: str(x[0])))
+
+
+def documentation_path(path: str | Path) -> Path:
+    """The generated annotation graph beside a canonical module file (same root-relativity as ``path``)."""
+    path = Path(path)
+    return path.with_name(documentation_name(path.name))
+
+
+def load(paths: Iterable[str | Path], base: bool = False) -> Graph:
+    """The graph of the canonical module files ``paths``, with their generated annotations unless ``base``.
+
+    ``base=True`` is the module as authored: what a version IRI names, and what the generated
+    annotations are computed from.
+    """
+    g = Graph()
     for p in paths:
-        text=(ROOT/p).read_text(encoding='utf-8')
-        if base:text=text.split(ANNOTATION_MARKER)[0]
-        g.parse(data=text,format='turtle')
+        g.parse(data=(ROOT / p).read_text(encoding="utf-8"), format="turtle")
+        doc = ROOT / documentation_path(p)
+        if not base and doc.is_file():
+            g.parse(data=doc.read_text(encoding="utf-8"), format="turtle")
     return g
 
-def owned(g):
-    return sorted(s for s in set(g.subjects()) if isinstance(s,URIRef) and str(s).startswith('https://hexplain.io/ns/'))
 
-def local(term):return str(term).rsplit('#',1)[-1].rsplit('/',1)[-1]
-def owner(term):return URIRef(str(term).split('#')[0])
-def label(g,term):
-    labels=list(g.objects(term,SKOS.prefLabel))+list(g.objects(term,RDFS.label))
-    return str(sorted(labels,key=lambda x:(x.language!='en',str(x)))[0]) if labels else re.sub(r'(?<=[a-z0-9])(?=[A-Z])',' ',local(term)).replace('_',' ').strip()
+def owned(g: Graph) -> list[URIRef]:
+    return sorted(
+        s for s in set(g.subjects()) if isinstance(s, URIRef) and str(s).startswith("https://hexplain.io/ns/")
+    )
 
-def compact(g,term):
-    if not isinstance(term,URIRef):return str(term)
-    ns=str(term).split('#')[0]
-    prefix=g.value(URIRef(ns),VANN.preferredNamespacePrefix)
-    if prefix and '#' in str(term):return f'{prefix}:{local(term)}'
+
+def local(term: Node | None) -> str:
+    return str(term).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+
+
+def owner(term: URIRef) -> URIRef:
+    return URIRef(str(term).split("#")[0])
+
+
+def label(g: Graph, term: Node | None) -> str:
+    labels = list(g.objects(term, SKOS.prefLabel)) + list(g.objects(term, RDFS.label))
+    if not labels and (term, RDF.type, HX.CodecContract) in g:
+        return label(g, g.value(None, HX.codecContract, term)) + " codec contract"
+    if not labels and (term, RDF.type, HX.CodecParameterSpec) in g:
+        key = str(g.value(term, HX.parameterKey))
+        # A spec several contracts declare (the AES ciphers share menc:Cipher.*) is labelled by all of
+        # them: naming whichever contract g.value happened to return called AES-CTR's iv an AES-GCM one.
+        contracts = sorted(set(g.subjects(HX.declaresParameter, term)), key=str)
+        if len(contracts) > 1:
+            concepts = sorted({label(g, g.value(None, HX.codecContract, c)) for c in contracts})
+            return f"codec contract parameter {key} shared by {_listed(concepts)}"
+        return label(g, g.value(None, HX.declaresParameter, term)) + " parameter " + key
+    return (
+        str(sorted(labels, key=lambda x: (getattr(x, "language", None) != "en", str(x)))[0])
+        if labels
+        else re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", local(term)).replace("_", " ").strip()
+    )
+
+
+def compact(g: Graph, term: Node | None) -> str:
+    if not isinstance(term, URIRef):
+        return str(term)
+    ns = str(term).split("#")[0]
+    prefix = g.value(URIRef(ns), VANN.preferredNamespacePrefix)
+    if prefix and "#" in str(term):
+        return f"{prefix}:{local(term)}"
     return g.namespace_manager.normalizeUri(term)
 
-def kind(g,t):
-    types=set(g.objects(t,RDF.type))
-    for typ,title in [(OWL.Ontology,'Ontology'),(SH.NodeShape,'Node shape'),(SH.PropertyShape,'Property shape'),(SKOS.ConceptScheme,'Concept scheme'),(SKOS.Collection,'Collection'),(SKOS.Concept,'Concept'),(OWL.Class,'Class'),(OWL.ObjectProperty,'Object property'),(OWL.DatatypeProperty,'Datatype property'),(OWL.AnnotationProperty,'Annotation property'),(RDFS.Datatype,'Datatype')]:
-        if typ in types:return title
-    if (t,SH.declare,None) in g:return 'SHACL prefix declarations'
-    return 'Named individual'
 
-def closure(g,node):
+def kind(g: Graph, t: Node) -> str:
+    types = set(g.objects(t, RDF.type))
+    for typ, title in [
+        (OWL.Ontology, "Ontology"),
+        (SH.NodeShape, "Node shape"),
+        (SH.PropertyShape, "Property shape"),
+        (SKOS.ConceptScheme, "Concept scheme"),
+        (SKOS.Collection, "Collection"),
+        (SKOS.Concept, "Concept"),
+        (OWL.Class, "Class"),
+        (OWL.ObjectProperty, "Object property"),
+        (OWL.DatatypeProperty, "Datatype property"),
+        (OWL.AnnotationProperty, "Annotation property"),
+        (RDFS.Datatype, "Datatype"),
+    ]:
+        if typ in types:
+            return title
+    if (t, SH.declare, None) in g:
+        return "SHACL prefix declarations"
+    return "Named individual"
+
+
+def closure(g: Graph, node: Node) -> set[Node]:
     """Blank-node closure only: named references remain explicit reusable references."""
-    seen=set();stack=[node]
+    seen: set[Node] = set()
+    stack: list[Node] = [node]
     while stack:
-        s=stack.pop()
-        if s in seen:continue
+        s = stack.pop()
+        if s in seen:
+            continue
         seen.add(s)
-        for _p,o in g.predicate_objects(s):
-            if isinstance(o,BNode):stack.append(o)
+        for _p, o in g.predicate_objects(s):
+            if isinstance(o, BNode):
+                stack.append(o)
     return seen
 
-def shape_targets(g,t):
-    parts=[]
-    for predicate,phrase in TARGETS.items():
-        vals=sorted(g.objects(t,predicate),key=str)
-        if vals:parts.append(phrase+' '+', '.join(compact(g,x) for x in vals))
+
+def shape_targets(g: Graph, t: URIRef) -> str:
+    parts = []
+    for predicate, phrase in TARGETS.items():
+        vals = sorted(g.objects(t, predicate), key=str)
+        if vals:
+            parts.append(phrase + " " + ", ".join(compact(g, x) for x in vals))
     # A SPARQL-based target (sh:target) is a target too; saying "no automatic target" of
     # hexplain:RegisterBindingShape was false.
-    if list(g.objects(t,SH.target)):parts.append('the nodes its SPARQL target selects')
-    return '; '.join(parts) or 'No automatic target; applied only when another shape references it or a caller explicitly selects it.'
+    if list(g.objects(t, SH.target)):
+        parts.append("the nodes its SPARQL target selects")
+    return (
+        "; ".join(parts)
+        or "No automatic target; applied only when another shape references it or a caller explicitly selects it."
+    )
 
-def shape_properties(g,shape):
-    return sorted({o for s in closure(g,shape) for o in g.objects(s,SH.path) if isinstance(o,URIRef)},key=str)
 
-def stated_definition(g,t):
+def _true(value: Node | None) -> bool:
+    """Whether a stated boolean literal is true (absent or another node is false)."""
+    return isinstance(value, Literal) and value.toPython() is True
+
+
+def _listed(items: list[str]) -> str:
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
+def codec_contract_definition(g: Graph, t: URIRef) -> str | None:
+    """The definition of a register concept's named codec contract, read from what the contract states.
+
+    A parameter spec gets none here: what a parameter MEANS cannot be derived from its type and
+    bounds, so the register states it (rdfs:comment) and one that does not fails the build.
+    """
+    if (t, RDF.type, HX.CodecParameterSpec) in g:
+        raise ValueError(
+            f"{compact(g, t)} states no rdfs:comment; say what the parameter means in the register that declares it"
+        )
+    if (t, RDF.type, HX.CodecContract) not in g:
+        return None
+    concept = g.value(None, HX.codecContract, t)
+    keys = sorted(str(g.value(p, HX.parameterKey)) for p in g.objects(t, HX.declaresParameter))
+    raised = sorted(str(c) for c in g.objects(t, HX.raisesCategory))
+    session = "keeps a session across blocks" if _true(g.value(t, HX.keepsSession)) else "keeps no session"
+    direction = "encodes as well as decodes" if _true(g.value(t, HX.encodes)) else "decodes only"
+    parameters = f"takes the parameter{'s' if len(keys) > 1 else ''} {_listed(keys)}" if keys else "takes no parameters"
+    errors = f"may raise {_listed(raised)} errors" if raised else "declares no error category"
+    return (
+        f"The codec contract of {compact(g, concept)}, version {g.value(t, HX.contractVersion)}, verified by vector "
+        f"suite version {g.value(t, HX.vectorSuiteVersion)}: a {local(g.value(t, HX.codecKind))} codec that {session} "
+        f"and {direction}, {parameters}, and {errors}."
+    )
+
+
+def stated_definition(g: Graph, t: URIRef) -> Node | None:
     """The definition a term's documentation gives: its skos:definition, else its rdfs:comment.
 
     One rule for the whole family: rdfs:comment is the author's definition where the source gives
@@ -85,105 +203,208 @@ def stated_definition(g,t):
     editorial definition for a term whose source has no comment, or one that replaces an
     inadequate comment). The two never repeat each other (tools/test_documentation_annotations.py).
     """
-    return g.value(t,SKOS.definition) or g.value(t,RDFS.comment)
+    return g.value(t, SKOS.definition) or g.value(t, RDFS.comment)
 
-def _prefixes(g):
-    out={p:str(n) for p,n in g.namespace_manager.namespaces() if p}
-    for ontology in g.subjects(VANN.preferredNamespacePrefix,None):
-        prefix=str(g.value(ontology,VANN.preferredNamespacePrefix));uri=g.value(ontology,VANN.preferredNamespaceUri)
+
+def _prefixes(g: Graph) -> dict[str, str]:
+    out = {p: str(n) for p, n in g.namespace_manager.namespaces() if p}
+    for ontology in g.subjects(VANN.preferredNamespacePrefix, None):
+        prefix = str(g.value(ontology, VANN.preferredNamespacePrefix))
+        uri = g.value(ontology, VANN.preferredNamespaceUri)
         if uri is not None:
-            out={k:v for k,v in out.items() if v!=str(uri)};out[prefix]=str(uri)
+            out = {k: v for k, v in out.items() if v != str(uri)}
+            out[prefix] = str(uri)
     return out
 
-def shape_definition(g,t):
+
+def shape_definition(g: Graph, t: URIRef) -> str:
     """A definition for a shape whose source gives none, built from what the shape checks.
 
     Sentences come from the shape's own validation messages and, for a value shape, from its
     constraints. A message that names SPARQL result variables ({?x}) is never copied: it reads
     as a template, not a definition. A shape with nothing to say needs an editorial rdfs:comment.
     """
-    if list(g.objects(t,SH.rule)):return 'A SHACL rule-bearing shape that derives additional triples for its selected focus nodes. Its rule is an inference operation, not a validation constraint; see the executable rule and activation scope below.'
-    prefixes=_prefixes(g);sentences=[]
-    def add(text):
-        text=str(text).strip()
-        if text and not PLACEHOLDER.search(text) and text not in sentences:sentences.append(text)
-    for message in g.objects(t,SH.message):add(message)
-    if constrains_value(g,t):
-        try:add(('Each focus node is ' if any((t,p,None) in g for p in TARGETS) or (t,SH.target,None) in g else 'A conforming value is ')+value_phrase(g,t,prefixes)+'.')
-        except Unhandled:pass
-    for pshape in sorted(g.objects(t,SH.property),key=lambda p:str(g.value(p,SH.path))):
-        stated=[m for m in g.objects(pshape,SH.message) if not PLACEHOLDER.search(str(m))]
+    if list(g.objects(t, SH.rule)):
+        return (
+            "A SHACL rule-bearing shape that derives additional triples for its selected focus nodes. Its rule is an "
+            "inference operation, not a validation constraint; see the executable rule and activation scope below."
+        )
+    prefixes = _prefixes(g)
+    sentences: list[str] = []
+
+    def add(text: object) -> None:
+        text = str(text).strip()
+        if text and not PLACEHOLDER.search(text) and text not in sentences:
+            sentences.append(text)
+
+    for message in g.objects(t, SH.message):
+        add(message)
+    if constrains_value(g, t):
+        with contextlib.suppress(Unhandled):
+            add(
+                (
+                    "Each focus node is "
+                    if any((t, p, None) in g for p in TARGETS) or (t, SH.target, None) in g
+                    else "A conforming value is "
+                )
+                + value_phrase(g, t, prefixes)
+                + "."
+            )
+    for pshape in sorted(g.objects(t, SH.property), key=lambda p: str(g.value(p, SH.path))):
+        stated = [m for m in g.objects(pshape, SH.message) if not PLACEHOLDER.search(str(m))]
         if stated:
-            for m in stated:add(m)
+            for m in stated:
+                add(m)
         else:
-            try:add(shape_message(g,pshape,prefixes))
-            except Unhandled:pass
-    for constraint in g.objects(t,SH.sparql):
-        for message in g.objects(constraint,SH.message):add(message)
+            with contextlib.suppress(Unhandled):
+                add(shape_message(g, pshape, prefixes))
+    for constraint in g.objects(t, SH.sparql):
+        for message in g.objects(constraint, SH.message):
+            add(message)
     if not sentences:
-        raise ValueError(f'Editorial definition required: {compact(g,t)} (a shape whose constraints cannot be stated and that has no rdfs:comment)')
-    targets=shape_targets(g,t)
-    opening='Applied through references from other shapes.' if targets.startswith('No automatic target') else 'Applies to '+targets+'.'
-    return opening+' '+' '.join(sentences)
+        raise ValueError(
+            f"Editorial definition required: {compact(g, t)} (a shape whose constraints cannot be stated and that "
+            "has no rdfs:comment)"
+        )
+    targets = shape_targets(g, t)
+    opening = (
+        "Applied through references from other shapes."
+        if targets.startswith("No automatic target")
+        else "Applies to " + targets + "."
+    )
+    return opening + " " + " ".join(sentences)
 
-def definition(g,t):
+
+def definition(g: Graph, t: URIRef) -> str | None:
     """The skos:definition to generate for [t], or None when the source already defines it."""
-    key=compact(g,t);name=label(g,t);k=kind(g,t)
-    stated=stated_definition(g,t)
+    key = compact(g, t)
+    name = label(g, t)
+    k = kind(g, t)
+    stated = stated_definition(g, t)
     if key in DEFINITIONS:
-        return None if stated is not None and str(stated).strip()==DEFINITIONS[key].strip() else DEFINITIONS[key]
-    if stated is not None:return None
-    if k in ['Node shape','Property shape']:return shape_definition(g,t)
-    if k=='SHACL prefix declarations':return 'Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation infrastructure, not a property of parsed data.'
-    if (t,RDF.type,BDDO.DataType) in g and g.value(t,BDDO.bitWidth):
-        width=str(g.value(t,BDDO.bitWidth));base=g.value(t,BDDO.baseType);signed=g.value(t,BDDO.isSigned)
-        flavor='floating-point' if base==BDDO.baseFloat else ('signed integer' if signed is not None and bool(signed.toPython()) else 'unsigned integer')
-        end=g.value(t,BDDO.endianness)
-        return f'A {width}-bit {flavor} primitive datatype. '+('Byte order is '+label(g,end)+'.' if end else 'Byte order is not fixed on this datatype; the field and processing context determine it.')
-    if k=='Concept scheme':return f'The controlled concept scheme grouping {name.removesuffix(" Register").lower()} values. Membership identifies the applicable value set; raw format codes are defined by profiles rather than by this scheme.'
-    if k=='Collection':return f'An editorial grouping of {name.lower()} concepts for navigation and selection. Collection membership does not assert a subclass or broader/narrower hierarchy.'
-    if k=='Ontology':return f'The vocabulary module publishing {name} terms, its imports and associated validation declarations.'
-    if k=='Concept' and '/us-nato-security#' in str(t):
-        scheme=g.value(t,SKOS.inScheme)
-        if local(t).startswith('Reason'):
-            return f'A legacy classification-reason selector identifying {name}. It preserves the source policy reference rather than asserting that the policy is current.'
-        if re.fullmatch('X[0-9]+',local(t)):
-            clause=('4-202b('+local(t)[1:]+')' if int(local(t)[1:])<10 else '4-301a('+str(int(local(t)[1:])-250)+')')
-            return f'A legacy exemption selector for DOD 5200.1-R paragraph {clause}, represented by the register label {name}. It records the cited exemption category, not an automatic decision to withhold or declassify data.'
-        return f'The legacy {label(g,scheme).removesuffix(" Register").lower()} designation “{name}” as an interoperable concept IRI. It records the designation found in a source; it does not determine current handling authority or grant access.'
-    raise ValueError(f'Editorial definition required: {key} ({k})')
+        return None if stated is not None and str(stated).strip() == DEFINITIONS[key].strip() else DEFINITIONS[key]
+    if stated is not None:
+        return None
+    contract = codec_contract_definition(g, t)
+    if contract:
+        return contract
+    if k in ["Node shape", "Property shape"]:
+        return shape_definition(g, t)
+    if k == "SHACL prefix declarations":
+        return (
+            "Namespace prefix declarations reused by SHACL SPARQL constraints and rules. This is validation "
+            "infrastructure, not a property of parsed data."
+        )
+    if (t, RDF.type, BDDO.DataType) in g and g.value(t, BDDO.bitWidth):
+        width = str(g.value(t, BDDO.bitWidth))
+        base = g.value(t, BDDO.baseType)
+        signed = g.value(t, BDDO.isSigned)
+        flavor = (
+            "floating-point"
+            if base == BDDO.baseFloat
+            else ("signed integer" if isinstance(signed, Literal) and bool(signed.toPython()) else "unsigned integer")
+        )
+        end = g.value(t, BDDO.endianness)
+        # "an 8-bit", "an 11-bit", "an 18-bit": the article follows the spoken number.
+        article = "An" if width.startswith(("8", "11", "18")) else "A"
+        return f"{article} {width}-bit {flavor} primitive datatype. " + (
+            "Byte order is " + label(g, end) + "."
+            if end
+            else "Byte order is not fixed on this datatype; the field and processing context determine it."
+        )
+    if k == "Concept scheme":
+        return (
+            f"The controlled concept scheme grouping {name.removesuffix(' Register').lower()} values. Membership "
+            "identifies the applicable value set; raw format codes are defined by profiles rather than by this "
+            "scheme."
+        )
+    if k == "Collection":
+        return (
+            f"An editorial grouping of {name.lower()} concepts for navigation and selection. Collection membership "
+            "does not assert a subclass or broader/narrower hierarchy."
+        )
+    if k == "Ontology":
+        return f"The vocabulary module publishing {name} terms, its imports and associated validation declarations."
+    if k == "Concept" and "/ns/register/" in str(t):
+        # A register is read on its own, so its concepts are defined where they are declared and
+        # never in the generated annotation graph.
+        raise ValueError(f"{key} has no skos:definition; state it in the register that declares the concept")
+    raise ValueError(f"Editorial definition required: {key} ({k})")
 
-SCOPE={
- 'bddo':'Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly specifies bits; HEL evaluation and failure behavior follow the processing specification.',
- 'dlv':'Use in declarations of physical multi-dimensional storage. Logical axis meaning is distinct from byte strides, chunk order and encoded payload interpretation.',
- 'core':'Use when linking a physical format description to semantic RDF output, encoding stages or controlled-value bindings. It does not replace the byte-layout description.',
- 'fn':'Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF sh:SPARQLFunction body without the Hexplain engine; native functions require it.',
- 'geo':'Use for georeferenced datasets. Combine the dataset kind with the appropriate raster, geometry, point-cloud, spatial-reference and provenance aspects.',
- 'image':'Use for image resources and their components. The legacy integer method/color codes preserve profile-specific wire values; they are not universal algorithm or color identifiers.',
- 'audio':'Use for audio resources, their streams and source metadata. Sampling, encoding and timing aspects carry shared properties.',
- 'video':'Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact variable-rate timeline.',
- 'docfont':'Use for documents, pages, fonts and glyph components. Object identity, coordinate units and code interpretation depend on the document/font profile.',
- 'net':'Use for protocol data units. Protocol-specific wire interpretation remains in the format profile; networkflow supplies shared endpoint and sequence metadata.',
- 'archive':'Use for archive resources and member entries. Distinguish stored compressed bytes from logical member content.',
- 'req':'Use for attributable requirements from a named standard or policy, independent of a particular executable validation rule.',
- 'conf':'Use for constraints evaluated against a declared structural scope and attributed to requirements. A requirement is not an executable assertion by itself.',
- 'raster':'Use for logical raster samples, bands and arrays after parsing. Logical dimensions are independent of physical DLV addressing; partial graphs and complete dimension lists have different completeness contracts.',
- 'spatialref':'Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel conventions explicitly; metadata validation does not execute coordinate transformations.',
- 'geometry':'Use for explicit geometry semantics across vector graphics, geospatial features and glyph outlines. Spatial coordinates and measure ordinates must remain distinct.',
- 'bundle':'Use for compound assets, their members and reusable membership profiles. Discovery/binding, semantic membership and physical byte location are separate concerns.',
- 'security':'Use to record source security-marking semantics. Bind controlled values through a selected register; the aspect does not define a jurisdiction-specific authorization policy.',
- 'sampling':'Use for quantized sample interpretation shared by raster, signal and point-cloud data. Precision, component organization and numeric interpretation are separate declarations.',
- 'color':'Use for color interpretation of sample values. Resolve controlled identifiers through the profile-bound register.',
- 'encoding':'Use for the encoding characteristics of data content; a codec identifier alone does not supply all container framing and parameters.',
- 'fsmeta':'Use for logical file or directory metadata recorded by a container or filesystem representation; it need not describe the current host filesystem.',
- 'integrity':'Use for recorded integrity information about bytes or resources; the presence of a digest is distinct from successful verification.',
- 'networkflow':'Use for protocol addressing and transport/flow metadata. A source number or bit pattern has meaning only in its declared protocol context.',
- 'packaging':'Use for membership and packaging metadata shared by archive and compound-resource descriptions.',
- 'pointcloud':'Use for unstructured sampled-point collections and their per-point record descriptions; no regular grid topology is implied.',
- 'provenance':'Use for acquisition and observing-equipment metadata. Keep observation time distinct from file timestamps and reference-frame epochs.',
- 'signal':'Use for sampled signals; state channel organization and units separately from sample rate.',
- 'tabular':'Use for tabular records and typed column declarations. Source datatype names require interpretation by the relevant format/profile.',
- 'time':'Use for temporal metadata of content. Numeric durations and frame/sample counts are not interchangeable without a timing model.',
+
+SCOPE = {
+    "bddo": "Use in physical binary-format descriptions. Extents and offsets describe bytes unless a term explicitly "
+    "specifies bits; HEL evaluation and failure behavior follow the processing specification.",
+    "dlv": "Use in declarations of physical multi-dimensional storage. Logical axis meaning is distinct from byte "
+    "strides, chunk order and encoded payload interpretation.",
+    "core": "Use when linking a physical format description to semantic RDF output, encoding stages or "
+    "controlled-value "
+    "bindings. It does not replace the byte-layout description.",
+    "fn": "Use to invoke a SPARQL extension function that reaches the bytes, parsed values, array cells or aspect "
+    "coordinates of an asset described by a Hexplain profile. Pure functions also run as a SHACL-AF "
+    "sh:SPARQLFunction body without the Hexplain engine; native functions require it.",
+    "geo": "Use for georeferenced datasets. Combine the dataset kind with the appropriate raster, geometry, "
+    "point-cloud, spatial-reference and provenance aspects.",
+    "image": "Use for image resources and their components. The legacy integer method/color codes preserve "
+    "profile-specific wire values; they are not universal algorithm or color identifiers.",
+    "audio": "Use for audio resources, their streams and source metadata. Sampling, encoding and timing aspects carry "
+    "shared properties.",
+    "video": "Use for video containers, streams, tracks and timing metadata. Nominal rate must not be used as an exact "
+    "variable-rate timeline.",
+    "docfont": "Use for documents, pages, fonts and glyph components. Object identity, coordinate units and code "
+    "interpretation depend on the document/font profile.",
+    "net": "Use for protocol data units. Protocol-specific wire interpretation remains in the format profile; "
+    "networkflow supplies shared endpoint and sequence metadata.",
+    "archive": "Use for archive resources and member entries. Distinguish stored compressed bytes from logical "
+    "member content.",
+    "req": "Use for attributable requirements from a named standard or policy, independent of a particular executable "
+    "validation rule.",
+    "conf": "Use for constraints evaluated against a declared structural scope and attributed to requirements. A "
+    "requirement is not an executable assertion by itself.",
+    "raster": "Use for logical raster samples, bands and arrays after parsing. Logical dimensions are independent of "
+    "physical DLV addressing; partial graphs and complete dimension lists have different completeness contracts.",
+    "spatialref": "Use for coordinate references and geolocation metadata. Declare units, reference frame and pixel "
+    "conventions explicitly; metadata validation does not execute coordinate transformations.",
+    "geometry": "Use for explicit geometry semantics across vector graphics, geospatial features and glyph "
+    "outlines. Spatial "
+    "coordinates and measure ordinates must remain distinct.",
+    "bundle": "Use for compound assets, their members and reusable membership profiles. Discovery/binding, semantic "
+    "membership and physical byte location are separate concerns.",
+    "security": "Use to record source security-marking semantics. Bind controlled values through a selected "
+    "register; the "
+    "aspect does not define a jurisdiction-specific authorization policy.",
+    "sampling": "Use for quantized sample interpretation shared by raster, signal and point-cloud data. "
+    "Precision, component "
+    "organization and numeric interpretation are separate declarations.",
+    "color": "Use for color interpretation of sample values. Resolve controlled identifiers through the profile-bound "
+    "register.",
+    "encoding": "Use for the encoding characteristics of data content; a codec identifier alone does not supply all "
+    "container framing and parameters.",
+    "fsmeta": "Use for logical file or directory metadata recorded by a container or filesystem representation; "
+    "it need "
+    "not describe the current host filesystem.",
+    "integrity": "Use for recorded integrity information about bytes or resources; the presence of a digest is "
+    "distinct from "
+    "successful verification.",
+    "networkflow": "Use for protocol addressing and transport/flow metadata. A source number or bit pattern has "
+    "meaning only in "
+    "its declared protocol context.",
+    "packaging": "Use for membership and packaging metadata shared by archive and compound-resource descriptions.",
+    "pointcloud": "Use for unstructured sampled-point collections and their per-point record descriptions; no "
+    "regular grid "
+    "topology is implied.",
+    "provenance": "Use for acquisition and observing-equipment metadata. Keep observation time distinct from "
+    "file timestamps "
+    "and reference-frame epochs.",
+    "signal": "Use for sampled signals; state channel organization and units separately from sample rate.",
+    "structure": "Use for decoded records, member roles and ordered occurrences when a more specific domain aspect "
+    "does not supply those meanings. Physical byte layout remains in BDDO; format profiles supply "
+    "application-specific member semantics.",
+    "tabular": "Use for tabular records and typed column declarations. Source datatype names require "
+    "interpretation by the "
+    "relevant format/profile.",
+    "time": "Use for temporal metadata of content. Numeric durations and frame/sample counts are not interchangeable "
+    "without a timing model.",
 }
 
 # Modules whose terms each carry their own skos:scopeNote, in the canonical RDF or in
@@ -192,46 +413,82 @@ SCOPE={
 # "for constraints evaluated against a declared structural scope", and that hexplain:RegisterStatus
 # was for "linking a physical format description to semantic RDF output"; both wrong. A term of
 # such a module without a note of its own gets only the kind sentence that is true of it.
-TERM_SCOPED={'conf','req','core','bundle'}
-SUBCLASS_NOTE=' Its subclass links below are the asserted hierarchy, not merely similarity links.'
-PATH_NOTE=' Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred from that usage.'
-NO_PATH_NOTE=' No shape of the family constrains it, and no global domain is inferred.'
+TERM_SCOPED = {"conf", "req", "core", "bundle"}
+SUBCLASS_NOTE = " Its subclass links below are the asserted hierarchy, not merely similarity links."
+PATH_NOTE = (
+    " Applicable SHACL paths and their focus-node scopes are listed below; no additional global domain is inferred "
+    "from that usage."
+)
+NO_PATH_NOTE = " No shape of the family constrains it, and no global domain is inferred."
 
-def has_hierarchy(g,t):
-    return (t,RDFS.subClassOf,None) in g or (None,RDFS.subClassOf,t) in g
 
-_FAMILY=[]
-def family_graph():
+def has_hierarchy(g: Graph, t: URIRef) -> bool:
+    return (t, RDFS.subClassOf, None) in g or (None, RDFS.subClassOf, t) in g
+
+
+_FAMILY: list[Graph] = []
+
+
+def family_graph() -> Graph:
     """Every module of the family without its generated documentation, loaded once."""
-    if not _FAMILY:_FAMILY.append(load(specgraph.ontology_paths(),base=True))
+    if not _FAMILY:
+        _FAMILY.append(load(specgraph.ontology_paths(), base=True))
     return _FAMILY[0]
 
-def constrained(g,t):
+
+def constrained(g: Graph, t: URIRef) -> bool:
     """True when a shape anywhere in the family uses the property as a path or targets its subjects or objects."""
-    f=family_graph()
-    return any((None,p,t) in f for p in (SH.path,SH.targetSubjectsOf,SH.targetObjectsOf))
+    f = family_graph()
+    return any((None, p, t) in f for p in (SH.path, SH.targetSubjectsOf, SH.targetObjectsOf))
 
-def kind_sentence(g,t,k):
+
+def kind_sentence(g: Graph, t: URIRef, k: str) -> str:
     """The sentence about how a term of kind [k] is used, claiming only what is true of [t]."""
-    if k=='Class':return 'Assert this class on a resource representing the defined entity.'+(SUBCLASS_NOTE if has_hierarchy(g,t) else '')
-    if 'property' in k.lower():return 'Use it as a predicate.'+(PATH_NOTE if constrained(g,t) else NO_PATH_NOTE)
-    if k=='Named individual':return 'Use this IRI as a controlled value where the profile or a shape accepts its declared type.'
-    return ''
+    if k == "Class":
+        return "Assert this class on a resource representing the defined entity." + (
+            SUBCLASS_NOTE if has_hierarchy(g, t) else ""
+        )
+    if "property" in k.lower():
+        return "Use it as a predicate." + (PATH_NOTE if constrained(g, t) else NO_PATH_NOTE)
+    if k == "Named individual":
+        return "Use this IRI as a controlled value where the profile or a shape accepts its declared type."
+    return ""
 
-def scope(g,t):
+
+def scope(g: Graph, t: URIRef) -> str | None:
     """The skos:scopeNote to generate for [t], or None.
 
     Only notes that say something about the term itself are generated: the module's note on its
     ontology, and a term's editorial note (_term_editorial.SCOPE_NOTES). Generating the module
     sentence, a kind sentence or a shape's activation onto every term repeated, 987 times, what
     the ontology's note and the term reference's own rows (activation, shape usage) already say.
+    For the same reason a codec contract and its parameter specs get no note each: how they are
+    used is the note of their classes, hexplain:CodecContract and hexplain:CodecParameterSpec,
+    and repeating it on every individual said nothing about any one of them.
     """
-    k=kind(g,t);ns=str(owner(t));module=ns.removesuffix('/shapes').rsplit('/',1)[-1]
-    if module=='hexplain':module='core'
-    for key in (str(t),compact(g,t)):
-        if key in SCOPE_NOTES:return SCOPE_NOTES[key]
-    if k!='Ontology':return None
-    if '/register/' in ns:
-        return 'Load to obtain the concepts of this register. A profile binds its schemes to the properties they supply with hexplain:usesRegister; the aspect the values serve does not import it.'+(
-          ' This is a historical interoperability register. Consult the source policy version and current governing authority before interpreting handling effects.' if module=='us-nato-security' else ' Codec/algorithm concepts require any applicable variant, framing and parameter information from the profile.' if module in ['media-encoding','checksum'] else ' Use concept IRIs as values; concept schemes and collections organize those values rather than describing parsed instances.')
+    k = kind(g, t)
+    ns = str(owner(t))
+    module = ns.removesuffix("/shapes").rsplit("/", 1)[-1]
+    if module == "hexplain":
+        module = "core"
+    for key in (str(t), compact(g, t)):
+        if key in SCOPE_NOTES:
+            return SCOPE_NOTES[key]
+    if k != "Ontology":
+        return None
+    if "/register/" in ns:
+        return (
+            "Load to obtain the concepts of this register. A profile binds its schemes to the properties they "
+            "supply with hexplain:usesRegister; the aspect the values serve does not import it."
+            + (
+                " This is a historical interoperability register. Consult the source policy version and current "
+                "governing authority before interpreting handling effects."
+                if module == "us-nato-security"
+                else " Codec/algorithm concepts require any applicable variant, framing and parameter information "
+                "from the profile."
+                if module in ["media-encoding", "checksum"]
+                else " Use concept IRIs as values; concept schemes and collections organize those values rather than "
+                "describing parsed instances."
+            )
+        )
     return SCOPE.get(module)

@@ -10,30 +10,38 @@ is not a dependency of the suite.
 Frames hand-built here instead (a raw-block frame naming a dictionary) are assembled field by
 field from RFC 8878.
 """
+
+from __future__ import annotations
+
 import hashlib
 import struct
 
 M64 = (1 << 64) - 1
-Q1, Q2, Q3, Q4, Q5 = (11400714785074694791, 14029467366897019727, 1609587929392839161,
-                      9650029242287828579, 2870177450012600261)
+Q1, Q2, Q3, Q4, Q5 = (
+    11400714785074694791,
+    14029467366897019727,
+    1609587929392839161,
+    9650029242287828579,
+    2870177450012600261,
+)
 MAGIC = b"\x28\xb5\x2f\xfd"
 
 
-def _rotl(x, r):
+def _rotl(x: int, r: int) -> int:
     return ((x << r) | (x >> (64 - r))) & M64
 
 
-def _round(acc, lane):
+def _round(acc: int, lane: int) -> int:
     acc = (acc + lane * Q2) & M64
     return (_rotl(acc, 31) * Q1) & M64
 
 
-def _merge(acc, val):
+def _merge(acc: int, val: int) -> int:
     acc ^= _round(0, val)
     return (acc * Q1 + Q4) & M64
 
 
-def xxh64(data, seed=0):
+def xxh64(data: bytes, seed: int = 0) -> int:
     """XXH64 of `data` (xxHash specification, doc/xxhash_spec.md)."""
     n = len(data)
     i = 0
@@ -75,13 +83,15 @@ assert xxh64(b"") == 0xEF46DB3751D8E999  # the specification's value for the emp
 CONTENT_1 = b"Hexplain Zstandard frame: " + b"abcabcabcabcabcabc" * 10
 CONTENT_2 = b"second frame"
 FRAMES = {
-    CONTENT_1: ("28b52ffd24ce250100e8486578706c61696e205a7374616e64617264206672616d653a206162630100b9a49c13a42a614b",
-                "b5f4163f4dd3085e"),
+    CONTENT_1: (
+        "28b52ffd24ce250100e8486578706c61696e205a7374616e64617264206672616d653a206162630100b9a49c13a42a614b",
+        "b5f4163f4dd3085e",
+    ),
     CONTENT_2: ("28b52ffd240c6100007365636f6e64206672616d65176407b6", "0d3004a4989bed77"),
 }
 
 
-def frame(content):
+def frame(content: bytes) -> bytes:
     """The pre-made frame of `content`, after checking its pin, magic and checksum trailer."""
     hexed, pin = FRAMES[content]
     data = bytes.fromhex(hexed)
@@ -96,7 +106,7 @@ def frame(content):
     return data
 
 
-def content_size_mismatch_frame(content):
+def content_size_mismatch_frame(content: bytes) -> bytes:
     """The pre-made frame of `content` with its Frame_Content_Size one larger than the content. The frame is
     single-segment with a one-byte content size (Frame_Header_Descriptor 0x24: Single_Segment_flag and
     Content_Checksum_flag), so the size is the byte after the descriptor; the window is that size, so the block
@@ -107,7 +117,7 @@ def content_size_mismatch_frame(content):
     return bytes(data)
 
 
-def dictionary_frame(content, dictionary_id):
+def dictionary_frame(content: bytes, dictionary_id: int) -> bytes:
     """A single-segment frame of one raw block that names a dictionary: Frame_Header_Descriptor
     0x21 (Single_Segment_flag, a one-byte Dictionary_ID, a one-byte Frame_Content_Size, no
     checksum), then the dictionary ID, the content size, and a last raw block."""
