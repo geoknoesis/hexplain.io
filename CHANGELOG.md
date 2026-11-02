@@ -6,6 +6,29 @@ snapshots are recorded under `releases/`.
 
 ## Unreleased (changes since snapshot 2026-09-24.2)
 
+### Reference-engine follow-ups (2026-11-02)
+
+- `dlv:DataLayoutShape`: the constraint that every rule of `dlv:hasConditionalDimensionOrder`
+  names the same Dimension nodes as the first rule never fired on a SPARQL engine that evaluates
+  a UNION branch before joining it (Jena, TopBraid), as SPARQL 1.1 section 18.2 states: its
+  `FILTER NOT EXISTS` sat inside the branches, where `?rule` and `?first` are unbound. The test
+  now sits in a top-level FILTER, so the rule is enforced on every conforming SHACL-SPARQL engine,
+  not only on pySHACL. The reference engine's Jena replay of the family contracts found it.
+- The reference engine's implementation report of the current suite (939 cases, digest
+  e2530a9831d3, engine commit 9f44e9f9) is published: 935 cases pass, none fail, and 4 are
+  skipped as not applicable (two refusals of a codec the engine decodes, and the two
+  chunk-order cases it does not claim). The Writer claim cites it, all 88 Writer cases passing.
+- `araster:SampleArrayShape`: the unterminated-list branch of the dimension-list constraint bound
+  its list head inside the branch for the same reason. Any such list is also caught by the
+  missing-cell and cycle branches, so no result changes.
+- HEL: `req-hel-array-values-4` is changed. The review fixes of 2026-11-01 made any array value or
+  struct node an error as the result of a `bddo:valueFromExpression`, which refused a derived field
+  that names one of two version-specific repeated fields (ISO-BMFF `iref`'s `toItemIds`, a
+  pattern the reference engine's bundled profile uses). Only a computed array, which is not a
+  node of the parsed tree, is now an error there; an array node or a struct node reached by an
+  accessor is named by the derived field, as before 2026-11-01. The `hexplain:valueExpression`
+  rule is unchanged. The name binding table's row for `bddo:valueFromExpression` follows.
+
 ### Review fixes (2026-11-01)
 
 A six-area review of the specification found 77 problems; this section records their fixes.

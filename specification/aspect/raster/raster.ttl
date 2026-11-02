@@ -186,7 +186,7 @@ araster:IntegerValueShape a sh:NodeShape ; rdfs:label "Integer value shape"@en ;
       PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
       SELECT DISTINCT $this WHERE {
         $this a:dimensions ?head .
-        { FILTER NOT EXISTS { ?head rdf:rest* rdf:nil } }
+        { $this a:dimensions ?open . FILTER NOT EXISTS { ?open rdf:rest* rdf:nil } }
         UNION { ?head rdf:rest* ?cell . FILTER(?cell != rdf:nil) FILTER NOT EXISTS { ?cell rdf:first ?v ; rdf:rest ?r } }
         UNION { ?head rdf:rest* ?cell . ?cell rdf:first ?v, ?w . FILTER(!sameTerm(?v, ?w)) }
         UNION { ?head rdf:rest* ?cell . ?cell rdf:rest ?v, ?w . FILTER(!sameTerm(?v, ?w)) }
