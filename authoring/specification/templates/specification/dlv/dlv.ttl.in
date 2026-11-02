@@ -175,13 +175,11 @@ dlv:DataLayoutShape a sh:NodeShape ;
             $this dlv:hasConditionalDimensionOrder ?list .
             ?list rdf:first ?first .
             ?list rdf:rest+/rdf:first ?rule .
-            {
-                ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d .
-                FILTER NOT EXISTS { ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
-            } UNION {
-                ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d .
-                FILTER NOT EXISTS { ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
-            }
+            { ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d } UNION { ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
+            # At the top level, where ?first and ?rule are bound: a FILTER inside a UNION branch is
+            # evaluated before the join, with ?rule or ?first unbound there (SPARQL 1.1, 18.2).
+            FILTER (NOT EXISTS { ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
+                || NOT EXISTS { ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d })
         }""" ] ;
     # The two choices a layout makes (cell type, dimension order) are dlv:CellTypeChoiceShape
     # and dlv:DimensionOrderChoiceShape.

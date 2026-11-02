@@ -151,13 +151,11 @@
             $this dlv:hasConditionalDimensionOrder ?list .
             ?list rdf:first ?first .
             ?list rdf:rest+/rdf:first ?rule .
-            {
-                ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d .
-                FILTER NOT EXISTS { ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
-            } UNION {
-                ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d .
-                FILTER NOT EXISTS { ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
-            }
+            { ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d } UNION { ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
+            # At the top level, where ?first and ?rule are bound: a FILTER inside a UNION branch is
+            # evaluated before the join, with ?rule or ?first unbound there (SPARQL 1.1, 18.2).
+            FILTER (NOT EXISTS { ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
+                || NOT EXISTS { ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d })
         }</pre></li></ul></li><li><b>SPARQL validation constraint:</b> <ul class="constraint"><li><b>Validation message:</b> <code>&quot;Rule {?rule} of dlv:hasConditionalDimensionOrder names Dimension {?d} more than once in its dlv:ruleDimensionOrder: every rule names each of the layout&#x27;s Dimension nodes exactly once.&quot;</code></li><li><b>SPARQL prefix declarations:</b> <a href="index.html#term-_prefixes"><code>dlv:_prefixes</code></a></li><li><b>SELECT query returning violations:</b> <pre>SELECT DISTINCT $this ?rule ?d WHERE {
             $this dlv:hasConditionalDimensionOrder/rdf:rest*/rdf:first ?rule .
             ?rule dlv:ruleDimensionOrder/rdf:rest* ?n1 , ?n2 .
@@ -350,13 +348,11 @@ dlv:DataLayoutShape a sh:NodeShape ;
             $this dlv:hasConditionalDimensionOrder ?list .
             ?list rdf:first ?first .
             ?list rdf:rest+/rdf:first ?rule .
-            {
-                ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d .
-                FILTER NOT EXISTS { ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
-            } UNION {
-                ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d .
-                FILTER NOT EXISTS { ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
-            }
+            { ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d } UNION { ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
+            # At the top level, where ?first and ?rule are bound: a FILTER inside a UNION branch is
+            # evaluated before the join, with ?rule or ?first unbound there (SPARQL 1.1, 18.2).
+            FILTER (NOT EXISTS { ?first dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d }
+                || NOT EXISTS { ?rule dlv:ruleDimensionOrder/rdf:rest*/rdf:first ?d })
         }""" ] ;
     # The two choices a layout makes (cell type, dimension order) are dlv:CellTypeChoiceShape
     # and dlv:DimensionOrderChoiceShape.
