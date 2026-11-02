@@ -74,6 +74,17 @@ def round_trip_problems(root: Path) -> None:
         assert run_suite.run_round_trip(case, command(writer), command(parser), claims, "round-trip", 5)[0] == expected
 
 
+def ended(pid: int, wait: float = 5.0) -> bool:
+    """Whether process [pid] has ended (or is a zombie) within [wait] seconds: SIGKILL is delivered
+    asynchronously, so a check made the instant the group is killed can still see the process running."""
+    try:
+        process = psutil.Process(pid)
+    except psutil.NoSuchProcess:
+        return True
+    _, alive = psutil.wait_procs([process], timeout=wait)
+    return not alive or all(p.status() == psutil.STATUS_ZOMBIE for p in alive)
+
+
 def containment_problems(root: Path) -> None:
     from processor_process import execute
 
@@ -98,7 +109,7 @@ def containment_problems(root: Path) -> None:
         if (root / "child.pid").is_file():
             break
     child = int((root / "child.pid").read_text())
-    assert not psutil.pid_exists(child) or psutil.Process(child).status() == psutil.STATUS_ZOMBIE
+    assert ended(child), "the timed-out implementation's child outlived it"
     # The implementation exits first, leaving a child holding inherited pipes open.
     script.write_text(
         "import subprocess,sys,pathlib\n"
@@ -120,7 +131,7 @@ def containment_problems(root: Path) -> None:
                 psutil.Process(int((root / "orphan.pid").read_text())).kill()
         assert failure is None and code == 0, (code, failure)
         orphan = psutil.Process(int((root / "orphan.pid").read_text()))
-        assert not orphan.is_running() or orphan.status() == psutil.STATUS_ZOMBIE
+        assert ended(orphan.pid), "the orphan holding the pipes outlived the implementation"
     except psutil.NoSuchProcess:
         pass
     finally:
