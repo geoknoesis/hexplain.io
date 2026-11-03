@@ -675,6 +675,61 @@ err(
 )
 
 err(
+    "layout-cell-struct",
+    "A struct as a layout cell type is an ERROR",
+    "dlv:cellDataType takes a bddo:DataType, which a struct is not, so layout cell Pixel has no form to compile to; a "
+    "compiler that emitted the layout without its cell type would describe a grid nothing can read.",
+    ["req-hdl-grammar-layout-2", "req-hdl-grammar-layout-3", "req-hdl-conformance-section-9"],
+    ["layout", "grammar-layout"],
+    """
+    format t @namespace "{ns}"
+    struct Pixel { r : u8  g : u8 }
+    struct Root {
+      pixels : bytes[..] layout cell Pixel { dim axis X size 4 }
+    }
+    """,
+    line=4,
+)
+
+err(
+    "layout-cell-switch-bits",
+    "bits[N] in a cell switch arm is an ERROR",
+    "bits[4] has no datatype of its own, so the arm has no dlv:ruleCellDataType to compile to; a compiler that dropped "
+    "the arm would read every grid with n = 2 as no type at all. A packed cell is its datatype and a cell-bits width.",
+    ["req-hdl-grammar-layout-2", "req-hdl-grammar-layout-3", "req-hdl-conformance-section-9"],
+    ["layout", "grammar-layout"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      n : u8
+      pixels : bytes[..] layout { cell switch { when n == 1 => u8  when n == 2 => bits[4] } dim axis X size 4 }
+    }
+    """,
+    line=4,
+)
+
+hc(
+    "layout-cell-curie",
+    "A CURIE layout cell type is emitted as the datatype it names",
+    "bddo:float16le names a bddo:DataType individual by its CURIE; the compiler emits its IRI as dlv:cellDataType, as "
+    "it does for a field's CURIE type, rather than dropping it.",
+    ["req-hdl-grammar-layout-2"],
+    ["layout", "grammar-layout"],
+    """
+    format t @namespace "{ns}"
+    struct Image {
+      pixels : bytes[..] layout cell bddo:float16le { dim axis X size 4 }
+    }
+    """,
+    """
+     ex:Image a bddo:Struct ; bddo:hasField ( ex:Image.pixels ) .
+     ex:Image.pixels a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
+         hexplain:hasDataLayout [ a dlv:DataLayout ; dlv:cellDataType bddo:float16le ;
+             dlv:hasDimension ( [ a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSize 4 ] ) ] .
+     """,
+)
+
+err(
     "pipeline-duplicate-parameter",
     "A pipeline step naming a parameter twice is an ERROR",
     "elementSize is given twice; which value the codec would run with is undefined.",
