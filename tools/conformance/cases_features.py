@@ -764,26 +764,28 @@ pp(
 pp(
     "concat-of",
     "concatOf concatenates the arrays its expression yields, in element order",
-    "Two Parts of lengths 2 and 1 hold 0A 0B and 0C; All is their concatenation.",
+    "Two Parts of lengths 2 and 1 hold 41 42 and 43; their concatenation, read as code points, is the String ABC: "
+    "a derived field holds no computed array (req-hel-array-values-4), so the case reads the array through "
+    "unicodeText.",
     ["req-hel-ext-quantifiers-24"],
     ["algorithm", "hel/index.html#ext-quantifiers"],
     """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.parts ex:Root.All ) .
    ex:Root.parts a bddo:Field ; bddo:dataType ex:Part ; bddo:repeatCount 2 .
-   ex:Root.All a bddo:Field ; bddo:valueFromExpression "concatOf(instance.parts, self.Data)" .
+   ex:Root.All a bddo:Field ; bddo:valueFromExpression "unicodeText(concatOf(instance.parts, self.Data))" .
    ex:Part a bddo:Struct ; bddo:hasField ( ex:Part.Len ex:Part.Data ) .
    ex:Part.Len a bddo:Field ; bddo:dataType bddo:uint8 .
    ex:Part.Data a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCountFromField ex:Part.Len .
    """,
-    bytes([2, 10, 11, 1, 12]),
-    {"parts": [{"Len": 2, "Data": [10, 11]}, {"Len": 1, "Data": [12]}], "All": [10, 11, 12]},
+    bytes([2, 65, 66, 1, 67]),
+    {"parts": [{"Len": 2, "Data": [65, 66]}, {"Len": 1, "Data": [67]}], "All": "ABC"},
 )
 
 pp(
     "concat-of-bytes",
     "concatOf of Bytes results is Bytes",
     "Each Part holds Len bytes; All is the Bytes 0A 0B 0C.",
-    ["req-hel-ext-quantifiers-8"],
+    ["req-hel-ext-quantifiers-24"],
     ["algorithm", "hel/index.html#ext-quantifiers"],
     """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.parts ex:Root.All ) .
@@ -800,19 +802,19 @@ pp(
 pp(
     "concat-of-empty",
     "concatOf over an empty collection is an empty array",
-    "No Part is read, so All is the empty array.",
-    ["req-hel-ext-quantifiers-8"],
+    "No Part is read, so the concatenation is the empty array and All, its length, is 0.",
+    ["req-hel-ext-quantifiers-24"],
     ["algorithm", "hel/index.html#ext-quantifiers"],
     """
    ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.tag ex:Root.parts ex:Root.All ) .
    ex:Root.tag a bddo:Field ; bddo:dataType bddo:uint8 .
    ex:Root.parts a bddo:Field ; bddo:dataType ex:Part ; bddo:repeatCount 0 .
-   ex:Root.All a bddo:Field ; bddo:valueFromExpression "concatOf(instance.parts, self.Data)" .
+   ex:Root.All a bddo:Field ; bddo:valueFromExpression "len(concatOf(instance.parts, self.Data))" .
    ex:Part a bddo:Struct ; bddo:hasField ( ex:Part.Data ) .
    ex:Part.Data a bddo:Field ; bddo:dataType bddo:uint8 .
    """,
     bytes([7]),
-    {"tag": 7, "parts": [], "All": []},
+    {"tag": 7, "parts": [], "All": 0},
 )
 
 pp(
