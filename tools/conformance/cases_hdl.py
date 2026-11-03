@@ -711,21 +711,20 @@ err(
 hc(
     "layout-cell-curie",
     "A CURIE layout cell type is emitted as the datatype it names",
-    "t:half names a bddo:DataType individual of another vocabulary; the compiler emits its IRI as dlv:cellDataType, "
-    "as it does for a field's CURIE type, rather than dropping it.",
+    "bddo:float16le names a bddo:DataType individual by its CURIE; the compiler emits its IRI as dlv:cellDataType, as "
+    "it does for a field's CURIE type, rather than dropping it.",
     ["req-hdl-grammar-layout-2"],
     ["layout", "grammar-layout"],
     """
     format t @namespace "{ns}"
-    use t: <https://example.org/types#>
     struct Image {
-      pixels : bytes[..] layout cell t:half { dim axis X size 4 }
+      pixels : bytes[..] layout cell bddo:float16le { dim axis X size 4 }
     }
     """,
     """
      ex:Image a bddo:Struct ; bddo:hasField ( ex:Image.pixels ) .
      ex:Image.pixels a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeToEndOfStream true ;
-         hexplain:hasDataLayout [ a dlv:DataLayout ; dlv:cellDataType <https://example.org/types#half> ;
+         hexplain:hasDataLayout [ a dlv:DataLayout ; dlv:cellDataType bddo:float16le ;
              dlv:hasDimension ( [ a dlv:Dimension ; dlv:hasAxis dlv:axisX ; dlv:dimensionSize 4 ] ) ] .
      """,
 )
