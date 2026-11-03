@@ -6,6 +6,10 @@ snapshots are recorded under `releases/`.
 
 ## Unreleased (changes since snapshot 2026-09-24.2)
 
+### Layout cell types
+
+HDL's grammar let a layout's cell be any `Type`, but `dlv:cellDataType` and `dlv:ruleCellDataType` take a `bddo:DataType`, which a struct is not and `bits[N]` has none of. A compiler could therefore emit a layout with no cell type, or a `cell switch` without one of its arms, and say nothing. New requirements: `req-hdl-grammar-layout-2` (what a cell type is) and `req-hdl-grammar-layout-3` (a compiler reports any other as an ERROR). A cell type names a datatype (a numeric, string, ASCII-numeric or `bytes` type, or a CURIE naming a datatype individual, which is emitted as the value). A struct, declared or imported, or `bits[N]` is an ERROR; a packed cell is its datatype and a `cell-bits` width. Cases: `hc-layout-cell-struct`, `hc-layout-cell-switch-bits` (errors), `hc-layout-cell-curie`.
+
 ### Alternatives a regular-expression match tries
 
 The match cost of `matches` now counts every alternative the matcher tries, as it already counted idle iterations of a quantified group. Before this change a run of groups each able to match the empty string in two ways (`(|)(|)...(|)x`) made a backtracking matcher try every combination of their alternatives against an empty subject without examining a character, so neither the character count nor a clock read between characters ever stopped it. New requirement: `req-hel-ext-text-11`. The Processing Model's definition of the regular-expression match cost names the alternatives too, and its closing sentence now bounds a non-backtracking matcher by the length of the subject times the size of the pattern rather than by the length of the subject alone. Case: `pp-limit-regex-empty-alternatives` (false or a ResourceLimit error).
