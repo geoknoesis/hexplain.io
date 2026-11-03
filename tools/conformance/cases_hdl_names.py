@@ -353,6 +353,29 @@ unknown_key(
     """,
 )
 
+err(
+    "yaml-dim-missing-axis",
+    "An entry of dims without an axis is an ERROR",
+    "A dimension's axis has no default: taken as X, a Y-by-X grid with Y's axis left out would be two X dimensions.",
+    UNKNOWN_KEY,
+    ["yaml"],
+    YAML_HEAD.strip("\n")
+    + "\n"
+    + """
+        fields:
+          - name: pixels
+            type: bytes
+            size: ".."
+            layout:
+              cell: u8
+              dims:
+                - { size: 2 }
+                - { axis: X, size: 2 }
+    """.strip("\n")
+    + "\n",
+    yaml=True,
+)
+
 # ----------------------------------------------------------------- YAML: a value of the wrong kind
 
 
@@ -445,6 +468,31 @@ value_kind(
             type: bytes
             size: ".."
             layout:
+    """,
+)
+value_kind(
+    "integer-struct-name",
+    "A struct named by an unquoted integer key is an ERROR",
+    '1: is the integer 1, not a name. Named by its text, it and a quoted "1": would be one struct, <base>1.',
+    """
+    structs:
+      1:
+        fields:
+          - { name: a, type: u8 }
+    """,
+    head="""
+    format: t
+    namespace: "{ns}"
+    """,
+)
+value_kind(
+    "null-parameter-name",
+    "A parameter named by a null key is an ERROR",
+    "~: is YAML's null, not a name; named by its text, the parameter would be called null.",
+    """
+        params: [ { ~: int } ]
+        fields:
+          - { name: a, type: u8 }
     """,
 )
 value_kind(
