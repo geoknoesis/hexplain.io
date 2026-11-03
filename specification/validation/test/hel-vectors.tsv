@@ -360,6 +360,11 @@ project maps each element in order	project(rows, v * 2)	value	[2, 4, 6]	eyJlbXB0
 project over an empty array is empty	len(project(empty, v))	value	int:0	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
 project elements may be arrays, read through self	all(project(rows, repeatValue(v, 2)), self[0] == self[1])	value	true	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
 project requires an array	project(n, 1)	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"array"
+concatOf joins the arrays its expression yields, in element order	concatOf(rows, repeatValue(v, v))	value	[1, 2, 2, 3, 3, 3]	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+concatOf of Bytes is Bytes	integerText(concatOf(rows, integerBytes(v, 1, false)), false, false)	value	"66051"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+concatOf over an empty array is an empty array	len(concatOf(empty, repeatValue(v, 1)))	value	int:0	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
+concatOf requires an array or Bytes from every element	concatOf(rows, v)	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"array or Bytes"
+concatOf does not mix arrays and Bytes	concatOf(rows, v == 1 ? integerBytes(v, 1, false) : repeatValue(v, 1))	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"cannot concatenate"
 len of a computed array	len(project(rows, v))	value	int:3	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9
 arrays do not compare	project(rows, v) == xs	error	"type"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	"compare"
 a computed array is not subscripted after a call	project(rows, v)[0]	error	"syntax"	eyJlbXB0eSI6IFtdLCAicm93cyI6IFt7InYiOiAxfSwgeyJ2IjogMn0sIHsidiI6IDN9XSwgInhzIjogWzEsIDIsIDNdLCAibiI6IDd9	""

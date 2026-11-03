@@ -694,6 +694,130 @@ pp(
 )
 
 pp(
+    "repeat-index",
+    "repeat.index is the zero-based position of the element being read",
+    "Items passes repeat.index to each Item, whose v must equal it: bytes 00 01 02 satisfy the three elements, "
+    "which would fail if every element saw the same index.",
+    ["req-pm-parsefield-37", "req-hel-reserved-roots-6"],
+    ["repeat-index", "hel/index.html#reserved-roots"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ) .
+   ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 3 ; bddo:hasArgument ( "repeat.index" ) .
+   ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.i ) ; bddo:hasField ( ex:Item.v ) .
+   ex:Item.i a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Item.v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self == param.i" .
+   """,
+    bytes([0, 1, 2]),
+    {"items": [{"v": 0}, {"v": 1}, {"v": 2}]},
+)
+
+pp(
+    "repeat-index-nested",
+    "repeat.index names the innermost repetition, the outer index arriving as an argument",
+    "Rows passes its index r to Row, which passes r and the cell index to Cell; v must equal r * 3 + c over bytes "
+    "00..05, which fails if the inner arguments saw the outer index.",
+    ["req-pm-parsefield-37", "req-hel-reserved-roots-6", "req-hel-reserved-roots-7"],
+    ["repeat-index", "hel/index.html#reserved-roots"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.rows ) .
+   ex:Root.rows a bddo:Field ; bddo:dataType ex:Row ; bddo:repeatCount 2 ; bddo:hasArgument ( "repeat.index" ) .
+   ex:Row a bddo:Struct ; bddo:hasParameter ( ex:Row.r ) ; bddo:hasField ( ex:Row.cells ) .
+   ex:Row.r a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Row.cells a bddo:Field ; bddo:dataType ex:Cell ; bddo:repeatCount 3 ;
+       bddo:hasArgument ( "param.r" "repeat.index" ) .
+   ex:Cell a bddo:Struct ; bddo:hasParameter ( ex:Cell.r ex:Cell.c ) ; bddo:hasField ( ex:Cell.v ) .
+   ex:Cell.r a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Cell.c a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Cell.v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self == param.r * 3 + param.c" .
+   """,
+    bytes([0, 1, 2, 3, 4, 5]),
+    {"rows": [{"cells": [{"v": 0}, {"v": 1}, {"v": 2}]}, {"cells": [{"v": 3}, {"v": 4}, {"v": 5}]}]},
+)
+
+pp(
+    "repeat-previous",
+    "repeat.previous is the element before the one being read, Null for the first",
+    "Each Item receives the Total of the one before it (0 for the first), so the Totals are the running sums "
+    "1, 3, 6 and the Pads are 1, 2 and 4 bytes long (base + 1).",
+    ["req-pm-parsefield-38", "req-hel-reserved-roots-8"],
+    ["repeat-index", "hel/index.html#reserved-roots"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ) .
+   ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 3 ;
+       bddo:hasArgument ( "repeat.index == 0 ? 0 : repeat.previous.Total" ) .
+   ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.base ) ; bddo:hasField ( ex:Item.N ex:Item.Pad ex:Item.Total ) .
+   ex:Item.base a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Item.N a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Item.Pad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.base + 1" .
+   ex:Item.Total a bddo:Field ; bddo:valueFromExpression "param.base + instance.N" .
+   """,
+    bytes([1, 0xAA, 2, 0xBB, 0xCC, 3, 0xDD, 0xEE, 0xFF, 0x11]),
+    {
+        "items": [
+            {"N": 1, "Pad": "aa", "Total": 1},
+            {"N": 2, "Pad": "bbcc", "Total": 3},
+            {"N": 3, "Pad": "ddeeff11", "Total": 6},
+        ]
+    },
+)
+
+pp(
+    "concat-of",
+    "concatOf concatenates the arrays its expression yields, in element order",
+    "Two Parts of lengths 2 and 1 hold 41 42 and 43; their concatenation, read as code points, is the String ABC: "
+    "a derived field holds no computed array (req-hel-array-values-4), so the case reads the array through "
+    "unicodeText.",
+    ["req-hel-ext-quantifiers-24"],
+    ["algorithm", "hel/index.html#ext-quantifiers"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.parts ex:Root.All ) .
+   ex:Root.parts a bddo:Field ; bddo:dataType ex:Part ; bddo:repeatCount 2 .
+   ex:Root.All a bddo:Field ; bddo:valueFromExpression "unicodeText(concatOf(instance.parts, self.Data))" .
+   ex:Part a bddo:Struct ; bddo:hasField ( ex:Part.Len ex:Part.Data ) .
+   ex:Part.Len a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Part.Data a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCountFromField ex:Part.Len .
+   """,
+    bytes([2, 65, 66, 1, 67]),
+    {"parts": [{"Len": 2, "Data": [65, 66]}, {"Len": 1, "Data": [67]}], "All": "ABC"},
+)
+
+pp(
+    "concat-of-bytes",
+    "concatOf of Bytes results is Bytes",
+    "Each Part holds Len bytes; All is the Bytes 0A 0B 0C.",
+    ["req-hel-ext-quantifiers-24"],
+    ["algorithm", "hel/index.html#ext-quantifiers"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.parts ex:Root.All ) .
+   ex:Root.parts a bddo:Field ; bddo:dataType ex:Part ; bddo:repeatCount 2 .
+   ex:Root.All a bddo:Field ; bddo:valueFromExpression "concatOf(instance.parts, self.Data)" .
+   ex:Part a bddo:Struct ; bddo:hasField ( ex:Part.Len ex:Part.Data ) .
+   ex:Part.Len a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Part.Data a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromField ex:Part.Len .
+   """,
+    bytes([2, 10, 11, 1, 12]),
+    {"parts": [{"Len": 2, "Data": bytes([10, 11])}, {"Len": 1, "Data": bytes([12])}], "All": bytes([10, 11, 12])},
+)
+
+pp(
+    "concat-of-empty",
+    "concatOf over an empty collection is an empty array",
+    "No Part is read, so the concatenation is the empty array and All, its length, is 0.",
+    ["req-hel-ext-quantifiers-24"],
+    ["algorithm", "hel/index.html#ext-quantifiers"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.tag ex:Root.parts ex:Root.All ) .
+   ex:Root.tag a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Root.parts a bddo:Field ; bddo:dataType ex:Part ; bddo:repeatCount 0 .
+   ex:Root.All a bddo:Field ; bddo:valueFromExpression "len(concatOf(instance.parts, self.Data))" .
+   ex:Part a bddo:Struct ; bddo:hasField ( ex:Part.Data ) .
+   ex:Part.Data a bddo:Field ; bddo:dataType bddo:uint8 .
+   """,
+    bytes([7]),
+    {"tag": 7, "parts": [], "All": 0},
+)
+
+pp(
     "param-nested-arguments",
     "Arguments are expressions in the caller's context and pass parameters on",
     "Root passes w and w * 2 to Row; Row passes param.w + 1 to Cell, whose data is that many bytes.",

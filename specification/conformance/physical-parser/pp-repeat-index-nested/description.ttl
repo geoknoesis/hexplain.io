@@ -1,0 +1,24 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/pp-repeat-index-nested#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.rows ) .
+ex:Root.rows a bddo:Field ; bddo:dataType ex:Row ; bddo:repeatCount 2 ; bddo:hasArgument ( "repeat.index" ) .
+ex:Row a bddo:Struct ; bddo:hasParameter ( ex:Row.r ) ; bddo:hasField ( ex:Row.cells ) .
+ex:Row.r a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+ex:Row.cells a bddo:Field ; bddo:dataType ex:Cell ; bddo:repeatCount 3 ;
+    bddo:hasArgument ( "param.r" "repeat.index" ) .
+ex:Cell a bddo:Struct ; bddo:hasParameter ( ex:Cell.r ex:Cell.c ) ; bddo:hasField ( ex:Cell.v ) .
+ex:Cell.r a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+ex:Cell.c a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+ex:Cell.v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self == param.r * 3 + param.c" .

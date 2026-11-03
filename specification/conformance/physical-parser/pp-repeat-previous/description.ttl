@@ -1,0 +1,22 @@
+@prefix bddo: <https://hexplain.io/ns/bddo#> .
+@prefix hexplain: <https://hexplain.io/ns/core#> .
+@prefix dlv: <https://hexplain.io/ns/dlv#> .
+@prefix menc: <https://hexplain.io/ns/register/media-encoding#> .
+@prefix abnd: <https://hexplain.io/ns/aspect/bundle#> .
+@prefix conf: <https://hexplain.io/ns/conf#> .
+@prefix req: <https://hexplain.io/ns/req#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/pp-repeat-previous#> .
+
+ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ) .
+ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 3 ;
+    bddo:hasArgument ( "repeat.index == 0 ? 0 : repeat.previous.Total" ) .
+ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.base ) ; bddo:hasField ( ex:Item.N ex:Item.Pad ex:Item.Total ) .
+ex:Item.base a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+ex:Item.N a bddo:Field ; bddo:dataType bddo:uint8 .
+ex:Item.Pad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.base + 1" .
+ex:Item.Total a bddo:Field ; bddo:valueFromExpression "param.base + instance.N" .

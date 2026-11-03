@@ -523,6 +523,74 @@ w(
 )
 
 w(
+    "repeat-index",
+    "A Writer binds repeat.index to each element's position",
+    "The tree holds three Item elements; each is written with repeat.index as its argument, so v == param.i holds "
+    "for 0, 1 and 2 and the output is 000102.",
+    ["req-pm-serialisation-39"],
+    ["repeat-index"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ) .
+   ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 3 ; bddo:hasArgument ( "repeat.index" ) .
+   ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.i ) ; bddo:hasField ( ex:Item.v ) .
+   ex:Item.i a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Item.v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self == param.i" .
+   """,
+    {"items": [{"v": 0}, {"v": 1}, {"v": 2}]},
+    bytes.fromhex("00 01 02"),
+)
+
+w(
+    "repeat-index-nested",
+    "A Writer binds repeat.index to the innermost repetition",
+    "Six cells in two rows are written with r the row index and c the cell index, so the output is 00 01 02 03 04 05.",
+    ["req-pm-serialisation-39", "req-hel-reserved-roots-7"],
+    ["repeat-index"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.rows ) .
+   ex:Root.rows a bddo:Field ; bddo:dataType ex:Row ; bddo:repeatCount 2 ; bddo:hasArgument ( "repeat.index" ) .
+   ex:Row a bddo:Struct ; bddo:hasParameter ( ex:Row.r ) ; bddo:hasField ( ex:Row.cells ) .
+   ex:Row.r a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Row.cells a bddo:Field ; bddo:dataType ex:Cell ; bddo:repeatCount 3 ;
+       bddo:hasArgument ( "param.r" "repeat.index" ) .
+   ex:Cell a bddo:Struct ; bddo:hasParameter ( ex:Cell.r ex:Cell.c ) ; bddo:hasField ( ex:Cell.v ) .
+   ex:Cell.r a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Cell.c a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Cell.v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self == param.r * 3 + param.c" .
+   """,
+    {"rows": [{"cells": [{"v": 0}, {"v": 1}, {"v": 2}]}, {"cells": [{"v": 3}, {"v": 4}, {"v": 5}]}]},
+    bytes.fromhex("00 01 02 03 04 05"),
+)
+
+w(
+    "repeat-previous",
+    "A Writer binds repeat.previous to the preceding element of the tree",
+    "Each Item is written with the Total of the element before it, as written (0 for the first), and its Pad is "
+    "base + 1 bytes: 1, 2 and 4 bytes, so the output is 01 AA 02 BB CC 03 DD EE FF 11. A Writer that bound another "
+    "element, or Null, would size Pad differently and refuse the tree.",
+    ["req-pm-serialisation-40", "req-hel-reserved-roots-8"],
+    ["repeat-index"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.items ) .
+   ex:Root.items a bddo:Field ; bddo:dataType ex:Item ; bddo:repeatCount 3 ;
+       bddo:hasArgument ( "repeat.index == 0 ? 0 : repeat.previous.Total" ) .
+   ex:Item a bddo:Struct ; bddo:hasParameter ( ex:Item.base ) ; bddo:hasField ( ex:Item.N ex:Item.Pad ex:Item.Total ) .
+   ex:Item.base a bddo:Parameter ; bddo:parameterType bddo:IntegerParameter .
+   ex:Item.N a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Item.Pad a bddo:Field ; bddo:dataType bddo:bytes ; bddo:sizeFromExpression "param.base + 1" .
+   ex:Item.Total a bddo:Field ; bddo:valueFromExpression "param.base + instance.N" .
+   """,
+    {
+        "items": [
+            {"N": 1, "Pad": "aa", "Total": 1},
+            {"N": 2, "Pad": "bbcc", "Total": 3},
+            {"N": 3, "Pad": "ddeeff11", "Total": 6},
+        ]
+    },
+    bytes.fromhex("01 aa 02 bb cc 03 dd ee ff 11"),
+)
+
+w(
     "pad-to-pad-byte",
     "The padding of a bddo:padTo is its declared bddo:padByte, and 00 when none is declared",
     "a is padded to 4 with its pad byte 2A: 01 2A 2A 2A. The struct Rec is padded to 4 with no pad byte declared: "

@@ -1,11 +1,11 @@
 {
  "cases": {
-  "physical-parser": 526,
+  "physical-parser": 532,
   "semantic-emitter": 49,
   "bundle-processor": 13,
-  "hdl-compiler": 222,
+  "hdl-compiler": 226,
   "conformance-evaluator": 41,
-  "writer": 88
+  "writer": 91
  },
  "excluded": {
   "blanket": [
@@ -19,8 +19,8 @@
  },
  "processorMust": {
   "Physical Parser": {
-   "total": 306,
-   "covered": 282,
+   "total": 312,
+   "covered": 288,
    "notSuiteTestable": {
     "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's shape gates (test_shapes, test_vocab_shapes) apply it.",
     "req-hel-array-values-1": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: len(project(rows, v)); all(project(rows, repeatValue(v, 2)), self[0] == self[1])",
@@ -69,8 +69,8 @@
    "uncovered": []
   },
   "HDL Compiler": {
-   "total": 64,
-   "covered": 63,
+   "total": 67,
+   "covered": 66,
    "notSuiteTestable": {
     "req-hdl-modules-3": "The import bounds are the compiler's own; a case would need an imported file larger than every conforming compiler's bound, and no size is."
    },
@@ -83,8 +83,8 @@
    "uncovered": []
   },
   "Writer": {
-   "total": 25,
-   "covered": 25,
+   "total": 27,
+   "covered": 27,
    "notSuiteTestable": {},
    "uncovered": []
   }
@@ -92,8 +92,8 @@
  "requirements": {
   "physical-parser": {
    "MUST": {
-    "total": 209,
-    "covered": 206
+    "total": 211,
+    "covered": 208
    },
    "SHOULD": {
     "total": 5,
@@ -102,8 +102,8 @@
   },
   "hel": {
    "MUST": {
-    "total": 97,
-    "covered": 76
+    "total": 101,
+    "covered": 80
    },
    "SHOULD": {
     "total": 1,
@@ -142,8 +142,8 @@
   },
   "hdl-compiler": {
    "MUST": {
-    "total": 64,
-    "covered": 63
+    "total": 67,
+    "covered": 66
    },
    "SHOULD": {
     "total": 1,
@@ -152,8 +152,8 @@
   },
   "writer": {
    "MUST": {
-    "total": 25,
-    "covered": 25
+    "total": 27,
+    "covered": 27
    },
    "SHOULD": {
     "total": 0,
@@ -163,11 +163,11 @@
  },
  "writer": {
   "roundTrip": {
-   "trees": 253,
+   "trees": 259,
    "outcomes": {
     "Unsupported": 17,
     "Validation": 7,
-    "round-trip": 229
+    "round-trip": 235
    }
   },
   "cases": [
@@ -693,6 +693,32 @@
     ]
    },
    {
+    "id": "w-repeat-index",
+    "title": "A Writer binds repeat.index to each element's position",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-39"
+    ]
+   },
+   {
+    "id": "w-repeat-index-nested",
+    "title": "A Writer binds repeat.index to the innermost repetition",
+    "outcome": "bytes",
+    "requirements": [
+     "req-hel-reserved-roots-7",
+     "req-pm-serialisation-39"
+    ]
+   },
+   {
+    "id": "w-repeat-previous",
+    "title": "A Writer binds repeat.previous to the preceding element of the tree",
+    "outcome": "bytes",
+    "requirements": [
+     "req-hel-reserved-roots-8",
+     "req-pm-serialisation-40"
+    ]
+   },
+   {
     "id": "w-repeat-until-to-end-not-padded",
     "title": "A to-end sequence that its condition ends is written as its elements, with no padding",
     "outcome": "bytes",
@@ -1035,6 +1061,13 @@
    ],
    "req-pm-serialisation-38": [
     "w-fixed-point-raw-integer"
+   ],
+   "req-pm-serialisation-39": [
+    "w-repeat-index",
+    "w-repeat-index-nested"
+   ],
+   "req-pm-serialisation-40": [
+    "w-repeat-previous"
    ]
   }
  },
@@ -2299,6 +2332,13 @@
   "req-pm-parsefield-36": [
    "pp-offset-field-start-absent-base"
   ],
+  "req-pm-parsefield-37": [
+   "pp-repeat-index",
+   "pp-repeat-index-nested"
+  ],
+  "req-pm-parsefield-38": [
+   "pp-repeat-previous"
+  ],
   "req-pm-parsestruct-1": [
    "pp-members-in-list-order"
   ],
@@ -2576,6 +2616,13 @@
   ],
   "req-pm-serialisation-38": [
    "w-fixed-point-raw-integer"
+  ],
+  "req-pm-serialisation-39": [
+   "w-repeat-index",
+   "w-repeat-index-nested"
+  ],
+  "req-pm-serialisation-40": [
+   "w-repeat-previous"
   ],
   "req-pm-size-resolution-1": [],
   "req-pm-size-resolution-2": [
@@ -3015,6 +3062,11 @@
   "req-hel-ext-quantifiers-21": [],
   "req-hel-ext-quantifiers-22": [],
   "req-hel-ext-quantifiers-23": [],
+  "req-hel-ext-quantifiers-24": [
+   "pp-concat-of",
+   "pp-concat-of-bytes",
+   "pp-concat-of-empty"
+  ],
   "req-hel-ext-temporal-1": [
    "pp-hel-temporal-date-only"
   ],
@@ -3209,6 +3261,18 @@
   ],
   "req-hel-reserved-roots-5": [
    "pp-hel-stream-key-parent-is-null"
+  ],
+  "req-hel-reserved-roots-6": [
+   "pp-repeat-index",
+   "pp-repeat-index-nested"
+  ],
+  "req-hel-reserved-roots-7": [
+   "pp-repeat-index-nested",
+   "w-repeat-index-nested"
+  ],
+  "req-hel-reserved-roots-8": [
+   "pp-repeat-previous",
+   "w-repeat-previous"
   ],
   "req-hel-tonumber-1": [
    "pp-hel-tonumber-float-lexeme",
@@ -3439,6 +3503,8 @@
    "hc-pipeline-unknown-register-concept",
    "hc-prop-bare-name",
    "hc-quoted-key-without-alias",
+   "hc-repeat-index-outside-repeat",
+   "hc-repeat-previous-outside-repeat",
    "hc-repeat-until-ambiguous",
    "hc-reserved-alias",
    "hc-reserved-field-name",
@@ -3644,6 +3710,10 @@
    "hc-raw-hel-yaml",
    "hc-raw-turtle",
    "hc-raw-turtle-yaml",
+   "hc-repeat-index-nested",
+   "hc-repeat-index-outside-repeat",
+   "hc-repeat-previous-accepted",
+   "hc-repeat-previous-outside-repeat",
    "hc-repeat-until-ambiguous",
    "hc-repeat-until-container-fallback",
    "hc-repeat-until-container-fallback-yaml",
@@ -3825,6 +3895,8 @@
    "hc-raw-hel-yaml",
    "hc-raw-turtle",
    "hc-raw-turtle-yaml",
+   "hc-repeat-index-nested",
+   "hc-repeat-previous-accepted",
    "hc-repeat-until-container-fallback",
    "hc-repeat-until-container-fallback-yaml",
    "hc-root-key",
@@ -3931,6 +4003,8 @@
    "hc-raw-hel-yaml",
    "hc-raw-turtle",
    "hc-raw-turtle-yaml",
+   "hc-repeat-index-nested",
+   "hc-repeat-previous-accepted",
    "hc-repeat-until-container-fallback",
    "hc-repeat-until-container-fallback-yaml",
    "hc-root-key",
@@ -4044,6 +4118,8 @@
    "hc-pipeline-unknown-register-concept",
    "hc-prop-bare-name",
    "hc-quoted-key-without-alias",
+   "hc-repeat-index-outside-repeat",
+   "hc-repeat-previous-outside-repeat",
    "hc-repeat-until-ambiguous",
    "hc-reserved-alias",
    "hc-reserved-field-name",
@@ -4163,6 +4239,16 @@
    "hc-element-key",
    "hc-key-on-array",
    "hc-key-on-scalar"
+  ],
+  "req-hdl-expressions-6": [
+   "hc-repeat-index-outside-repeat"
+  ],
+  "req-hdl-expressions-7": [
+   "hc-repeat-index-nested"
+  ],
+  "req-hdl-expressions-8": [
+   "hc-repeat-previous-accepted",
+   "hc-repeat-previous-outside-repeat"
   ],
   "req-hdl-form-rule-1": [
    "hc-field-and-expression-forms",
@@ -4706,7 +4792,7 @@
    "version": "0.1.0-SNAPSHOT",
    "date": "2026-11-02T16:22:03Z",
    "digest": "e2530a9831d328e477e6ea9301dbab972cb612ff6688787360fd1619d83d09b4",
-   "superseded": false,
+   "superseded": true,
    "PASS": 935,
    "FAIL": 0,
    "SKIP": 4
@@ -4749,6 +4835,7 @@
   "hdl/index.html#parameters": 27,
   "hdl/index.html#prefixes": 7,
   "hdl/index.html#raw-hel": 2,
+  "hdl/index.html#repeat-index": 4,
   "hdl/index.html#repeat-until-names": 4,
   "hdl/index.html#root-keys": 3,
   "hdl/index.html#scalar-keys": 3,
@@ -4766,7 +4853,7 @@
   "hel/index.html#expression-depth": 2,
   "hel/index.html#expression-literals": 1,
   "hel/index.html#ext-geometry": 3,
-  "hel/index.html#ext-quantifiers": 8,
+  "hel/index.html#ext-quantifiers": 11,
   "hel/index.html#ext-register": 1,
   "hel/index.html#ext-temporal": 3,
   "hel/index.html#ext-text": 19,
@@ -4779,13 +4866,13 @@
   "hel/index.html#name-binding": 9,
   "hel/index.html#non-leading-parent": 1,
   "hel/index.html#numeric-semantics": 16,
-  "hel/index.html#reserved-roots": 13,
+  "hel/index.html#reserved-roots": 16,
   "hel/index.html#syntax": 12,
   "hel/index.html#tonumber": 4,
   "hel/index.html#undefined-names": 10,
   "hel/index.html#version-marker": 4,
   "hel/index.html#versioning": 5,
-  "processing#algorithm": 140,
+  "processing#algorithm": 143,
   "processing#alignment-origin": 1,
   "processing#alignment-padding": 17,
   "processing#bit-cursor": 13,
@@ -4825,12 +4912,13 @@
   "processing#parent-start": 4,
   "processing#recovery": 8,
   "processing#refusal": 2,
+  "processing#repeat-index": 6,
   "processing#repeat-until-bindings": 5,
   "processing#resource-limits": 23,
   "processing#round-trip": 2,
   "processing#security-decompression": 4,
   "processing#security-resources": 1,
-  "processing#serialisation": 88,
+  "processing#serialisation": 91,
   "processing#size-resolution": 41,
   "processing#stream-metadata": 8,
   "processing#struct-size": 10,

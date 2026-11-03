@@ -1945,6 +1945,24 @@
    "text": "A processor MUST raise a description error when the base field is not read before the offset-addressed field: when bddo:offsetBaseField names no earlier member of the same struct, or appears without bddo:fieldStart (both refused by bddo:OffsetBaseFieldShape, and raised when the description is loaded), and when the base field is absent, its bddo:isPresentIf having evaluated to false (raised when the offset is resolved).",
    "sha256": "5435034b0b187c4e"
   },
+  "req-pm-parsefield-37": {
+   "page": "specification/processing/index.html",
+   "section": "context",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "While a processor reads the i-th element (from zero) of a repeated field, it MUST evaluate that field’s bddo:hasArgument expressions, and the bddo:repeatUntil condition after that element, with repeat.index bound to i of the innermost repetition whose arguments or condition contain the expression, so an argument of a repeated field inside a repeated struct sees the inner element’s index and the outer index only through an argument the outer field passes (HEL, Reserved Roots).",
+   "sha256": "0e0d89cb63249a86"
+  },
+  "req-pm-parsefield-38": {
+   "page": "specification/processing/index.html",
+   "section": "context",
+   "cls": "physical-parser",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST evaluate repeat.previous in the same expressions as the element at position i − 1 of the same repetition as it was read, with its fields reached by path, and as Null while i is zero.",
+   "sha256": "d0c215e81c89ea92"
+  },
   "req-pm-parsestruct-1": {
    "page": "specification/processing/index.html",
    "section": "parsestruct",
@@ -2208,7 +2226,7 @@
    "audience": "processor",
    "text": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:",
    "sha256": "0436d6a6174bd14b",
-   "context": "Introduces: Field order and presence. The members of bddo:hasField are written in list order, each present field once, at the position the parse rules read it (a bddo:sync… | Dependent lengths, counts and checksums. A field that another member's extent, count or integrity depends on — the target of bddo:sizeFromField, bddo:repeatCou… | Extent inference. A field's extent follows the size-resolution order of Size resolution, read in the write direction. A Writer MUST write a field that has no d… | Padding, alignment and offsets. A fill byte is 0x00, with one exception: the padding of a bddo:padTo is filled with the bddo:padByte declared beside it, and wi… | Text and text numbers. A string is encoded in its bddo:encoding; a character the encoding cannot represent is a validation error. A bddo:string with bddo:trimN… | Type selection and byte order. A dispatch table, conditional data type, conditional byte order, parameter argument and local binding are evaluated over the fie… | Codec encode parameters. A field with hexplain:isEncodedWith or hexplain:hasEncodingStep is serialised to a fresh sub-stream (its struct, or its bytes), which… | Checksum back-patching. A bddo:checksum field i…"
+   "context": "Introduces: Field order and presence. The members of bddo:hasField are written in list order, each present field once, at the position the parse rules read it (a bddo:sync… | Dependent lengths, counts and checksums. A field that another member's extent, count or integrity depends on — the target of bddo:sizeFromField, bddo:repeatCou… | The element index. A Writer MUST evaluate the bddo:hasArgument expressions of a repeated field, for each element it writes, with repeat.index bound to the posi… | Extent inference. A field's extent follows the size-resolution order of Size resolution, read in the write direction. A Writer MUST write a field that has no d… | Padding, alignment and offsets. A fill byte is 0x00, with one exception: the padding of a bddo:padTo is filled with the bddo:padByte declared beside it, and wi… | Text and text numbers. A string is encoded in its bddo:encoding; a character the encoding cannot represent is a validation error. A bddo:string with bddo:trimN… | Type selection and byte order. A dispatch table, conditional data type, conditional byte order, parameter argument and local binding are evaluated over the fie… | Codec encode parameters. A field with hexplain…"
   },
   "req-pm-serialisation-11": {
    "page": "specification/processing/index.html",
@@ -2515,6 +2533,26 @@
    "history": [
     "25b1a60e24949d17"
    ]
+  },
+  "req-pm-serialisation-39": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Writer MUST evaluate the bddo:hasArgument expressions of a repeated field, for each element it writes, with repeat.index bound to the position of that element in the array being written (from zero), of the innermost repetition whose arguments contain the expression and not of an enclosing one, exactly as the parse rules bind it to the position of the element being read (Stream metadata and eof()).",
+   "sha256": "d75e68ca32434074",
+   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
+  },
+  "req-pm-serialisation-40": {
+   "page": "specification/processing/index.html",
+   "section": "serialisation",
+   "cls": "writer",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A Writer MUST bind repeat.previous in the same expressions to the preceding element of the tree being written, as Null for the first, and MUST read that element as written: a field the tree binds has the tree’s value, and a derived field has the value the Writer recomputed while writing that element (the tree’s value for it, if any, is ignored, as everywhere in serialisation), so that the value a parser carried forward from the element before is the value the Writer computes from the tree.",
+   "sha256": "2f069a5aaec3697a",
+   "context": "A Writer MUST serialise a struct node by these rules, in field order, and MUST raise the stated error rather than write a stream that the description would not read back:"
   },
   "req-pm-size-resolution-1": {
    "page": "specification/processing/index.html",
@@ -2996,7 +3034,7 @@
    "audience": "processor",
    "text": "A conforming HEL 1.0 evaluator MUST:",
    "sha256": "6f3f9085f2eb2907",
-   "context": "Introduces: Parse all valid expressions per the ABNF grammar, and reject as a syntax error every string it does not generate, including out-of-range literals and unknown e… | Implement the parsing context, the reserved roots (instance, parent, root, self, stream, asset, param) and the name-binding table. A processor that does not pa… | Implement all operators and every core function with the specified precedence, the numeric semantics, and the value-type and coercion rules; and implement each… | Reject, at load time, a description that calls a function of an extension group it does not implement, with an unsupported-feature error. | Yield a Boolean in a boolean context, an Integer in a numeric context and a String in a string context, as the name-binding table gives for each property (e.g.… | Report a runtime error (rather than silently continue) on type errors, integer overflow, shift counts out of range, out-of-range unsigned values, division/modu… | Accept, by default, expressions whose expression tree is at least 512 levels deep and at least 64 KiB long, when they are parsed and when they are evaluated, a… | Produce, for every row of hel-vectors.tsv whose functions it implemen…"
+   "context": "Introduces: Parse all valid expressions per the ABNF grammar, and reject as a syntax error every string it does not generate, including out-of-range literals and unknown e… | Implement the parsing context, the reserved roots (instance, parent, root, self, stream, asset, param, repeat) and the name-binding table. A processor that doe… | Implement all operators and every core function with the specified precedence, the numeric semantics, and the value-type and coercion rules; and implement each… | Reject, at load time, a description that calls a function of an extension group it does not implement, with an unsupported-feature error. | Yield a Boolean in a boolean context, an Integer in a numeric context and a String in a string context, as the name-binding table gives for each property (e.g.… | Report a runtime error (rather than silently continue) on type errors, integer overflow, shift counts out of range, out-of-range unsigned values, division/modu… | Accept, by default, expressions whose expression tree is at least 512 levels deep and at least 64 KiB long, when they are parsed and when they are evaluated, a… | Produce, for every row of hel-vectors.tsv whose functions it implemen…"
   },
   "req-hel-conformance-2": {
    "page": "specification/hel/index.html",
@@ -3277,8 +3315,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "all and any MUST stop at the first element that decides the result (a false for all, a true for any) and MUST NOT evaluate the predicate for a later element; countWhere, sumOf and project MUST evaluate their element-scoped argument for every element.",
-   "sha256": "84b6818ac75f35bf"
+   "text": "all and any MUST stop at the first element that decides the result (a false for all, a true for any) and MUST NOT evaluate the predicate for a later element; countWhere, sumOf, project and concatOf MUST evaluate their element-scoped argument for every element.",
+   "sha256": "f4cf4eb216a41b9e",
+   "history": [
+    "84b6818ac75f35bf"
+   ]
   },
   "req-hel-ext-quantifiers-12": {
    "page": "specification/hel/index.html",
@@ -3387,6 +3428,15 @@
    "audience": "processor",
    "text": "All three MUST be array values (type error otherwise); every position MUST be an Integer (type error otherwise), non-negative, below the length of array and distinct from the others (range error otherwise); positions and replacements MUST have the same length (argument error otherwise).",
    "sha256": "476deb5e755004cf"
+  },
+  "req-hel-ext-quantifiers-24": {
+   "page": "specification/hel/index.html",
+   "section": "ext-quantifiers",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An evaluator MUST evaluate the element expression of concatOf as project does, check every value it yields, and then charge the number of elements, or bytes, of the result in one charge before it allocates the result, so a type error is reported as such whatever the budget.",
+   "sha256": "2d9f0a7810a7a1db"
   },
   "req-hel-ext-temporal-1": {
    "page": "specification/hel/index.html",
@@ -3560,8 +3610,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "processor",
-   "text": "An evaluator MUST report a syntax error for a root written as a function name (asset(1), param()) and for a root written as a key after a dot (x.param, x.asset, x.stream, x.self, x.root, x.instance): a Step is parent or a Name, and a Name is never a reserved word.",
-   "sha256": "f75e55a4f159fc42"
+   "text": "An evaluator MUST report a syntax error for a root written as a function name (asset(1), param(), repeat()) and for a root written as a key after a dot (x.param, x.asset, x.repeat, x.stream, x.self, x.root, x.instance): a Step is parent or a Name, and a Name is never a reserved word.",
+   "sha256": "2dd216d879c6a439",
+   "history": [
+    "f75e55a4f159fc42"
+   ]
   },
   "req-hel-key-resolution-1": {
    "page": "specification/hel/index.html",
@@ -3591,10 +3644,11 @@
    "cls": "hel",
    "level": "MUST",
    "audience": "description",
-   "text": "A name that is also a reserved word (instance parent root self stream asset param and or not true false) cannot be written as a bare name or a key, so a field, parameter or local binding that expressions need to reference MUST NOT have such a local name.",
-   "sha256": "5c0de2414f5eec77",
+   "text": "A name that is also a reserved word (instance parent root self stream asset param repeat and or not true false) cannot be written as a bare name or a key, so a field, parameter or local binding that expressions need to reference MUST NOT have such a local name.",
+   "sha256": "1f7a881ee3cf5f72",
    "history": [
-    "cb101823406ffe2a"
+    "cb101823406ffe2a",
+    "5c0de2414f5eec77"
    ]
   },
   "req-hel-key-resolution-4": {
@@ -3855,6 +3909,33 @@
    "audience": "processor",
    "text": "The stream, a parameter scope and the asset are not struct instances, so a key step taken on stream, param or asset records no holder: an evaluator MUST read stream.length.parent, param.n.parent and asset.Header.parent as Null, as it reads stream.parent, and MUST NOT report them as a key applied to a scalar or resolve them to the current struct.",
    "sha256": "7f0545488d8cef6a"
+  },
+  "req-hel-reserved-roots-6": {
+   "page": "specification/hel/index.html",
+   "section": "reserved-roots",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A processor MUST raise a Description error, when the description is loaded, for repeat in any expression other than an argument of a repeated field or its bddo:repeatUntil condition, and for repeat without one of the keys index and previous: whether an expression sits in a repetition is known from the description alone.",
+   "sha256": "1a5615b3952ce4bf"
+  },
+  "req-hel-reserved-roots-7": {
+   "page": "specification/hel/index.html",
+   "section": "reserved-roots",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An evaluator MUST bind repeat.index to the innermost repetition whose element arguments or bddo:repeatUntil condition lexically contain the expression: an argument of a repeated field inside a repeated struct sees the index of that inner field’s element, never the outer one, which the outer field passes to the struct as an argument if the struct needs it.",
+   "sha256": "d08fb9435fbc3a90"
+  },
+  "req-hel-reserved-roots-8": {
+   "page": "specification/hel/index.html",
+   "section": "reserved-roots",
+   "cls": "hel",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "An evaluator MUST give repeat.previous the same scope as repeat.index and MUST evaluate it to Null for the first element (repeat.index == 0), with HEL’s Null semantics for a key taken on it (repeat.index == 0 ? 0 : repeat.previous.Total is the usual guard); for any later element it is the preceding element of that repetition as the parser read it or as the Writer is writing it from the tree, so a running total can be carried from one element to the next without a nesting level per element.",
+   "sha256": "74b8a781b4b842d0"
   },
   "req-hel-tonumber-1": {
    "page": "specification/hel/index.html",
@@ -4251,6 +4332,33 @@
    "text": "A compiler MUST report an ERROR for a key step applied to a field that holds a scalar (n.foo), or to a repeated field without a subscript (es.size; the number of elements is len(es)): neither has fields.",
    "sha256": "f2cc12cbfb117bf2"
   },
+  "req-hdl-expressions-6": {
+   "page": "specification/hdl/index.html",
+   "section": "expressions",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST report an ERROR for repeat.index anywhere else — in a size, offset, count or presence expression, in an argument of a field without a repeat clause, or in @valid — and for repeat with any key but index and previous.",
+   "sha256": "b40c5512bb524878"
+  },
+  "req-hdl-expressions-7": {
+   "page": "specification/hdl/index.html",
+   "section": "expressions",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST resolve repeat.index to the innermost repeat clause whose element arguments or until condition contain it: in Rows : Row(repeat.index) repeat 2 with Row declaring Cells : Cell(repeat.index) repeat 3, the Cell arguments see the cell’s index 0 to 2, and Row reads its own index only through its parameter.",
+   "sha256": "5df74307f7f55e0e"
+  },
+  "req-hdl-expressions-8": {
+   "page": "specification/hdl/index.html",
+   "section": "expressions",
+   "cls": "hdl-compiler",
+   "level": "MUST",
+   "audience": "processor",
+   "text": "A compiler MUST accept repeat.previous exactly where it accepts repeat.index, resolve it to the same innermost repeat clause, and report an ERROR for it anywhere else.",
+   "sha256": "8af9c500e49f2950"
+  },
   "req-hdl-form-rule-1": {
    "page": "specification/hdl/index.html",
    "section": "form-rule",
@@ -4334,10 +4442,11 @@
    "cls": "hdl-compiler",
    "level": "MUST",
    "audience": "processor",
-   "text": "instance parent root self stream asset param and or not true false — HEL reads them as roots, operators or literals, so a compiler MUST reject a field, alias, parameter or let binding so named.",
-   "sha256": "4ccbce36c5c4c80e",
+   "text": "instance parent root self stream asset param repeat and or not true false — HEL reads them as roots, operators or literals, so a compiler MUST reject a field, alias, parameter or let binding so named.",
+   "sha256": "48db5be1a891ff60",
    "history": [
-    "297f8a0c0b41b31b"
+    "297f8a0c0b41b31b",
+    "4ccbce36c5c4c80e"
    ]
   },
   "req-hdl-grammar-layout-1": {
@@ -4395,10 +4504,11 @@
    "cls": "hdl-compiler",
    "level": "MUST",
    "audience": "processor",
-   "text": "Although the lexer folds - and ., a field's name and its as alias, a struct parameter's name and a let binding's name MUST be HEL identifiers — an ASCII letter or _ followed by ASCII letters, digits and _, and not one of instance parent root self stream asset param and or not true false — because expressions reach a field by that name (asset is HEL's multi-part root, so a field so named could never be read).",
-   "sha256": "e986edec576d6178",
+   "text": "Although the lexer folds - and ., a field's name and its as alias, a struct parameter's name and a let binding's name MUST be HEL identifiers — an ASCII letter or _ followed by ASCII letters, digits and _, and not one of instance parent root self stream asset param repeat and or not true false — because expressions reach a field by that name (asset is HEL's multi-part root, so a field so named could never be read).",
+   "sha256": "f9a8538fb5b8ecf5",
    "history": [
-    "2100b85236774c45"
+    "2100b85236774c45",
+    "e986edec576d6178"
    ]
   },
   "req-hdl-lexical-2": {

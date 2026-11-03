@@ -1594,6 +1594,99 @@ err(
     line=3,
 )
 
+hc(
+    "repeat-index-nested",
+    "repeat.index in a nested repetition is emitted unchanged for the innermost repeat clause",
+    "Rows passes its index to Row, which passes it on with the cell index to Cell: each hasArgument carries "
+    "repeat.index of the repeat clause on its own field, the outer index reaching Cell only through param.r.",
+    OK + ["req-hdl-expressions-7"],
+    ["repeat-index"],
+    """
+   format t @namespace "{ns}"
+   struct Root {
+     rows : Row(repeat.index) repeat 2
+   }
+   struct Row(r) {
+     cells : Cell(r, repeat.index) repeat 3
+   }
+   struct Cell(r, c) {
+     v : u8 @valid [self == r * 3 + c]
+   }
+   """,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.rows ) .
+   ex:Root.rows a bddo:Field ; bddo:dataType ex:Row ; bddo:hasArgument ( "repeat.index" ) ; bddo:repeatCount 2 .
+   ex:Row a bddo:Struct ; bddo:hasParameter ( ex:Row.r ) ; bddo:hasField ( ex:Row.cells ) .
+   ex:Row.r a bddo:Parameter .
+   ex:Row.cells a bddo:Field ; bddo:dataType ex:Cell ; bddo:hasArgument ( "param.r" "repeat.index" ) ;
+       bddo:repeatCount 3 .
+   ex:Cell a bddo:Struct ; bddo:hasParameter ( ex:Cell.r ex:Cell.c ) ; bddo:hasField ( ex:Cell.v ) .
+   ex:Cell.r a bddo:Parameter .
+   ex:Cell.c a bddo:Parameter .
+   ex:Cell.v a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:validIf "self == param.r * 3 + param.c" .
+   """,
+)
+
+hc(
+    "repeat-previous-accepted",
+    "repeat.previous is accepted in an element argument and in an until condition",
+    "The same positions that accept repeat.index accept repeat.previous, and each is emitted unchanged.",
+    OK + ["req-hdl-expressions-8"],
+    ["repeat-index"],
+    """
+   format t @namespace "{ns}"
+   struct Root {
+     xs : It(repeat.index == 0 ? 0 : repeat.previous.Total) repeat until repeat.index > 0 and repeat.previous.Total > 5
+   }
+   struct It(base) {
+     n : u8
+     Total : derive base + n
+   }
+   """,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.xs ) .
+   ex:Root.xs a bddo:Field ; bddo:dataType ex:It ;
+       bddo:hasArgument ( "repeat.index == 0 ? 0 : repeat.previous.Total" ) ;
+       bddo:repeatUntil "repeat.index > 0 and repeat.previous.Total > 5" .
+   ex:It a bddo:Struct ; bddo:hasParameter ( ex:It.base ) ; bddo:hasField ( ex:It.n ex:It.Total ) .
+   ex:It.base a bddo:Parameter .
+   ex:It.n a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:It.Total a bddo:Field ; bddo:valueFromExpression "param.base + instance.n" .
+   """,
+)
+
+err(
+    "repeat-index-outside-repeat",
+    "repeat.index outside the arguments and until condition of a repeat is an ERROR",
+    "A size expression is not an element argument of a repeat clause, so it has no element index.",
+    ["req-hdl-expressions-6"],
+    ["repeat-index"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      n : u8
+      d : bytes[repeat.index]
+    }
+    """,
+    line=4,
+)
+
+err(
+    "repeat-previous-outside-repeat",
+    "repeat.previous outside the arguments and until condition of a repeat is an ERROR",
+    "A size expression is not an element argument of a repeat clause, so it has no previous element.",
+    ["req-hdl-expressions-8"],
+    ["repeat-index"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      n : u8
+      d : bytes[repeat.previous]
+    }
+    """,
+    line=4,
+)
+
 err(
     "pipeline-and-encoded-with",
     "@pipeline together with @encoded-with is an ERROR",
