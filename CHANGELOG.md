@@ -6,6 +6,14 @@ snapshots are recorded under `releases/`.
 
 ## Unreleased (changes since snapshot 2026-09-24.2)
 
+### HDL forms that compiled to something else
+
+Three HDL forms used to compile, with a clean exit status, to a graph that said something the author did not write. A bare name where only a CURIE can stand (`means width`, `@prop bar 2`) became the relative IRI `<width>`; it is now an error (`req-hdl-prefixes-3`), while a bare name keeps its meaning where it has one (a struct, an enum symbol, a part role). On the YAML surface, a key that names something (a struct, a parameter, a property) and that YAML reads as a number, a Boolean or null is an error, not the name its text spells (`req-hdl-yaml-7`, which already listed float and null keys): `1:` and `"1":` would have named one struct. An entry of `dims` without an `axis` is an error rather than an X axis (`req-hdl-yaml-6`). New cases: `hc-bare-name-means`, `hc-bare-name-prop`, `hc-yaml-value-kind-integer-struct-name`, `hc-yaml-value-kind-null-parameter-name`, `hc-yaml-dim-missing-axis`.
+
+### Labels unique across modules
+
+No two modules now give a term the same `rdfs:label`. Relabelled: `araster:minimumValue` and `araster:maximumValue` ("minimum/maximum sample value", apart from the codec-parameter bounds `hexplain:minimumValue`/`maximumValue`), `ageom:hasMember` ("has member geometry"), `atab:Field` and `atab:hasField` ("Tabular Field", "has tabular field"), `aenc:codec` ("encoding codec"), `aintg:checksum` and `aintg:checksumAlgorithm` ("content checksum", "content checksum algorithm"), `hexplain:parameterType` ("codec parameter type") and the six codec parameter types ("integer parameter type", …), and `hxf:bytes` ("node bytes"). IRIs are unchanged.
+
 ### Layout cell types
 
 HDL's grammar let a layout's cell be any `Type`, but `dlv:cellDataType` and `dlv:ruleCellDataType` take a `bddo:DataType`, which a struct is not and `bits[N]` has none of. A compiler could therefore emit a layout with no cell type, or a `cell switch` without one of its arms, and say nothing. New requirements: `req-hdl-grammar-layout-2` (what a cell type is) and `req-hdl-grammar-layout-3` (a compiler reports any other as an ERROR). A cell type names a datatype (a numeric, string, ASCII-numeric or `bytes` type, or a CURIE naming a datatype individual, which is emitted as the value). A struct, declared or imported, or `bits[N]` is an ERROR; a packed cell is its datatype and a `cell-bits` width. Cases: `hc-layout-cell-struct`, `hc-layout-cell-switch-bits` (errors), `hc-layout-cell-curie`.

@@ -343,6 +343,36 @@ err(
 )
 
 err(
+    "bare-name-means",
+    "A bare name where only a CURIE can stand is an ERROR",
+    "width has no colon: expanded, it would be the relative IRI <width>, a graph naming nothing.",
+    ["req-hdl-prefixes-3"],
+    ["prefixes"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      a : u8 means width
+    }
+    """,
+    line=3,
+)
+
+err(
+    "bare-name-prop",
+    "A bare name as the property of @prop is an ERROR",
+    "@prop bar 2 would state the relative IRI <bar> as a property.",
+    ["req-hdl-prefixes-3"],
+    ["prefixes"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      a : u8 @prop bar 2
+    }
+    """,
+    line=3,
+)
+
+err(
     "aspect-prefix-not-predeclared",
     "Aspect prefixes are not predeclared",
     "araster: must be bound with use before a means can name it.",
