@@ -265,6 +265,22 @@ pp(
 )
 
 pp(
+    "limit-regex-empty-alternatives",
+    "Alternatives tried without consuming input are bounded: a run of empty choices is false or a ResourceLimit error",
+    "Each of the forty groups of (|)(|)...(|)x matches the empty string in two ways, and the x at the end matches "
+    "nothing in the empty subject, so a backtracking matcher that tries every combination of the groups' "
+    "alternatives tries 2^40 of them without examining a character. A processor that counts the alternatives it "
+    "tries meets its match-cost limit; one that never tries an alternative twice at the same place answers false. "
+    "Each is a ResourceLimit error or the value false; what no processor may do is run unbounded, or answer true.",
+    ["req-hel-ext-text-11", "req-hel-ext-text-3"],
+    ["resource-limits", "hel/index.html#ext-text"],
+    EMPTY_SUBJECT.replace("{pattern}", "(|)" * 40 + "x"),
+    b"\x00",
+    {"n": 0, "d": False},
+    manifest=dict(TEXT_GROUP, orError="ResourceLimit"),
+)
+
+pp(
     "limit-regex-counted-bound-above-cap",
     "A counted quantifier above 65,535 may be refused, and is otherwise matched correctly",
     "a{65536} is a HEL-RE expression (the bound is below 2^31), so it is no argument error. A processor MAY "

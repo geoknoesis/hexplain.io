@@ -1,0 +1,22 @@
+{
+  "id": "pp-limit-regex-empty-alternatives",
+  "class": "physical-parser",
+  "title": "Alternatives tried without consuming input are bounded: a run of empty choices is false or a ResourceLimit error",
+  "description": "Each of the forty groups of (|)(|)...(|)x matches the empty string in two ways, and the x at the end matches nothing in the empty subject, so a backtracking matcher that tries every combination of the groups' alternatives tries 2^40 of them without examining a character. A processor that counts the alternatives it tries meets its match-cost limit; one that never tries an alternative twice at the same place answers false. Each is a ResourceLimit error or the value false; what no processor may do is run unbounded, or answer true.",
+  "requirements": [
+    "req-hel-ext-text-11",
+    "req-hel-ext-text-3"
+  ],
+  "sections": [
+    "processing#resource-limits",
+    "hel/index.html#ext-text"
+  ],
+  "root": "https://example.org/pp-limit-regex-empty-alternatives#Root",
+  "input": "input.bin",
+  "features": {
+    "requires": [
+      "hel-ext-text"
+    ]
+  },
+  "orError": "ResourceLimit"
+}
