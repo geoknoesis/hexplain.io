@@ -75,6 +75,7 @@ def cases() -> list[dict[str, Any]]:
             ("enumeration", "enum"),
             ("checksum", "checksum"),
             ("validIf", "string"),
+            ("definesExpression", "string"),
             ("rootKeyFromField", "field"),
             ("isPresentIf", "string"),
         ],

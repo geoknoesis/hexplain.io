@@ -4022,6 +4022,30 @@
     "allowWarnings": true
   },
   {
+    "name": "field definesExpression valid",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": true,
+    "path": "",
+    "data": "@prefix ex:<urn:physical-property:> .\n@prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32; b:coversFromField ex:count; b:coversToField ex:other .\nex:check2 a b:Checksum; b:checksumAlgorithm b:sha256; b:coversFromField ex:count; b:coversToField ex:other .\nex:f a b:Field; b:dataType b:uint8. ex:f b:definesExpression \"value\".",
+    "allowWarnings": true
+  },
+  {
+    "name": "field definesExpression invalid",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/bddo#definesExpression",
+    "data": "@prefix ex:<urn:physical-property:> .\n@prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32; b:coversFromField ex:count; b:coversToField ex:other .\nex:check2 a b:Checksum; b:checksumAlgorithm b:sha256; b:coversFromField ex:count; b:coversToField ex:other .\nex:f a b:Field; b:dataType b:uint8. ex:f b:definesExpression 1.",
+    "allowWarnings": true
+  },
+  {
+    "name": "field definesExpression duplicate",
+    "module": "specification/bddo/bddo.ttl",
+    "expected": false,
+    "path": "https://hexplain.io/ns/bddo#definesExpression",
+    "data": "@prefix ex:<urn:physical-property:> .\n@prefix b:<https://hexplain.io/ns/bddo#> .\n@prefix xsd:<http://www.w3.org/2001/XMLSchema#> .\nb:uint8 a b:DataType . ex:count a b:Field; b:dataType b:uint8 .\nex:other a b:Field; b:dataType b:uint8 .\nex:enum a b:Enumeration; b:hasEnumValue ex:v . ex:v a b:EnumValue; b:enumRawValue 1 .\nex:enum2 a b:Enumeration; b:hasEnumValue ex:v .\nex:check a b:Checksum; b:checksumAlgorithm b:crc32; b:coversFromField ex:count; b:coversToField ex:other .\nex:check2 a b:Checksum; b:checksumAlgorithm b:sha256; b:coversFromField ex:count; b:coversToField ex:other .\nex:f a b:Field; b:dataType b:uint8. ex:f b:definesExpression \"value\",\"other\".",
+    "allowWarnings": true
+  },
+  {
     "name": "field rootKeyFromField valid",
     "module": "specification/bddo/bddo.ttl",
     "expected": true,

@@ -44,7 +44,7 @@ Acceptance requires completed module coverage, dispositions for all findings, re
 | specification/aspect/tabular | 14 | Unreviewed |
 | specification/aspect/time | 3 | Unreviewed |
 | specification/axv | 10 | Unreviewed |
-| specification/bddo | 316 | Unreviewed |
+| specification/bddo | 317 | Unreviewed |
 | specification/conf | 66 | Unreviewed |
 | specification/dfv | 28 | Unreviewed |
 | specification/dlv | 52 | Unreviewed |
