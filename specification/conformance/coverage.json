@@ -1,11 +1,11 @@
 {
  "cases": {
-  "physical-parser": 533,
+  "physical-parser": 535,
   "semantic-emitter": 49,
   "bundle-processor": 13,
-  "hdl-compiler": 234,
+  "hdl-compiler": 237,
   "conformance-evaluator": 41,
-  "writer": 91
+  "writer": 102
  },
  "excluded": {
   "blanket": [
@@ -19,8 +19,8 @@
  },
  "processorMust": {
   "Physical Parser": {
-   "total": 313,
-   "covered": 289,
+   "total": 314,
+   "covered": 290,
    "notSuiteTestable": {
     "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's shape gates (test_shapes, test_vocab_shapes) apply it.",
     "req-hel-array-values-1": "A processor case observes only the Processing Model category (Expression); the HEL vectors (validation/test/hel-vectors.tsv) assert it: len(project(rows, v)); all(project(rows, repeatValue(v, 2)), self[0] == self[1])",
@@ -69,8 +69,8 @@
    "uncovered": []
   },
   "HDL Compiler": {
-   "total": 70,
-   "covered": 69,
+   "total": 72,
+   "covered": 71,
    "notSuiteTestable": {
     "req-hdl-modules-3": "The import bounds are the compiler's own; a case would need an imported file larger than every conforming compiler's bound, and no size is."
    },
@@ -83,17 +83,20 @@
    "uncovered": []
   },
   "Writer": {
-   "total": 27,
-   "covered": 27,
-   "notSuiteTestable": {},
+   "total": 37,
+   "covered": 35,
+   "notSuiteTestable": {
+    "req-pm-serialisation-48": "Reuse of encoded bytes captured by a parse: a writer case gives a tree, not a parse, so no case can state which bytes were captured; the symmetry requirement observes the outcome.",
+    "req-pm-serialisation-49": "The layout-pass bound is the Writer's own (maxLayoutPasses); a conforming description that does not converge has no portable form for a case to state."
+   },
    "uncovered": []
   }
  },
  "requirements": {
   "physical-parser": {
    "MUST": {
-    "total": 211,
-    "covered": 208
+    "total": 212,
+    "covered": 209
    },
    "SHOULD": {
     "total": 5,
@@ -142,8 +145,8 @@
   },
   "hdl-compiler": {
    "MUST": {
-    "total": 70,
-    "covered": 69
+    "total": 72,
+    "covered": 71
    },
    "SHOULD": {
     "total": 1,
@@ -152,8 +155,8 @@
   },
   "writer": {
    "MUST": {
-    "total": 27,
-    "covered": 27
+    "total": 37,
+    "covered": 35
    },
    "SHOULD": {
     "total": 0,
@@ -163,11 +166,11 @@
  },
  "writer": {
   "roundTrip": {
-   "trees": 260,
+   "trees": 261,
    "outcomes": {
     "Unsupported": 17,
     "Validation": 7,
-    "round-trip": 236
+    "round-trip": 237
    }
   },
   "cases": [
@@ -677,6 +680,120 @@
     ]
    },
    {
+    "id": "w-recompute-codec-parameter",
+    "title": "A codec's recomputed parameter rebinds the field its expression reads",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-41",
+     "req-pm-serialisation-42",
+     "req-pm-serialisation-46"
+    ]
+   },
+   {
+    "id": "w-recompute-count-expression",
+    "title": "Recompute mode rebinds the field a count expression reads",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-41",
+     "req-pm-serialisation-42",
+     "req-pm-serialisation-43",
+     "req-pm-serialisation-50"
+    ]
+   },
+   {
+    "id": "w-recompute-defines",
+    "title": "A derived field with bddo:definesExpression rebinds the terminal of its expression",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-41",
+     "req-pm-serialisation-42",
+     "req-pm-serialisation-47"
+    ]
+   },
+   {
+    "id": "w-recompute-defines-verify",
+    "title": "In verify mode bddo:definesExpression is only a check",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-41",
+     "req-pm-serialisation-47"
+    ]
+   },
+   {
+    "id": "w-recompute-derive-chain",
+    "title": "Rebinding follows a derived field whose expression is itself invertible",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-41",
+     "req-pm-serialisation-42",
+     "req-pm-serialisation-43",
+     "req-pm-serialisation-50"
+    ]
+   },
+   {
+    "id": "w-recompute-mask",
+    "title": "A mask 2^k - 1 rebinds the representative in the signed range of k bits",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-41",
+     "req-pm-serialisation-42",
+     "req-pm-serialisation-43",
+     "req-pm-serialisation-50"
+    ]
+   },
+   {
+    "id": "w-recompute-not-invertible",
+    "title": "A size expression outside the invertible fragment is a validation error",
+    "outcome": "Validation",
+    "requirements": [
+     "req-pm-serialisation-41",
+     "req-pm-serialisation-42",
+     "req-pm-serialisation-44"
+    ]
+   },
+   {
+    "id": "w-recompute-offset",
+    "title": "A region addressed by an offset expression is placed at the next free position",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-41",
+     "req-pm-serialisation-42",
+     "req-pm-serialisation-45"
+    ]
+   },
+   {
+    "id": "w-recompute-parameter-path",
+    "title": "Rebinding follows a struct parameter to the node its argument denotes",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-41",
+     "req-pm-serialisation-42",
+     "req-pm-serialisation-43",
+     "req-pm-serialisation-47",
+     "req-pm-serialisation-50"
+    ]
+   },
+   {
+    "id": "w-recompute-size-expression",
+    "title": "Recompute mode rebinds the field a size expression reads",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-41",
+     "req-pm-serialisation-42",
+     "req-pm-serialisation-43",
+     "req-pm-serialisation-50"
+    ]
+   },
+   {
+    "id": "w-recompute-unchanged",
+    "title": "A tree that is already consistent writes the same bytes in recompute mode",
+    "outcome": "bytes",
+    "requirements": [
+     "req-pm-serialisation-41",
+     "req-pm-serialisation-42"
+    ]
+   },
+   {
     "id": "w-region-filled",
     "title": "A region of literal size is filled to its end after a shorter value",
     "outcome": "bytes",
@@ -1068,6 +1185,61 @@
    ],
    "req-pm-serialisation-40": [
     "w-repeat-previous"
+   ],
+   "req-pm-serialisation-41": [
+    "w-recompute-codec-parameter",
+    "w-recompute-count-expression",
+    "w-recompute-defines",
+    "w-recompute-defines-verify",
+    "w-recompute-derive-chain",
+    "w-recompute-mask",
+    "w-recompute-not-invertible",
+    "w-recompute-offset",
+    "w-recompute-parameter-path",
+    "w-recompute-size-expression",
+    "w-recompute-unchanged"
+   ],
+   "req-pm-serialisation-42": [
+    "w-recompute-codec-parameter",
+    "w-recompute-count-expression",
+    "w-recompute-defines",
+    "w-recompute-derive-chain",
+    "w-recompute-mask",
+    "w-recompute-not-invertible",
+    "w-recompute-offset",
+    "w-recompute-parameter-path",
+    "w-recompute-size-expression",
+    "w-recompute-unchanged"
+   ],
+   "req-pm-serialisation-43": [
+    "w-recompute-count-expression",
+    "w-recompute-derive-chain",
+    "w-recompute-mask",
+    "w-recompute-parameter-path",
+    "w-recompute-size-expression"
+   ],
+   "req-pm-serialisation-44": [
+    "w-recompute-not-invertible"
+   ],
+   "req-pm-serialisation-45": [
+    "w-recompute-offset"
+   ],
+   "req-pm-serialisation-46": [
+    "w-recompute-codec-parameter"
+   ],
+   "req-pm-serialisation-47": [
+    "w-recompute-defines",
+    "w-recompute-defines-verify",
+    "w-recompute-parameter-path"
+   ],
+   "req-pm-serialisation-48": [],
+   "req-pm-serialisation-49": [],
+   "req-pm-serialisation-50": [
+    "w-recompute-count-expression",
+    "w-recompute-derive-chain",
+    "w-recompute-mask",
+    "w-recompute-parameter-path",
+    "w-recompute-size-expression"
    ]
   }
  },
@@ -2339,6 +2511,10 @@
   "req-pm-parsefield-38": [
    "pp-repeat-previous"
   ],
+  "req-pm-parsefield-39": [
+   "pp-defines",
+   "pp-defines-mismatch"
+  ],
   "req-pm-parsestruct-1": [
    "pp-members-in-list-order"
   ],
@@ -2623,6 +2799,61 @@
   ],
   "req-pm-serialisation-40": [
    "w-repeat-previous"
+  ],
+  "req-pm-serialisation-41": [
+   "w-recompute-codec-parameter",
+   "w-recompute-count-expression",
+   "w-recompute-defines",
+   "w-recompute-defines-verify",
+   "w-recompute-derive-chain",
+   "w-recompute-mask",
+   "w-recompute-not-invertible",
+   "w-recompute-offset",
+   "w-recompute-parameter-path",
+   "w-recompute-size-expression",
+   "w-recompute-unchanged"
+  ],
+  "req-pm-serialisation-42": [
+   "w-recompute-codec-parameter",
+   "w-recompute-count-expression",
+   "w-recompute-defines",
+   "w-recompute-derive-chain",
+   "w-recompute-mask",
+   "w-recompute-not-invertible",
+   "w-recompute-offset",
+   "w-recompute-parameter-path",
+   "w-recompute-size-expression",
+   "w-recompute-unchanged"
+  ],
+  "req-pm-serialisation-43": [
+   "w-recompute-count-expression",
+   "w-recompute-derive-chain",
+   "w-recompute-mask",
+   "w-recompute-parameter-path",
+   "w-recompute-size-expression"
+  ],
+  "req-pm-serialisation-44": [
+   "w-recompute-not-invertible"
+  ],
+  "req-pm-serialisation-45": [
+   "w-recompute-offset"
+  ],
+  "req-pm-serialisation-46": [
+   "w-recompute-codec-parameter"
+  ],
+  "req-pm-serialisation-47": [
+   "w-recompute-defines",
+   "w-recompute-defines-verify",
+   "w-recompute-parameter-path"
+  ],
+  "req-pm-serialisation-48": [],
+  "req-pm-serialisation-49": [],
+  "req-pm-serialisation-50": [
+   "w-recompute-count-expression",
+   "w-recompute-derive-chain",
+   "w-recompute-mask",
+   "w-recompute-parameter-path",
+   "w-recompute-size-expression"
   ],
   "req-pm-size-resolution-1": [],
   "req-pm-size-resolution-2": [
@@ -3414,6 +3645,13 @@
    "hc-align-origin-unknown",
    "hc-align-origin-yaml"
   ],
+  "req-hdl-clauses-11": [
+   "hc-defines",
+   "hc-defines-aggregate"
+  ],
+  "req-hdl-clauses-12": [
+   "hc-defines-yaml"
+  ],
   "req-hdl-compilation-model-1": [
    "hc-align-origin-unknown",
    "hc-aspect-prefix-not-predeclared",
@@ -3430,6 +3668,7 @@
    "hc-checksum-custom-crc-value-too-wide",
    "hc-checksum-custom-crc-width-out-of-range",
    "hc-count-and-until",
+   "hc-defines-aggregate",
    "hc-derive-with-repeat",
    "hc-duplicate-struct",
    "hc-encoded-with-unknown-register-concept",
@@ -3603,6 +3842,9 @@
    "hc-contextual-keywords",
    "hc-contextual-keywords-yaml",
    "hc-count-and-until",
+   "hc-defines",
+   "hc-defines-aggregate",
+   "hc-defines-yaml",
    "hc-derive-with-repeat",
    "hc-dispatch-arm-iris",
    "hc-dispatch-arm-iris-yaml",
@@ -3872,6 +4114,8 @@
    "hc-codec-switch-and-session-yaml",
    "hc-contextual-keywords",
    "hc-contextual-keywords-yaml",
+   "hc-defines",
+   "hc-defines-yaml",
    "hc-dispatch-arm-iris",
    "hc-dispatch-arm-iris-yaml",
    "hc-element-key",
@@ -3981,6 +4225,8 @@
    "hc-codec-switch-and-session-yaml",
    "hc-contextual-keywords",
    "hc-contextual-keywords-yaml",
+   "hc-defines",
+   "hc-defines-yaml",
    "hc-dispatch-arm-iris",
    "hc-dispatch-arm-iris-yaml",
    "hc-element-key",
@@ -4060,6 +4306,7 @@
    "hc-checksum-custom-crc-value-too-wide",
    "hc-checksum-custom-crc-width-out-of-range",
    "hc-count-and-until",
+   "hc-defines-aggregate",
    "hc-derive-with-repeat",
    "hc-duplicate-struct",
    "hc-encoded-with-unknown-register-concept",
@@ -4854,6 +5101,7 @@
   "hdl/index.html#checksums": 10,
   "hdl/index.html#clause-multiplicity": 13,
   "hdl/index.html#clauses": 23,
+  "hdl/index.html#defines": 3,
   "hdl/index.html#delimited": 6,
   "hdl/index.html#escape-hatch": 10,
   "hdl/index.html#expressions": 21,
@@ -4888,7 +5136,7 @@
   "hdl/index.html#terms-without-a-clause": 2,
   "hdl/index.html#types": 11,
   "hdl/index.html#versioning": 3,
-  "hdl/index.html#yaml": 70,
+  "hdl/index.html#yaml": 71,
   "hel/index.html#array-values": 1,
   "hel/index.html#coercion": 9,
   "hel/index.html#conformance": 11,
@@ -4932,6 +5180,7 @@
   "processing#conformance-evaluation": 41,
   "processing#context": 6,
   "processing#data-layouts": 16,
+  "processing#defines-check": 2,
   "processing#delimited-records": 8,
   "processing#delimited-tables": 8,
   "processing#delta-parameters": 11,
@@ -4962,7 +5211,7 @@
   "processing#round-trip": 2,
   "processing#security-decompression": 4,
   "processing#security-resources": 1,
-  "processing#serialisation": 91,
+  "processing#serialisation": 102,
   "processing#size-resolution": 41,
   "processing#stream-metadata": 8,
   "processing#struct-size": 10,
@@ -4974,6 +5223,11 @@
   "processing#typed-cells": 3,
   "processing#valid-description": 2,
   "processing#value-mapping": 10,
+  "processing#write-defines": 3,
+  "processing#write-invertible": 9,
+  "processing#write-recompute": 11,
+  "processing#write-recompute-codec": 1,
+  "processing#write-recompute-offsets": 1,
   "req/index.html#conformance": 3
  }
 }

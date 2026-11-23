@@ -1740,6 +1740,76 @@ hc(
    """,
 )
 
+hc(
+    "defines",
+    "@defines is emitted as bddo:definesExpression",
+    "The expression after @defines is emitted in canonical HEL on the field that carries it.",
+    OK + ["req-hdl-clauses-11"],
+    ["defines"],
+    """
+   format t @namespace "{ns}"
+   struct Root {
+     count : u8
+     items : u8 repeat 2
+     cnt : derive len(items) @defines count
+   }
+   """,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.count ex:Root.items ex:Root.cnt ) .
+   ex:Root.count a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Root.items a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount 2 .
+   ex:Root.cnt a bddo:Field ; bddo:valueFromExpression "len(instance.items)" ;
+       bddo:definesExpression "instance.count" .
+   """,
+)
+
+hc(
+    "defines-yaml",
+    "YAML field key defines is emitted as bddo:definesExpression",
+    "In a .hx.yaml document the field key defines compiles identically to @defines on the text surface.",
+    OK + ["req-hdl-clauses-12"],
+    ["defines", "yaml"],
+    """
+    format: t
+    namespace: "{ns}"
+    structs:
+      Root:
+        fields:
+          count:
+            type: u8
+          items:
+            type: u8
+            repeat: 2
+          cnt:
+            derive: "len(items)"
+            defines: "count"
+    """,
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:Root.count ex:Root.items ex:Root.cnt ) .
+   ex:Root.count a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:Root.items a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount 2 .
+   ex:Root.cnt a bddo:Field ; bddo:valueFromExpression "len(instance.items)" ;
+       bddo:definesExpression "instance.count" .
+   """,
+    yaml=True,
+)
+
+err(
+    "defines-aggregate",
+    "@defines with an aggregate is an ERROR",
+    "sumOf is outside the invertible fragment, so the dependency it states could never be written.",
+    ["req-hdl-clauses-11"],
+    ["defines"],
+    """
+    format t @namespace "{ns}"
+    struct Root {
+      items : u8 repeat 2
+      cnt : derive 1 @defines sumOf(items, self)
+    }
+    """,
+    line=4,
+)
+
 err(
     "repeat-index-outside-repeat",
     "repeat.index outside the arguments and until condition of a repeat is an ERROR",

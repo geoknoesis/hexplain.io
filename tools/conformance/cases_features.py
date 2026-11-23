@@ -818,6 +818,38 @@ pp(
 )
 
 pp(
+    "defines",
+    "bddo:definesExpression holds when its expression equals the field's value",
+    "cnt is len(items) and defines count: count is 2, as is cnt.",
+    ["req-pm-parsefield-39"],
+    ["defines-check"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:count ex:items ex:cnt ) .
+   ex:count a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:items a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount 2 .
+   ex:cnt a bddo:Field ; bddo:valueFromExpression "len(instance.items)" ; bddo:definesExpression "instance.count" .
+   """,
+    bytes([2, 5, 6]),
+    {"count": 2, "items": [5, 6], "cnt": 2},
+)
+
+pp(
+    "defines-mismatch",
+    "A bddo:definesExpression that does not equal the field's value is a validation error",
+    "count is 9 but cnt, which defines it, is len(items) = 2.",
+    ["req-pm-parsefield-39"],
+    ["defines-check"],
+    """
+   ex:Root a bddo:Struct ; bddo:hasField ( ex:count ex:items ex:cnt ) .
+   ex:count a bddo:Field ; bddo:dataType bddo:uint8 .
+   ex:items a bddo:Field ; bddo:dataType bddo:uint8 ; bddo:repeatCount 2 .
+   ex:cnt a bddo:Field ; bddo:valueFromExpression "len(instance.items)" ; bddo:definesExpression "instance.count" .
+   """,
+    bytes([9, 5, 6]),
+    error="Validation",
+)
+
+pp(
     "param-nested-arguments",
     "Arguments are expressions in the caller's context and pass parameters on",
     "Root passes w and w * 2 to Row; Row passes param.w + 1 to Cell, whose data is that many bytes.",

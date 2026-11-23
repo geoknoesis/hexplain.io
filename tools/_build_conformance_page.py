@@ -102,6 +102,10 @@ NOT_SUITE_TESTABLE = {
     "req-pm-resource-limits-3": "A wall-clock limit and cancellation by the caller are implementation safeguards "
     "with no normative values: a case cannot make one fire on demand. The configured limits' ResourceLimit outcome "
     "is req-pm-resource-limits-1's, which the pp-limit-* cases exercise.",
+    "req-pm-serialisation-48": "Reuse of encoded bytes captured by a parse: a writer case gives a tree, not a "
+    "parse, so no case can state which bytes were captured; the symmetry requirement observes the outcome.",
+    "req-pm-serialisation-49": "The layout-pass bound is the Writer's own (maxLayoutPasses); a conforming description "
+    "that does not converge has no portable form for a case to state.",
     "req-bddo-conformance-1": "Binds a SHACL validator of description graphs, not a processor of streams; the family's "
     "shape gates (test_shapes, test_vocab_shapes) apply it.",
     "req-core-punning-1": "Whether a processor relies on a DL entailment is not observable from its output: a case "
